@@ -1,0 +1,36 @@
+Apple Pascal 1.1 SYSTEM.COMPILER / COMPINIT
+Corrected procedure count: 29
+
+1  entry $10E0  exit $1122  data 2444 params 4 lex 0
+2  entry $0000  exit $0172  data 184  params 2 lex 1
+3  entry $0184  exit $025C  data 2 params 0 lex 1
+4  entry $0268  exit $0361  data 106 params 0 lex 1
+5  entry $036E  exit $03C7  data 6 params 2 lex 1
+6  entry $04D2  exit $0751  data 10 params 0 lex 1
+7  entry $0766  exit $077F  data 0 params 4 lex 1
+8  entry $078C  exit $0821  data 4 params 4 lex 1
+9  entry $0830  exit $0864  data 2 params 6 lex 1
+10 entry $0870  exit $0881  data 0 params 6 lex 1
+11 entry $088E  exit $08AB  data 0 params 2 lex 1
+12 entry $03D6  exit $046C  data 0 params 0 lex 1
+13 entry $0C6A  exit $0CA9  data 4 params 6 lex 1
+14 entry $08B8  exit $08C6  data 0 params 8 lex 1
+15 entry $08D4  exit $08EC  data 0 params 6 lex 1
+16 entry $08F8  exit $0906  data 0 params 6 lex 1
+17 entry $0912  exit $091B  data 0 params 6 lex 1
+18 entry $0928  exit $0AD0  data 10 params 12 lex 1
+19 entry $0AE4  exit $0C4F  data 12 params 8 lex 1
+20 entry $0CB6  exit $0CBF  data 0 params 2 lex 1
+21 entry $0CCC  exit $0CF6  data 2 params 2 lex 1
+22 entry $0D02  exit $0D73  data 6 params 2 lex 1
+23 entry $0D82  exit $0DDC  data 4 params 0 lex 1
+24 entry $0E48  exit $0FD3  data 4 params 8 lex 1
+25 entry $0FE8  exit $1009  data 0 params 0 lex 1
+26 entry $0478  exit $04BF  data 2 params 2 lex 1
+27 entry $0DEA  exit $0E3C  data 2 params 2 lex 1
+28 entry $1092  exit $109E  data 0 params 0 lex 1
+29 entry $1076  exit $107A  data 0 params 0 lex 1
+
+Note: procedure ordering is compiler END/forward-order based; entry addresses
+are not monotonically ordered. Do not sort by address when assigning
+procedure numbers.

@@ -1,0 +1,247 @@
+Apple Pascal 1.3 SYSTEM.COMPILER -- global data map
+
+Global area: 1355 words (2710 bytes), from the data size of the
+outermost block (PASCALCO procedure with lex level 0).
+Distinct global offsets touched: 139
+Words accounted for by inferred objects: 1361 of 1355
+
+Offsets are WORD offsets into the shared global activation record.
+'scalar' = address never taken, only whole-word load/store.
+'aggregate' = address taken with LAO, so something bigger; the word
+count is exact when MOV/LDM/STM pinned it, otherwise it is an upper
+bound set by the next touched offset.
+
+VERIFIED BINARY FACT for the access counts; the object sizes marked
+'bounded by next touched offset' are STRONG INFERENCE.
+
+  off kind        words    rd    wr    & users  sizing / evidence
+    1 scalar-byref      1    69     0    1    14  address taken only to pass it | passed to CSP 1 NEW x1
+    2 scalar-byref      1    32     1    3    12  address taken only to pass it | passed to CSP 1 NEW x3
+    3 record          5   216    62   10    32  sized by MOV/LDM/STM/compare; spans 5 words but words 4..7 are also addressed individually, so these are its fields | MOV 5 word(s) x7; passed to CSP 1 NEW x2; passed to CLP 37 x1
+    4 scalar          1    19    17    0     9  word access only
+    5 aggregate       1    22    23    5    12  sized by MOV/LDM/STM/compare | MOV 1 word(s) x5
+    6 scalar          1    10    10    0     6  word access only
+    7 scalar          1     5     4    0     5  word access only
+    8 scalar          1    38    13    0    18  word access only
+    9 scalar          1    72    40    0    25  word access only
+   10 scalar          1    43    25    0    17  word access only
+   11 scalar          1    36    19    0    17  word access only
+   12 scalar-byref      1    60     0    1    24  address taken only to pass it | passed to CSP 1 NEW x1
+   13 scalar          1    49    26    0    15  word access only
+   14 scalar-byref      1   118    48    1    14  address taken only to pass it | passed to CGP 2 x1
+   15 scalar          1   260    24    0    61  word access only
+   16 scalar          1    12    16    0    10  word access only
+   17 aggregate       4     0     0   28    16  sized by MOV/LDM/STM/compare | MOV 4 word(s) x13; EQU type=BYTE len=8 x10; passed to CGP 3 x2
+   21 scalar-byref      1    10     1    2     6  address taken only to pass it | passed to CGP 12 x1; passed to CXP 1,12 x1
+   22 scalar-byref      1     8     4    2     7  address taken only to pass it | passed to CSP 9 TIME x2
+   23 aggregate       1    12     8    8     9  sized by MOV/LDM/STM/compare | MOV 1 word(s) x8
+   24 scalar          1     4     2    0     2  word access only
+   25 scalar          1     6     4    0     6  word access only
+   26 scalar          1     1     3    0     2  word access only
+   27 scalar          1     3     2    0     3  word access only
+   28 scalar          1     6     2    0     6  word access only
+   29 scalar          1     1     4    0     4  word access only
+   30 scalar          1     2     2    0     4  word access only
+   31 scalar          1     1     1    0     2  word access only
+   32 scalar          1    11     3    0    10  word access only
+   33 scalar          1    41     3    0    25  word access only
+   34 scalar          1     2     2    0     4  word access only
+   35 scalar          1     4     3    0     6  word access only
+   36 scalar          1     3     2    0     4  word access only
+   37 scalar          1    16     4    0     8  word access only
+   38 scalar          1     5     3    0     5  word access only
+   39 scalar          1     2     3    0     5  word access only
+   40 scalar          1     1     3    0     3  word access only
+   41 scalar          1    10     5    0     6  word access only
+   42 scalar          1    13     3    0     8  word access only
+   43 scalar          1     1     2    0     3  word access only
+   44 scalar          1     6     4    0     6  word access only
+   45 scalar          1     3     6    0     8  word access only
+   46 scalar          1     3     2    0     5  word access only
+   47 scalar          1     1     3    0     4  word access only
+   48 scalar          1     8     3    0     8  word access only
+   49 scalar          1     5     3    0     7  word access only
+   50 scalar          1     9     3    0     8  word access only
+   51 scalar          1     1     2    0     3  word access only
+   52 scalar          1     8     3    0     6  word access only
+   53 scalar          1     1     3    0     3  word access only
+   54 scalar          1     2     7    0     5  word access only
+   55 scalar-byref      1    11     0    1     9  address taken only to pass it | passed to CSP 1 NEW x1
+   56 scalar-byref      1     3     0    1     3  address taken only to pass it | passed to CSP 1 NEW x1
+   57 scalar-byref      1    15     0    1    10  address taken only to pass it | passed to CSP 1 NEW x1
+   58 scalar-byref      1    11     0    1     8  address taken only to pass it | passed to CSP 1 NEW x1
+   59 scalar-byref      1     3     0    1     3  address taken only to pass it | passed to CSP 1 NEW x1
+   60 scalar-byref      1     5     0    1     2  address taken only to pass it | passed to CSP 1 NEW x1
+   61 scalar-byref      1    17     0    1    10  address taken only to pass it | passed to CSP 1 NEW x1
+   62 scalar-byref      1    30     0    1    18  address taken only to pass it | passed to CSP 1 NEW x1
+   63 scalar-byref      1    14     0    1    10  address taken only to pass it | passed to CSP 1 NEW x1
+   64 scalar-byref      1    42     0    1    22  address taken only to pass it | passed to CSP 1 NEW x1
+   65 scalar          1     2     3    0     4  word access only
+   66 scalar-byref      1     5     5    1     6  address taken only to pass it | passed to CLP 26 x1
+   67 scalar          1     5     5    0     4  word access only
+   68 scalar-byref      1     8     1    1     3  address taken only to pass it | passed to CSP 1 NEW x1
+   69 scalar-byref      1     3     0    1     2  address taken only to pass it | passed to CSP 1 NEW x1
+   70 scalar-byref      1     4     0    1     3  address taken only to pass it | passed to CSP 1 NEW x1
+   71 scalar          1     5     2    0     5  word access only
+   72 scalar-byref      1     2     0    1     2  address taken only to pass it | passed to CSP 1 NEW x1
+   73 scalar-byref      1     3     0    1     3  address taken only to pass it | passed to CSP 1 NEW x1
+   74 aggregate       2     2     0    1     2  bounded by next touched offset | passed to CSP 1 NEW x1
+   76 scalar-byref      1     4     0    1     4  address taken only to pass it | passed to CSP 1 NEW x1
+   77 scalar-byref      1     2     0    1     2  address taken only to pass it | passed to CSP 1 NEW x1
+   78 scalar-byref      1     2     0    1     2  address taken only to pass it | passed to CSP 1 NEW x1
+   79 scalar          1     3     3    0     2  word access only
+   80 scalar          1    33     8    0    20  word access only
+   81 scalar          1     3     3    0     3  word access only
+   82 scalar          1     1     2    0     3  word access only
+   83 scalar-byref      1     1     0    2     2  address taken only to pass it | passed to CSP 32 x1; passed to CSP 33 x1
+   84 scalar-byref      1    25     3    4     6  address taken only to pass it | passed to CSP 1 NEW x4
+   85 scalar          1     1     3    0     3  word access only
+   86 scalar          1     1     4    0     3  word access only
+   87 scalar          1    14     6    0     8  word access only
+   88 scalar-byref      1     4     3    1     7  address taken only to pass it | passed to CGP 12 x1
+   89 scalar          1     5     5    0     6  word access only
+   90 scalar-byref      1    10     0    1     4  address taken only to pass it | passed to CSP 1 NEW x1
+   91 scalar          1     5     1    0     4  word access only
+   92 scalar          1     2     2    0     3  word access only
+   93 scalar          1    11     7    0     7  word access only
+   94 scalar-byref      1     2     3    1     5  address taken only to pass it | passed to CSP 9 TIME x1
+   95 scalar          1    15     3    0    10  word access only
+   96 scalar          1     1     5    0     5  word access only
+   97 scalar-byref      1     4     1    1     2  address taken only to pass it | passed to CSP 9 TIME x1
+   98 scalar          1     9     5    0     7  word access only
+   99 scalar-byref      1    11    13    1     9  address taken only to pass it | passed to CXP 1,12 x1
+  100 scalar          1     6     6    0     8  word access only
+  101 aggregate       4     0     0    7     3  sized by MOV/LDM/STM/compare | LDM 4 word(s) x6; STM 4 word(s) x1
+  105 aggregate       4     0     0    9     9  sized by MOV/LDM/STM/compare | LDM 4 word(s) x8; STM 4 word(s) x1
+  109 aggregate       4     0     0    5     2  sized by MOV/LDM/STM/compare | LDM 4 word(s) x4; STM 4 word(s) x1
+  113 aggregate       4     0     0    6     2  sized by MOV/LDM/STM/compare | LDM 4 word(s) x5; STM 4 word(s) x1
+  117 aggregate       4     0     0    7     5  sized by MOV/LDM/STM/compare | LDM 4 word(s) x6; STM 4 word(s) x1
+  121 aggregate       4     0     0    4     2  sized by MOV/LDM/STM/compare | LDM 4 word(s) x4
+  125 aggregate       4     0     0    6     3  sized by MOV/LDM/STM/compare | LDM 4 word(s) x6
+  129 aggregate       4     0     0    5     2  sized by MOV/LDM/STM/compare | LDM 4 word(s) x4; STM 4 word(s) x1
+  133 scalar          1     8     1    0     9  word access only
+  134 aggregate      52     0     0   28    18  bounded by next touched offset | IXA element=4 word(s) x28
+  186 aggregate       4     0     0   20     7  sized by MOV/LDM/STM/compare | LDM 4 word(s) x18; STM 4 word(s) x1; passed to CSP 2 MOVELEFT x1
+  190 aggregate     255     0     0   10     5  bounded by next touched offset | IXA element=1 word(s) x8; IND 11 x1; passed to CSP 2 MOVELEFT x1
+  445 aggregate     144     0     0   22    11  bounded by next touched offset | IXA element=9 word(s) x21; IND 9 x1
+  589 aggregate      16     0     0   12     9  bounded by next touched offset | IXA element=9 word(s) x9; IND 9 x1
+  605 scalar-byref      1     7     1    2     3  address taken only to pass it | passed to CSP 1 NEW x2
+  606 aggregate      21     0     0    3     2  bounded by next touched offset | passed to CLP 3 x1; passed to OS.5 FOPEN x1
+  627 scalar          1     4     3    0     4  word access only
+  628 aggregate      37     0     0    2     2  bounded by next touched offset | SIND 2 x1; IXA element=1 word(s) x1
+  665 aggregate      40     0     0    8     5  bounded by next touched offset | passed to OS.28 FBLOCKIO x3; passed to OS.6 FCLOSE x2; passed to OS.3 FINIT x1
+  705 scalar          1    10     2    0     5  word access only
+  706 scalar          1     5     3    0     3  word access only
+  707 scalar-byref      1     6     0    1     5  address taken only to pass it | passed to CSP 1 NEW x1
+  708 scalar          1     5     2    0     2  word access only
+  709 scalar          1     1     1    0     2  word access only
+  710 scalar          1     1     1    0     2  word access only
+  711 scalar          1     1     1    0     2  word access only
+  712 scalar          1     1     1    0     2  word access only
+  713 scalar          1     1     1    0     2  word access only
+  714 scalar          1     1     1    0     2  word access only
+  715 scalar          1     1     3    0     2  word access only
+  716 aggregate      40     0     0   10     5  bounded by next touched offset | passed to OS.6 FCLOSE x4; passed to OS.28 FBLOCKIO x3; passed to OS.5 FOPEN x2
+  756 aggregate      40     0     0    5     3  bounded by next touched offset | passed to OS.6 FCLOSE x2; passed to OS.3 FINIT x1; passed to OS.28 FBLOCKIO x1
+  796 aggregate     169     0     0   20     6  bounded by next touched offset | passed to OS.13 FWRITEINT x5; passed to OS.17 FWRITECHAR x4; passed to OS.6 FCLOSE x3
+  965 aggregate      51     0     0    1     1  bounded by next touched offset | passed to OS.3 FINIT x1
+ 1016 aggregate      40     0     0    1     1  bounded by next touched offset | passed to OS.3 FINIT x1
+ 1056 aggregate      40     0     0    1     1  bounded by next touched offset | passed to OS.3 FINIT x1
+ 1096 scalar-byref      1     0     0    1     1  address taken only to pass it | passed to OS.3 FINIT x1
+ 1097 scalar          1     6     3    0     6  word access only
+ 1098 scalar          1     4     6    0     5  word access only
+ 1099 aggregate     256     0     0    6     2  bounded by next touched offset | passed to OS.28 FBLOCKIO x3; STB (byte) x2; passed to CSP 2 MOVELEFT x1
+ 1355 scalar          1     1     1    0     2  word access only
+ 1356 scalar          1     2     2    0     3  word access only
+ 1357 scalar          1     2     3    0     2  word access only
+
+File variables, from FINIT(f, window, recwords) call sites:
+
+  FIB at word  796, window buffer at word 1096 (+300), recwords=-2  [text file]   (PASCALCO.1)
+  FIB at word  716, window buffer at word 1016 (+300), recwords=-1  [text file]   (PASCALCO.1)
+  FIB at word  756, window buffer at word 1056 (+300), recwords=-1  [text file]   (PASCALCO.1)
+  FIB at word  665, window buffer at word  965 (+300), recwords=-1  [text file]   (PASCALCO.1)
+
+Busiest globals (by total accesses):
+
+  word    3  record     rd=216  wr=62   &=10  used by 32 procedures
+        BODYPART.10, BODYPART.11, BODYPART.15, BODYPART.17, BODYPART.22, BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.32, BODYPART.33, BODYPART.34, BODYPART.35 ...
+  word   15  scalar     rd=260  wr=24   &=0   used by 61 procedures
+        BODY3.1, BODYPART.11, BODYPART.12, BODYPART.22, BODYPART.23, BODYPART.25, BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.34, BODYPART.35, BODYPART.36 ...
+  word   14  scalar-byref rd=118  wr=48   &=1   used by 14 procedures
+        COMPOPTI.1, COMPOPTI.3, COMPOPTI.4, DECLARAT.12, FINISHUP.1, NUMSTRIN.2, NUMSTRIN.3, PASCALCO.14, PASCALCO.28, PASCALCO.4, PASCALCO.5, PASCALCO.6 ...
+  word    9  scalar     rd=72   wr=40   &=0   used by 25 procedures
+        BODY1.1, BODY3.1, BODY3.2, BODYPART.16, BODYPART.19, BODYPART.3, BODYPART.31, BODYPART.36, BODYPART.5, CASESTAT.1, COMPINIT.1, FINISHUP.1 ...
+  word   13  scalar     rd=49   wr=26   &=0   used by 15 procedures
+        BODY3.1, BODYPART.31, COMPINIT.1, COMPINIT.9, DECLARAT.11, DECLARAT.12, DECLARAT.19, FINISHUP.1, PASCALCO.13, PASCALCO.25, PASCALCO.26, PASCALCO.6 ...
+  word    1  scalar-byref rd=69   wr=0    &=1   used by 14 procedures
+        COMPINIT.9, COMPOPTI.1, COMPOPTI.3, COMPOPTI.4, FINISHUP.1, NUMSTRIN.2, NUMSTRIN.3, PASCALCO.14, PASCALCO.28, PASCALCO.4, PASCALCO.5, PASCALCO.6 ...
+  word   10  scalar     rd=43   wr=25   &=0   used by 17 procedures
+        BODY1.1, COMPINIT.1, COMPINIT.9, DECLARAT.11, DECLARAT.18, DECLARAT.19, DECLARAT.20, FORSTATE.1, PASCALCO.14, PASCALCO.26, ROUTINE.10, ROUTINE.9 ...
+  word   12  scalar-byref rd=60   wr=0    &=1   used by 24 procedures
+        BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.32, BODYPART.33, BODYPART.34, BODYPART.35, BODYPART.36, BODYPART.37, COMPINIT.2, COMPINIT.3, COMPINIT.8 ...
+  word   11  scalar     rd=36   wr=19   &=0   used by 17 procedures
+        BODYPART.25, BODYPART.29, BODYPART.30, BODYPART.36, CASESTAT.1, DECLARAT.10, DECLARAT.15, DECLARAT.18, DECLARAT.20, DECLARAT.3, DECLARAT.6, DECLARAT.8 ...
+  word    8  scalar     rd=38   wr=13   &=0   used by 18 procedures
+        BODY1.1, BODY3.1, BODYPART.25, COMPINIT.1, DECLARAT.1, DECLARAT.15, DECLARAT.18, DECLARAT.19, DECLARAT.3, DECLARAT.4, PASCALCO.10, PASCALCO.26 ...
+  word    5  aggregate  rd=22   wr=23   &=5   used by 12 procedures
+        BODYPART.10, BODYPART.22, BODYPART.29, BODYPART.3, BODYPART.31, BODYPART.36, BODYPART.5, BODYPART.8, BODYPART.9, ROUTINE.4, STATEMEN.2, STATEMEN.8
+  word   33  scalar     rd=41   wr=3    &=0   used by 25 procedures
+        BODY1.1, BODY3.1, BODYPART.22, BODYPART.25, BODYPART.31, BODYPART.5, COMPINIT.9, COMPOPTI.1, COMPOPTI.5, DECLARAT.1, DECLARAT.10, DECLARAT.12 ...
+  word   64  scalar-byref rd=42   wr=0    &=1   used by 22 procedures
+        BODYPART.11, BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.32, BODYPART.34, BODYPART.35, BODYPART.36, BODYPART.8, CASESTAT.1, COMPINIT.2, COMPINIT.3 ...
+  word   80  scalar     rd=33   wr=8    &=0   used by 20 procedures
+        BODY1.1, BODY3.1, BODYPART.22, BODYPART.31, BODYPART.6, COMPINIT.1, COMPOPTI.1, DECLARAT.1, DECLARAT.10, DECLARAT.18, DECLARAT.19, DECLARAT.20 ...
+  word    2  scalar-byref rd=32   wr=1    &=3   used by 12 procedures
+        BODYPART.16, BODYPART.19, BODYPART.21, COMPINIT.9, DECLARAT.1, FINISHUP.1, PASCALCO.22, PASCALCO.23, PASCALCO.24, PASCALCO.5, UNITPART.1, WRITELIN.4
+  word    4  scalar     rd=19   wr=17   &=0   used by 9 procedures
+        BODYPART.10, BODYPART.11, BODYPART.22, BODYPART.31, BODYPART.36, BODYPART.8, BODYPART.9, ROUTINE.4, STATEMEN.2
+  word   84  scalar-byref rd=25   wr=3    &=4   used by 6 procedures
+        COMPINIT.1, DECLARAT.19, PASCALCO.26, UNITPART.1, UNITPART.3, UNITPART.4
+  word   62  scalar-byref rd=30   wr=0    &=1   used by 18 procedures
+        BODYPART.11, BODYPART.22, BODYPART.25, BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.36, COMPINIT.2, COMPINIT.3, COMPINIT.8, PASCALCO.11, PASCALCO.17 ...
+  word   16  scalar     rd=12   wr=16   &=0   used by 10 procedures
+        BODYPART.11, BODYPART.34, BODYPART.35, DECLARAT.16, DECLARAT.17, NUMSTRIN.2, NUMSTRIN.3, PASCALCO.20, PASCALCO.8, ROUTINE.14
+  word   17  aggregate  rd=0    wr=0    &=28  used by 16 procedures
+        COMPINIT.1, DECLARAT.10, DECLARAT.11, DECLARAT.16, DECLARAT.17, DECLARAT.18, DECLARAT.19, DECLARAT.20, DECLARAT.4, DECLARAT.6, DECLARAT.8, DECLARAT.9 ...
+  word   23  aggregate  rd=12   wr=8    &=8   used by 9 procedures
+        BODYPART.36, COMPOPTI.4, DECLARAT.15, NUMSTRIN.2, NUMSTRIN.3, PASCALCO.20, PASCALCO.8, STATEMEN.1, STATEMEN.3
+  word  134  aggregate  rd=0    wr=0    &=28  used by 18 procedures
+        BODY1.1, BODY3.1, BODYPART.22, BODYPART.25, COMPINIT.1, DECLARAT.15, DECLARAT.18, DECLARAT.19, DECLARAT.3, DECLARAT.4, PASCALCO.10, PASCALCO.26 ...
+  word   99  scalar-byref rd=11   wr=13   &=1   used by 9 procedures
+        BODYPART.13, COMPINIT.9, DECLARAT.11, DECLARAT.12, DECLARAT.19, PASCALCO.25, PASCALCO.26, UNITPART.1, UNITPART.3
+  word  445  aggregate  rd=0    wr=0    &=22  used by 11 procedures
+        BODY3.1, COMPINIT.1, COMPINIT.9, DECLARAT.12, DECLARAT.19, FINISHUP.1, PASCALCO.15, PASCALCO.25, PASCALCO.26, UNITPART.1, UNITPART.3
+  word    6  scalar     rd=10   wr=10   &=0   used by 6 procedures
+        BODYPART.10, BODYPART.22, BODYPART.31, BODYPART.8, BODYPART.9, STATEMEN.8
+
+Globals whose address is passed to a named runtime routine:
+
+  word   17 -> OS.20 FWRITEBYTES   (DECLARAT.11@$0F8D)
+  word  606 -> OS.5 FOPEN   (COMPOPTI.1@$03D0)
+  word  665 -> OS.3 FINIT   (PASCALCO.1@$11AB)
+  word  665 -> OS.6 FCLOSE   (PASCALCO.1@$11DE)
+  word  665 -> OS.28 FBLOCKIO   (BODYPART.2@$019F)
+  word  665 -> OS.4 FRESET   (UNITPART.1@$03CA)
+  word  665 -> OS.5 FOPEN   (UNITPART.2@$0000)
+  word  716 -> OS.3 FINIT   (PASCALCO.1@$1191)
+  word  716 -> OS.6 FCLOSE   (PASCALCO.1@$11D0)
+  word  716 -> OS.28 FBLOCKIO   (PASCALCO.5@$01D0)
+  word  716 -> OS.5 FOPEN   (DECLARAT.12@$0E5B)
+  word  756 -> OS.3 FINIT   (PASCALCO.1@$119E)
+  word  756 -> OS.6 FCLOSE   (PASCALCO.1@$11D7)
+  word  756 -> OS.28 FBLOCKIO   (PASCALCO.5@$0203)
+  word  756 -> OS.5 FOPEN   (COMPOPTI.1@$0243)
+  word  796 -> OS.3 FINIT   (PASCALCO.1@$1184)
+  word  796 -> OS.6 FCLOSE   (PASCALCO.1@$11C9)
+  word  796 -> OS.13 FWRITEINT   (PASCALCO.6@$0295)
+  word  796 -> OS.17 FWRITECHAR   (PASCALCO.6@$02B5)
+  word  796 -> OS.20 FWRITEBYTES   (PASCALCO.6@$0329)
+  word  796 -> OS.19 FWRITESTRING   (PASCALCO.6@$0344)
+  word  796 -> OS.22 FWRITELN   (PASCALCO.6@$036B)
+  word  796 -> OS.5 FOPEN   (COMPINIT.1@$0CE3)
+  word  965 -> OS.3 FINIT   (PASCALCO.1@$11AE)
+  word 1016 -> OS.3 FINIT   (PASCALCO.1@$1194)
+  word 1056 -> OS.3 FINIT   (PASCALCO.1@$11A1)
+  word 1096 -> OS.3 FINIT   (PASCALCO.1@$1187)
+  word 1099 -> OS.28 FBLOCKIO   (PASCALCO.24@$0DCA)

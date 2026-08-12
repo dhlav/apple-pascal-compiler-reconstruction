@@ -1,0 +1,13 @@
+# Evidence must round-trip byte for byte: the SHA-256s in docs/FINDINGS.md
+# are the anchor for every derived artifact.
+*.dsk  binary
+*.sdk  binary
+*.po   binary
+*.bin  binary
+*.zip  binary
+
+# Analysis output is plain ASCII; keep it stable across platforms.
+*.txt  text eol=lf
+*.md   text eol=lf
+*.py   text eol=lf
+*.json text eol=lf

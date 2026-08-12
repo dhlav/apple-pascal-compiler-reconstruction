@@ -1,0 +1,334 @@
+0A46  CE 09              CLP child 9
+0A48  CE 0A              CLP child 10
+0A4A  00                 SLDC #0000
+0A4B  AB 4D              SRO 004D
+0A4D  00                 SLDC #0000
+0A4E  AB 08              SRO 0008
+0A50  A9 31              LDO? 0031
+0A52  A1 56              FJP? -> 0AAA
+0A54  01                 SLDC #0001
+0A55  AB 09              SRO 0009
+0A57  07                 SLDC #0007
+0A58  CC 81              STL 0081
+0A5A  03                 SLDC #0003
+0A5B  F0                 SLDL?
+0A5C  CA 81              LDL 0081
+0A5E  03                 SLDC #0003
+0A5F  C8                 LEQI
+0A60  A1 0D              FJP? -> 0A6F
+0A62  B6 02 03           LOD 0302
+0A65  CD 00 16           CXP proc 0, seg $16
+0A68  F0                 SLDL?
+0A69  01                 SLDC #0001
+0A6A  82                 ADI
+0A6B  AB 09              SRO 0009
+0A6D  B9 F6              UJP -> 0A65
+0A6F  B6 02 03           LOD 0302
+0A72  D7                 NOP
+0A73  A6 1B 41 70 70 6C 65 20 50 61 73 63 61 6C 20 43 6F 6D 70 69 6C 65 72 20 5B 31 2E 31 5D LSA "Apple Pascal Compiler [1.1]"
+0A90  00                 SLDC #0000
+0A91  CD 00 13           CXP proc 0, seg $13
+0A94  B6 02 03           LOD 0302
+0A97  CD 00 16           CXP proc 0, seg $16
+0A9A  B6 02 03           LOD 0302
+0A9D  A6 06 3C 20 20 20 30 3E LSA "<   0>"
+0AA5  D7                 NOP
+0AA6  00                 SLDC #0000
+0AA7  CD 00 13           CXP proc 0, seg $13
+0AAA  A5 80              LA0 0080
+0AAC  83                 ADR?
+0AAD  00                 SLDC #0000
+0AAE  A4 04              IXA 0004
+0AB0  CC 81              STL 0081
+0AB2  03                 SLDC #0003
+0AB3  CA 81              LDL 0081
+0AB5  03                 SLDC #0003
+0AB6  9F                 OP $9F
+0AB7  9A                 STO?
+0AB8  CA 81              LDL 0081
+0ABA  03                 SLDC #0003
+0ABB  A2 02              INC 0002
+0ABD  9F                 OP $9F
+0ABE  9A                 STO?
+0ABF  CA 81              LDL 0081
+0AC1  03                 SLDC #0003
+0AC2  A2 03              INC 0003
+0AC4  9F                 OP $9F
+0AC5  9A                 STO?
+0AC6  CA 81              LDL 0081
+0AC8  03                 SLDC #0003
+0AC9  A2 01              INC 0001
+0ACB  00                 SLDC #0000
+0ACC  9A                 STO?
+0ACD  9E 28              CSP $28
+0ACF  AB 59              SRO 0059
+0AD1  CD 01 03           CXP proc 1, seg $03
+0AD4  CD 01 06           CXP proc 1, seg $06
+0AD7  CE 02              CLP child 2
+0AD9  CE 03              CLP child 3
+0ADB  CE 04              CLP child 4
+0ADD  CE 07              CLP child 7
+0ADF  CE 08              CLP child 8
+0AE1  A9 1C              LDO? 001C
+0AE3  A1 25              FJP? -> 0B0A
+0AE5  9F                 OP $9F
+0AE6  AB 41              SRO 0041
+0AE8  00                 SLDC #0000
+0AE9  AB 0D              SRO 000D
+0AEB  01                 SLDC #0001
+0AEC  AB 55              SRO 0055
+0AEE  01                 SLDC #0001
+0AEF  AB 52              SRO 0052
+0AF1  A5 72              LA0 0072
+0AF3  A5 72              LA0 0072
+0AF5  BC 04              STM?
+0AF7  04                 SLDC #0004
+0AF8  B3 04 04           LDC? 0404
+0AFB  00                 SLDC #0000
+0AFC  00                 SLDC #0000
+0AFD  00                 SLDC #0000
+0AFE  00                 SLDC #0000
+0AFF  00                 SLDC #0000
+0B00  00                 SLDC #0000
+0B01  00                 SLDC #0000
+0B02  04                 SLDC #0004
+0B03  9C                 STB?
+0B04  A0                 OP $A0
+0B05  04                 SLDC #0004
+0B06  BD                 OP $BD
+0B07  04                 SLDC #0004
+0B08  B9 F4              UJP -> 0AFE
+0B0A  01                 SLDC #0001
+0B0B  AB 08              SRO 0008
+0B0D  01                 SLDC #0001
+0B0E  AB 4D              SRO 004D
+0B10  A5 80              LA0 0080
+0B12  83                 ADR?
+0B13  01                 SLDC #0001
+0B14  A4 04              IXA 0004
+0B16  CC 81              STL 0081
+0B18  03                 SLDC #0003
+0B19  CA 81              LDL 0081
+0B1B  03                 SLDC #0003
+0B1C  9F                 OP $9F
+0B1D  9A                 STO?
+0B1E  CA 81              LDL 0081
+0B20  03                 SLDC #0003
+0B21  A2 02              INC 0002
+0B23  9F                 OP $9F
+0B24  9A                 STO?
+0B25  CA 81              LDL 0081
+0B27  03                 SLDC #0003
+0B28  A2 03              INC 0003
+0B2A  9F                 OP $9F
+0B2B  9A                 STO?
+0B2C  CA 81              LDL 0081
+0B2E  03                 SLDC #0003
+0B2F  A2 01              INC 0001
+0B31  00                 SLDC #0000
+0B32  9A                 STO?
+0B33  F1 02              STL? 0002
+0B35  82                 ADI
+0B36  AB 0A              SRO 000A
+0B38  03                 SLDC #0003
+0B39  AB 52              SRO 0052
+0B3B  A5 81              LA0 0081
+0B3D  4F                 SLDC #004F
+0B3E  A9 15              LDO? 0015
+0B40  A4 09              IXA 0009
+0B42  A2 06              INC 0006
+0B44  F4 9A              STL? 009A
+0B46  A5 41              LA0 0041
+0B48  12                 SLDC #0012
+0B49  9E 01              CSP $01
+0B4B  A9 41              LDO? 0041
+0B4D  CC 81              STL 0081
+0B4F  03                 SLDC #0003
+0B50  CA 81              LDL 0081
+0B52  03                 SLDC #0003
+0B53  A2 07              INC 0007
+0B55  9F                 OP $9F
+0B56  9A                 STO?
+0B57  CA 81              LDL 0081
+0B59  03                 SLDC #0003
+0B5A  A2 0E              INC 000E
+0B5C  F1 9A              STL? 009A
+0B5E  CA 81              LDL 0081
+0B60  03                 SLDC #0003
+0B61  D7                 NOP
+0B62  D0                 ?
+0B63  08                 SLDC #0008
+0B64  50                 SLDC #0050
+0B65  52                 SLDC #0052
+0B66  4F                 SLDC #004F
+0B67  47                 SLDC #0047
+0B68  52                 SLDC #0052
+0B69  41                 SLDC #0041
+0B6A  4D                 SLDC #004D
+0B6B  20                 SLDC #0020
+0B6C  A8 04              MOV 0004
+0B6E  CA 81              LDL 0081
+0B70  03                 SLDC #0003
+0B71  A2 06              INC 0006
+0B73  9F                 OP $9F
+0B74  9A                 STO?
+0B75  CA 81              LDL 0081
+0B77  03                 SLDC #0003
+0B78  A2 08              INC 0008
+0B7A  05                 SLDC #0005
+0B7B  9A                 STO?
+0B7C  CA 81              LDL 0081
+0B7E  03                 SLDC #0003
+0B7F  A2 09              INC 0009
+0B81  01                 SLDC #0001
+0B82  9A                 STO?
+0B83  CA 81              LDL 0081
+0B85  03                 SLDC #0003
+0B86  A2 0A              INC 000A
+0B88  00                 SLDC #0000
+0B89  9A                 STO?
+0B8A  CA 81              LDL 0081
+0B8C  03                 SLDC #0003
+0B8D  A2 0B              INC 000B
+0B8F  01                 SLDC #0001
+0B90  9A                 STO?
+0B91  CA 81              LDL 0081
+0B93  03                 SLDC #0003
+0B94  A2 0C              INC 000C
+0B96  F4 9A              STL? 009A
+0B98  CA 81              LDL 0081
+0B9A  03                 SLDC #0003
+0B9B  A2 0D              INC 000D
+0B9D  00                 SLDC #0000
+0B9E  9A                 STO?
+0B9F  CA 81              LDL 0081
+0BA1  03                 SLDC #0003
+0BA2  A2 0F              INC 000F
+0BA4  00                 SLDC #0000
+0BA5  9A                 STO?
+0BA6  CA 81              LDL 0081
+0BA8  03                 SLDC #0003
+0BA9  A2 10              INC 0010
+0BAB  00                 SLDC #0000
+0BAC  9A                 STO?
+0BAD  CA 81              LDL 0081
+0BAF  03                 SLDC #0003
+0BB0  A2 11              INC 0011
+0BB2  01                 SLDC #0001
+0BB3  9A                 STO?
+0BB4  A5 81              LA0 0081
+0BB6  DF                 SLDL8
+0BB7  F4 C0              STL? 00C0
+0BB9  04                 SLDC #0004
+0BBA  04                 SLDC #0004
+0BBB  A9 15              LDO? 0015
+0BBD  BB                 OP $BB
+0BBE  F6                 ?
+0BBF  21                 SLDC #0021
+0BC0  C3                 EQUI
+0BC1  A1 5F              FJP? -> 0C22
+0BC3  CD 01 06           CXP proc 1, seg $06
+0BC6  F6                 ?
+0BC7  00                 SLDC #0000
+0BC8  C3                 EQUI
+0BC9  A1 20              FJP? -> 0BEB
+0BCB  A5 81              LA0 0081
+0BCD  4F                 SLDC #004F
+0BCE  A9 15              LDO? 0015
+0BD0  A4 09              IXA 0009
+0BD2  A2 02              INC 0002
+0BD4  A5 11              LA0 0011
+0BD6  A8 04              MOV 0004
+0BD8  A9 41              LDO? 0041
+0BDA  9F                 OP $9F
+0BDB  CB                 NEQI
+0BDC  A1 0B              FJP? -> 0BE9
+0BDE  A9 41              LDO? 0041
+0BE0  A5 11              LA0 0011
+0BE2  A8 04              MOV 0004
+0BE4  A9 41              LDO? 0041
+0BE6  CD 01 05           CXP proc 1, seg $05
+0BE9  B9 04              UJP -> 0BEF
+0BEB  02                 SLDC #0002
+0BEC  CD 01 02           CXP proc 1, seg $02
+0BEF  CD 01 06           CXP proc 1, seg $06
+0BF2  F6                 ?
+0BF3  04                 SLDC #0004
+0BF4  C3                 EQUI
+0BF5  A1 1D              FJP? -> 0C14
+0BF7  CD 01 06           CXP proc 1, seg $06
+0BFA  F6                 ?
+0BFB  28                 SLDC #0028
+0BFC  01                 SLDC #0001
+0BFD  A5 72              LA0 0072
+0BFF  BC 04              STM?
+0C01  04                 SLDC #0004
+0C02  9C                 STB?
+0C03  8B                 OP $8B
+0C04  A1 F2              FJP? -> 0BF8
+0C06  F6                 ?
+0C07  05                 SLDC #0005
+0C08  C3                 EQUI
+0C09  A1 05              FJP? -> 0C10
+0C0B  CD 01 06           CXP proc 1, seg $06
+0C0E  B9 04              UJP -> 0C14
+0C10  04                 SLDC #0004
+0C11  CD 01 02           CXP proc 1, seg $02
+0C14  F6                 ?
+0C15  03                 SLDC #0003
+0C16  C3                 EQUI
+0C17  A1 05              FJP? -> 0C1E
+0C19  CD 01 06           CXP proc 1, seg $06
+0C1C  B9 04              UJP -> 0C22
+0C1E  0E                 SLDC #000E
+0C1F  CD 01 02           CXP proc 1, seg $02
+0C22  A5 50              LA0 0050
+0C24  9E 20              CSP $20
+0C26  A5 51              LA0 0051
+0C28  0B                 SLDC #000B
+0C29  9E 01              CSP $01
+0C2B  A9 51              LDO? 0051
+0C2D  CC 81              STL 0081
+0C2F  03                 SLDC #0003
+0C30  CA 81              LDL 0081
+0C32  03                 SLDC #0003
+0C33  A2 0A              INC 000A
+0C35  9F                 OP $9F
+0C36  9A                 STO?
+0C37  CA 81              LDL 0081
+0C39  03                 SLDC #0003
+0C3A  A2 06              INC 0006
+0C3C  12                 SLDC #0012
+0C3D  9A                 STO?
+0C3E  CA 81              LDL 0081
+0C40  03                 SLDC #0003
+0C41  A2 07              INC 0007
+0C43  A9 41              LDO? 0041
+0C45  9A                 STO?
+0C46  CA 81              LDL 0081
+0C48  03                 SLDC #0003
+0C49  A2 05              INC 0005
+0C4B  F1 9A              STL? 009A
+0C4D  CA 81              LDL 0081
+0C4F  03                 SLDC #0003
+0C50  A2 01              INC 0001
+0C52  A9 4D              LDO? 004D
+0C54  9A                 STO?
+0C55  CA 81              LDL 0081
+0C57  03                 SLDC #0003
+0C58  EF 9A              STL? 009A
+0C5A  CA 81              LDL 0081
+0C5C  03                 SLDC #0003
+0C5D  A2 03              INC 0003
+0C5F  A9 61              LDO? 0061
+0C61  9A                 STO?
+0C62  CA 81              LDL 0081
+0C64  03                 SLDC #0003
+0C65  A2 09              INC 0009
+0C67  00                 SLDC #0000
+0C68  9A                 STO?
+0C69  CA 81              LDL 0081
+0C6B  03                 SLDC #0003
+0C6C  A2 08              INC 0008
+0C6E  A9 50              LDO? 0050
+0C70  9A                 STO?

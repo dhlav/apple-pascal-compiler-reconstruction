@@ -1,0 +1,85 @@
+APPLE PASCAL 1.1 — COMPINIT PROCEDURES 9 AND 10
+Structural P-code analysis
+
+IMPORTANT CORRECTION
+--------------------
+COMPINIT does NOT contain only ten procedures. The segment contains 29
+procedures. Earlier reports truncated the procedure map at procedure 10.
+The JTAB parser now finds all 29. This report analyzes procedures 9 and 10.
+
+P9
+--
+Entry $0830
+Exit  $0864
+Data  2 bytes
+Params 6 bytes
+Lexical level 1
+
+Raw:
+0830 DA CC 04 DB F9 01 C3 A1 0A
+0839 D9 DB FC 9A B9 21
+0840 D9 DB FB 9F CB A1 08
+0847 D8 DA FB A3 09 9A B9 03
+084E D8 00 9A AD
+
+Using TommyGoog's notation, DA/DB/D9/D8 are short SLDL forms for
+local/parameter words. F9/FB are indirect-byte/field accesses and STO
+performs an indirect assignment.
+
+The first basic block is structurally:
+
+    MP04 := MP03;
+    IF <byte/field derived from MP04> = 1 THEN
+    BEGIN
+        <indirect assignment involving MP02 and MP04>;
+        GOTO common_exit;
+    END;
+
+The second block compares an indirect value with a local/address-related
+quantity and conditionally performs a byte assignment. The exact source
+types are intentionally unresolved because the distinction between pointer,
+VAR parameter, and packed/record field access cannot safely be determined
+from P9 alone.
+
+P10
+---
+Entry $0870
+Exit  $0881
+Data  0 bytes
+Params 6 bytes
+Lexical level 1
+
+Raw:
+0870 DA F8 D9 C9 A1 08
+0876 DA DA F8 01 82 9A B9 03
+087F D8 00 CF 02 AD
+
+The first sequence has the recognizable form:
+
+    IF MP02 < MP03^ THEN
+        MP03^ := MP03^ + 1
+    ELSE
+        <alternate action>;
+
+The exact meaning of the alternate action is not yet promoted to Pascal
+source because CF 02 is a global-procedure call and the actual declaration
+has not yet been recovered.
+
+This is a strong clue that P10 is a small comparison/update helper rather
+than generic initialization.
+
+CALL-GRAPH NEXT STEP
+--------------------
+We should find every CLP 9 and CLP 10 in COMPINIT and inspect the stack
+immediately before each call. That will reveal the actual parameter types.
+
+The source-level reconstruction should not be finalized until those call
+sites agree.
+
+VALIDATION RULE
+---------------
+TommyGoog's work establishes that matching the visible semantics is not
+enough: the reconstructed Pascal must eventually generate matching P-code.
+His DeCompiler walks the JTAB-selected procedure and decodes the P-code,
+and his re-engineering workflow uses Apple Pascal 1.1 to compile the
+reconstructed source and compare generated P-code.

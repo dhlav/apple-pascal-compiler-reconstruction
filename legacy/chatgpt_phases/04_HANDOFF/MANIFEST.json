@@ -1,0 +1,32 @@
+{
+  "package": "apple_pascal_compiler_reconstruction_HANDOFF",
+  "purpose": "Transfer complete Apple Pascal compiler reconstruction work to another model",
+  "generated": "2026-08-11",
+  "original_inputs": [
+    {
+      "name": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
+      "size": 143360,
+      "sha256": "88b67683f3ac645a91e0139d987a8b8fd8725b6b4045d38eb272e4cb91341adf"
+    },
+    {
+      "name": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
+      "size": 143360,
+      "sha256": "873b9e41c40cef539c06b4f5e2dafe475b0fec5c52c71e241c2cf8ad0f6f05a9"
+    },
+    {
+      "name": "ii0src.sdk",
+      "size": 40464,
+      "sha256": "1dfab0b03dbd8b72c863bf6ce805e4493ccad70aa6dee78d493a310603ef3015"
+    },
+    {
+      "name": "Undocumented Secrets of Apple Pascal.html",
+      "size": 92281,
+      "sha256": "4416a361644a16cfba9eea5eb1030e5a3146f169e29a847444b25758d985184c"
+    }
+  ],
+  "research_urls": [
+    "https://groups.google.com/g/comp.sys.apple2/c/2oDJTbQaJWU",
+    "https://groups.google.com/g/comp.sys.apple2/c/aI5ob1mLUwY/m/HhH1edM3gzkJ",
+    "https://llx.com/Neil/a2/passec.html"
+  ]
+}

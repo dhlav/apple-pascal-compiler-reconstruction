@@ -1,0 +1,8058 @@
+Apple Pascal 1.1 SYSTEM.COMPILER -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 PASCALCO
+======================================================================
+
+procedure PASCALCO.1(params 2 words);  { locals 1222 words, lex 0 }
+  FINIT(@G666, @G966, -(2));
+  FINIT(@G586, @G886, -(1));
+  FINIT(@G626, @G926, -(1));
+  FINIT(@G535, @G835, -(1));
+  COMPINIT.1();
+  if not (not (G34)) then goto L1120;
+  PASCALCO.28();
+  goto L1122;
+L1120:
+  PASCALCO.25();
+L1122:
+  FCLOSE(@G666, 0);
+  FCLOSE(@G586, 0);
+  FCLOSE(@G626, 0);
+  FCLOSE(@G535, 0);
+
+procedure PASCALCO.2(params 1 words);  { locals 92 words, lex 1 }
+  if not (((I2,12 <> G14) or (I2,11 <> G90))) then goto L0172;
+  I2,11 := G90;
+  I2,12 := G14;
+  I2,10 := L1;
+  if not (I2,13) then goto L0025;
+  L2 := 69;
+  goto L0128;
+L0025:
+  if not (G49) then goto L0031;
+  FWRITELN(I2,3);
+  goto L003F;
+L0031:
+  if not ((G43 and (L1 <= 400))) then goto L003F;
+  CSP4(1, 2);
+L003F:
+  if not ((G95 = 0)) then goto L0052;
+  FWRITEBYTES(I2,3, G1, G14, 1024);
+  goto L0080;
+L0052:
+  L3 := ((CSP11(13, G1, (G95-2), 0)+G95)-1);
+  CSP2(@L4, 0, (G14-L3));
+  FWRITEBYTES(I2,3, @L4, (G14-L3), 180);
+  { left on stack: -((G95-1)) }
+  { left on stack: 0 }
+  { left on stack: G1 }
+  { left on stack: L3 }
+L0080:
+  FWRITESTRING(I2,3, ' <<<<', 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, 'Line ', 0);
+  FWRITEINT(I2,3, G92, 0);
+  FWRITESTRING(I2,3, ', error ', 0);
+  FWRITEINT(I2,3, L1, 0);
+  FWRITECHAR(I2,3, 58, 0);
+  if not (G49) then goto L0105;
+  FWRITESTRING(I2,3, ' <sp>(continue), <esc>(terminate), E(dit', 0);
+L0105:
+  FWRITECHAR(I2,3, 7, 0);
+L010D:
+  FREADCHAR(I2,4, @L2);
+  if not (((((L2 = 32) or (L2 = 69)) or (L2 = 101)) or (L2 = I2,15))) then goto L010D;
+L0128:
+  if not (((L2 = 69) or (L2 = 101))) then goto L013C;
+  I2,11 := (G90-2);
+  CSP4(1, 1);
+L013C:
+  if not (((L1 > 400) or (L2 = 27))) then goto L014F;
+  I2,11 := 0;
+  CSP4(1, 1);
+L014F:
+  FWRITELN(I2,3);
+  if not (G49) then goto L0172;
+  FWRITECHAR(I2,3, 60, 0);
+  FWRITEINT(I2,3, G92, 4);
+  FWRITECHAR(I2,3, 62, 0);
+L0172:
+
+procedure PASCALCO.3(params 0 words);  { locals 1 words, lex 1 }
+  G14 := 0;
+  G95 := 0;
+  if not (G32) then goto L01A8;
+  if not ((G31 and not (G36))) then goto L01A8;
+  CSP2(G2, 0, 1024);
+  PASCALCO.22(1);
+  G578 := 0;
+  { left on stack: G1 }
+  { left on stack: G578 }
+L01A8:
+  if not (G36) then goto L01F4;
+  if not ((G585 = 0)) then goto L01CA;
+  if not ((FBLOCKIO(0, 2, G90, 1, 0, 0) <> 2)) then goto L01C8;
+  G36 := 0;
+  { left on stack: I2,8 }
+  { left on stack: G1 }
+L01C8:
+  goto L01DF;
+L01CA:
+  if not ((FBLOCKIO(0, 2, G90, 1, 0, 0) <> 2)) then goto L01DF;
+  G36 := 0;
+  { left on stack: @G586 }
+  { left on stack: G1 }
+L01DF:
+  if not (G36) then goto L01E5;
+  goto L01F4;
+L01E5:
+  G90 := G579;
+  G14 := G582;
+  G95 := G581;
+L01F4:
+  if not (not (G36)) then goto L0228;
+  if not (G37) then goto L0228;
+  if not ((FBLOCKIO(0, 2, G90, 1, 0, 0) <> 2)) then goto L0228;
+  FCLOSE(@G626, 0);
+  G37 := 0;
+  G90 := G580;
+  G14 := G584;
+  G95 := G583;
+  { left on stack: @G626 }
+  { left on stack: G1 }
+L0228:
+  if not (not ((G37 or G36))) then goto L0247;
+  if not ((FBLOCKIO(0, 2, G90, 1, 0, 0) <> 2)) then goto L0247;
+  PASCALCO.2(401);
+  { left on stack: I2,9 }
+  { left on stack: G1 }
+L0247:
+  if not ((G14 = 0)) then goto L0256;
+  if not ((G1^[0] = 16)) then goto L0256;
+  G14 := 2;
+L0256:
+  G90 := (G90+2);
+
+procedure PASCALCO.4(params 0 words);  { locals 53 words, lex 1 }
+  L1 := 58;
+  if not (G38) then goto L0274;
+  L2 := 68;
+  goto L027C;
+L0274:
+  L2 := ((G79 mod 10)+48);
+L027C:
+  if not (G46) then goto L0283;
+  L1 := 42;
+L0283:
+  FWRITEINT(@G666, G92, 6);
+  CSP0();
+  FWRITEINT(@G666, G13, 4);
+  CSP0();
+  FWRITEINT(@G666, G97, 5);
+  CSP0();
+  FWRITECHAR(@G666, L1, 0);
+  CSP0();
+  FWRITECHAR(@G666, L2, 0);
+  CSP0();
+  FWRITEINT(@G666, G93, 6);
+  CSP0();
+  FWRITECHAR(@G666, 32, 0);
+  CSP0();
+  L3 := (G14-G95);
+  if not ((L3 > 100)) then goto L02DA;
+  L3 := 100;
+L02DA:
+  CSP2(@L4, 0, L3);
+  if not ((@L4^[0] = 16)) then goto L0310;
+  if not ((@L4^[1] > 32)) then goto L0302;
+  FWRITECHAR(@G666, 32, (@L4^[1]-32));
+  CSP0();
+  { left on stack: G1 }
+  { left on stack: G95 }
+L0302:
+  L3 := (L3-2);
+  CSP2(@L4, 0, L3);
+  { left on stack: @L4 }
+  { left on stack: 2 }
+L0310:
+  @L4^[(L3-1)] := 13;
+  FWRITEBYTES(@G666, @L4, L3, 100);
+  CSP0();
+  if not (((I2,11 = G90) and (I2,12 > G95))) then goto L0361;
+  FWRITESTRING(@G666, '>>>>>> Error # ', 0);
+  CSP0();
+  FWRITEINT(@G666, I2,10, 0);
+  CSP0();
+  FWRITELN(@G666);
+  CSP0();
+L0361:
+
+procedure PASCALCO.5(params 1 words);  { locals 3 words, lex 1 }
+  L3 := @G131[G8*4w]^;
+  if not ((L3 = nil)) then goto L0386;
+  @G131[G8*4w]^ := L1;
+  goto L03BD;
+L0386:
+  CSP8(L3, @L2, L1);
+  L4 := ?;
+L038E:
+  if not ((L4 = 0)) then goto L03AC;
+  PASCALCO.2(101);
+  if not ((L2^.f4 = nil)) then goto L03A1;
+  L4 := 1;
+  goto L03AA;
+L03A1:
+  CSP8(L2^.f4, @L2, L1);
+  L4 := ?;
+L03AA:
+  goto L038E;
+L03AC:
+  if not ((L4 = 1)) then goto L03B8;
+  (L2+4)^ := L1;
+  goto L03BD;
+L03B8:
+  (L2+5)^ := L1;
+L03BD:
+  (L1+5)^ := nil;
+  (L1+4)^ := nil;
+
+procedure PASCALCO.6(params 0 words);  { locals 5 words, lex 1 }
+  if not (G26) then goto L04DD;
+  G79 := G78;
+  G26 := 0;
+L04DD:
+  G16 := 15;
+L04E0:
+  G15 := 47;
+  { left on stack: G1^[G14] }
+  goto L0645;
+  NUMSTRIN.1(0, @L1);
+  goto L0732;
+  L5 := G1^[G14];
+  L4 := 0;
+  L3 := 0;
+L04FB:
+  if not ((([$03FF,$0000,$0000,$0000] in 4) and (L4 < 4))) then goto L0525;
+  L3 := ((L3*10)+(L5-48));
+  L4 := (L4+1);
+  L5 := G1^[(G14+L4)];
+  { left on stack: L5 }
+  goto L04FB;
+L0525:
+  if not (([$0020,$03FF,$4000,$0000,$0000] in 5)) then goto L053E;
+  NUMSTRIN.1(1, @L1);
+  { left on stack: L5 }
+  goto L054E;
+L053E:
+  G14 := ((G14+L4)-1);
+  G15 := 35;
+  G16 := 15;
+  G23 := L3;
+L054E:
+  goto L0732;
+  CSP7(@G14, G1);
+  goto L0732;
+  PASCALCO.26(125);
+  goto L04E0;
+  goto L0732;
+  if not ((G1^[(G14+1)] = 42)) then goto L0578;
+  G14 := (G14+1);
+  PASCALCO.26(42);
+  G14 := (G14+1);
+  goto L04E0;
+  goto L057B;
+L0578:
+  G15 := 4;
+L057B:
+  goto L0732;
+  G15 := 5;
+  goto L0732;
+  G15 := 1;
+  goto L0732;
+  G14 := (G14+1);
+  goto L04E0;
+  goto L0732;
+  if not ((G1^[(G14+1)] = 46)) then goto L05A3;
+  G14 := (G14+1);
+  G15 := 2;
+  goto L05A6;
+L05A3:
+  G15 := 18;
+L05A6:
+  goto L0732;
+  if not ((G1^[(G14+1)] = 61)) then goto L05BB;
+  G14 := (G14+1);
+  G15 := 14;
+  goto L05BE;
+L05BB:
+  G15 := 2;
+L05BE:
+  goto L0732;
+  G15 := 3;
+  goto L0732;
+  G15 := 17;
+  goto L0732;
+  G15 := 15;
+  goto L0732;
+  G15 := 16;
+  goto L0732;
+  G15 := 39;
+  G16 := 0;
+  goto L0732;
+  G15 := 40;
+  G16 := 5;
+  goto L0732;
+  G15 := 40;
+  G16 := 6;
+  goto L0732;
+  G15 := 39;
+  G16 := 1;
+  goto L0732;
+  G15 := 41;
+  G16 := 8;
+  { left on stack: G1^[(G14+1)] }
+  goto L0615;
+  G16 := 12;
+  G14 := (G14+1);
+  goto L0620;
+  G16 := 9;
+  G14 := (G14+1);
+  goto L0620;
+L0615:
+L0620:
+  goto L0732;
+  G15 := 41;
+  G16 := 13;
+  goto L0732;
+  G15 := 41;
+  if not ((G1^[(G14+1)] = 61)) then goto L0640;
+  G16 := 10;
+  G14 := (G14+1);
+  goto L0643;
+L0640:
+  G16 := 11;
+L0643:
+  goto L0732;
+L0645:
+L0732:
+  if not ((G15 = 47)) then goto L074C;
+  if not ((G1^[G14] = 13)) then goto L0747;
+  PASCALCO.12();
+  G26 := 1;
+  goto L04E0;
+  goto L074C;
+L0747:
+  PASCALCO.2(400);
+L074C:
+  G14 := (G14+1);
+
+procedure PASCALCO.7(params 2 words);  { locals 0 words, lex 1 }
+  if not ((L2 <> nil)) then goto L077C;
+  CSP8(L2, L1, @G17);
+  if not ((? = 0)) then goto L0777;
+  goto L077A;
+L0777:
+  L1^ := nil;
+L077A:
+  goto L077F;
+L077C:
+  L1^ := nil;
+L077F:
+
+procedure PASCALCO.8(params 2 words);  { locals 2 words, lex 1 }
+  G24 := G8;
+  L4 := 0;
+L0792:
+  if not ((G24 >= L4)) then goto L07D7;
+  L3 := @G131[G24*4w]^;
+  if not ((L3 <> nil)) then goto L07CF;
+  CSP8(L3, @L3, @G17);
+  if not ((? = 0)) then goto L07CC;
+  if not ((L2 in 1)) then goto L07BE;
+  { left on stack: L3^.f8 }
+  goto L081E;
+  goto L07CA;
+L07BE:
+  if not (G53) then goto L07C7;
+  PASCALCO.2(103);
+  goto L07CA;
+L07C7:
+  L3 := nil;
+L07CA:
+  goto L07CF;
+L07CC:
+  L3 := nil;
+L07CF:
+  G24 := (G24-1);
+  goto L0792;
+L07D7:
+  if not (G53) then goto L081E;
+  PASCALCO.2(104);
+  if not ((L2 in 1)) then goto L07EA;
+  L3 := G75;
+  { left on stack: 0 }
+  goto L081E;
+L07EA:
+  if not ((L2 in 1)) then goto L07F6;
+  L3 := G73;
+  { left on stack: 3 }
+  goto L081E;
+L07F6:
+  if not ((L2 in 1)) then goto L0802;
+  L3 := G71;
+  { left on stack: 4 }
+  goto L081E;
+L0802:
+  if not ((L2 in 1)) then goto L080E;
+  L3 := G74;
+  { left on stack: 1 }
+  goto L081E;
+L080E:
+  if not ((L2 in 1)) then goto L081A;
+  L3 := G70;
+  { left on stack: 5 }
+  goto L081E;
+L081A:
+  L3 := G69;
+L081E:
+  L1^ := L3;
+
+procedure PASCALCO.9(params 3 words);  { locals 1 words, lex 1 }
+  L4 := L3;
+  if not ((L4^.f1 = 1)) then goto L0843;
+  L2^ := L4^.f4;
+  L1^ := L4^.f3;
+  goto L0864;
+L0843:
+  L2^ := 0;
+  if not ((L3 = G59)) then goto L0853;
+  L1^ := 255;
+  goto L0864;
+L0853:
+  if not ((L3^.f3 <> nil)) then goto L0861;
+  L1^ := L3^.f3^.f9;
+  goto L0864;
+L0861:
+  L1^ := 0;
+L0864:
+
+procedure PASCALCO.10(params 3 words);  { locals 0 words, lex 1 }
+  if not ((L3^ < L2)) then goto L087E;
+  L3^ := (L3^+1);
+  goto L0881;
+L087E:
+  PASCALCO.2(L1);
+L0881:
+
+procedure PASCALCO.11(params 1 words);  { locals 0 words, lex 1 }
+  if not (L1) then goto L0899;
+  PASCALCO.10(@G85, 31, 354);
+L0899:
+  PASCALCO.10(@G21, 15, 354);
+  @G479~[G13]{4per word,4 bits} := G21;
+
+procedure PASCALCO.12(params 0 words);  { locals 0 words, lex 1 }
+  G92 := (G92+1);
+  G14 := (G14+1);
+  if not (G49) then goto L0417;
+  FWRITECHAR(I2,3, 46, 0);
+  if not ((((G92-G91) mod 50) = 0)) then goto L0417;
+  FWRITELN(I2,3);
+  FWRITECHAR(I2,3, 60, 0);
+  FWRITEINT(I2,3, G92, 4);
+  FWRITECHAR(I2,3, 62, 0);
+L0417:
+  if not (G43) then goto L041D;
+  PASCALCO.4();
+L041D:
+  G46 := 0;
+  if not ((G1^[G14] = 0)) then goto L042B;
+  PASCALCO.3();
+  goto L042E;
+L042B:
+  G95 := G14;
+L042E:
+  if not ((G1^[G14] = 12)) then goto L043A;
+  G14 := (G14+1);
+L043A:
+  if not ((G1^[G14] = 16)) then goto L0448;
+  G14 := (G14+2);
+  goto L0460;
+L0448:
+  G14 := (1+CSP11(9, G1, G14, 0));
+  G14 := (1+CSP11(32, G1, G14, 0));
+  { left on stack: G14 }
+  { left on stack: 80 }
+  { left on stack: G14 }
+  { left on stack: 80 }
+L0460:
+  if not (G38) then goto L0469;
+  G93 := G10;
+  goto L046C;
+L0469:
+  G93 := G9;
+L046C:
+
+function PASCALCO.13(params 3 words) : <1 word result>;  { locals 2 words, lex 1 }
+  L5 := 0;
+  8 := 2;
+  L4 := (@L5^[0] <> 0);
+  if not (G30) then goto L0C85;
+  L4 := (L4 = 0);
+  { left on stack: @L5 }
+  { left on stack: 4 }
+L0C85:
+  if not (L4) then goto L0C8E;
+  8 := 1;
+  { left on stack: @L5 }
+  { left on stack: 4 }
+L0C8E:
+  0 := @G335[L3*9w]^.f6;
+  12 := 0;
+  13 := 2;
+  L1 := L5;
+  { left on stack: @L5 }
+  { left on stack: 8 }
+  { left on stack: @L5 }
+  { left on stack: 1 }
+  { left on stack: @L5 }
+  { left on stack: 3 }
+
+procedure PASCALCO.14(params 4 words);  { locals 0 words, lex 1 }
+L08B8:
+  if not (not ((@L1^<4w> in 4))) then goto L08C6;
+  PASCALCO.6();
+  { left on stack: G15 }
+  goto L08B8;
+L08C6:
+
+function PASCALCO.15(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := 0;
+  if not ((L3 <> nil)) then goto L08EC;
+  if not ((L3^.f1 = 5)) then goto L08EC;
+  L1 := (L3^.f4 and (L3^.f3 = G59));
+L08EC:
+
+function PASCALCO.16(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := 0;
+  if not (PASCALCO.15(L3, 0, 0)) then goto L0906;
+  L1 := L3^.f7;
+L0906:
+
+function PASCALCO.17(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := (((L3+3) div 4)+1);
+
+procedure PASCALCO.18(params 6 words);  { locals 5 words, lex 1 }
+  L7 := nil;
+  L1^ := 0;
+  if not (not ((@G126^<4w> in 4))) then goto L094A;
+  PASCALCO.2(50);
+  PASCALCO.14(G15, @L3^<4w>, 4, adjust((@G126^<4w> + 4),4));
+L094A:
+  if not ((@G126^<4w> in 4)) then goto L0ACD;
+  if not ((G15 = 37)) then goto L0992;
+  if not ((G22 = 1)) then goto L0964;
+  L7 := G59;
+  { left on stack: G15 }
+  goto L0989;
+L0964:
+  CSP1(@L7, 9);
+  move(L7, G54, 9 words);
+  (L7+8)^ := G22;
+  (L7+2)^ := nil;
+  CSP1(@L10, 130);
+  move(L10, G23, 130 words);
+  G23 := L10;
+L0989:
+  move(L1, @G23, 1 words);
+  PASCALCO.6();
+  goto L0ABA;
+L0992:
+  L9 := 0;
+  if not ((G16 and (96 in 1))) then goto L09AE;
+  if not ((G16 = 5)) then goto L09A9;
+  L9 := 1;
+  { left on stack: (G15 = 40) }
+  goto L09AC;
+L09A9:
+  L9 := 2;
+L09AC:
+  PASCALCO.6();
+L09AE:
+  if not ((G15 = 0)) then goto L0A38;
+  PASCALCO.8(adjust(1,1), @L8);
+  L11 := L8;
+  L7 := L11^.f6;
+  move(L1, (L11+9), 1 words);
+  if not ((L9 <> 0)) then goto L0A34;
+  if not ((L7 = G12)) then goto L09DE;
+  if not ((L9 = 2)) then goto L09DC;
+  L1^ := -(L1^);
+  { left on stack: 2 }
+L09DC:
+  goto L0A34;
+L09DE:
+  if not ((L7 = G61)) then goto L0A02;
+  if not ((L9 = 2)) then goto L0A00;
+  CSP1(@L10, 3);
+  L10^ := 0;
+  (L10+1)^ := -((L1^+1)^<2w>)  {2 words};
+  L1^ := L10;
+L0A00:
+  goto L0A34;
+L0A02:
+  if not (PASCALCO.19(L7, G60, 0, 0)) then goto L0A31;
+  if not ((L9 = 2)) then goto L0A2F;
+  CSP1(@L10, 12);
+  L10^ := 4;
+  (L10+3)[(1-1)]^ := -((L1^+3)[(1-1)]^);
+  L1^ := L10;
+L0A2F:
+  goto L0A34;
+L0A31:
+  PASCALCO.2(105);
+L0A34:
+  PASCALCO.6();
+  goto L0ABA;
+L0A38:
+  if not ((G15 = 35)) then goto L0A53;
+  if not ((L9 = 2)) then goto L0A47;
+  G23 := -(G23);
+L0A47:
+  L7 := G12;
+  move(L1, @G23, 1 words);
+  PASCALCO.6();
+  goto L0ABA;
+L0A53:
+  if not ((G15 = 36)) then goto L0A77;
+  if not ((L9 = 2)) then goto L0A6A;
+  (G23+1)^ := -((G23+1)^<2w>)  {2 words};
+L0A6A:
+  L7 := G61;
+  move(L1, @G23, 1 words);
+  PASCALCO.6();
+  goto L0ABA;
+L0A77:
+  if not ((G15 = 48)) then goto L0AB1;
+  if not ((L9 = 2)) then goto L0A96;
+  (G23+3)[(1-1)]^ := -((G23+3)[(1-1)]^);
+L0A96:
+  CSP1(@L7, 2);
+  L7^ := PASCALCO.17(G22, 0, 0);
+  (L7+1)^ := 3;
+  move(L1, @G23, 1 words);
+  PASCALCO.6();
+  goto L0ABA;
+L0AB1:
+  PASCALCO.2(106);
+  PASCALCO.14(?, ?, ?, @L3^<4w>);
+L0ABA:
+  if not (not ((@L3^<4w> in 4))) then goto L0ACD;
+  PASCALCO.2(6);
+  PASCALCO.14(?, ?, G15, @L3^<4w>);
+L0ACD:
+  L2^ := L7;
+
+function PASCALCO.19(params 4 words) : <1 word result>;  { locals 6 words, lex 1 }
+  if not ((L4 = L3)) then goto L0AEE;
+  L1 := 1;
+  goto L0C4F;
+L0AEE:
+  if not (((L4 = nil) or (L3 = nil))) then goto L0AFC;
+  L1 := 1;
+  goto L0C4F;
+L0AFC:
+  if not ((L4^.f1 = L3^.f1)) then goto L0C2A;
+  { left on stack: L4^.f1 }
+  goto L0C11;
+  L1 := 0;
+  goto L0C28;
+  L1 := PASCALCO.19(L4^.f2, L3^.f2, 0, 0);
+  goto L0C28;
+  L7 := 0;
+  L9 := G76;
+  L8 := G76;
+L0B23:
+  if not ((L9 <> nil)) then goto L0B41;
+  L10 := L9;
+  if not (((L10^.f1 = L4^.f2) and (L10^ = L3^.f2))) then goto L0B3B;
+  L7 := 1;
+L0B3B:
+  L9 := L10^.f2;
+  goto L0B23;
+L0B41:
+  if not (not (L7)) then goto L0B6A;
+  CSP1(@L9, 3);
+  L10 := L9;
+  (L10+1)^ := L4^.f2;
+  L10^ := L3^.f2;
+  (L10+2)^ := G76;
+  G76 := L9;
+  L7 := PASCALCO.19(L4^.f2, L3^.f2, 0, 0);
+L0B6A:
+  L1 := L7;
+  G76 := L8;
+  goto L0C28;
+  L1 := 1;
+  goto L0C28;
+  L1 := PASCALCO.19(L4^.f2, L3^.f2, 0, 0);
+  goto L0C28;
+  L7 := (PASCALCO.19(L4^.f3, L3^.f3, 0, 0) and (L4^.f4 = L3^.f4));
+  if not ((L7 and L4^.f4)) then goto L0BAE;
+  L7 := (((L4^.f6 = L3^.f6) and (L4^.f5 = L3^.f5)) and (L4^.f7 = L3^.f7));
+L0BAE:
+  if not ((L7 and not (PASCALCO.16(L4, 0, 0)))) then goto L0BBF;
+  L7 := (L4^ = L3^);
+L0BBF:
+  L1 := L7;
+  goto L0C28;
+  L6 := L4^.f2;
+  L5 := L3^.f2;
+  L7 := 1;
+L0BCF:
+  if not ((((L6 <> nil) and (L5 <> nil)) and L7)) then goto L0BEE;
+  L7 := PASCALCO.19(L6^.f6, L5^.f6, 0, 0);
+  L6 := L6^.f7;
+  L5 := L5^.f7;
+  goto L0BCF;
+L0BEE:
+  L1 := ((((L7 and (L6 = nil)) and (L5 = nil)) and (L4^.f3 = nil)) and (L3^.f3 = nil));
+  goto L0C28;
+  L1 := PASCALCO.19(L4^.f2, L3^.f2, 0, 0);
+  goto L0C28;
+L0C11:
+L0C28:
+  goto L0C4F;
+L0C2A:
+  if not ((L4^.f1 = 1)) then goto L0C3B;
+  L1 := PASCALCO.19(L4^.f2, L3, 0, 0);
+  goto L0C4F;
+L0C3B:
+  if not ((L3^.f1 = 1)) then goto L0C4C;
+  L1 := PASCALCO.19(L4, L3^.f2, 0, 0);
+  goto L0C4F;
+L0C4C:
+  L1 := 0;
+L0C4F:
+
+procedure PASCALCO.20(params 1 words);  { locals 0 words, lex 1 }
+  G2^[G9] := L1;
+  G9 := (G9+1);
+
+procedure PASCALCO.21(params 1 words);  { locals 1 words, lex 1 }
+  if not (G9) then goto L0CD2;
+  PASCALCO.20(0);
+L0CD2:
+  CSP2(G2, G9, 2);
+  if not (G30) then goto L0CF1;
+  L2 := G2^[G9];
+  G2^[G9] := G2^[(G9+1)];
+  G2^[(G9+1)] := L2;
+  { left on stack: @L1 }
+  { left on stack: 0 }
+L0CF1:
+  G9 := (G9+2);
+
+procedure PASCALCO.22(params 1 words);  { locals 3 words, lex 1 }
+  L4 := 0;
+  L3 := G9;
+L0D08:
+  L2 := (512-G968);
+  if not ((L2 > L3)) then goto L0D19;
+  L2 := L3;
+L0D19:
+  CSP2(@G969, G968, L2);
+  L4 := (L4+L2);
+  G968 := (G968+L2);
+  if not (((G968 = 512) or L1)) then goto L0D69;
+  if not ((I2,10 = 0)) then goto L0D5D;
+  if not ((FBLOCKIO(0, 1, G967, 0, 0, 0) <> 1)) then goto L0D5D;
+  PASCALCO.2(402);
+  { left on stack: G2 }
+  { left on stack: L4 }
+  { left on stack: I2,8 }
+  { left on stack: @G969 }
+L0D5D:
+  G967 := (G967+1);
+  G968 := 0;
+L0D69:
+  L3 := (L3-L2);
+  if not ((L3 = 0)) then goto L0D08;
+
+procedure PASCALCO.23(params 0 words);  { locals 2 words, lex 1 }
+  G9 := 0;
+  L1 := (G96-1);
+  L2 := 1;
+L0D8E:
+  if not ((L1 >= L2)) then goto L0DB8;
+  if not ((@G185[L1]^ = 0)) then goto L0DA3;
+  PASCALCO.21(0);
+  goto L0DB1;
+L0DA3:
+  PASCALCO.21(((G86+G9)-@G185[L1]^));
+L0DB1:
+  L1 := (L1-1);
+  goto L0D8E;
+L0DB8:
+  PASCALCO.20(G13);
+  PASCALCO.20((G96-1));
+  @G335[@G479~[G13]{4per word,4 bits}*9w]^ := (G86+G9);
+  PASCALCO.22(1);
+  G86 := 0;
+  G48 := 0;
+
+procedure PASCALCO.24(params 4 words);  { locals 2 words, lex 1 }
+  if not (((G15 = 50) and not (G32))) then goto L0E7B;
+  if not (G34) then goto L0E76;
+  UNITPART.1(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0200] + 4),4));
+  if not ((G15 = 18)) then goto L0E74;
+  CSP4(1, 24);
+L0E74:
+  goto L0E7B;
+L0E76:
+  PASCALCO.2(408);
+L0E7B:
+  G83 := 1;
+L0E7E:
+  if not (not (G83)) then goto L0FEE;
+  G38 := 0;
+  G78 := 0;
+  G9 := 0;
+  G93 := 0;
+  if not ((not (G28) or (G77 > 1))) then goto L0EA2;
+  PASCALCO.27(@G131[G8*4w]^);
+L0EA2:
+  if not (G32) then goto L0EC0;
+  if not ((G81^.f10^.f7 = G65)) then goto L0EC0;
+  if not (([$0008,$0200] in 2)) then goto L0EC0;
+  CSP4(1, 24);
+  { left on stack: G15 }
+L0EC0:
+  G62 := nil;
+  if not ((G15 = 19)) then goto L0ECC;
+  PASCALCO.6();
+  goto L0ECF;
+L0ECC:
+  PASCALCO.2(17);
+L0ECF:
+  BODYPART.1(?, @L1^<4w>, 4, adjust(([$0020,$0000] + 2),4), G81^.f7);
+  L5 := ((G15 = G81^.f6) or (G32 and (G15 = 9)));
+  if not (not (L5)) then goto L0F21;
+  if not ((G81^.f6 = 3)) then goto L0F02;
+  PASCALCO.2(14);
+  goto L0F05;
+L0F02:
+  PASCALCO.2(6);
+L0F05:
+  PASCALCO.14(?, ?, @L1^<4w>, adjust((4 + [G81^.f6]),4));
+  L5 := ((G15 = G81^.f6) or (G32 and (G15 = 9)));
+L0F21:
+  if not ((G15 or (@G114^<4w> in 4))) then goto L0ECF;
+  if not (not (L5)) then goto L0F48;
+  if not ((G81^.f6 = 3)) then goto L0F3C;
+  PASCALCO.2(14);
+  { left on stack: L5 }
+  goto L0F3F;
+L0F3C:
+  PASCALCO.2(6);
+L0F3F:
+  DECLARAT.1(?, ?, ?, @L1^<4w>);
+  goto L0FEC;
+L0F48:
+  if not ((G15 = 3)) then goto L0F4F;
+  PASCALCO.6();
+L0F4F:
+  if not ((not (([$0003,$8008,$0000] in 3)) and (G81^.f6 = 3))) then goto L0F82;
+  if not (not ((G32 and (G15 = 9)))) then goto L0F7E;
+  PASCALCO.2(6);
+  PASCALCO.14(?, ?, G15, @L1^<4w>);
+  DECLARAT.1(?, ?, ?, @L1^<4w>);
+  goto L0F80;
+L0F7E:
+  goto L0F82;
+L0F80:
+  goto L0FEC;
+L0F82:
+  L6 := G81;
+  if not ((L6^.f7 <> nil)) then goto L0F92;
+  (L6^.f7+17)^ := 0;
+L0F92:
+  if not (L6^.f9) then goto L0FC2;
+  if not (G48) then goto L0F9D;
+  PASCALCO.23();
+L0F9D:
+  if not ((G44 and (G77 = 1))) then goto L0FBA;
+  (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 1;
+  WRITELIN.1();
+L0FBA:
+  G96 := L6^.f2;
+  G13 := L6^.f4;
+L0FC2:
+  G77 := L6^.f1;
+  G8 := L6^;
+  G10 := L6^.f5;
+  G97 := L6^.f3;
+  { stack tracking stopped: 'CSP 33' }
+  { CSP 33 }
+  { LDO 81 }
+  { IND 10 }
+  { SRO 81 }
+  { SLDO 15 }
+  { LDC 3w [$0003 $8000 $0000] }
+  { SLDC 3 }
+  { INN }
+  { SRO 83 }
+L0FEC:
+  goto L102B;
+L0FEE:
+  DECLARAT.1(?, ?, ?, @L1^<4w>);
+  if not ((G77 = 0)) then goto L102B;
+  if not ((G15 = 50)) then goto L102B;
+  UNITPART.1(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0200] + 4),4));
+  if not (([$0003,$8000,$0000] in 3)) then goto L102B;
+  DECLARAT.1(?, ?, G15, @L1^<4w>);
+L102B:
+  if not ((G81 = nil)) then goto L0E7E;
+  PASCALCO.23();
+
+procedure PASCALCO.25(params 0 words);  { locals 0 words, lex 1 }
+  CSP9(@G22, @G94);
+  PASCALCO.24(@G114^<4w>, 4, (@G102^<4w> + 4), adjust(([$0020,$0000] - 2),4));
+  FINISHUP.1();
+
+procedure PASCALCO.26(params 1 words);  { locals 1 words, lex 2 }
+  G14 := (G14+1);
+  if not ((G1^[G14] = 36)) then goto L0491;
+  if not (not (COMPOPTI.1(L1, 0, 0))) then goto L0491;
+  CSP4(1, 26);
+L0491:
+  G14 := (G14-1);
+L0496:
+  G14 := (G14+1);
+L049B:
+  if not ((G1^[G14] = 13)) then goto L04A6;
+  PASCALCO.12();
+  goto L049B;
+L04A6:
+  if not ((G1^[G14] = L1)) then goto L0496;
+  if not (((G1^[(G14+1)] = 41) or (L1 = 125))) then goto L0496;
+  G14 := (G14+1);
+
+procedure PASCALCO.27(params 1 words);  { locals 1 words, lex 2 }
+  if not ((L1 <> nil)) then goto L0E3C;
+  L2 := L1;
+  if not ((96 in 1)) then goto L0E34;
+  if not ((L2^.f9 = 1)) then goto L0E34;
+  if not ((L2^.f13 = 0)) then goto L0E34;
+  if not (L2^.f15) then goto L0E34;
+  I3,10 := 117;
+  FWRITELN(I3,3);
+  FWRITEBYTES(I3,3, L2, 8, 8);
+  FWRITESTRING(I3,3, ' undefined', 0);
+  { left on stack: L2^.f8 }
+L0E34:
+  PASCALCO.27(L2^.f4);
+  PASCALCO.27(L2^.f5);
+L0E3C:
+
+procedure PASCALCO.28(params 0 words);  { locals 0 words, lex 1 }
+  goto L10B8;
+L1094:
+  if not (G33) then goto L109C;
+  PASCALCO.25();
+  goto L109E;
+L109C:
+  PASCALCO.29();
+L109E:
+  { stack tracking stopped: 'CSP 22' }
+  { CSP 22 }
+  { SLDC 14 }
+  { CSP 22 }
+  { SLDC 13 }
+  { CSP 22 }
+  { SLDC 12 }
+  { CSP 22 }
+  { SLDC 11 }
+  { CSP 22 }
+  { SLDC 19 }
+  { CSP 22 }
+  { SLDC 9 }
+  { CSP 22 }
+  { SLDC 8 }
+  { CSP 22 }
+  { UJP $10D2 }
+  goto L10D2;
+L10B8:
+  { stack tracking stopped: 'CSP 21' }
+  { CSP 21 }
+  { SLDC 9 }
+  { CSP 21 }
+  { SLDC 19 }
+  { CSP 21 }
+  { SLDC 11 }
+  { CSP 21 }
+  { SLDC 12 }
+  { CSP 21 }
+  { SLDC 13 }
+  { CSP 21 }
+  { SLDC 14 }
+  { CSP 21 }
+  { SLDC 15 }
+  { CSP 21 }
+  { UJP $1094 (jtab-10) }
+  goto L1094;
+L10D2:
+
+procedure PASCALCO.29(params 0 words);  { locals 0 words, lex 2 }
+  goto L107F;
+L1078:
+  PASCALCO.25();
+  { stack tracking stopped: 'CSP 22' }
+  { CSP 22 }
+  { UJP $1084 }
+  goto L1084;
+L107F:
+  { stack tracking stopped: 'CSP 21' }
+  { CSP 21 }
+  { UJP $1078 (jtab-10) }
+  goto L1078;
+L1084:
+
+======================================================================
+SEGMENT 7 COMPINIT
+======================================================================
+
+procedure COMPINIT.1(params 0 words);  { locals 259 words, lex 1 }
+  COMPINIT.9();
+  COMPINIT.10();
+  G77 := 0;
+  G8 := 0;
+  if not (G49) then goto L0AAA;
+  G9 := 1;
+  L259 := 7;
+L0A5B:
+  if not ((G9 <= L259)) then goto L0A6F;
+  FWRITELN(I2,3);
+  G9 := (G9+1);
+  goto L0A5B;
+L0A6F:
+  FWRITESTRING(I2,3, 'Apple Pascal Compiler [1.1]', 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '<   0>', 0);
+L0AAA:
+  L259 := @G131[0*4w];
+  L259^ := nil;
+  (L259+2)^ := nil;
+  (L259+3)^ := nil;
+  (L259+1)^ := 0;
+  G89 := CSP40();
+  PASCALCO.3();
+  PASCALCO.6();
+  COMPINIT.2();
+  COMPINIT.3();
+  COMPINIT.4();
+  COMPINIT.7();
+  COMPINIT.8();
+  if not (G28) then goto L0B0A;
+  G65 := nil;
+  G13 := 0;
+  G85 := 1;
+  G82 := 1;
+  4^ := adjust(([$0004,$0000,$0000,$0000] + 4),4)  {4 words};
+  { left on stack: @G114 }
+  { left on stack: @G114^<4w> }
+  goto L0BB4;
+L0B0A:
+  G8 := 1;
+  G77 := 1;
+  L259 := @G131[1*4w];
+  L259^ := nil;
+  (L259+2)^ := nil;
+  (L259+3)^ := nil;
+  (L259+1)^ := 0;
+  G10 := (G10+2);
+  G82 := 3;
+  (@G335[G21*9w]+6)^ := G13;
+  CSP1(@G65, 18);
+  L259 := G65;
+  (L259+7)^ := nil;
+  (L259+14)^ := G10;
+  move(L259, @'PROGRAM ', 4 words);
+  (L259+6)^ := nil;
+  (L259+8)^ := 5;
+  (L259+9)^ := 1;
+  (L259+10)^ := 0;
+  (L259+11)^ := 1;
+  (L259+12)^ := G13;
+  (L259+13)^ := 0;
+  (L259+15)^ := 0;
+  (L259+16)^ := 0;
+  (L259+17)^ := 1;
+L0BB4:
+  @G479~[G13]{4per word,4 bits} := G21;
+  if not ((G15 = 33)) then goto L0C22;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L0BEB;
+  move((@G335[G21*9w]+2), @G17, 4 words);
+  if not ((G65 <> nil)) then goto L0BE9;
+  move(G65, @G17, 4 words);
+  PASCALCO.5(G65);
+L0BE9:
+  goto L0BEF;
+L0BEB:
+  PASCALCO.2(2);
+L0BEF:
+  PASCALCO.6();
+  if not ((G15 = 4)) then goto L0C14;
+L0BF7:
+  PASCALCO.6();
+  if not ((1 in (@G114^<4w> + 4))) then goto L0BF7;
+  if not ((G15 = 5)) then goto L0C10;
+  PASCALCO.6();
+  { left on stack: G15 }
+  { left on stack: 40 }
+  goto L0C14;
+L0C10:
+  PASCALCO.2(4);
+L0C14:
+  if not ((G15 = 3)) then goto L0C1E;
+  PASCALCO.6();
+  goto L0C22;
+L0C1E:
+  PASCALCO.2(14);
+L0C22:
+  { stack tracking stopped: 'CSP 32' }
+  { CSP 32 }
+  { LAO 81 }
+  { SLDC 11 }
+  { CSP 1 }
+  { LDO 81 }
+  { STL 259 }
+  { LDL 259 }
+  { INC 10 }
+  { LDCN }
+  { STO }
+  { LDL 259 }
+  { INC 6 }
+  { SLDC 18 }
+  { STO }
+  { LDL 259 }
+  { INC 7 }
+  { LDO 65 }
+  { STO }
+  { LDL 259 }
+  { INC 5 }
+  { SLDO 10 }
+  { STO }
+  { LDL 259 }
+  { INC 1 }
+  { LDO 77 }
+  { STO }
+  { LDL 259 }
+  { SLDO 8 }
+  { STO }
+  { LDL 259 }
+  { INC 3 }
+  { LDO 97 }
+  { STO }
+  { LDL 259 }
+  { INC 9 }
+  { SLDC 0 }
+  { STO }
+  { LDL 259 }
+  { INC 8 }
+  { LDO 80 }
+  { STO }
+  { RNP 0 }
+
+procedure COMPINIT.2(params 0 words);  { locals 1 words, lex 2 }
+  CSP1(@G12, 3);
+  L1 := G12;
+  L1^ := 1;
+  (L1+1)^ := 0;
+  (L1+2)^ := 0;
+  CSP1(@G61, 3);
+  L1 := G61;
+  L1^ := 2;
+  (L1+1)^ := 0;
+  (L1+2)^ := 0;
+  CSP1(@G60, 2);
+  L1 := G60;
+  L1^ := PASCALCO.17(((((16-1)*100) div 332)+1), 0, 0);
+  (L1+1)^ := 3;
+  CSP1(@G59, 3);
+  L1 := G59;
+  L1^ := 1;
+  (L1+1)^ := 0;
+  (L1+2)^ := 0;
+  CSP1(@G58, 4);
+  L1 := G58;
+  L1^ := 1;
+  (L1+1)^ := 0;
+  (L1+2)^ := 1;
+  CSP1(@G56, 3);
+  L1 := G56;
+  L1^ := 1;
+  (L1+1)^ := 2;
+  (L1+2)^ := nil;
+  CSP1(@G57, 3);
+  L1 := G57;
+  L1^ := (300+1);
+  (L1+1)^ := 7;
+  (L1+2)^ := G59;
+  CSP1(@G55, 3);
+  L1 := G55;
+  L1^ := (300+1);
+  (L1+1)^ := 7;
+  (L1+2)^ := G59;
+  CSP1(@G54, 9);
+  L1 := G54;
+  (L1+1)^ := 5;
+  L1^ := ((80+2) div 2);
+  (L1+4)^ := 1;
+  (L1+7)^ := 1;
+  (L1+2)^ := G12;
+  (L1+5)^ := 8;
+  (L1+6)^ := 2;
+  (L1+3)^ := G59;
+  (L1+8)^ := 80;
+
+procedure COMPINIT.3(params 0 words);  { locals 5 words, lex 2 }
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'INTEGER ', 4 words);
+  (L4+6)^ := G12;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'REAL    ', 4 words);
+  (L4+6)^ := G61;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'CHAR    ', 4 words);
+  (L4+6)^ := G59;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'BOOLEAN ', 4 words);
+  (L4+6)^ := G58;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'STRING  ', 4 words);
+  (L4+6)^ := G54;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'TEXT    ', 4 words);
+  (L4+6)^ := G57;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@L2, 9);
+  L4 := L2;
+  move(L4, @'INTERACT', 4 words);
+  (L4+6)^ := G55;
+  (L4+8)^ := 0;
+  PASCALCO.5(L2);
+  CSP1(@G67, 11);
+  L4 := G67;
+  move(L4, @'INPUT   ', 4 words);
+  (L4+6)^ := G57;
+  (L4+8)^ := 2;
+  (L4+9)^ := 0;
+  (L4+10)^ := 2;
+  PASCALCO.5(G67);
+  CSP1(@G66, 11);
+  L4 := G66;
+  move(L4, @'OUTPUT  ', 4 words);
+  (L4+6)^ := G57;
+  (L4+8)^ := 2;
+  (L4+9)^ := 0;
+  (L4+10)^ := 3;
+  PASCALCO.5(G66);
+  CSP1(@L2, 11);
+  L4 := L2;
+  move(L4, @'KEYBOARD', 4 words);
+  (L4+6)^ := G57;
+  (L4+8)^ := 2;
+  (L4+9)^ := 0;
+  (L4+10)^ := 4;
+  PASCALCO.5(L2);
+  L1 := nil;
+  L3 := 0;
+  L4 := 1;
+L02A4:
+  if not ((L3 <= L4)) then goto L02F7;
+  CSP1(@L2, 10);
+  L5 := L2;
+  (L5+6)^ := G58;
+  if not ((L3 = 0)) then goto L02CC;
+  move(L5, @'FALSE   ', 4 words);
+  goto L02DA;
+L02CC:
+  move(L5, @'TRUE    ', 4 words);
+L02DA:
+  (L5+7)^ := L1;
+  (L5+9)^ := L3;
+  (L5+8)^ := 1;
+  PASCALCO.5(L2);
+  L1 := L2;
+  L3 := (L3+1);
+  goto L02A4;
+L02F7:
+  (G58+3)^ := L2;
+  CSP1(@L2, 10);
+  L4 := L2;
+  move(L4, @'NIL     ', 4 words);
+  (L4+6)^ := G56;
+  (L4+7)^ := nil;
+  (L4+9)^ := 0;
+  (L4+8)^ := 1;
+  PASCALCO.5(L2);
+  CSP1(@L2, 10);
+  L4 := L2;
+  move(L4, @'MAXINT  ', 4 words);
+  (L4+6)^ := G12;
+  (L4+8)^ := 1;
+  (L4+9)^ := 32767;
+  PASCALCO.5(L2);
+
+procedure COMPINIT.4(params 0 words);  { locals 5 words, lex 2 }
+  move(@L1, @'        ', 4 words);
+  CSP1(@G75, 9);
+  L5 := G75;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+8)^ := 0;
+  CSP1(@G74, 10);
+  L5 := G74;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+7)^ := nil;
+  (L5+9)^ := 0;
+  (L5+8)^ := 1;
+  CSP1(@G73, 11);
+  L5 := G73;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+7)^ := nil;
+  (L5+9)^ := 0;
+  (L5+10)^ := 0;
+  (L5+8)^ := 3;
+  CSP1(@G71, 13);
+  L5 := G71;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+7)^ := nil;
+  (L5+9)^ := 0;
+  (L5+8)^ := 4;
+  CSP1(@G70, 18);
+  L5 := G70;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+15)^ := 0;
+  (L5+7)^ := nil;
+  (L5+17)^ := 0;
+  (L5+14)^ := 0;
+  (L5+16)^ := 0;
+  (L5+10)^ := 0;
+  (L5+11)^ := 0;
+  (L5+12)^ := 0;
+  (L5+8)^ := 5;
+  (L5+9)^ := 1;
+  (L5+13)^ := 0;
+  CSP1(@G69, 18);
+  L5 := G69;
+  move(L5, @L1, 4 words);
+  (L5+6)^ := nil;
+  (L5+7)^ := nil;
+  (L5+15)^ := 0;
+  (L5+16)^ := 0;
+  (L5+17)^ := 0;
+  (L5+14)^ := 0;
+  (L5+10)^ := 0;
+  (L5+11)^ := 0;
+  (L5+12)^ := 0;
+  (L5+8)^ := 6;
+  (L5+9)^ := 1;
+  (L5+13)^ := 0;
+
+procedure COMPINIT.5(params 1 words);  { locals 41 words, lex 2 }
+  @L2^ := L1  {string};
+  if not (((I1,258+@L2^[0]) < 511)) then goto L04BC;
+  CSP2(@I1,1, I1,258, @L2^[0]);
+  { left on stack: @L2 }
+  { left on stack: 1 }
+L04BC:
+  I1,258 := (I1,258+@L2^[0]);
+
+procedure COMPINIT.6(params 1 words);  { locals 1 words, lex 2 }
+  move(L1, @'        ', 4 words);
+  L2 := CSP11(46, @I1,1, I1,257, 0);
+  CSP2(L1, 0, L2);
+  I1,257 := ((I1,257+L2)+1);
+  { left on stack: 8 }
+  { left on stack: 0 }
+  { left on stack: @I1,1 }
+  { left on stack: I1,257 }
+
+procedure COMPINIT.7(params 0 words);  { locals 8 words, lex 2 }
+  I1,258 := 0;
+  COMPINIT.5('READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.');
+  COMPINIT.5('UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.');
+  COMPINIT.5('MOVELEFT.MOVERIGH.EXIT.IDSEARCH.TREESEAR.TIME.FILLCHAR.');
+  COMPINIT.5('OPENNEW.OPENOLD.REWRITE.CLOSE.SEEK.RESET.GET.PUT.SCAN.');
+  COMPINIT.5('BLOCKREA.BLOCKWRI.TRUNC.PAGE.SIZEOF.STR.GOTOXY.UNITSTAT.');
+  I1,257 := 0;
+  L2 := 0;
+L0657:
+  if not ((I1,257 < I1,258)) then goto L06CC;
+  COMPINIT.6(@L4);
+  L2 := (L2+1);
+  if not (G42) then goto L067E;
+  if not (([$1D0D,$001E,$2484] in 3)) then goto L067E;
+  { left on stack: L2 }
+  goto L06CA;
+L067E:
+  L3 := ([$02F0,$0219,$8FE0] in 3);
+  if not (L3) then goto L0696;
+  CSP1(@L1, 11);
+  { left on stack: L2 }
+  goto L069B;
+L0696:
+  CSP1(@L1, 11);
+L069B:
+  L8 := L1;
+  move(L8, @L4, 4 words);
+  (L8+7)^ := nil;
+  (L8+6)^ := nil;
+  if not (L3) then goto L06B7;
+  (L8+8)^ := 6;
+  goto L06BC;
+L06B7:
+  (L8+8)^ := 5;
+L06BC:
+  (L8+9)^ := 2;
+  (L8+10)^ := L2;
+  PASCALCO.5(L1);
+L06CA:
+  goto L0657;
+L06CC:
+
+procedure COMPINIT.8(params 0 words);  { locals 11 words, lex 2 }
+  I1,258 := 0;
+  COMPINIT.5('ODD.CHR.XXX.ROUND.MARK.RELEASE.');
+  COMPINIT.5('IORESULT.UNITBUSY.PWROFTEN.UNITWAIT.UNITCLEA.HALT.MEMAVAIL.');
+  I1,257 := 0;
+  L5 := 0;
+L074B:
+  if not ((I1,257 < I1,258)) then goto L0884;
+  COMPINIT.6(@L7);
+  L5 := (L5+1);
+  L6 := (7264 in 1);
+  { left on stack: L5 }
+  { left on stack: L5 }
+  goto L0808;
+  L3 := G58;
+  CSP1(@L1, 11);
+  L11 := L1;
+  (L11+6)^ := G12;
+  (L11+8)^ := 3;
+  goto L082A;
+  L3 := G59;
+  goto L082A;
+  goto L0882;
+  goto L082A;
+  L3 := G12;
+  CSP1(@L1, 11);
+  L11 := L1;
+  (L11+6)^ := G61;
+  (L11+8)^ := 3;
+  goto L082A;
+  L3 := nil;
+  CSP1(@L1, 11);
+  CSP1(@L4, 3);
+  L11 := L4;
+  L11^ := 1;
+  (L11+1)^ := 2;
+  (L11+2)^ := nil;
+  L11 := L1;
+  (L11+6)^ := L4;
+  (L11+8)^ := 2;
+  goto L082A;
+  L3 := G12;
+  L1 := nil;
+  goto L082A;
+  L3 := G58;
+  CSP1(@L1, 11);
+  L11 := L1;
+  (L11+6)^ := G12;
+  (L11+8)^ := 3;
+  goto L082A;
+  L3 := G61;
+  goto L082A;
+  L3 := nil;
+  goto L082A;
+  L3 := nil;
+  L1 := nil;
+  goto L082A;
+  L3 := G12;
+  goto L082A;
+L0808:
+L082A:
+  if not (L6) then goto L0834;
+  CSP1(@L2, 11);
+  goto L0839;
+L0834:
+  CSP1(@L2, 11);
+L0839:
+  L11 := L2;
+  move(L11, @L7, 4 words);
+  (L11+9)^ := 0;
+  if not ((L5 < 5)) then goto L0854;
+  (L11+10)^ := (L5+20);
+  goto L085B;
+L0854:
+  (L11+10)^ := (L5+27);
+L085B:
+  if not (L6) then goto L0865;
+  (L11+8)^ := 5;
+  goto L086A;
+L0865:
+  (L11+8)^ := 6;
+L086A:
+  if not ((L1 <> nil)) then goto L0874;
+  (L1+7)^ := nil;
+L0874:
+  (L11+6)^ := L3;
+  (L11+7)^ := L1;
+  PASCALCO.5(L2);
+L0882:
+  goto L074B;
+L0884:
+
+procedure COMPINIT.9(params 0 words);  { locals 2 words, lex 2 }
+  if not (((CSP40() < 0) or (CSP40() > 9950))) then goto L08AC;
+  G34 := 0;
+  goto L08AF;
+L08AC:
+  G34 := 1;
+L08AF:
+  G33 := 0;
+  G64 := nil;
+  G68 := nil;
+  G76 := nil;
+  G95 := 0;
+  G93 := 1;
+  G43 := 0;
+  G90 := 2;
+  G92 := 0;
+  G91 := 0;
+  G13 := 0;
+  L1 := 15;
+L08D3:
+  if not ((G13 <= L1)) then goto L090E;
+  L2 := @G335[G13*9w];
+  (L2+1)^ := 0;
+  L2^ := 0;
+  move((L2+2), @'        ', 4 words);
+  (L2+8)^ := 0;
+  (L2+7)^ := 0;
+  (L2+6)^ := 0;
+  G13 := (G13+1);
+  goto L08D3;
+L090E:
+  G63 := nil;
+  @G488^ := 42  {string};
+  G10 := 1;
+  G47 := 1;
+  G38 := 1;
+  G21 := 0;
+  G86 := 0;
+  G509 := 1;
+  G96 := 2;
+  G97 := 1;
+  CSP1(@G87, 130);
+  CSP1(@G1, 512);
+  G2 := nil;
+  G44 := 0;
+  G41 := 0;
+  G40 := 0;
+  G39 := 1;
+  G13 := 1;
+  G85 := 7;
+  G967 := 1;
+  G968 := 0;
+  G49 := not (I3,14);
+  G45 := 0;
+  G50 := 0;
+  G46 := 0;
+  G32 := 0;
+  G35 := 0;
+  G52 := 0;
+  G51 := 1;
+  G28 := 0;
+  G42 := 0;
+  G48 := 0;
+  G53 := 1;
+  G37 := 0;
+  G36 := 0;
+  G487 := nil;
+  G29 := 1;
+  G26 := 1;
+  G79 := 0;
+  G30 := 0;
+  @G183^ := adjust(0,2)  {2 words};
+
+procedure COMPINIT.10(params 0 words);  { locals 0 words, lex 2 }
+  [$0001,$0138,$0000,$0001]^ := adjust(4,4)  {4 words};
+  1^ := adjust((@G126^<4w> + 4),4)  {4 words};
+  3^ := adjust((@G122^<4w> + 4),4)  {4 words};
+  [$7400,$0000,$0000]^ := adjust(3,4)  {4 words};
+  [$0002,$0003,$F808,$0000]^ := adjust(4,4)  {4 words};
+  [$0006,$8000]^ := adjust(2,4)  {4 words};
+  [$0001,$0078,$0000,$8011]^ := adjust(4,4)  {4 words};
+  [$07F8,$0000]^ := adjust(2,4)  {4 words};
+  G130 := adjust(1,1);
+  { left on stack: @G126 }
+  { left on stack: @G122 }
+  { left on stack: 16 }
+  { left on stack: @G118 }
+  { left on stack: [$7C00,$0002,$0000] }
+  { left on stack: @G98 }
+  { left on stack: @G114 }
+  { left on stack: @G110 }
+  { left on stack: @G106 }
+  { left on stack: @G102 }
+  { left on stack: 12 }
+
+======================================================================
+SEGMENT 8 DECLARAT
+======================================================================
+
+procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
+  if not (G49) then goto L1C21;
+  { stack tracking stopped: 'CSP 6' }
+  { CSP 6 }
+L1C21:
+  4^ := adjust((10 + 1),4)  {4 words};
+  4^ := adjust((1 + 1),4)  {4 words};
+  { left on stack: @L12 }
+  { left on stack: @L1^<4w> }
+  { left on stack: @L8 }
+  { left on stack: @L1^<4w> }
+L1C3D:
+  L6 := 0;
+  if not ((G15 = 49)) then goto L1C4A;
+  PASCALCO.6();
+  DECLARAT.10();
+L1C4A:
+  if not ((G2 = nil)) then goto L1C56;
+  CSP1(@G2, 650);
+L1C56:
+  if not ((G15 = 27)) then goto L1C82;
+  if not ((G32 and G31)) then goto L1C7D;
+  PASCALCO.2(186);
+  PASCALCO.14(?, @L1^<4w>, 4, adjust(([$0800,$0000] - 2),4));
+  goto L1C80;
+L1C7D:
+  PASCALCO.6();
+L1C80:
+  DECLARAT.15();
+L1C82:
+  if not ((G15 = 28)) then goto L1C8C;
+  PASCALCO.6();
+  DECLARAT.16();
+L1C8C:
+  if not ((G15 = 29)) then goto L1C96;
+  PASCALCO.6();
+  DECLARAT.17();
+L1C96:
+  if not ((G15 = 30)) then goto L1CA0;
+  PASCALCO.6();
+  DECLARAT.18();
+L1CA0:
+  if not ((G77 = 1)) then goto L1CA9;
+  G82 := G8;
+L1CA9:
+  if not (([$0003,$8000,$0000] in 3)) then goto L1CF9;
+  if not (G32) then goto L1CC5;
+  if not ((G31 and not (G36))) then goto L1CC5;
+  G27 := 1;
+  { left on stack: G15 }
+L1CC5:
+  L5 := G15;
+  PASCALCO.6();
+  if not ((L5 = 33)) then goto L1CE6;
+  if not (G32) then goto L1CE0;
+  PASCALCO.2(185);
+  DECLARAT.19(31, 0);
+  goto L1CE4;
+L1CE0:
+  DECLARAT.19(L5, 1);
+L1CE4:
+  goto L1CEA;
+L1CE6:
+  DECLARAT.19(L5, 0);
+L1CEA:
+  { left on stack: G15 }
+  if not (not (([$0003,$8000,$0000] in 3))) then goto L1CC5;
+L1CF9:
+  if not ((G15 <> 19)) then goto L1D43;
+  if not ((not ((G15 and ([$0010,$0000,$0000,$0200] in 4))) and (G15 <> 50))) then goto L1D43;
+  if not ((G15 or not ((@G114^<4w> in 4)))) then goto L1D43;
+  PASCALCO.2(18);
+  PASCALCO.14(not ((G37 or L6)), @L1^<4w>, 4, adjust(([$000C,$0000,$0000,$0000] - 4),4));
+  { left on stack: (G36 or G32) }
+L1D43:
+  if not ((4 in ([$0014,$0000,$0000,$0200] + 4))) then goto L1C3D;
+  G83 := 0;
+  { left on stack: G15 }
+  { left on stack: @G102^<4w> }
+
+procedure DECLARAT.2(params 4 words);  { locals 0 words, lex 2 }
+  if not (not ((@L1^<4w> in 4))) then goto L0015;
+  PASCALCO.2(6);
+  PASCALCO.14(?, ?, G15, @L1^<4w>);
+L0015:
+
+procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
+  L16 := 0;
+  if not (not ((@G118^<4w> in 4))) then goto L0979;
+  PASCALCO.2(10);
+  PASCALCO.14(G15, @L3^<4w>, 4, adjust((@G118^<4w> + 4),4));
+L0979:
+  if not ((@G118^<4w> in 4)) then goto L0CA9;
+  if not ((@G122^<4w> in 4)) then goto L0995;
+  DECLARAT.4(?, G15, G15, @L3^<4w>, L2, L1);
+  goto L0CA1;
+L0995:
+  if not ((G15 = 17)) then goto L099E;
+  DECLARAT.9();
+  goto L0CA1;
+L099E:
+  if not ((G15 = 43)) then goto L09C7;
+  PASCALCO.6();
+  L16 := 1;
+  if not (not ((@G98^<4w> in 4))) then goto L09C7;
+  PASCALCO.2(10);
+  PASCALCO.14(G15, @L3^<4w>, 4, adjust((@G98^<4w> + 4),4));
+L09C7:
+  if not ((G15 = 44)) then goto L0B2D;
+  PASCALCO.6();
+  if not ((G15 = 15)) then goto L09D9;
+  PASCALCO.6();
+  goto L09DD;
+L09D9:
+  PASCALCO.2(11);
+L09DD:
+  L8 := nil;
+L09E0:
+  if not (L16) then goto L09EA;
+  CSP1(@L9, 8);
+  goto L09EF;
+L09EA:
+  CSP1(@L9, 5);
+L09EF:
+  L19 := L9;
+  (L19+3)^ := L8;
+  (L19+2)^ := nil;
+  if not (L16) then goto L0A07;
+  (L19+7)^ := 0;
+L0A07:
+  (L19+4)^ := 0;
+  (L19+1)^ := 5;
+  L8 := L9;
+  DECLARAT.4(?, @L3^<4w>, 4, adjust(([$0001,$0802] + 2),4), @L7, @L13);
+  L8^ := L13;
+  if not ((L7 <> nil)) then goto L0A65;
+  if not ((L7^.f1 <= 1)) then goto L0A5E;
+  if not ((L7 = G61)) then goto L0A49;
+  PASCALCO.2(109);
+  L7 := nil;
+  goto L0A57;
+L0A49:
+  if not ((L7 = G12)) then goto L0A57;
+  PASCALCO.2(149);
+  L7 := nil;
+L0A57:
+  (L9+2)^ := L7;
+  goto L0A65;
+L0A5E:
+  PASCALCO.2(113);
+  L7 := nil;
+L0A65:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0A71;
+  PASCALCO.6();
+L0A71:
+  if not (G11) then goto L09E0;
+  if not ((G15 = 16)) then goto L0A7E;
+  PASCALCO.6();
+  goto L0A82;
+L0A7E:
+  PASCALCO.2(12);
+L0A82:
+  if not ((G15 = 11)) then goto L0A8C;
+  PASCALCO.6();
+  goto L0A90;
+L0A8C:
+  PASCALCO.2(8);
+L0A90:
+  DECLARAT.3(?, ?, ?, @L3^<4w>, @L9, @L13);
+  if not ((L9 <> nil)) then goto L0AA9;
+  if not ((L9^.f1 = 7)) then goto L0AA9;
+  PASCALCO.2(108);
+L0AA9:
+  if not (DECLARAT.5(L9, 0, 0)) then goto L0AD2;
+  if not (((L17+L17) <= 16)) then goto L0AD2;
+  L19 := L8;
+  (L19+4)^ := 1;
+  (L19+6)^ := (16 div L17);
+  (L19+5)^ := L17;
+L0AD2:
+  L19 := L8;
+  L7 := L19^.f3;
+  (L19+3)^ := L9;
+  if not ((L19^.f2 <> nil)) then goto L0B20;
+  PASCALCO.9(L19^.f2, @L15, @L14);
+  if not (L19^.f4) then goto L0B05;
+  L13 := (((L14-L15)+L19^.f6) div L19^.f6);
+  goto L0B0E;
+L0B05:
+  L13 := (L13*((L14-L15)+1));
+L0B0E:
+  if not ((L13 <= 0)) then goto L0B1C;
+  PASCALCO.2(398);
+  L13 := 1;
+L0B1C:
+  L19^ := L13;
+L0B20:
+  L9 := L8;
+  L8 := L7;
+  if not ((L8 = nil)) then goto L0AD2;
+  goto L0C9E;
+L0B2D:
+  if not ((G15 = 45)) then goto L0BB4;
+  PASCALCO.6();
+  L10 := G8;
+  if not ((G8 < 12)) then goto L0B56;
+  G8 := (G8+1);
+  L19 := @G131[G8*4w];
+  L19^ := nil;
+  (L19+1)^ := 3;
+  goto L0B5C;
+L0B56:
+  PASCALCO.2(250);
+L0B5C:
+  L12 := 0;
+  L18 := 0;
+  DECLARAT.6(@L3^<4w>, 4, (8 - 1), adjust((512 + 1),4), @L8);
+  L12 := (L12+(L18 > 0));
+  CSP1(@L9, 4);
+  L19 := L9;
+  (L19+2)^ := @G131[G8*4w]^;
+  (L19+3)^ := L8;
+  L19^ := L12;
+  (L19+1)^ := 6;
+  G8 := L10;
+  if not ((G15 = 9)) then goto L0BAE;
+  PASCALCO.6();
+  goto L0BB2;
+L0BAE:
+  PASCALCO.2(13);
+L0BB2:
+  goto L0C9E;
+L0BB4:
+  if not ((G15 = 42)) then goto L0C42;
+  PASCALCO.6();
+  if not ((G15 = 11)) then goto L0BC6;
+  PASCALCO.6();
+  goto L0BCA;
+L0BC6:
+  PASCALCO.2(8);
+L0BCA:
+  DECLARAT.4(?, ?, ?, @L3^<4w>, @L8, @L13);
+  if not ((L8 <> nil)) then goto L0BFE;
+  if not ((((L8^.f1 > 1) or (L8 = G12)) or (L8 = G61))) then goto L0BF1;
+  PASCALCO.2(115);
+  L8 := nil;
+  goto L0BFE;
+L0BF1:
+  if not ((L8 = G61)) then goto L0BFE;
+  PASCALCO.2(114);
+  L8 := nil;
+L0BFE:
+  CSP1(@L9, 3);
+  L19 := L9;
+  (L19+2)^ := L8;
+  (L19+1)^ := 4;
+  if not ((L8 <> nil)) then goto L0C3C;
+  PASCALCO.9(L8, @L15, @L14);
+  L19^ := ((L14+16) div 16);
+  if not ((L19^ > 255)) then goto L0C3A;
+  PASCALCO.2(169);
+  L19^ := 1;
+L0C3A:
+  goto L0C40;
+L0C3C:
+  L19^ := 0;
+L0C40:
+  goto L0C9E;
+L0C42:
+  if not ((G15 = 46)) then goto L0C9E;
+  if not (G32) then goto L0C59;
+  if not (not ((G31 or G45))) then goto L0C59;
+  PASCALCO.2(191);
+L0C59:
+  PASCALCO.6();
+  CSP1(@L9, 3);
+  L19 := L9;
+  (L19+1)^ := 7;
+  (L19+2)^ := nil;
+  if not ((G15 = 11)) then goto L0C84;
+  PASCALCO.6();
+  DECLARAT.3(?, ?, ?, @L3^<4w>, @L8, @L13);
+  goto L0C87;
+L0C84:
+  L8 := nil;
+L0C87:
+  (L9+2)^ := L8;
+  if not ((L8 <> nil)) then goto L0C9B;
+  L9^ := (300+L8^);
+  goto L0C9E;
+L0C9B:
+  L9^ := 40;
+L0C9E:
+  L2^ := L9;
+L0CA1:
+  DECLARAT.2(?, ?, ?, @L3^<4w>);
+  goto L0CAC;
+L0CA9:
+  L2^ := nil;
+L0CAC:
+  if not ((L2^ = nil)) then goto L0CB7;
+  L1^ := 1;
+  goto L0CBC;
+L0CB7:
+  L1^ := L2^^;
+L0CBC:
+
+procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
+  L1^ := 1;
+  4^ := adjust((34 + 1),4)  {4 words};
+  if not (not ((@G122^<4w> in 4))) then goto L0051;
+  PASCALCO.2(1);
+  PASCALCO.14(G15, @L3^<4w>, 4, adjust((@G122^<4w> + 4),4));
+  { left on stack: @L14 }
+  { left on stack: @L3^<4w> }
+L0051:
+  if not ((@G122^<4w> in 4)) then goto L0325;
+  if not ((G15 = 4)) then goto L00F8;
+  L11 := G8;
+  { left on stack: G15 }
+L0062:
+  if not ((@G131[G8*4w]^.f1 <> 0)) then goto L0074;
+  G8 := (G8-1);
+  goto L0062;
+L0074:
+  CSP1(@L8, 4);
+  L18 := L8;
+  L18^ := 1;
+  (L18+1)^ := 0;
+  (L18+2)^ := 1;
+  L9 := nil;
+  L12 := 0;
+L0092:
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L00D1;
+  CSP1(@L10, 10);
+  L18 := L10;
+  move(L18, @G17, 4 words);
+  (L18+6)^ := L8;
+  (L18+7)^ := L9;
+  (L18+9)^ := L12;
+  (L18+8)^ := 1;
+  PASCALCO.5(L10);
+  L12 := (L12+1);
+  L9 := L10;
+  PASCALCO.6();
+  goto L00D5;
+L00D1:
+  PASCALCO.2(2);
+L00D5:
+  DECLARAT.2(?, ?, ?, @L14^<4w>);
+  if not ((G15 <> 1)) then goto L0092;
+  (L8+3)^ := L9;
+  G8 := L11;
+  if not ((G15 = 5)) then goto L00F2;
+  PASCALCO.6();
+  goto L00F6;
+L00F2:
+  PASCALCO.2(4);
+L00F6:
+  goto L031A;
+L00F8:
+  if not ((G15 = 0)) then goto L0274;
+  PASCALCO.8(adjust(1,1), @L10);
+  PASCALCO.6();
+  if not ((L10^.f8 = 1)) then goto L0179;
+  CSP1(@L8, 5);
+  L18 := L8;
+  L19 := L10;
+  (L18+2)^ := L19^.f6;
+  (L18+1)^ := 1;
+  if not (PASCALCO.16(L18^.f2, 0, 0)) then goto L013F;
+  PASCALCO.2(148);
+  (L18+2)^ := nil;
+  { left on stack: 3 }
+L013F:
+  move((L18+4), (L19+9), 1 words);
+  L18^ := 1;
+  if not ((G15 = 2)) then goto L0157;
+  PASCALCO.6();
+  goto L015B;
+L0157:
+  PASCALCO.2(5);
+L015B:
+  PASCALCO.18(?, ?, ?, @L3^<4w>, @L7, @L13);
+  move((L8+3), @L13, 1 words);
+  if not ((L8^.f2 <> L7)) then goto L0177;
+  PASCALCO.2(107);
+L0177:
+  goto L0272;
+L0179:
+  L8 := L10^.f6;
+  if not (((L8 = G54) and (G15 = 15))) then goto L01F0;
+  PASCALCO.6();
+  PASCALCO.18(?, @L3^<4w>, 4, adjust(([$0001,$0000] + 2),4), @L7, @L13);
+  if not ((L7 = G12)) then goto L01DC;
+  if not (((L13 <= 0) or (L13 > 255))) then goto L01BA;
+  PASCALCO.2(203);
+  L13 := 80;
+L01BA:
+  if not ((L13 <> 80)) then goto L01DA;
+  CSP1(@L8, 9);
+  move(L8, G54, 9 words);
+  L18 := L8;
+  (L18+8)^ := L13;
+  L18^ := ((L13+2) div 2);
+L01DA:
+  goto L01E0;
+L01DC:
+  PASCALCO.2(15);
+L01E0:
+  if not ((G15 = 16)) then goto L01EA;
+  PASCALCO.6();
+  goto L01EE;
+L01EA:
+  PASCALCO.2(12);
+L01EE:
+  goto L0269;
+L01F0:
+  if not ((L8 = G12)) then goto L0251;
+  if not ((G15 = 15)) then goto L024F;
+  PASCALCO.6();
+  CSP1(@L8, 2);
+  move(L8, G60, 9 words);
+  PASCALCO.18(?, @L3^<4w>, 4, adjust(([$0001,$0000] + 2),4), @L7, @L13);
+  if not ((L7 = G12)) then goto L023D;
+  if not (((L13 <= 0) or (L13 > 36))) then goto L0233;
+  PASCALCO.2(203);
+  goto L023B;
+L0233:
+  L8^ := PASCALCO.17(L13, 0, 0);
+L023B:
+  goto L0241;
+L023D:
+  PASCALCO.2(15);
+L0241:
+  if not ((G15 = 16)) then goto L024B;
+  PASCALCO.6();
+  goto L024F;
+L024B:
+  PASCALCO.2(12);
+L024F:
+  goto L0269;
+L0251:
+  if not ((L8^.f1 = 7)) then goto L0269;
+  if not (G32) then goto L0269;
+  if not (not ((G31 or G45))) then goto L0269;
+  PASCALCO.2(191);
+L0269:
+  if not ((L8 <> nil)) then goto L0272;
+  L1^ := L8^;
+L0272:
+  goto L02DF;
+L0274:
+  CSP1(@L8, 5);
+  (L8+1)^ := 1;
+  PASCALCO.18(?, @L3^<4w>, 4, adjust((4 + 1),4), @L7, @L13);
+  if not (PASCALCO.16(L7, 0, 0)) then goto L02A0;
+  PASCALCO.2(148);
+  L7 := nil;
+L02A0:
+  L18 := L8;
+  (L18+2)^ := L7;
+  move((L18+4), @L13, 1 words);
+  L18^ := 1;
+  if not ((G15 = 2)) then goto L02BF;
+  PASCALCO.6();
+  goto L02C3;
+L02BF:
+  PASCALCO.2(5);
+L02C3:
+  PASCALCO.18(?, ?, ?, @L3^<4w>, @L7, @L13);
+  move((L8+3), @L13, 1 words);
+  if not ((L8^.f2 <> L7)) then goto L02DF;
+  PASCALCO.2(107);
+L02DF:
+  if not ((L8 <> nil)) then goto L031A;
+  L18 := L8;
+  if not ((L18^.f1 = 1)) then goto L031A;
+  if not ((L18^.f2 <> nil)) then goto L031A;
+  if not ((L18^.f2 = G61)) then goto L0305;
+  PASCALCO.2(399);
+  goto L031A;
+L0305:
+  if not ((L18^.f4 > L18^.f3)) then goto L031A;
+  PASCALCO.2(102);
+  (L18+3)^ := L18^.f4;
+L031A:
+  L2^ := L8;
+  DECLARAT.2(?, ?, ?, @L3^<4w>);
+  goto L0328;
+L0325:
+  L2^ := nil;
+L0328:
+
+function DECLARAT.5(params 3 words) : <1 word result>;  { locals 3 words, lex 3 }
+  L1 := 0;
+  if not (((L3 <> nil) and I1,16)) then goto L03C8;
+  L6 := L3;
+  { left on stack: L6^.f1 }
+  goto L03B7;
+  if not (((L3 <> G12) and (L3 <> G61))) then goto L0391;
+  PASCALCO.9(L3, @L5, @L4);
+  if not ((L5 >= 0)) then goto L0391;
+  L1 := 1;
+  I1,17 := 1;
+  L5 := 1;
+L0376:
+  if not ((L5 < L4)) then goto L0391;
+  L5 := (L5+1);
+  L5 := ((L5+L5)-1);
+  I1,17 := (I1,17+1);
+  goto L0376;
+L0391:
+  goto L03C8;
+  if not (DECLARAT.5(L6^.f2, 0, 0)) then goto L03B5;
+  PASCALCO.9(L6^.f2, @L5, @L4);
+  L4 := (L4+1);
+  if not ((L4 < 16)) then goto L03B5;
+  L1 := 1;
+  I1,17 := L4;
+L03B5:
+  goto L03C8;
+L03B7:
+L03C8:
+
+procedure DECLARAT.6(params 5 words);  { locals 21 words, lex 3 }
+  L7 := nil;
+  L15 := nil;
+  L6 := nil;
+  4^ := adjust((8 + 1),4)  {4 words};
+  if not (not (([$0020,$0001] in 2))) then goto L077F;
+  PASCALCO.2(19);
+  PASCALCO.14(G15, @L2^<4w>, 4, adjust(([$0020,$0001] + 2),4));
+  { left on stack: @L20 }
+  { left on stack: @L2^<4w> }
+L077F:
+  if not ((G15 = 0)) then goto L0877;
+  L8 := L7;
+L0787:
+  if not ((G15 = 0)) then goto L07CA;
+  if not (I1,16) then goto L0798;
+  CSP1(@L10, 13);
+  goto L079D;
+L0798:
+  CSP1(@L10, 11);
+L079D:
+  L26 := L10;
+  move(L26, @G17, 4 words);
+  (L26+6)^ := nil;
+  (L26+7)^ := L8;
+  (L26+8)^ := 4;
+  (L26+10)^ := 0;
+  L8 := L10;
+  PASCALCO.5(L10);
+  PASCALCO.6();
+  goto L07CE;
+L07CA:
+  PASCALCO.2(2);
+L07CE:
+  if not (not ((6 in 1))) then goto L07EB;
+  PASCALCO.2(6);
+  PASCALCO.14(G15, @L2^<4w>, 4, adjust(([$0020,$000E] + 2),4));
+L07EB:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L07F7;
+  PASCALCO.6();
+L07F7:
+  if not (G11) then goto L0787;
+  if not ((G15 = 2)) then goto L0804;
+  PASCALCO.6();
+  goto L0808;
+L0804:
+  PASCALCO.2(5);
+L0808:
+  DECLARAT.3(?, @L2^<4w>, 4, adjust(([$0020,$0008] + 2),4), @L15, @L16);
+  if not ((L15 <> nil)) then goto L082D;
+  if not ((L15^.f1 = 7)) then goto L082D;
+  PASCALCO.2(108);
+L082D:
+  if not ((L8 <> L7)) then goto L0848;
+  L26 := L8;
+  (L26+6)^ := L15;
+  DECLARAT.7(L8);
+  L6 := L8;
+  L8 := L26^.f7;
+  goto L082D;
+L0848:
+  L7 := L10;
+  if not ((G15 = 3)) then goto L0875;
+  PASCALCO.6();
+  if not (not (([$0020,$0201] in 2))) then goto L0875;
+  PASCALCO.2(19);
+  PASCALCO.14(G15, @L2^<4w>, 4, adjust(([$0020,$0001] + 2),4));
+L0875:
+  goto L077F;
+L0877:
+  L8 := nil;
+L087A:
+  if not ((L7 <> nil)) then goto L0895;
+  L26 := L7;
+  L10 := L26^.f7;
+  (L26+7)^ := L8;
+  L8 := L7;
+  L7 := L10;
+  goto L087A;
+L0895:
+  if not ((G15 = 21)) then goto L089E;
+  DECLARAT.8();
+  goto L08A1;
+L089E:
+  L1^ := nil;
+L08A1:
+
+procedure DECLARAT.7(params 1 words);  { locals 2 words, lex 4 }
+  L2 := 0;
+  L3 := L1;
+  if not (DECLARAT.5(L3^.f6, 0, 0)) then goto L0424;
+  if not (((I2,17+I2,18) > 16)) then goto L03FE;
+  I2,12 := (I2,12+1);
+  I2,18 := 0;
+  L2 := 1;
+L03FE:
+  (L3+9)^ := I2,12;
+  (L3+10)^ := 1;
+  (L3+11)^ := I2,17;
+  (L3+12)^ := I2,18;
+  I2,18 := (I2,18+I2,17);
+  goto L0453;
+L0424:
+  I2,12 := (I2,12+(I2,18 > 0));
+  I2,18 := 0;
+  L2 := 1;
+  (L3+10)^ := 0;
+  (L3+9)^ := I2,12;
+  if not ((L3^.f6 <> nil)) then goto L0453;
+  I2,12 := (I2,12+L3^.f6^);
+L0453:
+  if not ((L2 and (I1,6 <> nil))) then goto L048B;
+  L3 := I1,6;
+  if not (L3^.f10) then goto L048B;
+  if not ((L3^.f12 = 0)) then goto L0474;
+  (L3+10)^ := 0;
+  goto L048B;
+L0474:
+  if not (((L3^.f11 <= 8) and (L3^.f12 <= 8))) then goto L048B;
+  (L3+11)^ := 8;
+  (L3+12)^ := 8;
+L048B:
+
+procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
+  CSP1(@I1,15, 4);
+  L2 := I1,15;
+  (L2+2)^ := nil;
+  (L2+3)^ := nil;
+  (L2+1)^ := 8;
+  I1,1^ := I1,15;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L0598;
+  if not (I2,16) then goto L04CE;
+  CSP1(@I1,10, 13);
+  goto L04D4;
+L04CE:
+  CSP1(@I1,10, 11);
+L04D4:
+  L2 := I1,10;
+  (L2+6)^ := nil;
+  (L2+8)^ := 4;
+  (L2+7)^ := nil;
+  (L2+10)^ := 0;
+  L1 := 0;
+  G53 := 0;
+  PASCALCO.8(adjust(1,1), @I1,9);
+  G53 := 1;
+  if not ((I1,9 = nil)) then goto L0528;
+  L1 := 1;
+  move(I1,10, @G17, 4 words);
+  PASCALCO.5(I1,10);
+  PASCALCO.6();
+  if not ((G15 = 2)) then goto L0524;
+  PASCALCO.6();
+  { left on stack: 1 }
+  goto L0528;
+L0524:
+  PASCALCO.2(5);
+L0528:
+  if not ((G15 = 0)) then goto L0582;
+  PASCALCO.8(adjust(1,1), @I1,9);
+  I1,14 := I1,9^.f6;
+  if not ((I1,14 <> nil)) then goto L057D;
+  if not ((I1,14^.f1 <= 1)) then goto L0579;
+  if not (PASCALCO.19(G61, I1,14, 0, 0)) then goto L055D;
+  PASCALCO.2(109);
+  { left on stack: 1 }
+L055D:
+  (I1,10+6)^ := I1,14;
+  (I1,15+2)^ := I1,10;
+  if not (L1) then goto L0577;
+  DECLARAT.7(I1,10);
+L0577:
+  goto L057D;
+L0579:
+  PASCALCO.2(110);
+L057D:
+  PASCALCO.6();
+  goto L0596;
+L0582:
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,2^<4w>, 4, adjust((2064 + 1),4));
+L0596:
+  goto L05AC;
+L0598:
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,2^<4w>, 4, adjust((2064 + 1),4));
+L05AC:
+  I1,15^ := (I2,12+(I2,18 > 0));
+  if not ((G15 = 11)) then goto L05C3;
+  PASCALCO.6();
+  goto L05C7;
+L05C3:
+  PASCALCO.2(8);
+L05C7:
+  I1,14 := nil;
+  I1,18 := I2,12;
+  I1,17 := I2,12;
+  I1,24 := I2,18;
+  I1,25 := I2,18;
+L05E3:
+  I1,13 := nil;
+L05E7:
+  PASCALCO.18(?, @I1,2^<4w>, 4, adjust((22 + 1),4), @I1,12, @I1,19);
+  if not ((I1,15^.f2 <> nil)) then goto L0617;
+  if not (not (PASCALCO.19(I1,15^.f2^.f6, I1,12, 0, 0))) then goto L0617;
+  PASCALCO.2(111);
+L0617:
+  CSP1(@I1,12, 5);
+  L2 := I1,12;
+  (L2+3)^ := I1,14;
+  (L2+2)^ := I1,13;
+  move((L2+4), @I1,19, 1 words);
+  (L2+1)^ := 9;
+  I1,14 := I1,12;
+  I1,13 := I1,12;
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0655;
+  PASCALCO.6();
+L0655:
+  if not (G11) then goto L05E7;
+  if not ((G15 = 2)) then goto L0662;
+  PASCALCO.6();
+  goto L0666;
+L0662:
+  PASCALCO.2(5);
+L0666:
+  if not ((G15 = 4)) then goto L0670;
+  PASCALCO.6();
+  goto L0674;
+L0670:
+  PASCALCO.2(9);
+L0674:
+  if not ((G15 = 5)) then goto L067F;
+  I1,13 := nil;
+  goto L068F;
+L067F:
+  DECLARAT.6(?, @I1,2^<4w>, 4, adjust((40 + 1),4), @I1,13);
+L068F:
+  if not ((I2,12 > I1,17)) then goto L06A6;
+  I1,17 := I2,12;
+  I1,25 := I2,18;
+  goto L06BD;
+L06A6:
+  if not (((I2,12 = I1,17) and (I2,18 > I1,25))) then goto L06BD;
+  I1,25 := I2,18;
+L06BD:
+  if not ((I1,12 <> nil)) then goto L06E9;
+  I1,11 := I1,12^.f2;
+  (I1,12+2)^ := I1,13;
+  I1,12^ := (I2,12+(I2,18 > 0));
+  I1,12 := I1,11;
+  goto L06BD;
+L06E9:
+  if not ((G15 = 5)) then goto L06FA;
+  PASCALCO.6();
+  DECLARAT.2(?, ?, ?, @I1,20^<4w>);
+  goto L06FE;
+L06FA:
+  PASCALCO.2(4);
+L06FE:
+  G11 := (G15 <> 3);
+  if not (not (G11)) then goto L0716;
+  PASCALCO.6();
+  I2,12 := I1,18;
+  I2,18 := I1,24;
+L0716:
+  if not ((G11 or (G15 = 9))) then goto L05E3;
+  I2,12 := I1,17;
+  I2,18 := I1,25;
+  (I1,15+3)^ := I1,14;
+
+procedure DECLARAT.9(params 0 words);  { locals 1 words, lex 3 }
+  CSP1(@I1,9, 3);
+  I1,2^ := I1,9;
+  L1 := I1,9;
+  (L1+2)^ := nil;
+  L1^ := 1;
+  (L1+1)^ := 2;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L0948;
+  G53 := 0;
+  PASCALCO.8(adjust(1,1), @I1,11);
+  G53 := 1;
+  if not ((I1,11 = nil)) then goto L091F;
+  CSP1(@I1,11, 9);
+  L1 := I1,11;
+  move(L1, @G17, 4 words);
+  (L1+6)^ := I1,9;
+  (L1+7)^ := G64;
+  (L1+8)^ := 0;
+  G64 := I1,11;
+  { left on stack: 1 }
+  goto L0943;
+L091F:
+  if not ((I1,11^.f6 <> nil)) then goto L0943;
+  if not (((I1,11^.f6^.f1 <> 7) or G28)) then goto L093F;
+  (I1,9+2)^ := I1,11^.f6;
+  goto L0943;
+L093F:
+  PASCALCO.2(108);
+L0943:
+  PASCALCO.6();
+  goto L094C;
+L0948:
+  PASCALCO.2(2);
+L094C:
+
+procedure DECLARAT.10(params 0 words);  { locals 257 words, lex 2 }
+  if not ((G77 > 1)) then goto L1128;
+  PASCALCO.2(189);
+L1128:
+  if not ((G32 and not (G31))) then goto L1136;
+  PASCALCO.2(192);
+L1136:
+  if not (not (G36)) then goto L113E;
+  G63 := nil;
+L113E:
+  if not ((G15 <> 0)) then goto L1149;
+  PASCALCO.2(2);
+  goto L1174;
+L1149:
+  if not (G36) then goto L1170;
+  L1 := G63;
+L1151:
+  if not ((L1 <> nil)) then goto L1168;
+  if not ((L1 = @G17)) then goto L1162;
+  goto L116E;
+  goto L1166;
+L1162:
+  L1 := L1^.f7;
+L1166:
+  goto L1151;
+L1168:
+  PASCALCO.2(188);
+L116E:
+  goto L1174;
+L1170:
+  DECLARAT.11(@G17);
+L1174:
+  PASCALCO.6();
+  G11 := (G15 <> 1);
+  if not (G11) then goto L118C;
+  if not ((G15 <> 3)) then goto L118A;
+  PASCALCO.2(20);
+  goto L118A;
+L118A:
+  goto L118F;
+L118C:
+  PASCALCO.6();
+L118F:
+  if not (G11) then goto L113E;
+  if not ((G15 = 3)) then goto L119C;
+  PASCALCO.6();
+  goto L11A0;
+L119C:
+  PASCALCO.2(14);
+L11A0:
+  if not (not (G36)) then goto L11AF;
+  if not (G32) then goto L11AC;
+  G63 := nil;
+L11AC:
+  G29 := 1;
+L11AF:
+
+procedure DECLARAT.11(params 1 words);  { locals 22 words, lex 3 }
+  move(@L2, L1, 4 words);
+  L9 := 0;
+  if not (G49) then goto L0FBB;
+  FWRITELN(I4,3);
+  FWRITEBYTES(I4,3, @G17, 8, 8);
+  FWRITESTRING(I4,3, ' [', 0);
+  FWRITEINT(I4,3, CSP40(), 5);
+  FWRITESTRING(I4,3, ' words]', 0);
+  FWRITELN(I4,3);
+  FWRITECHAR(I4,3, 60, 0);
+  FWRITEINT(I4,3, G92, 4);
+  FWRITECHAR(I4,3, 62, 0);
+L0FBB:
+  L16 := G13;
+  L14 := G96;
+  L17 := G10;
+  DECLARAT.12(@L10);
+  if not (L10) then goto L10F2;
+  if not (G40) then goto L0FD7;
+  CSP1(@L11, 14);
+  goto L0FDC;
+L0FD7:
+  CSP1(@L11, 13);
+L0FDC:
+  L23 := L11;
+  move(L23, @L2, 4 words);
+  (L23+7)^ := G63;
+  (L23+6)^ := nil;
+  (L23+8)^ := 7;
+  (L23+11)^ := (L7 <> 6);
+  L7^ := (104 in 1);
+  if not (L23^.f10) then goto L1015;
+  (L23+9)^ := G13;
+  { left on stack: (L23+10) }
+L1015:
+  (L23+12)^ := (G40 and not (L9));
+  if not (L23^.f12) then goto L102C;
+  (L23+13)^ := G84;
+L102C:
+  G63 := L11;
+  if not (not (G40)) then goto L1039;
+  G44 := 1;
+  goto L103C;
+L1039:
+  G10 := 1;
+L103C:
+  G91 := G92;
+  PASCALCO.1(4, adjust((512 + 1),4));
+  if not (G40) then goto L1074;
+  if not (L9) then goto L1063;
+  if not ((G10 > 1)) then goto L1061;
+  PASCALCO.2(350);
+  { left on stack: @I2,1^<4w> }
+L1061:
+  goto L1074;
+L1063:
+  @G183^<2w>^ := adjust((2 + [G84]),2)  {2 words};
+  { left on stack: @G183 }
+L1074:
+  if not (L11^.f10) then goto L1091;
+  if not (G40) then goto L108D;
+  @G183^<2w>^ := adjust((2 + [G13]),2)  {2 words};
+  { left on stack: @G183 }
+L108D:
+  PASCALCO.5(L11);
+L1091:
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L10EA;
+  if not ((@G17 = @'P       ')) then goto L10C3;
+  2^ := adjust(([$8000,$0000] + 2),2)  {2 words};
+  PASCALCO.6();
+  { left on stack: @G183 }
+  { left on stack: @G183^<2w> }
+L10C3:
+  if not ((@G17 = @'L       ')) then goto L10EA;
+  2^ := adjust(([$4000,$0000] + 2),2)  {2 words};
+  { left on stack: @G183 }
+  { left on stack: @G183^<2w> }
+L10EA:
+  G90 := 9999;
+  PASCALCO.3();
+L10F2:
+  if not (G40) then goto L10FA;
+  G10 := L17;
+L10FA:
+  G13 := L16;
+  G96 := L14;
+  if not (G40) then goto L110E;
+  G40 := 0;
+  if not (not (L9)) then goto L110E;
+  G84 := L6;
+L110E:
+
+procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
+  L1^ := 0;
+  L2 := G68;
+L0DA7:
+  if not (((L2 <> nil) and not (L1^))) then goto L0DC4;
+  if not ((L2 = @I1,2)) then goto L0DBE;
+  L1^ := 1;
+  goto L0DC2;
+L0DBE:
+  L2 := L2^.f7;
+L0DC2:
+  goto L0DA7;
+L0DC4:
+  if not (L1^) then goto L0E1C;
+  L4 := @G335[@G479~[L2^.f9]{4per word,4 bits}*9w];
+  I1,7 := L4^.f8;
+  I1,8 := L4^.f7;
+  G13 := L2^.f9;
+  G96 := 2;
+  if not (((96 in 1) or ((I1,7 = 0) and L2^.f12))) then goto L0E16;
+  G40 := 1;
+  if not (L2^.f12) then goto L0E12;
+  I1,6 := G84;
+  G84 := L2^.f13;
+  { left on stack: I1,7 }
+  goto L0E16;
+L0E12:
+  I1,9 := 1;
+L0E16:
+  G585 := 0;
+  goto L0F18;
+L0E1C:
+  L1^ := 1;
+  if not (G29) then goto L0E8B;
+  if not ((FBLOCKIO(0, 1, 0, 1, 0, 0) <> 1)) then goto L0E80;
+  FCLOSE(@G586, 0);
+  FOPEN(@G586, '*SYSTEM.LIBRARY', 1, 0);
+  if not ((CSP34() <> 0)) then goto L0E62;
+  L1^ := 0;
+  { left on stack: @G586 }
+  { left on stack: @I2,2 }
+  goto L0E7E;
+L0E62:
+  if not ((FBLOCKIO(0, 1, 0, 1, 0, 0) <> 1)) then goto L0E7A;
+  L1^ := 0;
+  { left on stack: @G586 }
+  { left on stack: @I2,2 }
+  goto L0E7E;
+L0E7A:
+  G585 := 1;
+L0E7E:
+  goto L0E84;
+L0E80:
+  G585 := 2;
+L0E84:
+  if not (L1^) then goto L0E8B;
+  G29 := 0;
+L0E8B:
+  if not (L1^) then goto L0EA2;
+  if not (DECLARAT.13(0, 0)) then goto L0E97;
+  goto L0EA0;
+L0E97:
+  PASCALCO.2(190);
+  L1^ := 0;
+L0EA0:
+  goto L0EA8;
+L0EA2:
+  PASCALCO.2(187);
+L0EA8:
+  if not (L1^) then goto L0F18;
+  I1,8 := @I2,114[L3]^;
+  if not (G40) then goto L0ECB;
+  G13 := 0;
+  G96 := 2;
+  { left on stack: @I2,130[L3] }
+  { left on stack: 8 }
+  goto L0F18;
+L0ECB:
+  if not (G41) then goto L0ED5;
+  PASCALCO.2(353);
+L0ED5:
+  G13 := G85;
+  PASCALCO.11(1);
+  L4 := @G335[G21*9w];
+  (L4+1)^ := 0;
+  L4^ := 0;
+  move((L4+2), @I2,34[L3*4w], 4 words);
+  (L4+6)^ := G13;
+  if not (G32) then goto L0F09;
+  (L4+8)^ := 0;
+  goto L0F10;
+L0F09:
+  (L4+8)^ := I1,7;
+L0F10:
+  (L4+7)^ := 0;
+  G96 := 2;
+L0F18:
+  if not ((I1,8 = 0)) then goto L0F28;
+  PASCALCO.2(195);
+  L1^ := 0;
+L0F28:
+  if not (L1^) then goto L0F4A;
+  G36 := 1;
+  G582 := G14;
+  G581 := G95;
+  G579 := (G90-2);
+  G90 := I1,8;
+  PASCALCO.3();
+  PASCALCO.6();
+L0F4A:
+
+function DECLARAT.13(params 2 words) : <1 word result>;  { locals 2 words, lex 5 }
+  I2,7 := DECLARAT.14(@I1,3, 121, adjust(1,2), @L4, 0, 0);
+  L1 := L4;
+  if not (L4) then goto L0D93;
+  if not ((97 in 1)) then goto L0D93;
+  if not ((DECLARAT.14(@L3, 128, adjust(1,2), @L4, 0, 0) = 7)) then goto L0D84;
+  G40 := 1;
+  I2,6 := G84;
+  G84 := 0;
+  { left on stack: I2,7 }
+  { left on stack: @I3,130[L3] }
+  { left on stack: 8 }
+  goto L0D93;
+L0D84:
+  if not ((96 in 1)) then goto L0D93;
+  G40 := 1;
+  I2,9 := 1;
+  { left on stack: I2,7 }
+L0D93:
+
+function DECLARAT.14(params 6 words) : <1 word result>;  { locals 1 words, lex 6 }
+  L6^ := 0;
+  L3^ := 0;
+L0CE2:
+  if not (((L6^ <= 15) and not (L3^))) then goto L0D23;
+  if not ((@I4,34[L6^*4w] = @I3,2)) then goto L0D1B;
+  L7 := @I4,98[L6^]^;
+  if not ((@L4^<2w> in 2)) then goto L0D13;
+  L3^ := 1;
+  { left on stack: L7 }
+  goto L0D19;
+L0D13:
+  L6^ := (L6^+1);
+L0D19:
+  goto L0D21;
+L0D1B:
+  L6^ := (L6^+1);
+L0D21:
+  goto L0CE2;
+L0D23:
+  if not (L3^) then goto L0D2C;
+  L1 := L7;
+  goto L0D30;
+L0D2C:
+  L1 := -(1);
+L0D30:
+
+procedure DECLARAT.15(params 0 words);  { locals 4 words, lex 2 }
+L11C0:
+  if not ((G15 = 35)) then goto L1219;
+  L3 := @G131[G8*4w];
+  L1 := L3^.f3;
+  L2 := 0;
+L11D4:
+  if not (((L1 <> nil) and not (L2))) then goto L11F4;
+  if not ((L1^ <> G23)) then goto L11E9;
+  L1 := L1^.f1;
+  goto L11F2;
+L11E9:
+  L2 := 1;
+  PASCALCO.2(166);
+L11F2:
+  goto L11D4;
+L11F4:
+  if not (not (L2)) then goto L1214;
+  CSP1(@L1, 3);
+  L4 := L1;
+  L4^ := G23;
+  (L4+2)^ := nil;
+  (L4+1)^ := L3^.f3;
+  (L3+3)^ := L1;
+L1214:
+  PASCALCO.6();
+  goto L121D;
+L1219:
+  PASCALCO.2(15);
+L121D:
+  DECLARAT.2(?, ?, ?, @I1,12^<4w>);
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L1230;
+  PASCALCO.6();
+L1230:
+  if not (G11) then goto L11C0;
+  if not ((G15 = 3)) then goto L123D;
+  PASCALCO.6();
+  goto L1241;
+L123D:
+  PASCALCO.2(14);
+L1241:
+
+procedure DECLARAT.16(params 0 words);  { locals 4 words, lex 2 }
+  if not ((G15 <> 0)) then goto L1269;
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((1 + 1),4));
+L1269:
+  if not ((G15 = 0)) then goto L12E1;
+  CSP1(@L1, 10);
+  L4 := L1;
+  move(L4, @G17, 4 words);
+  (L4+6)^ := nil;
+  (L4+7)^ := nil;
+  (L4+8)^ := 1;
+  PASCALCO.6();
+  if not (((G15 = 41) and (G16 = 13))) then goto L129B;
+  PASCALCO.6();
+  goto L129F;
+L129B:
+  PASCALCO.2(16);
+L129F:
+  PASCALCO.18(?, @I1,1^<4w>, 4, adjust((8 + 1),4), @L2, @L3);
+  PASCALCO.5(L1);
+  (L1+6)^ := L2;
+  move((L1+9), @L3, 1 words);
+  if not ((G15 = 3)) then goto L12D2;
+  PASCALCO.6();
+  DECLARAT.2(?, ?, ?, @I1,8^<4w>);
+  goto L12DF;
+L12D2:
+  if not (not (((G15 = 9) and G32))) then goto L12DF;
+  PASCALCO.2(14);
+L12DF:
+  goto L1269;
+L12E1:
+
+procedure DECLARAT.17(params 0 words);  { locals 6 words, lex 2 }
+  if not ((G15 <> 0)) then goto L1307;
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((1 + 1),4));
+L1307:
+  if not ((G15 = 0)) then goto L13A4;
+  CSP1(@L3, 9);
+  L6 := L3;
+  move(L6, @G17, 4 words);
+  (L6+6)^ := nil;
+  (L6+8)^ := 0;
+  PASCALCO.6();
+  if not (((G15 = 41) and (G16 = 13))) then goto L1334;
+  PASCALCO.6();
+  goto L1338;
+L1334:
+  PASCALCO.2(16);
+L1338:
+  DECLARAT.3(?, @I1,1^<4w>, 4, adjust((8 + 1),4), @L4, @L5);
+  PASCALCO.5(L3);
+  (L3+6)^ := L4;
+  L2 := G64;
+L1356:
+  if not ((L2 <> nil)) then goto L1384;
+  if not ((L2 = L3)) then goto L137B;
+  (L2^.f6+2)^ := L3^.f6;
+  if not ((L2 <> G64)) then goto L1377;
+  (L1+7)^ := L2^.f7;
+  goto L137B;
+L1377:
+  G64 := L2^.f7;
+L137B:
+  L1 := L2;
+  L2 := L2^.f7;
+  goto L1356;
+L1384:
+  if not ((G15 = 3)) then goto L1395;
+  PASCALCO.6();
+  DECLARAT.2(?, ?, ?, @I1,8^<4w>);
+  goto L13A2;
+L1395:
+  if not (not (((G15 = 9) and G32))) then goto L13A2;
+  PASCALCO.2(14);
+L13A2:
+  goto L1307;
+L13A4:
+  if not ((G64 <> nil)) then goto L13B1;
+  PASCALCO.2(117);
+  G64 := nil;
+L13B1:
+
+procedure DECLARAT.18(params 0 words);  { locals 6 words, lex 2 }
+  L2 := nil;
+L13C7:
+  if not ((G15 = 0)) then goto L1437;
+  if not (G32) then goto L13D7;
+  CSP1(@L3, 12);
+  goto L13DC;
+L13D7:
+  CSP1(@L3, 11);
+L13DC:
+  L6 := L3;
+  move(L6, @G17, 4 words);
+  (L6+7)^ := L2;
+  (L6+8)^ := 3;
+  (L6+6)^ := nil;
+  if not ((G40 or G41)) then goto L1411;
+  if not ((G77 <= 1)) then goto L1409;
+  (L6+9)^ := -(G84);
+  goto L140F;
+L1409:
+  (L6+9)^ := G77;
+L140F:
+  goto L1417;
+L1411:
+  (L6+9)^ := G77;
+L1417:
+  if not (G32) then goto L142B;
+  if not (G31) then goto L1426;
+  (L6+11)^ := 1;
+  goto L142B;
+L1426:
+  (L6+11)^ := 0;
+L142B:
+  PASCALCO.5(L3);
+  L2 := L3;
+  PASCALCO.6();
+  goto L143B;
+L1437:
+  PASCALCO.2(2);
+L143B:
+  if not (not (((6 + 1) in (@G98^<4w> + 4)))) then goto L1467;
+  PASCALCO.2(6);
+  PASCALCO.14(@I1,1^<4w>, 4, (14 + 1), adjust((@G98^<4w> + 4),4));
+  { left on stack: G15 }
+  { left on stack: @I1,1^<4w> }
+  { left on stack: 4 }
+L1467:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L1473;
+  PASCALCO.6();
+L1473:
+  if not (G11) then goto L13C7;
+  if not ((G15 = 2)) then goto L1480;
+  PASCALCO.6();
+  goto L1484;
+L1480:
+  PASCALCO.2(5);
+L1484:
+  L1 := L2;
+  DECLARAT.3(@I1,1^<4w>, 4, (8 + 1), adjust((@G98^<4w> + 4),4), @L4, @L5);
+L149E:
+  if not ((L2 <> nil)) then goto L14E1;
+  L6 := L2;
+  (L6+6)^ := L4;
+  (L6+10)^ := G10;
+  G10 := (G10+L5);
+  L2 := L6^.f7;
+  if not ((L6^.f7 = nil)) then goto L14DF;
+  if not ((L4 <> nil)) then goto L14DF;
+  if not ((L4^.f1 = 7)) then goto L14DF;
+  (L6+7)^ := @G131[G8*4w]^.f2;
+  (@G131[G8*4w]+2)^ := L1;
+L14DF:
+  goto L149E;
+L14E1:
+  if not ((G15 = 3)) then goto L14F2;
+  PASCALCO.6();
+  DECLARAT.2(?, ?, ?, @I1,8^<4w>);
+  goto L14FF;
+L14F2:
+  if not (not (((G15 = 9) and G32))) then goto L14FF;
+  PASCALCO.2(14);
+L14FF:
+  if not ((G15 and not ((@G98^<4w> in 4)))) then goto L13C7;
+  if not ((G64 <> nil)) then goto L151A;
+  PASCALCO.2(117);
+  G64 := nil;
+  { left on stack: (G15 <> 0) }
+L151A:
+
+procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
+  if not (L1) then goto L17E9;
+  if not (G48) then goto L17BA;
+  PASCALCO.2(399);
+  G86 := 0;
+  G968 := 0;
+L17BA:
+  L14 := G13;
+  G13 := G85;
+  L12 := G96;
+  G96 := 1;
+  L3 := G15;
+  if not (([$0001,$8000,$0000] in 3)) then goto L17DD;
+  PASCALCO.6();
+  { left on stack: G15 }
+  goto L17E6;
+L17DD:
+  PASCALCO.2(399);
+  L3 := 31;
+L17E6:
+  L2 := L3;
+L17E9:
+  L15 := G10;
+  G10 := 1;
+  if not ((L2 = 32)) then goto L17F9;
+  G10 := (G10+2);
+L17F9:
+  G93 := G10;
+  G38 := 1;
+  L8 := 0;
+  if not ((G15 = 0)) then goto L19A0;
+  if not ((G36 or (G32 and G31))) then goto L1816;
+  L7 := 0;
+  goto L1869;
+L1816:
+  PASCALCO.7(@G131[G8*4w]^, @L5);
+  if not ((L5 <> nil)) then goto L1866;
+  if not ((L5^.f8 = 5)) then goto L183F;
+  L7 := ((L5^.f15 and (L2 = 31)) and (L5^.f13 = 0));
+  goto L185A;
+L183F:
+  if not ((L5^.f8 = 6)) then goto L1857;
+  L7 := ((L5^.f15 and (L2 = 32)) and (L5^.f13 = 0));
+  goto L185A;
+L1857:
+  L7 := 0;
+L185A:
+  if not (not (L7)) then goto L1864;
+  PASCALCO.2(160);
+L1864:
+  goto L1869;
+L1866:
+  L7 := 0;
+L1869:
+  if not (not (L7)) then goto L192F;
+  if not ((L2 = 31)) then goto L1884;
+  if not (G32) then goto L187D;
+  CSP1(@L5, 19);
+  goto L1882;
+L187D:
+  CSP1(@L5, 18);
+L1882:
+  goto L1894;
+L1884:
+  if not (G32) then goto L188F;
+  CSP1(@L5, 19);
+  goto L1894;
+L188F:
+  CSP1(@L5, 18);
+L1894:
+  L21 := L5;
+  move(L21, @G17, 4 words);
+  (L21+6)^ := nil;
+  (L21+14)^ := G10;
+  (L21+9)^ := 1;
+  (L21+13)^ := 0;
+  (L21+17)^ := 0;
+  (L21+10)^ := G77;
+  (L21+11)^ := G96;
+  (L21+12)^ := G13;
+  @G185[G96]^ := 0;
+  (L21+16)^ := 0;
+  if not (G32) then goto L18ED;
+  (L21+18)^ := (not (G40) and G36);
+L18ED:
+  if not (L1) then goto L190B;
+  PASCALCO.11(1);
+  L22 := @G335[G21*9w];
+  move((L22+2), @G17, 4 words);
+  (L22+6)^ := G13;
+L190B:
+  PASCALCO.10(@G96, 149, 251);
+  if not ((L2 = 31)) then goto L1923;
+  (L21+8)^ := 5;
+  goto L1929;
+L1923:
+  (L21+8)^ := 6;
+L1929:
+  PASCALCO.5(L5);
+  goto L199B;
+L192F:
+  L4 := L5^.f7;
+L1933:
+  if not ((L4 <> nil)) then goto L1982;
+  L21 := L4;
+  if not ((L21^.f6 = nil)) then goto L1947;
+  L8 := 1;
+  goto L197C;
+L1947:
+  if not ((L21^.f8 = 2)) then goto L1961;
+  L9 := (L21^.f10+1);
+  if not ((L9 > G10)) then goto L195F;
+  G10 := L9;
+L195F:
+  goto L197C;
+L1961:
+  if not ((L21^.f8 = 3)) then goto L197C;
+  L9 := (L21^.f10+L21^.f6^);
+  if not ((L9 > G10)) then goto L197C;
+  G10 := L9;
+L197C:
+  L4 := L4^.f7;
+  goto L1933;
+L1982:
+  if not ((G13 <> L5^.f12)) then goto L199B;
+  G13 := L5^.f12;
+  G96 := 2;
+  if not (not (L1)) then goto L199B;
+  PASCALCO.2(399);
+L199B:
+  PASCALCO.6();
+  goto L19A8;
+L19A0:
+  PASCALCO.2(2);
+  L5 := G70;
+L19A8:
+  L11 := G77;
+  L10 := G8;
+  L13 := G97;
+  L17 := L5;
+  G97 := L5^.f11;
+  if not ((G77 < 8)) then goto L19C9;
+  G77 := (G77+1);
+  goto L19CF;
+L19C9:
+  PASCALCO.2(251);
+L19CF:
+  if not ((G8 < 12)) then goto L1A03;
+  G8 := (G8+1);
+  L21 := @G131[G8*4w];
+  if not (L7) then goto L19EB;
+  L21^ := L5^.f7;
+  goto L19EF;
+L19EB:
+  L21^ := nil;
+L19EF:
+  (L21+3)^ := nil;
+  (L21+2)^ := nil;
+  (L21+1)^ := 0;
+  goto L1A09;
+L1A03:
+  PASCALCO.2(250);
+L1A09:
+  if not ((L2 = 31)) then goto L1A22;
+  DECLARAT.20(?, ?, 8, adjust(1,4), @L4, L5);
+  if not (not (L7)) then goto L1A20;
+  (L5+7)^ := L4;
+L1A20:
+  goto L1A91;
+L1A22:
+  DECLARAT.20(?, ?, 12, adjust(1,4), @L4, L5);
+  if not (not (L7)) then goto L1A34;
+  (L5+7)^ := L4;
+L1A34:
+  if not ((G15 = 2)) then goto L1A89;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L1A75;
+  if not (L7) then goto L1A48;
+  PASCALCO.2(122);
+L1A48:
+  PASCALCO.8(adjust(1,1), @L4);
+  L6 := L4^.f6;
+  (L5+6)^ := L6;
+  if not ((L6 <> nil)) then goto L1A70;
+  if not (not ((7 in 1))) then goto L1A70;
+  PASCALCO.2(120);
+  (L5+6)^ := nil;
+  { left on stack: 1 }
+  { left on stack: L6^.f1 }
+L1A70:
+  PASCALCO.6();
+  goto L1A87;
+L1A75:
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((8 + 1),4));
+L1A87:
+  goto L1A91;
+L1A89:
+  if not (not (L7)) then goto L1A91;
+  PASCALCO.2(123);
+L1A91:
+  if not ((G15 = 3)) then goto L1A9B;
+  PASCALCO.6();
+  goto L1A9F;
+L1A9B:
+  PASCALCO.2(14);
+L1A9F:
+  if not ((G15 = 53)) then goto L1B5D;
+  if not ((G77 <> 2)) then goto L1AB0;
+  PASCALCO.2(183);
+L1AB0:
+  if not (G32) then goto L1AC2;
+  if not ((G31 and not (G36))) then goto L1AC2;
+  PASCALCO.2(184);
+L1AC2:
+  if not (L1) then goto L1ACB;
+  PASCALCO.2(399);
+L1ACB:
+  L21 := L5;
+  (L21+15)^ := 0;
+  FWRITELN(I3,3);
+  FWRITEBYTES(I3,3, L21, 8, 8);
+  FWRITESTRING(I3,3, ' [', 0);
+  FWRITEINT(I3,3, CSP40(), 5);
+  FWRITESTRING(I3,3, ' words]', 0);
+  FWRITELN(I3,3);
+  FWRITECHAR(I3,3, 60, 0);
+  FWRITEINT(I3,3, G92, 4);
+  FWRITECHAR(I3,3, 62, 0);
+  if not ((G15 <> 53)) then goto L1B3B;
+  G96 := (G96-1);
+  (L5+11)^ := 0;
+  goto L1B5B;
+L1B3B:
+  (L5+16)^ := 1;
+  G44 := 1;
+  PASCALCO.6();
+  if not ((G15 = 3)) then goto L1B50;
+  PASCALCO.6();
+  goto L1B54;
+L1B50:
+  PASCALCO.2(14);
+L1B54:
+  DECLARAT.2(?, ?, ?, @I1,1^<4w>);
+L1B5B:
+  goto L1BE2;
+L1B5D:
+  if not (G36) then goto L1B68;
+  (L5+15)^ := 0;
+  goto L1BE2;
+L1B68:
+  if not (((G15 = 34) or (G32 and G31))) then goto L1BA2;
+  if not (L7) then goto L1B7E;
+  PASCALCO.2(161);
+  goto L1B83;
+L1B7E:
+  (L5+15)^ := 1;
+L1B83:
+  if not ((G15 = 34)) then goto L1B99;
+  PASCALCO.6();
+  if not ((G15 = 3)) then goto L1B95;
+  PASCALCO.6();
+  goto L1B99;
+L1B95:
+  PASCALCO.2(14);
+L1B99:
+  DECLARAT.2(?, ?, ?, @I1,1^<4w>);
+  goto L1BE2;
+L1BA2:
+  if not (L8) then goto L1BA9;
+  PASCALCO.2(7);
+L1BA9:
+  G83 := 1;
+  I1,6 := 1;
+  { stack tracking stopped: 'CSP 32' }
+  { CSP 32 }
+  { SLDL 5 }
+  { STL 21 }
+  { LDL 21 }
+  { INC 15 }
+  { SLDC 0 }
+  { STO }
+  { LDL 21 }
+  { INC 17 }
+  { SLDC 1 }
+  { STO }
+  { LDL 21 }
+  { INC 16 }
+  { SLDC 0 }
+  { STO }
+  { SLDC 3 }
+  { STL 16 }
+  { SLDL 1 }
+  { STL 19 }
+  { LDO 81 }
+  { STL 20 }
+  { LAO 81 }
+  { SLDC 11 }
+  { CSP 1 }
+  { LDO 81 }
+  { LLA 10 }
+  { MOV 11 }
+  { SLDC 8 }
+  { SLDC 19 }
+  { CSP 4 }
+L1BE2:
+  G77 := L11;
+  G8 := L10;
+  G10 := L15;
+  G97 := L13;
+  if not (L1) then goto L1BF7;
+  G96 := L12;
+  G13 := L14;
+L1BF7:
+
+procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
+  L9 := nil;
+  L14 := G10;
+  if not (not ((4 in (16 + 1)))) then goto L1557;
+  PASCALCO.2(7);
+  PASCALCO.14(@I2,1^<4w>, 4, (@L3^<4w> + 4), adjust((16 + 1),4));
+  { left on stack: G15 }
+  { left on stack: @L3^<4w> }
+L1557:
+  if not ((G15 = 4)) then goto L178A;
+  if not (I1,7) then goto L1565;
+  PASCALCO.2(119);
+L1565:
+  PASCALCO.6();
+  if not (not (([$4000,$0001] in 2))) then goto L1587;
+  PASCALCO.2(7);
+  PASCALCO.14(G15, @I2,1^<4w>, 4, adjust((33 + 1),4));
+L1587:
+  if not (([$4000,$0001] in 2)) then goto L1700;
+  if not ((G15 = 30)) then goto L159F;
+  L12 := 1;
+  PASCALCO.6();
+  { left on stack: G15 }
+  goto L15A2;
+L159F:
+  L12 := 0;
+L15A2:
+  L8 := nil;
+  L15 := 0;
+L15A8:
+  if not ((G15 <> 0)) then goto L15B3;
+  PASCALCO.2(2);
+  goto L15F0;
+L15B3:
+  CSP1(@L10, 11);
+  L16 := L10;
+  move(L16, @G17, 4 words);
+  (L16+6)^ := nil;
+  (L16+7)^ := L8;
+  if not ((L12 = 1)) then goto L15D6;
+  (L16+8)^ := 2;
+  goto L15DB;
+L15D6:
+  (L16+8)^ := 3;
+L15DB:
+  (L16+9)^ := G77;
+  PASCALCO.5(L10);
+  L8 := L10;
+  L15 := (L15+1);
+  PASCALCO.6();
+L15F0:
+  if not (not ((4 in (46 + 1)))) then goto L1610;
+  PASCALCO.2(7);
+  PASCALCO.14(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((46 + 1),4));
+  { left on stack: G15 }
+L1610:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L161C;
+  PASCALCO.6();
+L161C:
+  if not (G11) then goto L15A8;
+  L11 := nil;
+  if not ((G15 = 2)) then goto L1671;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L166B;
+  PASCALCO.8(adjust(1,1), @L10);
+  PASCALCO.6();
+  L11 := L10^.f6;
+  L13 := 1;
+  if not ((L11 <> nil)) then goto L1662;
+  if not ((L12 = 0)) then goto L1662;
+  if not ((L11^.f1 = 7)) then goto L1658;
+  PASCALCO.2(121);
+  { left on stack: 1 }
+  goto L1662;
+L1658:
+  if not ((L11^.f1 <= 4)) then goto L1662;
+  L13 := L11^;
+L1662:
+  G10 := (G10+(L15*L13));
+  goto L166F;
+L166B:
+  PASCALCO.2(2);
+L166F:
+  goto L1687;
+L1671:
+  if not ((L12 = 1)) then goto L1683;
+  I1,8 := 1;
+  G10 := (G10+(L15*1));
+  goto L1687;
+L1683:
+  PASCALCO.2(5);
+L1687:
+  if not (not ((4 in (40 + 1)))) then goto L16A7;
+  PASCALCO.2(7);
+  PASCALCO.14(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((40 + 1),4));
+  { left on stack: G15 }
+L16A7:
+  L7 := L8;
+  L10 := nil;
+L16AD:
+  if not ((L8 <> nil)) then goto L16C3;
+  L10 := L8;
+  L16 := L8;
+  (L16+6)^ := L11;
+  L8 := L16^.f7;
+  goto L16AD;
+L16C3:
+  if not ((L10 <> nil)) then goto L16D0;
+  (L10+7)^ := L9;
+  L9 := L7;
+L16D0:
+  if not ((G15 = 3)) then goto L16FE;
+  PASCALCO.6();
+  if not (not ((4 in ([$4000,$0001] + 2)))) then goto L16FE;
+  PASCALCO.2(7);
+  PASCALCO.14(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((33 + 1),4));
+  { left on stack: G15 }
+L16FE:
+  goto L1587;
+L1700:
+  if not ((G15 = 5)) then goto L171A;
+  PASCALCO.6();
+  DECLARAT.2(?, @L3^<4w>, 4, adjust((@I2,1^<4w> + 4),4));
+  goto L171E;
+L171A:
+  PASCALCO.2(4);
+L171E:
+  (L1+14)^ := G10;
+  L7 := nil;
+L1726:
+  if not ((L9 <> nil)) then goto L1785;
+  L16 := L9;
+  L8 := L16^.f7;
+  (L16+7)^ := L7;
+  if not ((L16^.f6 <> nil)) then goto L177D;
+  if not ((L16^.f8 = 2)) then goto L1750;
+  (L16+10)^ := L14;
+  L14 := (L14+1);
+  goto L177D;
+L1750:
+  if not ((L16^.f8 = 3)) then goto L177D;
+  if not ((L16^.f6^.f1 <= 4)) then goto L176C;
+  (L16+10)^ := L14;
+  L14 := (L14+L16^.f6^);
+  goto L177D;
+L176C:
+  (L16+10)^ := G10;
+  G10 := (G10+L16^.f6^);
+  L14 := (L14+1);
+L177D:
+  L7 := L9;
+  L9 := L8;
+  goto L1726;
+L1785:
+  L2^ := L7;
+  goto L178D;
+L178A:
+  L2^ := nil;
+L178D:
+
+======================================================================
+SEGMENT 9 BODYPART
+======================================================================
+
+procedure BODYPART.1(params 5 words);  { locals 0 words, lex 1 }
+  if not ((not (G34) or G33)) then goto L1BCE;
+  BODYPART.24();
+  goto L1BD0;
+L1BCE:
+  BODYPART.37();
+L1BD0:
+
+procedure BODYPART.2(params 3 words);  { locals 1 words, lex 2 }
+  if not ((G576 > 128)) then goto L01C4;
+  if not ((FBLOCKIO(0, 1, G575, 0, 0, 0) <> 1)) then goto L01B8;
+  PASCALCO.2(402);
+  { left on stack: @G535 }
+  { left on stack: G577 }
+L01B8:
+  G575 := (G575+1);
+  G576 := 1;
+L01C4:
+  L4 := G577[(G576-1)*2w];
+  if not ((G130 in 1)) then goto L01E1;
+  (L4+1)^ := (L2+32);
+  { left on stack: L3 }
+  goto L01E6;
+L01E1:
+  (L4+1)^ := L2;
+L01E6:
+  L4^ := (G86+L1);
+  G576 := (G576+1);
+
+procedure BODYPART.3(params 1 words);  { locals 4 words, lex 2 }
+  if not ((L1 <> 38)) then goto L020F;
+  PASCALCO.20((L1+128));
+  goto L0253;
+L020F:
+  L3 := G9;
+  G88 := G9;
+  if not (not (L3)) then goto L021F;
+  PASCALCO.20(215);
+L021F:
+  PASCALCO.20(166);
+  L4 := G5;
+  PASCALCO.20(L4^.f1);
+  L2 := 1;
+  L5 := L4^.f1;
+L0234:
+  if not ((L2 <= L5)) then goto L024A;
+  PASCALCO.20((L4+2)^[(L2-1)]);
+  L2 := (L2+1);
+  goto L0234;
+L024A:
+  if not (L3) then goto L0253;
+  PASCALCO.20(215);
+L0253:
+
+procedure BODYPART.4(params 1 words);  { locals 0 words, lex 2 }
+  if not (((L1 >= 0) and (L1 <= 127))) then goto L0271;
+  PASCALCO.20(L1);
+  goto L0293;
+L0271:
+  PASCALCO.20((51+148));
+  PASCALCO.20((abs(L1) mod 256));
+  PASCALCO.20((abs(L1) div 256));
+  if not ((L1 < 0)) then goto L0293;
+  BODYPART.3(17);
+L0293:
+
+procedure BODYPART.5(params 2 words);  { locals 3 words, lex 2 }
+  PASCALCO.20((L2+128));
+  if not ((L2 = 51)) then goto L0346;
+  if not ((L1 = 2)) then goto L02E3;
+  L4 := 2;
+  goto L0303;
+L02E3:
+  L4 := 8;
+L02E6:
+  if not ((L4 > 0)) then goto L0303;
+  if not (((G5+1)[(L4-1)]^ <> 0)) then goto L02FC;
+  goto L0303;
+  goto L0301;
+L02FC:
+  L4 := (L4-1);
+L0301:
+  goto L02E6;
+L0303:
+  G3^ := L4;
+  if not ((L4 > 1)) then goto L032F;
+  PASCALCO.20(L4);
+  L3 := L4;
+  L5 := 1;
+L0315:
+  if not ((L3 >= L5)) then goto L032D;
+  PASCALCO.21((G5+1)[(L3-1)]^);
+  L3 := (L3-1);
+  goto L0315;
+L032D:
+  goto L0344;
+L032F:
+  G9 := (G9-1);
+  if not ((L4 = 1)) then goto L0344;
+  BODYPART.4((G5+1)[(1-1)]^);
+L0344:
+  goto L03C6;
+L0346:
+  if not (([$C006,$3000,$6401,$4000,$0000] in 5)) then goto L035E;
+  PASCALCO.20(L1);
+  { left on stack: L2 }
+  goto L03C6;
+L035E:
+  if not ((L2 and ([$0A20,$0000,$0000] in 3))) then goto L0380;
+  BODYPART.2(3, L1, G9);
+  PASCALCO.20(128);
+  PASCALCO.20(0);
+  { left on stack: G32 }
+  goto L03C6;
+L0380:
+  if not ((((L2 = 74) or (L2 = 41)) and (L1 <= 16))) then goto L03AB;
+  G9 := (G9-1);
+  if not ((L2 = 41)) then goto L03A1;
+  PASCALCO.20((231+L1));
+  goto L03A9;
+L03A1:
+  PASCALCO.20((215+L1));
+L03A9:
+  goto L03C6;
+L03AB:
+  if not (((L2 = 35) and (L1 <= 7))) then goto L03C3;
+  G9 := (G9-1);
+  PASCALCO.20((248+L1));
+  goto L03C6;
+L03C3:
+  BODYPART.27(L1);
+L03C6:
+
+procedure BODYPART.6(params 3 words);  { locals 0 words, lex 2 }
+  if not (((L3 = 64) or (L3 = 77))) then goto L03F3;
+  PASCALCO.20((L3+128));
+  PASCALCO.20(L2);
+  PASCALCO.20(L1);
+  goto L047A;
+L03F3:
+  if not (([$00B3,$8000,$0000,$0000] in 4)) then goto L041E;
+  if not ((L2 = 0)) then goto L040E;
+  BODYPART.3((L3+20));
+  { left on stack: L3 }
+  goto L041C;
+L040E:
+  BODYPART.5(L3, (L2+L2));
+  if not ((L2 > 4)) then goto L041C;
+  BODYPART.27(L1);
+L041C:
+  goto L047A;
+L041E:
+  if not ((L2 = 1)) then goto L042B;
+  BODYPART.5((L3-13), L1);
+  goto L047A;
+L042B:
+  if not ((L2 = G77)) then goto L0439;
+  BODYPART.5((L3+20), L1);
+  goto L047A;
+L0439:
+  if not ((L2 < 0)) then goto L0468;
+  if not ((L3 = 54)) then goto L044B;
+  PASCALCO.20(157);
+  goto L045E;
+L044B:
+  if not ((L3 = 56)) then goto L0458;
+  PASCALCO.20(209);
+  goto L045E;
+L0458:
+  PASCALCO.20(167);
+L045E:
+  PASCALCO.20(-(L2));
+  BODYPART.27(L1);
+  goto L047A;
+L0468:
+  PASCALCO.20((L3+128));
+  PASCALCO.20((G77-L2));
+  BODYPART.27(L1);
+L047A:
+
+procedure BODYPART.7(params 2 words);  { locals 0 words, lex 2 }
+  @G183^<2w>^ := adjust((2 + [L2]),2)  {2 words};
+  BODYPART.6(77, L2, L1);
+  { left on stack: @G183 }
+
+procedure BODYPART.8(params 0 words);  { locals 4 words, lex 2 }
+  if not ((G3 <> nil)) then goto L06F1;
+  { left on stack: G4 }
+  goto L06C6;
+  if not ((G3^.f1 = 3)) then goto L0663;
+  L3 := G5;
+  L1 := 10000;
+  BODYPART.4((L3+3)[(1-1)]^);
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  L2 := 2;
+  L4 := L3^.f2;
+L061D:
+  if not ((L2 <= L4)) then goto L0661;
+  if not ((L2 = L3^.f2)) then goto L0630;
+  { stack tracking stopped: 'CSP 36' }
+  { CSP 36 }
+  { CSP 23 }
+  { STL 1 }
+L0630:
+  BODYPART.4(L1);
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  BODYPART.4(8);
+  BODYPART.7(30, 4);
+  BODYPART.4((L3+3)[(L2-1)]^);
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  BODYPART.4(2);
+  BODYPART.7(30, 4);
+  L2 := (L2+1);
+  goto L061D;
+L0661:
+  goto L068E;
+L0663:
+  if not (((G3^.f1 = 0) and (G3 <> G61))) then goto L0673;
+  BODYPART.4(G5);
+  goto L068E;
+L0673:
+  if not ((G3 = G56)) then goto L067E;
+  BODYPART.3(31);
+  goto L068E;
+L067E:
+  if not ((G3 = G61)) then goto L068A;
+  BODYPART.5(51, 2);
+  goto L068E;
+L068A:
+  BODYPART.5(51, 5);
+L068E:
+  goto L06D4;
+  { left on stack: G5 }
+  goto L06B1;
+  BODYPART.6(54, G6, G7);
+  goto L06C2;
+  BODYPART.5(35, G6);
+  goto L06C2;
+  BODYPART.3(58);
+  goto L06C2;
+  BODYPART.5(60, G3^);
+  goto L06C2;
+  BODYPART.3(62);
+  goto L06C2;
+L06B1:
+L06C2:
+  goto L06D4;
+  goto L06D4;
+L06C6:
+L06D4:
+  L3 := G3;
+  if not ((((L3^.f1 = 4) or ((L3^.f1 = 3) and (G4 <> 0))) and (G4 <> 2))) then goto L06EE;
+  BODYPART.4(G3^);
+L06EE:
+  G4 := 2;
+L06F1:
+
+procedure BODYPART.9(params 0 words);  { locals 0 words, lex 2 }
+  if not ((G3 <> nil)) then goto L07B9;
+  { left on stack: G4 }
+  goto L07A4;
+  if not (PASCALCO.16(G3, 0, 0)) then goto L0771;
+  BODYPART.3(38);
+  goto L0777;
+L0771:
+  PASCALCO.2(400);
+L0777:
+  goto L07B0;
+  { left on stack: G5 }
+  goto L0794;
+  BODYPART.6(50, G6, G7);
+  goto L07A2;
+  if not ((G6 <> 0)) then goto L078C;
+  BODYPART.5(34, G6);
+L078C:
+  goto L07A2;
+  PASCALCO.2(103);
+  goto L07A2;
+L0794:
+L07A2:
+  goto L07B0;
+L07A4:
+L07B0:
+  G4 := 1;
+  G5 := 1;
+  G6 := 0;
+L07B9:
+
+procedure BODYPART.10(params 0 words);  { locals 0 words, lex 2 }
+  if not ((G3 <> nil)) then goto L0832;
+  { left on stack: G4 }
+  goto L080E;
+  if not (PASCALCO.16(G3, 0, 0)) then goto L07DB;
+  BODYPART.3(38);
+  goto L07E1;
+L07DB:
+  PASCALCO.2(400);
+L07E1:
+  goto L081A;
+  { left on stack: G5 }
+  goto L07FE;
+  BODYPART.6(50, G6, G7);
+  goto L080C;
+  if not ((G6 <> 0)) then goto L07F6;
+  BODYPART.5(34, G6);
+L07F6:
+  goto L080C;
+  PASCALCO.2(103);
+  goto L080C;
+L07FE:
+L080C:
+  goto L081A;
+L080E:
+L081A:
+  if not ((G4 <> 1)) then goto L0827;
+  G4 := 1;
+  BODYPART.4(0);
+  goto L082F;
+L0827:
+  if not ((G5 <> 4)) then goto L082F;
+  BODYPART.4(0);
+L082F:
+  G5 := 4;
+L0832:
+
+procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
+  BODYPART.33(?, @L1^<4w>, 4, adjust(([$0200,$0000,$0000] + 3),4));
+  if not ((G15 = 41)) then goto L1B8D;
+  L15 := ((G4 = 0) and (PASCALCO.16(G3, 0, 0) or (G3 = G59)));
+  if not ((G3 <> nil)) then goto L1998;
+  if not ((G3^.f1 <= 4)) then goto L1996;
+  BODYPART.8();
+  if not ((G16 = 14)) then goto L1994;
+  BODYPART.15();
+L1994:
+  goto L1998;
+L1996:
+  BODYPART.9();
+L1998:
+  move(@L5, @G3, 5 words);
+  L10 := G16;
+  L13 := G88;
+  PASCALCO.6();
+  BODYPART.33(?, ?, ?, @L1^<4w>);
+  L14 := ((G4 = 0) and (PASCALCO.16(G3, 0, 0) or (G3 = G59)));
+  if not ((G3 <> nil)) then goto L19D0;
+  if not ((G3^.f1 <= 4)) then goto L19CE;
+  BODYPART.8();
+  goto L19D0;
+L19CE:
+  BODYPART.9();
+L19D0:
+  if not (((L5 <> nil) and (G3 <> nil))) then goto L1B86;
+  if not ((L10 = 14)) then goto L1A09;
+  if not ((G3^.f1 = 4)) then goto L19FE;
+  if not (PASCALCO.19(L5, G3^.f2, 0, 0)) then goto L19F3;
+  BODYPART.3(11);
+  goto L19FC;
+L19F3:
+  PASCALCO.2(129);
+  G3 := nil;
+L19FC:
+  goto L1A07;
+L19FE:
+  PASCALCO.2(130);
+  G3 := nil;
+L1A07:
+  goto L1B86;
+L1A09:
+  if not ((L5 <> G3)) then goto L1A17;
+  BODYPART.31(@L5, 0);
+  BODYPART.32(@L5);
+L1A17:
+  if not (L15) then goto L1A31;
+  if not (PASCALCO.15(G3, 0, 0)) then goto L1A2F;
+  if not (not (G3^.f7)) then goto L1A2F;
+  BODYPART.21(L13);
+  BODYPART.36(@L5, G3);
+L1A2F:
+  goto L1A4A;
+L1A31:
+  if not (L14) then goto L1A4A;
+  if not (PASCALCO.15(L5, 0, 0)) then goto L1A4A;
+  if not (not (L5^.f7)) then goto L1A4A;
+  BODYPART.21(G88);
+  BODYPART.36(@G3, L5);
+L1A4A:
+  if not (((L15 and PASCALCO.16(G3, 0, 0)) or (L14 and PASCALCO.16(L5, 0, 0)))) then goto L1A5F;
+  goto L1AC5;
+L1A5F:
+  if not (PASCALCO.19(L5, G3, 0, 0)) then goto L1B80;
+  L12 := L5^;
+  { left on stack: L5^.f1 }
+  goto L1B14;
+  if not ((L5 = G61)) then goto L1A7B;
+  L11 := 1;
+  goto L1A89;
+L1A7B:
+  if not ((L5 = G58)) then goto L1A86;
+  L11 := 3;
+  goto L1A89;
+L1A86:
+  L11 := 0;
+L1A89:
+  goto L1B2C;
+  if not ((3840 in 1)) then goto L1A99;
+  PASCALCO.2(131);
+  { left on stack: L10 }
+L1A99:
+  L11 := 0;
+  goto L1B2C;
+  L11 := 7;
+  goto L1B2C;
+  if not ((2304 in 1)) then goto L1AB1;
+  PASCALCO.2(132);
+  { left on stack: L10 }
+L1AB1:
+  L11 := 4;
+  goto L1B2C;
+  L11 := 6;
+  if not (PASCALCO.15(L5, 0, 0)) then goto L1AE6;
+  if not (L5^.f7) then goto L1ACA;
+L1AC5:
+  L11 := 2;
+  goto L1AE4;
+L1ACA:
+  L11 := 5;
+  if not ((L5^.f2 <> nil)) then goto L1AE4;
+  PASCALCO.9(L5^.f2, @L17, @L16);
+  L12 := ((L16-L17)+1);
+L1AE4:
+  goto L1AF4;
+L1AE6:
+  if not ((3840 in 1)) then goto L1AF4;
+  PASCALCO.2(131);
+  { left on stack: L10 }
+L1AF4:
+  goto L1B2C;
+  if not ((3840 in 1)) then goto L1B04;
+  PASCALCO.2(131);
+  { left on stack: L10 }
+L1B04:
+  L11 := 6;
+  goto L1B2C;
+  PASCALCO.2(133);
+  L11 := 0;
+  goto L1B2C;
+L1B14:
+L1B2C:
+  if not ((L11 = 7)) then goto L1B3D;
+  BODYPART.4(L10);
+  BODYPART.4(16);
+  BODYPART.7(30, 4);
+  goto L1B7E;
+L1B3D:
+  { left on stack: L10 }
+  goto L1B6A;
+  BODYPART.6(53, L11, L12);
+  goto L1B7E;
+  BODYPART.6(52, L11, L12);
+  goto L1B7E;
+  BODYPART.6(49, L11, L12);
+  goto L1B7E;
+  BODYPART.6(48, L11, L12);
+  goto L1B7E;
+  BODYPART.6(55, L11, L12);
+  goto L1B7E;
+  BODYPART.6(47, L11, L12);
+  goto L1B7E;
+L1B6A:
+L1B7E:
+  goto L1B86;
+L1B80:
+  PASCALCO.2(129);
+L1B86:
+  G3 := G58;
+  G4 := 2;
+L1B8D:
+
+procedure BODYPART.12(params 4 words);  { locals 1 words, lex 2 }
+  if not ((G15 = 0)) then goto L0C06;
+  PASCALCO.8(adjust((16 + 1),1), @L5);
+  PASCALCO.6();
+  { left on stack: G130 }
+  { left on stack: 1 }
+  goto L0C0E;
+L0C06:
+  PASCALCO.2(2);
+  L5 := G73;
+L0C0E:
+  BODYPART.22(?, ?, ?, @L1^<4w>, L5);
+
+procedure BODYPART.13(params 1 words);  { locals 1 words, lex 2 }
+  L2 := L1^;
+  (L2+11)^ := G96;
+  if not ((G96 > 149)) then goto L0C3C;
+  PASCALCO.2(251);
+  goto L0C42;
+L0C3C:
+  G96 := (G96+1);
+L0C42:
+  @G185[L2^.f11]^ := 0;
+  G44 := 1;
+  (L2+16)^ := 1;
+
+procedure BODYPART.14(params 1 words);  { locals 1 words, lex 2 }
+  L2 := L1;
+  if not ((L2^.f8 = 3)) then goto L0C75;
+  BODYPART.6(50, L2^.f9, L2^.f10);
+  goto L0C7E;
+L0C75:
+  BODYPART.6(54, L2^.f9, L2^.f10);
+L0C7E:
+
+procedure BODYPART.15(params 0 words);  { locals 0 words, lex 2 }
+  if not ((G3 = G58)) then goto L04BA;
+  PASCALCO.20(1);
+  PASCALCO.20(132);
+L04BA:
+
+procedure BODYPART.16(params 2 words);  { locals 2 words, lex 2 }
+  L4 := L1;
+  if not (L4^) then goto L052D;
+  PASCALCO.20((L2+128));
+  L3 := ((L4^.f1-G9)-1);
+  if not (((L3 >= 0) and (L3 <= 127))) then goto L04EC;
+  PASCALCO.20(L3);
+  goto L052B;
+L04EC:
+  if not ((L4^.f2 = 0)) then goto L051A;
+  (L4+2)^ := G509;
+  if not ((G509 = 24)) then goto L0508;
+  PASCALCO.2(253);
+  goto L0510;
+L0508:
+  G509 := (G509+1);
+L0510:
+  @G510[L4^.f2]^ := L4^.f1;
+L051A:
+  L3 := -(L4^.f2);
+  PASCALCO.20(((248-L4^.f2)-L4^.f2));
+L052B:
+  goto L0551;
+L052D:
+  CSP2(G2, G9, 2);
+  if not ((L2 = 57)) then goto L0544;
+  L3 := (G9+4096);
+  { left on stack: (L4+1) }
+  { left on stack: 0 }
+  goto L0547;
+L0544:
+  L3 := G9;
+L0547:
+  (L4+1)^ := L3;
+  G9 := (G9+2);
+L0551:
+
+procedure BODYPART.17(params 1 words);  { locals 0 words, lex 2 }
+  BODYPART.8();
+  if not ((G3 <> G58)) then goto L056C;
+  PASCALCO.2(135);
+L056C:
+  BODYPART.16(33, L1);
+
+procedure BODYPART.18(params 1 words);  { locals 1 words, lex 2 }
+  CSP1(L1, 3);
+  L2 := L1^;
+  L2^ := 0;
+  (L2+1)^ := 28000;
+
+procedure BODYPART.19(params 1 words);  { locals 3 words, lex 2 }
+  L4 := L1;
+  L2 := L4^.f1;
+  L4^ := 1;
+  (L4+1)^ := G9;
+  (L4+2)^ := 0;
+L05AE:
+  if not ((L2 < 28000)) then goto L05DC;
+  if not ((L2 >= 4096)) then goto L05C8;
+  L2 := (L2-4096);
+  L3 := 57;
+  goto L05CB;
+L05C8:
+  L3 := 33;
+L05CB:
+  G9 := L2;
+  CSP2(@L2, 0, 2);
+  BODYPART.16(L3, L1);
+  { left on stack: G2 }
+  { left on stack: G9 }
+  goto L05AE;
+L05DC:
+  G9 := L4^.f1;
+
+procedure BODYPART.20(params 1 words);  { locals 1 words, lex 2 }
+  L2 := L1;
+  if not ((L2^ <> nil)) then goto L0750;
+  { left on stack: L2^.f2 }
+  goto L073F;
+  BODYPART.6(56, L2^.f3, L2^.f4);
+  goto L0750;
+  if not ((L2^.f3 <> 0)) then goto L0728;
+  PASCALCO.2(400);
+  goto L072B;
+L0728:
+  BODYPART.3(26);
+L072B:
+  goto L0750;
+  BODYPART.3(59);
+  goto L0750;
+  BODYPART.5(61, L2^^);
+  goto L0750;
+  BODYPART.3(63);
+  goto L0750;
+L073F:
+L0750:
+
+procedure BODYPART.21(params 1 words);  { locals 0 words, lex 2 }
+  if not (L1) then goto L0862;
+  CSP3(G2, (L1+2), (G2^[(L1+1)]+1));
+  G2^[L1] := 215;
+  G2^[(L1+1)] := 208;
+  { left on stack: G2 }
+  { left on stack: (L1+1) }
+  goto L0887;
+L0862:
+  CSP2(G2, (L1+1), (G2^[(L1+2)]+1));
+  G2^[L1] := 208;
+  G2^[((L1+G2^[(L1+1)])+2)] := 215;
+  { left on stack: G2 }
+  { left on stack: (L1+2) }
+L0887:
+
+procedure BODYPART.22(params 5 words);  { locals 10 words, lex 2 }
+  L14 := L1;
+  G3 := L14^.f6;
+  G4 := 1;
+  { left on stack: L14^.f8 }
+  goto L0949;
+  G6 := L14^.f9;
+  G7 := L14^.f10;
+  G5 := 0;
+  if not (G32) then goto L08C7;
+  if not ((G3 <> nil)) then goto L08C7;
+  if not (((L14^.f9 = 1) and (G3^.f1 = 6))) then goto L08C7;
+  BODYPART.9();
+L08C7:
+  goto L095A;
+  BODYPART.6(54, L14^.f9, L14^.f10);
+  G5 := 1;
+  G6 := 0;
+  goto L095A;
+  L15 := @G131[G24*4w];
+  if not ((L15^.f1 = 1)) then goto L08FA;
+  G5 := 0;
+  G6 := L15^.f2;
+  G7 := (L15^.f3+L14^.f9);
+  goto L0909;
+L08FA:
+  BODYPART.6(54, G77, L15^.f2);
+  G5 := 1;
+  G6 := L14^.f9;
+L0909:
+  if not (L14^.f10) then goto L091D;
+  BODYPART.9();
+  G5 := 2;
+  BODYPART.4(L14^.f11);
+  BODYPART.4(L14^.f12);
+L091D:
+  goto L095A;
+  if not ((L14^.f9 <> 1)) then goto L092E;
+  PASCALCO.2(150);
+  goto L0947;
+L092E:
+  if not (not (L14^.f17)) then goto L093A;
+  PASCALCO.2(103);
+  goto L0947;
+L093A:
+  G5 := 0;
+  G6 := (L14^.f10+1);
+  G7 := 1;
+L0947:
+  goto L095A;
+L0949:
+L095A:
+  if not ((G3 <> nil)) then goto L096F;
+  if not (((G3^.f1 <= 4) and (G3^ > 1))) then goto L096F;
+  BODYPART.9();
+  G5 := 3;
+L096F:
+  if not (not ((4 in (@L2^<4w> + 4)))) then goto L0993;
+  PASCALCO.2(59);
+  PASCALCO.14(@G110^<4w>, @G110^<4w>, 4, adjust((@L2^<4w> + 4),4));
+  { left on stack: G15 }
+L0993:
+  if not ((@G110^<4w> in 4)) then goto L0BCF;
+  { left on stack: G15 }
+  if not ((G15 = 15)) then goto L0A9E;
+L09A1:
+  move(@L6, @G3, 5 words);
+  if not ((L6 <> nil)) then goto L09BB;
+  if not ((L6^.f1 <> 5)) then goto L09BB;
+  PASCALCO.2(138);
+  L6 := nil;
+L09BB:
+  BODYPART.9();
+  PASCALCO.6();
+  BODYPART.11(?, @L2^<4w>, 4, adjust(([$0001,$0002] + 2),4));
+  BODYPART.8();
+  BODYPART.15();
+  if not ((G3 <> nil)) then goto L09E5;
+  if not ((G3^.f1 <> 0)) then goto L09E5;
+  PASCALCO.2(113);
+L09E5:
+  if not ((L6 <> nil)) then goto L0A89;
+  L14 := L6;
+  if not (PASCALCO.19(L14^.f2, G3, 0, 0)) then goto L0A33;
+  if not (((L14^.f2 <> nil) and not (PASCALCO.16(L6, 0, 0)))) then goto L0A31;
+  PASCALCO.9(L14^.f2, @L13, @L12);
+  if not (G51) then goto L0A1B;
+  BODYPART.4(L13);
+  BODYPART.4(L12);
+  BODYPART.3(8);
+L0A1B:
+  if not ((L13 <> 0)) then goto L0A31;
+  BODYPART.4(abs(L13));
+  if not ((L13 > 0)) then goto L0A2E;
+  BODYPART.3(21);
+  goto L0A31;
+L0A2E:
+  BODYPART.3(2);
+L0A31:
+  goto L0A39;
+L0A33:
+  PASCALCO.2(139);
+L0A39:
+  G3 := L14^.f3;
+  G4 := 1;
+  G5 := 1;
+  G6 := 0;
+  if not ((G3 <> nil)) then goto L0A89;
+  if not (L14^.f4) then goto L0A76;
+  if not ((L14^.f5 = 8)) then goto L0A6A;
+  G5 := 4;
+  if not ((PASCALCO.16(L6, 0, 0) and G51)) then goto L0A68;
+  BODYPART.3(27);
+  goto L0A68;
+L0A68:
+  goto L0A74;
+L0A6A:
+  G5 := 2;
+  BODYPART.6(64, L14^.f6, L14^.f5);
+L0A74:
+  goto L0A89;
+L0A76:
+  BODYPART.5(36, G3^);
+  if not (((G3^.f1 <= 4) and (G3^ > 1))) then goto L0A89;
+  G5 := 3;
+L0A89:
+  if not ((G15 <> 1)) then goto L09A1;
+  if not ((G15 = 16)) then goto L0A98;
+  PASCALCO.6();
+  goto L0A9C;
+L0A98:
+  PASCALCO.2(12);
+L0A9C:
+  goto L0BA9;
+L0A9E:
+  if not ((G15 = 18)) then goto L0B44;
+  if not ((G3 <> nil)) then goto L0AB7;
+  if not ((G3^.f1 <> 6)) then goto L0AB7;
+  PASCALCO.2(140);
+  G3 := nil;
+L0AB7:
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L0B3E;
+  if not ((G3 <> nil)) then goto L0B39;
+  PASCALCO.7(G3^.f2, @L11);
+  if not ((L11 = nil)) then goto L0ADB;
+  PASCALCO.2(152);
+  G3 := nil;
+  goto L0B39;
+L0ADB:
+  L14 := L11;
+  G3 := L14^.f6;
+  { left on stack: G5 }
+  goto L0AFF;
+  G7 := (G7+L14^.f9);
+  goto L0B10;
+  G6 := (G6+L14^.f9);
+  goto L0B10;
+  PASCALCO.2(400);
+  goto L0B10;
+L0AFF:
+L0B10:
+  if not (L14^.f10) then goto L0B24;
+  BODYPART.9();
+  G5 := 2;
+  BODYPART.4(L14^.f11);
+  BODYPART.4(L14^.f12);
+L0B24:
+  if not ((G3 <> nil)) then goto L0B39;
+  if not (((G3^.f1 <= 4) and (G3^ > 1))) then goto L0B39;
+  BODYPART.9();
+  G5 := 3;
+L0B39:
+  PASCALCO.6();
+  goto L0B42;
+L0B3E:
+  PASCALCO.2(2);
+L0B42:
+  goto L0BA9;
+L0B44:
+  if not ((G3 <> nil)) then goto L0BA6;
+  L14 := G3;
+  if not (((L14^.f1 = 2) or (L14^.f1 = 7))) then goto L0BA0;
+  BODYPART.8();
+  G4 := 1;
+  G5 := 1;
+  G6 := 0;
+  if not ((L14^.f1 = 2)) then goto L0B6E;
+  G3 := L14^.f2;
+  goto L0B8B;
+L0B6E:
+  G3 := L14^.f2;
+  if not ((G3 = nil)) then goto L0B7F;
+  PASCALCO.2(399);
+  goto L0B8B;
+L0B7F:
+  if not ((G3 = G59)) then goto L0B8B;
+  BODYPART.4(0);
+  G5 := 4;
+L0B8B:
+  if not ((G3 <> nil)) then goto L0B9E;
+  if not (((G3^.f1 <= 4) and (G3^ > 1))) then goto L0B9E;
+  G5 := 3;
+L0B9E:
+  goto L0BA6;
+L0BA0:
+  PASCALCO.2(141);
+L0BA6:
+  PASCALCO.6();
+L0BA9:
+  if not (not ((4 in (@G110^<4w> + 4)))) then goto L0BCD;
+  PASCALCO.2(6);
+  PASCALCO.14(@L2^<4w>, @L2^<4w>, 4, adjust((@G110^<4w> + 4),4));
+  { left on stack: G15 }
+L0BCD:
+  goto L0993;
+L0BCF:
+
+procedure BODYPART.23(params 5 words);  { locals 2 words, lex 2 }
+  if not ((L1^.f9 = 2)) then goto L126C;
+  L7 := 1;
+  L6 := L1^.f10;
+  if not ((G15 = 4)) then goto L1211;
+  PASCALCO.6();
+  goto L1220;
+L1211:
+  if not ((116 in 1)) then goto L121C;
+  L7 := 0;
+  { left on stack: L6 }
+  goto L1220;
+L121C:
+  PASCALCO.2(9);
+L1220:
+  if not (([$0490,$0200,$6F80] in 3)) then goto L123C;
+  BODYPART.11(L6, @L2^<4w>, 4, adjust((34 + 1),4));
+  BODYPART.8();
+L123C:
+  if not ((6 in 1)) then goto L1246;
+  BODYPART.28();
+  { left on stack: L6 }
+  goto L1259;
+L1246:
+  if not ((24 in 1)) then goto L1250;
+  BODYPART.29();
+  { left on stack: L6 }
+  goto L1259;
+L1250:
+  ROUTINE.1(?, ?, ?, @L2^<4w>, L7, L6);
+L1259:
+  if not (L7) then goto L126A;
+  if not ((G15 = 5)) then goto L1266;
+  PASCALCO.6();
+  goto L126A;
+L1266:
+  PASCALCO.2(4);
+L126A:
+  goto L126E;
+L126C:
+  BODYPART.30();
+L126E:
+
+procedure BODYPART.24(params 0 words);  { locals 19 words, lex 2 }
+  BODY1.1();
+  if not (G34) then goto L0183;
+  BODYPART.26();
+  goto L0185;
+L0183:
+  BODYPART.25();
+L0185:
+  BODY3.1();
+
+procedure BODYPART.25(params 0 words);  { locals 2 words, lex 3 }
+  if not (G49) then goto L0084;
+  FWRITELN(I4,3);
+  @I1,19[0]^ := CSP40();
+  if not ((@I1,19[0]^ < G89)) then goto L0028;
+  G89 := @I1,19[0]^;
+L0028:
+  if not ((I2,1 <> nil)) then goto L006B;
+  FWRITEBYTES(I4,3, I2,1, 8, 8);
+  FWRITESTRING(I4,3, ' [', 0);
+  FWRITEINT(I4,3, @I1,19[0]^, 5);
+  FWRITESTRING(I4,3, ' words]', 0);
+  FWRITELN(I4,3);
+L006B:
+  FWRITECHAR(I4,3, 60, 0);
+  FWRITEINT(I4,3, G92, 4);
+  FWRITECHAR(I4,3, 62, 0);
+L0084:
+  if not ((not (G32) or G45)) then goto L00F2;
+  I1,6 := @G131[G8*4w]^.f2;
+L0096:
+  if not ((I1,6 <> nil)) then goto L00F2;
+  L1 := I1,6;
+  L2 := L1^.f6;
+  BODYPART.6(50, L1^.f9, L1^.f10);
+  BODYPART.6(50, L1^.f9, (L1^.f10+300));
+  if not ((L2^.f2 = nil)) then goto L00C8;
+  BODYPART.4(-(1));
+  goto L00E6;
+L00C8:
+  if not ((L1^.f6 = G55)) then goto L00D4;
+  BODYPART.4(0);
+  goto L00E6;
+L00D4:
+  if not ((L2^.f2 = G59)) then goto L00E1;
+  BODYPART.4(-(2));
+  goto L00E6;
+L00E1:
+  BODYPART.4(L2^.f2^);
+L00E6:
+  BODYPART.6(77, 0, 3);
+  I1,6 := L1^.f7;
+  goto L0096;
+L00F2:
+  if not (I1,8) then goto L011C;
+  I1,6 := G63;
+L00FC:
+  if not ((I1,6 <> nil)) then goto L011C;
+  if not (I1,6^.f10) then goto L0113;
+  BODYPART.6(77, I1,6^.f9, 1);
+L0113:
+  I1,6 := I1,6^.f7;
+  goto L00FC;
+L011C:
+  STATEMEN.1(?, @I2,2^<4w>, 4, adjust((520 + 1),4));
+  if not (not ((@G102^<4w> in 4))) then goto L011C;
+  G11 := (G15 <> 3);
+  if not (not (G11)) then goto L0142;
+  PASCALCO.6();
+  { left on stack: G15 }
+L0142:
+  if not (G11) then goto L011C;
+
+procedure BODYPART.26(params 0 words);  { locals 0 words, lex 3 }
+  goto L0165;
+L015E:
+  BODYPART.25();
+  { stack tracking stopped: 'CSP 22' }
+  { CSP 22 }
+  { UJP $016A }
+  goto L016A;
+L0165:
+  { stack tracking stopped: 'CSP 21' }
+  { CSP 21 }
+  { UJP $015E (jtab-10) }
+  goto L015E;
+L016A:
+
+procedure BODYPART.27(params 1 words);  { locals 0 words, lex 2 }
+  if not ((L1 <= 127)) then goto L02AB;
+  PASCALCO.20(L1);
+  goto L02BF;
+L02AB:
+  PASCALCO.20((128+(L1 div 256)));
+  PASCALCO.20((L1 mod 256));
+L02BF:
+
+procedure BODYPART.28(params 0 words);  { locals 2 words, lex 3 }
+  L2 := G67;
+  if not (((G15 = 0) and I1,7)) then goto L0CD5;
+  PASCALCO.8(adjust((16 + 1),1), @L1);
+  if not ((L1^.f6 <> nil)) then goto L0CD3;
+  if not ((L1^.f6^.f1 = 7)) then goto L0CD3;
+  if not ((L1^.f6^.f2 = G59)) then goto L0CD3;
+  PASCALCO.6();
+  L2 := L1;
+  if not (not ((34 in 1))) then goto L0CCB;
+  PASCALCO.2(20);
+  { left on stack: G130 }
+  { left on stack: 1 }
+  { left on stack: G15 }
+L0CCB:
+  if not ((G15 = 1)) then goto L0CD3;
+  PASCALCO.6();
+L0CD3:
+  goto L0CDE;
+L0CD5:
+  if not (I1,7) then goto L0CDE;
+  PASCALCO.2(2);
+L0CDE:
+  if not ((I1,7 and (G15 <> 5))) then goto L0D7B;
+L0CE7:
+  BODYPART.14(L2);
+  BODYPART.12(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  if not ((G5 = 4)) then goto L0D00;
+  PASCALCO.2(103);
+L0D00:
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L0D64;
+  if not (PASCALCO.19(G12, G3, 0, 0)) then goto L0D17;
+  BODYPART.6(77, 0, 12);
+  goto L0D64;
+L0D17:
+  if not (PASCALCO.19(G61, G3, 0, 0)) then goto L0D27;
+  BODYPART.7(31, 3);
+  goto L0D64;
+L0D27:
+  if not (PASCALCO.19(G60, G3, 0, 0)) then goto L0D3B;
+  BODYPART.4(G3^);
+  BODYPART.7(30, 2);
+  goto L0D64;
+L0D3B:
+  if not (PASCALCO.19(G59, G3, 0, 0)) then goto L0D4C;
+  BODYPART.6(77, 0, 16);
+  goto L0D64;
+L0D4C:
+  if not (PASCALCO.16(G3, 0, 0)) then goto L0D60;
+  BODYPART.4(G3^.f8);
+  BODYPART.6(77, 0, 18);
+  goto L0D64;
+L0D60:
+  PASCALCO.2(125);
+L0D64:
+  if not (G47) then goto L0D6C;
+  BODYPART.5(30, 0);
+L0D6C:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0D78;
+  PASCALCO.6();
+L0D78:
+  if not (G11) then goto L0CE7;
+L0D7B:
+  if not ((I1,6 = 2)) then goto L0D92;
+  BODYPART.14(L2);
+  BODYPART.6(77, 0, 21);
+  if not (G47) then goto L0D92;
+  BODYPART.5(30, 0);
+L0D92:
+
+procedure BODYPART.29(params 0 words);  { locals 8 words, lex 3 }
+  L4 := G66;
+  if not (((G15 = 0) and I1,7)) then goto L0DEB;
+  PASCALCO.8(adjust((82 + 1),1), @L3);
+  if not ((L3^.f6 <> nil)) then goto L0DEB;
+  if not ((L3^.f6^.f1 = 7)) then goto L0DEB;
+  if not ((L3^.f6^.f2 = G59)) then goto L0DEB;
+  PASCALCO.6();
+  L4 := L3;
+  if not (not ((34 in 1))) then goto L0DE3;
+  PASCALCO.2(20);
+  { left on stack: G130 }
+  { left on stack: 1 }
+  { left on stack: G15 }
+L0DE3:
+  if not ((G15 = 1)) then goto L0DEB;
+  PASCALCO.6();
+L0DEB:
+  if not ((I1,7 and (G15 <> 5))) then goto L0F35;
+L0DF4:
+  BODYPART.14(L4);
+  BODYPART.11(?, @I1,2^<4w>, 4, adjust((38 + 1),4));
+  L1 := G3;
+  if not ((L1 <> nil)) then goto L0E30;
+  L8 := L1;
+  if not ((L8^.f1 > 3)) then goto L0E19;
+  BODYPART.9();
+  goto L0E30;
+L0E19:
+  BODYPART.8();
+  if not ((L8^.f1 = 3)) then goto L0E30;
+  BODYPART.4(PASCALCO.17(36, 0, 0));
+  BODYPART.4(0);
+  BODYPART.7(30, 4);
+L0E30:
+  if not ((G15 = 2)) then goto L0E5A;
+  PASCALCO.6();
+  BODYPART.11(?, @I1,2^<4w>, 4, adjust((38 + 1),4));
+  if not ((G3 <> nil)) then goto L0E53;
+  if not ((G3 <> G12)) then goto L0E53;
+  PASCALCO.2(20);
+L0E53:
+  BODYPART.8();
+  L2 := 0;
+  goto L0E5D;
+L0E5A:
+  L2 := 1;
+L0E5D:
+  if not ((L1 = G12)) then goto L0E6F;
+  if not (L2) then goto L0E68;
+  BODYPART.4(0);
+L0E68:
+  BODYPART.6(77, 0, 13);
+  goto L0F1E;
+L0E6F:
+  if not ((L1 = G61)) then goto L0EAB;
+  if not (L2) then goto L0E7B;
+  BODYPART.4(0);
+L0E7B:
+  if not ((G15 = 2)) then goto L0EA2;
+  PASCALCO.6();
+  BODYPART.11(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L0EA0;
+  if not ((G3 <> G12)) then goto L0EA0;
+  PASCALCO.2(125);
+L0EA0:
+  goto L0EA5;
+L0EA2:
+  BODYPART.4(0);
+L0EA5:
+  BODYPART.7(31, 4);
+  goto L0F1E;
+L0EAB:
+  if not (PASCALCO.19(L1, G60, 0, 0)) then goto L0EC1;
+  if not (L2) then goto L0EBB;
+  BODYPART.4(0);
+L0EBB:
+  BODYPART.7(30, 3);
+  goto L0F1E;
+L0EC1:
+  if not ((L1 = G59)) then goto L0ED4;
+  if not (L2) then goto L0ECD;
+  BODYPART.4(0);
+L0ECD:
+  BODYPART.6(77, 0, 17);
+  goto L0F1E;
+L0ED4:
+  if not (PASCALCO.16(L1, 0, 0)) then goto L0EE9;
+  if not (L2) then goto L0EE2;
+  BODYPART.4(0);
+L0EE2:
+  BODYPART.6(77, 0, 19);
+  goto L0F1E;
+L0EE9:
+  if not (PASCALCO.15(L1, 0, 0)) then goto L0F1A;
+  L5 := 0;
+  if not ((L1^.f2 <> nil)) then goto L0F0A;
+  PASCALCO.9(L1^.f2, @L6, @L5);
+  L5 := ((L5-L6)+1);
+L0F0A:
+  if not (L2) then goto L0F10;
+  BODYPART.4(L5);
+L0F10:
+  BODYPART.4(L5);
+  BODYPART.6(77, 0, 20);
+  goto L0F1E;
+L0F1A:
+  PASCALCO.2(125);
+L0F1E:
+  if not (G47) then goto L0F26;
+  BODYPART.5(30, 0);
+L0F26:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0F32;
+  PASCALCO.6();
+L0F32:
+  if not (G11) then goto L0DF4;
+L0F35:
+  if not ((I1,6 = 4)) then goto L0F4C;
+  BODYPART.14(L4);
+  BODYPART.6(77, 0, 22);
+  if not (G47) then goto L0F4C;
+  BODYPART.5(30, 0);
+L0F4C:
+
+procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
+  L8 := I1,1;
+  L2 := L8^.f7;
+  if not ((L8^.f9 = 1)) then goto L0F7B;
+  if not ((L8^.f13 <> 0)) then goto L0F7B;
+  PASCALCO.2(400);
+L0F7B:
+  if not ((G15 = 4)) then goto L1130;
+L0F80:
+  if not ((L2 = nil)) then goto L0F89;
+  PASCALCO.2(126);
+L0F89:
+  PASCALCO.6();
+  BODYPART.11(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  if not (((G3 <> nil) and (L2 <> nil))) then goto L1114;
+  L3 := L2^.f6;
+  if not (((L2^.f8 = 2) or (L3 <> nil))) then goto L1114;
+  if not ((L2^.f8 = 3)) then goto L10A7;
+  if not ((G3^.f1 <= 4)) then goto L1061;
+  L4 := ((G3 = G59) and (G4 = 0));
+  L5 := ((L3^ <> G3^) or (G4 <> 1));
+  BODYPART.8();
+  if not ((L3^.f1 = 4)) then goto L0FF7;
+  if not (L5) then goto L0FE5;
+  BODYPART.5(32, L3^);
+  goto L0FF5;
+L0FE5:
+  G9 := (G9-1);
+  if not ((L3^ > 127)) then goto L0FF5;
+  G9 := (G9-2);
+L0FF5:
+  goto L105F;
+L0FF7:
+  if not ((L3^.f1 = 3)) then goto L1024;
+  if not ((G3 = G12)) then goto L100D;
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  G3 := G60;
+L100D:
+  if not (L5) then goto L101D;
+  BODYPART.4(L3^);
+  BODYPART.4(0);
+  BODYPART.7(30, 4);
+  goto L1022;
+L101D:
+  G9 := (G9-1);
+L1022:
+  goto L105F;
+L1024:
+  if not (((L3^.f1 = 1) and G51)) then goto L103A;
+  BODYPART.4(L3^.f4);
+  BODYPART.4(L3^.f3);
+  BODYPART.3(8);
+  goto L105F;
+L103A:
+  if not (((G3 = G12) and PASCALCO.19(L3, G61, 0, 0))) then goto L1051;
+  BODYPART.3(10);
+  G3 := G61;
+  goto L105F;
+L1051:
+  if not ((L4 and PASCALCO.16(L3, 0, 0))) then goto L105F;
+  G3 := G54;
+L105F:
+  goto L10A5;
+L1061:
+  L4 := (PASCALCO.16(G3, 0, 0) and (G4 = 0));
+  BODYPART.9();
+  if not ((L4 and PASCALCO.15(L3, 0, 0))) then goto L10A5;
+  if not (not (L3^.f7)) then goto L10A5;
+  BODYPART.21(G88);
+  if not ((L3^.f2 <> nil)) then goto L10A2;
+  PASCALCO.9(L3^.f2, @L7, @L6);
+  if not ((((L6-L7)+1) <> G3^.f8)) then goto L10A2;
+  PASCALCO.2(142);
+L10A2:
+  G3 := L3;
+L10A5:
+  goto L1104;
+L10A7:
+  if not ((G4 = 1)) then goto L10FE;
+  if not ((G5 = 4)) then goto L10B5;
+  PASCALCO.2(103);
+L10B5:
+  BODYPART.9();
+  if not ((L3 <> nil)) then goto L10FC;
+  L8 := L3;
+  { left on stack: L8^.f1 }
+  goto L10EE;
+  if not ((G3^ <> L3^)) then goto L10D0;
+  PASCALCO.2(142);
+L10D0:
+  goto L10FC;
+  if not (L8^.f4) then goto L10EC;
+  if not (L8^.f7) then goto L10EC;
+  if not (((L8^.f8 > G3^.f8) and G39)) then goto L10EC;
+  PASCALCO.2(175);
+L10EC:
+  goto L10FC;
+L10EE:
+L10FC:
+  goto L1104;
+L10FE:
+  PASCALCO.2(154);
+L1104:
+  if not (not (PASCALCO.19(L3, G3, 0, 0))) then goto L1114;
+  PASCALCO.2(142);
+L1114:
+  if not ((L2 <> nil)) then goto L111D;
+  L2 := L2^.f7;
+L111D:
+  if not ((G15 <> 1)) then goto L0F80;
+  if not ((G15 = 5)) then goto L112C;
+  PASCALCO.6();
+  goto L1130;
+L112C:
+  PASCALCO.2(4);
+L1130:
+  if not ((L2 <> nil)) then goto L1139;
+  PASCALCO.2(126);
+L1139:
+  L8 := I1,1;
+  if not ((L8^.f9 = 1)) then goto L11C5;
+  if not ((L8^.f8 = 6)) then goto L1152;
+  BODYPART.4(0);
+  BODYPART.4(0);
+L1152:
+  if not ((L8^.f11 = 0)) then goto L115E;
+  BODYPART.13(@I1,1);
+L115E:
+  if not (G32) then goto L117D;
+  if not (L8^.f18) then goto L1179;
+  BODYPART.6(77, 0, L8^.f11);
+  BODYPART.2(5, L8^.f12, (G9-2));
+  goto L117B;
+L1179:
+  goto L117D;
+L117B:
+  goto L11C3;
+L117D:
+  if not ((L8^.f12 <> G13)) then goto L118F;
+  BODYPART.6(77, L8^.f12, L8^.f11);
+  goto L11C3;
+L118F:
+  if not ((L8^.f10 = 0)) then goto L119E;
+  BODYPART.5(66, L8^.f11);
+  goto L11C3;
+L119E:
+  if not ((L8^.f10 = G77)) then goto L11AE;
+  BODYPART.5(78, L8^.f11);
+  goto L11C3;
+L11AE:
+  if not ((L8^.f10 = 1)) then goto L11BD;
+  BODYPART.5(79, L8^.f11);
+  goto L11C3;
+L11BD:
+  BODYPART.5(46, L8^.f11);
+L11C3:
+  goto L11D8;
+L11C5:
+  if not (((L8^.f10 <> 21) and (L8^.f10 <> 22))) then goto L11D8;
+  BODYPART.5(30, L8^.f10);
+L11D8:
+  G3 := I1,1^.f6;
+
+procedure BODYPART.31(params 2 words);  { locals 0 words, lex 3 }
+  if not ((((G3 = G61) or (L2^ = G61)) or L1)) then goto L12A1;
+  if not ((G3 = G12)) then goto L1294;
+  BODYPART.3(10);
+  G3 := G61;
+L1294:
+  if not ((L2^ = G12)) then goto L12A1;
+  BODYPART.3(9);
+  L2^ := G61;
+L12A1:
+
+procedure BODYPART.32(params 1 words);  { locals 0 words, lex 3 }
+  if not (((L1^^.f1 = 3) or (G3^.f1 = 3))) then goto L12DD;
+  if not ((G3 = G12)) then goto L12CC;
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  G3 := G60;
+  goto L12DD;
+L12CC:
+  if not ((L1^ = G12)) then goto L12DD;
+  BODYPART.4(14);
+  BODYPART.7(30, 4);
+  L1^ := G60;
+L12DD:
+
+procedure BODYPART.33(params 4 words);  { locals 7 words, lex 3 }
+  L11 := 0;
+  if not ((G16 and (96 in 1))) then goto L17B5;
+  L11 := (G16 = 6);
+  PASCALCO.6();
+  { left on stack: (G15 = 40) }
+L17B5:
+  BODYPART.34(?, @L1^<4w>, 4, adjust(([$0100,$0000,$0000] + 3),4));
+  if not (L11) then goto L17FA;
+  BODYPART.8();
+  if not ((G3 = G12)) then goto L17D7;
+  BODYPART.3(17);
+  goto L17FA;
+L17D7:
+  if not ((G3 = G61)) then goto L17E2;
+  BODYPART.3(18);
+  goto L17FA;
+L17E2:
+  if not ((G3^.f1 = 3)) then goto L17F1;
+  BODYPART.4(6);
+  BODYPART.7(30, 4);
+  goto L17FA;
+L17F1:
+  PASCALCO.2(134);
+  G3 := nil;
+L17FA:
+  if not ((G15 = 40)) then goto L190F;
+  BODYPART.8();
+  move(@L5, @G3, 5 words);
+  L10 := G16;
+  PASCALCO.6();
+  BODYPART.34(?, @L1^<4w>, 4, adjust(([$0100,$0000,$0000] + 3),4));
+  BODYPART.8();
+  if not (((L5 <> nil) and (G3 <> nil))) then goto L190A;
+  { left on stack: L10 }
+  goto L18FB;
+  BODYPART.31(@L5, 0);
+  BODYPART.32(@L5);
+  if not (((L5 = G12) and (G3 = G12))) then goto L1845;
+  BODYPART.3(2);
+  goto L1885;
+L1845:
+  if not (((L5 = G61) and (G3 = G61))) then goto L1855;
+  BODYPART.3(3);
+  goto L1885;
+L1855:
+  if not (((G3^.f1 = 3) and (L5^.f1 = 3))) then goto L1869;
+  BODYPART.4(2);
+  BODYPART.7(30, 4);
+  goto L1885;
+L1869:
+  if not (((L5^.f1 = 4) and PASCALCO.19(L5, G3, 0, 0))) then goto L187C;
+  BODYPART.3(28);
+  goto L1885;
+L187C:
+  PASCALCO.2(134);
+  G3 := nil;
+L1885:
+  goto L1908;
+  BODYPART.31(@L5, 0);
+  BODYPART.32(@L5);
+  if not (((L5 = G12) and (G3 = G12))) then goto L189E;
+  BODYPART.3(21);
+  goto L18DE;
+L189E:
+  if not (((L5 = G61) and (G3 = G61))) then goto L18AE;
+  BODYPART.3(22);
+  goto L18DE;
+L18AE:
+  if not (((G3^.f1 = 3) and (L5^.f1 = 3))) then goto L18C2;
+  BODYPART.4(4);
+  BODYPART.7(30, 4);
+  goto L18DE;
+L18C2:
+  if not (((L5^.f1 = 4) and PASCALCO.19(L5, G3, 0, 0))) then goto L18D5;
+  BODYPART.3(5);
+  goto L18DE;
+L18D5:
+  PASCALCO.2(134);
+  G3 := nil;
+L18DE:
+  goto L1908;
+  if not (((L5 = G58) and (G3 = G58))) then goto L18F0;
+  BODYPART.3(13);
+  goto L18F9;
+L18F0:
+  PASCALCO.2(134);
+  G3 := nil;
+L18F9:
+  goto L1908;
+L18FB:
+L1908:
+  goto L190D;
+L190A:
+  G3 := nil;
+L190D:
+  goto L17FA;
+L190F:
+
+procedure BODYPART.34(params 4 words);  { locals 7 words, lex 4 }
+  BODYPART.35(?, @L1^<4w>, 4, adjust(([$0080,$0000,$0000] + 3),4));
+L165E:
+  if not ((G15 = 39)) then goto L1789;
+  BODYPART.8();
+  move(@L5, @G3, 5 words);
+  L11 := G16;
+  PASCALCO.6();
+  BODYPART.35(?, @L1^<4w>, 4, adjust(([$0080,$0000,$0000] + 3),4));
+  BODYPART.8();
+  if not (((L5 <> nil) and (G3 <> nil))) then goto L1784;
+  { left on stack: L11 }
+  goto L1770;
+  BODYPART.31(@L5, 0);
+  BODYPART.32(@L5);
+  if not (((L5 = G12) and (G3 = G12))) then goto L16A9;
+  BODYPART.3(15);
+  goto L16E9;
+L16A9:
+  if not (((L5 = G61) and (G3 = G61))) then goto L16B9;
+  BODYPART.3(16);
+  goto L16E9;
+L16B9:
+  if not (((G3^.f1 = 3) and (L5^.f1 = 3))) then goto L16CD;
+  BODYPART.4(8);
+  BODYPART.7(30, 4);
+  goto L16E9;
+L16CD:
+  if not (((L5^.f1 = 4) and PASCALCO.19(L5, G3, 0, 0))) then goto L16E0;
+  BODYPART.3(12);
+  goto L16E9;
+L16E0:
+  PASCALCO.2(134);
+  G3 := nil;
+L16E9:
+  goto L1782;
+  BODYPART.31(@L5, 1);
+  if not (((L5 = G61) and (G3 = G61))) then goto L1700;
+  BODYPART.3(7);
+  goto L1709;
+L1700:
+  PASCALCO.2(134);
+  G3 := nil;
+L1709:
+  goto L1782;
+  BODYPART.32(@L5);
+  if not (((L5 = G12) and (G3 = G12))) then goto L171D;
+  BODYPART.3(6);
+  goto L173A;
+L171D:
+  if not (((L5^.f1 = 3) and (G3^.f1 = 3))) then goto L1731;
+  BODYPART.4(10);
+  BODYPART.7(30, 4);
+  goto L173A;
+L1731:
+  PASCALCO.2(134);
+  G3 := nil;
+L173A:
+  goto L1782;
+  if not (((L5 = G12) and (G3 = G12))) then goto L174A;
+  BODYPART.3(14);
+  goto L1753;
+L174A:
+  PASCALCO.2(134);
+  G3 := nil;
+L1753:
+  goto L1782;
+  if not (((L5 = G58) and (G3 = G58))) then goto L1765;
+  BODYPART.3(4);
+  goto L176E;
+L1765:
+  PASCALCO.2(134);
+  G3 := nil;
+L176E:
+  goto L1782;
+L1770:
+L1782:
+  goto L1787;
+L1784:
+  G3 := nil;
+L1787:
+  goto L165E;
+L1789:
+
+procedure BODYPART.35(params 4 words);  { locals 18 words, lex 5 }
+  if not (not ((@G106^<4w> in 4))) then goto L130B;
+  PASCALCO.2(58);
+  PASCALCO.14(G15, @L1^<4w>, 4, adjust((@G106^<4w> + 4),4));
+  G3 := nil;
+L130B:
+  if not ((@G106^<4w> in 4)) then goto L162C;
+  { left on stack: G15 }
+  { left on stack: G15 }
+  goto L15A2;
+  PASCALCO.8(adjust(1,1), @L5);
+  PASCALCO.6();
+  if not ((L5^.f8 = 6)) then goto L1336;
+  BODYPART.23(?, ?, 94, @L1^<4w>, L5);
+  G4 := 2;
+  goto L1359;
+L1336:
+  if not ((L5^.f8 = 1)) then goto L1352;
+  L22 := L5;
+  G3 := L22^.f6;
+  G4 := 0;
+  move(@G5, (L22+9), 1 words);
+  goto L1359;
+L1352:
+  BODYPART.22(?, ?, ?, @L1^<4w>, L5);
+L1359:
+  if not ((G3 <> nil)) then goto L136D;
+  L22 := G3;
+  if not ((L22^.f1 = 1)) then goto L136D;
+  G3 := L22^.f2;
+L136D:
+  goto L160C;
+  G3 := G12;
+  G4 := 0;
+  move(@G5, @G23, 1 words);
+  PASCALCO.6();
+  goto L160C;
+  G3 := G61;
+  G4 := 0;
+  move(@G5, @G23, 1 words);
+  PASCALCO.6();
+  goto L160C;
+  if not ((G22 = 1)) then goto L139E;
+  G3 := G59;
+  goto L13B1;
+L139E:
+  CSP1(@L9, 9);
+  move(L9, G54, 9 words);
+  (L9+8)^ := G22;
+  G3 := L9;
+L13B1:
+  G4 := 0;
+  move(@G5, @G23, 1 words);
+  PASCALCO.6();
+  goto L160C;
+  CSP1(@L9, 2);
+  move(L9, G60, 9 words);
+  L9^ := PASCALCO.17(G22, 0, 0);
+  G3 := L9;
+  G4 := 0;
+  move(@G5, @G23, 1 words);
+  PASCALCO.6();
+  goto L160C;
+  PASCALCO.6();
+  BODYPART.11(?, @L1^<4w>, 4, adjust((32 + 1),4));
+  if not ((G15 = 5)) then goto L13FC;
+  PASCALCO.6();
+  goto L1400;
+L13FC:
+  PASCALCO.2(4);
+L1400:
+  goto L160C;
+  PASCALCO.6();
+  BODYPART.35(?, ?, ?, @L1^<4w>);
+  if not (((G4 = 0) and (G3 = G58))) then goto L141B;
+  G5 := not (G5);
+  goto L1434;
+L141B:
+  BODYPART.8();
+  BODYPART.3(19);
+  if not ((G3 <> nil)) then goto L1434;
+  if not ((G3 <> G58)) then goto L1434;
+  PASCALCO.2(135);
+  G3 := nil;
+L1434:
+  goto L160C;
+  PASCALCO.6();
+  @L14^ := adjust(0,8)  {8 words};
+  L8 := 0;
+  CSP1(@L9, 3);
+  L22 := L9;
+  (L22+2)^ := nil;
+  L22^ := 0;
+  (L22+1)^ := 4;
+  if not ((G15 = 16)) then goto L146B;
+  G3 := L9;
+  G4 := 0;
+  PASCALCO.6();
+  goto L1559;
+L146B:
+  BODYPART.11(?, @L1^<4w>, 4, adjust(([$0001,$0006] + 2),4));
+  if not ((G3 <> nil)) then goto L153C;
+  if not ((G3^.f1 <> 0)) then goto L1492;
+  PASCALCO.2(136);
+  G3 := nil;
+  goto L153C;
+L1492:
+  if not (PASCALCO.19(L9^.f2, G3, 0, 0)) then goto L1536;
+  L7 := 0;
+  L10 := 23;
+  if not (((G4 = 0) and (G5 <= 127))) then goto L14B4;
+  L7 := 1;
+  L12 := G5;
+  L13 := L12;
+L14B4:
+  L11 := G9;
+  BODYPART.8();
+  BODYPART.15();
+  if not ((G15 = 2)) then goto L1507;
+  PASCALCO.6();
+  L10 := 20;
+  BODYPART.11(?, @L1^<4w>, 4, adjust(([$0001,$0002] + 2),4));
+  if not (PASCALCO.19(L9^.f2, G3, 0, 0)) then goto L14E4;
+  goto L14ED;
+L14E4:
+  PASCALCO.2(137);
+  G3 := nil;
+L14ED:
+  if not (L7) then goto L1505;
+  if not (((G4 = 0) and (G5 <= 127))) then goto L14FE;
+  L13 := G5;
+  goto L1503;
+L14FE:
+  BODYPART.8();
+  L7 := 0;
+L1503:
+  goto L1507;
+L1505:
+  BODYPART.8();
+L1507:
+  if not (L7) then goto L151E;
+  G9 := L11;
+  @L14^<8w>^ := adjust((8 + [L12..L13]),8)  {8 words};
+  { left on stack: @L14 }
+  goto L152C;
+L151E:
+  BODYPART.3(L10);
+  if not (L8) then goto L1529;
+  BODYPART.3(28);
+  goto L152C;
+L1529:
+  L8 := 1;
+L152C:
+  (L9+2)^ := G3;
+  G3 := L9;
+  goto L153C;
+L1536:
+  PASCALCO.2(137);
+L153C:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L1548;
+  PASCALCO.6();
+L1548:
+  if not (G11) then goto L146B;
+  if not ((G15 = 16)) then goto L1555;
+  PASCALCO.6();
+  goto L1559;
+L1555:
+  PASCALCO.2(12);
+L1559:
+  if not (L8) then goto L1588;
+  if not ((8 <> 0)) then goto L1583;
+  @L14^<8w>^ := adjust(8,8)  {8 words};
+  G87^ := 1;
+  G5 := G87;
+  G4 := 0;
+  BODYPART.8();
+  BODYPART.3(28);
+  { left on stack: @L14^<8w> }
+  { left on stack: (G87+1) }
+L1583:
+  G4 := 2;
+  goto L15A0;
+L1588:
+  @L14^<8w>^ := adjust(8,8)  {8 words};
+  G87^ := 1;
+  G5 := G87;
+  G4 := 0;
+  { left on stack: (G87+1) }
+L15A0:
+  goto L160C;
+L15A2:
+L160C:
+  if not (not ((@L1^<4w> in 4))) then goto L162A;
+  PASCALCO.2(6);
+  PASCALCO.14(G15, @L1^<4w>, 4, adjust((@G106^<4w> + 4),4));
+L162A:
+  goto L130B;
+L162C:
+
+procedure BODYPART.36(params 2 words);  { locals 2 words, lex 3 }
+  if not ((L1^.f2 <> nil)) then goto L1947;
+  PASCALCO.9(L1^.f2, @L4, @L3);
+  if not ((((L3-L4)+1) <> L2^^.f8)) then goto L1947;
+  PASCALCO.2(129);
+L1947:
+  L2^ := L1;
+
+procedure BODYPART.37(params 0 words);  { locals 0 words, lex 2 }
+  goto L1BAF;
+L1BA8:
+  BODYPART.24();
+  { stack tracking stopped: 'CSP 22' }
+  { CSP 22 }
+  { UJP $1BB4 }
+  goto L1BB4;
+L1BAF:
+  { stack tracking stopped: 'CSP 21' }
+  { CSP 21 }
+  { UJP $1BA8 (jtab-10) }
+  goto L1BA8;
+L1BB4:
+
+======================================================================
+SEGMENT 10 ROUTINE
+======================================================================
+
+procedure ROUTINE.1(params 6 words);  { locals 12 words, lex 2 }
+  4^ := adjust((32 + 1),4)  {4 words};
+  4^ := adjust((2 + 1),4)  {4 words};
+  4^ := adjust((@L15^<4w> + 4),4)  {4 words};
+  if not (not (([$0F7D,$88EC,$F000] in 3))) then goto L0AAB;
+  ROUTINE.17();
+  { left on stack: @L11 }
+  { left on stack: @L3^<4w> }
+  { left on stack: @L15 }
+  { left on stack: @L3^<4w> }
+  { left on stack: @L7 }
+  { left on stack: @L11^<4w> }
+  { left on stack: L1 }
+  goto L0B26;
+L0AAB:
+  { left on stack: L1 }
+  goto L0ADE;
+  ROUTINE.5();
+  goto L0B26;
+  ROUTINE.8();
+  goto L0B26;
+  ROUTINE.9();
+  goto L0B26;
+  ROUTINE.10();
+  goto L0B26;
+  ROUTINE.6();
+  goto L0B26;
+  ROUTINE.7();
+  goto L0B26;
+  ROUTINE.12();
+  goto L0B26;
+  ROUTINE.13();
+  goto L0B26;
+  ROUTINE.14();
+  goto L0B26;
+  ROUTINE.15();
+  goto L0B26;
+  ROUTINE.16();
+  goto L0B26;
+  ROUTINE.11();
+  goto L0B26;
+L0ADE:
+L0B26:
+
+procedure ROUTINE.2(params 0 words);  { locals 0 words, lex 3 }
+  if not ((G15 = 1)) then goto L000A;
+  PASCALCO.6();
+  goto L000E;
+L000A:
+  PASCALCO.2(20);
+L000E:
+
+procedure ROUTINE.3(params 0 words);  { locals 0 words, lex 3 }
+  if not ((G3 <> G12)) then goto L0023;
+  PASCALCO.2(125);
+L0023:
+
+procedure ROUTINE.4(params 5 words);  { locals 1 words, lex 3 }
+  BODYPART.11(?, ?, ?, @L2^<4w>);
+  if not ((((G4 = 0) and (G3 = G59)) or PASCALCO.16(G3, 0, 0))) then goto L0092;
+  if not ((G4 = 1)) then goto L0052;
+  BODYPART.9();
+  goto L0090;
+L0052:
+  if not (L1) then goto L005B;
+  PASCALCO.2(154);
+L005B:
+  if not ((G4 = 0)) then goto L0090;
+  if not ((G3 = G59)) then goto L008D;
+  L6 := G87;
+  L6^ := 2;
+  (L6+1)^ := 1;
+  (L6+2)^[(1-1)] := G5;
+  G5 := G87;
+  CSP1(@G3, 9);
+  move(G3, G54, 9 words);
+  (G3+8)^ := 1;
+L008D:
+  BODYPART.9();
+L0090:
+  goto L009F;
+L0092:
+  if not ((G3 <> nil)) then goto L009B;
+  PASCALCO.2(125);
+L009B:
+  G3 := G54;
+L009F:
+
+procedure ROUTINE.5(params 0 words);  { locals 10 words, lex 3 }
+  BODYPART.12(?, ?, ?, @I1,7^<4w>);
+  BODYPART.9();
+  L2 := nil;
+  L5 := 0;
+  L7 := 0;
+  if not ((G3 <> nil)) then goto L00EC;
+  L9 := G3;
+  if not ((L9^.f1 = 2)) then goto L00E8;
+  if not ((L9^.f2 <> nil)) then goto L00E6;
+  L10 := L9^.f2;
+  L7 := L10^;
+  if not ((L10^.f1 = 6)) then goto L00E6;
+  L2 := L10^.f3;
+L00E6:
+  goto L00EC;
+L00E8:
+  PASCALCO.2(116);
+L00EC:
+  if not ((G15 = 1)) then goto L0179;
+  PASCALCO.6();
+  PASCALCO.18(?, ?, ?, @I1,7^<4w>, @L1, @L8);
+  L5 := (L5+1);
+  if not ((L2 = nil)) then goto L0112;
+  PASCALCO.2(158);
+  goto L0177;
+L0112:
+  if not ((L2^.f1 <> 8)) then goto L0120;
+  PASCALCO.2(162);
+  goto L0177;
+L0120:
+  if not ((L2^.f2 <> nil)) then goto L0177;
+  if not ((PASCALCO.16(L1, 0, 0) or (L1 = G61))) then goto L013B;
+  PASCALCO.2(159);
+  goto L0177;
+L013B:
+  if not (PASCALCO.19(L2^.f2^.f6, L1, 0, 0)) then goto L0173;
+  L1 := L2^.f3;
+L014A:
+  if not ((L1 <> nil)) then goto L016A;
+  L9 := L1;
+  if not ((L9^.f4 = L8)) then goto L0164;
+  L7 := L9^;
+  L2 := L9^.f2;
+  goto L0177;
+  goto L0168;
+L0164:
+  L1 := L9^.f3;
+L0168:
+  goto L014A;
+L016A:
+  L7 := L2^;
+  L2 := nil;
+  goto L0177;
+L0173:
+  PASCALCO.2(116);
+L0177:
+  goto L00EC;
+L0179:
+  BODYPART.4(L7);
+  BODYPART.5(30, 1);
+
+procedure ROUTINE.6(params 0 words);  { locals 0 words, lex 3 }
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.10();
+  ROUTINE.2();
+  if not ((I1,1 = 27)) then goto L01B5;
+  BODYPART.11(?, ?, ?, @I1,15^<4w>);
+  BODYPART.8();
+  goto L01C0;
+L01B5:
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.10();
+L01C0:
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  if not ((I1,1 = 27)) then goto L01DB;
+  BODYPART.5(30, 10);
+  goto L01EE;
+L01DB:
+  if not ((I1,1 = 21)) then goto L01E9;
+  BODYPART.5(30, 2);
+  goto L01EE;
+L01E9:
+  BODYPART.5(30, 3);
+L01EE:
+
+procedure ROUTINE.7(params 0 words);  { locals 2 words, lex 3 }
+  if not ((G15 = 0)) then goto L020D;
+  PASCALCO.8(adjust(1,1), @L1);
+  PASCALCO.6();
+  { left on stack: 96 }
+  goto L021E;
+L020D:
+  if not ((G15 = 33)) then goto L021B;
+  L1 := G65;
+  PASCALCO.6();
+  goto L021E;
+L021B:
+  L1 := nil;
+L021E:
+  if not ((L1 <> nil)) then goto L0260;
+  L2 := L1;
+  if not ((L2^.f9 = 1)) then goto L025A;
+  if not ((L2^.f11 = 0)) then goto L0239;
+  BODYPART.13(@L1);
+L0239:
+  BODYPART.4(L2^.f12);
+  BODYPART.4(L2^.f11);
+  if not (G32) then goto L0258;
+  if not (not (G41)) then goto L0258;
+  BODYPART.2(5, L2^.f12, (G9-2));
+L0258:
+  goto L025E;
+L025A:
+  PASCALCO.2(125);
+L025E:
+  goto L0264;
+L0260:
+  PASCALCO.2(125);
+L0264:
+  BODYPART.5(30, 4);
+
+procedure ROUTINE.8(params 0 words);  { locals 0 words, lex 3 }
+  ROUTINE.3();
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.10();
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,7^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+  if not ((G15 = 1)) then goto L02B6;
+  PASCALCO.6();
+  if not ((G15 = 1)) then goto L02A7;
+  BODYPART.4(0);
+  goto L02B4;
+L02A7:
+  BODYPART.11(?, ?, ?, @I1,7^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+L02B4:
+  goto L02BA;
+L02B6:
+  BODYPART.4(0);
+L02BA:
+  if not ((G15 = 1)) then goto L02D1;
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+  goto L02D5;
+L02D1:
+  BODYPART.4(0);
+L02D5:
+  if not ((I1,1 = 13)) then goto L02E3;
+  BODYPART.5(30, 5);
+  goto L02E8;
+L02E3:
+  BODYPART.5(30, 6);
+L02E8:
+
+procedure ROUTINE.9(params 0 words);  { locals 2 words, lex 3 }
+  L2 := 0;
+  L1 := G10;
+  G10 := ((G10+(255 div 2))+1);
+  BODYPART.4(0);
+  BODYPART.6(56, G77, L1);
+  BODYPART.6(50, G77, L1);
+L0317:
+  ROUTINE.4(?, ?, ?, @I1,7^<4w>, 0);
+  L2 := (L2+G3^.f8);
+  if not ((L2 < 255)) then goto L0333;
+  BODYPART.4(L2);
+  goto L0339;
+L0333:
+  BODYPART.4(255);
+L0339:
+  BODYPART.6(77, 0, 23);
+  BODYPART.6(50, G77, L1);
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0352;
+  PASCALCO.6();
+L0352:
+  if not (G11) then goto L0317;
+  if not ((L2 < 255)) then goto L0367;
+  G10 := ((L1+(L2 div 2))+1);
+  goto L036C;
+L0367:
+  L2 := 255;
+L036C:
+  if not ((G10 > G25)) then goto L0375;
+  G25 := G10;
+L0375:
+  G10 := L1;
+  CSP1(@G3, 9);
+  move(G3, G54, 9 words);
+  (G3+8)^ := L2;
+
+procedure ROUTINE.10(params 0 words);  { locals 2 words, lex 3 }
+  if not ((I1,1 = 19)) then goto L03AB;
+  L1 := G10;
+  G10 := ((G10+(255 div 2))+1);
+L03AB:
+  if not ((I1,1 <> 43)) then goto L03D1;
+  ROUTINE.4(?, ?, ?, @I1,15^<4w>, (I1,1 = 18));
+  if not ((I1,1 = 19)) then goto L03CF;
+  L2 := G3;
+  BODYPART.6(50, G77, L1);
+L03CF:
+  ROUTINE.2();
+L03D1:
+  BODYPART.11(?, ?, ?, @I1,15^<4w>);
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L03E3;
+  ROUTINE.3();
+L03E3:
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L03F7;
+  ROUTINE.3();
+L03F7:
+  if not ((I1,1 = 19)) then goto L0430;
+  BODYPART.6(77, 0, 25);
+  BODYPART.6(50, G77, L1);
+  if not ((L2^.f8 < 255)) then goto L041F;
+  G10 := ((L1+(L2^.f8 div 2))+1);
+L041F:
+  if not ((G10 > G25)) then goto L0428;
+  G25 := G10;
+L0428:
+  G10 := L1;
+  G3 := L2;
+  goto L0445;
+L0430:
+  if not ((I1,1 = 43)) then goto L043F;
+  BODYPART.6(77, 0, 29);
+  goto L0445;
+L043F:
+  BODYPART.6(77, 0, 26);
+L0445:
+
+procedure ROUTINE.11(params 0 words);  { locals 0 words, lex 3 }
+  if not (PASCALCO.19(G60, G3, 0, 0)) then goto L045E;
+  goto L0476;
+L045E:
+  if not ((G3 = G12)) then goto L0472;
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  G3 := G60;
+  goto L0476;
+L0472:
+  PASCALCO.2(125);
+L0476:
+  ROUTINE.2();
+  ROUTINE.4(?, ?, ?, @I1,11^<4w>, 1);
+  if not (PASCALCO.16(G3, 0, 0)) then goto L0499;
+  BODYPART.4(G3^.f8);
+  BODYPART.4(12);
+  BODYPART.7(30, 4);
+  goto L049D;
+L0499:
+  PASCALCO.2(116);
+L049D:
+
+procedure ROUTINE.12(params 0 words);  { locals 0 words, lex 3 }
+  BODYPART.12(?, ?, ?, @I1,7^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L04C4;
+  if not ((G3^.f1 <> 7)) then goto L04C4;
+  PASCALCO.2(125);
+L04C4:
+  if not ((G15 = 1)) then goto L0540;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L053A;
+  if not ((@G17 = @'NORMAL  ')) then goto L04E9;
+  BODYPART.4(0);
+  goto L0535;
+L04E9:
+  if not ((@G17 = @'LOCK    ')) then goto L0501;
+  BODYPART.4(1);
+  goto L0535;
+L0501:
+  if not ((@G17 = @'PURGE   ')) then goto L0519;
+  BODYPART.4(2);
+  goto L0535;
+L0519:
+  if not ((@G17 = @'CRUNCH  ')) then goto L0531;
+  BODYPART.4(3);
+  goto L0535;
+L0531:
+  PASCALCO.2(2);
+L0535:
+  PASCALCO.6();
+  goto L053E;
+L053A:
+  PASCALCO.2(2);
+L053E:
+  goto L0544;
+L0540:
+  BODYPART.4(0);
+L0544:
+  BODYPART.6(77, 0, 6);
+  if not (G47) then goto L0553;
+  BODYPART.5(30, 0);
+L0553:
+
+procedure ROUTINE.13(params 0 words);  { locals 0 words, lex 3 }
+  BODYPART.12(?, ?, ?, @I1,7^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L0588;
+  if not ((G3^.f1 <> 7)) then goto L057C;
+  PASCALCO.2(125);
+  goto L0588;
+L057C:
+  if not ((G3^.f2 = nil)) then goto L0588;
+  PASCALCO.2(399);
+L0588:
+  { left on stack: I1,1 }
+  goto L05E1;
+  if not ((G15 = 1)) then goto L05A4;
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+  goto L05A8;
+L05A4:
+  PASCALCO.2(125);
+L05A8:
+  BODYPART.7(31, 2);
+  goto L05FA;
+  BODYPART.6(77, 0, 7);
+  goto L05FA;
+  BODYPART.6(77, 0, 8);
+  goto L05FA;
+  if not ((G3 <> nil)) then goto L05D1;
+  if not ((G3^.f2 <> G59)) then goto L05D1;
+  PASCALCO.2(399);
+L05D1:
+  BODYPART.4(12);
+  BODYPART.4(0);
+  BODYPART.6(77, 0, 17);
+  goto L05FA;
+L05E1:
+L05FA:
+  if not (G47) then goto L0603;
+  BODYPART.5(30, 0);
+L0603:
+
+procedure ROUTINE.14(params 0 words);  { locals 0 words, lex 3 }
+  if not ((G3 <> nil)) then goto L0617;
+  ROUTINE.3();
+L0617:
+  ROUTINE.2();
+  if not ((G15 = 41)) then goto L063D;
+  if not ((G16 = 13)) then goto L0629;
+  BODYPART.4(0);
+  goto L0638;
+L0629:
+  if not ((G16 = 12)) then goto L0634;
+  BODYPART.4(1);
+  goto L0638;
+L0634:
+  PASCALCO.2(125);
+L0638:
+  PASCALCO.6();
+  goto L0641;
+L063D:
+  PASCALCO.2(125);
+L0641:
+  BODYPART.11(?, ?, ?, @I1,15^<4w>);
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L065B;
+  if not ((G3 <> G59)) then goto L065B;
+  PASCALCO.2(125);
+L065B:
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,7^<4w>);
+  BODYPART.10();
+  if not ((G15 = 1)) then goto L067D;
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  goto L0681;
+L067D:
+  BODYPART.4(0);
+L0681:
+  BODYPART.5(30, 11);
+  G3 := G12;
+
+procedure ROUTINE.15(params 0 words);  { locals 0 words, lex 3 }
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L06BE;
+  if not ((G3^.f1 <> 7)) then goto L06B2;
+  PASCALCO.2(125);
+  goto L06BE;
+L06B2:
+  if not ((G3^.f2 <> nil)) then goto L06BE;
+  PASCALCO.2(399);
+L06BE:
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.10();
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,7^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+  if not ((G15 = 1)) then goto L06F1;
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  ROUTINE.3();
+  goto L06F6;
+L06F1:
+  BODYPART.4(-(1));
+L06F6:
+  if not ((I1,1 = 37)) then goto L0703;
+  BODYPART.4(1);
+  goto L0707;
+L0703:
+  BODYPART.4(0);
+L0707:
+  BODYPART.4(0);
+  BODYPART.4(0);
+  BODYPART.6(77, 0, 28);
+  if not (G47) then goto L071E;
+  BODYPART.5(30, 0);
+L071E:
+  G3 := G12;
+
+procedure ROUTINE.16(params 0 words);  { locals 1 words, lex 3 }
+  if not ((G15 = 0)) then goto L0752;
+  PASCALCO.8(adjust((17 + 1),1), @L1);
+  PASCALCO.6();
+  if not ((L1^.f6 <> nil)) then goto L0752;
+  BODYPART.4((L1^.f6^*2));
+  { left on stack: G130 }
+  { left on stack: 1 }
+L0752:
+  G3 := G12;
+
+procedure ROUTINE.17(params 0 words);  { locals 0 words, lex 3 }
+  { left on stack: I1,1 }
+  goto L0A05;
+  if not (I1,2) then goto L079D;
+  BODYPART.12(?, ?, ?, @I1,11^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L079B;
+  if not ((G3^.f1 <> 7)) then goto L0788;
+  PASCALCO.2(125);
+  goto L079B;
+L0788:
+  if not (((G3^.f2 <> G59) and (I1,1 = 6))) then goto L079B;
+  PASCALCO.2(399);
+L079B:
+  goto L07A2;
+L079D:
+  BODYPART.14(G67);
+L07A2:
+  BODYPART.4(0);
+  BODYPART.4(0);
+  if not ((I1,1 = 5)) then goto L07B9;
+  BODYPART.6(77, 0, 10);
+  goto L07BF;
+L07B9:
+  BODYPART.6(77, 0, 11);
+L07BF:
+  G3 := G58;
+  goto L0A5C;
+  BODYPART.4(1);
+  if not ((G3 <> nil)) then goto L07EB;
+  if not ((G3^.f1 = 0)) then goto L07E7;
+  if not ((I1,1 = 8)) then goto L07E1;
+  BODYPART.3(2);
+  goto L07E5;
+L07E1:
+  BODYPART.3(21);
+L07E5:
+  goto L07EB;
+L07E7:
+  PASCALCO.2(115);
+L07EB:
+  goto L0A5C;
+  if not ((G3 <> nil)) then goto L0801;
+  if not (((G3^.f1 >= 4) or (G3^ <> 1))) then goto L0801;
+  PASCALCO.2(125);
+L0801:
+  G3 := G12;
+  goto L0A5C;
+  if not ((G3 <> nil)) then goto L0829;
+  if not ((G3 = G12)) then goto L0816;
+  BODYPART.3(24);
+  goto L0829;
+L0816:
+  if not ((G3 = G61)) then goto L0822;
+  BODYPART.3(25);
+  goto L0829;
+L0822:
+  PASCALCO.2(125);
+  G3 := G12;
+L0829:
+  goto L0A5C;
+  if not ((G3 <> nil)) then goto L084E;
+  if not ((G3 = G12)) then goto L083B;
+  BODYPART.3(0);
+  goto L084E;
+L083B:
+  if not ((G3 = G61)) then goto L0847;
+  BODYPART.3(1);
+  goto L084E;
+L0847:
+  PASCALCO.2(125);
+  G3 := G12;
+L084E:
+  goto L0A5C;
+  ROUTINE.4(?, ?, ?, @I1,11^<4w>, 0);
+  BODYPART.4(0);
+  BODYPART.3(62);
+  G3 := G12;
+  goto L0A5C;
+  ROUTINE.4(?, ?, ?, @I1,15^<4w>, 0);
+  ROUTINE.2();
+  ROUTINE.4(?, ?, ?, @I1,15^<4w>, 1);
+  BODYPART.4(G3^.f8);
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,11^<4w>);
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L0891;
+  ROUTINE.3();
+L0891:
+  BODYPART.6(77, 0, 24);
+  goto L0A5C;
+  ROUTINE.4(?, ?, ?, @I1,15^<4w>, 0);
+  ROUTINE.2();
+  ROUTINE.4(?, ?, ?, @I1,11^<4w>, 0);
+  BODYPART.4(0);
+  BODYPART.4(0);
+  BODYPART.6(77, 0, 27);
+  G3 := G12;
+  goto L0A5C;
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.9();
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,11^<4w>);
+  BODYPART.9();
+  BODYPART.5(30, 7);
+  goto L0A5C;
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.9();
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,11^<4w>);
+  BODYPART.9();
+  G3 := G12;
+  BODYPART.5(30, 8);
+  goto L0A5C;
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L0913;
+  ROUTINE.3();
+L0913:
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,11^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L0927;
+  ROUTINE.3();
+L0927:
+  BODYPART.5(30, 9);
+  goto L0A5C;
+  BODYPART.12(?, ?, ?, @I1,7^<4w>);
+  BODYPART.9();
+  if not ((G3 <> nil)) then goto L0948;
+  if not ((G3^.f1 <> 7)) then goto L0948;
+  PASCALCO.2(125);
+L0948:
+  if not ((G15 <> 1)) then goto L0962;
+  if not ((I1,1 = 33)) then goto L095C;
+  BODYPART.6(77, 0, 4);
+  goto L0960;
+L095C:
+  PASCALCO.2(20);
+L0960:
+  goto L098E;
+L0962:
+  PASCALCO.6();
+  ROUTINE.4(?, ?, ?, @I1,11^<4w>, 0);
+  if not (((I1,1 = 28) or (I1,1 = 30))) then goto L0980;
+  BODYPART.4(0);
+  goto L0984;
+L0980:
+  BODYPART.4(1);
+L0984:
+  BODYPART.4(0);
+  BODYPART.6(77, 0, 5);
+L098E:
+  if not (G47) then goto L0997;
+  BODYPART.5(30, 0);
+L0997:
+  goto L0A5C;
+  if not ((G3 = G12)) then goto L09A6;
+  BODYPART.3(10);
+  G3 := G61;
+L09A6:
+  if not ((G3 <> nil)) then goto L09CD;
+  if not ((G3 = G61)) then goto L09B8;
+  BODYPART.5(30, 23);
+  goto L09CD;
+L09B8:
+  if not ((G3^.f1 = 3)) then goto L09C9;
+  BODYPART.4(20);
+  BODYPART.7(30, 4);
+  goto L09CD;
+L09C9:
+  PASCALCO.2(125);
+L09CD:
+  G3 := G12;
+  goto L0A5C;
+  BODYPART.11(?, ?, ?, @I1,15^<4w>);
+  BODYPART.8();
+  if not ((G3 <> nil)) then goto L09E4;
+  ROUTINE.3();
+L09E4:
+  ROUTINE.2();
+  BODYPART.12(?, ?, ?, @I1,15^<4w>);
+  BODYPART.10();
+  ROUTINE.2();
+  BODYPART.11(?, ?, ?, @I1,7^<4w>);
+  BODYPART.8();
+  BODYPART.5(30, 12);
+  goto L0A5C;
+L0A05:
+L0A5C:
+
+======================================================================
+SEGMENT 11 STATEMEN
+======================================================================
+
+procedure STATEMEN.1(params 4 words);  { locals 5 words, lex 2 }
+  G78 := (G78+1);
+  if not ((G15 = 35)) then goto L0511;
+  L6 := G8;
+L04B6:
+  if not ((@G131[L6*4w]^.f1 <> 0)) then goto L04C8;
+  L6 := (L6-1);
+  goto L04B6;
+L04C8:
+  L7 := @G131[L6*4w]^.f3;
+L04D1:
+  if not ((L7 <> nil)) then goto L04FA;
+  L9 := L7;
+  if not ((L9^ = G23)) then goto L04F4;
+  if not (L9^.f2^) then goto L04EB;
+  PASCALCO.2(165);
+L04EB:
+  BODYPART.19(L9^.f2);
+  goto L0500;
+  goto L04F8;
+L04F4:
+  L7 := L9^.f1;
+L04F8:
+  goto L04D1;
+L04FA:
+  PASCALCO.2(167);
+L0500:
+  PASCALCO.6();
+  if not ((G15 = 2)) then goto L050D;
+  PASCALCO.6();
+  goto L0511;
+L050D:
+  PASCALCO.2(5);
+L0511:
+  if not (G50) then goto L0520;
+  BODYPART.5(85, (G92+1));
+  G46 := 1;
+L0520:
+  if not (not ((4 in (1 + 1)))) then goto L0538;
+  PASCALCO.2(6);
+  PASCALCO.14(?, G15, @L1^<4w>, @L1^<4w>);
+L0538:
+  if not ((4 in (1 + 1))) then goto L0614;
+  { stack tracking stopped: 'CSP 32' }
+  { CSP 32 }
+  { SLDO 15 }
+  { UJP $05AC }
+  goto L05AC;
+  PASCALCO.8(adjust((112 + 1),1), @L5);
+  PASCALCO.6();
+  if not ((L5^.f8 = 5)) then goto L056D;
+  BODYPART.23(?, G130, 1, @L1^<4w>, L5);
+  goto L0570;
+L056D:
+  STATEMEN.2(L5);
+L0570:
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.4();
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.3();
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.5();
+  goto L05EA;
+  PASCALCO.6();
+  CASESTAT.1();
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.7();
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.6();
+  goto L05EA;
+  PASCALCO.6();
+  FORSTATE.1();
+  goto L05EA;
+  PASCALCO.6();
+  STATEMEN.8();
+  goto L05EA;
+L05AC:
+L05EA:
+  { stack tracking stopped: 'CSP 33' }
+  { CSP 33 }
+  { SLDO 9 }
+  { SLDC 100 }
+  { ADI }
+  { LDCI 1299 }
+  { GRTI }
+  { FJP $0600 }
+  goto L0600;
+  PASCALCO.2(253);
+  G9 := 0;
+L0600:
+  if not (not ((9736 in 1))) then goto L0614;
+  PASCALCO.2(6);
+  PASCALCO.14(?, ?, G15, @L1^<4w>);
+L0614:
+  G78 := (G78-1);
+
+procedure STATEMEN.2(params 1 words);  { locals 9 words, lex 3 }
+  BODYPART.22(?, @I1,1^<4w>, 4, adjust((16384 + 1),4), L1);
+  if not ((G15 = 14)) then goto L01AA;
+  L9 := 0;
+  L8 := 0;
+  if not ((G3 <> nil)) then goto L002E;
+  if not (((G5 = 1) or (G3^.f1 > 4))) then goto L002E;
+  BODYPART.9();
+L002E:
+  L7 := PASCALCO.15(G3, 0, 0);
+  move(@L2, @G3, 5 words);
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,1^<4w>);
+  if not ((G4 = 0)) then goto L0059;
+  L8 := ((G3 = G59) or PASCALCO.16(G3, 0, 0));
+L0059:
+  if not ((G3 <> nil)) then goto L006C;
+  if not ((G3^.f1 <= 4)) then goto L0069;
+  BODYPART.8();
+  goto L006C;
+L0069:
+  BODYPART.9();
+L006C:
+  if not (((L2 <> nil) and (G3 <> nil))) then goto L01A8;
+  if not ((G3 = G12)) then goto L008C;
+  if not (PASCALCO.19(G61, L2, 0, 0)) then goto L008C;
+  BODYPART.3(10);
+  G3 := G61;
+L008C:
+  if not (PASCALCO.19(G60, L2, 0, 0)) then goto L00B8;
+  if not ((G3 = G12)) then goto L00A8;
+  BODYPART.4(18);
+  BODYPART.7(30, 4);
+  G3 := G60;
+L00A8:
+  if not ((G3^.f1 <> 3)) then goto L00B8;
+  PASCALCO.2(129);
+  G3 := G60;
+L00B8:
+  if not (L7) then goto L0107;
+  if not (L2^.f7) then goto L00CF;
+  if not ((L8 and (G3 = G59))) then goto L00CD;
+  G3 := G54;
+  goto L00CD;
+L00CD:
+  goto L0107;
+L00CF:
+  if not ((L2^.f2 <> nil)) then goto L0104;
+  PASCALCO.9(L2^.f2, @L10, @L9);
+  L9 := ((L9-L10)+1);
+  if not ((L8 and (G3 <> G59))) then goto L0102;
+  BODYPART.21(G88);
+  if not ((L9 <> G3^.f8)) then goto L00FF;
+  PASCALCO.2(129);
+L00FF:
+  G3 := L2;
+L0102:
+  goto L0107;
+L0104:
+  G3 := L2;
+L0107:
+  if not (PASCALCO.19(L2, G3, 0, 0)) then goto L01A2;
+  { left on stack: L2^.f1 }
+  goto L0189;
+  if not (G51) then goto L0126;
+  BODYPART.4(L2^.f4);
+  BODYPART.4(L2^.f3);
+  BODYPART.3(8);
+L0126:
+  BODYPART.20(@L2);
+  goto L01A0;
+  BODYPART.5(32, L2^);
+  BODYPART.20(@L2);
+  goto L01A0;
+  BODYPART.20(@L2);
+  goto L01A0;
+  BODYPART.4(L2^);
+  BODYPART.4(0);
+  BODYPART.7(30, 4);
+  BODYPART.20(@L2);
+  goto L01A0;
+  if not (L7) then goto L0171;
+  if not (L2^.f7) then goto L0166;
+  BODYPART.5(42, L2^.f8);
+  goto L016F;
+L0166:
+  BODYPART.5(40, ((L9+1) div 2));
+L016F:
+  goto L0177;
+L0171:
+  BODYPART.5(40, L2^);
+L0177:
+  goto L01A0;
+  BODYPART.5(40, L2^);
+  goto L01A0;
+  PASCALCO.2(146);
+  goto L01A0;
+L0189:
+L01A0:
+  goto L01A8;
+L01A2:
+  PASCALCO.2(129);
+L01A8:
+  goto L01AE;
+L01AA:
+  PASCALCO.2(51);
+L01AE:
+
+procedure STATEMEN.3(params 0 words);  { locals 4 words, lex 3 }
+  if not (not (G52)) then goto L01C9;
+  PASCALCO.2(6);
+L01C9:
+  if not ((G15 = 35)) then goto L0221;
+  L2 := 0;
+  L3 := G8;
+L01D4:
+  if not ((@G131[L3*4w]^.f1 <> 0)) then goto L01E6;
+  L3 := (L3-1);
+  goto L01D4;
+L01E6:
+  L1 := @G131[L3*4w]^.f3;
+L01EF:
+  if not (((L1 <> nil) and not (L2))) then goto L0212;
+  L4 := L1;
+  if not ((L4^ = G23)) then goto L020C;
+  L2 := 1;
+  BODYPART.16(57, L4^.f2);
+  goto L0210;
+L020C:
+  L1 := L4^.f1;
+L0210:
+  goto L01EF;
+L0212:
+  if not (not (L2)) then goto L021C;
+  PASCALCO.2(167);
+L021C:
+  PASCALCO.6();
+  goto L0225;
+L0221:
+  PASCALCO.2(15);
+L0225:
+
+procedure STATEMEN.4(params 0 words);  { locals 0 words, lex 3 }
+L0236:
+  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((520 + 1),4));
+  if not (not ((@G102^<4w> in 4))) then goto L0236;
+  G11 := (G15 <> 3);
+  if not (not (G11)) then goto L025B;
+  PASCALCO.6();
+  { left on stack: G15 }
+L025B:
+  if not (G11) then goto L0236;
+  if not ((G15 = 9)) then goto L0268;
+  PASCALCO.6();
+  goto L026C;
+L0268:
+  PASCALCO.2(13);
+L026C:
+
+procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
+  L5 := 0;
+  BODYPART.11(?, @I1,1^<4w>, 4, adjust((4096 + 1),4));
+  if not (not (L5)) then goto L029C;
+  BODYPART.18(@L2);
+  BODYPART.17(L2);
+L029C:
+  if not ((G15 = 12)) then goto L02A6;
+  PASCALCO.6();
+  goto L02AA;
+L02A6:
+  PASCALCO.2(52);
+L02AA:
+  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((8192 + 1),4));
+  if not (L5) then goto L02C7;
+  if not (L4) then goto L02C4;
+  G9 := L3;
+  goto L02C7;
+L02C4:
+  L3 := G9;
+L02C7:
+  if not ((G15 = 13)) then goto L02FA;
+  if not (not (L5)) then goto L02DE;
+  BODYPART.18(@L1);
+  BODYPART.16(57, L1);
+  BODYPART.19(L2);
+L02DE:
+  PASCALCO.6();
+  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  if not (L5) then goto L02F4;
+  if not (not (L4)) then goto L02F2;
+  G9 := L3;
+L02F2:
+  goto L02F8;
+L02F4:
+  BODYPART.19(L1);
+L02F8:
+  goto L0302;
+L02FA:
+  if not (not (L5)) then goto L0302;
+  BODYPART.19(L2);
+L0302:
+
+procedure STATEMEN.6(params 0 words);  { locals 1 words, lex 3 }
+  BODYPART.18(@L1);
+  BODYPART.19(L1);
+L0317:
+  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((1032 + 1),4));
+  if not (not ((@G102^<4w> in 4))) then goto L0317;
+  G11 := (G15 <> 3);
+  if not (not (G11)) then goto L033C;
+  PASCALCO.6();
+  { left on stack: G15 }
+L033C:
+  if not (G11) then goto L0317;
+  if not ((G15 = 10)) then goto L0355;
+  PASCALCO.6();
+  BODYPART.11(?, ?, ?, @I1,1^<4w>);
+  BODYPART.17(L1);
+  goto L0359;
+L0355:
+  PASCALCO.2(53);
+L0359:
+
+procedure STATEMEN.7(params 0 words);  { locals 2 words, lex 3 }
+  BODYPART.18(@L2);
+  BODYPART.19(L2);
+  BODYPART.11(?, @I1,1^<4w>, 4, adjust((64 + 1),4));
+  BODYPART.18(@L1);
+  BODYPART.17(L1);
+  if not ((G15 = 6)) then goto L0394;
+  PASCALCO.6();
+  goto L0398;
+L0394:
+  PASCALCO.2(54);
+L0398:
+  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  BODYPART.16(57, L2);
+  BODYPART.19(L1);
+
+procedure STATEMEN.8(params 0 words);  { locals 4 words, lex 3 }
+  L3 := 0;
+  L2 := 0;
+L03BA:
+  if not ((G15 = 0)) then goto L03D2;
+  PASCALCO.8(adjust((16 + 1),1), @L1);
+  PASCALCO.6();
+  { left on stack: G130 }
+  { left on stack: 1 }
+  goto L03DA;
+L03D2:
+  PASCALCO.2(2);
+  L1 := G73;
+L03DA:
+  BODYPART.22(?, @I1,1^<4w>, 4, adjust((66 + 1),4), L1);
+  if not ((G3 <> nil)) then goto L046C;
+  if not ((G3^.f1 = 6)) then goto L0466;
+  if not ((G8 < 12)) then goto L045E;
+  G8 := (G8+1);
+  L3 := (L3+1);
+  L4 := @G131[G8*4w];
+  L4^ := G3^.f2;
+  if not ((G5 = 0)) then goto L042D;
+  L4 := @G131[G8*4w];
+  (L4+1)^ := 1;
+  (L4+2)^ := G6;
+  (L4+3)^ := G7;
+  goto L045C;
+L042D:
+  BODYPART.9();
+  BODYPART.6(56, G77, G10);
+  L4 := @G131[G8*4w];
+  (L4+1)^ := 2;
+  (L4+2)^ := G10;
+  G10 := (G10+1);
+  L2 := (L2+1);
+  if not ((G10 > G25)) then goto L045C;
+  G25 := G10;
+L045C:
+  goto L0464;
+L045E:
+  PASCALCO.2(250);
+L0464:
+  goto L046C;
+L0466:
+  PASCALCO.2(140);
+L046C:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L0478;
+  PASCALCO.6();
+L0478:
+  if not (G11) then goto L03BA;
+  if not ((G15 = 6)) then goto L0485;
+  PASCALCO.6();
+  goto L0489;
+L0485:
+  PASCALCO.2(54);
+L0489:
+  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  G8 := (G8-L3);
+  G10 := (G10-L2);
+
+======================================================================
+SEGMENT 12 CASESTAT
+======================================================================
+
+procedure CASESTAT.1(params 0 words);  { locals 13 words, lex 3 }
+  BODYPART.11(?, @I1,1^<4w>, 4, adjust((2054 + 1),4));
+  BODYPART.8();
+  BODYPART.15();
+  BODYPART.18(@L8);
+  BODYPART.16(57, L8);
+  L2 := G3;
+  if not ((L2 <> nil)) then goto L003C;
+  if not (((L2^.f1 <> 0) or (L2 = G61))) then goto L003C;
+  PASCALCO.2(144);
+  L2 := nil;
+L003C:
+  if not ((G15 = 11)) then goto L0046;
+  PASCALCO.6();
+  goto L004A;
+L0046:
+  PASCALCO.2(8);
+L004A:
+  L6 := nil;
+  BODYPART.18(@L9);
+L0052:
+  L3 := nil;
+L0055:
+  PASCALCO.18(?, @I1,1^<4w>, 4, adjust((6 + 1),4), @L1, @L7);
+  if not ((L2 <> nil)) then goto L00CA;
+  if not (PASCALCO.19(L2, L1, 0, 0)) then goto L00C4;
+  L5 := L6;
+  L4 := nil;
+L007B:
+  if not ((L5 <> nil)) then goto L00A0;
+  L13 := L5;
+  if not ((L13^.f2 <= L7)) then goto L0097;
+  if not ((L13^.f2 = L7)) then goto L0095;
+  PASCALCO.2(156);
+L0095:
+  goto L00A0;
+L0097:
+  L4 := L5;
+  L5 := L13^;
+  goto L007B;
+L00A0:
+  CSP1(@L3, 3);
+  L13 := L3;
+  L13^ := L5;
+  (L13+2)^ := L7;
+  (L13+1)^ := G9;
+  if not ((L4 = nil)) then goto L00BF;
+  L6 := L3;
+  goto L00C2;
+L00BF:
+  L4^ := L3;
+L00C2:
+  goto L00CA;
+L00C4:
+  PASCALCO.2(147);
+L00CA:
+  G11 := (G15 <> 1);
+  if not (not (G11)) then goto L00D6;
+  PASCALCO.6();
+L00D6:
+  if not (G11) then goto L0055;
+  if not ((G15 = 2)) then goto L00E3;
+  PASCALCO.6();
+  goto L00E7;
+L00E3:
+  PASCALCO.2(5);
+L00E7:
+  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((8 + 1),4));
+  if not (not ((@G102^<4w> in 4))) then goto L00E7;
+  if not ((L3 <> nil)) then goto L0109;
+  BODYPART.16(57, L9);
+  { left on stack: G15 }
+L0109:
+  G11 := (G15 <> 3);
+  if not (not (G11)) then goto L0115;
+  PASCALCO.6();
+L0115:
+  if not ((G11 or (G15 = 9))) then goto L0052;
+  BODYPART.19(L8);
+  if not ((L6 <> nil)) then goto L0188;
+  L10 := L6^.f2;
+  L5 := L6;
+  L6 := nil;
+L012F:
+  L4 := L5^;
+  L5^ := L6;
+  L6 := L5;
+  L5 := L4;
+  if not ((L5 = nil)) then goto L012F;
+  L11 := L6^.f2;
+  BODYPART.3(44);
+  PASCALCO.21(L11);
+  PASCALCO.21(L10);
+  L12 := G9;
+  BODYPART.16(57, L9);
+L0159:
+  L13 := L6;
+L015C:
+  if not ((L13^.f2 > L11)) then goto L016F;
+  PASCALCO.21((G9-L12));
+  L11 := (L11+1);
+  goto L015C;
+L016F:
+  PASCALCO.21((G9-L13^.f1));
+  L6 := L13^;
+  L11 := (L11+1);
+  if not ((L6 = nil)) then goto L0159;
+  BODYPART.19(L9);
+L0188:
+  if not ((G15 = 9)) then goto L0192;
+  PASCALCO.6();
+  goto L0196;
+L0192:
+  PASCALCO.2(13);
+L0196:
+
+======================================================================
+SEGMENT 13 FORSTATE
+======================================================================
+
+procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
+  if not ((G15 = 0)) then goto L005B;
+  PASCALCO.8(G130, @I1,5);
+  L10 := I1,5;
+  L1 := L10^.f6;
+  L2 := 1;
+  if not ((L10^.f8 = 3)) then goto L0030;
+  L3 := 0;
+  L4 := L10^.f9;
+  L5 := L10^.f10;
+  goto L0039;
+L0030:
+  PASCALCO.2(155);
+  L1 := nil;
+L0039:
+  if not ((L1 <> nil)) then goto L0056;
+  if not (((L1^.f1 > 1) or PASCALCO.19(G61, L1, 0, 0))) then goto L0056;
+  PASCALCO.2(143);
+  L1 := nil;
+L0056:
+  PASCALCO.6();
+  goto L006F;
+L005B:
+  PASCALCO.2(2);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((16832 + 1),4));
+L006F:
+  if not ((G15 = 14)) then goto L00D4;
+  PASCALCO.6();
+  BODYPART.11(?, @I1,1^<4w>, 4, adjust((448 + 1),4));
+  if not ((G3 <> nil)) then goto L00D2;
+  if not ((G3^.f1 <> 0)) then goto L009A;
+  PASCALCO.2(144);
+  goto L00D2;
+L009A:
+  if not (PASCALCO.19(L1, G3, 0, 0)) then goto L00CC;
+  BODYPART.8();
+  BODYPART.15();
+  if not ((L1 <> nil)) then goto L00C5;
+  if not (((L1^.f1 = 1) and G51)) then goto L00C5;
+  BODYPART.4(L1^.f4);
+  BODYPART.4(L1^.f3);
+  BODYPART.3(8);
+L00C5:
+  BODYPART.20(@L1);
+  goto L00D2;
+L00CC:
+  PASCALCO.2(145);
+L00D2:
+  goto L00E8;
+L00D4:
+  PASCALCO.2(51);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((448 + 1),4));
+L00E8:
+  BODYPART.18(@L8);
+  if not ((384 in 1)) then goto L018D;
+  L7 := G15;
+  PASCALCO.6();
+  BODYPART.11(G15, @I1,1^<4w>, 4, adjust((64 + 1),4));
+  if not ((G3 <> nil)) then goto L018B;
+  if not ((G3^.f1 <> 0)) then goto L011C;
+  PASCALCO.2(144);
+  goto L018B;
+L011C:
+  if not (PASCALCO.19(L1, G3, 0, 0)) then goto L0185;
+  BODYPART.8();
+  BODYPART.15();
+  if not ((L1 <> nil)) then goto L0147;
+  if not (((L1^.f1 = 1) and G51)) then goto L0147;
+  BODYPART.4(L1^.f4);
+  BODYPART.4(L1^.f3);
+  BODYPART.3(8);
+L0147:
+  BODYPART.6(56, G77, G10);
+  BODYPART.19(L8);
+  move(@G3, @L1, 5 words);
+  BODYPART.8();
+  BODYPART.6(54, G77, G10);
+  G10 := (G10+1);
+  if not ((G10 > G25)) then goto L0170;
+  G25 := G10;
+L0170:
+  if not ((L7 = 7)) then goto L017D;
+  BODYPART.6(52, 0, 1);
+  goto L0183;
+L017D:
+  BODYPART.6(48, 0, 1);
+L0183:
+  goto L018B;
+L0185:
+  PASCALCO.2(145);
+L018B:
+  goto L019F;
+L018D:
+  PASCALCO.2(55);
+  PASCALCO.14(?, @I1,1^<4w>, 4, adjust((64 + 1),4));
+L019F:
+  BODYPART.18(@L9);
+  BODYPART.16(33, L9);
+  if not ((G15 = 6)) then goto L01B3;
+  PASCALCO.6();
+  goto L01B7;
+L01B3:
+  PASCALCO.2(54);
+L01B7:
+  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  move(@G3, @L1, 5 words);
+  BODYPART.8();
+  BODYPART.4(1);
+  if not ((L7 = 7)) then goto L01D7;
+  BODYPART.3(2);
+  goto L01DB;
+L01D7:
+  BODYPART.3(21);
+L01DB:
+  BODYPART.20(@L1);
+  BODYPART.16(57, L8);
+  BODYPART.19(L9);
+  G10 := (G10-1);
+
+======================================================================
+SEGMENT 14 BODY1
+======================================================================
+
+procedure BODY1.1(params 0 words);  { locals 2 words, lex 3 }
+  G509 := 1;
+  I1,8 := 0;
+  if not ((G77 = 1)) then goto L001C;
+  if not (not (G28)) then goto L001C;
+  if not (not (G32)) then goto L001C;
+  I1,8 := 1;
+L001C:
+  if not ((I2,1 <> nil)) then goto L00D7;
+  I1,2 := I2,1^.f14;
+  I1,6 := I2,1^.f7;
+L0032:
+  if not ((I1,6 <> nil)) then goto L00D7;
+  L1 := I1,6;
+  if not ((L1^.f6 <> nil)) then goto L00D0;
+  if not ((L1^.f8 = 3)) then goto L00C1;
+  if not ((L1^.f6^.f1 > 4)) then goto L00B5;
+  I1,2 := (I1,2-1);
+  BODYPART.6(50, G77, L1^.f10);
+  BODYPART.6(54, G77, I1,2);
+  if not (PASCALCO.15(L1^.f6, 0, 0)) then goto L00AC;
+  L2 := L1^.f6;
+  if not (L2^.f7) then goto L0086;
+  BODYPART.5(42, L2^.f8);
+  goto L00AA;
+L0086:
+  if not ((L2^.f2 <> nil)) then goto L00AA;
+  PASCALCO.9(L2^.f2, @I1,12, @I1,11);
+  BODYPART.5(40, ((((I1,11-I1,12)+1)+1) div 2));
+  goto L00AA;
+L00AA:
+  goto L00B3;
+L00AC:
+  BODYPART.5(40, L1^.f6^);
+L00B3:
+  goto L00BF;
+L00B5:
+  I1,2 := (I1,2-L1^.f6^);
+L00BF:
+  goto L00D0;
+L00C1:
+  if not ((L1^.f8 = 2)) then goto L00D0;
+  I1,2 := (I1,2-1);
+L00D0:
+  I1,6 := L1^.f7;
+  goto L0032;
+L00D7:
+  G91 := G92;
+  G25 := G10;
+  I1,9 := @G131[G8*4w]^.f3;
+L00E8:
+  if not ((I1,9 <> nil)) then goto L0100;
+  BODYPART.18((I1,9+2));
+  I1,9 := I1,9^.f1;
+  goto L00E8;
+L0100:
+  I1,3 := G62;
+  if not (((I1,3 <> nil) or I1,8)) then goto L012C;
+  I1,14 := G9;
+  PASCALCO.20(215);
+  PASCALCO.20(215);
+  BODYPART.18(@I1,18);
+  BODYPART.19(I1,18);
+L012C:
+
+======================================================================
+SEGMENT 15 BODY3
+======================================================================
+
+procedure BODY3.1(params 0 words);  { locals 2 words, lex 3 }
+  if not ((G15 = 9)) then goto L01CC;
+  PASCALCO.6();
+  goto L01D0;
+L01CC:
+  PASCALCO.2(13);
+L01D0:
+  I1,1 := G9;
+  if not (not (G32)) then goto L020A;
+  I1,6 := @G131[G8*4w]^.f2;
+L01E3:
+  if not ((I1,6 <> nil)) then goto L020A;
+  L1 := I1,6;
+  BODYPART.6(50, L1^.f9, L1^.f10);
+  BODYPART.4(0);
+  BODYPART.6(77, 0, 6);
+  I1,6 := L1^.f7;
+  goto L01E3;
+L020A:
+  if not ((I1,8 or (@G183^<2w> and ((2 <> 0) or (not (G35) and (G63 <> nil)))))) then goto L022A;
+  BODY3.2();
+  { left on stack: (I1,3 <> nil) }
+L022A:
+  if not ((I2,1 = nil)) then goto L0237;
+  BODYPART.3(86);
+  goto L0266;
+L0237:
+  if not ((I2,1^.f10 = 0)) then goto L0246;
+  I1,7 := 65;
+  goto L024A;
+L0246:
+  I1,7 := 45;
+L024A:
+  if not ((I2,1^.f6 = nil)) then goto L025B;
+  BODYPART.5(I1,7, 0);
+  goto L0266;
+L025B:
+  BODYPART.5(I1,7, I2,1^.f6^);
+L0266:
+  I1,9 := @G131[G8*4w]^.f3;
+L0270:
+  if not ((I1,9 <> nil)) then goto L029A;
+  L1 := I1,9;
+  L2 := L1^.f2;
+  if not (not (L2^)) then goto L0293;
+  if not ((L2^.f1 <> 28000)) then goto L0293;
+  PASCALCO.2(168);
+L0293:
+  I1,9 := L1^.f1;
+  goto L0270;
+L029A:
+  I1,10 := (G509-1);
+  if not (G9) then goto L02A9;
+  PASCALCO.20(0);
+L02A9:
+  if not ((I1,10 > 0)) then goto L02C8;
+  PASCALCO.21((G9-@G510[I1,10]^));
+  I1,10 := (I1,10-1);
+  goto L02A9;
+L02C8:
+  if not ((I2,1 = nil)) then goto L02DE;
+  PASCALCO.21(((G25-1)*2));
+  PASCALCO.21(0);
+  goto L02F8;
+L02DE:
+  L1 := I2,1;
+  PASCALCO.21(((G25-L1^.f14)*2));
+  PASCALCO.21(((L1^.f14-1)*2));
+L02F8:
+  PASCALCO.21((G9-I1,1));
+  PASCALCO.21(G9);
+  PASCALCO.20(G97);
+  PASCALCO.20((G77-1));
+  if not (not (G48)) then goto L032B;
+  G48 := 1;
+  (@G335[@G479~[G13]{4per word,4 bits}*9w]+1)^ := G967;
+L032B:
+  PASCALCO.22(0);
+  G86 := (G86+G9);
+  @G185[G97]^ := (G86-2);
+
+procedure BODY3.2(params 0 words);  { locals 1 words, lex 4 }
+  if not (I2,8) then goto L0093;
+  I2,6 := G63;
+  I2,4 := nil;
+L000E:
+  if not ((I2,6 <> nil)) then goto L005F;
+  if not ((I2,6^.f10 and not (G35))) then goto L002D;
+  BODYPART.4(I2,6^.f9);
+  BODYPART.5(30, 22);
+L002D:
+  if not (I2,6^.f12) then goto L0041;
+  BODYPART.4(I2,6^.f13);
+  BODYPART.5(30, 22);
+L0041:
+  I2,5 := I2,6^.f7;
+  (I2,6+7)^ := I2,4;
+  I2,4 := I2,6;
+  I2,6 := I2,5;
+  goto L000E;
+L005F:
+  G63 := I2,4;
+  I2,15 := 31;
+  L1 := 30;
+L006B:
+  if not ((I2,15 >= L1)) then goto L0093;
+  if not ((@G183^<2w> in 2)) then goto L0089;
+  BODYPART.4(I2,15);
+  BODYPART.5(30, 22);
+  { left on stack: I2,15 }
+L0089:
+  I2,15 := (I2,15-1);
+  goto L006B;
+L0093:
+  I2,6 := I2,3;
+  I2,4 := nil;
+L009D:
+  if not ((I2,6 <> nil)) then goto L00CF;
+  BODYPART.4(I2,6^.f9);
+  BODYPART.5(30, 22);
+  I2,5 := I2,6^.f7;
+  (I2,6+7)^ := I2,4;
+  I2,4 := I2,6;
+  I2,6 := I2,5;
+  goto L009D;
+L00CF:
+  I2,3 := I2,4;
+  BODYPART.18(@I2,16);
+  BODYPART.16(57, I2,16);
+  BODYPART.18(@I2,17);
+  BODYPART.19(I2,17);
+  I2,13 := G9;
+  G9 := I2,14;
+  BODYPART.16(57, I2,17);
+  G9 := I2,13;
+  I2,6 := I2,3;
+L0109:
+  if not ((I2,6 <> nil)) then goto L0126;
+  BODYPART.4(I2,6^.f9);
+  BODYPART.5(30, 21);
+  I2,6 := I2,6^.f7;
+  goto L0109;
+L0126:
+  if not (I2,8) then goto L019B;
+  I2,15 := 30;
+  L1 := 31;
+L0132:
+  if not ((I2,15 <= L1)) then goto L015A;
+  if not ((@G183^<2w> in 2)) then goto L0150;
+  BODYPART.4(I2,15);
+  BODYPART.5(30, 21);
+  { left on stack: I2,15 }
+L0150:
+  I2,15 := (I2,15+1);
+  goto L0132;
+L015A:
+  I2,6 := G63;
+L015F:
+  if not ((I2,6 <> nil)) then goto L019B;
+  if not (I2,6^.f12) then goto L017A;
+  BODYPART.4(I2,6^.f13);
+  BODYPART.5(30, 21);
+L017A:
+  if not ((I2,6^.f10 and not (G35))) then goto L0192;
+  BODYPART.4(I2,6^.f9);
+  BODYPART.5(30, 21);
+L0192:
+  I2,6 := I2,6^.f7;
+  goto L015F;
+L019B:
+  BODYPART.16(57, I2,18);
+  BODYPART.19(I2,16);
+
+======================================================================
+SEGMENT 16 WRITELIN
+======================================================================
+
+procedure WRITELIN.1(params 0 words);  { locals 7 words, lex 1 }
+  G9 := 0;
+  if not (G48) then goto L02D5;
+  PASCALCO.2(399);
+L02D5:
+  if not (G32) then goto L02DE;
+  L1 := G575;
+L02DE:
+  WRITELIN.4(@G131[G82*4w]^);
+  G22 := 1;
+  L7 := 8;
+L02EE:
+  if not ((G22 <= L7)) then goto L0300;
+  PASCALCO.20(32);
+  G22 := (G22+1);
+  goto L02EE;
+L0300:
+  PASCALCO.21(0);
+  PASCALCO.21(G25);
+  PASCALCO.21(G84);
+  PASCALCO.21(0);
+  PASCALCO.22(1);
+  G44 := 0;
+
+procedure WRITELIN.2(params 1 words);  { locals 8 words, lex 2 }
+  L4 := 0;
+  L3 := (G9-4);
+  if not (((G576 <> 1) or (G575 <> 0))) then goto L00AF;
+  L5 := 0;
+  L8 := G575;
+L0053:
+  if not ((L5 <= L8)) then goto L00AF;
+  if not ((I1,1 < G575)) then goto L0068;
+  L6 := 128;
+  goto L006F;
+L0068:
+  L6 := (G576-1);
+L006F:
+  L7 := 1;
+  L9 := L6;
+L0075:
+  if not ((L7 <= L9)) then goto L009F;
+  if not ((L1 = G577[(L7-1)*2w]^.f1)) then goto L0098;
+  PASCALCO.21(G577[(L7-1)*2w]^);
+  L4 := (L4+1);
+L0098:
+  L7 := (L7+1);
+  goto L0075;
+L009F:
+  if not ((L5 < G575)) then goto L00A8;
+  WRITELIN.3();
+L00A8:
+  L5 := (L5+1);
+  goto L0053;
+L00AF:
+  if not ((L4 = 0)) then goto L00BB;
+  G9 := (G9-16);
+  goto L00C8;
+L00BB:
+  L2 := G9;
+  G9 := L3;
+  PASCALCO.21(L4);
+  G9 := L2;
+L00C8:
+  L7 := 1;
+  L8 := ((8-(L4 mod 8)) mod 8);
+L00D4:
+  if not ((L7 <= L8)) then goto L00E4;
+  PASCALCO.21(0);
+  L7 := (L7+1);
+  goto L00D4;
+L00E4:
+
+procedure WRITELIN.3(params 0 words);  { locals 0 words, lex 3 }
+  I2,1 := (I2,1+1);
+  if not ((I2,1 > G575)) then goto L0015;
+  I2,1 := 0;
+L0015:
+  { left on stack: @G535 }
+  { left on stack: G577 }
+  if not ((FBLOCKIO(0, 1, I2,1, 1, 0, 0) <> 1)) then goto L002A;
+L002A:
+
+procedure WRITELIN.4(params 1 words);  { locals 1 words, lex 2 }
+  I1,3 := -(9999);
+  I1,4 := G9;
+  if not ((L1 <> nil)) then goto L02B3;
+  L2 := L1;
+  if not ((238 in 1)) then goto L029D;
+  CSP2(G2, G9, 8);
+  G9 := (G9+8);
+  { left on stack: L2^.f8 }
+  { left on stack: L2 }
+  { left on stack: 0 }
+  { left on stack: L2^.f8 }
+  goto L0278;
+  if not (((L2^.f6^ = 1) and not (G32))) then goto L0143;
+  PASCALCO.21(8);
+  PASCALCO.21(L2^.f9);
+  PASCALCO.21(0);
+  PASCALCO.21(0);
+  goto L0148;
+L0143:
+  G9 := I1,4;
+L0148:
+  goto L028E;
+  I1,6 := (L2^.f9 < 0);
+  if not (((I1,6 or G41) or not (G32))) then goto L018D;
+  if not (((G41 and (-(L2^.f9) <> G84)) or (I1,6 and not (G41)))) then goto L0179;
+  G9 := I1,4;
+  goto L018B;
+L0179:
+  PASCALCO.21(7);
+  PASCALCO.21(L2^.f10);
+  PASCALCO.21(0);
+  PASCALCO.21(0);
+L018B:
+  goto L01C9;
+L018D:
+  if not (L2^.f11) then goto L019C;
+  PASCALCO.21(3);
+  I1,2 := 0;
+  goto L01B3;
+L019C:
+  PASCALCO.21(4);
+  if not ((L2^.f8 = 2)) then goto L01AD;
+  I1,2 := 1;
+  goto L01B3;
+L01AD:
+  I1,2 := L2^.f6^;
+L01B3:
+  PASCALCO.21(2);
+  PASCALCO.21(0);
+  PASCALCO.21(I1,2);
+  I1,3 := (L2^.f10+32);
+L01C9:
+  goto L028E;
+  if not ((L2^.f9 = 1)) then goto L020B;
+  if not ((L2^.f13 = 0)) then goto L0204;
+  if not ((L2^.f8 = 5)) then goto L01F2;
+  if not (L2^.f16) then goto L01EB;
+  I1,5 := 9;
+  goto L01F0;
+L01EB:
+  G9 := I1,4;
+L01F0:
+  goto L0202;
+L01F2:
+  if not (L2^.f16) then goto L01FD;
+  I1,5 := 10;
+  goto L0202;
+L01FD:
+  G9 := I1,4;
+L0202:
+  goto L0209;
+L0204:
+  G9 := I1,4;
+L0209:
+  goto L0210;
+L020B:
+  G9 := I1,4;
+L0210:
+  if not ((I1,4 <> G9)) then goto L0247;
+  PASCALCO.21(I1,5);
+  I1,2 := ((L2^.f14-1)-(2*(L2^.f8 = 6)));
+  if not ((1536 in 1)) then goto L0247;
+  PASCALCO.21(L2^.f11);
+  PASCALCO.21(I1,2);
+  PASCALCO.21(nil);
+  { left on stack: I1,5 }
+L0247:
+  goto L028E;
+  if not ((((G32 and not (G41)) and L2^.f10) and L2^.f11)) then goto L0271;
+  PASCALCO.21(1);
+  PASCALCO.21(1);
+  PASCALCO.21(0);
+  PASCALCO.21(0);
+  I1,3 := L2^.f9;
+  goto L0276;
+L0271:
+  G9 := I1,4;
+L0276:
+  goto L028E;
+L0278:
+L028E:
+  if not ((I1,3 <> -(9999))) then goto L029D;
+  WRITELIN.2(I1,3);
+L029D:
+  if not ((G9 >= 1024)) then goto L02AB;
+  PASCALCO.22(0);
+  G9 := 0;
+L02AB:
+  WRITELIN.4(L1^.f5);
+  WRITELIN.4(L1^.f4);
+L02B3:
+
+======================================================================
+SEGMENT 17 UNITPART
+======================================================================
+
+procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
+  if not ((G2 = nil)) then goto L03B2;
+  CSP1(@G2, 650);
+L03B2:
+  UNITPART.2();
+L03B4:
+  FRESET(@G535);
+  G576 := 1;
+  G575 := 0;
+  UNITPART.3(?, ?, ?, @L1^<4w>, @L5);
+  G578 := G14;
+  G9 := 1024;
+  G31 := 1;
+  if not (G37) then goto L03E0;
+  PASCALCO.2(406);
+L03E0:
+  if not ((G15 = 51)) then goto L03EA;
+  PASCALCO.6();
+  goto L03EE;
+L03EA:
+  PASCALCO.2(22);
+L03EE:
+  DECLARAT.1(?, ?, ?, @L1^<4w>);
+  G9 := ((G14-G578)+10);
+  if not ((G9 > 1024)) then goto L040A;
+  G9 := 1034;
+L040A:
+  L9 := (G9-10);
+  L8 := G967;
+L0414:
+  if not ((L9 >= 512)) then goto L0429;
+  L9 := (L9-512);
+  L8 := (L8+1);
+  goto L0414;
+L0429:
+  CSP2(G2, 0, G9);
+  CSP10((G9-10), 10, 32);
+  G2^[(G9-2)] := 69;
+  if not ((G9 > 1024)) then goto L0459;
+  G2^[(G14-G578)] := 13;
+  G2^[((G14-G578)+1)] := 0;
+  { left on stack: G1 }
+  { left on stack: G578 }
+  { left on stack: G2 }
+L0459:
+  PASCALCO.22(1);
+  if not ((G27 or (not (G27) and (G15 = 19)))) then goto L0570;
+  G31 := 0;
+  if not ((G41 and not (L7))) then goto L0479;
+  PASCALCO.2(352);
+L0479:
+  if not (G27) then goto L049B;
+  if not ((G15 <> 52)) then goto L0498;
+  PASCALCO.2(23);
+  PASCALCO.14(?, @L1^<4w>, 4, adjust((@G102^<4w> - 4),4));
+  goto L049B;
+L0498:
+  PASCALCO.6();
+L049B:
+  PASCALCO.24(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0000] - 4),4));
+  UNITPART.4();
+  PASCALCO.23();
+  if not (((@G183^<2w> * 2) <> 0)) then goto L0528;
+  { left on stack: [$C000,$0000] }
+  { left on stack: 2 }
+  { left on stack: I2,8 }
+  { left on stack: @G969 }
+  if not ((FBLOCKIO(0, 1, L8, 1, 0, 0) <> 1)) then goto L04DC;
+L04DC:
+  if not ((@G183^<2w> in 2)) then goto L04EE;
+  @G969^[(L9+1)] := 80;
+  { left on stack: 31 }
+L04EE:
+  if not ((@G183^<2w> in 2)) then goto L0500;
+  @G969^[(L9+3)] := 76;
+  { left on stack: 30 }
+L0500:
+  { left on stack: I2,8 }
+  { left on stack: @G969 }
+  if not ((FBLOCKIO(0, 1, L8, 0, 0, 0) <> 1)) then goto L0513;
+L0513:
+  2^ := adjust(([$C000,$0000] - 2),2)  {2 words};
+  { left on stack: @G183 }
+  { left on stack: @G183^<2w> }
+L0528:
+  if not (not (G41)) then goto L0530;
+  G44 := 1;
+L0530:
+  if not (G44) then goto L056E;
+  if not (G41) then goto L0549;
+  (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 5;
+L0549:
+  if not ((G575 > 0)) then goto L056B;
+  if not ((FBLOCKIO(0, 1, G575, 0, 0, 0) <> 1)) then goto L056B;
+  PASCALCO.2(402);
+  { left on stack: @G535 }
+  { left on stack: G577 }
+L056B:
+  WRITELIN.1();
+L056E:
+  goto L05A9;
+L0570:
+  if not ((G15 = 9)) then goto L057A;
+  PASCALCO.6();
+  goto L0585;
+L057A:
+  PASCALCO.2(13);
+  PASCALCO.14(?, ?, ?, @L1^<4w>);
+L0585:
+  if not (G68^.f10) then goto L05A9;
+  L10 := @G335[@G479~[G13]{4per word,4 bits}*9w];
+  L10^ := 0;
+  (L10+1)^ := G967;
+  (L10+8)^ := 0;
+L05A9:
+  if not (G41) then goto L05D9;
+  if not (L6) then goto L05CE;
+  L10 := @G335[@G479~[G84]{4per word,4 bits}*9w];
+  (L10+1)^ := 0;
+  L10^ := ((G10-1)*2);
+  goto L05D9;
+L05CE:
+  if not ((G10 > 1)) then goto L05D9;
+  PASCALCO.2(350);
+L05D9:
+  G41 := 0;
+  G32 := 0;
+  if not ((G15 <> 18)) then goto L05F2;
+  if not ((G15 = 3)) then goto L05EE;
+  PASCALCO.6();
+  goto L05F2;
+L05EE:
+  PASCALCO.2(14);
+L05F2:
+  L10 := G81;
+  G8 := L10^;
+  G77 := L10^.f1;
+  G97 := L10^.f3;
+  G96 := L10^.f2;
+  G13 := L10^.f4;
+  G10 := L10^.f5;
+  G81 := G81^.f10;
+  { stack tracking stopped: 'CSP 33' }
+  { CSP 33 }
+  { SLDO 15 }
+  { SLDC 50 }
+  { NEQI }
+  { FJP $03B4 (jtab-14) }
+  goto L03B4;
+  FCLOSE(@G535, 0);
+
+procedure UNITPART.2(params 0 words);  { locals 0 words, lex 2 }
+  FOPEN(@G535, '*SYSTEM.INFO[*]', 0, 0);
+  if not ((CSP34() <> 0)) then goto L0026;
+  PASCALCO.2(402);
+L0026:
+
+procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
+  if not (G32) then goto L003C;
+  PASCALCO.2(182);
+L003C:
+  if not (G48) then goto L004D;
+  PASCALCO.2(399);
+  G86 := 0;
+  G968 := 0;
+L004D:
+  L11 := G8;
+  L12 := G77;
+  L14 := G97;
+  L13 := G96;
+  L15 := G13;
+  L16 := G10;
+  L21 := G81;
+  G97 := 1;
+  G96 := 2;
+  G10 := 1;
+  G27 := 0;
+  G32 := 1;
+  G31 := 0;
+  PASCALCO.6();
+  if not ((G15 <> 0)) then goto L0093;
+  PASCALCO.2(2);
+  PASCALCO.14(?, @L2^<4w>, 4, adjust((8 + 1),4));
+  goto L0294;
+L0093:
+  L8 := 0;
+  L6 := G68;
+L009A:
+  if not (((L6 <> nil) and not (L8))) then goto L00B9;
+  if not ((L6 <> @G17)) then goto L00B0;
+  L6 := L6^.f7;
+  goto L00B7;
+L00B0:
+  L8 := 1;
+  PASCALCO.2(101);
+L00B7:
+  goto L009A;
+L00B9:
+  if not (not (L8)) then goto L00F3;
+  CSP1(@L6, 14);
+  L22 := L6;
+  move(L22, @G17, 4 words);
+  (L22+6)^ := nil;
+  (L22+7)^ := G68;
+  (L22+8)^ := 7;
+  (L22+10)^ := 1;
+  (L22+12)^ := 0;
+  (L22+11)^ := 1;
+  G68 := L6;
+L00F3:
+  PASCALCO.6();
+  if not ((G15 = 3)) then goto L0100;
+  PASCALCO.6();
+  goto L0104;
+L0100:
+  PASCALCO.2(14);
+L0104:
+  if not ((G15 = 0)) then goto L0249;
+  if not ((@G17 = @'INTRINSI')) then goto L0243;
+  G41 := 1;
+  I1,7 := 0;
+  I1,6 := 0;
+  G84 := 1;
+  PASCALCO.6();
+  if not ((G15 = 0)) then goto L0222;
+  if not ((@G17 = @'CODE    ')) then goto L0197;
+  PASCALCO.6();
+  PASCALCO.18(?, @L2^<4w>, 4, adjust((9 + 1),4), @L7, @L10);
+  if not ((L7 = G12)) then goto L0193;
+  G13 := L10;
+  if not (not (([$FFFF,$FFFF] in 2))) then goto L0174;
+  PASCALCO.2(203);
+  G13 := 1;
+  { left on stack: G13 }
+L0174:
+  PASCALCO.11(0);
+  L22 := @G335[G21*9w];
+  (L22+8)^ := 6;
+  (L22+6)^ := G13;
+  I1,7 := 1;
+  goto L0197;
+L0193:
+  PASCALCO.2(15);
+L0197:
+  if not (((G15 = 0) and (@G17 = @'DATA    '))) then goto L0222;
+  PASCALCO.6();
+  PASCALCO.18(?, @L2^<4w>, 4, adjust((8 + 1),4), @L7, @L9);
+  if not ((L7 = G12)) then goto L021E;
+  G84 := L9;
+  if not (not (([$FFFF,$FFFF] in 2))) then goto L01E2;
+  PASCALCO.2(203);
+  G84 := (G13+1);
+  { left on stack: G84 }
+L01E2:
+  PASCALCO.10(@G21, 15, 354);
+  @G479~[G84]{4per word,4 bits} := G21;
+  L22 := @G335[G21*9w];
+  move((L22+2), L6, 4 words);
+  (L22+8)^ := 7;
+  (L22+6)^ := G84;
+  I1,6 := 1;
+  (L6+12)^ := 1;
+  goto L0222;
+L021E:
+  PASCALCO.2(15);
+L0222:
+  if not (not (I1,7)) then goto L0233;
+  PASCALCO.2(352);
+  (L6+10)^ := 0;
+L0233:
+  if not ((G15 = 3)) then goto L023D;
+  PASCALCO.6();
+  goto L0241;
+L023D:
+  PASCALCO.2(14);
+L0241:
+  goto L0247;
+L0243:
+  PASCALCO.2(22);
+L0247:
+  goto L0266;
+L0249:
+  G13 := G85;
+  PASCALCO.11(1);
+  L22 := @G335[G21*9w];
+  (L22+6)^ := G13;
+  (L22+8)^ := 3;
+L0266:
+  L22 := L6;
+  if not (L22^.f10) then goto L0294;
+  L23 := @G335[@G479~[G13]{4per word,4 bits}*9w];
+  move((L23+2), L22, 4 words);
+  (L23+7)^ := G967;
+  (L22+9)^ := G13;
+L0294:
+  { stack tracking stopped: 'CSP 32' }
+  { CSP 32 }
+  { LAO 577 }
+  { LDCI 256 }
+  { CSP 1 }
+  { LAO 81 }
+  { SLDC 11 }
+  { CSP 1 }
+  { LDO 81 }
+  { LLA 11 }
+  { MOV 11 }
+  { SLDC 1 }
+  { SRO 77 }
+  { SLDO 8 }
+  { SLDC 12 }
+  { LESI }
+  { FJP $02E0 }
+  goto L02E0;
+  G8 := (G8+1);
+  L22 := @G131[G8*4w];
+  L22^ := nil;
+  (L22+2)^ := nil;
+  (L22+3)^ := nil;
+  (L22+1)^ := 0;
+  if not ((L6 <> nil)) then goto L02DE;
+  PASCALCO.5(L6);
+L02DE:
+  goto L02E6;
+L02E0:
+  PASCALCO.2(250);
+L02E6:
+
+procedure UNITPART.4(params 0 words);  { locals 3 words, lex 2 }
+  L1 := G81;
+  CSP1(@G81, 11);
+  L2 := G81;
+  CSP1((L2+7), 19);
+  L3 := L2^.f7;
+  move(L3, G68, 4 words);
+  (L3+6)^ := nil;
+  (L3+7)^ := nil;
+  (L3+8)^ := 5;
+  (L3+9)^ := 1;
+  (L3+10)^ := 1;
+  (L3+11)^ := 1;
+  (L3+12)^ := G13;
+  (L3+13)^ := 0;
+  (L3+14)^ := 1;
+  (L3+15)^ := 0;
+  (L3+16)^ := 0;
+  (L3+17)^ := 1;
+  (L3+18)^ := 0;
+  (L2+5)^ := G10;
+  (L2+10)^ := L1;
+  G10 := 1;
+  G77 := 2;
+  G62 := nil;
+  if not ((G15 = 19)) then goto L0374;
+  PASCALCO.6();
+L0374:
+  BODYPART.1(@I1,1^<4w>, 4, ([$0020,$0000] + 2), adjust((512 - 1),4), G81^.f7);
+  G10 := G81^.f5;
+  G81 := G81^.f10;
+
+======================================================================
+SEGMENT 18 COMPOPTI
+======================================================================
+
+function COMPOPTI.1(params 3 words) : <1 word result>;  { locals 28 words, lex 1 }
+  L1 := 1;
+  if not ((G1^[(G14+1)] <> L3)) then goto L0404;
+L017A:
+  L6 := G1^[(G14+1)];
+  L5 := G1^[(G14+2)];
+  L4 := G1^[(G14+3)];
+  if not (((L5 = 44) or (L5 = L3))) then goto L01B1;
+  if not (not ((((L3 = 42) and (L5 = L3)) and (L4 <> 41)))) then goto L01B1;
+  L4 := L5;
+  L5 := 43;
+  G14 := (G14-1);
+L01B1:
+  if not ((L6 > 96)) then goto L01BB;
+  L6 := (L6-32);
+L01BB:
+  { left on stack: L6 }
+  goto L03CA;
+  if not ((G77 > 1)) then goto L01CA;
+  PASCALCO.2(194);
+L01CA:
+  CSP1(@G487, 41);
+  COMPOPTI.3(G487, 80);
+  COMPOPTI.2();
+  goto L03FA;
+  G50 := (L5 = 43);
+  goto L03FA;
+  G45 := (L5 = 43);
+  goto L03FA;
+  G30 := (L5 = 43);
+  goto L03FA;
+  G52 := (L5 = 43);
+  goto L03FA;
+  if not (((L5 = 43) or (L5 = 45))) then goto L0206;
+  G47 := (L5 = 43);
+  goto L0273;
+L0206:
+  COMPOPTI.3(@L7, 40);
+  if not ((L3 = 42)) then goto L0215;
+  G14 := (G14+1);
+L0215:
+  if not (G43) then goto L0226;
+  G14 := (G14+1);
+  PASCALCO.4();
+  G14 := (G14-1);
+L0226:
+  if not ((G37 or (G32 and G31))) then goto L0236;
+  PASCALCO.2(406);
+L0236:
+  COMMAND();
+  FOPEN(@G626, @L7, 1, 0);
+  if not ((CSP34() <> 0)) then goto L0253;
+  PASCALCO.2(403);
+  { left on stack: @L7 }
+  { left on stack: 1 }
+  { left on stack: 40 }
+L0253:
+  G37 := 1;
+  G584 := G14;
+  G583 := G95;
+  G580 := (G90-2);
+  G90 := 2;
+  PASCALCO.3();
+  PASCALCO.6();
+  CSP4(1, 6);
+L0273:
+  goto L03FA;
+  if not (((L5 = 43) or (L5 = 45))) then goto L02A4;
+  G43 := (L5 = 43);
+  if not (G43) then goto L02A2;
+  FOPEN(@G666, '*SYSTEM.LST.TEXT', 0, 0);
+L02A2:
+  goto L02C2;
+L02A4:
+  COMPOPTI.3(@L7, 40);
+  COMMAND();
+  FOPEN(@G666, @L7, 0, 0);
+  G43 := (CSP34() = 0);
+  COMPOPTI.2();
+  { left on stack: @L7 }
+  { left on stack: 1 }
+  { left on stack: 40 }
+L02C2:
+  goto L03FA;
+  if not (((L5 = 83) or (L5 = 115))) then goto L0321;
+  G14 := (G14+1);
+  COMPOPTI.3(@L7, 40);
+  L28 := 0;
+  L29 := @L7^[0];
+  if not ((L29 > 2)) then goto L02E9;
+  L29 := 2;
+L02E9:
+  L30 := 1;
+  L31 := L29;
+L02F0:
+  if not ((L30 <= L31)) then goto L030D;
+  L28 := ((L28*10)+(@L7^[L30]-48));
+  L30 := (L30+1);
+  goto L02F0;
+L030D:
+  if not (((L28 > G85) and (L28 < 31))) then goto L031D;
+  G85 := L28;
+L031D:
+  COMPOPTI.2();
+  goto L0326;
+L0321:
+  G35 := (L5 = 43);
+L0326:
+  goto L03FA;
+  G49 := (L5 = 45);
+  goto L03FA;
+  FWRITECHAR(@G666, 12, 0);
+  goto L03FA;
+  if not (((L5 = 43) or (L5 = 45))) then goto L0349;
+  G51 := (L5 = 43);
+  goto L034B;
+L0349:
+  COMPOPTI.4();
+L034B:
+  goto L03FA;
+  G34 := (L5 = 43);
+  G33 := (L4 = 43);
+  if not (([$2800,$0000,$0000] in 3)) then goto L0369;
+  G14 := (G14+1);
+  { left on stack: L4 }
+L0369:
+  goto L03FA;
+  G42 := (L5 = 43);
+  goto L03FA;
+  if not (((L5 = 43) or (L5 = 45))) then goto L0393;
+  G28 := (L5 = 45);
+  G51 := not (G28);
+  G47 := G51;
+  G39 := G51;
+  G52 := G28;
+  goto L03C1;
+L0393:
+  if not (not (G36)) then goto L03C1;
+  FCLOSE(@G586, 0);
+  G29 := 1;
+  COMPOPTI.3(@G488, 40);
+  FOPEN(@G586, @G488, 1, 0);
+  if not ((CSP34() <> 0)) then goto L03BF;
+  PASCALCO.2(187);
+L03BF:
+  COMPOPTI.2();
+L03C1:
+  goto L03FA;
+  G39 := (L5 = 43);
+  goto L03FA;
+L03CA:
+L03FA:
+  G14 := (G14+3);
+  if not ((L4 <> 44)) then goto L017A;
+L0404:
+
+procedure COMPOPTI.2(params 0 words);  { locals 0 words, lex 2 }
+  I1,1 := 0;
+  CSP4(18, 1);
+
+procedure COMPOPTI.3(params 2 words);  { locals 3 words, lex 2 }
+  G14 := (G14+2);
+  L4 := CSP11(32, G1, G14, 0);
+  L5 := (0+CSP11(I1,3, G1, (G14+L4), 0));
+  { left on stack: L1 }
+  { left on stack: 1 }
+  { left on stack: L4 }
+  { left on stack: (L1-L4) }
+  if not ((I1,3 = 42)) then goto L0066;
+L003C:
+  if not (((G1^[((G14+L5)+1)] <> 41) and ((L1-L5) > 0))) then goto L0066;
+  L5 := (L5+1);
+  L5 := (0+CSP11(I1,3, G1, (G14+L5), 0));
+  { left on stack: L5 }
+  { left on stack: (L1-L5) }
+  goto L003C;
+L0066:
+  L3 := -(CSP11(32, G1, (G14+L5), 0));
+  L5 := ((L5-L4)-L3);
+  L2^[0] := L5;
+  CSP2(L2, 1, L5);
+  G14 := ((((G14+L5)+L4)+L3)+1);
+  { left on stack: -(L5) }
+  { left on stack: 1 }
+  { left on stack: G1 }
+  { left on stack: (G14+L4) }
+
+procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
+  G14 := (G14+2);
+  L3 := 0;
+L00AA:
+  G14 := (1+CSP11(32, G1, G14, 0));
+  if not ((G1^[G14] = I1,3)) then goto L00C4;
+  L3 := 1;
+  { left on stack: G14 }
+  { left on stack: 80 }
+  goto L0149;
+L00C4:
+  PASCALCO.6();
+  if not ((G15 = 35)) then goto L00E2;
+  CSP1(@L2, 13);
+  (L2+9)^ := G23;
+  (L2+7)^ := G62;
+  G62 := L2;
+  goto L013D;
+L00E2:
+  if not ((G15 <> 0)) then goto L00EC;
+  L3 := 1;
+  goto L013D;
+L00EC:
+  G53 := 0;
+  PASCALCO.8(adjust(1,1), @L2);
+  G53 := 1;
+  if not ((L2 <> nil)) then goto L013D;
+  L4 := L2;
+  if not ((L4^.f8 = 7)) then goto L0128;
+  if not (L4^.f10) then goto L0126;
+  CSP1(@L1, 13);
+  (L1+9)^ := L4^.f9;
+  (L1+7)^ := G62;
+  G62 := L1;
+  { left on stack: 224 }
+L0126:
+  goto L013D;
+L0128:
+  CSP1(@L1, 13);
+  (L1+9)^ := L4^.f12;
+  (L1+7)^ := G62;
+  G62 := L1;
+L013D:
+  if not ((G1^[G14] = 44)) then goto L0149;
+  G14 := (G14+1);
+L0149:
+  if not (L3) then goto L00AA;
+  G14 := ((0+CSP11(I1,3, G1, G14, 0))+1);
+  COMPOPTI.2();
+  { left on stack: G14 }
+  { left on stack: 80 }
+
+======================================================================
+SEGMENT 19 NUMSTRIN
+======================================================================
+
+procedure NUMSTRIN.1(params 2 words);  { locals 0 words, lex 1 }
+  if not (L2) then goto L0349;
+  NUMSTRIN.3();
+  goto L034B;
+L0349:
+  NUMSTRIN.2();
+L034B:
+
+procedure NUMSTRIN.2(params 0 words);  { locals 45 words, lex 2 }
+  L44 := 0;
+  L43 := 0;
+L0006:
+  if not (L44) then goto L000F;
+  G14 := (G14+1);
+L000F:
+  G14 := (G14+1);
+  L43 := (L43+1);
+  if not ((G1^[G14] = 13)) then goto L002C;
+  PASCALCO.2(202);
+  PASCALCO.12();
+  goto L0049;
+L002C:
+  @L1^[(L43-1)] := G1^[G14];
+  if not ((G1^[G14] = 39)) then goto L000F;
+  L44 := 1;
+  if not ((G1^[(G14+1)] <> 39)) then goto L0006;
+L0049:
+  L43 := (L43-1);
+  G15 := 37;
+  G16 := 15;
+  G22 := L43;
+  if not ((L43 = 1)) then goto L0069;
+  G23 := @L1^[(1-1)];
+  goto L008C;
+L0069:
+  L45 := G87;
+  L45^ := 2;
+  (L45+1)^ := L43;
+  CSP2((L45+2), (1-1), L43);
+  G23 := G87;
+  { left on stack: @L1 }
+  { left on stack: (1-1) }
+L008C:
+
+procedure NUMSTRIN.3(params 0 words);  { locals 16 words, lex 2 }
+  L10 := 1;
+  L7 := 0;
+  L6 := 0;
+  L5 := 1;
+  L13 := 1;
+  L2 := 9999;
+  L3 := 9999;
+  L4 := G14;
+L00B8:
+  G14 := (G14+1);
+  if not (((G1^[G14] < 48) or (G1^[G14] > 57))) then goto L00B8;
+  L8 := (G14-1);
+  if not ((G1^[G14] = 46)) then goto L010E;
+  if not ((G1^[(G14+1)] <> 46)) then goto L010E;
+  L10 := 0;
+  G14 := (G14+1);
+  L3 := G14;
+L00EA:
+  if not (((G1^[G14] >= 48) and (G1^[G14] <= 57))) then goto L00FE;
+  G14 := (G14+1);
+  goto L00EA;
+L00FE:
+  if not ((G14 = L3)) then goto L0109;
+  PASCALCO.2(201);
+L0109:
+  L7 := (G14-1);
+L010E:
+  if not ((G1^[G14] = 69)) then goto L0162;
+  L10 := 0;
+  G14 := (G14+1);
+  if not ((G1^[G14] = 45)) then goto L012F;
+  G14 := (G14+1);
+  L5 := -(1);
+  goto L013B;
+L012F:
+  if not ((G1^[G14] = 43)) then goto L013B;
+  G14 := (G14+1);
+L013B:
+  L2 := G14;
+L013E:
+  if not (((G1^[G14] >= 48) and (G1^[G14] <= 57))) then goto L0152;
+  G14 := (G14+1);
+  goto L013E;
+L0152:
+  L6 := (G14-1);
+  if not ((L6 < L2)) then goto L0162;
+  PASCALCO.2(201);
+L0162:
+  if not ((L10 = 1)) then goto L0253;
+  L1 := 0;
+  L14 := L4;
+  L16 := L8;
+L0170:
+  if not ((L14 <= L16)) then goto L01AF;
+  if not (((L1 > (32767 div 10)) or ((L1 = (32767 div 10)) and ((G1^[L14]-48) > (32767 mod 10))))) then goto L019D;
+  L13 := 0;
+  L15 := L14;
+  L14 := L8;
+  goto L01A8;
+L019D:
+  L1 := ((L1*10)+(G1^[L14]-48));
+L01A8:
+  L14 := (L14+1);
+  goto L0170;
+L01AF:
+  if not (L13) then goto L01BD;
+  G15 := 35;
+  G16 := 15;
+  G23 := L1;
+  goto L0251;
+L01BD:
+  if not (((L8-L4) >= 36)) then goto L01D0;
+  PASCALCO.2(203);
+  L4 := L8;
+  L15 := L8;
+L01D0:
+  CSP1(I1,1, 12);
+  L16 := I1,1^;
+  L16^ := 4;
+  L14 := 4;
+  (L16+2)^ := 0;
+L01E7:
+  if not ((L15 <= L8)) then goto L0221;
+  if not ((L14 = 4)) then goto L020A;
+  (L16+2)^ := (L16^.f2+1);
+  (L16+3)[(L16^.f2-1)]^ := L1;
+  L1 := 0;
+  L14 := 0;
+L020A:
+  L1 := (((L1*10)+G1^[L15])-48);
+  L15 := (L15+1);
+  L14 := (L14+1);
+  goto L01E7;
+L0221:
+  (L16+1)^ := L14;
+  if not ((L14 > 0)) then goto L023E;
+  (L16+2)^ := (L16^.f2+1);
+  (L16+3)[(L16^.f2-1)]^ := L1;
+L023E:
+  G15 := 48;
+  G16 := 15;
+  G22 := ((L8-L4)+1);
+  G23 := I1,1^;
+L0251:
+  goto L031A;
+L0253:
+  @L11^ := flt(0)  {2 words};
+  L14 := L4;
+  L16 := L8;
+L025F:
+  if not ((L14 <= L16)) then goto L027D;
+  @L11^ := ((@L11^<2w>*flt(10))+flt((G1^[L14]-48)))  {2 words};
+  L14 := (L14+1);
+  goto L025F;
+L027D:
+  L14 := L3;
+  L16 := L7;
+L0283:
+  if not ((L14 <= L16)) then goto L02A1;
+  @L11^ := ((@L11^<2w>*flt(10))+flt((G1^[L14]-48)))  {2 words};
+  L14 := (L14+1);
+  goto L0283;
+L02A1:
+  L9 := 0;
+  L14 := L2;
+  L16 := L6;
+L02AA:
+  if not ((L14 <= L16)) then goto L02C1;
+  L9 := (((L9*10)+G1^[L14])-48);
+  L14 := (L14+1);
+  goto L02AA;
+L02C1:
+  L9 := (L5*L9);
+  if not ((L3 <> 9999)) then goto L02D6;
+  L9 := (((L9+L3)-L7)-1);
+L02D6:
+  if not ((L9 < 0)) then goto L02EA;
+  { stack tracking stopped: 'CSP 36' }
+  { CSP 36 }
+  { DVR }
+  { STM 2 }
+  { UJP $02F6 }
+  goto L02F6;
+L02EA:
+  { stack tracking stopped: 'CSP 36' }
+  { CSP 36 }
+  { MPR }
+  { STM 2 }
+L02F6:
+  G15 := 36;
+  G16 := 15;
+  CSP1(I1,1, 3);
+  I1,1^^ := 0;
+  (I1,1^+1)^ := @L11^<2w>  {2 words};
+  G23 := I1,1^;
+L031A:
+  G14 := (G14-1);
+
+======================================================================
+SEGMENT 20 FINISHUP
+======================================================================
+
+procedure FINISHUP.1(params 0 words);  { locals 2 words, lex 1 }
+  if not ((G15 <> 18)) then goto L0009;
+  PASCALCO.2(21);
+L0009:
+  if not (G43) then goto L001F;
+  G92 := (G92+1);
+  G1^[G14] := 13;
+  G14 := (G14+1);
+  PASCALCO.4();
+L001F:
+  I2,11 := 0;
+  CSP9(@G22, @G91);
+  G94 := (G91-G94);
+  if not (G44) then goto L0048;
+  (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 1;
+  WRITELIN.1();
+L0048:
+  FCLOSE(@G586, 0);
+  FCLOSE(@G666, 1);
+  if not (G49) then goto L0060;
+  FWRITELN(I2,3);
+L0060:
+  FWRITEINT(I2,3, G92, 0);
+  FWRITESTRING(I2,3, ' lines', 0);
+  if not ((G94 > 0)) then goto L00D2;
+  FWRITESTRING(I2,3, ', ', 0);
+  FWRITEINT(I2,3, ((G94+30) div 60), 0);
+  FWRITESTRING(I2,3, ' secs, ', 0);
+  { stack tracking stopped: 'CSP 24' }
+  { CSP 24 }
+  { SLDC 0 }
+  { CXP 0,13 }
+  { LOD 2,3 }
+  { LSA ' lines/min' }
+  { NOP }
+  { SLDC 0 }
+  { CXP 0,19 }
+L00D2:
+  if not (G49) then goto L011A;
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, 'Smallest available space = ', 0);
+  FWRITEINT(I2,3, G89, 0);
+  FWRITESTRING(I2,3, ' words', 0);
+L011A:
+  G9 := 0;
+  CSP1(@G2, 650);
+  G13 := 0;
+  L1 := 15;
+L012A:
+  if not ((G13 <= L1)) then goto L0148;
+  L2 := @G335[G13*9w];
+  PASCALCO.21(L2^.f1);
+  PASCALCO.21(L2^);
+  G13 := (G13+1);
+  goto L012A;
+L0148:
+  G13 := 0;
+  L1 := 15;
+L014E:
+  if not ((G13 <= L1)) then goto L016D;
+  CSP2(G2, G9, 8);
+  G9 := (G9+8);
+  G13 := (G13+1);
+  { left on stack: (@G335[G13*9w]+2) }
+  { left on stack: 0 }
+  goto L014E;
+L016D:
+  G13 := 0;
+  L1 := 15;
+L0173:
+  if not ((G13 <= L1)) then goto L018A;
+  PASCALCO.21(@G335[G13*9w]^.f8);
+  G13 := (G13+1);
+  goto L0173;
+L018A:
+  G13 := 0;
+  L1 := 15;
+L0190:
+  if not ((G13 <= L1)) then goto L01A6;
+  PASCALCO.21(@G335[G13*9w]^.f7);
+  G13 := (G13+1);
+  goto L0190;
+L01A6:
+  G13 := 0;
+  L1 := 15;
+L01AC:
+  if not ((G13 <= L1)) then goto L01D2;
+  if not ((@G335[G13*9w]^.f6 <> 0)) then goto L01C7;
+  PASCALCO.21(PASCALCO.13(G13, 0, 0));
+  goto L01CB;
+L01C7:
+  PASCALCO.21(0);
+L01CB:
+  G13 := (G13+1);
+  goto L01AC;
+L01D2:
+  CSP2(@G185, 0, 4);
+  PASCALCO.21(@G185[0]^);
+  PASCALCO.21(@G185[1]^);
+  G11 := 1;
+  if not ((([$C000,$0000] * 2) <> 0)) then goto L023F;
+  PASCALCO.20(42);
+  PASCALCO.20(0);
+  G22 := 30;
+  L1 := 31;
+  { left on stack: @G183 }
+  { left on stack: 0 }
+  { left on stack: @G183^<2w> }
+  { left on stack: 2 }
+L0215:
+  if not ((G22 <= L1)) then goto L023B;
+  if not ((@G183^<2w> in 2)) then goto L0233;
+  PASCALCO.20(G22);
+  PASCALCO.20(6);
+  PASCALCO.20(0);
+  { left on stack: G22 }
+L0233:
+  G22 := (G22+1);
+  goto L0215;
+L023B:
+  PASCALCO.20(0);
+L023F:
+  if not ((G9 >= 432)) then goto L024C;
+  PASCALCO.2(407);
+L024C:
+  if not ((G9 < 432)) then goto L0259;
+  PASCALCO.20(0);
+  goto L024C;
+L0259:
+  if not ((G487 <> nil)) then goto L026B;
+  CSP2(G2, G9, 80);
+  { left on stack: G487 }
+  { left on stack: 0 }
+  goto L0271;
+L026B:
+  CSP10(G9, 80, 0);
+  { left on stack: G2 }
+L0271:
+  G9 := (G9+80);
+  G967 := 0;
+  G968 := 0;
+  PASCALCO.22(1);

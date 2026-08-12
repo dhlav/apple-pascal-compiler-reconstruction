@@ -1,0 +1,7 @@
+# Generated: reproducible from evidence/ via tools/build_all.py
+build/
+
+# Local tooling state
+.claude/
+__pycache__/
+*.pyc

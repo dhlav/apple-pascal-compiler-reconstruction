@@ -1,0 +1,29 @@
+Apple Pascal 1.1 SYSTEM.COMPILER
+COMPINIT / Procedure 1
+Conservative annotated reconstruction
+
+Procedure metadata recovered:
+  Segment: 7 (COMPINIT)
+  Procedure: 1
+  Data size: 518 bytes
+  Parameter size: 0
+  Lexical level: 1
+  Entry: $0A46
+  Exit:  $0C71
+
+Initial observed P-code:
+  $0A46  CE 09       CLP 9
+  $0A48  CE 0A       CLP 10
+  $0A4A  00          SLDC #0
+  $0A4B  AB 4D       SRO $4D
+  $0A4D  00          SLDC #0
+  $0A4E  AB 08       SRO $08
+  $0A50  A9 31       LDO $31
+  $0A52  A1 56       FJP $0AAA
+
+The procedure contains the compiler identification string:
+  "Apple Pascal Compiler [1.1]"
+
+The remaining instructions are retained for continued control-flow and
+symbol/data-reference analysis rather than being assigned speculative
+Pascal names.

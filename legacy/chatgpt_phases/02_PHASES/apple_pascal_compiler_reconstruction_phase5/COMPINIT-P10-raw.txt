@@ -1,0 +1,4 @@
+Procedure 10 entry $0870 exit $0881 data=0 params=6 lex=1
+Raw bytes:
+$0870: da f8 d9 c9 a1 08 da da f8 01 82 9a b9 03 d8 cf
+$0880: 02 ad

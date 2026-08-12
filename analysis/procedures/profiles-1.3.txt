@@ -1,0 +1,789 @@
+Apple Pascal 1.3 SYSTEM.COMPILER -- procedure profiles
+
+signature line: params/locals in BYTES, lex level, code size in bytes.
+'function(n words)' comes from the RNP/RBP db operand.
+globals are word offsets: r=read w=write &=address taken.
+
+--------------------------------------------------------------------
+BODY1.1   procedure   params=0 locals=4 lex=3 size=300
+  called from 1 site(s) in 1 procedure(s): BODYPART.24
+  calls      : BODYPART.5 x3, BODYPART.6 x2, BODYPART.18 x2, BODYPART.19, PASCALCO.11, PASCALCO.17, PASCALCO.22 x2
+  globals    : 8r, 9r, 10r, 25w, 28r, 33r, 65r, 80r, 94w, 95r, 134&, 627w
+--------------------------------------------------------------------
+BODY3.1   procedure   params=0 locals=4 lex=3 size=383
+  called from 1 site(s) in 1 procedure(s): BODYPART.24
+  calls      : BODY3.2, BODYPART.3, BODYPART.4, BODYPART.5 x2, BODYPART.6 x2, PASCALCO.4 x2, PASCALCO.8, PASCALCO.22 x3, PASCALCO.23 x7, PASCALCO.24
+  globals    : 8r, 9r, 13r, 15r, 25r, 33r, 36r, 49rw, 66r, 80r, 89rw, 100r, 134&, 186&, 190&, 445&, 589&, 627r, 628&, 1097r
+--------------------------------------------------------------------
+BODY3.2   procedure   params=0 locals=2 lex=4 size=468
+  called from 1 site(s) in 1 procedure(s): BODY3.1
+  calls      : BODYPART.2 x2, BODYPART.4 x8, BODYPART.5 x8, BODYPART.16 x3, BODYPART.18 x2, BODYPART.19 x2
+  globals    : 9rw, 36r, 66rw, 186&
+--------------------------------------------------------------------
+BODYPART.1   procedure   params=10 locals=0 lex=1 size=14
+  called from 2 site(s) in 2 procedure(s): PASCALCO.26, UNITPART.4
+  calls      : BODYPART.24, BODYPART.38
+  globals    : 34r, 35r
+--------------------------------------------------------------------
+BODYPART.2   procedure   params=6 locals=2 lex=2 size=98
+  called from 5 site(s) in 4 procedure(s): BODY3.2, BODYPART.5, BODYPART.31, ROUTINE.7
+  calls      : PASCALCO.4
+  runtime    : OS.28 FBLOCKIO
+  globals    : 89r, 133r, 665&, 705rw, 706rw, 707r
+--------------------------------------------------------------------
+BODYPART.3   procedure   params=2 locals=8 lex=2 size=83
+  called from 56 site(s) in 18 procedure(s)
+  calls      : PASCALCO.22 x6
+  globals    : 5r, 9r, 91w
+--------------------------------------------------------------------
+BODYPART.4   procedure   params=2 locals=0 lex=2 size=49
+  called from 111 site(s) in 27 procedure(s)
+  calls      : BODYPART.3, PASCALCO.22 x4
+--------------------------------------------------------------------
+BODYPART.5   procedure   params=4 locals=6 lex=2 size=250
+  called from 56 site(s) in 23 procedure(s)
+  calls      : BODYPART.2, BODYPART.4, BODYPART.28, PASCALCO.22 x8, PASCALCO.23
+  globals    : 3r, 5r, 9rw, 33r
+--------------------------------------------------------------------
+BODYPART.6   procedure   params=6 locals=0 lex=2 size=162
+  called from 60 site(s) in 23 procedure(s)
+  calls      : BODYPART.3, BODYPART.5 x3, BODYPART.28 x3, PASCALCO.22 x9
+  globals    : 80r
+--------------------------------------------------------------------
+BODYPART.7   procedure   params=4 locals=0 lex=2 size=21
+  called from 26 site(s) in 12 procedure(s): BODYPART.8, BODYPART.11, BODYPART.29, BODYPART.30, BODYPART.31, BODYPART.33, BODYPART.34, BODYPART.35, ROUTINE.11, ROUTINE.13, ROUTINE.17, STATEMEN.2
+  calls      : BODYPART.6
+  globals    : 186&
+--------------------------------------------------------------------
+BODYPART.8   procedure   params=0 locals=8 lex=2 size=259
+  called from 41 site(s) in 19 procedure(s)
+  calls      : BODYPART.3 x3, BODYPART.4 x10, BODYPART.5 x4, BODYPART.6, BODYPART.7 x5
+  intrinsics : CSP 23, CSP 36
+  globals    : 3r, 4rw, 5r, 6r, 7r, 59r, 64r
+--------------------------------------------------------------------
+BODYPART.9   procedure   params=0 locals=0 lex=2 size=93
+  called from 29 site(s) in 13 procedure(s): BODYPART.11, BODYPART.22, BODYPART.29, BODYPART.30, BODYPART.31, ROUTINE.4, ROUTINE.5, ROUTINE.12, ROUTINE.13, ROUTINE.15, ROUTINE.17, STATEMEN.2, STATEMEN.8
+  calls      : BODYPART.3, BODYPART.5, BODYPART.6, PASCALCO.4 x2, PASCALCO.18
+  globals    : 3r, 4rw, 5rw, 6rw, 7r
+--------------------------------------------------------------------
+BODYPART.10   procedure   params=0 locals=0 lex=2 size=108
+  called from 6 site(s) in 5 procedure(s): ROUTINE.6, ROUTINE.8, ROUTINE.14, ROUTINE.15, ROUTINE.17
+  calls      : BODYPART.3, BODYPART.4 x2, BODYPART.5, BODYPART.6, PASCALCO.4 x2, PASCALCO.18
+  globals    : 3r, 4rw, 5rw, 6r, 7r
+--------------------------------------------------------------------
+BODYPART.11   procedure   params=8 locals=26 lex=2 size=617
+  called from 32 site(s) in 19 procedure(s)
+  calls      : BODYPART.3, BODYPART.4 x2, BODYPART.6 x6, BODYPART.7, BODYPART.8 x2, BODYPART.9 x2, BODYPART.15, BODYPART.21 x2, BODYPART.32, BODYPART.33, BODYPART.34 x2, BODYPART.37 x2, PASCALCO.4 x10, PASCALCO.8, PASCALCO.11, PASCALCO.17 x3, PASCALCO.18 x4, PASCALCO.21 x2
+  globals    : 3&rw, 4rw, 15r, 16r, 57r, 58r, 61r, 62r, 64r, 91r
+--------------------------------------------------------------------
+BODYPART.12   procedure   params=8 locals=2 lex=2 size=39
+  called from 19 site(s) in 9 procedure(s): BODYPART.29, ROUTINE.5, ROUTINE.6, ROUTINE.8, ROUTINE.12, ROUTINE.13, ROUTINE.14, ROUTINE.15, ROUTINE.17
+  calls      : BODYPART.22, PASCALCO.4, PASCALCO.8, PASCALCO.10
+  globals    : 15r, 76r, 133r
+--------------------------------------------------------------------
+BODYPART.13   procedure   params=2 locals=2 lex=2 size=50
+  called from 2 site(s) in 2 procedure(s): BODYPART.31, ROUTINE.7
+  calls      : PASCALCO.4
+  globals    : 45w, 99rw, 190&
+--------------------------------------------------------------------
+BODYPART.14   procedure   params=2 locals=2 lex=2 size=30
+  called from 5 site(s) in 3 procedure(s): BODYPART.29, BODYPART.30, ROUTINE.17
+  calls      : BODYPART.6 x2
+--------------------------------------------------------------------
+BODYPART.15   procedure   params=0 locals=0 lex=2 size=16
+  called from 6 site(s) in 5 procedure(s): BODYPART.11, BODYPART.22, BODYPART.36, CASESTAT.1, FORSTATE.1
+  calls      : PASCALCO.22 x2
+  globals    : 3r, 61r
+--------------------------------------------------------------------
+BODYPART.16   procedure   params=4 locals=4 lex=2 size=139
+  called from 13 site(s) in 8 procedure(s): BODY3.2, BODYPART.17, BODYPART.19, CASESTAT.1, FORSTATE.1, STATEMEN.3, STATEMEN.5, STATEMEN.7
+  calls      : PASCALCO.4, PASCALCO.22 x3
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 2r, 9rw, 627rw, 628&
+--------------------------------------------------------------------
+BODYPART.17   procedure   params=2 locals=0 lex=2 size=22
+  called from 3 site(s) in 3 procedure(s): STATEMEN.5, STATEMEN.6, STATEMEN.7
+  calls      : BODYPART.8, BODYPART.16, PASCALCO.4
+  globals    : 3r, 61r
+--------------------------------------------------------------------
+BODYPART.18   procedure   params=2 locals=2 lex=2 size=18
+  called from 14 site(s) in 7 procedure(s): BODY1.1, BODY3.2, CASESTAT.1, FORSTATE.1, STATEMEN.5, STATEMEN.6, STATEMEN.7
+  intrinsics : CSP 1 NEW
+--------------------------------------------------------------------
+BODYPART.19   procedure   params=2 locals=6 lex=2 size=70
+  called from 15 site(s) in 8 procedure(s): BODY1.1, BODY3.2, CASESTAT.1, FORSTATE.1, STATEMEN.1, STATEMEN.5, STATEMEN.6, STATEMEN.7
+  calls      : BODYPART.16
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 2r, 9rw
+--------------------------------------------------------------------
+BODYPART.20   procedure   params=2 locals=2 lex=2 size=76
+  called from 6 site(s) in 2 procedure(s): FORSTATE.1, STATEMEN.2
+  calls      : BODYPART.3 x3, BODYPART.5, BODYPART.6, PASCALCO.4
+--------------------------------------------------------------------
+BODYPART.21   procedure   params=2 locals=0 lex=2 size=73
+  called from 5 site(s) in 3 procedure(s): BODYPART.11, BODYPART.31, STATEMEN.2
+  intrinsics : CSP 2 MOVELEFT, CSP 3 MOVERIGHT
+  globals    : 2r
+--------------------------------------------------------------------
+BODYPART.22   procedure   params=10 locals=20 lex=2 size=827
+  called from 4 site(s) in 4 procedure(s): BODYPART.12, BODYPART.36, STATEMEN.2, STATEMEN.8
+  calls      : BODYPART.3 x4, BODYPART.4 x8, BODYPART.5, BODYPART.6 x3, BODYPART.8 x2, BODYPART.9 x6, BODYPART.11, BODYPART.15, PASCALCO.4 x14, PASCALCO.8 x5, PASCALCO.9, PASCALCO.11, PASCALCO.16 x2, PASCALCO.18 x2, PASCALCO.21
+  globals    : 3&rw, 4w, 5rw, 6rw, 7rw, 15r, 24r, 33r, 52r, 62r, 80r, 113&, 134&
+--------------------------------------------------------------------
+BODYPART.23   procedure   params=10 locals=4 lex=2 size=118
+  called from 2 site(s) in 2 procedure(s): BODYPART.36, STATEMEN.1
+  calls      : BODYPART.8, BODYPART.11, BODYPART.29, BODYPART.30, BODYPART.31, PASCALCO.4 x2, PASCALCO.8 x2, ROUTINE.1
+  globals    : 15r
+--------------------------------------------------------------------
+BODYPART.24   procedure   params=0 locals=38 lex=2 size=16
+  called from 2 site(s) in 2 procedure(s): BODYPART.1, BODYPART.38
+  calls      : BODY1.1, BODY3.1, BODYPART.25, BODYPART.27
+  globals    : 35r
+--------------------------------------------------------------------
+BODYPART.25   procedure   params=0 locals=4 lex=3 size=292
+  called from 2 site(s) in 2 procedure(s): BODYPART.24, BODYPART.27
+  calls      : BODYPART.4 x4, BODYPART.6 x3, BODYPART.26, PASCALCO.8, STATEMEN.1
+  runtime    : OS.13 FWRITEINT x2, OS.17 FWRITECHAR x2, OS.19 FWRITESTRING x2, OS.20 FWRITEBYTES, OS.22 FWRITELN x2
+  intrinsics : CSP 40
+  globals    : 8r, 11rw, 15r, 33r, 46r, 50r, 56r, 62r, 66&, 92rw, 95r, 105&, 134&
+  strings    : ' [', ' words]'
+--------------------------------------------------------------------
+BODYPART.26   procedure   params=2 locals=0 lex=4 size=26
+  called from 2 site(s) in 2 procedure(s): BODYPART.25, BODYPART.26
+  calls      : BODYPART.6, BODYPART.26
+--------------------------------------------------------------------
+BODYPART.27   procedure   params=0 locals=0 lex=3 size=4
+  called from 1 site(s) in 1 procedure(s): BODYPART.24
+  calls      : BODYPART.25
+  intrinsics : CSP 21, CSP 22
+--------------------------------------------------------------------
+BODYPART.28   procedure   params=2 locals=0 lex=2 size=31
+  called from 4 site(s) in 2 procedure(s): BODYPART.5, BODYPART.6
+  calls      : PASCALCO.22 x3
+--------------------------------------------------------------------
+BODYPART.29   procedure   params=0 locals=4 lex=3 size=264
+  called from 1 site(s) in 1 procedure(s): BODYPART.23
+  calls      : BODYPART.4 x2, BODYPART.5 x2, BODYPART.6 x4, BODYPART.7 x2, BODYPART.9, BODYPART.12, BODYPART.14 x2, PASCALCO.4 x4, PASCALCO.8 x3, PASCALCO.10, PASCALCO.18, PASCALCO.21 x4
+  globals    : 3r, 5r, 11rw, 12r, 15r, 48r, 62r, 63r, 64r, 70r, 133r
+--------------------------------------------------------------------
+BODYPART.30   procedure   params=0 locals=16 lex=3 size=431
+  called from 1 site(s) in 1 procedure(s): BODYPART.23
+  calls      : BODYPART.4 x10, BODYPART.5 x2, BODYPART.6 x5, BODYPART.7 x3, BODYPART.8 x3, BODYPART.9, BODYPART.11 x3, BODYPART.14 x2, PASCALCO.4 x4, PASCALCO.8 x5, PASCALCO.10, PASCALCO.11, PASCALCO.17, PASCALCO.18, PASCALCO.19, PASCALCO.21
+  globals    : 3r, 11rw, 12r, 15r, 48r, 57r, 62r, 63r, 64r, 69r, 133r
+--------------------------------------------------------------------
+BODYPART.31   procedure   params=0 locals=18 lex=3 size=766
+  called from 1 site(s) in 1 procedure(s): BODYPART.23
+  calls      : BODYPART.2, BODYPART.3 x3, BODYPART.4 x7, BODYPART.5 x6, BODYPART.6 x2, BODYPART.7 x2, BODYPART.8, BODYPART.9 x2, BODYPART.11, BODYPART.13, BODYPART.21, PASCALCO.4 x12, PASCALCO.8 x2, PASCALCO.11, PASCALCO.17, PASCALCO.18 x2, PASCALCO.21 x2
+  globals    : 3rw, 4r, 5rw, 6w, 9rw, 12r, 13r, 15r, 33r, 40r, 52r, 55r, 57r, 58r, 62r, 63r, 64r, 80r, 91r
+--------------------------------------------------------------------
+BODYPART.32   procedure   params=4 locals=0 lex=3 size=39
+  called from 5 site(s) in 3 procedure(s): BODYPART.11, BODYPART.34, BODYPART.35
+  calls      : BODYPART.3 x2
+  globals    : 3rw, 12r, 64r
+--------------------------------------------------------------------
+BODYPART.33   procedure   params=2 locals=0 lex=3 size=47
+  called from 5 site(s) in 3 procedure(s): BODYPART.11, BODYPART.34, BODYPART.35
+  calls      : BODYPART.4 x2, BODYPART.7 x2
+  globals    : 3rw, 12r, 63r
+--------------------------------------------------------------------
+BODYPART.34   procedure   params=8 locals=14 lex=3 size=367
+  called from 2 site(s) in 1 procedure(s): BODYPART.11
+  calls      : BODYPART.3 x9, BODYPART.4 x3, BODYPART.7 x3, BODYPART.8 x3, BODYPART.32 x2, BODYPART.33 x2, BODYPART.35 x2, PASCALCO.4 x4, PASCALCO.8 x2, PASCALCO.21 x2
+  globals    : 3&rw, 12r, 15r, 16r, 61r, 64r
+--------------------------------------------------------------------
+BODYPART.35   procedure   params=8 locals=14 lex=4 size=319
+  called from 2 site(s) in 1 procedure(s): BODYPART.34
+  calls      : BODYPART.3 x7, BODYPART.4 x2, BODYPART.7 x2, BODYPART.8 x2, BODYPART.32 x2, BODYPART.33 x2, BODYPART.36 x2, PASCALCO.4 x5, PASCALCO.8, PASCALCO.21
+  globals    : 3&rw, 12r, 15r, 16r, 61r, 64r
+--------------------------------------------------------------------
+BODYPART.36   procedure   params=8 locals=36 lex=5 size=834
+  called from 3 site(s) in 2 procedure(s): BODYPART.35, BODYPART.36
+  calls      : BODYPART.3 x4, BODYPART.8 x5, BODYPART.11 x3, BODYPART.15, BODYPART.22, BODYPART.23, BODYPART.36, PASCALCO.4 x8, PASCALCO.8 x13, PASCALCO.10, PASCALCO.16 x2, PASCALCO.19, PASCALCO.21 x2
+  intrinsics : CSP 1 NEW x3
+  globals    : 3rw, 4rw, 5&rw, 9rw, 11rw, 12r, 15r, 22r, 23&, 55r, 61r, 62r, 63r, 64r, 90r, 109&
+--------------------------------------------------------------------
+BODYPART.37   procedure   params=4 locals=10 lex=3 size=89
+  called from 2 site(s) in 1 procedure(s): BODYPART.11
+  calls      : PASCALCO.4, PASCALCO.11
+  intrinsics : CSP 1 NEW
+  globals    : 12r, 57r
+--------------------------------------------------------------------
+BODYPART.38   procedure   params=0 locals=0 lex=2 size=4
+  called from 1 site(s) in 1 procedure(s): BODYPART.1
+  calls      : BODYPART.24
+  intrinsics : CSP 21, CSP 22
+--------------------------------------------------------------------
+CASESTAT.1   procedure   params=0 locals=28 lex=3 size=479
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.3, BODYPART.8, BODYPART.11, BODYPART.15, BODYPART.16 x3, BODYPART.18 x3, BODYPART.19 x3, PASCALCO.4 x7, PASCALCO.8 x7, PASCALCO.20, PASCALCO.21, PASCALCO.23 x4, STATEMEN.1 x2
+  intrinsics : CSP 1 NEW
+  globals    : 3r, 9r, 11rw, 15r, 64r, 105&
+--------------------------------------------------------------------
+COMPINIT.1   procedure   params=0 locals=608 lex=1 size=981
+  called from 1 site(s) in 1 procedure(s): PASCALCO.1
+  calls      : COMPINIT.2, COMPINIT.3, COMPINIT.4, COMPINIT.7, COMPINIT.8, COMPINIT.9, COMPINIT.10, COMPINIT.11, PASCALCO.4 x3, PASCALCO.5, PASCALCO.7, PASCALCO.8 x6
+  runtime    : OS.5 FOPEN, OS.13 FWRITEINT, OS.17 FWRITECHAR, OS.18 FREADSTRING, OS.19 FWRITESTRING x6, OS.21 FREADLN, OS.22 FWRITELN x4, OS.26 SDELETE, OS.43 COMMAND
+  intrinsics : CSP 1 NEW x2, CSP 4 EXIT, CSP 32, CSP 34 x2, CSP 40
+  globals    : 8rw, 9rw, 10rw, 13rw, 15r, 17&, 21r, 28r, 44w, 50rw, 68&rw, 80rw, 83&r, 84&r, 85w, 88w, 92w, 100r, 117&, 134&, 445&, 589&, 796&, 1356w, 1357w
+  strings    : 'Listing file (<ret> for none or option in source): ', '', '', 'CONSOLE:', '#1:', 'I/O Error #', ' occured while opening ', 'Apple Pascal Compiler [1.3]', '<   0>'
+--------------------------------------------------------------------
+COMPINIT.2   procedure   params=0 locals=4 lex=2 size=365
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  calls      : PASCALCO.19
+  intrinsics : CSP 1 NEW x12
+  globals    : 12&r, 55&r, 56&r, 57&r, 58&r, 59&r, 60&r, 61&r, 62&r, 63&r, 64&r
+--------------------------------------------------------------------
+COMPINIT.3   procedure   params=0 locals=10 lex=2 size=675
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  calls      : PASCALCO.7 x15
+  intrinsics : CSP 1 NEW x15
+  globals    : 12r, 55r, 56r, 57r, 58r, 59r, 60r, 61r, 62r, 64r, 69&r, 70&r
+--------------------------------------------------------------------
+COMPINIT.4   procedure   params=0 locals=10 lex=2 size=294
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  intrinsics : CSP 1 NEW x6
+  globals    : 72&r, 73&r, 74&r, 76&r, 77&r, 78&r
+--------------------------------------------------------------------
+COMPINIT.5   procedure   params=2 locals=82 lex=2 size=49
+  called from 7 site(s) in 2 procedure(s): COMPINIT.7, COMPINIT.8
+  intrinsics : CSP 2 MOVELEFT
+--------------------------------------------------------------------
+COMPINIT.6   procedure   params=2 locals=2 lex=2 size=53
+  called from 2 site(s) in 2 procedure(s): COMPINIT.7, COMPINIT.8
+  intrinsics : CSP 2 MOVELEFT, CSP 11 SCAN
+--------------------------------------------------------------------
+COMPINIT.7   procedure   params=0 locals=16 lex=2 size=436
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  calls      : COMPINIT.5 x5, COMPINIT.6, PASCALCO.7
+  intrinsics : CSP 1 NEW x2
+  globals    : 43r
+  strings    : 'READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.', 'UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.', 'MOVELEFT.MOVERIGH.EXIT.IDSEARCH.TREESEAR.TIME.FILLCHAR.', 'OPENNEW.OPENOLD.REWRITE.CLOSE.SEEK.RESET.GET.PUT.SCAN.', 'BLOCKREA.BLOCKWRI.TRUNC.PAGE.SIZEOF.STR.GOTOXY.UNITSTAT.'
+--------------------------------------------------------------------
+COMPINIT.8   procedure   params=0 locals=22 lex=2 size=426
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  calls      : COMPINIT.5 x2, COMPINIT.6, PASCALCO.7
+  intrinsics : CSP 1 NEW x7
+  globals    : 12r, 61r, 62r, 64r
+  strings    : 'ODD.CHR.XXX.ROUND.MARK.RELEASE.', 'IORESULT.UNITBUSY.PWROFTEN.UNITWAIT.UNITCLEA.HALT.MEMAVAIL.'
+--------------------------------------------------------------------
+COMPINIT.9   procedure   params=0 locals=4 lex=2 size=262
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  intrinsics : CSP 1 NEW x2, CSP 40 x2
+  globals    : 1&, 2w, 10w, 13rw, 21w, 26w, 28w, 29w, 30w, 33w, 34w, 35w, 36w, 37w, 38w, 39w, 40w, 41w, 42w, 43w, 44w, 45w, 46w, 47w, 48w, 49w, 50w, 51w, 52w, 53w, 54w, 66w, 67w, 71w, 79w, 82w, 88w, 89w, 90&, 93w, 94w, 95w, 96w, 98w, 99w, 100w, 186&, 445&, 605w, 606&, 627w, 1097w, 1098w
+--------------------------------------------------------------------
+COMPINIT.10   procedure   params=0 locals=0 lex=2 size=142
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  globals    : 101&, 105&, 109&, 113&, 117&, 121&, 125&, 129&, 133w
+--------------------------------------------------------------------
+COMPINIT.11   procedure   params=0 locals=2 lex=2 size=156
+  called from 1 site(s) in 1 procedure(s): COMPINIT.1
+  runtime    : OS.19 FWRITESTRING x2, OS.22 FWRITELN x4
+  intrinsics : CSP 4 EXIT
+  globals    : 1355w
+  strings    : 'Version 1.3 of SYSTEM.COMPILER cannot run', 'with a non-1.3 version of SYSTEM.PASCAL'
+--------------------------------------------------------------------
+COMPOPTI.1   function(1 word)   params=6 locals=56 lex=1 size=692
+  called from 1 site(s) in 1 procedure(s): PASCALCO.28
+  calls      : COMPOPTI.2 x4, COMPOPTI.3 x5, COMPOPTI.4, PASCALCO.4 x4, PASCALCO.5, PASCALCO.6, PASCALCO.8
+  runtime    : OS.5 FOPEN x4, OS.6 FCLOSE, OS.17 FWRITECHAR, OS.43 COMMAND x2
+  intrinsics : CSP 1 NEW, CSP 4 EXIT, CSP 34 x3
+  globals    : 1r, 14rw, 28rw, 29w, 30w, 32r, 33r, 34w, 35w, 36w, 37r, 38rw, 40w, 43w, 44rw, 46w, 48w, 50w, 51w, 52rw, 53w, 80r, 88rw, 93rw, 98r, 605&r, 606&, 710w, 713w, 714w, 716&, 756&, 796&, 1356r, 1357r
+  strings    : '*SYSTEM.LST.TEXT[*]'
+--------------------------------------------------------------------
+COMPOPTI.2   procedure   params=0 locals=0 lex=2 size=8
+  called from 5 site(s) in 2 procedure(s): COMPOPTI.1, COMPOPTI.4
+  intrinsics : CSP 4 EXIT
+--------------------------------------------------------------------
+COMPOPTI.3   procedure   params=4 locals=6 lex=2 size=127
+  called from 5 site(s) in 1 procedure(s): COMPOPTI.1
+  intrinsics : CSP 2 MOVELEFT, CSP 11 SCAN x4
+  globals    : 1r, 14rw
+--------------------------------------------------------------------
+COMPOPTI.4   procedure   params=0 locals=8 lex=2 size=148
+  called from 1 site(s) in 1 procedure(s): COMPOPTI.1
+  calls      : COMPOPTI.2, COMPOPTI.5 x3, PASCALCO.4, PASCALCO.8, PASCALCO.10
+  intrinsics : CSP 11 SCAN x2
+  globals    : 1r, 14rw, 15r, 23r, 54w
+--------------------------------------------------------------------
+COMPOPTI.5   procedure   params=2 locals=4 lex=3 size=36
+  called from 3 site(s) in 1 procedure(s): COMPOPTI.4
+  intrinsics : CSP 1 NEW
+  globals    : 15r, 33r, 42r, 65rw
+--------------------------------------------------------------------
+DECLARAT.1   procedure   params=8 locals=22 lex=1 size=314
+  called from 5 site(s) in 2 procedure(s): PASCALCO.26, UNITPART.1
+  calls      : DECLARAT.10, DECLARAT.15, DECLARAT.16, DECLARAT.17, DECLARAT.18, DECLARAT.19 x3, PASCALCO.4 x3, PASCALCO.8 x6, PASCALCO.16 x2
+  intrinsics : CSP 1 NEW
+  globals    : 2&r, 8r, 15r, 27w, 32r, 33r, 37r, 38r, 80r, 85w, 86w, 105&, 117&
+--------------------------------------------------------------------
+DECLARAT.2   procedure   params=8 locals=0 lex=2 size=21
+  called from 11 site(s) in 9 procedure(s): DECLARAT.3, DECLARAT.4, DECLARAT.8, DECLARAT.15, DECLARAT.16, DECLARAT.17, DECLARAT.18, DECLARAT.19, DECLARAT.20
+  calls      : PASCALCO.4, PASCALCO.16
+  globals    : 15r
+--------------------------------------------------------------------
+DECLARAT.3   procedure   params=12 locals=26 lex=2 size=868
+  called from 5 site(s) in 4 procedure(s): DECLARAT.3, DECLARAT.6, DECLARAT.17, DECLARAT.18
+  calls      : DECLARAT.2, DECLARAT.3 x2, DECLARAT.4 x3, DECLARAT.5, DECLARAT.6, DECLARAT.9, PASCALCO.4 x17, PASCALCO.8 x12, PASCALCO.11 x2, PASCALCO.16 x2
+  intrinsics : CSP 1 NEW x5
+  globals    : 8rw, 11rw, 12r, 15r, 32r, 33r, 46r, 64r, 101&, 121&, 125&, 134&
+--------------------------------------------------------------------
+DECLARAT.4   procedure   params=12 locals=26 lex=3 size=802
+  called from 3 site(s) in 1 procedure(s): DECLARAT.3
+  calls      : DECLARAT.2 x2, PASCALCO.4 x19, PASCALCO.7, PASCALCO.8 x13, PASCALCO.10, PASCALCO.16, PASCALCO.18 x2, PASCALCO.19, PASCALCO.20 x5
+  intrinsics : CSP 1 NEW x6
+  globals    : 8rw, 12r, 15r, 17&, 32r, 33r, 46r, 55r, 57r, 58r, 63r, 64r, 125&, 134&
+--------------------------------------------------------------------
+DECLARAT.5   function(1 word)   params=6 locals=6 lex=3 size=134
+  called from 3 site(s) in 3 procedure(s): DECLARAT.3, DECLARAT.5, DECLARAT.7
+  calls      : DECLARAT.5, PASCALCO.11 x2
+  globals    : 12r, 64r
+--------------------------------------------------------------------
+DECLARAT.6   procedure   params=10 locals=42 lex=3 size=347
+  called from 2 site(s) in 2 procedure(s): DECLARAT.3, DECLARAT.8
+  calls      : DECLARAT.3, DECLARAT.7, DECLARAT.8, PASCALCO.4 x6, PASCALCO.7, PASCALCO.8 x4, PASCALCO.16 x3
+  intrinsics : CSP 1 NEW x2
+  globals    : 11rw, 15r, 17&
+--------------------------------------------------------------------
+DECLARAT.7   procedure   params=2 locals=4 lex=4 size=181
+  called from 2 site(s) in 2 procedure(s): DECLARAT.6, DECLARAT.8
+  calls      : DECLARAT.5
+--------------------------------------------------------------------
+DECLARAT.8   procedure   params=0 locals=4 lex=4 size=666
+  called from 1 site(s) in 1 procedure(s): DECLARAT.6
+  calls      : DECLARAT.2, DECLARAT.6, DECLARAT.7, PASCALCO.4 x10, PASCALCO.7, PASCALCO.8 x10, PASCALCO.10 x2, PASCALCO.16 x2, PASCALCO.20, PASCALCO.21 x2
+  intrinsics : CSP 1 NEW x4
+  globals    : 11rw, 15r, 17&, 54w, 64r
+--------------------------------------------------------------------
+DECLARAT.9   procedure   params=0 locals=2 lex=3 size=148
+  called from 1 site(s) in 1 procedure(s): DECLARAT.3
+  calls      : PASCALCO.4 x2, PASCALCO.8 x2, PASCALCO.10
+  intrinsics : CSP 1 NEW x2
+  globals    : 15r, 17&, 28r, 54w, 67rw
+--------------------------------------------------------------------
+DECLARAT.10   procedure   params=0 locals=514 lex=2 size=147
+  called from 1 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.11, PASCALCO.4 x6, PASCALCO.8 x3
+  globals    : 11rw, 15r, 17&, 29w, 32r, 33r, 37r, 66rw, 80r
+--------------------------------------------------------------------
+DECLARAT.11   procedure   params=2 locals=44 lex=3 size=436
+  called from 1 site(s) in 1 procedure(s): DECLARAT.10
+  calls      : DECLARAT.12, PASCALCO.1, PASCALCO.4, PASCALCO.5, PASCALCO.7, PASCALCO.8 x2
+  runtime    : OS.13 FWRITEINT x2, OS.17 FWRITECHAR x2, OS.19 FWRITESTRING x2, OS.20 FWRITEBYTES, OS.22 FWRITELN x2
+  intrinsics : CSP 1 NEW x2, CSP 40
+  globals    : 10rw, 13rw, 15r, 17&, 41rw, 45w, 50r, 66rw, 87rw, 93w, 94w, 95r, 99rw, 186&
+  strings    : ' [', ' words]'
+--------------------------------------------------------------------
+DECLARAT.12   procedure   params=2 locals=6 lex=4 size=426
+  called from 1 site(s) in 1 procedure(s): DECLARAT.11
+  calls      : DECLARAT.13, PASCALCO.4 x4, PASCALCO.5, PASCALCO.8, PASCALCO.13
+  runtime    : OS.5 FOPEN, OS.6 FCLOSE, OS.28 FBLOCKIO x2
+  intrinsics : CSP 34
+  globals    : 13rw, 14r, 21r, 29rw, 33r, 37w, 41rw, 42r, 71r, 87rw, 88r, 93rw, 98r, 99w, 445&, 589&, 709w, 711w, 712w, 715w, 716&
+  strings    : '*SYSTEM.LIBRARY'
+--------------------------------------------------------------------
+DECLARAT.13   function(1 word)   params=4 locals=4 lex=5 size=85
+  called from 1 site(s) in 1 procedure(s): DECLARAT.12
+  calls      : DECLARAT.14 x2
+  globals    : 41w, 87rw
+--------------------------------------------------------------------
+DECLARAT.14   function(1 word)   params=16 locals=2 lex=6 size=84
+  called from 2 site(s) in 1 procedure(s): DECLARAT.13
+--------------------------------------------------------------------
+DECLARAT.15   procedure   params=0 locals=8 lex=2 size=129
+  called from 1 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.2, PASCALCO.4 x3, PASCALCO.8 x3
+  intrinsics : CSP 1 NEW
+  globals    : 8r, 11rw, 15r, 23r, 134&
+--------------------------------------------------------------------
+DECLARAT.16   procedure   params=0 locals=8 lex=2 size=143
+  called from 1 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.2, PASCALCO.4 x3, PASCALCO.7, PASCALCO.8 x3, PASCALCO.16, PASCALCO.20
+  intrinsics : CSP 1 NEW
+  globals    : 15r, 16r, 17&, 33r
+--------------------------------------------------------------------
+DECLARAT.17   procedure   params=0 locals=12 lex=2 size=193
+  called from 1 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.2, DECLARAT.3, PASCALCO.4 x4, PASCALCO.7, PASCALCO.8 x3, PASCALCO.16
+  intrinsics : CSP 1 NEW
+  globals    : 15r, 16r, 17&, 33r, 67rw
+--------------------------------------------------------------------
+DECLARAT.18   procedure   params=0 locals=12 lex=2 size=342
+  called from 1 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.2, DECLARAT.3, PASCALCO.4 x5, PASCALCO.7, PASCALCO.8 x4, PASCALCO.16
+  intrinsics : CSP 1 NEW x2
+  globals    : 8r, 10rw, 11rw, 15r, 17&, 32r, 33r, 41r, 42r, 67rw, 80r, 87r, 101&, 134&
+--------------------------------------------------------------------
+DECLARAT.19   procedure   params=4 locals=40 lex=2 size=1105
+  called from 3 site(s) in 1 procedure(s): DECLARAT.1
+  calls      : DECLARAT.2 x2, DECLARAT.20 x2, PASCALCO.4 x19, PASCALCO.7, PASCALCO.8 x9, PASCALCO.9, PASCALCO.10, PASCALCO.12, PASCALCO.13, PASCALCO.16
+  runtime    : OS.13 FWRITEINT x2, OS.17 FWRITECHAR x2, OS.19 FWRITESTRING x2, OS.20 FWRITEBYTES, OS.22 FWRITELN x2
+  intrinsics : CSP 1 NEW x5, CSP 4 EXIT, CSP 32, CSP 40
+  globals    : 8rw, 10rw, 13rw, 15r, 17&, 21r, 32r, 33r, 37r, 39w, 41r, 45w, 49r, 73r, 80rw, 84&r, 86w, 88r, 89w, 95r, 96w, 99&rw, 100rw, 134&, 190&, 445&, 1098w
+  strings    : ' [', ' words]'
+--------------------------------------------------------------------
+DECLARAT.20   procedure   params=12 locals=20 lex=3 size=625
+  called from 2 site(s) in 1 procedure(s): DECLARAT.19
+  calls      : DECLARAT.2, PASCALCO.4 x12, PASCALCO.7, PASCALCO.8 x8, PASCALCO.10, PASCALCO.16 x5
+  intrinsics : CSP 1 NEW
+  globals    : 10rw, 11rw, 15r, 17&, 57r, 58r, 80r
+--------------------------------------------------------------------
+FINISHUP.1   procedure   params=0 locals=4 lex=1 size=622
+  called from 1 site(s) in 1 procedure(s): PASCALCO.1
+  calls      : PASCALCO.4 x2, PASCALCO.6, PASCALCO.15, PASCALCO.22, PASCALCO.23 x13, PASCALCO.24, WRITELIN.1
+  runtime    : OS.6 FCLOSE x2, OS.13 FWRITEINT x4, OS.19 FWRITESTRING x6, OS.22 FWRITELN x2
+  intrinsics : CSP 1 NEW x2, CSP 2 MOVELEFT x3, CSP 9 TIME, CSP 10 FILLCHAR, CSP 24, CSP 33
+  globals    : 1r, 2&r, 9rw, 11w, 13rw, 14rw, 15r, 22&, 31r, 44r, 45r, 50r, 83&, 92r, 94&r, 95rw, 97rw, 186&, 190&, 445&, 589&, 605&r, 716&, 796&, 1097w, 1098w
+  strings    : ' lines', ', ', ' secs, ', ' lines/min', 'Smallest available space = ', ' words'
+--------------------------------------------------------------------
+FORSTATE.1   procedure   params=0 locals=20 lex=3 size=480
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.3 x4, BODYPART.4 x5, BODYPART.6 x4, BODYPART.8 x4, BODYPART.11 x2, BODYPART.15 x2, BODYPART.16 x2, BODYPART.18 x2, BODYPART.19 x2, BODYPART.20 x2, PASCALCO.4 x10, PASCALCO.8 x4, PASCALCO.10, PASCALCO.16 x3, PASCALCO.21 x3, STATEMEN.1
+  globals    : 3&r, 10rw, 15r, 52r, 64r, 80r, 133r
+--------------------------------------------------------------------
+NUMSTRIN.1   procedure   params=4 locals=0 lex=1 size=9
+  called from 2 site(s) in 1 procedure(s): PASCALCO.8
+  calls      : NUMSTRIN.2, NUMSTRIN.3
+--------------------------------------------------------------------
+NUMSTRIN.2   procedure   params=0 locals=92 lex=2 size=168
+  called from 1 site(s) in 1 procedure(s): NUMSTRIN.1
+  calls      : PASCALCO.4 x2, PASCALCO.14
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 1r, 14rw, 15w, 16w, 22w, 23w, 90r
+--------------------------------------------------------------------
+NUMSTRIN.3   procedure   params=0 locals=32 lex=2 size=649
+  called from 1 site(s) in 1 procedure(s): NUMSTRIN.1
+  calls      : PASCALCO.4 x3
+  intrinsics : CSP 1 NEW x2, CSP 36 x2
+  globals    : 1r, 14rw, 15w, 16w, 22w, 23w
+--------------------------------------------------------------------
+PASCALCO.1   procedure   params=4 locals=2710 lex=0 size=69
+  called from 1 site(s) in 1 procedure(s): DECLARAT.11
+  calls      : COMPINIT.1, FINISHUP.1, PASCALCO.27, PASCALCO.30
+  runtime    : OS.3 FINIT x4, OS.6 FCLOSE x4
+  globals    : 35r, 665&, 716&, 756&, 796&, 965&, 1016&, 1056&, 1096&
+--------------------------------------------------------------------
+PASCALCO.4   procedure   params=2 locals=184 lex=1 size=376
+  called from 333 site(s) in 76 procedure(s)
+  runtime    : OS.6 FCLOSE, OS.13 FWRITEINT x3, OS.16 FREADCHAR, OS.17 FWRITECHAR x4, OS.19 FWRITESTRING x4, OS.20 FWRITEBYTES x2, OS.22 FWRITELN x3
+  intrinsics : CSP 2 MOVELEFT, CSP 4 EXIT x3, CSP 11 SCAN
+  globals    : 1r, 14r, 44r, 50r, 93r, 95r, 98r, 796&, 1356r
+  strings    : ' <<<<', 'Line ', ', error ', ' <sp>(continue), <esc>(terminate), E(dit'
+--------------------------------------------------------------------
+PASCALCO.5   procedure   params=0 locals=2 lex=1 size=227
+  called from 5 site(s) in 5 procedure(s): COMPINIT.1, COMPOPTI.1, DECLARAT.11, DECLARAT.12, PASCALCO.14
+  calls      : PASCALCO.4 x2, PASCALCO.24
+  runtime    : OS.6 FCLOSE, OS.28 FBLOCKIO x4
+  intrinsics : CSP 2 MOVELEFT, CSP 34
+  globals    : 1r, 2r, 14rw, 32r, 33r, 37rw, 38rw, 93rw, 98w, 708rw, 709r, 710r, 711r, 712r, 713r, 714r, 715r, 716&, 756&
+--------------------------------------------------------------------
+PASCALCO.6   procedure   params=0 locals=106 lex=1 size=249
+  called from 3 site(s) in 3 procedure(s): COMPOPTI.1, FINISHUP.1, PASCALCO.14
+  runtime    : OS.13 FWRITEINT x5, OS.17 FWRITECHAR x4, OS.19 FWRITESTRING, OS.20 FWRITEBYTES, OS.22 FWRITELN
+  intrinsics : CSP 0 IOCHECK x12, CSP 2 MOVELEFT x2
+  globals    : 1r, 13r, 14r, 39r, 47r, 82r, 93r, 95r, 96r, 98r, 100r, 796&
+  strings    : '>>>>>> Error # '
+--------------------------------------------------------------------
+PASCALCO.7   procedure   params=2 locals=6 lex=1 size=93
+  called from 28 site(s) in 14 procedure(s): COMPINIT.1, COMPINIT.3, COMPINIT.7, COMPINIT.8, DECLARAT.4, DECLARAT.6, DECLARAT.8, DECLARAT.11, DECLARAT.16, DECLARAT.17, DECLARAT.18, DECLARAT.19, DECLARAT.20, UNITPART.3
+  calls      : PASCALCO.3 x2, PASCALCO.4
+  globals    : 8r, 134&
+--------------------------------------------------------------------
+PASCALCO.8   procedure   params=0 locals=10 lex=1 size=639
+  called from 198 site(s) in 57 procedure(s)
+  calls      : NUMSTRIN.1 x2, PASCALCO.2, PASCALCO.4, PASCALCO.14, PASCALCO.28 x2
+  globals    : 1r, 14&rw, 15rw, 16w, 23w, 26rw, 81r, 82w
+--------------------------------------------------------------------
+PASCALCO.9   procedure   params=4 locals=0 lex=1 size=27
+  called from 2 site(s) in 2 procedure(s): BODYPART.22, DECLARAT.19
+  calls      : PASCALCO.3
+  globals    : 17&
+--------------------------------------------------------------------
+PASCALCO.10   procedure   params=4 locals=4 lex=1 size=151
+  called from 17 site(s) in 16 procedure(s)
+  calls      : PASCALCO.3, PASCALCO.4 x2
+  globals    : 8r, 17&, 24rw, 54r, 72r, 73r, 74r, 76r, 77r, 78r, 134&
+--------------------------------------------------------------------
+PASCALCO.11   procedure   params=6 locals=2 lex=1 size=52
+  called from 11 site(s) in 9 procedure(s): BODY1.1, BODYPART.11, BODYPART.22, BODYPART.30, BODYPART.31, BODYPART.37, DECLARAT.3, DECLARAT.5, STATEMEN.2
+  globals    : 62r
+--------------------------------------------------------------------
+PASCALCO.12   procedure   params=6 locals=0 lex=1 size=17
+  called from 4 site(s) in 3 procedure(s): DECLARAT.19, PASCALCO.13, UNITPART.3
+  calls      : PASCALCO.4
+--------------------------------------------------------------------
+PASCALCO.13   procedure   params=2 locals=0 lex=1 size=29
+  called from 4 site(s) in 3 procedure(s): DECLARAT.12, DECLARAT.19, UNITPART.3
+  calls      : PASCALCO.12 x2
+  globals    : 13r, 21&r, 88&, 589&
+--------------------------------------------------------------------
+PASCALCO.14   procedure   params=0 locals=0 lex=1 size=183
+  called from 3 site(s) in 3 procedure(s): NUMSTRIN.2, PASCALCO.8, PASCALCO.28
+  calls      : PASCALCO.4, PASCALCO.5, PASCALCO.6
+  runtime    : OS.13 FWRITEINT, OS.17 FWRITECHAR x3, OS.22 FWRITELN
+  intrinsics : CSP 11 SCAN x3
+  globals    : 1r, 9r, 10r, 14rw, 37r, 39r, 44r, 47w, 50r, 94r, 95rw, 96w, 98w
+--------------------------------------------------------------------
+PASCALCO.15   function(1 word)   params=6 locals=4 lex=1 size=63
+  called from 1 site(s) in 1 procedure(s): FINISHUP.1
+  globals    : 30r, 445&
+--------------------------------------------------------------------
+PASCALCO.16   procedure   params=8 locals=0 lex=1 size=14
+  called from 37 site(s) in 19 procedure(s)
+  calls      : PASCALCO.8
+  globals    : 15r
+--------------------------------------------------------------------
+PASCALCO.17   function(1 word)   params=6 locals=0 lex=1 size=24
+  called from 8 site(s) in 6 procedure(s): BODY1.1, BODYPART.11, BODYPART.30, BODYPART.31, PASCALCO.18, STATEMEN.2
+  globals    : 62r
+--------------------------------------------------------------------
+PASCALCO.18   function(1 word)   params=6 locals=0 lex=1 size=14
+  called from 19 site(s) in 13 procedure(s): BODYPART.9, BODYPART.10, BODYPART.11, BODYPART.22, BODYPART.29, BODYPART.30, BODYPART.31, DECLARAT.4, PASCALCO.21, ROUTINE.4, ROUTINE.5, ROUTINE.11, STATEMEN.2
+  calls      : PASCALCO.17
+--------------------------------------------------------------------
+PASCALCO.19   function(1 word)   params=6 locals=0 lex=1 size=9
+  called from 5 site(s) in 5 procedure(s): BODYPART.30, BODYPART.36, COMPINIT.2, DECLARAT.4, PASCALCO.20
+--------------------------------------------------------------------
+PASCALCO.20   procedure   params=12 locals=12 lex=1 size=468
+  called from 11 site(s) in 6 procedure(s): CASESTAT.1, DECLARAT.4, DECLARAT.8, DECLARAT.16, ROUTINE.5, UNITPART.3
+  calls      : PASCALCO.4 x4, PASCALCO.8 x6, PASCALCO.10, PASCALCO.16 x3, PASCALCO.19, PASCALCO.21
+  intrinsics : CSP 1 NEW x5
+  globals    : 12r, 15r, 16r, 22r, 23&rw, 55r, 62r, 63r, 64r, 129&
+--------------------------------------------------------------------
+PASCALCO.21   function(1 word)   params=8 locals=12 lex=1 size=385
+  called from 36 site(s) in 16 procedure(s)
+  calls      : PASCALCO.18, PASCALCO.21 x8
+  intrinsics : CSP 1 NEW
+  globals    : 57r, 58r, 79rw
+--------------------------------------------------------------------
+PASCALCO.22   procedure   params=2 locals=0 lex=1 size=9
+  called from 45 site(s) in 13 procedure(s): BODY1.1, BODY3.1, BODYPART.3, BODYPART.4, BODYPART.5, BODYPART.6, BODYPART.15, BODYPART.16, BODYPART.28, FINISHUP.1, PASCALCO.23, PASCALCO.25, WRITELIN.1
+  globals    : 2r, 9rw
+--------------------------------------------------------------------
+PASCALCO.23   procedure   params=2 locals=2 lex=1 size=42
+  called from 55 site(s) in 8 procedure(s): BODY3.1, BODYPART.5, CASESTAT.1, FINISHUP.1, PASCALCO.25, WRITELIN.1, WRITELIN.2, WRITELIN.4
+  calls      : PASCALCO.22
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 2r, 9rw, 30r
+--------------------------------------------------------------------
+PASCALCO.24   procedure   params=2 locals=6 lex=1 size=113
+  called from 7 site(s) in 7 procedure(s): BODY3.1, FINISHUP.1, PASCALCO.5, PASCALCO.25, UNITPART.1, WRITELIN.1, WRITELIN.4
+  calls      : PASCALCO.4
+  runtime    : OS.28 FBLOCKIO
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 2r, 9r, 1097rw, 1098rw, 1099&
+--------------------------------------------------------------------
+PASCALCO.25   procedure   params=0 locals=4 lex=1 size=90
+  called from 3 site(s) in 2 procedure(s): PASCALCO.26, UNITPART.1
+  calls      : PASCALCO.22 x2, PASCALCO.23 x2, PASCALCO.24
+  globals    : 9rw, 13r, 49w, 89rw, 99r, 190&, 445&, 589&
+--------------------------------------------------------------------
+PASCALCO.26   procedure   params=8 locals=4 lex=1 size=515
+  called from 2 site(s) in 2 procedure(s): PASCALCO.27, UNITPART.1
+  calls      : BODYPART.1, DECLARAT.1 x4, PASCALCO.4 x8, PASCALCO.8 x2, PASCALCO.16 x2, PASCALCO.25 x2, PASCALCO.29, UNITPART.1 x2, WRITELIN.1
+  intrinsics : CSP 4 EXIT x2, CSP 33
+  globals    : 8rw, 9w, 10w, 13rw, 15r, 28r, 31w, 33r, 35r, 39w, 45r, 49r, 65w, 68r, 80rw, 81w, 84rw, 86rw, 96w, 99w, 100w, 117&, 134&, 445&, 589&, 1355r
+--------------------------------------------------------------------
+PASCALCO.27   procedure   params=0 locals=0 lex=1 size=30
+  called from 3 site(s) in 3 procedure(s): PASCALCO.1, PASCALCO.30, PASCALCO.31
+  calls      : PASCALCO.26
+  intrinsics : CSP 9 TIME
+  globals    : 22&, 97&, 105&, 117&
+--------------------------------------------------------------------
+PASCALCO.28   procedure   params=2 locals=2 lex=2 size=71
+  called from 2 site(s) in 1 procedure(s): PASCALCO.8
+  calls      : COMPOPTI.1, PASCALCO.14
+  intrinsics : CSP 4 EXIT
+  globals    : 1r, 14rw
+--------------------------------------------------------------------
+PASCALCO.29   function(1 word)   params=6 locals=2 lex=2 size=94
+  called from 3 site(s) in 2 procedure(s): PASCALCO.26, PASCALCO.29
+  calls      : PASCALCO.29 x2
+  runtime    : OS.19 FWRITESTRING, OS.20 FWRITEBYTES, OS.22 FWRITELN
+  strings    : ' undefined'
+--------------------------------------------------------------------
+PASCALCO.30   procedure   params=0 locals=0 lex=1 size=12
+  called from 1 site(s) in 1 procedure(s): PASCALCO.1
+  calls      : PASCALCO.27, PASCALCO.31
+  intrinsics : CSP 21 x8, CSP 22 x8
+  globals    : 34r
+--------------------------------------------------------------------
+PASCALCO.31   procedure   params=0 locals=0 lex=2 size=4
+  called from 1 site(s) in 1 procedure(s): PASCALCO.30
+  calls      : PASCALCO.27
+  intrinsics : CSP 21, CSP 22
+--------------------------------------------------------------------
+ROUTINE.1   procedure   params=12 locals=24 lex=2 size=186
+  called from 1 site(s) in 1 procedure(s): BODYPART.23
+  calls      : ROUTINE.5, ROUTINE.6, ROUTINE.7, ROUTINE.8, ROUTINE.9, ROUTINE.10, ROUTINE.11, ROUTINE.12, ROUTINE.13, ROUTINE.14, ROUTINE.15, ROUTINE.16, ROUTINE.17
+--------------------------------------------------------------------
+ROUTINE.2   procedure   params=0 locals=0 lex=3 size=14
+  called from 20 site(s) in 7 procedure(s): ROUTINE.6, ROUTINE.8, ROUTINE.10, ROUTINE.11, ROUTINE.14, ROUTINE.15, ROUTINE.17
+  calls      : PASCALCO.4, PASCALCO.8
+  globals    : 15r
+--------------------------------------------------------------------
+ROUTINE.3   procedure   params=0 locals=0 lex=3 size=9
+  called from 14 site(s) in 6 procedure(s): ROUTINE.8, ROUTINE.10, ROUTINE.13, ROUTINE.14, ROUTINE.15, ROUTINE.17
+  calls      : PASCALCO.4
+  globals    : 3r, 12r
+--------------------------------------------------------------------
+ROUTINE.4   procedure   params=10 locals=2 lex=3 size=111
+  called from 9 site(s) in 4 procedure(s): ROUTINE.9, ROUTINE.10, ROUTINE.11, ROUTINE.17
+  calls      : BODYPART.9 x2, BODYPART.11, PASCALCO.4 x2, PASCALCO.18
+  intrinsics : CSP 1 NEW
+  globals    : 3&rw, 4r, 5rw, 55r, 62r, 90r
+--------------------------------------------------------------------
+ROUTINE.5   procedure   params=0 locals=20 lex=3 size=214
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4, BODYPART.5, BODYPART.9, BODYPART.12, PASCALCO.4 x5, PASCALCO.8, PASCALCO.18, PASCALCO.20, PASCALCO.21
+  globals    : 3r, 15r, 64r
+--------------------------------------------------------------------
+ROUTINE.6   procedure   params=0 locals=0 lex=3 size=90
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.5 x3, BODYPART.8 x2, BODYPART.10 x2, BODYPART.11 x2, BODYPART.12 x2, ROUTINE.2 x2
+--------------------------------------------------------------------
+ROUTINE.7   procedure   params=0 locals=4 lex=3 size=111
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.2, BODYPART.4 x2, BODYPART.5, BODYPART.13, PASCALCO.4 x2, PASCALCO.8 x2, PASCALCO.10
+  globals    : 9r, 15r, 33r, 42r, 68r
+--------------------------------------------------------------------
+ROUTINE.8   procedure   params=0 locals=0 lex=3 size=114
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x3, BODYPART.5 x2, BODYPART.8 x3, BODYPART.10, BODYPART.11 x3, BODYPART.12, PASCALCO.8 x2, ROUTINE.2 x2, ROUTINE.3 x4
+  globals    : 15r
+--------------------------------------------------------------------
+ROUTINE.9   procedure   params=0 locals=4 lex=3 size=144
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x3, BODYPART.6 x4, PASCALCO.8, ROUTINE.4
+  intrinsics : CSP 1 NEW
+  globals    : 3&r, 10rw, 11rw, 15r, 25rw, 55r, 80r
+--------------------------------------------------------------------
+ROUTINE.10   procedure   params=0 locals=4 lex=3 size=172
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.6 x5, BODYPART.8 x2, BODYPART.11 x2, ROUTINE.2 x2, ROUTINE.3 x2, ROUTINE.4
+  globals    : 3rw, 10rw, 25rw, 80r
+--------------------------------------------------------------------
+ROUTINE.11   procedure   params=0 locals=0 lex=3 size=75
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x3, BODYPART.7 x2, PASCALCO.4 x2, PASCALCO.18, PASCALCO.21, ROUTINE.2, ROUTINE.4
+  globals    : 3rw, 12r, 63r
+--------------------------------------------------------------------
+ROUTINE.12   procedure   params=0 locals=0 lex=3 size=169
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x5, BODYPART.5, BODYPART.6, BODYPART.9, BODYPART.12, PASCALCO.4 x3, PASCALCO.8 x2
+  globals    : 3r, 15r, 17&, 48r
+--------------------------------------------------------------------
+ROUTINE.13   procedure   params=0 locals=0 lex=3 size=163
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x2, BODYPART.5, BODYPART.6 x3, BODYPART.7, BODYPART.8, BODYPART.9, BODYPART.11, BODYPART.12, PASCALCO.4 x4, PASCALCO.8, ROUTINE.3
+  globals    : 3r, 15r, 48r, 62r
+--------------------------------------------------------------------
+ROUTINE.14   procedure   params=0 locals=0 lex=3 size=121
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x3, BODYPART.5, BODYPART.8 x2, BODYPART.10, BODYPART.11 x2, BODYPART.12, PASCALCO.4 x3, PASCALCO.8 x2, ROUTINE.2 x2, ROUTINE.3
+  globals    : 3rw, 12r, 15r, 16r, 62r
+--------------------------------------------------------------------
+ROUTINE.15   procedure   params=0 locals=0 lex=3 size=139
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4 x5, BODYPART.5, BODYPART.6, BODYPART.8 x2, BODYPART.9, BODYPART.10, BODYPART.11 x2, BODYPART.12 x2, PASCALCO.4 x2, PASCALCO.8, ROUTINE.2 x2, ROUTINE.3 x2
+  globals    : 3rw, 12r, 15r, 48r
+--------------------------------------------------------------------
+ROUTINE.16   procedure   params=0 locals=2 lex=3 size=39
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.4, PASCALCO.8, PASCALCO.10
+  globals    : 3w, 12r, 15r, 133r
+--------------------------------------------------------------------
+ROUTINE.17   procedure   params=0 locals=0 lex=3 size=760
+  called from 1 site(s) in 1 procedure(s): ROUTINE.1
+  calls      : BODYPART.3 x8, BODYPART.4 x11, BODYPART.5 x4, BODYPART.6 x6, BODYPART.7, BODYPART.8 x3, BODYPART.9 x8, BODYPART.10, BODYPART.11 x3, BODYPART.12 x9, BODYPART.14, PASCALCO.4 x11, PASCALCO.8, ROUTINE.2 x9, ROUTINE.3 x4, ROUTINE.4 x6
+  globals    : 3rw, 12r, 15r, 48r, 61r, 62r, 64r, 70r
+--------------------------------------------------------------------
+STATEMEN.1   procedure   params=8 locals=12 lex=2 size=392
+  called from 10 site(s) in 8 procedure(s): BODYPART.25, CASESTAT.1, FORSTATE.1, STATEMEN.4, STATEMEN.5, STATEMEN.6, STATEMEN.7, STATEMEN.8
+  calls      : BODYPART.5, BODYPART.19, BODYPART.23, CASESTAT.1, FORSTATE.1, PASCALCO.4 x6, PASCALCO.8 x11, PASCALCO.10, PASCALCO.16 x2, STATEMEN.2, STATEMEN.3, STATEMEN.4, STATEMEN.5, STATEMEN.6, STATEMEN.7, STATEMEN.8
+  intrinsics : CSP 32, CSP 33
+  globals    : 8r, 9rw, 10rw, 15r, 23r, 25rw, 47w, 51r, 81rw, 95r, 105&, 133r, 134&
+--------------------------------------------------------------------
+STATEMEN.2   procedure   params=2 locals=18 lex=3 size=516
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.3 x2, BODYPART.4 x5, BODYPART.5 x6, BODYPART.7 x2, BODYPART.8, BODYPART.9 x2, BODYPART.11, BODYPART.20 x4, BODYPART.21 x2, BODYPART.22, PASCALCO.4 x7, PASCALCO.8, PASCALCO.11, PASCALCO.17, PASCALCO.18, PASCALCO.21 x4
+  intrinsics : CSP 4 EXIT
+  globals    : 3&rw, 4r, 5r, 12r, 15r, 52r, 55r, 57r, 58r, 62r, 63r, 64r, 91r
+--------------------------------------------------------------------
+STATEMEN.3   procedure   params=0 locals=8 lex=3 size=101
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.16, PASCALCO.4 x3, PASCALCO.8
+  globals    : 8r, 15r, 23r, 53r, 134&
+--------------------------------------------------------------------
+STATEMEN.4   procedure   params=0 locals=0 lex=3 size=54
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : PASCALCO.4, PASCALCO.8 x2, STATEMEN.1
+  globals    : 11rw, 15r, 105&
+--------------------------------------------------------------------
+STATEMEN.5   procedure   params=0 locals=10 lex=3 size=134
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.11, BODYPART.16, BODYPART.17, BODYPART.18 x2, BODYPART.19 x3, PASCALCO.4, PASCALCO.8 x2, STATEMEN.1 x2
+  globals    : 9rw, 15r
+--------------------------------------------------------------------
+STATEMEN.6   procedure   params=0 locals=2 lex=3 size=75
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.11, BODYPART.17, BODYPART.18, BODYPART.19, PASCALCO.4, PASCALCO.8 x2, STATEMEN.1
+  globals    : 11rw, 15r, 105&
+--------------------------------------------------------------------
+STATEMEN.7   procedure   params=0 locals=4 lex=3 size=62
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.11, BODYPART.16, BODYPART.17, BODYPART.18 x2, BODYPART.19 x2, PASCALCO.4, PASCALCO.8, STATEMEN.1
+  globals    : 15r
+--------------------------------------------------------------------
+STATEMEN.8   procedure   params=0 locals=8 lex=3 size=208
+  called from 1 site(s) in 1 procedure(s): STATEMEN.1
+  calls      : BODYPART.6, BODYPART.9, BODYPART.22, PASCALCO.4 x4, PASCALCO.8 x3, PASCALCO.10, STATEMEN.1
+  globals    : 3r, 5r, 6r, 7r, 8rw, 10rw, 11rw, 15r, 76r, 80r, 133r, 134&
+--------------------------------------------------------------------
+UNITPART.1   procedure   params=8 locals=12 lex=1 size=680
+  called from 2 site(s) in 1 procedure(s): PASCALCO.26
+  calls      : DECLARAT.1, PASCALCO.4 x12, PASCALCO.8 x4, PASCALCO.16 x2, PASCALCO.24, PASCALCO.25, PASCALCO.26, UNITPART.2, UNITPART.3, UNITPART.4, WRITELIN.1
+  runtime    : OS.4 FRESET, OS.6 FCLOSE, OS.28 FBLOCKIO x3
+  intrinsics : CSP 1 NEW, CSP 2 MOVELEFT, CSP 10 FILLCHAR, CSP 33
+  globals    : 1r, 2&r, 8w, 9rw, 10rw, 13rw, 14r, 15r, 27r, 32w, 33w, 38r, 42rw, 45rw, 71r, 80w, 84rw, 87r, 99w, 100w, 105&, 186&, 445&, 589&, 665&, 705rw, 706w, 707r, 708rw, 1097r, 1099&
+--------------------------------------------------------------------
+UNITPART.2   procedure   params=0 locals=0 lex=2 size=38
+  called from 1 site(s) in 1 procedure(s): UNITPART.1
+  calls      : PASCALCO.4
+  runtime    : OS.5 FOPEN
+  intrinsics : CSP 34
+  globals    : 665&
+  strings    : '%SYSTEM.INFO[*]'
+--------------------------------------------------------------------
+UNITPART.3   procedure   params=10 locals=36 lex=2 size=712
+  called from 1 site(s) in 1 procedure(s): UNITPART.1
+  calls      : PASCALCO.4 x14, PASCALCO.7, PASCALCO.8 x7, PASCALCO.12, PASCALCO.13 x2, PASCALCO.16, PASCALCO.20 x2
+  intrinsics : CSP 1 NEW x3, CSP 32
+  globals    : 8rw, 10rw, 12r, 13rw, 15r, 17&, 21&r, 27w, 32w, 33rw, 42w, 49r, 71rw, 80rw, 84&r, 87rw, 88r, 89w, 99rw, 100rw, 134&, 445&, 589&, 707&, 1097r, 1098w
+--------------------------------------------------------------------
+UNITPART.4   procedure   params=0 locals=6 lex=2 size=158
+  called from 1 site(s) in 1 procedure(s): UNITPART.1
+  calls      : BODYPART.1, PASCALCO.8
+  intrinsics : CSP 1 NEW x2
+  globals    : 10rw, 13r, 15r, 65w, 71r, 80w, 84&rw
+--------------------------------------------------------------------
+WRITELIN.1   procedure   params=0 locals=14 lex=1 size=81
+  called from 3 site(s) in 3 procedure(s): FINISHUP.1, PASCALCO.26, UNITPART.1
+  calls      : PASCALCO.4, PASCALCO.22, PASCALCO.23 x4, PASCALCO.24, WRITELIN.4
+  globals    : 9w, 22rw, 25r, 33r, 45w, 49r, 85r, 87r, 134&, 705r
+--------------------------------------------------------------------
+WRITELIN.2   procedure   params=2 locals=16 lex=2 size=174
+  called from 1 site(s) in 1 procedure(s): WRITELIN.4
+  calls      : PASCALCO.23 x3, WRITELIN.3
+  globals    : 9rw, 705r, 706r, 707r
+--------------------------------------------------------------------
+WRITELIN.3   procedure   params=0 locals=0 lex=3 size=48
+  called from 1 site(s) in 1 procedure(s): WRITELIN.2
+  calls      : PASCALCO.4
+  runtime    : OS.28 FBLOCKIO
+  globals    : 665&, 705r, 707r
+--------------------------------------------------------------------
+WRITELIN.4   procedure   params=2 locals=2 lex=2 size=447
+  called from 3 site(s) in 2 procedure(s): WRITELIN.1, WRITELIN.4
+  calls      : PASCALCO.23 x21, PASCALCO.24, WRITELIN.2, WRITELIN.4 x2
+  intrinsics : CSP 2 MOVELEFT
+  globals    : 2r, 9rw, 33r, 42r, 87r

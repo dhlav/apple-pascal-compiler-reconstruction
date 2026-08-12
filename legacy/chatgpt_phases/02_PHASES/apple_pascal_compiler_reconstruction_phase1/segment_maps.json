@@ -1,0 +1,2802 @@
+{
+  "1.1": {
+    "compiler_blocks": [
+      6,
+      81
+    ],
+    "segments": [
+      {
+        "segment": 1,
+        "name": "PASCALCO",
+        "offset": 512,
+        "length": 4486,
+        "start_block": 1
+      },
+      {
+        "segment": 8,
+        "name": "COMPINIT",
+        "offset": 5120,
+        "length": 3226,
+        "start_block": 10
+      },
+      {
+        "segment": 9,
+        "name": "DECLARAT",
+        "offset": 8704,
+        "length": 7574,
+        "start_block": 17
+      },
+      {
+        "segment": 10,
+        "name": "BODYPART",
+        "offset": 16384,
+        "length": 7208,
+        "start_block": 32
+      },
+      {
+        "segment": 11,
+        "name": "ROUTINE",
+        "offset": 24064,
+        "length": 2902,
+        "start_block": 47
+      },
+      {
+        "segment": 12,
+        "name": "STATEMEN",
+        "offset": 27136,
+        "length": 1598,
+        "start_block": 53
+      },
+      {
+        "segment": 13,
+        "name": "CASESTAT",
+        "offset": 29184,
+        "length": 436,
+        "start_block": 57
+      },
+      {
+        "segment": 14,
+        "name": "FORSTATE",
+        "offset": 29696,
+        "length": 512,
+        "start_block": 58
+      },
+      {
+        "segment": 15,
+        "name": "BODY1",
+        "offset": 30208,
+        "length": 326,
+        "start_block": 59
+      },
+      {
+        "segment": 16,
+        "name": "BODY3",
+        "offset": 30720,
+        "length": 858,
+        "start_block": 60
+      },
+      {
+        "segment": 17,
+        "name": "WRITELIN",
+        "offset": 31744,
+        "length": 818,
+        "start_block": 62
+      },
+      {
+        "segment": 18,
+        "name": "UNITPART",
+        "offset": 32768,
+        "length": 1600,
+        "start_block": 64
+      },
+      {
+        "segment": 19,
+        "name": "COMPOPTI",
+        "offset": 34816,
+        "length": 1060,
+        "start_block": 68
+      },
+      {
+        "segment": 20,
+        "name": "NUMSTRIN",
+        "offset": 36352,
+        "length": 864,
+        "start_block": 71
+      },
+      {
+        "segment": 21,
+        "name": "FINISHUP",
+        "offset": 37376,
+        "length": 672,
+        "start_block": 73
+      }
+    ],
+    "procedures": [
+      {
+        "segment": 8,
+        "name": "COMPINIT",
+        "offset": 5120,
+        "length": 3226,
+        "start_block": 10,
+        "procedure_count": 10,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 518,
+            "param_size": 0,
+            "exit_offset": 3185,
+            "enter_offset": 2630,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 3194
+          },
+          {
+            "procedure": 2,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 252,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 254
+          },
+          {
+            "procedure": 3,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 855,
+            "enter_offset": 264,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 860
+          },
+          {
+            "procedure": 4,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 1164,
+            "enter_offset": 870,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 1166
+          },
+          {
+            "procedure": 5,
+            "data_size": 82,
+            "param_size": 2,
+            "exit_offset": 1225,
+            "enter_offset": 1176,
+            "proc_number": 5,
+            "lexical_level": 2,
+            "jtab_offset": 1228
+          },
+          {
+            "procedure": 6,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1291,
+            "enter_offset": 1238,
+            "proc_number": 6,
+            "lexical_level": 2,
+            "jtab_offset": 1294
+          },
+          {
+            "procedure": 7,
+            "data_size": 16,
+            "param_size": 0,
+            "exit_offset": 1740,
+            "enter_offset": 1304,
+            "proc_number": 7,
+            "lexical_level": 2,
+            "jtab_offset": 1744
+          },
+          {
+            "procedure": 8,
+            "data_size": 22,
+            "param_size": 0,
+            "exit_offset": 2180,
+            "enter_offset": 1754,
+            "proc_number": 8,
+            "lexical_level": 2,
+            "jtab_offset": 2192
+          },
+          {
+            "procedure": 9,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 2464,
+            "enter_offset": 2202,
+            "proc_number": 9,
+            "lexical_level": 2,
+            "jtab_offset": 2468
+          },
+          {
+            "procedure": 10,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2618,
+            "enter_offset": 2478,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 2620
+          }
+        ]
+      },
+      {
+        "segment": 9,
+        "name": "DECLARAT",
+        "offset": 8704,
+        "length": 7574,
+        "start_block": 17,
+        "procedure_count": 20,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 22,
+            "param_size": 8,
+            "exit_offset": 7516,
+            "enter_offset": 7182,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 7522
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 8,
+            "exit_offset": 21,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 24
+          },
+          {
+            "procedure": 3,
+            "data_size": 26,
+            "param_size": 12,
+            "exit_offset": 3260,
+            "enter_offset": 2392,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 3282
+          },
+          {
+            "procedure": 4,
+            "data_size": 26,
+            "param_size": 12,
+            "exit_offset": 808,
+            "enter_offset": 34,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 824
+          },
+          {
+            "procedure": 5,
+            "data_size": 6,
+            "param_size": 6,
+            "exit_offset": 968,
+            "enter_offset": 834,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 972
+          },
+          {
+            "procedure": 6,
+            "data_size": 42,
+            "param_size": 10,
+            "exit_offset": 2209,
+            "enter_offset": 1862,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 2222
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 2,
+            "exit_offset": 1163,
+            "enter_offset": 982,
+            "proc_number": 7,
+            "lexical_level": 4,
+            "jtab_offset": 1166
+          },
+          {
+            "procedure": 8,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 1842,
+            "enter_offset": 1176,
+            "proc_number": 8,
+            "lexical_level": 4,
+            "jtab_offset": 1852
+          },
+          {
+            "procedure": 9,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 2380,
+            "enter_offset": 2232,
+            "proc_number": 9,
+            "lexical_level": 3,
+            "jtab_offset": 2382
+          },
+          {
+            "procedure": 10,
+            "data_size": 514,
+            "param_size": 0,
+            "exit_offset": 4527,
+            "enter_offset": 4380,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 4534
+          },
+          {
+            "procedure": 11,
+            "data_size": 44,
+            "param_size": 2,
+            "exit_offset": 4366,
+            "enter_offset": 3930,
+            "proc_number": 11,
+            "lexical_level": 3,
+            "jtab_offset": 4370
+          },
+          {
+            "procedure": 12,
+            "data_size": 6,
+            "param_size": 2,
+            "exit_offset": 3914,
+            "enter_offset": 3488,
+            "proc_number": 12,
+            "lexical_level": 4,
+            "jtab_offset": 3920
+          },
+          {
+            "procedure": 13,
+            "data_size": 4,
+            "param_size": 4,
+            "exit_offset": 3475,
+            "enter_offset": 3390,
+            "proc_number": 13,
+            "lexical_level": 5,
+            "jtab_offset": 3478
+          },
+          {
+            "procedure": 14,
+            "data_size": 2,
+            "param_size": 12,
+            "exit_offset": 3376,
+            "enter_offset": 3292,
+            "proc_number": 14,
+            "lexical_level": 6,
+            "jtab_offset": 3380
+          },
+          {
+            "procedure": 15,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 4673,
+            "enter_offset": 4544,
+            "proc_number": 15,
+            "lexical_level": 2,
+            "jtab_offset": 4680
+          },
+          {
+            "procedure": 16,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 4833,
+            "enter_offset": 4690,
+            "proc_number": 16,
+            "lexical_level": 2,
+            "jtab_offset": 4838
+          },
+          {
+            "procedure": 17,
+            "data_size": 12,
+            "param_size": 0,
+            "exit_offset": 5041,
+            "enter_offset": 4848,
+            "proc_number": 17,
+            "lexical_level": 2,
+            "jtab_offset": 5050
+          },
+          {
+            "procedure": 18,
+            "data_size": 12,
+            "param_size": 0,
+            "exit_offset": 5402,
+            "enter_offset": 5060,
+            "proc_number": 18,
+            "lexical_level": 2,
+            "jtab_offset": 5410
+          },
+          {
+            "procedure": 19,
+            "data_size": 40,
+            "param_size": 4,
+            "exit_offset": 7159,
+            "enter_offset": 6054,
+            "proc_number": 19,
+            "lexical_level": 2,
+            "jtab_offset": 7172
+          },
+          {
+            "procedure": 20,
+            "data_size": 20,
+            "param_size": 12,
+            "exit_offset": 6029,
+            "enter_offset": 5420,
+            "proc_number": 20,
+            "lexical_level": 3,
+            "jtab_offset": 6044
+          }
+        ]
+      },
+      {
+        "segment": 10,
+        "name": "BODYPART",
+        "offset": 16384,
+        "length": 7208,
+        "start_block": 32,
+        "procedure_count": 37,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 0,
+            "param_size": 10,
+            "exit_offset": 7120,
+            "enter_offset": 7106,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 7122
+          },
+          {
+            "procedure": 2,
+            "data_size": 2,
+            "param_size": 6,
+            "exit_offset": 500,
+            "enter_offset": 404,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 502
+          },
+          {
+            "procedure": 3,
+            "data_size": 8,
+            "param_size": 2,
+            "exit_offset": 595,
+            "enter_offset": 512,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 600
+          },
+          {
+            "procedure": 4,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 659,
+            "enter_offset": 610,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 662
+          },
+          {
+            "procedure": 5,
+            "data_size": 6,
+            "param_size": 4,
+            "exit_offset": 966,
+            "enter_offset": 716,
+            "proc_number": 5,
+            "lexical_level": 2,
+            "jtab_offset": 974
+          },
+          {
+            "procedure": 6,
+            "data_size": 0,
+            "param_size": 6,
+            "exit_offset": 1146,
+            "enter_offset": 984,
+            "proc_number": 6,
+            "lexical_level": 2,
+            "jtab_offset": 1150
+          },
+          {
+            "procedure": 7,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 1181,
+            "enter_offset": 1160,
+            "proc_number": 7,
+            "lexical_level": 2,
+            "jtab_offset": 1184
+          },
+          {
+            "procedure": 8,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 1777,
+            "enter_offset": 1518,
+            "proc_number": 8,
+            "lexical_level": 2,
+            "jtab_offset": 1786
+          },
+          {
+            "procedure": 9,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1977,
+            "enter_offset": 1884,
+            "proc_number": 9,
+            "lexical_level": 2,
+            "jtab_offset": 1980
+          },
+          {
+            "procedure": 10,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2098,
+            "enter_offset": 1990,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 2100
+          },
+          {
+            "procedure": 11,
+            "data_size": 26,
+            "param_size": 8,
+            "exit_offset": 7053,
+            "enter_offset": 6486,
+            "proc_number": 11,
+            "lexical_level": 2,
+            "jtab_offset": 7068
+          },
+          {
+            "procedure": 12,
+            "data_size": 2,
+            "param_size": 8,
+            "exit_offset": 3093,
+            "enter_offset": 3054,
+            "proc_number": 12,
+            "lexical_level": 2,
+            "jtab_offset": 3096
+          },
+          {
+            "procedure": 13,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 3156,
+            "enter_offset": 3106,
+            "proc_number": 13,
+            "lexical_level": 2,
+            "jtab_offset": 3158
+          },
+          {
+            "procedure": 14,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 3198,
+            "enter_offset": 3168,
+            "proc_number": 14,
+            "lexical_level": 2,
+            "jtab_offset": 3200
+          },
+          {
+            "procedure": 15,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1210,
+            "enter_offset": 1194,
+            "proc_number": 15,
+            "lexical_level": 2,
+            "jtab_offset": 1212
+          },
+          {
+            "procedure": 16,
+            "data_size": 4,
+            "param_size": 4,
+            "exit_offset": 1361,
+            "enter_offset": 1222,
+            "proc_number": 16,
+            "lexical_level": 2,
+            "jtab_offset": 1364
+          },
+          {
+            "procedure": 17,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 1392,
+            "enter_offset": 1374,
+            "proc_number": 17,
+            "lexical_level": 2,
+            "jtab_offset": 1394
+          },
+          {
+            "procedure": 18,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1422,
+            "enter_offset": 1404,
+            "proc_number": 18,
+            "lexical_level": 2,
+            "jtab_offset": 1424
+          },
+          {
+            "procedure": 19,
+            "data_size": 6,
+            "param_size": 2,
+            "exit_offset": 1504,
+            "enter_offset": 1434,
+            "proc_number": 19,
+            "lexical_level": 2,
+            "jtab_offset": 1508
+          },
+          {
+            "procedure": 20,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1872,
+            "enter_offset": 1796,
+            "proc_number": 20,
+            "lexical_level": 2,
+            "jtab_offset": 1874
+          },
+          {
+            "procedure": 21,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 2183,
+            "enter_offset": 2110,
+            "proc_number": 21,
+            "lexical_level": 2,
+            "jtab_offset": 2186
+          },
+          {
+            "procedure": 22,
+            "data_size": 20,
+            "param_size": 10,
+            "exit_offset": 3023,
+            "enter_offset": 2196,
+            "proc_number": 22,
+            "lexical_level": 2,
+            "jtab_offset": 3044
+          },
+          {
+            "procedure": 23,
+            "data_size": 4,
+            "param_size": 10,
+            "exit_offset": 4718,
+            "enter_offset": 4600,
+            "proc_number": 23,
+            "lexical_level": 2,
+            "jtab_offset": 4720
+          },
+          {
+            "procedure": 24,
+            "data_size": 38,
+            "param_size": 0,
+            "exit_offset": 392,
+            "enter_offset": 376,
+            "proc_number": 24,
+            "lexical_level": 2,
+            "jtab_offset": 394
+          },
+          {
+            "procedure": 25,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 325,
+            "enter_offset": 0,
+            "proc_number": 25,
+            "lexical_level": 3,
+            "jtab_offset": 338
+          },
+          {
+            "procedure": 26,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 352,
+            "enter_offset": 348,
+            "proc_number": 26,
+            "lexical_level": 3,
+            "jtab_offset": 366
+          },
+          {
+            "procedure": 27,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 703,
+            "enter_offset": 672,
+            "proc_number": 27,
+            "lexical_level": 2,
+            "jtab_offset": 706
+          },
+          {
+            "procedure": 28,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 3474,
+            "enter_offset": 3210,
+            "proc_number": 28,
+            "lexical_level": 3,
+            "jtab_offset": 3480
+          },
+          {
+            "procedure": 29,
+            "data_size": 16,
+            "param_size": 0,
+            "exit_offset": 3916,
+            "enter_offset": 3490,
+            "proc_number": 29,
+            "lexical_level": 3,
+            "jtab_offset": 3924
+          },
+          {
+            "procedure": 30,
+            "data_size": 16,
+            "param_size": 0,
+            "exit_offset": 4574,
+            "enter_offset": 3934,
+            "proc_number": 30,
+            "lexical_level": 3,
+            "jtab_offset": 4590
+          },
+          {
+            "procedure": 31,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 4769,
+            "enter_offset": 4730,
+            "proc_number": 31,
+            "lexical_level": 3,
+            "jtab_offset": 4772
+          },
+          {
+            "procedure": 32,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 4829,
+            "enter_offset": 4782,
+            "proc_number": 32,
+            "lexical_level": 3,
+            "jtab_offset": 4832
+          },
+          {
+            "procedure": 33,
+            "data_size": 14,
+            "param_size": 8,
+            "exit_offset": 6415,
+            "enter_offset": 6048,
+            "proc_number": 33,
+            "lexical_level": 3,
+            "jtab_offset": 6428
+          },
+          {
+            "procedure": 34,
+            "data_size": 14,
+            "param_size": 8,
+            "exit_offset": 6025,
+            "enter_offset": 5706,
+            "proc_number": 34,
+            "lexical_level": 4,
+            "jtab_offset": 6038
+          },
+          {
+            "procedure": 35,
+            "data_size": 36,
+            "param_size": 8,
+            "exit_offset": 5676,
+            "enter_offset": 4842,
+            "proc_number": 35,
+            "lexical_level": 5,
+            "jtab_offset": 5696
+          },
+          {
+            "procedure": 36,
+            "data_size": 4,
+            "param_size": 4,
+            "exit_offset": 6474,
+            "enter_offset": 6438,
+            "proc_number": 36,
+            "lexical_level": 3,
+            "jtab_offset": 6476
+          },
+          {
+            "procedure": 37,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 7082,
+            "enter_offset": 7078,
+            "proc_number": 37,
+            "lexical_level": 2,
+            "jtab_offset": 7096
+          }
+        ]
+      },
+      {
+        "segment": 11,
+        "name": "ROUTINE",
+        "offset": 24064,
+        "length": 2902,
+        "start_block": 47,
+        "procedure_count": 17,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 24,
+            "param_size": 12,
+            "exit_offset": 2854,
+            "enter_offset": 2668,
+            "proc_number": 1,
+            "lexical_level": 2,
+            "jtab_offset": 2856
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 14,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 3,
+            "jtab_offset": 16
+          },
+          {
+            "procedure": 3,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 35,
+            "enter_offset": 26,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 38
+          },
+          {
+            "procedure": 4,
+            "data_size": 2,
+            "param_size": 10,
+            "exit_offset": 159,
+            "enter_offset": 48,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 162
+          },
+          {
+            "procedure": 5,
+            "data_size": 20,
+            "param_size": 0,
+            "exit_offset": 386,
+            "enter_offset": 172,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 394
+          },
+          {
+            "procedure": 6,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 494,
+            "enter_offset": 404,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 496
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 617,
+            "enter_offset": 506,
+            "proc_number": 7,
+            "lexical_level": 3,
+            "jtab_offset": 620
+          },
+          {
+            "procedure": 8,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 744,
+            "enter_offset": 630,
+            "proc_number": 8,
+            "lexical_level": 3,
+            "jtab_offset": 746
+          },
+          {
+            "procedure": 9,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 903,
+            "enter_offset": 756,
+            "proc_number": 9,
+            "lexical_level": 3,
+            "jtab_offset": 908
+          },
+          {
+            "procedure": 10,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 1093,
+            "enter_offset": 918,
+            "proc_number": 10,
+            "lexical_level": 3,
+            "jtab_offset": 1096
+          },
+          {
+            "procedure": 11,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1181,
+            "enter_offset": 1106,
+            "proc_number": 11,
+            "lexical_level": 3,
+            "jtab_offset": 1184
+          },
+          {
+            "procedure": 12,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1363,
+            "enter_offset": 1194,
+            "proc_number": 12,
+            "lexical_level": 3,
+            "jtab_offset": 1366
+          },
+          {
+            "procedure": 13,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1539,
+            "enter_offset": 1376,
+            "proc_number": 13,
+            "lexical_level": 3,
+            "jtab_offset": 1542
+          },
+          {
+            "procedure": 14,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1673,
+            "enter_offset": 1552,
+            "proc_number": 14,
+            "lexical_level": 3,
+            "jtab_offset": 1676
+          },
+          {
+            "procedure": 15,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1825,
+            "enter_offset": 1686,
+            "proc_number": 15,
+            "lexical_level": 3,
+            "jtab_offset": 1828
+          },
+          {
+            "procedure": 16,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 1877,
+            "enter_offset": 1838,
+            "proc_number": 16,
+            "lexical_level": 3,
+            "jtab_offset": 1880
+          },
+          {
+            "procedure": 17,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2652,
+            "enter_offset": 1890,
+            "proc_number": 17,
+            "lexical_level": 3,
+            "jtab_offset": 2658
+          }
+        ]
+      },
+      {
+        "segment": 12,
+        "name": "STATEMEN",
+        "offset": 27136,
+        "length": 1598,
+        "start_block": 53,
+        "procedure_count": 8,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 10,
+            "param_size": 8,
+            "exit_offset": 1562,
+            "enter_offset": 1192,
+            "proc_number": 1,
+            "lexical_level": 2,
+            "jtab_offset": 1570
+          },
+          {
+            "procedure": 2,
+            "data_size": 18,
+            "param_size": 2,
+            "exit_offset": 430,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 3,
+            "jtab_offset": 438
+          },
+          {
+            "procedure": 3,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 549,
+            "enter_offset": 448,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 556
+          },
+          {
+            "procedure": 4,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 620,
+            "enter_offset": 566,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 626
+          },
+          {
+            "procedure": 5,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 770,
+            "enter_offset": 636,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 772
+          },
+          {
+            "procedure": 6,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 857,
+            "enter_offset": 782,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 864
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 936,
+            "enter_offset": 874,
+            "proc_number": 7,
+            "lexical_level": 3,
+            "jtab_offset": 938
+          },
+          {
+            "procedure": 8,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 1178,
+            "enter_offset": 948,
+            "proc_number": 8,
+            "lexical_level": 3,
+            "jtab_offset": 1182
+          }
+        ]
+      },
+      {
+        "segment": 13,
+        "name": "CASESTAT",
+        "offset": 29184,
+        "length": 436,
+        "start_block": 57,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 26,
+            "param_size": 0,
+            "exit_offset": 406,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 422
+          }
+        ]
+      },
+      {
+        "segment": 14,
+        "name": "FORSTATE",
+        "offset": 29696,
+        "length": 512,
+        "start_block": 58,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 20,
+            "param_size": 0,
+            "exit_offset": 494,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 498
+          }
+        ]
+      },
+      {
+        "segment": 15,
+        "name": "BODY1",
+        "offset": 30208,
+        "length": 326,
+        "start_block": 59,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 300,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 312
+          }
+        ]
+      },
+      {
+        "segment": 16,
+        "name": "BODY3",
+        "offset": 30720,
+        "length": 858,
+        "start_block": 60,
+        "procedure_count": 2,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 833,
+            "enter_offset": 450,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 842
+          },
+          {
+            "procedure": 2,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 424,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 4,
+            "jtab_offset": 440
+          }
+        ]
+      },
+      {
+        "segment": 17,
+        "name": "WRITELIN",
+        "offset": 31744,
+        "length": 818,
+        "start_block": 62,
+        "procedure_count": 4,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 14,
+            "param_size": 0,
+            "exit_offset": 793,
+            "enter_offset": 712,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 798
+          },
+          {
+            "procedure": 2,
+            "data_size": 16,
+            "param_size": 2,
+            "exit_offset": 228,
+            "enter_offset": 54,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 236
+          },
+          {
+            "procedure": 3,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 42,
+            "enter_offset": 0,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 44
+          },
+          {
+            "procedure": 4,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 691,
+            "enter_offset": 246,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 702
+          }
+        ]
+      },
+      {
+        "segment": 18,
+        "name": "UNITPART",
+        "offset": 32768,
+        "length": 1600,
+        "start_block": 64,
+        "procedure_count": 4,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 12,
+            "param_size": 8,
+            "exit_offset": 1572,
+            "enter_offset": 934,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 1580
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 38,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 40
+          },
+          {
+            "procedure": 3,
+            "data_size": 36,
+            "param_size": 10,
+            "exit_offset": 742,
+            "enter_offset": 50,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 754
+          },
+          {
+            "procedure": 4,
+            "data_size": 6,
+            "param_size": 0,
+            "exit_offset": 922,
+            "enter_offset": 764,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 924
+          }
+        ]
+      },
+      {
+        "segment": 19,
+        "name": "COMPOPTI",
+        "offset": 34816,
+        "length": 1060,
+        "start_block": 68,
+        "procedure_count": 4,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 56,
+            "param_size": 6,
+            "exit_offset": 1028,
+            "enter_offset": 366,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 1040
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 8,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 10
+          },
+          {
+            "procedure": 3,
+            "data_size": 6,
+            "param_size": 4,
+            "exit_offset": 147,
+            "enter_offset": 20,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 152
+          },
+          {
+            "procedure": 4,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 350,
+            "enter_offset": 162,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 356
+          }
+        ]
+      },
+      {
+        "segment": 20,
+        "name": "NUMSTRIN",
+        "offset": 36352,
+        "length": 864,
+        "start_block": 71,
+        "procedure_count": 3,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 843,
+            "enter_offset": 834,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 846
+          },
+          {
+            "procedure": 2,
+            "data_size": 90,
+            "param_size": 0,
+            "exit_offset": 140,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 146
+          },
+          {
+            "procedure": 3,
+            "data_size": 32,
+            "param_size": 0,
+            "exit_offset": 799,
+            "enter_offset": 156,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 824
+          }
+        ]
+      },
+      {
+        "segment": 21,
+        "name": "FINISHUP",
+        "offset": 37376,
+        "length": 672,
+        "start_block": 73,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 642,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 658
+          }
+        ]
+      }
+    ]
+  },
+  "1.3": {
+    "compiler_blocks": [
+      56,
+      134
+    ],
+    "segments": [
+      {
+        "segment": 1,
+        "name": "PASCALCO",
+        "offset": 512,
+        "length": 5606,
+        "start_block": 1
+      },
+      {
+        "segment": 8,
+        "name": "COMPINIT",
+        "offset": 6144,
+        "length": 4032,
+        "start_block": 12
+      },
+      {
+        "segment": 9,
+        "name": "DECLARAT",
+        "offset": 10240,
+        "length": 7600,
+        "start_block": 20
+      },
+      {
+        "segment": 10,
+        "name": "BODYPART",
+        "offset": 17920,
+        "length": 7454,
+        "start_block": 35
+      },
+      {
+        "segment": 11,
+        "name": "ROUTINE",
+        "offset": 25600,
+        "length": 2892,
+        "start_block": 50
+      },
+      {
+        "segment": 12,
+        "name": "STATEMEN",
+        "offset": 28672,
+        "length": 1690,
+        "start_block": 56
+      },
+      {
+        "segment": 13,
+        "name": "CASESTAT",
+        "offset": 30720,
+        "length": 512,
+        "start_block": 60
+      },
+      {
+        "segment": 14,
+        "name": "FORSTATE",
+        "offset": 31232,
+        "length": 498,
+        "start_block": 61
+      },
+      {
+        "segment": 15,
+        "name": "BODY1",
+        "offset": 31744,
+        "length": 326,
+        "start_block": 62
+      },
+      {
+        "segment": 16,
+        "name": "BODY3",
+        "offset": 32256,
+        "length": 902,
+        "start_block": 63
+      },
+      {
+        "segment": 17,
+        "name": "WRITELIN",
+        "offset": 33280,
+        "length": 826,
+        "start_block": 65
+      },
+      {
+        "segment": 18,
+        "name": "UNITPART",
+        "offset": 34304,
+        "length": 1664,
+        "start_block": 67
+      },
+      {
+        "segment": 19,
+        "name": "COMPOPTI",
+        "offset": 36352,
+        "length": 1098,
+        "start_block": 71
+      },
+      {
+        "segment": 20,
+        "name": "NUMSTRIN",
+        "offset": 37888,
+        "length": 898,
+        "start_block": 74
+      },
+      {
+        "segment": 21,
+        "name": "FINISHUP",
+        "offset": 38912,
+        "length": 650,
+        "start_block": 76
+      }
+    ],
+    "procedures": [
+      {
+        "segment": 8,
+        "name": "COMPINIT",
+        "offset": 6144,
+        "length": 4032,
+        "start_block": 12,
+        "procedure_count": 11,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 608,
+            "param_size": 0,
+            "exit_offset": 3981,
+            "enter_offset": 3000,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 3998
+          },
+          {
+            "procedure": 2,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 365,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 368
+          },
+          {
+            "procedure": 3,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 1053,
+            "enter_offset": 378,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 1058
+          },
+          {
+            "procedure": 4,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 1362,
+            "enter_offset": 1068,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 1364
+          },
+          {
+            "procedure": 5,
+            "data_size": 82,
+            "param_size": 2,
+            "exit_offset": 1423,
+            "enter_offset": 1374,
+            "proc_number": 5,
+            "lexical_level": 2,
+            "jtab_offset": 1426
+          },
+          {
+            "procedure": 6,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1489,
+            "enter_offset": 1436,
+            "proc_number": 6,
+            "lexical_level": 2,
+            "jtab_offset": 1492
+          },
+          {
+            "procedure": 7,
+            "data_size": 16,
+            "param_size": 0,
+            "exit_offset": 1938,
+            "enter_offset": 1502,
+            "proc_number": 7,
+            "lexical_level": 2,
+            "jtab_offset": 1942
+          },
+          {
+            "procedure": 8,
+            "data_size": 22,
+            "param_size": 0,
+            "exit_offset": 2378,
+            "enter_offset": 1952,
+            "proc_number": 8,
+            "lexical_level": 2,
+            "jtab_offset": 2390
+          },
+          {
+            "procedure": 9,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 2662,
+            "enter_offset": 2400,
+            "proc_number": 9,
+            "lexical_level": 2,
+            "jtab_offset": 2666
+          },
+          {
+            "procedure": 10,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2818,
+            "enter_offset": 2676,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 2820
+          },
+          {
+            "procedure": 11,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 2986,
+            "enter_offset": 2830,
+            "proc_number": 11,
+            "lexical_level": 2,
+            "jtab_offset": 2990
+          }
+        ]
+      },
+      {
+        "segment": 9,
+        "name": "DECLARAT",
+        "offset": 10240,
+        "length": 7600,
+        "start_block": 20,
+        "procedure_count": 20,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 22,
+            "param_size": 8,
+            "exit_offset": 7542,
+            "enter_offset": 7228,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 7548
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 8,
+            "exit_offset": 21,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 24
+          },
+          {
+            "procedure": 3,
+            "data_size": 26,
+            "param_size": 12,
+            "exit_offset": 3290,
+            "enter_offset": 2422,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 3312
+          },
+          {
+            "procedure": 4,
+            "data_size": 26,
+            "param_size": 12,
+            "exit_offset": 836,
+            "enter_offset": 34,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 854
+          },
+          {
+            "procedure": 5,
+            "data_size": 6,
+            "param_size": 6,
+            "exit_offset": 998,
+            "enter_offset": 864,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 1002
+          },
+          {
+            "procedure": 6,
+            "data_size": 42,
+            "param_size": 10,
+            "exit_offset": 2239,
+            "enter_offset": 1892,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 2252
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 2,
+            "exit_offset": 1193,
+            "enter_offset": 1012,
+            "proc_number": 7,
+            "lexical_level": 4,
+            "jtab_offset": 1196
+          },
+          {
+            "procedure": 8,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 1872,
+            "enter_offset": 1206,
+            "proc_number": 8,
+            "lexical_level": 4,
+            "jtab_offset": 1882
+          },
+          {
+            "procedure": 9,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 2410,
+            "enter_offset": 2262,
+            "proc_number": 9,
+            "lexical_level": 3,
+            "jtab_offset": 2412
+          },
+          {
+            "procedure": 10,
+            "data_size": 514,
+            "param_size": 0,
+            "exit_offset": 4557,
+            "enter_offset": 4410,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 4564
+          },
+          {
+            "procedure": 11,
+            "data_size": 44,
+            "param_size": 2,
+            "exit_offset": 4396,
+            "enter_offset": 3960,
+            "proc_number": 11,
+            "lexical_level": 3,
+            "jtab_offset": 4400
+          },
+          {
+            "procedure": 12,
+            "data_size": 6,
+            "param_size": 2,
+            "exit_offset": 3944,
+            "enter_offset": 3518,
+            "proc_number": 12,
+            "lexical_level": 4,
+            "jtab_offset": 3950
+          },
+          {
+            "procedure": 13,
+            "data_size": 4,
+            "param_size": 4,
+            "exit_offset": 3505,
+            "enter_offset": 3420,
+            "proc_number": 13,
+            "lexical_level": 5,
+            "jtab_offset": 3508
+          },
+          {
+            "procedure": 14,
+            "data_size": 2,
+            "param_size": 16,
+            "exit_offset": 3406,
+            "enter_offset": 3322,
+            "proc_number": 14,
+            "lexical_level": 6,
+            "jtab_offset": 3410
+          },
+          {
+            "procedure": 15,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 4703,
+            "enter_offset": 4574,
+            "proc_number": 15,
+            "lexical_level": 2,
+            "jtab_offset": 4710
+          },
+          {
+            "procedure": 16,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 4863,
+            "enter_offset": 4720,
+            "proc_number": 16,
+            "lexical_level": 2,
+            "jtab_offset": 4868
+          },
+          {
+            "procedure": 17,
+            "data_size": 12,
+            "param_size": 0,
+            "exit_offset": 5071,
+            "enter_offset": 4878,
+            "proc_number": 17,
+            "lexical_level": 2,
+            "jtab_offset": 5080
+          },
+          {
+            "procedure": 18,
+            "data_size": 12,
+            "param_size": 0,
+            "exit_offset": 5432,
+            "enter_offset": 5090,
+            "proc_number": 18,
+            "lexical_level": 2,
+            "jtab_offset": 5440
+          },
+          {
+            "procedure": 19,
+            "data_size": 40,
+            "param_size": 4,
+            "exit_offset": 7205,
+            "enter_offset": 6100,
+            "proc_number": 19,
+            "lexical_level": 2,
+            "jtab_offset": 7218
+          },
+          {
+            "procedure": 20,
+            "data_size": 20,
+            "param_size": 12,
+            "exit_offset": 6075,
+            "enter_offset": 5450,
+            "proc_number": 20,
+            "lexical_level": 3,
+            "jtab_offset": 6090
+          }
+        ]
+      },
+      {
+        "segment": 10,
+        "name": "BODYPART",
+        "offset": 17920,
+        "length": 7454,
+        "start_block": 35,
+        "procedure_count": 38,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 0,
+            "param_size": 10,
+            "exit_offset": 7364,
+            "enter_offset": 7350,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 7366
+          },
+          {
+            "procedure": 2,
+            "data_size": 2,
+            "param_size": 6,
+            "exit_offset": 504,
+            "enter_offset": 406,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 506
+          },
+          {
+            "procedure": 3,
+            "data_size": 8,
+            "param_size": 2,
+            "exit_offset": 599,
+            "enter_offset": 516,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 604
+          },
+          {
+            "procedure": 4,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 663,
+            "enter_offset": 614,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 666
+          },
+          {
+            "procedure": 5,
+            "data_size": 6,
+            "param_size": 4,
+            "exit_offset": 970,
+            "enter_offset": 720,
+            "proc_number": 5,
+            "lexical_level": 2,
+            "jtab_offset": 978
+          },
+          {
+            "procedure": 6,
+            "data_size": 0,
+            "param_size": 6,
+            "exit_offset": 1150,
+            "enter_offset": 988,
+            "proc_number": 6,
+            "lexical_level": 2,
+            "jtab_offset": 1154
+          },
+          {
+            "procedure": 7,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 1185,
+            "enter_offset": 1164,
+            "proc_number": 7,
+            "lexical_level": 2,
+            "jtab_offset": 1188
+          },
+          {
+            "procedure": 8,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 1785,
+            "enter_offset": 1526,
+            "proc_number": 8,
+            "lexical_level": 2,
+            "jtab_offset": 1794
+          },
+          {
+            "procedure": 9,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1985,
+            "enter_offset": 1892,
+            "proc_number": 9,
+            "lexical_level": 2,
+            "jtab_offset": 1988
+          },
+          {
+            "procedure": 10,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2106,
+            "enter_offset": 1998,
+            "proc_number": 10,
+            "lexical_level": 2,
+            "jtab_offset": 2108
+          },
+          {
+            "procedure": 11,
+            "data_size": 26,
+            "param_size": 8,
+            "exit_offset": 7297,
+            "enter_offset": 6680,
+            "proc_number": 11,
+            "lexical_level": 2,
+            "jtab_offset": 7312
+          },
+          {
+            "procedure": 12,
+            "data_size": 2,
+            "param_size": 8,
+            "exit_offset": 3101,
+            "enter_offset": 3062,
+            "proc_number": 12,
+            "lexical_level": 2,
+            "jtab_offset": 3104
+          },
+          {
+            "procedure": 13,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 3164,
+            "enter_offset": 3114,
+            "proc_number": 13,
+            "lexical_level": 2,
+            "jtab_offset": 3166
+          },
+          {
+            "procedure": 14,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 3206,
+            "enter_offset": 3176,
+            "proc_number": 14,
+            "lexical_level": 2,
+            "jtab_offset": 3208
+          },
+          {
+            "procedure": 15,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1214,
+            "enter_offset": 1198,
+            "proc_number": 15,
+            "lexical_level": 2,
+            "jtab_offset": 1216
+          },
+          {
+            "procedure": 16,
+            "data_size": 4,
+            "param_size": 4,
+            "exit_offset": 1365,
+            "enter_offset": 1226,
+            "proc_number": 16,
+            "lexical_level": 2,
+            "jtab_offset": 1368
+          },
+          {
+            "procedure": 17,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 1400,
+            "enter_offset": 1378,
+            "proc_number": 17,
+            "lexical_level": 2,
+            "jtab_offset": 1402
+          },
+          {
+            "procedure": 18,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1430,
+            "enter_offset": 1412,
+            "proc_number": 18,
+            "lexical_level": 2,
+            "jtab_offset": 1432
+          },
+          {
+            "procedure": 19,
+            "data_size": 6,
+            "param_size": 2,
+            "exit_offset": 1512,
+            "enter_offset": 1442,
+            "proc_number": 19,
+            "lexical_level": 2,
+            "jtab_offset": 1516
+          },
+          {
+            "procedure": 20,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 1880,
+            "enter_offset": 1804,
+            "proc_number": 20,
+            "lexical_level": 2,
+            "jtab_offset": 1882
+          },
+          {
+            "procedure": 21,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 2191,
+            "enter_offset": 2118,
+            "proc_number": 21,
+            "lexical_level": 2,
+            "jtab_offset": 2194
+          },
+          {
+            "procedure": 22,
+            "data_size": 20,
+            "param_size": 10,
+            "exit_offset": 3031,
+            "enter_offset": 2204,
+            "proc_number": 22,
+            "lexical_level": 2,
+            "jtab_offset": 3052
+          },
+          {
+            "procedure": 23,
+            "data_size": 4,
+            "param_size": 10,
+            "exit_offset": 4858,
+            "enter_offset": 4740,
+            "proc_number": 23,
+            "lexical_level": 2,
+            "jtab_offset": 4860
+          },
+          {
+            "procedure": 24,
+            "data_size": 38,
+            "param_size": 0,
+            "exit_offset": 394,
+            "enter_offset": 378,
+            "proc_number": 24,
+            "lexical_level": 2,
+            "jtab_offset": 396
+          },
+          {
+            "procedure": 25,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 330,
+            "enter_offset": 38,
+            "proc_number": 25,
+            "lexical_level": 3,
+            "jtab_offset": 340
+          },
+          {
+            "procedure": 26,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 26,
+            "enter_offset": 0,
+            "proc_number": 26,
+            "lexical_level": 4,
+            "jtab_offset": 28
+          },
+          {
+            "procedure": 27,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 354,
+            "enter_offset": 350,
+            "proc_number": 27,
+            "lexical_level": 3,
+            "jtab_offset": 368
+          },
+          {
+            "procedure": 28,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 707,
+            "enter_offset": 676,
+            "proc_number": 28,
+            "lexical_level": 2,
+            "jtab_offset": 710
+          },
+          {
+            "procedure": 29,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 3482,
+            "enter_offset": 3218,
+            "proc_number": 29,
+            "lexical_level": 3,
+            "jtab_offset": 3488
+          },
+          {
+            "procedure": 30,
+            "data_size": 16,
+            "param_size": 0,
+            "exit_offset": 3929,
+            "enter_offset": 3498,
+            "proc_number": 30,
+            "lexical_level": 3,
+            "jtab_offset": 3938
+          },
+          {
+            "procedure": 31,
+            "data_size": 18,
+            "param_size": 0,
+            "exit_offset": 4714,
+            "enter_offset": 3948,
+            "proc_number": 31,
+            "lexical_level": 3,
+            "jtab_offset": 4730
+          },
+          {
+            "procedure": 32,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 4909,
+            "enter_offset": 4870,
+            "proc_number": 32,
+            "lexical_level": 3,
+            "jtab_offset": 4912
+          },
+          {
+            "procedure": 33,
+            "data_size": 0,
+            "param_size": 2,
+            "exit_offset": 4969,
+            "enter_offset": 4922,
+            "proc_number": 33,
+            "lexical_level": 3,
+            "jtab_offset": 4972
+          },
+          {
+            "procedure": 34,
+            "data_size": 14,
+            "param_size": 8,
+            "exit_offset": 6555,
+            "enter_offset": 6188,
+            "proc_number": 34,
+            "lexical_level": 3,
+            "jtab_offset": 6568
+          },
+          {
+            "procedure": 35,
+            "data_size": 14,
+            "param_size": 8,
+            "exit_offset": 6165,
+            "enter_offset": 5846,
+            "proc_number": 35,
+            "lexical_level": 4,
+            "jtab_offset": 6178
+          },
+          {
+            "procedure": 36,
+            "data_size": 36,
+            "param_size": 8,
+            "exit_offset": 5816,
+            "enter_offset": 4982,
+            "proc_number": 36,
+            "lexical_level": 5,
+            "jtab_offset": 5836
+          },
+          {
+            "procedure": 37,
+            "data_size": 10,
+            "param_size": 4,
+            "exit_offset": 6667,
+            "enter_offset": 6578,
+            "proc_number": 37,
+            "lexical_level": 3,
+            "jtab_offset": 6670
+          },
+          {
+            "procedure": 38,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 7326,
+            "enter_offset": 7322,
+            "proc_number": 38,
+            "lexical_level": 2,
+            "jtab_offset": 7340
+          }
+        ]
+      },
+      {
+        "segment": 11,
+        "name": "ROUTINE",
+        "offset": 25600,
+        "length": 2892,
+        "start_block": 50,
+        "procedure_count": 17,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 24,
+            "param_size": 12,
+            "exit_offset": 2844,
+            "enter_offset": 2658,
+            "proc_number": 1,
+            "lexical_level": 2,
+            "jtab_offset": 2846
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 14,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 3,
+            "jtab_offset": 16
+          },
+          {
+            "procedure": 3,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 35,
+            "enter_offset": 26,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 38
+          },
+          {
+            "procedure": 4,
+            "data_size": 2,
+            "param_size": 10,
+            "exit_offset": 159,
+            "enter_offset": 48,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 162
+          },
+          {
+            "procedure": 5,
+            "data_size": 20,
+            "param_size": 0,
+            "exit_offset": 386,
+            "enter_offset": 172,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 394
+          },
+          {
+            "procedure": 6,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 494,
+            "enter_offset": 404,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 496
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 617,
+            "enter_offset": 506,
+            "proc_number": 7,
+            "lexical_level": 3,
+            "jtab_offset": 620
+          },
+          {
+            "procedure": 8,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 744,
+            "enter_offset": 630,
+            "proc_number": 8,
+            "lexical_level": 3,
+            "jtab_offset": 746
+          },
+          {
+            "procedure": 9,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 900,
+            "enter_offset": 756,
+            "proc_number": 9,
+            "lexical_level": 3,
+            "jtab_offset": 904
+          },
+          {
+            "procedure": 10,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 1086,
+            "enter_offset": 914,
+            "proc_number": 10,
+            "lexical_level": 3,
+            "jtab_offset": 1088
+          },
+          {
+            "procedure": 11,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1173,
+            "enter_offset": 1098,
+            "proc_number": 11,
+            "lexical_level": 3,
+            "jtab_offset": 1176
+          },
+          {
+            "procedure": 12,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1355,
+            "enter_offset": 1186,
+            "proc_number": 12,
+            "lexical_level": 3,
+            "jtab_offset": 1358
+          },
+          {
+            "procedure": 13,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1531,
+            "enter_offset": 1368,
+            "proc_number": 13,
+            "lexical_level": 3,
+            "jtab_offset": 1534
+          },
+          {
+            "procedure": 14,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1665,
+            "enter_offset": 1544,
+            "proc_number": 14,
+            "lexical_level": 3,
+            "jtab_offset": 1668
+          },
+          {
+            "procedure": 15,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 1817,
+            "enter_offset": 1678,
+            "proc_number": 15,
+            "lexical_level": 3,
+            "jtab_offset": 1820
+          },
+          {
+            "procedure": 16,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 1869,
+            "enter_offset": 1830,
+            "proc_number": 16,
+            "lexical_level": 3,
+            "jtab_offset": 1872
+          },
+          {
+            "procedure": 17,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 2642,
+            "enter_offset": 1882,
+            "proc_number": 17,
+            "lexical_level": 3,
+            "jtab_offset": 2648
+          }
+        ]
+      },
+      {
+        "segment": 12,
+        "name": "STATEMEN",
+        "offset": 28672,
+        "length": 1690,
+        "start_block": 56,
+        "procedure_count": 8,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 12,
+            "param_size": 8,
+            "exit_offset": 1654,
+            "enter_offset": 1262,
+            "proc_number": 1,
+            "lexical_level": 2,
+            "jtab_offset": 1662
+          },
+          {
+            "procedure": 2,
+            "data_size": 18,
+            "param_size": 2,
+            "exit_offset": 516,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 3,
+            "jtab_offset": 530
+          },
+          {
+            "procedure": 3,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 641,
+            "enter_offset": 540,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 648
+          },
+          {
+            "procedure": 4,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 712,
+            "enter_offset": 658,
+            "proc_number": 4,
+            "lexical_level": 3,
+            "jtab_offset": 718
+          },
+          {
+            "procedure": 5,
+            "data_size": 10,
+            "param_size": 0,
+            "exit_offset": 862,
+            "enter_offset": 728,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 864
+          },
+          {
+            "procedure": 6,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 949,
+            "enter_offset": 874,
+            "proc_number": 6,
+            "lexical_level": 3,
+            "jtab_offset": 956
+          },
+          {
+            "procedure": 7,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 1028,
+            "enter_offset": 966,
+            "proc_number": 7,
+            "lexical_level": 3,
+            "jtab_offset": 1030
+          },
+          {
+            "procedure": 8,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 1248,
+            "enter_offset": 1040,
+            "proc_number": 8,
+            "lexical_level": 3,
+            "jtab_offset": 1252
+          }
+        ]
+      },
+      {
+        "segment": 13,
+        "name": "CASESTAT",
+        "offset": 30720,
+        "length": 512,
+        "start_block": 60,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 28,
+            "param_size": 0,
+            "exit_offset": 479,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 498
+          }
+        ]
+      },
+      {
+        "segment": 14,
+        "name": "FORSTATE",
+        "offset": 31232,
+        "length": 498,
+        "start_block": 61,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 20,
+            "param_size": 0,
+            "exit_offset": 480,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 484
+          }
+        ]
+      },
+      {
+        "segment": 15,
+        "name": "BODY1",
+        "offset": 31744,
+        "length": 326,
+        "start_block": 62,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 300,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 312
+          }
+        ]
+      },
+      {
+        "segment": 16,
+        "name": "BODY3",
+        "offset": 32256,
+        "length": 902,
+        "start_block": 63,
+        "procedure_count": 2,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 877,
+            "enter_offset": 494,
+            "proc_number": 1,
+            "lexical_level": 3,
+            "jtab_offset": 886
+          },
+          {
+            "procedure": 2,
+            "data_size": 2,
+            "param_size": 0,
+            "exit_offset": 468,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 4,
+            "jtab_offset": 484
+          }
+        ]
+      },
+      {
+        "segment": 17,
+        "name": "WRITELIN",
+        "offset": 33280,
+        "length": 826,
+        "start_block": 65,
+        "procedure_count": 4,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 14,
+            "param_size": 0,
+            "exit_offset": 801,
+            "enter_offset": 720,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 806
+          },
+          {
+            "procedure": 2,
+            "data_size": 16,
+            "param_size": 2,
+            "exit_offset": 234,
+            "enter_offset": 60,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 242
+          },
+          {
+            "procedure": 3,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 48,
+            "enter_offset": 0,
+            "proc_number": 3,
+            "lexical_level": 3,
+            "jtab_offset": 50
+          },
+          {
+            "procedure": 4,
+            "data_size": 2,
+            "param_size": 2,
+            "exit_offset": 699,
+            "enter_offset": 252,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 710
+          }
+        ]
+      },
+      {
+        "segment": 18,
+        "name": "UNITPART",
+        "offset": 34304,
+        "length": 1664,
+        "start_block": 67,
+        "procedure_count": 4,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 12,
+            "param_size": 8,
+            "exit_offset": 1636,
+            "enter_offset": 956,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 1644
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 38,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 40
+          },
+          {
+            "procedure": 3,
+            "data_size": 36,
+            "param_size": 10,
+            "exit_offset": 762,
+            "enter_offset": 50,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 776
+          },
+          {
+            "procedure": 4,
+            "data_size": 6,
+            "param_size": 0,
+            "exit_offset": 944,
+            "enter_offset": 786,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 946
+          }
+        ]
+      },
+      {
+        "segment": 19,
+        "name": "COMPOPTI",
+        "offset": 36352,
+        "length": 1098,
+        "start_block": 71,
+        "procedure_count": 5,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 56,
+            "param_size": 6,
+            "exit_offset": 1064,
+            "enter_offset": 372,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 1076
+          },
+          {
+            "procedure": 2,
+            "data_size": 0,
+            "param_size": 0,
+            "exit_offset": 8,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 10
+          },
+          {
+            "procedure": 3,
+            "data_size": 6,
+            "param_size": 4,
+            "exit_offset": 147,
+            "enter_offset": 20,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 152
+          },
+          {
+            "procedure": 4,
+            "data_size": 8,
+            "param_size": 0,
+            "exit_offset": 358,
+            "enter_offset": 210,
+            "proc_number": 4,
+            "lexical_level": 2,
+            "jtab_offset": 362
+          },
+          {
+            "procedure": 5,
+            "data_size": 4,
+            "param_size": 2,
+            "exit_offset": 198,
+            "enter_offset": 162,
+            "proc_number": 5,
+            "lexical_level": 3,
+            "jtab_offset": 200
+          }
+        ]
+      },
+      {
+        "segment": 20,
+        "name": "NUMSTRIN",
+        "offset": 37888,
+        "length": 898,
+        "start_block": 74,
+        "procedure_count": 3,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 0,
+            "param_size": 4,
+            "exit_offset": 877,
+            "enter_offset": 868,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 880
+          },
+          {
+            "procedure": 2,
+            "data_size": 92,
+            "param_size": 0,
+            "exit_offset": 168,
+            "enter_offset": 0,
+            "proc_number": 2,
+            "lexical_level": 2,
+            "jtab_offset": 174
+          },
+          {
+            "procedure": 3,
+            "data_size": 32,
+            "param_size": 0,
+            "exit_offset": 833,
+            "enter_offset": 184,
+            "proc_number": 3,
+            "lexical_level": 2,
+            "jtab_offset": 858
+          }
+        ]
+      },
+      {
+        "segment": 21,
+        "name": "FINISHUP",
+        "offset": 38912,
+        "length": 650,
+        "start_block": 76,
+        "procedure_count": 1,
+        "procedures": [
+          {
+            "procedure": 1,
+            "data_size": 4,
+            "param_size": 0,
+            "exit_offset": 622,
+            "enter_offset": 0,
+            "proc_number": 1,
+            "lexical_level": 1,
+            "jtab_offset": 636
+          }
+        ]
+      }
+    ]
+  }
+}

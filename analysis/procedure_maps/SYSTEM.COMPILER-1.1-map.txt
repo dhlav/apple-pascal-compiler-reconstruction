@@ -1,0 +1,194 @@
+SYSTEM.COMPILER segment/procedure map -- Apple Pascal 1.1
+source image : Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk
+file blocks  : 6..80 (75 blocks, 38400 bytes)
+copyright    : (C)Apple Computer Inc. 1979,1980 (C)U.C.Regents 1979
+
+Derived directly from the binary by tools/a2pascal/codefile.py.
+VERIFIED BINARY FACT unless marked otherwise.
+
+--- segment  1  PASCALCO  dictslot=1  block=1   len=4486   mtype=pcode-lsb ver=2 nproc=29
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x1148 0x10E0 0x1122      4   2444    0    66  y  pcode
+      2 0x0182 0x0000 0x0172      2    184    1   370  y  pcode
+      3 0x0266 0x0184 0x025C      0      2    1   216  y  pcode
+      4 0x036C 0x0268 0x0361      0    106    1   249  y  pcode
+      5 0x03D4 0x036E 0x03C7      2      6    1    89  y  pcode
+      6 0x0764 0x04D2 0x0751      0     10    1   639  y  pcode
+      7 0x078A 0x0766 0x077F      4      0    1    25  y  pcode
+      8 0x082E 0x078C 0x0821      4      4    1   149  y  pcode
+      9 0x086E 0x0830 0x0864      6      2    1    52  y  pcode
+     10 0x088C 0x0870 0x0881      6      0    1    17  y  pcode
+     11 0x08B6 0x088E 0x08AB      2      0    1    29  y  pcode
+     12 0x0476 0x03D6 0x046C      0      0    1   150  y  pcode
+     13 0x0CB4 0x0C6A 0x0CA9      6      4    1    63  y  pcode
+     14 0x08D2 0x08B8 0x08C6      8      0    1    14  y  pcode
+     15 0x08F6 0x08D4 0x08EC      6      0    1    24  y  pcode
+     16 0x0910 0x08F8 0x0906      6      0    1    14  y  pcode
+     17 0x0926 0x0912 0x091B      6      0    1     9  y  pcode
+     18 0x0AE2 0x0928 0x0AD0     12     10    1   424  y  pcode
+     19 0x0C68 0x0AE4 0x0C4F      8     12    1   363  y  pcode
+     20 0x0CCA 0x0CB6 0x0CBF      2      0    1     9  y  pcode
+     21 0x0D00 0x0CCC 0x0CF6      2      2    1    42  y  pcode
+     22 0x0D80 0x0D02 0x0D73      2      6    1   113  y  pcode
+     23 0x0DE8 0x0D82 0x0DDC      0      4    1    90  y  pcode
+     24 0x1046 0x0E48 0x1033      8      4    1   491  y  pcode
+     25 0x1074 0x1048 0x1069      0      0    1    33  y  pcode
+     26 0x04D0 0x0478 0x04BF      2      2    2    71  y  pcode
+     27 0x0E46 0x0DEA 0x0E3C      2      2    2    82  y  pcode
+     28 0x10DE 0x1092 0x109E      0      0    1    12  y  pcode
+     29 0x1090 0x1076 0x107A      0      0    2     4  y  pcode
+
+--- segment  7  COMPINIT  dictslot=2  block=10  len=3226   mtype=pcode-lsb ver=2 nproc=10
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0C82 0x0A46 0x0C71      0    518    1   555  y  pcode
+      2 0x0106 0x0000 0x00FC      0      2    2   252  y  pcode
+      3 0x0364 0x0108 0x0357      0     10    2   591  y  pcode
+      4 0x0496 0x0366 0x048C      0     10    2   294  y  pcode
+      5 0x04D4 0x0498 0x04C9      2     82    2    49  y  pcode
+      6 0x0516 0x04D6 0x050B      2      2    2    53  y  pcode
+      7 0x06D8 0x0518 0x06CC      0     16    2   436  y  pcode
+      8 0x0898 0x06DA 0x0884      0     22    2   426  y  pcode
+      9 0x09AC 0x089A 0x09A0      0      4    2   262  y  pcode
+     10 0x0A44 0x09AE 0x0A3A      0      0    2   140  y  pcode
+
+--- segment  8  DECLARAT  dictslot=3  block=17  len=7574   mtype=pcode-lsb ver=2 nproc=20
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x1D6A 0x1C0E 0x1D5C      8     22    1   334  y  pcode
+      2 0x0020 0x0000 0x0015      8      0    2    21  y  pcode
+      3 0x0CDA 0x0958 0x0CBC     12     26    2   868  y  pcode
+      4 0x0340 0x0022 0x0328     12     26    3   774  y  pcode
+      5 0x03D4 0x0342 0x03C8      6      6    3   134  y  pcode
+      6 0x08B6 0x0746 0x08A1     10     42    3   347  y  pcode
+      7 0x0496 0x03D6 0x048B      2      4    4   181  y  pcode
+      8 0x0744 0x0498 0x0732      0      4    4   666  y  pcode
+      9 0x0956 0x08B8 0x094C      0      2    3   148  y  pcode
+     10 0x11BE 0x111C 0x11AF      0    514    2   147  y  pcode
+     11 0x111A 0x0F5A 0x110E      2     44    3   436  y  pcode
+     12 0x0F58 0x0DA0 0x0F4A      2      6    4   426  y  pcode
+     13 0x0D9E 0x0D3E 0x0D93      4      4    5    85  y  pcode
+     14 0x0D3C 0x0CDC 0x0D30     12      2    6    84  y  pcode
+     15 0x1250 0x11C0 0x1241      0      8    2   129  y  pcode
+     16 0x12EE 0x1252 0x12E1      0      8    2   143  y  pcode
+     17 0x13C2 0x12F0 0x13B1      0     12    2   193  y  pcode
+     18 0x152A 0x13C4 0x151A      0     12    2   342  y  pcode
+     19 0x1C0C 0x17A6 0x1BF7      4     40    2  1105  y  pcode
+     20 0x17A4 0x152C 0x178D     12     20    3   609  y  pcode
+
+--- segment  9  BODYPART  dictslot=4  block=32  len=7208   mtype=pcode-lsb ver=2 nproc=37
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x1BDA 0x1BC2 0x1BD0     10      0    1    14  y  pcode
+      2 0x01FE 0x0194 0x01F4      6      2    2    96  y  pcode
+      3 0x0260 0x0200 0x0253      2      8    2    83  y  pcode
+      4 0x029E 0x0262 0x0293      2      0    2    49  y  pcode
+      5 0x03D6 0x02CC 0x03C6      4      6    2   250  y  pcode
+      6 0x0486 0x03D8 0x047A      6      0    2   162  y  pcode
+      7 0x04A8 0x0488 0x049D      4      0    2    21  y  pcode
+      8 0x0702 0x05EE 0x06F1      0      8    2   259  y  pcode
+      9 0x07C4 0x075C 0x07B9      0      0    2    93  y  pcode
+     10 0x083C 0x07C6 0x0832      0      0    2   108  y  pcode
+     11 0x1BA4 0x1956 0x1B8D      8     26    2   567  y  pcode
+     12 0x0C20 0x0BEE 0x0C15      8      2    2    39  y  pcode
+     13 0x0C5E 0x0C22 0x0C54      2      2    2    50  y  pcode
+     14 0x0C88 0x0C60 0x0C7E      2      2    2    30  y  pcode
+     15 0x04C4 0x04AA 0x04BA      0      0    2    16  y  pcode
+     16 0x055C 0x04C6 0x0551      4      4    2   139  y  pcode
+     17 0x057A 0x055E 0x0570      2      0    2    18  y  pcode
+     18 0x0598 0x057C 0x058E      2      2    2    18  y  pcode
+     19 0x05EC 0x059A 0x05E0      2      6    2    70  y  pcode
+     20 0x075A 0x0704 0x0750      2      2    2    76  y  pcode
+     21 0x0892 0x083E 0x0887      2      0    2    73  y  pcode
+     22 0x0BEC 0x0894 0x0BCF     10     20    2   827  y  pcode
+     23 0x1278 0x11F8 0x126E     10      4    2   118  y  pcode
+     24 0x0192 0x0178 0x0188      0     38    2    16  y  pcode
+     25 0x015A 0x0000 0x0145      0      4    3   325  y  pcode
+     26 0x0176 0x015C 0x0160      0      0    3     4  y  pcode
+     27 0x02CA 0x02A0 0x02BF      2      0    2    31  y  pcode
+     28 0x0DA0 0x0C8A 0x0D92      0      4    3   264  y  pcode
+     29 0x0F5C 0x0DA2 0x0F4C      0     16    3   426  y  pcode
+     30 0x11F6 0x0F5E 0x11DE      0     16    3   640  y  pcode
+     31 0x12AC 0x127A 0x12A1      4      0    3    39  y  pcode
+     32 0x12E8 0x12AE 0x12DD      2      0    3    47  y  pcode
+     33 0x1924 0x17A0 0x190F      8     14    3   367  y  pcode
+     34 0x179E 0x164A 0x1789      8     14    4   319  y  pcode
+     35 0x1648 0x12EA 0x162C      8     36    5   834  y  pcode
+     36 0x1954 0x1926 0x194A      4      4    3    36  y  pcode
+     37 0x1BC0 0x1BA6 0x1BAA      0      0    2     4  y  pcode
+
+--- segment 10  ROUTINE   dictslot=5  block=47  len=2902   mtype=pcode-lsb ver=2 nproc=17
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0B30 0x0A6C 0x0B26     12     24    2   186  y  pcode
+      2 0x0018 0x0000 0x000E      0      0    3    14  y  pcode
+      3 0x002E 0x001A 0x0023      0      0    3     9  y  pcode
+      4 0x00AA 0x0030 0x009F     10      2    3   111  y  pcode
+      5 0x0192 0x00AC 0x0182      0     20    3   214  y  pcode
+      6 0x01F8 0x0194 0x01EE      0      0    3    90  y  pcode
+      7 0x0274 0x01FA 0x0269      0      4    3   111  y  pcode
+      8 0x02F2 0x0276 0x02E8      0      0    3   114  y  pcode
+      9 0x0394 0x02F4 0x0387      0      4    3   147  y  pcode
+     10 0x0450 0x0396 0x0445      0      4    3   175  y  pcode
+     11 0x04A8 0x0452 0x049D      0      0    3    75  y  pcode
+     12 0x055E 0x04AA 0x0553      0      0    3   169  y  pcode
+     13 0x060E 0x0560 0x0603      0      0    3   163  y  pcode
+     14 0x0694 0x0610 0x0689      0      0    3   121  y  pcode
+     15 0x072C 0x0696 0x0721      0      0    3   139  y  pcode
+     16 0x0760 0x072E 0x0755      0      2    3    39  y  pcode
+     17 0x0A6A 0x0762 0x0A5C      0      0    3   762  y  pcode
+
+--- segment 11  STATEMEN  dictslot=6  block=53  len=1598   mtype=pcode-lsb ver=2 nproc=8
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x062A 0x04A8 0x061A      8     10    2   370  y  pcode
+      2 0x01BE 0x0000 0x01AE      2     18    3   430  y  pcode
+      3 0x0234 0x01C0 0x0225      0      8    3   101  y  pcode
+      4 0x027A 0x0236 0x026C      0      0    3    54  y  pcode
+      5 0x030C 0x027C 0x0302      0     10    3   134  y  pcode
+      6 0x0368 0x030E 0x0359      0      2    3    75  y  pcode
+      7 0x03B2 0x036A 0x03A8      0      4    3    62  y  pcode
+      8 0x04A6 0x03B4 0x049A      0      8    3   230  y  pcode
+
+--- segment 12  CASESTAT  dictslot=7  block=57  len=436    mtype=pcode-lsb ver=2 nproc=1
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x01AE 0x0000 0x0196      0     26    3   406  y  pcode
+
+--- segment 13  FORSTATE  dictslot=8  block=58  len=512    mtype=pcode-lsb ver=2 nproc=1
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x01FA 0x0000 0x01EE      0     20    3   494  y  pcode
+
+--- segment 14  BODY1     dictslot=9  block=59  len=326    mtype=pcode-lsb ver=2 nproc=1
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0140 0x0000 0x012C      0      4    3   300  y  pcode
+
+--- segment 15  BODY3     dictslot=10 block=60  len=858    mtype=pcode-lsb ver=2 nproc=2
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0352 0x01C2 0x0341      0      4    3   383  y  pcode
+      2 0x01C0 0x0000 0x01A8      0      2    4   424  y  pcode
+
+--- segment 16  WRITELIN  dictslot=11 block=62  len=818    mtype=pcode-lsb ver=2 nproc=4
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0326 0x02C8 0x0319      0     14    1    81  y  pcode
+      2 0x00F4 0x0036 0x00E4      2     16    2   174  y  pcode
+      3 0x0034 0x0000 0x002A      0      0    3    42  y  pcode
+      4 0x02C6 0x00F6 0x02B3      2      2    2   445  y  pcode
+
+--- segment 17  UNITPART  dictslot=12 block=64  len=1600   mtype=pcode-lsb ver=2 nproc=4
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0634 0x03A6 0x0624      8     12    1   638  y  pcode
+      2 0x0030 0x0000 0x0026      0      0    2    38  y  pcode
+      3 0x02FA 0x0032 0x02E6     10     36    2   692  y  pcode
+      4 0x03A4 0x02FC 0x039A      0      6    2   158  y  pcode
+
+--- segment 18  COMPOPTI  dictslot=13 block=68  len=1060   mtype=pcode-lsb ver=2 nproc=4
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0418 0x016E 0x0404      6     56    1   662  y  pcode
+      2 0x0012 0x0000 0x0008      0      0    2     8  y  pcode
+      3 0x00A0 0x0014 0x0093      4      6    2   127  y  pcode
+      4 0x016C 0x00A2 0x015E      0      8    2   188  y  pcode
+
+--- segment 19  NUMSTRIN  dictslot=14 block=71  len=864    mtype=pcode-lsb ver=2 nproc=3
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x0356 0x0342 0x034B      4      0    1     9  y  pcode
+      2 0x009A 0x0000 0x008C      0     90    2   140  y  pcode
+      3 0x0340 0x009C 0x031F      0     32    2   643  y  pcode
+
+--- segment 20  FINISHUP  dictslot=15 block=73  len=672    mtype=pcode-lsb ver=2 nproc=1
+      #   JTAB  enter   exit  param   data  lex  size  ok  kind
+      1 0x029A 0x0000 0x0282      0      4    1   642  y  pcode

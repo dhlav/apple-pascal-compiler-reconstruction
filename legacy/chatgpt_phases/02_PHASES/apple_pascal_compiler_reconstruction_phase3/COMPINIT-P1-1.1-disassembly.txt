@@ -1,0 +1,328 @@
+0A46  ce                   CLP     09
+0A47  09                   SLDC    #0009
+0A48  ce                   CLP     0A
+0A49  0a                   SLDC    #000A
+0A4A  00                   SLDC    #0000
+0A4B  ab 4d                SRO     4d
+0A4D  00                   SLDC    #0000
+0A4E  ab 08                SRO     08
+0A50  a9 31                LDO     31
+0A52  a1 56                FJP     -> 0AAA
+0A54  01                   SLDC    #0001
+0A55  ab 09                SRO     09
+0A57  07                   SLDC    #0007
+0A58  cc 81                STL     81
+0A5A  03                   SLDC    #0003
+0A5B  f0                   OP_F0   
+0A5C  ca 81                LDL     81
+0A5E  03                   SLDC    #0003
+0A5F  c8                   LEQI    
+0A60  a1 0d                FJP     -> 0A6F
+0A62  b6 02 03             LOD     02 03
+0A65  cd 00 16             CXP     seg 00, proc 16
+0A68  f0                   OP_F0   
+0A69  01                   SLDC    #0001
+0A6A  82                   ADI     
+0A6B  ab 09                SRO     09
+0A6D  b9 f6                UJP     -> 0A65
+0A6F  b6 02 03             LOD     02 03
+0A72  d7                   NOP     
+0A73  a6 1b 41 70 70 6c 65 20 50 61 73 63 61 6c 20 43 6f 6d 70 69 6c 65 72 20 5b 31 2e 31 5d LSA     'Apple Pascal Compiler [1.1]'
+0A90  00                   SLDC    #0000
+0A91  cd 00 13             CXP     seg 00, proc 13
+0A94  b6 02 03             LOD     02 03
+0A97  cd 00 16             CXP     seg 00, proc 16
+0A9A  b6 02 03             LOD     02 03
+0A9D  a6 06 3c 20 20 20 30 3e LSA     '<   0>'
+0AA5  d7                   NOP     
+0AA6  00                   SLDC    #0000
+0AA7  cd 00 13             CXP     seg 00, proc 13
+0AAA  a5 80                LA0     80
+0AAC  83                   ADR     
+0AAD  00                   SLDC    #0000
+0AAE  a4 04                IXA     04
+0AB0  cc 81                STL     81
+0AB2  03                   SLDC    #0003
+0AB3  ca 81                LDL     81
+0AB5  03                   SLDC    #0003
+0AB6  9f 9a                LOCN    9a
+0AB8  ca 81                LDL     81
+0ABA  03                   SLDC    #0003
+0ABB  a2 02                INC     02
+0ABD  9f 9a                LOCN    9a
+0ABF  ca 81                LDL     81
+0AC1  03                   SLDC    #0003
+0AC2  a2 03                INC     03
+0AC4  9f 9a                LOCN    9a
+0AC6  ca 81                LDL     81
+0AC8  03                   SLDC    #0003
+0AC9  a2 01                INC     01
+0ACB  00                   SLDC    #0000
+0ACC  9a 9e                STO     9e
+0ACE  28                   SLDC    #0028
+0ACF  ab 59                SRO     59
+0AD1  cd 01 03             CXP     seg 01, proc 03
+0AD4  cd 01 06             CXP     seg 01, proc 06
+0AD7  ce                   CLP     02
+0AD8  02                   SLDC    #0002
+0AD9  ce                   CLP     03
+0ADA  03                   SLDC    #0003
+0ADB  ce                   CLP     04
+0ADC  04                   SLDC    #0004
+0ADD  ce                   CLP     07
+0ADE  07                   SLDC    #0007
+0ADF  ce                   CLP     08
+0AE0  08                   SLDC    #0008
+0AE1  a9 1c                LDO     1c
+0AE3  a1 25                FJP     -> 0B0A
+0AE5  9f ab                LOCN    ab
+0AE7  41                   SLDC    #0041
+0AE8  00                   SLDC    #0000
+0AE9  ab 0d                SRO     0d
+0AEB  01                   SLDC    #0001
+0AEC  ab 55                SRO     55
+0AEE  01                   SLDC    #0001
+0AEF  ab 52                SRO     52
+0AF1  a5 72                LA0     72
+0AF3  a5 72                LA0     72
+0AF5  bc                   OP_BC   
+0AF6  04                   SLDC    #0004
+0AF7  04                   SLDC    #0004
+0AF8  b3 04 04 00 00 00 00 00 00 00 LDC     4 words: 04 00 00 00 00 00 00 00
+0B02  04                   SLDC    #0004
+0B03  9c                   OP_9C   
+0B04  a0 04                OP_A0   04
+0B06  bd 04                STM     04
+0B08  b9 f4                UJP     -> 0AFE
+0B0A  01                   SLDC    #0001
+0B0B  ab 08                SRO     08
+0B0D  01                   SLDC    #0001
+0B0E  ab 4d                SRO     4d
+0B10  a5 80                LA0     80
+0B12  83                   ADR     
+0B13  01                   SLDC    #0001
+0B14  a4 04                IXA     04
+0B16  cc 81                STL     81
+0B18  03                   SLDC    #0003
+0B19  ca 81                LDL     81
+0B1B  03                   SLDC    #0003
+0B1C  9f 9a                LOCN    9a
+0B1E  ca 81                LDL     81
+0B20  03                   SLDC    #0003
+0B21  a2 02                INC     02
+0B23  9f 9a                LOCN    9a
+0B25  ca 81                LDL     81
+0B27  03                   SLDC    #0003
+0B28  a2 03                INC     03
+0B2A  9f 9a                LOCN    9a
+0B2C  ca 81                LDL     81
+0B2E  03                   SLDC    #0003
+0B2F  a2 01                INC     01
+0B31  00                   SLDC    #0000
+0B32  9a f1                STO     f1
+0B34  02                   SLDC    #0002
+0B35  82                   ADI     
+0B36  ab 0a                SRO     0a
+0B38  03                   SLDC    #0003
+0B39  ab 52                SRO     52
+0B3B  a5 81                LA0     81
+0B3D  4f                   SLDC    #004F
+0B3E  a9 15                LDO     15
+0B40  a4 09                IXA     09
+0B42  a2 06                INC     06
+0B44  f4 9a                STM     9a
+0B46  a5 41                LA0     41
+0B48  12                   SLDC    #0012
+0B49  9e 01                CSP     01
+0B4B  a9 41                LDO     41
+0B4D  cc 81                STL     81
+0B4F  03                   SLDC    #0003
+0B50  ca 81                LDL     81
+0B52  03                   SLDC    #0003
+0B53  a2 07                INC     07
+0B55  9f 9a                LOCN    9a
+0B57  ca 81                LDL     81
+0B59  03                   SLDC    #0003
+0B5A  a2 0e                INC     0e
+0B5C  f1 9a                STL     9a
+0B5E  ca 81                LDL     81
+0B60  03                   SLDC    #0003
+0B61  d7                   NOP     
+0B62  d0                   OP_D0   
+0B63  08                   SLDC    #0008
+0B64  50                   SLDC    #0050
+0B65  52                   SLDC    #0052
+0B66  4f                   SLDC    #004F
+0B67  47                   SLDC    #0047
+0B68  52                   SLDC    #0052
+0B69  41                   SLDC    #0041
+0B6A  4d                   SLDC    #004D
+0B6B  20                   SLDC    #0020
+0B6C  a8                   OP_A8   
+0B6D  04                   SLDC    #0004
+0B6E  ca 81                LDL     81
+0B70  03                   SLDC    #0003
+0B71  a2 06                INC     06
+0B73  9f 9a                LOCN    9a
+0B75  ca 81                LDL     81
+0B77  03                   SLDC    #0003
+0B78  a2 08                INC     08
+0B7A  05                   SLDC    #0005
+0B7B  9a ca                STO     ca
+0B7D  81                   OP_81   
+0B7E  03                   SLDC    #0003
+0B7F  a2 09                INC     09
+0B81  01                   SLDC    #0001
+0B82  9a ca                STO     ca
+0B84  81                   OP_81   
+0B85  03                   SLDC    #0003
+0B86  a2 0a                INC     0a
+0B88  00                   SLDC    #0000
+0B89  9a ca                STO     ca
+0B8B  81                   OP_81   
+0B8C  03                   SLDC    #0003
+0B8D  a2 0b                INC     0b
+0B8F  01                   SLDC    #0001
+0B90  9a ca                STO     ca
+0B92  81                   OP_81   
+0B93  03                   SLDC    #0003
+0B94  a2 0c                INC     0c
+0B96  f4 9a                STM     9a
+0B98  ca 81                LDL     81
+0B9A  03                   SLDC    #0003
+0B9B  a2 0d                INC     0d
+0B9D  00                   SLDC    #0000
+0B9E  9a ca                STO     ca
+0BA0  81                   OP_81   
+0BA1  03                   SLDC    #0003
+0BA2  a2 0f                INC     0f
+0BA4  00                   SLDC    #0000
+0BA5  9a ca                STO     ca
+0BA7  81                   OP_81   
+0BA8  03                   SLDC    #0003
+0BA9  a2 10                INC     10
+0BAB  00                   SLDC    #0000
+0BAC  9a ca                STO     ca
+0BAE  81                   OP_81   
+0BAF  03                   SLDC    #0003
+0BB0  a2 11                INC     11
+0BB2  01                   SLDC    #0001
+0BB3  9a a5                STO     a5
+0BB5  81                   OP_81   
+0BB6  df                   SLDL    
+0BB7  f4 c0                STM     c0
+0BB9  04                   SLDC    #0004
+0BBA  04                   SLDC    #0004
+0BBB  a9 15                LDO     15
+0BBD  bb                   OP_BB   
+0BBE  f6                   SLDO    
+0BBF  21                   SLDC    #0021
+0BC0  c3                   EQUI    
+0BC1  a1 5f                FJP     -> 0C22
+0BC3  cd 01 06             CXP     seg 01, proc 06
+0BC6  f6                   SLDO    
+0BC7  00                   SLDC    #0000
+0BC8  c3                   EQUI    
+0BC9  a1 20                FJP     -> 0BEB
+0BCB  a5 81                LA0     81
+0BCD  4f                   SLDC    #004F
+0BCE  a9 15                LDO     15
+0BD0  a4 09                IXA     09
+0BD2  a2 02                INC     02
+0BD4  a5 11                LA0     11
+0BD6  a8                   OP_A8   
+0BD7  04                   SLDC    #0004
+0BD8  a9 41                LDO     41
+0BDA  9f cb                LOCN    cb
+0BDC  a1 0b                FJP     -> 0BE9
+0BDE  a9 41                LDO     41
+0BE0  a5 11                LA0     11
+0BE2  a8                   OP_A8   
+0BE3  04                   SLDC    #0004
+0BE4  a9 41                LDO     41
+0BE6  cd 01 05             CXP     seg 01, proc 05
+0BE9  b9 04                UJP     -> 0BEF
+0BEB  02                   SLDC    #0002
+0BEC  cd 01 02             CXP     seg 01, proc 02
+0BEF  cd 01 06             CXP     seg 01, proc 06
+0BF2  f6                   SLDO    
+0BF3  04                   SLDC    #0004
+0BF4  c3                   EQUI    
+0BF5  a1 1d                FJP     -> 0C14
+0BF7  cd 01 06             CXP     seg 01, proc 06
+0BFA  f6                   SLDO    
+0BFB  28                   SLDC    #0028
+0BFC  01                   SLDC    #0001
+0BFD  a5 72                LA0     72
+0BFF  bc                   OP_BC   
+0C00  04                   SLDC    #0004
+0C01  04                   SLDC    #0004
+0C02  9c                   OP_9C   
+0C03  8b                   OP_8B   
+0C04  a1 f2                FJP     -> 0BF8
+0C06  f6                   SLDO    
+0C07  05                   SLDC    #0005
+0C08  c3                   EQUI    
+0C09  a1 05                FJP     -> 0C10
+0C0B  cd 01 06             CXP     seg 01, proc 06
+0C0E  b9 04                UJP     -> 0C14
+0C10  04                   SLDC    #0004
+0C11  cd 01 02             CXP     seg 01, proc 02
+0C14  f6                   SLDO    
+0C15  03                   SLDC    #0003
+0C16  c3                   EQUI    
+0C17  a1 05                FJP     -> 0C1E
+0C19  cd 01 06             CXP     seg 01, proc 06
+0C1C  b9 04                UJP     -> 0C22
+0C1E  0e                   SLDC    #000E
+0C1F  cd 01 02             CXP     seg 01, proc 02
+0C22  a5 50                LA0     50
+0C24  9e 20                CSP     20
+0C26  a5 51                LA0     51
+0C28  0b                   SLDC    #000B
+0C29  9e 01                CSP     01
+0C2B  a9 51                LDO     51
+0C2D  cc 81                STL     81
+0C2F  03                   SLDC    #0003
+0C30  ca 81                LDL     81
+0C32  03                   SLDC    #0003
+0C33  a2 0a                INC     0a
+0C35  9f 9a                LOCN    9a
+0C37  ca 81                LDL     81
+0C39  03                   SLDC    #0003
+0C3A  a2 06                INC     06
+0C3C  12                   SLDC    #0012
+0C3D  9a ca                STO     ca
+0C3F  81                   OP_81   
+0C40  03                   SLDC    #0003
+0C41  a2 07                INC     07
+0C43  a9 41                LDO     41
+0C45  9a ca                STO     ca
+0C47  81                   OP_81   
+0C48  03                   SLDC    #0003
+0C49  a2 05                INC     05
+0C4B  f1 9a                STL     9a
+0C4D  ca 81                LDL     81
+0C4F  03                   SLDC    #0003
+0C50  a2 01                INC     01
+0C52  a9 4d                LDO     4d
+0C54  9a ca                STO     ca
+0C56  81                   OP_81   
+0C57  03                   SLDC    #0003
+0C58  ef                   OP_EF   
+0C59  9a ca                STO     ca
+0C5B  81                   OP_81   
+0C5C  03                   SLDC    #0003
+0C5D  a2 03                INC     03
+0C5F  a9 61                LDO     61
+0C61  9a ca                STO     ca
+0C63  81                   OP_81   
+0C64  03                   SLDC    #0003
+0C65  a2 09                INC     09
+0C67  00                   SLDC    #0000
+0C68  9a ca                STO     ca
+0C6A  81                   OP_81   
+0C6B  03                   SLDC    #0003
+0C6C  a2 08                INC     08
+0C6E  a9 50                LDO     50
+0C70  9a ad                STO     ad
