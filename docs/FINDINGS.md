@@ -474,6 +474,14 @@ stacks when they agree).
 
 ## 14. CSP arities recovered by balance testing
 
+> **Superseded in part by finding 17.** The whole CSP table is now available
+> as source. Everything below stands as the record of what balance testing
+> alone could establish, and two of its results — CSP 34 and CSP 40 — turned
+> out to be exactly right, which is the main reason to trust the method
+> elsewhere. The one claim below that finding 17 *overturns* is `CSP 31 =
+> MARK`, taken from Hyde p.228; the interpreter puts MARK at 32.
+
+
 `tools/probes/probe_csp_arity.py`. A procedure only lifts cleanly if every
 stack effect is known *and* the stack ends empty with no underflow, so the
 correct (pops, pushes) for an unknown CSP should be the one that makes the
@@ -547,12 +555,201 @@ New, actionable:
   equivalent is cheaper: run `tools/disasm.py` over both and diff, since
   the decoder is the same on each side.
 
+## 17. John Brooks' Apple Pascal 1.4 interpreter source
+
+`C:\JohnBrooks\pascal13Src\pascal13\` — `Interp.s` (10,126 lines) and
+`Common.s`. This is the p-machine itself in 6502 assembly: a maintained,
+commented descendant of the 1.3 interpreter, running the same p-code the
+compiler on our evidence disks emits. **It is not in this repo** — it is
+third-party source read in place, like Hyde's book. Probes reference the
+absolute path and will report it missing on another machine.
+
+It answers, as VERIFIED SOURCE FACT, questions this project had been
+inferring. Everything below was re-checked against the binary rather than
+adopted on authority.
+
+**The complete CSP table.** `CSPTBL` lists all 41 entries with mnemonics.
+This retires the standing guess that CSP 21-40 were "Apple additions
+outside the documented set" — they are ordinary UCSD standard procedures
+sitting above the range Hyde tabulates:
+
+```
+ 0 IOCHECK    5 UNITREAD   10 FILLCHAR  23 TRUNC   33 RELEASE   38 UNITCLEAR
+ 1 NEW        6 UNITWRITE  11 SCAN      24 ROUND   34 IORESULT  39 HALT
+ 2 MOVELEFT   7 IDSEARCH   12 UNITSTATUS 25-31 transcendental   40 MEMAVAIL
+ 3 MOVERIGHT  8 TREESEARCH 21 LOADSEGMENT   35 UNITBUSY
+ 4 EXIT       9 TIME       22 UNLOADSEGMENT 36 PWROFTEN  37 UNITWAIT
+                                        32 MARK
+```
+
+`$0D`-`$14` are reserved holes; 25-31 and the holes are never emitted.
+
+**The arities, counted off the handlers.** These are *stack words*, not
+Pascal arguments — the two differ whenever an argument is a packed-array
+reference, which the compiler passes as a (base, index) pair. That
+distinction is what four of the twelve hand-built entries had wrong:
+`MOVELEFT` and `MOVERIGHT` pop 5 words, not 3; `FILLCHAR` 4, not 3; `SCAN`
+6, not 4. See `tools/a2pascal/lift.py`.
+
+**Checked against the binary, not assumed.**
+`tools/probes/probe_csp_check.py` lifts all 287 procedures under the old
+and new tables. Cleanly-balancing procedures go **83 → 115**, and end-to-end
+`liftall.py` goes **256 → 283 of 287** procedures lifted with the stack
+fully tracked. Per entry, five arities are independently corroborated (the
+true value balances strictly more procedures than any of the 20 alternatives
+— `NEW` by +16, `MOVELEFT` by +20), and the rest tie, meaning they occur
+only in procedures blocked for other reasons. Two disagree:
+
+* **CSP 8 TREESEARCH.** Never source-verified — every version of `Interp.s`
+  dispatches IDSEARCH and TREESEARCH to "not implemented", since they exist
+  only for the compiler and the runtime-only system drops them (`Common.s`
+  says so explicitly). The binary prefers `(2,0)` over the inherited
+  `(3,0)` by +2 across four call sites, so `(2,0)` is now used. STRONG
+  INFERENCE, still.
+* **CSP 24 ROUND.** Source is unambiguous — `PopFPAcc` takes a 4-byte real,
+  the handler pushes 2 bytes, so `(2,1)`. The probe reports `(0,0)`
+  balancing one procedure more, across two call sites in the whole
+  compiler. That is the finding 13 join-straddling limitation showing
+  through, not evidence about ROUND. Source kept.
+
+**Hyde is wrong about MARK.** *P-Source* p.228 gives `MRK` as `158,31`. The
+interpreter puts `MRK` at `$20` = 32 and `SQRT` at 31. The interpreter's
+numbering is the one to trust here, and not merely because it is source:
+balance testing had *independently* solved CSP 34 and CSP 40 as
+zero-argument word-returning functions (finding 14), and the interpreter
+names exactly those two `IORESULT` and `MEMAVAIL`. Two independent methods
+agreeing on the numbering, against a book that is off by one.
+
+**CSP 21/22 are the phase dispatch, and they are not in the procedure
+bodies.** This is why the balance solver could never resolve them:
+`disassemble(enter_ic, exit_ic)` does not cover them. They live in the
+*exit* sequences, in a shape now readable end to end:
+
+```
+  10B4 9e 16   CSP 22          ; UNLOADSEGMENT
+  10B6 b9 1a   UJP $10D2
+  10B8 08      SLDC 8
+  10B9 9e 15   CSP 21          ; LOADSEGMENT
+  10BB 09      SLDC 9
+  10BC 9e 15   CSP 21
+  ...          (segments 8, 9, 19, 11, 12, 13, 14, 15)
+  10D0 b9 f6   UJP $1094 (jtab-10)
+  10D2 ad 00   RNP 0
+```
+
+That is PASCALCO swapping compiler phases in and out — the thing plan step 5
+said "cannot be expressed" without resolving these CSPs.
+
+**Confirmations of earlier inferences.** Each of these was previously
+labelled inference and is now source-backed:
+
+* `$D7 = NOP`. Hyde describes a word-alignment NOP (p.95) but never numbers
+  it. The interpreter dispatches both `$D2` and `$D7` to `IncIPC1`.
+* **Native procedures are marked by procedure number 0.** `CallProc`'s
+  comment: "Assembly language routines are denoted by the fact that the
+  procedure number ... is zero." This was `codefile.py`'s heuristic.
+* **The short-form ranges of finding 7.** `SLDL` = op−`$D7` (1..16),
+  `SLDO` = op−`$E7` (1..16), `SIND` = op−`$F8` (0..7). Note the interpreter's
+  *comments* number the SIND slots 1..8 while its handler label is
+  `OpF8_SIND0` and the code dereferences at offset 0 — the code is right and
+  the comment is off by one. Arithmetic: the handlers enter with A =
+  opcode×2, so `SLDO $E8` computes `$D0 − $C3 = 13`, and `LDO 1` computes
+  `2×1 + 10 = 12..13`. Same slot. The off-by-eight correction holds.
+* **Decoder edge cases.** `LDC`'s and `XJP`'s word alignment, `CXP`'s
+  operand order (segment, then procedure), `LDE`'s `(UB, BIG)` shape — all
+  match `pcode.py` exactly. `tools/probes/probe_opcode_names.py` diffs all
+  128 dispatch entries: 74 agree outright, 8 differ only in spelling
+  (`CEQ`/`EQU`, `CGE`/`GEQ`, …), 6 were missing and are now filled in.
+
+**Two things newly available and not yet exploited.**
+
+* **`$D1`-`$D6` identified** — `STE`, `NOP`, `EFJ`, `NFJ`, `BPT`, `XIT`.
+  Closes an open question below. None occur in SYSTEM.COMPILER.
+* **`RNP`'s operand is the function-result word count**, pushed from
+  `MP+10` upward on return. So it states, for every procedure, whether it
+  is a procedure or a function and how wide the result is. Across both
+  disks: **266 `RNP 0`, 19 `RNP 1`, 2 `RBP 0`** — nineteen functions, all
+  returning a single word, and no real-valued functions anywhere in the
+  compiler. Directly usable for the reconstruction's headers.
+* **Activation records.** `LDO n` addresses `BASE + 2n + 10`; `LDL n` the
+  same off `MP`. Global word 0 is never referenced by any instruction on
+  either disk (lowest operand emitted is 1), so the first declared global
+  is at operand 1 — an anchor for plan step 2.
+
+**What it does not give.** No IDSEARCH/TREESEARCH implementation exists in
+any of the four `Interp*.s` copies or the `Kernel128*` variants; all
+dispatch to "not implemented". Plan step 6's native-code track gets no help
+here.
+
+## 18. Peter Miller's `ucsd-psystem-xc`
+
+<https://github.com/dhlav/ucsd-psystem-xc> — a UCSD p-System Pascal cross
+compiler, cross assembler, disassembler, linker and librarian, in C++ under
+GPL-2. **Not in this repo**; read from a scratch clone. Its value here is
+twofold.
+
+**As a third independent opinion on the p-machine.** `lib/pcode.h` carries
+the opcode enum and a CSP enum, hand-built by Miller from the UCSD
+documentation — a lineage independent of both Hyde's book and Brooks'
+interpreter. It agrees with this project's decoder on all 128 opcodes
+*including the two places where the other sources were shaky*:
+
+* `SIND_0` at `$F8`, confirming the numbering against `Interp.s`'s comments,
+  which label the same slots 1..8 (finding 17).
+* The comparison-operator spellings `EQU`/`GEQ`/`GTR`/`LEQ`/`LES`/`NEQ`,
+  which is what `pcode.py` already used; `Interp.s` spells them
+  `CEQ`/`CGE`/`CGT`/`CLE`/`CLS`/`CNE`. Cosmetic, but it settles which
+  convention belongs to II.0.
+
+Its CSP enum matches `Interp.s` entry for entry across 21-40, so the CSP
+numbering in finding 17 now rests on **three** independent sources — and
+against Hyde's `MRK = 31`, which stays the outlier. (The two disagree on one
+never-emitted entry: `27` is `TAN` to Miller, `LOG` to Brooks.)
+
+Its `CXP_0_*` enum of segment-0 procedure numbers agrees with the table
+`syscall.py` derives by parsing `GLOBALS.TEXT` — **28 of 28, no
+differences**. Finding 9 was a one-source result until now.
+
+**It also supplies the version dimension this project had been ignoring.**
+Miller annotates opcodes per p-machine release (I.3, I.5, II.0, II.1), which
+none of the other references do. Four opcodes turn out to be release-
+dependent, and SYSTEM.COMPILER is II.0:
+
+| op | II.0 | II.1 | I.3 / I.5 |
+|----|------|------|-----------|
+| `$9D` | not implemented | `LDE` | `S2P` |
+| `$A7` | not implemented | `LAE` | `LDO` |
+| `$D1` | not implemented | `STE` | `IXB` |
+| `$D2` | not implemented | not implemented | `BYT` |
+
+`pcode.py` lists `LDE`, `LAE` and `STE` at those slots, which is the II.1
+reading. Harmless — the binary emits none of them (`IND` 339 times and `IXP`
+25, but `LDE`/`LAE`/`STE` zero) — and it is now recorded rather than latent.
+`$D2 = NOP` in finding 17 came from `Interp.s`, a 1.4 interpreter; Miller
+has `$D2` unimplemented in II.0/II.1 alike. Neither occurs.
+
+**As a possible validation path.** `ucsdpsys_compile` compiles UCSD Pascal
+to codefiles and `ucsdpsys_disassemble` reads them back, on a modern host.
+That is a far cheaper loop than plan step 7's emulator.
+
+**It cannot be the acceptance test, though**, and it would be a serious
+error to treat it as one. It is a modern reimplementation, not Apple's
+compiler: it will make its own register-allocation and code-shape choices,
+so equivalent source will not produce byte-identical p-code. What it can do
+is fail fast — reconstructed source that will not compile, or that compiles
+to obviously different structure, is wrong without needing an emulator. The
+acceptance test stays what plan step 7 says: recompile under Apple Pascal
+itself and diff.
+
+Neither tool has been built or run yet; this finding is from reading the
+source.
+
 ## 16. Open questions
 
-* **Non-standard CSPs.** See findings 14 and 15. Still unnamed and
-  un-aritied: CSP 6, 22, 23, 24, 32, 33, 36. The most valuable next move is
-  probably TommyGoog's: cross-reference `LIBMAP.CODE` / `LIBRARY.CODE`,
-  both of which are on the 1.3 disk already in `evidence/`.
+* ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
+  named and aritied from interpreter source, and CSP 21/22 are the compiler
+  phase dispatch. TommyGoog's `LIBMAP.CODE` cross-reference is no longer
+  needed for this.
 * **The file-variable block layout.** The four FIBs sit at words 535, 586,
   626, 666 — spacings of 51, 40, 40 — and their window buffers at 835, 886,
   926, 966, with *identical* internal spacing and a constant +300 offset
@@ -562,9 +759,8 @@ New, actionable:
   structure of the two groups is unexplained. Do not assume these are two
   arrays.
 * One word of the 1222-word global area in 1.1 is unaccounted for.
-* `$D1`-`$D6` are unidentified. They do not occur in SYSTEM.COMPILER, so
-  they cost nothing here, but a complete decoder would want them. Hyde ch.5
-  documents them somewhere in pp. 151-306.
+* ~~`$D1`-`$D6` are unidentified.~~ Resolved by finding 17: `STE`, `NOP`,
+  `EFJ`, `NFJ`, `BPT`, `XIT`. Still none of them occur in SYSTEM.COMPILER.
 * `PASCALCO.9`, `.15`, `.16`, `.17` (finding 12) are unnamed.
 * Segment 1.1 PASCALCO proc 1 has `lex=0`; every other procedure in the
   compiler has lex 1 or greater. Consistent with it being the outermost

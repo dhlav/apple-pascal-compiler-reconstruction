@@ -44,14 +44,28 @@ def segment0_procedures(globals_text: Path) -> dict[int, str]:
     return names
 
 
-# CSP (call standard procedure) operand -> name, UCSD II.0 assignment.
-# 0-11 are the documented UCSD II.0 set. The compiler also issues CSP 21,
-# 22, 23, 24, 32, 33, 34, 36 and 40, which are outside that set and are
-# presumed Apple additions; see docs/FINDINGS.md finding 10.
+# CSP (call standard procedure) operand -> name.
+#
+# VERIFIED SOURCE FACT. This is the whole CSPTBL dispatch table read straight
+# out of John Brooks' Apple Pascal 1.4 interpreter source (Interp.s), which
+# is a maintained descendant of the 1.3 interpreter and dispatches the same
+# p-machine. Entries are listed there in hex; these keys are the decimal
+# operand byte the compiler actually emits.
+#
+# This supersedes the guess in finding 10 that CSP 21..40 were "Apple
+# additions outside the documented set". They are ordinary UCSD standard
+# procedures that simply sit above the range Hyde tabulates. Two of them are
+# reserved holes ($0D-$14) that the compiler never emits.
 CSP = {
     0: "IOCHECK", 1: "NEW", 2: "MOVELEFT", 3: "MOVERIGHT", 4: "EXIT",
     5: "UNITREAD", 6: "UNITWRITE", 7: "IDSEARCH", 8: "TREESEARCH",
-    9: "TIME", 10: "FILLCHAR", 11: "SCAN",
+    9: "TIME", 10: "FILLCHAR", 11: "SCAN", 12: "UNITSTATUS",
+    21: "LOADSEGMENT", 22: "UNLOADSEGMENT", 23: "TRUNC", 24: "ROUND",
+    25: "SIN", 26: "COS", 27: "LOG", 28: "ATAN", 29: "LN", 30: "EXP",
+    31: "SQRT",
+    32: "MARK", 33: "RELEASE", 34: "IORESULT", 35: "UNITBUSY",
+    36: "PWROFTEN", 37: "UNITWAIT", 38: "UNITCLEAR", 39: "HALT",
+    40: "MEMAVAIL",
 }
 
 

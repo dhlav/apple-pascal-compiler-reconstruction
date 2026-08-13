@@ -31,28 +31,66 @@ try:
 except OSError:
     OS_SIG = {}
 
-# CSP number -> (pops, pushes). Only the ones whose arity is established.
-# 0-11 are the documented UCSD II.0 set. 34 and 40 were recovered by
-# tools/probes/probe_csp_arity.py, which searches for the arity that makes
-# the most procedures' evaluation stacks balance; both came out as
-# zero-argument word-returning functions with a clear margin over the
-# runner-up, which fits IORESULT and MEMAVAIL (both are interpreter
-# routines in Apple Pascal 1.1 -- Hyde pp.347 and 342).
-# CSP 6, 21, 22, 23, 24, 32, 33 and 36 remain unresolved: 36 tied, and the
-# rest occur only in procedures already blocked for other reasons.
+# CSP number -> (pops, pushes), counted in 16-bit words on the evaluation
+# stack -- NOT in Pascal source-level arguments. The two differ whenever an
+# argument is a packed-array reference, which the compiler passes as a
+# (base, index) pair occupying two words: FILLCHAR looks like three
+# arguments in Pascal and pops four words here.
+#
+# VERIFIED SOURCE FACT for everything below, counted off the pops and pushes
+# in each handler of John Brooks' Apple Pascal 1.4 interpreter (Interp.s),
+# then confirmed against the binary by tools/probes/probe_csp_check.py --
+# adopting these arities raises the number of cleanly balancing procedures,
+# which is a result a wrong table could not produce.
+#
+# This replaces four values that the earlier hand-built table got wrong by
+# counting Pascal arguments instead of stack words (CSP 2, 3, 10, 11), and
+# supplies the ten that tools/probes/probe_csp_arity.py could not reach. The
+# two that probe did solve, 34 and 40, are confirmed exactly: they are
+# IORESULT and MEMAVAIL, both zero-argument word-returning functions.
 CSP_EFFECT = {
-    0: (0, 0),    # IOCHECK
-    1: (2, 0),    # NEW(ptr, size)
-    2: (3, 0),    # MOVELEFT(src, dst, n)
-    3: (3, 0),    # MOVERIGHT
-    4: (2, 0),    # EXIT
+    0: (0, 0),    # IOCHECK    -- inspects IOResult, touches no stack
+    1: (2, 0),    # NEW(ptr, nwords)
+    2: (5, 0),    # MOVELEFT(src[2], dst[2], nbytes)
+    3: (5, 0),    # MOVERIGHT  -- same handler as MOVELEFT
+    4: (2, 0),    # EXIT(proc, seg)
+    5: (6, 0),    # UNITREAD(unit, buf[2], len, blk, mode)
+    6: (6, 0),    # UNITWRITE  -- same handler as UNITREAD
+    9: (2, 0),    # TIME(hiptr, loptr)
+    10: (4, 0),   # FILLCHAR(dst[2], nbytes, char)
+    11: (6, 1),   # SCAN(...) -> displacement
+    12: (4, 0),   # UNITSTATUS(unit, pab[2], control)
+    21: (1, 0),   # LOADSEGMENT(segnum)
+    22: (1, 0),   # UNLOADSEGMENT(segnum)
+    23: (2, 1),   # TRUNC(real) -> integer
+    # ROUND shares TRUNC's handler shape -- PopFPAcc takes a 4-byte real, the
+    # handler pushes 2 bytes -- so (2,1) is not in doubt. Recorded here
+    # because probe_csp_check reports it as CONTRADICTED: with only two call
+    # sites in the whole compiler, (0,0) happens to balance one more
+    # procedure. That is the join-straddling limitation of finding 13 showing
+    # through, not evidence about ROUND. Source wins; the probe is too weak
+    # at n=2 to overturn it.
+    24: (2, 1),   # ROUND(real) -> integer
+    32: (1, 0),   # MARK(ptr)
+    33: (1, 0),   # RELEASE(ptr)
+    34: (0, 1),   # IORESULT -> integer
+    35: (1, 1),   # UNITBUSY(unit) -> boolean
+    36: (1, 2),   # PWROFTEN(integer) -> real
+    37: (1, 0),   # UNITWAIT(unit)
+    38: (1, 0),   # UNITCLEAR(unit)
+    39: (0, 0),   # HALT
+    40: (0, 1),   # MEMAVAIL -> integer
+    # 7 IDSEARCH and 8 TREESEARCH are the two the interpreter cannot settle:
+    # every version of Interp.s dispatches them to "not implemented", because
+    # they exist only to serve the compiler and the runtime-only system drops
+    # them. So these stay STRONG INFERENCE, resting on 1.1 call sites alone.
+    #
+    # 8 was (3, 0) and is now (2, 0): probe_csp_check found (2, 0) balances
+    # two more procedures, over four call sites, and nothing argues the other
+    # way now that the source-derived entries have removed the noise that
+    # earlier masked the difference.
     7: (2, 0),    # IDSEARCH
-    8: (3, 0),    # TREESEARCH
-    9: (2, 0),    # TIME
-    10: (3, 0),   # FILLCHAR
-    11: (4, 1),   # SCAN -> count
-    34: (0, 1),   # solved; consistent with IORESULT
-    40: (0, 1),   # solved; consistent with MEMAVAIL
+    8: (2, 0),    # TREESEARCH
 }
 
 BINOP = {

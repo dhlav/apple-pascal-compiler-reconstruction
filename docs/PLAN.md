@@ -49,6 +49,13 @@ Done, and reproducible via `python tools/build_all.py`:
    `VAR` block has to reproduce. Words 3..7 (a record with addressed
    fields) and 131 (13 x 8-char entries) are the models to work from.
 
+   Two anchors from finding 17: `LDO n` addresses `BASE + 2n + 10`, and word
+   0 is never referenced on either disk, so the first declared global is at
+   operand 1. Also fold in the `RNP` result-width census — 19 of the 287
+   procedures are functions, all returning one word — since every one of
+   those needs a `function`, not a `procedure`, header with a matching
+   result type.
+
 3. **Match phases to the published UCSD compiler structure.** Segment names
    (DECLARAT, BODYPART, ROUTINE, STATEMEN, CASESTAT, FORSTATE, BODY1,
    BODY3, UNITPART, COMPOPTI, NUMSTRIN, FINISHUP) map onto the standard
@@ -61,9 +68,13 @@ Done, and reproducible via `python tools/build_all.py`:
    nothing and are 9-63 bytes each. Build a small structuriser over the
    existing `Insn` stream (FJP/UJP/XJP into if/while/case).
 
-5. **Resolve the non-standard CSPs**, especially `CSP 21`/`CSP 22`
-   (finding 12), before reconstructing PASCALCO's phase dispatch, which
-   cannot be expressed without them. Both versions need this equally.
+5. ~~**Resolve the non-standard CSPs.**~~ **Done** (finding 17). The whole
+   table is named and aritied from interpreter source and confirmed against
+   the binary; `CSP 21`/`22` are `LOADSEGMENT`/`UNLOADSEGMENT`, and
+   PASCALCO's phase dispatch is now readable. What is left is downstream:
+   write the dispatch back out as Pascal, and note that it lives in the
+   procedure *exit* sequences, which `disassemble(enter_ic, exit_ic)` does
+   not cover — anything that walks only procedure bodies will miss it.
 
 6. **Work the 1.3 delta.** Two 1.3-only tracks:
    * A 6502 disassembler for the two native procedures, and a
@@ -74,15 +85,24 @@ Done, and reproducible via `python tools/build_all.py`:
      localises the insertions to a few points; read off which offsets are
      new in 1.3 and classify them with the same evidence pipeline.
 
-7. **Validation loop.** Compile reconstructed source under the target Apple
-   Pascal release in an emulator and diff generated p-code against the
-   original, using the same decoder on both sides. Equivalence at the
-   p-code level is the acceptance test. Validate against 1.1 first — it is
-   the cleaner target and the compiler that would have built 1.1's own
-   source — then carry the result to 1.3 through the correspondence table.
-   Start from TommyGoog's configuration (finding 15): AppleWin with **four
-   disk drives**, which the Apple Pascal compiler requires. Nothing of this
-   exists in the repo yet.
+7. **Validation loop**, now in two tiers (finding 18).
+
+   * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
+     from Peter Miller's `ucsd-psystem-xc` and run reconstructed source
+     through them on the host. This catches source that does not compile or
+     that compiles to visibly wrong structure, in seconds and with no
+     emulator. Neither tool has been built yet.
+   * *Acceptance tier, unchanged:* recompile under the target Apple Pascal
+     release in an emulator and diff generated p-code against the original,
+     using the same decoder on both sides. Start from TommyGoog's
+     configuration (finding 15): AppleWin with **four disk drives**, which
+     the Apple Pascal compiler requires.
+
+   Keep the tiers distinct. `ucsdpsys_compile` is a modern reimplementation
+   and will not emit byte-identical p-code for equivalent source, so it can
+   only ever falsify, never accept. Validate against 1.1 first — it is the
+   cleaner target and the compiler that would have built 1.1's own source —
+   then carry the result to 1.3 through the correspondence table.
 
 8. **Improve the lifter** (finding 13). Two concrete gaps: merge
    predecessor stacks at control-flow joins so argument lists that straddle

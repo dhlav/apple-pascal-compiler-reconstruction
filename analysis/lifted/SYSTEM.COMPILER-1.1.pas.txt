@@ -48,13 +48,9 @@ L003F:
   FWRITEBYTES(I2,3, G1, G14, 1024);
   goto L0080;
 L0052:
-  L3 := ((CSP11(13, G1, (G95-2), 0)+G95)-1);
-  CSP2(@L4, 0, (G14-L3));
+  L3 := ((CSP11(-((G95-1)), 0, 13, G1, (G95-2), 0)+G95)-1);
+  CSP2(G1, L3, @L4, 0, (G14-L3));
   FWRITEBYTES(I2,3, @L4, (G14-L3), 180);
-  { left on stack: -((G95-1)) }
-  { left on stack: 0 }
-  { left on stack: G1 }
-  { left on stack: L3 }
 L0080:
   FWRITESTRING(I2,3, ' <<<<', 0);
   FWRITELN(I2,3);
@@ -91,11 +87,9 @@ procedure PASCALCO.3(params 0 words);  { locals 1 words, lex 1 }
   G95 := 0;
   if not (G32) then goto L01A8;
   if not ((G31 and not (G36))) then goto L01A8;
-  CSP2(G2, 0, 1024);
+  CSP2(G1, G578, G2, 0, 1024);
   PASCALCO.22(1);
   G578 := 0;
-  { left on stack: G1 }
-  { left on stack: G578 }
 L01A8:
   if not (G36) then goto L01F4;
   if not ((G585 = 0)) then goto L01CA;
@@ -170,18 +164,14 @@ L0283:
   if not ((L3 > 100)) then goto L02DA;
   L3 := 100;
 L02DA:
-  CSP2(@L4, 0, L3);
+  CSP2(G1, G95, @L4, 0, L3);
   if not ((@L4^[0] = 16)) then goto L0310;
   if not ((@L4^[1] > 32)) then goto L0302;
   FWRITECHAR(@G666, 32, (@L4^[1]-32));
   CSP0();
-  { left on stack: G1 }
-  { left on stack: G95 }
 L0302:
   L3 := (L3-2);
-  CSP2(@L4, 0, L3);
-  { left on stack: @L4 }
-  { left on stack: 2 }
+  CSP2(@L4, 2, @L4, 0, L3);
 L0310:
   @L4^[(L3-1)] := 13;
   FWRITEBYTES(@G666, @L4, L3, 100);
@@ -201,8 +191,8 @@ procedure PASCALCO.5(params 1 words);  { locals 3 words, lex 1 }
   @G131[G8*4w]^ := L1;
   goto L03BD;
 L0386:
-  CSP8(L3, @L2, L1);
-  L4 := ?;
+  CSP8(@L2, L1);
+  L4 := L3;
 L038E:
   if not ((L4 = 0)) then goto L03AC;
   PASCALCO.2(101);
@@ -210,8 +200,8 @@ L038E:
   L4 := 1;
   goto L03AA;
 L03A1:
-  CSP8(L2^.f4, @L2, L1);
-  L4 := ?;
+  CSP8(@L2, L1);
+  L4 := L2^.f4;
 L03AA:
   goto L038E;
 L03AC:
@@ -356,8 +346,8 @@ L074C:
 
 procedure PASCALCO.7(params 2 words);  { locals 0 words, lex 1 }
   if not ((L2 <> nil)) then goto L077C;
-  CSP8(L2, L1, @G17);
-  if not ((? = 0)) then goto L0777;
+  CSP8(L1, @G17);
+  if not ((L2 = 0)) then goto L0777;
   goto L077A;
 L0777:
   L1^ := nil;
@@ -374,8 +364,8 @@ L0792:
   if not ((G24 >= L4)) then goto L07D7;
   L3 := @G131[G24*4w]^;
   if not ((L3 <> nil)) then goto L07CF;
-  CSP8(L3, @L3, @G17);
-  if not ((? = 0)) then goto L07CC;
+  CSP8(@L3, @G17);
+  if not ((L3 = 0)) then goto L07CC;
   if not ((L2 in 1)) then goto L07BE;
   { left on stack: L3^.f8 }
   goto L081E;
@@ -487,12 +477,8 @@ L043A:
   G14 := (G14+2);
   goto L0460;
 L0448:
-  G14 := (1+CSP11(9, G1, G14, 0));
-  G14 := (1+CSP11(32, G1, G14, 0));
-  { left on stack: G14 }
-  { left on stack: 80 }
-  { left on stack: G14 }
-  { left on stack: 80 }
+  G14 := (G14+CSP11(80, 1, 9, G1, G14, 0));
+  G14 := (G14+CSP11(80, 1, 32, G1, G14, 0));
 L0460:
   if not (G38) then goto L0469;
   G93 := G10;
@@ -751,13 +737,11 @@ procedure PASCALCO.21(params 1 words);  { locals 1 words, lex 1 }
   if not (G9) then goto L0CD2;
   PASCALCO.20(0);
 L0CD2:
-  CSP2(G2, G9, 2);
+  CSP2(@L1, 0, G2, G9, 2);
   if not (G30) then goto L0CF1;
   L2 := G2^[G9];
   G2^[G9] := G2^[(G9+1)];
   G2^[(G9+1)] := L2;
-  { left on stack: @L1 }
-  { left on stack: 0 }
 L0CF1:
   G9 := (G9+2);
 
@@ -769,15 +753,13 @@ L0D08:
   if not ((L2 > L3)) then goto L0D19;
   L2 := L3;
 L0D19:
-  CSP2(@G969, G968, L2);
+  CSP2(G2, L4, @G969, G968, L2);
   L4 := (L4+L2);
   G968 := (G968+L2);
   if not (((G968 = 512) or L1)) then goto L0D69;
   if not ((I2,10 = 0)) then goto L0D5D;
   if not ((FBLOCKIO(0, 1, G967, 0, 0, 0) <> 1)) then goto L0D5D;
   PASCALCO.2(402);
-  { left on stack: G2 }
-  { left on stack: L4 }
   { left on stack: I2,8 }
   { left on stack: @G969 }
 L0D5D:
@@ -900,16 +882,10 @@ L0FC2:
   G8 := L6^;
   G10 := L6^.f5;
   G97 := L6^.f3;
-  { stack tracking stopped: 'CSP 33' }
-  { CSP 33 }
-  { LDO 81 }
-  { IND 10 }
-  { SRO 81 }
-  { SLDO 15 }
-  { LDC 3w [$0003 $8000 $0000] }
-  { SLDC 3 }
-  { INN }
-  { SRO 83 }
+  CSP33((G81+8));
+  G81 := G81^.f10;
+  G83 := ([$0003,$8000,$0000] in 3);
+  { left on stack: G15 }
 L0FEC:
   goto L102B;
 L0FEE:
@@ -972,42 +948,24 @@ L1094:
 L109C:
   PASCALCO.29();
 L109E:
-  { stack tracking stopped: 'CSP 22' }
-  { CSP 22 }
-  { SLDC 14 }
-  { CSP 22 }
-  { SLDC 13 }
-  { CSP 22 }
-  { SLDC 12 }
-  { CSP 22 }
-  { SLDC 11 }
-  { CSP 22 }
-  { SLDC 19 }
-  { CSP 22 }
-  { SLDC 9 }
-  { CSP 22 }
-  { SLDC 8 }
-  { CSP 22 }
-  { UJP $10D2 }
+  CSP22(15);
+  CSP22(14);
+  CSP22(13);
+  CSP22(12);
+  CSP22(11);
+  CSP22(19);
+  CSP22(9);
+  CSP22(8);
   goto L10D2;
 L10B8:
-  { stack tracking stopped: 'CSP 21' }
-  { CSP 21 }
-  { SLDC 9 }
-  { CSP 21 }
-  { SLDC 19 }
-  { CSP 21 }
-  { SLDC 11 }
-  { CSP 21 }
-  { SLDC 12 }
-  { CSP 21 }
-  { SLDC 13 }
-  { CSP 21 }
-  { SLDC 14 }
-  { CSP 21 }
-  { SLDC 15 }
-  { CSP 21 }
-  { UJP $1094 (jtab-10) }
+  CSP21(8);
+  CSP21(9);
+  CSP21(19);
+  CSP21(11);
+  CSP21(12);
+  CSP21(13);
+  CSP21(14);
+  CSP21(15);
   goto L1094;
 L10D2:
 
@@ -1015,14 +973,10 @@ procedure PASCALCO.29(params 0 words);  { locals 0 words, lex 2 }
   goto L107F;
 L1078:
   PASCALCO.25();
-  { stack tracking stopped: 'CSP 22' }
-  { CSP 22 }
-  { UJP $1084 }
+  CSP22(10);
   goto L1084;
 L107F:
-  { stack tracking stopped: 'CSP 21' }
-  { CSP 21 }
-  { UJP $1078 (jtab-10) }
+  CSP21(10);
   goto L1078;
 L1084:
 
@@ -1129,49 +1083,18 @@ L0C14:
 L0C1E:
   PASCALCO.2(14);
 L0C22:
-  { stack tracking stopped: 'CSP 32' }
-  { CSP 32 }
-  { LAO 81 }
-  { SLDC 11 }
-  { CSP 1 }
-  { LDO 81 }
-  { STL 259 }
-  { LDL 259 }
-  { INC 10 }
-  { LDCN }
-  { STO }
-  { LDL 259 }
-  { INC 6 }
-  { SLDC 18 }
-  { STO }
-  { LDL 259 }
-  { INC 7 }
-  { LDO 65 }
-  { STO }
-  { LDL 259 }
-  { INC 5 }
-  { SLDO 10 }
-  { STO }
-  { LDL 259 }
-  { INC 1 }
-  { LDO 77 }
-  { STO }
-  { LDL 259 }
-  { SLDO 8 }
-  { STO }
-  { LDL 259 }
-  { INC 3 }
-  { LDO 97 }
-  { STO }
-  { LDL 259 }
-  { INC 9 }
-  { SLDC 0 }
-  { STO }
-  { LDL 259 }
-  { INC 8 }
-  { LDO 80 }
-  { STO }
-  { RNP 0 }
+  CSP32(@G80);
+  CSP1(@G81, 11);
+  L259 := G81;
+  (L259+10)^ := nil;
+  (L259+6)^ := 18;
+  (L259+7)^ := G65;
+  (L259+5)^ := G10;
+  (L259+1)^ := G77;
+  L259^ := G8;
+  (L259+3)^ := G97;
+  (L259+9)^ := 0;
+  (L259+8)^ := G80;
 
 procedure COMPINIT.2(params 0 words);  { locals 1 words, lex 2 }
   CSP1(@G12, 3);
@@ -1394,21 +1317,15 @@ procedure COMPINIT.4(params 0 words);  { locals 5 words, lex 2 }
 procedure COMPINIT.5(params 1 words);  { locals 41 words, lex 2 }
   @L2^ := L1  {string};
   if not (((I1,258+@L2^[0]) < 511)) then goto L04BC;
-  CSP2(@I1,1, I1,258, @L2^[0]);
-  { left on stack: @L2 }
-  { left on stack: 1 }
+  CSP2(@L2, 1, @I1,1, I1,258, @L2^[0]);
 L04BC:
   I1,258 := (I1,258+@L2^[0]);
 
 procedure COMPINIT.6(params 1 words);  { locals 1 words, lex 2 }
   move(L1, @'        ', 4 words);
-  L2 := CSP11(46, @I1,1, I1,257, 0);
-  CSP2(L1, 0, L2);
+  L2 := CSP11(8, 0, 46, @I1,1, I1,257, 0);
+  CSP2(@I1,1, I1,257, L1, 0, L2);
   I1,257 := ((I1,257+L2)+1);
-  { left on stack: 8 }
-  { left on stack: 0 }
-  { left on stack: @I1,1 }
-  { left on stack: I1,257 }
 
 procedure COMPINIT.7(params 0 words);  { locals 8 words, lex 2 }
   I1,258 := 0;
@@ -1646,8 +1563,7 @@ SEGMENT 8 DECLARAT
 
 procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
   if not (G49) then goto L1C21;
-  { stack tracking stopped: 'CSP 6' }
-  { CSP 6 }
+  CSP6(3, @L7[-(1600)], 0, 35, 0, 0);
 L1C21:
   4^ := adjust((10 + 1),4)  {4 words};
   4^ := adjust((1 + 1),4)  {4 words};
@@ -3281,37 +3197,17 @@ L1BA2:
 L1BA9:
   G83 := 1;
   I1,6 := 1;
-  { stack tracking stopped: 'CSP 32' }
-  { CSP 32 }
-  { SLDL 5 }
-  { STL 21 }
-  { LDL 21 }
-  { INC 15 }
-  { SLDC 0 }
-  { STO }
-  { LDL 21 }
-  { INC 17 }
-  { SLDC 1 }
-  { STO }
-  { LDL 21 }
-  { INC 16 }
-  { SLDC 0 }
-  { STO }
-  { SLDC 3 }
-  { STL 16 }
-  { SLDL 1 }
-  { STL 19 }
-  { LDO 81 }
-  { STL 20 }
-  { LAO 81 }
-  { SLDC 11 }
-  { CSP 1 }
-  { LDO 81 }
-  { LLA 10 }
-  { MOV 11 }
-  { SLDC 8 }
-  { SLDC 19 }
-  { CSP 4 }
+  CSP32(@L18);
+  L21 := L5;
+  (L21+15)^ := 0;
+  (L21+17)^ := 1;
+  (L21+16)^ := 0;
+  L16 := 3;
+  L19 := L1;
+  L20 := G81;
+  CSP1(@G81, 11);
+  move(G81, @L10, 11 words);
+  CSP4(8, 19);
 L1BE2:
   G77 := L11;
   G8 := L10;
@@ -3687,10 +3583,7 @@ procedure BODYPART.8(params 0 words);  { locals 4 words, lex 2 }
 L061D:
   if not ((L2 <= L4)) then goto L0661;
   if not ((L2 = L3^.f2)) then goto L0630;
-  { stack tracking stopped: 'CSP 36' }
-  { CSP 36 }
-  { CSP 23 }
-  { STL 1 }
+  L1 := CSP23(?, CSP36(L3^.f1));
 L0630:
   BODYPART.4(L1);
   BODYPART.4(18);
@@ -4034,11 +3927,9 @@ L051A:
 L052B:
   goto L0551;
 L052D:
-  CSP2(G2, G9, 2);
+  CSP2((L4+1), 0, G2, G9, 2);
   if not ((L2 = 57)) then goto L0544;
   L3 := (G9+4096);
-  { left on stack: (L4+1) }
-  { left on stack: 0 }
   goto L0547;
 L0544:
   L3 := G9;
@@ -4076,10 +3967,8 @@ L05C8:
   L3 := 33;
 L05CB:
   G9 := L2;
-  CSP2(@L2, 0, 2);
+  CSP2(G2, G9, @L2, 0, 2);
   BODYPART.16(L3, L1);
-  { left on stack: G2 }
-  { left on stack: G9 }
   goto L05AE;
 L05DC:
   G9 := L4^.f1;
@@ -4109,18 +3998,14 @@ L0750:
 
 procedure BODYPART.21(params 1 words);  { locals 0 words, lex 2 }
   if not (L1) then goto L0862;
-  CSP3(G2, (L1+2), (G2^[(L1+1)]+1));
+  CSP3(G2, (L1+1), G2, (L1+2), (G2^[(L1+1)]+1));
   G2^[L1] := 215;
   G2^[(L1+1)] := 208;
-  { left on stack: G2 }
-  { left on stack: (L1+1) }
   goto L0887;
 L0862:
-  CSP2(G2, (L1+1), (G2^[(L1+2)]+1));
+  CSP2(G2, (L1+2), G2, (L1+1), (G2^[(L1+2)]+1));
   G2^[L1] := 208;
   G2^[((L1+G2^[(L1+1)])+2)] := 215;
-  { left on stack: G2 }
-  { left on stack: (L1+2) }
 L0887:
 
 procedure BODYPART.22(params 5 words);  { locals 10 words, lex 2 }
@@ -4461,14 +4346,10 @@ procedure BODYPART.26(params 0 words);  { locals 0 words, lex 3 }
   goto L0165;
 L015E:
   BODYPART.25();
-  { stack tracking stopped: 'CSP 22' }
-  { CSP 22 }
-  { UJP $016A }
+  CSP22(11);
   goto L016A;
 L0165:
-  { stack tracking stopped: 'CSP 21' }
-  { CSP 21 }
-  { UJP $015E (jtab-10) }
+  CSP21(11);
   goto L015E;
 L016A:
 
@@ -5263,14 +5144,10 @@ procedure BODYPART.37(params 0 words);  { locals 0 words, lex 2 }
   goto L1BAF;
 L1BA8:
   BODYPART.24();
-  { stack tracking stopped: 'CSP 22' }
-  { CSP 22 }
-  { UJP $1BB4 }
+  CSP22(10);
   goto L1BB4;
 L1BAF:
-  { stack tracking stopped: 'CSP 21' }
-  { CSP 21 }
-  { UJP $1BA8 (jtab-10) }
+  CSP21(10);
   goto L1BA8;
 L1BB4:
 
@@ -6049,10 +5926,10 @@ L0520:
   PASCALCO.14(?, G15, @L1^<4w>, @L1^<4w>);
 L0538:
   if not ((4 in (1 + 1))) then goto L0614;
-  { stack tracking stopped: 'CSP 32' }
-  { CSP 32 }
-  { SLDO 15 }
-  { UJP $05AC }
+  CSP32(@L8);
+  { left on stack: G15 }
+  { left on stack: @G102^<4w> }
+  { left on stack: G15 }
   goto L05AC;
   PASCALCO.8(adjust((112 + 1),1), @L5);
   PASCALCO.6();
@@ -6089,15 +5966,8 @@ L0570:
   goto L05EA;
 L05AC:
 L05EA:
-  { stack tracking stopped: 'CSP 33' }
-  { CSP 33 }
-  { SLDO 9 }
-  { SLDC 100 }
-  { ADI }
-  { LDCI 1299 }
-  { GRTI }
-  { FJP $0600 }
-  goto L0600;
+  CSP33(@L8);
+  if not (((G9+100) > 1299)) then goto L0600;
   PASCALCO.2(253);
   G9 := 0;
 L0600:
@@ -6990,11 +6860,9 @@ procedure WRITELIN.4(params 1 words);  { locals 1 words, lex 2 }
   if not ((L1 <> nil)) then goto L02B3;
   L2 := L1;
   if not ((238 in 1)) then goto L029D;
-  CSP2(G2, G9, 8);
+  CSP2(L2, 0, G2, G9, 8);
   G9 := (G9+8);
   { left on stack: L2^.f8 }
-  { left on stack: L2 }
-  { left on stack: 0 }
   { left on stack: L2^.f8 }
   goto L0278;
   if not (((L2^.f6^ = 1) and not (G32))) then goto L0143;
@@ -7136,15 +7004,12 @@ L0414:
   L8 := (L8+1);
   goto L0414;
 L0429:
-  CSP2(G2, 0, G9);
-  CSP10((G9-10), 10, 32);
+  CSP2(G1, G578, G2, 0, G9);
+  CSP10(G2, (G9-10), 10, 32);
   G2^[(G9-2)] := 69;
   if not ((G9 > 1024)) then goto L0459;
   G2^[(G14-G578)] := 13;
   G2^[((G14-G578)+1)] := 0;
-  { left on stack: G1 }
-  { left on stack: G578 }
-  { left on stack: G2 }
 L0459:
   PASCALCO.22(1);
   if not ((G27 or (not (G27) and (G15 = 19)))) then goto L0570;
@@ -7243,13 +7108,8 @@ L05F2:
   G13 := L10^.f4;
   G10 := L10^.f5;
   G81 := G81^.f10;
-  { stack tracking stopped: 'CSP 33' }
-  { CSP 33 }
-  { SLDO 15 }
-  { SLDC 50 }
-  { NEQI }
-  { FJP $03B4 (jtab-14) }
-  goto L03B4;
+  CSP33(@L5);
+  if not ((G15 <> 50)) then goto L03B4;
   FCLOSE(@G535, 0);
 
 procedure UNITPART.2(params 0 words);  { locals 0 words, lex 2 }
@@ -7396,24 +7256,12 @@ L0266:
   (L23+7)^ := G967;
   (L22+9)^ := G13;
 L0294:
-  { stack tracking stopped: 'CSP 32' }
-  { CSP 32 }
-  { LAO 577 }
-  { LDCI 256 }
-  { CSP 1 }
-  { LAO 81 }
-  { SLDC 11 }
-  { CSP 1 }
-  { LDO 81 }
-  { LLA 11 }
-  { MOV 11 }
-  { SLDC 1 }
-  { SRO 77 }
-  { SLDO 8 }
-  { SLDC 12 }
-  { LESI }
-  { FJP $02E0 }
-  goto L02E0;
+  CSP32(L1);
+  CSP1(@G577, 256);
+  CSP1(@G81, 11);
+  move(G81, @L11, 11 words);
+  G77 := 1;
+  if not ((G8 < 12)) then goto L02E0;
   G8 := (G8+1);
   L22 := @G131[G8*4w];
   L22^ := nil;
@@ -7626,40 +7474,28 @@ procedure COMPOPTI.2(params 0 words);  { locals 0 words, lex 2 }
 
 procedure COMPOPTI.3(params 2 words);  { locals 3 words, lex 2 }
   G14 := (G14+2);
-  L4 := CSP11(32, G1, G14, 0);
-  L5 := (0+CSP11(I1,3, G1, (G14+L4), 0));
-  { left on stack: L1 }
-  { left on stack: 1 }
-  { left on stack: L4 }
-  { left on stack: (L1-L4) }
+  L4 := CSP11(L1, 1, 32, G1, G14, 0);
+  L5 := (L4+CSP11((L1-L4), 0, I1,3, G1, (G14+L4), 0));
   if not ((I1,3 = 42)) then goto L0066;
 L003C:
   if not (((G1^[((G14+L5)+1)] <> 41) and ((L1-L5) > 0))) then goto L0066;
   L5 := (L5+1);
-  L5 := (0+CSP11(I1,3, G1, (G14+L5), 0));
-  { left on stack: L5 }
-  { left on stack: (L1-L5) }
+  L5 := (L5+CSP11((L1-L5), 0, I1,3, G1, (G14+L5), 0));
   goto L003C;
 L0066:
-  L3 := -(CSP11(32, G1, (G14+L5), 0));
+  L3 := -(CSP11(-(L5), 1, 32, G1, (G14+L5), 0));
   L5 := ((L5-L4)-L3);
   L2^[0] := L5;
-  CSP2(L2, 1, L5);
+  CSP2(G1, (G14+L4), L2, 1, L5);
   G14 := ((((G14+L5)+L4)+L3)+1);
-  { left on stack: -(L5) }
-  { left on stack: 1 }
-  { left on stack: G1 }
-  { left on stack: (G14+L4) }
 
 procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
   G14 := (G14+2);
   L3 := 0;
 L00AA:
-  G14 := (1+CSP11(32, G1, G14, 0));
+  G14 := (G14+CSP11(80, 1, 32, G1, G14, 0));
   if not ((G1^[G14] = I1,3)) then goto L00C4;
   L3 := 1;
-  { left on stack: G14 }
-  { left on stack: 80 }
   goto L0149;
 L00C4:
   PASCALCO.6();
@@ -7698,10 +7534,8 @@ L013D:
   G14 := (G14+1);
 L0149:
   if not (L3) then goto L00AA;
-  G14 := ((0+CSP11(I1,3, G1, G14, 0))+1);
+  G14 := ((G14+CSP11(80, 0, I1,3, G1, G14, 0))+1);
   COMPOPTI.2();
-  { left on stack: G14 }
-  { left on stack: 80 }
 
 ======================================================================
 SEGMENT 19 NUMSTRIN
@@ -7745,10 +7579,8 @@ L0069:
   L45 := G87;
   L45^ := 2;
   (L45+1)^ := L43;
-  CSP2((L45+2), (1-1), L43);
+  CSP2(@L1, (1-1), (L45+2), (1-1), L43);
   G23 := G87;
-  { left on stack: @L1 }
-  { left on stack: (1-1) }
 L008C:
 
 procedure NUMSTRIN.3(params 0 words);  { locals 16 words, lex 2 }
@@ -7889,17 +7721,10 @@ L02C1:
   L9 := (((L9+L3)-L7)-1);
 L02D6:
   if not ((L9 < 0)) then goto L02EA;
-  { stack tracking stopped: 'CSP 36' }
-  { CSP 36 }
-  { DVR }
-  { STM 2 }
-  { UJP $02F6 }
+  @L11^ := (@L11^<2w>/CSP36(-(L9)))  {2 words};
   goto L02F6;
 L02EA:
-  { stack tracking stopped: 'CSP 36' }
-  { CSP 36 }
-  { MPR }
-  { STM 2 }
+  @L11^ := (@L11^<2w>*CSP36(L9))  {2 words};
 L02F6:
   G15 := 36;
   G16 := 15;
@@ -7942,15 +7767,8 @@ L0060:
   FWRITESTRING(I2,3, ', ', 0);
   FWRITEINT(I2,3, ((G94+30) div 60), 0);
   FWRITESTRING(I2,3, ' secs, ', 0);
-  { stack tracking stopped: 'CSP 24' }
-  { CSP 24 }
-  { SLDC 0 }
-  { CXP 0,13 }
-  { LOD 2,3 }
-  { LSA ' lines/min' }
-  { NOP }
-  { SLDC 0 }
-  { CXP 0,19 }
+  FWRITEINT(?, CSP24(I2,3, ((3600/flo(flt(G94)))*flt(G92))), 0);
+  FWRITESTRING(I2,3, ' lines/min', 0);
 L00D2:
   if not (G49) then goto L011A;
   FWRITELN(I2,3);
@@ -7974,11 +7792,9 @@ L0148:
   L1 := 15;
 L014E:
   if not ((G13 <= L1)) then goto L016D;
-  CSP2(G2, G9, 8);
+  CSP2((@G335[G13*9w]+2), 0, G2, G9, 8);
   G9 := (G9+8);
   G13 := (G13+1);
-  { left on stack: (@G335[G13*9w]+2) }
-  { left on stack: 0 }
   goto L014E;
 L016D:
   G13 := 0;
@@ -8010,7 +7826,7 @@ L01CB:
   G13 := (G13+1);
   goto L01AC;
 L01D2:
-  CSP2(@G185, 0, 4);
+  CSP2(@G183, 0, @G185, 0, 4);
   PASCALCO.21(@G185[0]^);
   PASCALCO.21(@G185[1]^);
   G11 := 1;
@@ -8019,8 +7835,6 @@ L01D2:
   PASCALCO.20(0);
   G22 := 30;
   L1 := 31;
-  { left on stack: @G183 }
-  { left on stack: 0 }
   { left on stack: @G183^<2w> }
   { left on stack: 2 }
 L0215:
@@ -8044,13 +7858,10 @@ L024C:
   goto L024C;
 L0259:
   if not ((G487 <> nil)) then goto L026B;
-  CSP2(G2, G9, 80);
-  { left on stack: G487 }
-  { left on stack: 0 }
+  CSP2(G487, 0, G2, G9, 80);
   goto L0271;
 L026B:
-  CSP10(G9, 80, 0);
-  { left on stack: G2 }
+  CSP10(G2, G9, 80, 0);
 L0271:
   G9 := (G9+80);
   G967 := 0;

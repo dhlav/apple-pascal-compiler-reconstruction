@@ -90,7 +90,7 @@ VERIFIED BINARY FACT for the access counts; the object sizes marked
    77 scalar          1    33     8    0    20  word access only
    78 scalar          1     3     3    0     3  word access only
    79 scalar          1     1     2    0     3  word access only
-   80 scalar-byref      1     1     0    1     1  address taken only to pass it | passed to CSP 32 x1
+   80 scalar-byref      1     1     0    1     1  address taken only to pass it | passed to CSP 32 MARK x1
    81 scalar-byref      1    24     3    4     6  address taken only to pass it | passed to CSP 1 NEW x4
    82 scalar          1     1     3    0     3  word access only
    83 scalar          1     1     4    0     3  word access only

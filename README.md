@@ -12,6 +12,9 @@ and where the inherited ChatGPT handoff was wrong. Then
 
 ```
 evidence/          original inputs, never modified
+                   (two external sources are read in place and NOT copied
+                   here: John Brooks' Apple Pascal 1.4 interpreter source,
+                   and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
   disks/           the two Apple Pascal .dsk images and ii0src.sdk
   reference/       Neil Parker, "Undocumented Secrets of Apple Pascal"
 tools/             all analysis code
@@ -45,15 +48,23 @@ ones, both added in 1.3.
 
 The decoder in `tools/a2pascal/pcode.py` disassembles all 287 with the
 instruction stream landing exactly on every procedure boundary and no
-unknown opcodes, and its opcode table is cross-checked against Hyde's
-*P-Source* (1983). Calls into the runtime are named by cross-referencing
-the UCSD II.0 OS source, so listings read like `CXP 0,3  ; OS.3 FINIT`.
+unknown opcodes. Its opcode table is cross-checked against three
+independent sources — Hyde's *P-Source* (1983), John Brooks' Apple Pascal
+1.4 interpreter, and Peter Miller's `ucsd-psystem-xc` — which agree with it
+and, on the one point where they disagree with each other, against Hyde.
+Calls into the runtime are named by cross-referencing the UCSD II.0 OS
+source, so listings read like `CXP 0,3  ; OS.3 FINIT`; that numbering also
+matches Miller's table 28 out of 28.
+
+All 41 standard-procedure calls are named and their stack effects known,
+including the `LOADSEGMENT`/`UNLOADSEGMENT` pair that drives the compiler's
+phase swapping.
 
 The compiler's global variables are mapped (sizes, shapes, access counts,
 users), and several service routines are identified — the error reporter,
 the scanner, the symbol-table search, the code-byte emitter.
 
-**256 of 287 procedures across the two releases lift to expression-level
+**283 of 287 procedures across the two releases lift to expression-level
 pseudo-Pascal** with the evaluation stack fully tracked
 (`analysis/lifted/`). `tools/show.py SEGMENT.N` prints a procedure's
 p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:

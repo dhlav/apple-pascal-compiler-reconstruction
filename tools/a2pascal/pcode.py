@@ -66,15 +66,24 @@ OPCODES: dict[int, tuple[str, list[str]]] = {
     0xC9: ("LESI", []), 0xCA: ("LDL", [BIG]), 0xCB: ("NEQI", []),
     0xCC: ("STL", [BIG]), 0xCD: ("CXP", [UB, UB]), 0xCE: ("CLP", [UB]),
     0xCF: ("CGP", [UB]),
-    # $D0-$D7. Hyde, "P-Source" (1983) p.220 gives LPA UB,<bytes> = 208 ($D0),
-    # "load packed array address": pushes the address of the byte just past
-    # the UB length operand. $D7 is the only other opcode in this window that
-    # occurs in SYSTEM.COMPILER; it is one byte, stack-neutral, and appears
-    # immediately before or after LSA/LPA/LDC constants, which is exactly the
-    # word-alignment NOP that p-Source p.95 describes ("The NOP that follows
-    # is used to align the string that follows on a word boundary").
-    # STRONG INFERENCE: the book does not state NOP's opcode number.
+    # $D0-$D7. Filled in from the XFRTBL dispatch table of John Brooks' Apple
+    # Pascal 1.4 interpreter (Interp.s), which names every slot in $80-$FF.
+    # Only $D0 and $D7 occur in SYSTEM.COMPILER; the rest are carried so that
+    # an unexpected one is reported as itself rather than as an unknown byte.
+    #
+    # $D7 NOP was STRONG INFERENCE before (Hyde describes a word-alignment NOP
+    # at p.95 but never gives its number) and is now VERIFIED SOURCE FACT: the
+    # interpreter dispatches both $D2 and $D7 to IncIPC1, a bare "skip one
+    # byte". $D0 LPA is confirmed too, including the detail that distinguishes
+    # it from LSA -- LPA pushes a pointer *past* the length byte, LSA pushes
+    # one *at* it, though both instructions are the same length.
     0xD0: ("LPA", ["str"]),
+    0xD1: ("STE", [UB, BIG]),   # store extended, mirror of $9D LDE
+    0xD2: ("NOP", []),
+    0xD3: ("EFJ", [SB]),        # equal false jump      ) not implemented by
+    0xD4: ("NFJ", [SB]),        # not-equal false jump  ) the 1.4 interpreter
+    0xD5: ("BPT", [BIG]),       # breakpoint
+    0xD6: ("XIT", []),          # exit the interpreter
     0xD7: ("NOP", []),
 }
 

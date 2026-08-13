@@ -2272,7 +2272,7 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   0FD0 ab 61                        SRO 97
   0FD2 a9 51                        LDO 81
   0FD4 a2 08                        INC 8
-  0FD6 9e 21                        CSP 33  ; CSP 33
+  0FD6 9e 21                        CSP 33  ; CSP RELEASE
   0FD8 a9 51                        LDO 81
   0FDA a3 0a                        IND 10
   0FDC ab 51                        SRO 81
@@ -2465,38 +2465,38 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   109C ce 1d                L109C:  CLP 29  ; local proc 29
   ---- exit code (EXIT target) ----
   109E 0f                   L109E:  SLDC 15
-  109F 9e 16                        CSP 22  ; CSP 22
+  109F 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10A1 0e                           SLDC 14
-  10A2 9e 16                        CSP 22  ; CSP 22
+  10A2 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10A4 0d                           SLDC 13
-  10A5 9e 16                        CSP 22  ; CSP 22
+  10A5 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10A7 0c                           SLDC 12
-  10A8 9e 16                        CSP 22  ; CSP 22
+  10A8 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10AA 0b                           SLDC 11
-  10AB 9e 16                        CSP 22  ; CSP 22
+  10AB 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10AD 13                           SLDC 19
-  10AE 9e 16                        CSP 22  ; CSP 22
+  10AE 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10B0 09                           SLDC 9
-  10B1 9e 16                        CSP 22  ; CSP 22
+  10B1 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10B3 08                           SLDC 8
-  10B4 9e 16                        CSP 22  ; CSP 22
+  10B4 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   10B6 b9 1a                        UJP $10D2
   10B8 08                   L10B8:  SLDC 8
-  10B9 9e 15                        CSP 21  ; CSP 21
+  10B9 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10BB 09                           SLDC 9
-  10BC 9e 15                        CSP 21  ; CSP 21
+  10BC 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10BE 13                           SLDC 19
-  10BF 9e 15                        CSP 21  ; CSP 21
+  10BF 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10C1 0b                           SLDC 11
-  10C2 9e 15                        CSP 21  ; CSP 21
+  10C2 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10C4 0c                           SLDC 12
-  10C5 9e 15                        CSP 21  ; CSP 21
+  10C5 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10C7 0d                           SLDC 13
-  10C8 9e 15                        CSP 21  ; CSP 21
+  10C8 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10CA 0e                           SLDC 14
-  10CB 9e 15                        CSP 21  ; CSP 21
+  10CB 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10CD 0f                           SLDC 15
-  10CE 9e 15                        CSP 21  ; CSP 21
+  10CE 9e 15                        CSP 21  ; CSP LOADSEGMENT
   10D0 b9 f6                        UJP $1094 (jtab-10)
   10D2 ad 00                L10D2:  RNP 0
   ---- jump table: 1 entry ----
@@ -2507,10 +2507,10 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   1078 cf 19                L1078:  CGP 25  ; local proc 25
   ---- exit code (EXIT target) ----
   107A 0a                           SLDC 10
-  107B 9e 16                        CSP 22  ; CSP 22
+  107B 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   107D b9 05                        UJP $1084
   107F 0a                   L107F:  SLDC 10
-  1080 9e 15                        CSP 21  ; CSP 21
+  1080 9e 15                        CSP 21  ; CSP LOADSEGMENT
   1082 b9 f6                        UJP $1078 (jtab-10)
   1084 ad 00                L1084:  RNP 0
   ---- jump table: 1 entry ----
@@ -2575,7 +2575,7 @@ SEGMENT 7 COMPINIT  block=10 len=3226 mtype=pcode-lsb nproc=10
   0AC9 a2 01                        INC 1
   0ACB 00                           SLDC 0
   0ACC 9a                           STO
-  0ACD 9e 28                        CSP 40  ; CSP 40
+  0ACD 9e 28                        CSP 40  ; CSP MEMAVAIL
   0ACF ab 59                        SRO 89
   0AD1 cd 01 03                     CXP 1,3  ; PASCALCO.3
   0AD4 cd 01 06                     CXP 1,6  ; PASCALCO.6
@@ -2760,7 +2760,7 @@ SEGMENT 7 COMPINIT  block=10 len=3226 mtype=pcode-lsb nproc=10
   0C1E 0e                   L0C1E:  SLDC 14
   0C1F cd 01 02                     CXP 1,2  ; PASCALCO.2
   0C22 a5 50                L0C22:  LAO 80
-  0C24 9e 20                        CSP 32  ; CSP 32
+  0C24 9e 20                        CSP 32  ; CSP MARK
   0C26 a5 51                        LAO 81
   0C28 0b                           SLDC 11
   0C29 9e 01                        CSP 1  ; CSP NEW
@@ -3895,10 +3895,10 @@ SEGMENT 7 COMPINIT  block=10 len=3226 mtype=pcode-lsb nproc=10
        jtab-18  -> $0884
 
 --- procedure 9  lex=2 params=0 data=4 enter=$089A exit=$09A0 jtab=$09AC
-  089A 9e 28                        CSP 40  ; CSP 40
+  089A 9e 28                        CSP 40  ; CSP MEMAVAIL
   089C 00                           SLDC 0
   089D c9                           LESI
-  089E 9e 28                        CSP 40  ; CSP 40
+  089E 9e 28                        CSP 40  ; CSP MEMAVAIL
   08A0 c7 de 26                     LDCI 9950
   08A3 c5                           GRTI
   08A4 8d                           LOR
@@ -6361,7 +6361,7 @@ SEGMENT 8 DECLARAT  block=17 len=7574 mtype=pcode-lsb nproc=20
   0F7E 00                           SLDC 0
   0F7F cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
   0F82 b6 04 03                     LOD 4,3
-  0F85 9e 28                        CSP 40  ; CSP 40
+  0F85 9e 28                        CSP 40  ; CSP MEMAVAIL
   0F87 05                           SLDC 5
   0F88 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
   0F8B b6 04 03                     LOD 4,3
@@ -6670,7 +6670,7 @@ SEGMENT 8 DECLARAT  block=17 len=7574 mtype=pcode-lsb nproc=20
   0E52 01                           SLDC 1
   0E53 00                           SLDC 0
   0E54 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
-  0E57 9e 22                        CSP 34  ; CSP 34
+  0E57 9e 22                        CSP 34  ; CSP IORESULT
   0E59 00                           SLDC 0
   0E5A cb                           NEQI
   0E5B a1 05                        FJP $0E62
@@ -8005,7 +8005,7 @@ SEGMENT 8 DECLARAT  block=17 len=7574 mtype=pcode-lsb nproc=20
   1AEC 00                           SLDC 0
   1AED cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
   1AF0 b6 03 03                     LOD 3,3
-  1AF3 9e 28                        CSP 40  ; CSP 40
+  1AF3 9e 28                        CSP 40  ; CSP MEMAVAIL
   1AF5 05                           SLDC 5
   1AF6 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
   1AF9 b6 03 03                     LOD 3,3
@@ -8109,7 +8109,7 @@ SEGMENT 8 DECLARAT  block=17 len=7574 mtype=pcode-lsb nproc=20
   1BAC 01                           SLDC 1
   1BAD b8 01 06                     STR 1,6
   1BB0 c6 12                        LLA 18
-  1BB2 9e 20                        CSP 32  ; CSP 32
+  1BB2 9e 20                        CSP 32  ; CSP MARK
   1BB4 dc                           SLDL 5
   1BB5 cc 15                        STL 21
   1BB7 ca 15                        LDL 21
@@ -9074,8 +9074,8 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   0626 a1 08                        FJP $0630
   0628 da                           SLDL 3
   0629 f9                           SIND 1
-  062A 9e 24                        CSP 36  ; CSP 36
-  062C 9e 17                        CSP 23  ; CSP 23
+  062A 9e 24                        CSP 36  ; CSP PWROFTEN
+  062C 9e 17                        CSP 23  ; CSP TRUNC
   062E cc 01                        STL 1
   0630 d8                   L0630:  SLDL 1
   0631 ae 04                        CIP 4  ; local proc 4
@@ -10670,7 +10670,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   000A b2 01 13                     LDA 1,19
   000D 00                           SLDC 0
   000E a4 01                        IXA 1
-  0010 9e 28                        CSP 40  ; CSP 40
+  0010 9e 28                        CSP 40  ; CSP MEMAVAIL
   0012 9a                           STO
   0013 b2 01 13                     LDA 1,19
   0016 00                           SLDC 0
@@ -10854,10 +10854,10 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   015E ae 19                L015E:  CIP 25  ; local proc 25
   ---- exit code (EXIT target) ----
   0160 0b                           SLDC 11
-  0161 9e 16                        CSP 22  ; CSP 22
+  0161 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   0163 b9 05                        UJP $016A
   0165 0b                   L0165:  SLDC 11
-  0166 9e 15                        CSP 21  ; CSP 21
+  0166 9e 15                        CSP 21  ; CSP LOADSEGMENT
   0168 b9 f6                        UJP $015E (jtab-10)
   016A ad 00                L016A:  RNP 0
   ---- jump table: 1 entry ----
@@ -12790,10 +12790,10 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   1BA8 ae 18                L1BA8:  CIP 24  ; local proc 24
   ---- exit code (EXIT target) ----
   1BAA 0a                           SLDC 10
-  1BAB 9e 16                        CSP 22  ; CSP 22
+  1BAB 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
   1BAD b9 05                        UJP $1BB4
   1BAF 0a                   L1BAF:  SLDC 10
-  1BB0 9e 15                        CSP 21  ; CSP 21
+  1BB0 9e 15                        CSP 21  ; CSP LOADSEGMENT
   1BB2 b9 f6                        UJP $1BA8 (jtab-10)
   1BB4 ad 00                L1BB4:  RNP 0
   ---- jump table: 1 entry ----
@@ -14360,7 +14360,7 @@ SEGMENT 11 STATEMEN  block=53 len=1598 mtype=pcode-lsb nproc=8
   0541 8b                           INN
   0542 a1 f2                        FJP $0614 (jtab-14)
   0544 c6 08                        LLA 8
-  0546 9e 20                        CSP 32  ; CSP 32
+  0546 9e 20                        CSP 32  ; CSP MARK
   0548 f6                           SLDO 15
   0549 b9 61                        UJP $05AC
   054B a9 80 82             L054B:  LDO 130
@@ -14411,7 +14411,7 @@ SEGMENT 11 STATEMEN  block=53 len=1598 mtype=pcode-lsb nproc=8
   05AA b9 3e                        UJP $05EA
   05AC ac 00 00 00 1a 00 b9 36 69 00 04 00 06 00 08 00 0a 00 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 20 00 22 00 24 00 26 00 68 00 5c 00 57 00 4a 00 53 00 47 00 41 00 6f 00 L05AC:  XJP 0..26 else $-3107 [$054B $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $0572 $0580 $0587 $0596 $058F $059D $05A5 $0579]
   05EA c6 08                L05EA:  LLA 8
-  05EC 9e 21                        CSP 33  ; CSP 33
+  05EC 9e 21                        CSP 33  ; CSP RELEASE
   05EE f0                           SLDO 9
   05EF 64                           SLDC 100
   05F0 82                           ADI
@@ -17123,7 +17123,7 @@ SEGMENT 17 UNITPART  block=64 len=1600 mtype=pcode-lsb nproc=4
   0610 a3 0a                        IND 10
   0612 ab 51                        SRO 81
   0614 c6 05                        LLA 5
-  0616 9e 21                        CSP 33  ; CSP 33
+  0616 9e 21                        CSP 33  ; CSP RELEASE
   0618 f6                           SLDO 15
   0619 32                           SLDC 50
   061A cb                           NEQI
@@ -17145,7 +17145,7 @@ SEGMENT 17 UNITPART  block=64 len=1600 mtype=pcode-lsb nproc=4
   0015 00                           SLDC 0
   0016 00                           SLDC 0
   0017 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
-  001A 9e 22                        CSP 34  ; CSP 34
+  001A 9e 22                        CSP 34  ; CSP IORESULT
   001C 00                           SLDC 0
   001D cb                           NEQI
   001E a1 06                        FJP $0026
@@ -17486,7 +17486,7 @@ SEGMENT 17 UNITPART  block=64 len=1600 mtype=pcode-lsb nproc=4
   0292 f4                           SLDO 13
   0293 9a                           STO
   0294 d8                   L0294:  SLDL 1
-  0295 9e 20                        CSP 32  ; CSP 32
+  0295 9e 20                        CSP 32  ; CSP MARK
   0297 a5 82 41                     LAO 577
   029A c7 00 01                     LDCI 256
   029D 9e 01                        CSP 1  ; CSP NEW
@@ -17812,7 +17812,7 @@ SEGMENT 18 COMPOPTI  block=68 len=1060 mtype=pcode-lsb nproc=4
   0242 01                           SLDC 1
   0243 00                           SLDC 0
   0244 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
-  0247 9e 22                        CSP 34  ; CSP 34
+  0247 9e 22                        CSP 34  ; CSP IORESULT
   0249 00                           SLDC 0
   024A cb                           NEQI
   024B a1 06                        FJP $0253
@@ -17869,7 +17869,7 @@ SEGMENT 18 COMPOPTI  block=68 len=1060 mtype=pcode-lsb nproc=4
   02B5 00                           SLDC 0
   02B6 00                           SLDC 0
   02B7 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
-  02BA 9e 22                        CSP 34  ; CSP 34
+  02BA 9e 22                        CSP 34  ; CSP IORESULT
   02BC 00                           SLDC 0
   02BD c3                           EQUI
   02BE ab 2b                        SRO 43
@@ -18028,7 +18028,7 @@ SEGMENT 18 COMPOPTI  block=68 len=1060 mtype=pcode-lsb nproc=4
   03AE 01                           SLDC 1
   03AF 00                           SLDC 0
   03B0 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
-  03B3 9e 22                        CSP 34  ; CSP 34
+  03B3 9e 22                        CSP 34  ; CSP IORESULT
   03B5 00                           SLDC 0
   03B6 cb                           NEQI
   03B7 a1 06                        FJP $03BF
@@ -18867,7 +18867,7 @@ SEGMENT 19 NUMSTRIN  block=71 len=864 mtype=pcode-lsb nproc=3
   02DF bc 02                        LDM 2
   02E1 e0                           SLDL 9
   02E2 91                           NGI
-  02E3 9e 24                        CSP 36  ; CSP 36
+  02E3 9e 24                        CSP 36  ; CSP PWROFTEN
   02E5 87                           DVR
   02E6 bd 02                        STM 2
   02E8 b9 0c                        UJP $02F6
@@ -18875,7 +18875,7 @@ SEGMENT 19 NUMSTRIN  block=71 len=864 mtype=pcode-lsb nproc=3
   02EC c6 0b                        LLA 11
   02EE bc 02                        LDM 2
   02F0 e0                           SLDL 9
-  02F1 9e 24                        CSP 36  ; CSP 36
+  02F1 9e 24                        CSP 36  ; CSP PWROFTEN
   02F3 90                           MPR
   02F4 bd 02                        STM 2
   02F6 24                   L02F6:  SLDC 36
@@ -19014,7 +19014,7 @@ SEGMENT 20 FINISHUP  block=73 len=672 mtype=pcode-lsb nproc=1
   00B4 a9 5c                        LDO 92
   00B6 8a                           FLT
   00B7 90                           MPR
-  00B8 9e 18                        CSP 24  ; CSP 24
+  00B8 9e 18                        CSP 24  ; CSP ROUND
   00BA 00                           SLDC 0
   00BB cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
   00BE b6 02 03                     LOD 2,3
