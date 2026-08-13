@@ -387,10 +387,15 @@ def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
                 return None, f"OS.{n} arity unknown", False
             tgt = segbynum.get(s)
             label = named(tgt.name, n) if tgt else f"seg{s}.{n}"
-        elif mnem == "CGP":
-            tgt, n = segbynum.get(1), ops[0]
-            label = named(tgt.name, n) if tgt else f"?.{n}"
         else:
+            # CLP/CIP/CGP/CBP all name a procedure in the *current* segment.
+            # CGP is the lex-level-1 case (Language Reference IV-73: "Call
+            # procedure number UB, which is at lexical level 1 and in the
+            # same segment as the currently executing procedure"), which is
+            # indistinguishable from segment 1 everywhere except DECLARAT.11,
+            # the compiler's one cross-check: it pushes a four-word set and
+            # calls CGP 1, and DECLARAT.1 takes eight bytes of parameters
+            # where PASCALCO.1 takes four.
             tgt, n = seg, ops[0]
             label = named(seg.name, n)
         if tgt is None:

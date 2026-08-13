@@ -12,20 +12,20 @@ SEGMENT 1 PASCALCO
 ======================================================================
 
 procedure PASCALCO.1(args 2 words);  { locals 1222 words, lex 0 }
-  FINIT(@G666, @G966, -(2));
-  FINIT(@G586, @G886, -(1));
-  FINIT(@G626, @G926, -(1));
-  FINIT(@G535, @G835, -(1));
+  FINIT(@LISTFILE, @G966, -(2));
+  FINIT(@LIBFILE, @G886, -(1));
+  FINIT(@SOURCEFILE, @G926, -(1));
+  FINIT(@INFOFILE, @G835, -(1));
   COMPINIT.1();
-  if not (G34) then begin
+  if not (SWAPPING) then begin
     PASCALCO.28();
   end else begin
     PASCALCO.25();
   end;
-  FCLOSE(@G666, 0);
-  FCLOSE(@G586, 0);
-  FCLOSE(@G626, 0);
-  FCLOSE(@G535, 0);
+  FCLOSE(@LISTFILE, 0);
+  FCLOSE(@LIBFILE, 0);
+  FCLOSE(@SOURCEFILE, 0);
+  FCLOSE(@INFOFILE, 0);
 
 procedure PASCALCO.2:ERROR(args 1 words);  { locals 92 words, lex 1 }
   if ((I2,12 <> G14) or (I2,11 <> G90)) then begin
@@ -35,10 +35,10 @@ procedure PASCALCO.2:ERROR(args 1 words);  { locals 92 words, lex 1 }
     if I2,13 then begin
       L2 := 69;
     end else begin
-      if G49 then begin
+      if SHOWPROGRESS then begin
         FWRITELN(I2,3);
       end else begin
-        if (G43 and (L1 <= 400)) then begin
+        if (LISTING and (L1 <= 400)) then begin
           CSP4(1, 2);
         end;
       end;
@@ -56,7 +56,7 @@ procedure PASCALCO.2:ERROR(args 1 words);  { locals 92 words, lex 1 }
       FWRITESTRING(I2,3, ', error ', 0);
       FWRITEINT(I2,3, L1, 0);
       FWRITECHAR(I2,3, 58, 0);
-      if G49 then begin
+      if SHOWPROGRESS then begin
         FWRITESTRING(I2,3, ' <sp>(continue), <esc>(terminate), E(dit', 0);
       end;
       FWRITECHAR(I2,3, 7, 0);
@@ -73,7 +73,7 @@ L010D:
       CSP4(1, 1);
     end;
     FWRITELN(I2,3);
-    if G49 then begin
+    if SHOWPROGRESS then begin
       FWRITECHAR(I2,3, 60, 0);
       FWRITEINT(I2,3, G92, 4);
       FWRITECHAR(I2,3, 62, 0);
@@ -96,7 +96,7 @@ procedure PASCALCO.3(args 0 words);  { locals 1 words, lex 1 }
         G36 := 0;
       end;
     end else begin
-      if (FBLOCKIO(@G586, G1, 0, 2, G90, 1) <> 2) then begin
+      if (FBLOCKIO(@LIBFILE, G1, 0, 2, G90, 1) <> 2) then begin
         G36 := 0;
       end;
     end;
@@ -109,8 +109,8 @@ procedure PASCALCO.3(args 0 words);  { locals 1 words, lex 1 }
   end;
   if not (G36) then begin
     if G37 then begin
-      if (FBLOCKIO(@G626, G1, 0, 2, G90, 1) <> 2) then begin
-        FCLOSE(@G626, 0);
+      if (FBLOCKIO(@SOURCEFILE, G1, 0, 2, G90, 1) <> 2) then begin
+        FCLOSE(@SOURCEFILE, 0);
         G37 := 0;
         G90 := G580;
         G14 := G584;
@@ -140,19 +140,19 @@ procedure PASCALCO.4:ERRORWITHTEXT(args 0 words);  { locals 53 words, lex 1 }
   if G46 then begin
     L1 := 42;
   end;
-  FWRITEINT(@G666, G92, 6);
+  FWRITEINT(@LISTFILE, G92, 6);
   CSP0();
-  FWRITEINT(@G666, G13, 4);
+  FWRITEINT(@LISTFILE, LEVEL, 4);
   CSP0();
-  FWRITEINT(@G666, G97, 5);
+  FWRITEINT(@LISTFILE, G97, 5);
   CSP0();
-  FWRITECHAR(@G666, L1, 0);
+  FWRITECHAR(@LISTFILE, L1, 0);
   CSP0();
-  FWRITECHAR(@G666, L2, 0);
+  FWRITECHAR(@LISTFILE, L2, 0);
   CSP0();
-  FWRITEINT(@G666, G93, 6);
+  FWRITEINT(@LISTFILE, G93, 6);
   CSP0();
-  FWRITECHAR(@G666, 32, 0);
+  FWRITECHAR(@LISTFILE, 32, 0);
   CSP0();
   L3 := (G14-G95);
   if (L3 > 100) then begin
@@ -161,21 +161,21 @@ procedure PASCALCO.4:ERRORWITHTEXT(args 0 words);  { locals 53 words, lex 1 }
   CSP2(G1, G95, @L4, 0, L3);
   if (@L4^[0] = 16) then begin
     if (@L4^[1] > 32) then begin
-      FWRITECHAR(@G666, 32, (@L4^[1]-32));
+      FWRITECHAR(@LISTFILE, 32, (@L4^[1]-32));
       CSP0();
     end;
     L3 := (L3-2);
     CSP2(@L4, 2, @L4, 0, L3);
   end;
   @L4^[(L3-1)] := 13;
-  FWRITEBYTES(@G666, @L4, L3, 100);
+  FWRITEBYTES(@LISTFILE, @L4, L3, 100);
   CSP0();
   if ((I2,11 = G90) and (I2,12 > G95)) then begin
-    FWRITESTRING(@G666, '>>>>>> Error # ', 0);
+    FWRITESTRING(@LISTFILE, '>>>>>> Error # ', 0);
     CSP0();
-    FWRITEINT(@G666, I2,10, 0);
+    FWRITEINT(@LISTFILE, I2,10, 0);
     CSP0();
-    FWRITELN(@G666);
+    FWRITELN(@LISTFILE);
     CSP0();
   end;
 
@@ -559,15 +559,15 @@ procedure PASCALCO.10(args 3 words);  { locals 0 words, lex 1 }
 
 procedure PASCALCO.11(args 1 words);  { locals 0 words, lex 1 }
   if L1 then begin
-    PASCALCO.10(@G85, 31, 354);
+    PASCALCO.10(@NEXTSEG, 31, 354);
   end;
   PASCALCO.10(@G21, 15, 354);
-  @G479~[G13]{4per word,4 bits} := G21;
+  @G479~[LEVEL]{4per word,4 bits} := G21;
 
 procedure PASCALCO.12(args 0 words);  { locals 0 words, lex 1 }
   G92 := (G92+1);
   G14 := (G14+1);
-  if G49 then begin
+  if SHOWPROGRESS then begin
     FWRITECHAR(I2,3, 46, 0);
     if (((G92-G91) mod 50) = 0) then begin
       FWRITELN(I2,3);
@@ -576,7 +576,7 @@ procedure PASCALCO.12(args 0 words);  { locals 0 words, lex 1 }
       FWRITECHAR(I2,3, 62, 0);
     end;
   end;
-  if G43 then begin
+  if LISTING then begin
     PASCALCO.4:ERRORWITHTEXT();
   end;
   G46 := 0;
@@ -604,7 +604,7 @@ function PASCALCO.13(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
   L5 := 0;
   { unmodelled packed store of 2 }
   L4 := (@L5^[0] <> 0);
-  if G30 then begin
+  if OPT_F then begin
     L4 := (L4 = 0);
   end;
   if L4 then begin
@@ -855,7 +855,7 @@ procedure PASCALCO.21(args 1 words);  { locals 1 words, lex 1 }
     PASCALCO.20:EMIT(0);
   end;
   CSP2(@L1, 0, G2, G9, 2);
-  if G30 then begin
+  if OPT_F then begin
     L2 := G2^[G9];
     G2^[G9] := G2^[(G9+1)];
     G2^[(G9+1)] := L2;
@@ -897,16 +897,16 @@ procedure PASCALCO.23(args 0 words);  { locals 2 words, lex 1 }
     end;
     L1 := (L1-1);
   end;
-  PASCALCO.20:EMIT(G13);
+  PASCALCO.20:EMIT(LEVEL);
   PASCALCO.20:EMIT((G96-1));
-  @G335[@G479~[G13]{4per word,4 bits}*9w]^ := (G86+G9);
+  @G335[@G479~[LEVEL]{4per word,4 bits}*9w]^ := (G86+G9);
   PASCALCO.22:FLUSHBUFFER(1);
   G86 := 0;
   G48 := 0;
 
 procedure PASCALCO.24(args 4 words);  { locals 2 words, lex 1 }
   if ((SY = 50) and not (G32)) then begin
-    if G34 then begin
+    if SWAPPING then begin
       UNITPART.1(?, ?, ?, adjust((@L1^<4w> + [$001C,$0000,$0000,$0200]),4));
       if (SY = 18) then begin
         CSP4(1, 24);
@@ -922,7 +922,7 @@ procedure PASCALCO.24(args 4 words);  { locals 2 words, lex 1 }
       G78 := 0;
       G9 := 0;
       G93 := 0;
-      if (not (G28) or (G77 > 1)) then begin
+      if (not (SYSCOMP) or (G77 > 1)) then begin
         PASCALCO.27:ENTERUNDECL(@G131[G8*4w]^);
       end;
       if G32 then begin
@@ -982,11 +982,11 @@ L0F82:
               PASCALCO.23();
             end;
             if (G44 and (G77 = 1)) then begin
-              (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 1;
+              (@G335[@G479~[LEVEL]{4per word,4 bits}*9w]+8)^ := 1;
               WRITELIN.1();
             end;
             G96 := L6^.f2;
-            G13 := L6^.f4;
+            LEVEL := L6^.f4;
           end;
           G77 := L6^.f1;
           G8 := L6^;
@@ -1058,7 +1058,7 @@ procedure PASCALCO.27:ENTERUNDECL(args 1 words);  { locals 1 words, lex 2 }
 procedure PASCALCO.28(args 0 words);  { locals 0 words, lex 1 }
   goto L10B8;
 L1094:
-  if G33 then begin
+  if SWAPMORE then begin
     PASCALCO.25();
   end else begin
     PASCALCO.29();
@@ -1104,7 +1104,7 @@ procedure COMPINIT.1(args 0 words);  { locals 259 words, lex 1 }
   COMPINIT.10();
   G77 := 0;
   G8 := 0;
-  if G49 then begin
+  if SHOWPROGRESS then begin
     G9 := 1;
     L259 := 7;
     while (G9 <= L259) do begin
@@ -1128,10 +1128,10 @@ procedure COMPINIT.1(args 0 words);  { locals 259 words, lex 1 }
   COMPINIT.4();
   COMPINIT.7();
   COMPINIT.8();
-  if G28 then begin
+  if SYSCOMP then begin
     G65 := nil;
-    G13 := 0;
-    G85 := 1;
+    LEVEL := 0;
+    NEXTSEG := 1;
     G82 := 1;
     @G114^ := adjust((@G114^<4w> + [$0004,$0000,$0000,$0000]),4)  {4 words};
   end else begin
@@ -1144,7 +1144,7 @@ procedure COMPINIT.1(args 0 words);  { locals 259 words, lex 1 }
     (L259+1)^ := 0;
     G10 := (G10+2);
     G82 := 3;
-    (@G335[G21*9w]+6)^ := G13;
+    (@G335[G21*9w]+6)^ := LEVEL;
     CSP1(@G65, 18);
     L259 := G65;
     (L259+7)^ := nil;
@@ -1155,13 +1155,13 @@ procedure COMPINIT.1(args 0 words);  { locals 259 words, lex 1 }
     (L259+9)^ := 1;
     (L259+10)^ := 0;
     (L259+11)^ := 1;
-    (L259+12)^ := G13;
+    (L259+12)^ := LEVEL;
     (L259+13)^ := 0;
     (L259+15)^ := 0;
     (L259+16)^ := 0;
     (L259+17)^ := 1;
   end;
-  @G479~[G13]{4per word,4 bits} := G21;
+  @G479~[LEVEL]{4per word,4 bits} := G21;
   if (SY = 33) then begin
     PASCALCO.6:INSYMBOL();
     if (SY = 0) then begin
@@ -1445,7 +1445,7 @@ procedure COMPINIT.7(args 0 words);  { locals 8 words, lex 2 }
   while (I1,257 < I1,258) do begin
     COMPINIT.6(@L4);
     L2 := (L2+1);
-    if G42 then begin
+    if OPT_T then begin
       if not ((L2 in [$1D0D,$001E,$2484])) then goto L067E;
     end else begin
 L067E:
@@ -1586,36 +1586,36 @@ L0882:
 
 procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
   if ((CSP40() < 0) or (CSP40() > 9950)) then begin
-    G34 := 0;
+    SWAPPING := 0;
   end else begin
-    G34 := 1;
+    SWAPPING := 1;
   end;
-  G33 := 0;
+  SWAPMORE := 0;
   G64 := nil;
   G68 := nil;
   G76 := nil;
   G95 := 0;
   G93 := 1;
-  G43 := 0;
+  LISTING := 0;
   G90 := 2;
   G92 := 0;
   G91 := 0;
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    L2 := @G335[G13*9w];
+  while (LEVEL <= L1) do begin
+    L2 := @G335[LEVEL*9w];
     (L2+1)^ := 0;
     L2^ := 0;
     move((L2+2), @'        ', 4 words);
     (L2+8)^ := 0;
     (L2+7)^ := 0;
     (L2+6)^ := 0;
-    G13 := (G13+1);
+    LEVEL := (LEVEL+1);
   end;
   G63 := nil;
-  @G488^ := 42  {string};
+  @LIBNAME^ := 42  {string};
   G10 := 1;
-  G47 := 1;
+  IOCHECK := 1;
   G38 := 1;
   G21 := 0;
   G86 := 0;
@@ -1628,30 +1628,30 @@ procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
   G44 := 0;
   G41 := 0;
   G40 := 0;
-  G39 := 1;
-  G13 := 1;
-  G85 := 7;
+  VARSTRING := 1;
+  LEVEL := 1;
+  NEXTSEG := 7;
   G967 := 1;
   G968 := 0;
-  G49 := not (I3,14);
-  G45 := 0;
-  G50 := 0;
+  SHOWPROGRESS := not (I3,14);
+  OPT_E := 0;
+  OPT_D := 0;
   G46 := 0;
   G32 := 0;
-  G35 := 0;
-  G52 := 0;
-  G51 := 1;
-  G28 := 0;
-  G42 := 0;
+  NOLOAD := 0;
+  GOTOOK := 0;
+  RANGECHECK := 1;
+  SYSCOMP := 0;
+  OPT_T := 0;
   G48 := 0;
   G53 := 1;
   G37 := 0;
   G36 := 0;
-  G487 := nil;
+  CODECOMMENT := nil;
   G29 := 1;
   G26 := 1;
   G79 := 0;
-  G30 := 0;
+  OPT_F := 0;
   @G183^ := adjust(0,2)  {2 words};
 
 procedure COMPINIT.10(args 0 words);  { locals 0 words, lex 2 }
@@ -1672,7 +1672,7 @@ SEGMENT 8 DECLARAT
 ======================================================================
 
 procedure DECLARAT.1(args 4 words);  { locals 11 words, lex 1 }
-  if G49 then begin
+  if SHOWPROGRESS then begin
     CSP6(3, @L7[-(1600)], 0, 35, 0, 0);
   end;
   @L1^<4w>^ := adjust((10 + 1),4)  {4 words};
@@ -1926,7 +1926,7 @@ procedure DECLARAT.3(args 6 words);  { locals 13 words, lex 2 }
             end else begin
               if (SY = 46) then begin
                 if G32 then begin
-                  if not ((G31 or G45)) then begin
+                  if not ((G31 or OPT_E)) then begin
                     PASCALCO.2:ERROR(191);
                   end;
                 end;
@@ -2088,7 +2088,7 @@ procedure DECLARAT.4(args 6 words);  { locals 13 words, lex 3 }
             end else begin
               if (L8^.f1 = 7) then begin
                 if G32 then begin
-                  if not ((G31 or G45)) then begin
+                  if not ((G31 or OPT_E)) then begin
                     PASCALCO.2:ERROR(191);
                   end;
                 end;
@@ -2471,7 +2471,7 @@ procedure DECLARAT.9(args 0 words);  { locals 1 words, lex 3 }
       G64 := I1,11;
     end else begin
       if (I1,11^.f6 <> nil) then begin
-        if ((I1,11^.f6^.f1 <> 7) or G28) then begin
+        if ((I1,11^.f6^.f1 <> 7) or SYSCOMP) then begin
           (I1,9+2)^ := I1,11^.f6;
         end else begin
           PASCALCO.2:ERROR(108);
@@ -2543,7 +2543,7 @@ L118A:
 procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
   move(@L2, L1, 4 words);
   L9 := 0;
-  if G49 then begin
+  if SHOWPROGRESS then begin
     FWRITELN(I4,3);
     FWRITEBYTES(I4,3, @G17, 8, 8);
     FWRITESTRING(I4,3, ' [', 0);
@@ -2554,7 +2554,7 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
     FWRITEINT(I4,3, G92, 4);
     FWRITECHAR(I4,3, 62, 0);
   end;
-  L16 := G13;
+  L16 := LEVEL;
   L14 := G96;
   L17 := G10;
   DECLARAT.12(@L10);
@@ -2572,7 +2572,7 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
     (L23+11)^ := (L7 <> 6);
     L7^ := (104 in 1);
     if L23^.f10 then begin
-      (L23+9)^ := G13;
+      (L23+9)^ := LEVEL;
     end;
     (L23+12)^ := (G40 and not (L9));
     if L23^.f12 then begin
@@ -2585,7 +2585,7 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
       G10 := 1;
     end;
     G91 := G92;
-    PASCALCO.1(@I2,1^<4w>, adjust((512 + 1),4));
+    DECLARAT.1(?, (L23+10), @I2,1^<4w>, adjust((512 + 1),4));
     if G40 then begin
       if L9 then begin
         if (G10 > 1) then begin
@@ -2597,7 +2597,7 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
     end;
     if L11^.f10 then begin
       if G40 then begin
-        @G183^ := adjust((@G183^<2w> + [G13]),2)  {2 words};
+        @G183^ := adjust((@G183^<2w> + [LEVEL]),2)  {2 words};
       end;
       PASCALCO.5:ENTERID(L11);
     end;
@@ -2614,11 +2614,10 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
     G90 := 9999;
     PASCALCO.3();
   end;
-  { paths disagree on stack depth here }
   if G40 then begin
     G10 := L17;
   end;
-  G13 := L16;
+  LEVEL := L16;
   G96 := L14;
   if G40 then begin
     G40 := 0;
@@ -2641,7 +2640,7 @@ procedure DECLARAT.12(args 1 words);  { locals 3 words, lex 4 }
     L4 := @G335[@G479~[L2^.f9]{4per word,4 bits}*9w];
     I1,7 := L4^.f8;
     I1,8 := L4^.f7;
-    G13 := L2^.f9;
+    LEVEL := L2^.f9;
     G96 := 2;
     if ((96 in 1) or ((I1,7 = 0) and L2^.f12)) then begin
       G40 := 1;
@@ -2656,13 +2655,13 @@ procedure DECLARAT.12(args 1 words);  { locals 3 words, lex 4 }
   end else begin
     L1^ := 1;
     if G29 then begin
-      if (FBLOCKIO(@G586, @I2,2, 0, 1, 0, 1) <> 1) then begin
-        FCLOSE(@G586, 0);
-        FOPEN(?, ?, ?, @G586, '*SYSTEM.LIBRARY', 1, 0);
+      if (FBLOCKIO(@LIBFILE, @I2,2, 0, 1, 0, 1) <> 1) then begin
+        FCLOSE(@LIBFILE, 0);
+        FOPEN(?, ?, ?, @LIBFILE, '*SYSTEM.LIBRARY', 1, 0);
         if (CSP34() <> 0) then begin
           L1^ := 0;
         end else begin
-          if (FBLOCKIO(@G586, @I2,2, 0, 1, 0, 1) <> 1) then begin
+          if (FBLOCKIO(@LIBFILE, @I2,2, 0, 1, 0, 1) <> 1) then begin
             L1^ := 0;
           end else begin
             G585 := 1;
@@ -2687,19 +2686,19 @@ procedure DECLARAT.12(args 1 words);  { locals 3 words, lex 4 }
     if L1^ then begin
       I1,8 := @I2,114[L3]^;
       if G40 then begin
-        G13 := 0;
+        LEVEL := 0;
         G96 := 2;
       end else begin
         if G41 then begin
           PASCALCO.2:ERROR(353);
         end;
-        G13 := G85;
+        LEVEL := NEXTSEG;
         PASCALCO.11(1);
         L4 := @G335[G21*9w];
         (L4+1)^ := 0;
         L4^ := 0;
         move((L4+2), @I2,34[L3*4w], 4 words);
-        (L4+6)^ := G13;
+        (L4+6)^ := LEVEL;
         if G32 then begin
           (L4+8)^ := 0;
         end else begin
@@ -2973,8 +2972,8 @@ procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
       G86 := 0;
       G968 := 0;
     end;
-    L14 := G13;
-    G13 := G85;
+    L14 := LEVEL;
+    LEVEL := NEXTSEG;
     L12 := G96;
     G96 := 1;
     L3 := SY;
@@ -3039,7 +3038,7 @@ procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
       (L21+17)^ := 0;
       (L21+10)^ := G77;
       (L21+11)^ := G96;
-      (L21+12)^ := G13;
+      (L21+12)^ := LEVEL;
       @G185[G96]^ := 0;
       (L21+16)^ := 0;
       if G32 then begin
@@ -3049,7 +3048,7 @@ procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
         PASCALCO.11(1);
         L22 := @G335[G21*9w];
         move((L22+2), @G17, 4 words);
-        (L22+6)^ := G13;
+        (L22+6)^ := LEVEL;
       end;
       PASCALCO.10(@G96, 149, 251);
       if (L2 = 31) then begin
@@ -3081,8 +3080,8 @@ procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
         end;
         L4 := L4^.f7;
       end;
-      if (G13 <> L5^.f12) then begin
-        G13 := L5^.f12;
+      if (LEVEL <> L5^.f12) then begin
+        LEVEL := L5^.f12;
         G96 := 2;
         if not (L1) then begin
           PASCALCO.2:ERROR(399);
@@ -3242,7 +3241,7 @@ procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
   G97 := L13;
   if L1 then begin
     G96 := L12;
-    G13 := L14;
+    LEVEL := L14;
   end;
 
 procedure DECLARAT.20(args 6 words);  { locals 10 words, lex 3 }
@@ -3400,7 +3399,7 @@ SEGMENT 9 BODYPART
 ======================================================================
 
 procedure BODYPART.1(args 5 words);  { locals 0 words, lex 1 }
-  if (not (G34) or G33) then begin
+  if (not (SWAPPING) or SWAPMORE) then begin
     BODYPART.24();
   end else begin
     BODYPART.37();
@@ -3408,7 +3407,7 @@ procedure BODYPART.1(args 5 words);  { locals 0 words, lex 1 }
 
 procedure BODYPART.2(args 3 words);  { locals 1 words, lex 2 }
   if (G576 > 128) then begin
-    if (FBLOCKIO(@G535, G577, 0, 1, G575, 0) <> 1) then begin
+    if (FBLOCKIO(@INFOFILE, G577, 0, 1, G575, 0) <> 1) then begin
       PASCALCO.2:ERROR(402);
     end;
     G575 := (G575+1);
@@ -4177,7 +4176,7 @@ L095A:
           if PASCALCO.19(L14^.f2, G3) then begin
             if ((L14^.f2 <> nil) and not (PASCALCO.16:STRINGTYPE(L6))) then begin
               PASCALCO.9:GETBOUNDS(L14^.f2, @L13, @L12);
-              if G51 then begin
+              if RANGECHECK then begin
                 BODYPART.4(L13);
                 BODYPART.4(L12);
                 BODYPART.3(8);
@@ -4202,7 +4201,7 @@ L095A:
             if L14^.f4 then begin
               if (L14^.f5 = 8) then begin
                 G5 := 4;
-                if (PASCALCO.16:STRINGTYPE(L6) and G51) then begin
+                if (PASCALCO.16:STRINGTYPE(L6) and RANGECHECK) then begin
                   BODYPART.3(27);
                   goto L0A68;
                 end;
@@ -4361,7 +4360,7 @@ procedure BODYPART.23(args 5 words);  { locals 2 words, lex 2 }
 
 procedure BODYPART.24(args 0 words);  { locals 19 words, lex 2 }
   BODY1.1();
-  if G34 then begin
+  if SWAPPING then begin
     BODYPART.26();
   end else begin
     BODYPART.25();
@@ -4369,7 +4368,7 @@ procedure BODYPART.24(args 0 words);  { locals 19 words, lex 2 }
   BODY3.1();
 
 procedure BODYPART.25(args 0 words);  { locals 2 words, lex 3 }
-  if G49 then begin
+  if SHOWPROGRESS then begin
     FWRITELN(I4,3);
     @I1,19[0]^ := CSP40();
     if (@I1,19[0]^ < G89) then begin
@@ -4386,7 +4385,7 @@ procedure BODYPART.25(args 0 words);  { locals 2 words, lex 3 }
     FWRITEINT(I4,3, G92, 4);
     FWRITECHAR(I4,3, 62, 0);
   end;
-  if (not (G32) or G45) then begin
+  if (not (G32) or OPT_E) then begin
     I1,6 := @G131[G8*4w]^.f2;
     while (I1,6 <> nil) do begin
       L1 := I1,6;
@@ -4506,7 +4505,7 @@ procedure BODYPART.28(args 0 words);  { locals 2 words, lex 3 }
           end;
         end;
       end;
-      if G47 then begin
+      if IOCHECK then begin
         BODYPART.5(30, 0);
       end;
       G11 := (SY <> 1);
@@ -4518,7 +4517,7 @@ procedure BODYPART.28(args 0 words);  { locals 2 words, lex 3 }
   if (I1,6 = 2) then begin
     BODYPART.14(L2);
     BODYPART.6(77, 0, 21);
-    if G47 then begin
+    if IOCHECK then begin
       BODYPART.5(30, 0);
     end;
   end;
@@ -4635,7 +4634,7 @@ procedure BODYPART.29(args 0 words);  { locals 8 words, lex 3 }
           end;
         end;
       end;
-      if G47 then begin
+      if IOCHECK then begin
         BODYPART.5(30, 0);
       end;
       G11 := (SY <> 1);
@@ -4647,7 +4646,7 @@ procedure BODYPART.29(args 0 words);  { locals 8 words, lex 3 }
   if (I1,6 = 4) then begin
     BODYPART.14(L4);
     BODYPART.6(77, 0, 22);
-    if G47 then begin
+    if IOCHECK then begin
       BODYPART.5(30, 0);
     end;
   end;
@@ -4699,7 +4698,7 @@ procedure BODYPART.30(args 0 words);  { locals 8 words, lex 3 }
                     G9 := (G9-1);
                   end;
                 end else begin
-                  if ((L3^.f1 = 1) and G51) then begin
+                  if ((L3^.f1 = 1) and RANGECHECK) then begin
                     BODYPART.4(L3^.f4);
                     BODYPART.4(L3^.f3);
                     BODYPART.3(8);
@@ -4748,7 +4747,7 @@ L10C3:
 L10D2:
                 if L8^.f4 then begin
                   if L8^.f7 then begin
-                    if ((L8^.f8 > G3^.f8) and G39) then begin
+                    if ((L8^.f8 > G3^.f8) and VARSTRING) then begin
                       PASCALCO.2:ERROR(175);
                     end;
                   end;
@@ -4804,7 +4803,7 @@ L1179:
 L117B:
     end else begin
 L117D:
-      if (L8^.f12 <> G13) then begin
+      if (L8^.f12 <> LEVEL) then begin
         BODYPART.6(77, L8^.f12, L8^.f11);
       end else begin
         if (L8^.f10 = 0) then begin
@@ -5736,7 +5735,7 @@ procedure ROUTINE.12(args 0 words);  { locals 0 words, lex 3 }
     BODYPART.4(0);
   end;
   BODYPART.6(77, 0, 6);
-  if G47 then begin
+  if IOCHECK then begin
     BODYPART.5(30, 0);
   end;
 
@@ -5794,7 +5793,7 @@ L05E1:
     otherwise goto L05FA;
   end;
 L05FA:
-  if G47 then begin
+  if IOCHECK then begin
     BODYPART.5(30, 0);
   end;
 
@@ -5872,7 +5871,7 @@ procedure ROUTINE.15(args 0 words);  { locals 0 words, lex 3 }
   BODYPART.4(0);
   BODYPART.4(0);
   BODYPART.6(77, 0, 28);
-  if G47 then begin
+  if IOCHECK then begin
     BODYPART.5(30, 0);
   end;
   G3 := INTPTR;
@@ -6050,7 +6049,7 @@ L092E:
     BODYPART.4(0);
     BODYPART.6(77, 0, 5);
   end;
-  if G47 then begin
+  if IOCHECK then begin
     BODYPART.5(30, 0);
   end;
   goto L0A5C;
@@ -6169,7 +6168,7 @@ L0500:
       PASCALCO.2:ERROR(5);
     end;
   end;
-  if G50 then begin
+  if OPT_D then begin
     BODYPART.5(85, (G92+1));
     G46 := 1;
   end;
@@ -6337,7 +6336,7 @@ L00CD:
       if PASCALCO.19(L2, G3) then begin
         goto L0189;
 L0114:
-        if G51 then begin
+        if RANGECHECK then begin
           BODYPART.4(L2^.f4);
           BODYPART.4(L2^.f3);
           BODYPART.3(8);
@@ -6396,7 +6395,7 @@ L01A0:
   end;
 
 procedure STATEMEN.3(args 0 words);  { locals 4 words, lex 3 }
-  if not (G52) then begin
+  if not (GOTOOK) then begin
     PASCALCO.2:ERROR(6);
   end;
   if (SY = 35) then begin
@@ -6729,7 +6728,7 @@ procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
           BODYPART.8();
           BODYPART.15();
           if (L1 <> nil) then begin
-            if ((L1^.f1 = 1) and G51) then begin
+            if ((L1^.f1 = 1) and RANGECHECK) then begin
               BODYPART.4(L1^.f4);
               BODYPART.4(L1^.f3);
               BODYPART.3(8);
@@ -6758,7 +6757,7 @@ procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
           BODYPART.8();
           BODYPART.15();
           if (L1 <> nil) then begin
-            if ((L1^.f1 = 1) and G51) then begin
+            if ((L1^.f1 = 1) and RANGECHECK) then begin
               BODYPART.4(L1^.f4);
               BODYPART.4(L1^.f3);
               BODYPART.3(8);
@@ -6816,7 +6815,7 @@ procedure BODY1.1(args 0 words);  { locals 2 words, lex 3 }
   G509 := 1;
   I1,8 := 0;
   if (G77 = 1) then begin
-    if not (G28) then begin
+    if not (SYSCOMP) then begin
       if not (G32) then begin
         I1,8 := 1;
       end;
@@ -6897,7 +6896,7 @@ procedure BODY3.1(args 0 words);  { locals 2 words, lex 3 }
       I1,6 := L1^.f7;
     end;
   end;
-  if ((I1,3 <> nil) or (I1,8 and ((@G183^<2w> <> 0) or (not (G35) and (G63 <> nil))))) then begin
+  if ((I1,3 <> nil) or (I1,8 and ((@G183^<2w> <> 0) or (not (NOLOAD) and (G63 <> nil))))) then begin
     BODY3.2();
   end;
   if (I2,1 = nil) then begin
@@ -6947,7 +6946,7 @@ procedure BODY3.1(args 0 words);  { locals 2 words, lex 3 }
   PASCALCO.20:EMIT((G77-1));
   if not (G48) then begin
     G48 := 1;
-    (@G335[@G479~[G13]{4per word,4 bits}*9w]+1)^ := G967;
+    (@G335[@G479~[LEVEL]{4per word,4 bits}*9w]+1)^ := G967;
   end;
   PASCALCO.22:FLUSHBUFFER(0);
   G86 := (G86+G9);
@@ -6958,7 +6957,7 @@ procedure BODY3.2(args 0 words);  { locals 1 words, lex 4 }
     I2,6 := G63;
     I2,4 := nil;
     while (I2,6 <> nil) do begin
-      if (I2,6^.f10 and not (G35)) then begin
+      if (I2,6^.f10 and not (NOLOAD)) then begin
         BODYPART.4(I2,6^.f9);
         BODYPART.5(30, 22);
       end;
@@ -7023,7 +7022,7 @@ procedure BODY3.2(args 0 words);  { locals 1 words, lex 4 }
         BODYPART.4(I2,6^.f13);
         BODYPART.5(30, 21);
       end;
-      if (I2,6^.f10 and not (G35)) then begin
+      if (I2,6^.f10 and not (NOLOAD)) then begin
         BODYPART.4(I2,6^.f9);
         BODYPART.5(30, 21);
       end;
@@ -7106,7 +7105,7 @@ procedure WRITELIN.3(args 0 words);  { locals 0 words, lex 3 }
   if (I2,1 > G575) then begin
     I2,1 := 0;
   end;
-  if (FBLOCKIO(@G535, G577, 0, 1, I2,1, 1) <> 1) then begin
+  if (FBLOCKIO(@INFOFILE, G577, 0, 1, I2,1, 1) <> 1) then begin
   end;
 
 procedure WRITELIN.4(args 1 words);  { locals 1 words, lex 2 }
@@ -7237,7 +7236,7 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
   end;
   UNITPART.2();
   repeat
-    FRESET(@G535);
+    FRESET(@INFOFILE);
     G576 := 1;
     G575 := 0;
     UNITPART.3(?, ?, ?, @L1^<4w>, @L5);
@@ -7305,10 +7304,10 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
       end;
       if G44 then begin
         if G41 then begin
-          (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 5;
+          (@G335[@G479~[LEVEL]{4per word,4 bits}*9w]+8)^ := 5;
         end;
         if (G575 > 0) then begin
-          if (FBLOCKIO(@G535, G577, 0, 1, G575, 0) <> 1) then begin
+          if (FBLOCKIO(@INFOFILE, G577, 0, 1, G575, 0) <> 1) then begin
             PASCALCO.2:ERROR(402);
           end;
         end;
@@ -7322,7 +7321,7 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
         PASCALCO.14(?, ?, ?, @L1^<4w>);
       end;
       if G68^.f10 then begin
-        L10 := @G335[@G479~[G13]{4per word,4 bits}*9w];
+        L10 := @G335[@G479~[LEVEL]{4per word,4 bits}*9w];
         L10^ := 0;
         (L10+1)^ := G967;
         (L10+8)^ := 0;
@@ -7353,15 +7352,15 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
     G77 := L10^.f1;
     G97 := L10^.f3;
     G96 := L10^.f2;
-    G13 := L10^.f4;
+    LEVEL := L10^.f4;
     G10 := L10^.f5;
     G81 := G81^.f10;
     CSP33(@L5);
   until (SY <> 50);
-  FCLOSE(@G535, 0);
+  FCLOSE(@INFOFILE, 0);
 
 procedure UNITPART.2(args 0 words);  { locals 0 words, lex 2 }
-  FOPEN(?, ?, ?, @G535, '*SYSTEM.INFO[*]', 0, 0);
+  FOPEN(?, ?, ?, @INFOFILE, '*SYSTEM.INFO[*]', 0, 0);
   if (CSP34() <> 0) then begin
     PASCALCO.2:ERROR(402);
   end;
@@ -7379,7 +7378,7 @@ procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
   L12 := G77;
   L14 := G97;
   L13 := G96;
-  L15 := G13;
+  L15 := LEVEL;
   L16 := G10;
   L21 := G81;
   G97 := 1;
@@ -7433,15 +7432,15 @@ procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
             PASCALCO.6:INSYMBOL();
             PASCALCO.18:CONSTANT(?, ?, @L2^<4w>, adjust((9 + 1),4), @L7, @L10);
             if (L7 = INTPTR) then begin
-              G13 := L10;
-              if not ((G13 in [$FFFF,$FFFF])) then begin
+              LEVEL := L10;
+              if not ((LEVEL in [$FFFF,$FFFF])) then begin
                 PASCALCO.2:ERROR(203);
-                G13 := 1;
+                LEVEL := 1;
               end;
               PASCALCO.11(0);
               L22 := @G335[G21*9w];
               (L22+8)^ := 6;
-              (L22+6)^ := G13;
+              (L22+6)^ := LEVEL;
               I1,7 := 1;
             end else begin
               PASCALCO.2:ERROR(15);
@@ -7454,7 +7453,7 @@ procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
               G84 := L9;
               if not ((G84 in [$FFFF,$FFFF])) then begin
                 PASCALCO.2:ERROR(203);
-                G84 := (G13+1);
+                G84 := (LEVEL+1);
               end;
               PASCALCO.10(@G21, 15, 354);
               @G479~[G84]{4per word,4 bits} := G21;
@@ -7482,18 +7481,18 @@ procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
         PASCALCO.2:ERROR(22);
       end;
     end else begin
-      G13 := G85;
+      LEVEL := NEXTSEG;
       PASCALCO.11(1);
       L22 := @G335[G21*9w];
-      (L22+6)^ := G13;
+      (L22+6)^ := LEVEL;
       (L22+8)^ := 3;
     end;
     L22 := L6;
     if L22^.f10 then begin
-      L23 := @G335[@G479~[G13]{4per word,4 bits}*9w];
+      L23 := @G335[@G479~[LEVEL]{4per word,4 bits}*9w];
       move((L23+2), L22, 4 words);
       (L23+7)^ := G967;
-      (L22+9)^ := G13;
+      (L22+9)^ := LEVEL;
     end;
   end;
   CSP32(L1);
@@ -7528,7 +7527,7 @@ procedure UNITPART.4(args 0 words);  { locals 3 words, lex 2 }
   (L3+9)^ := 1;
   (L3+10)^ := 1;
   (L3+11)^ := 1;
-  (L3+12)^ := G13;
+  (L3+12)^ := LEVEL;
   (L3+13)^ := 0;
   (L3+14)^ := 1;
   (L3+15)^ := 0;
@@ -7573,31 +7572,31 @@ L01BE:
       if (G77 > 1) then begin
         PASCALCO.2:ERROR(194);
       end;
-      CSP1(@G487, 41);
-      COMPOPTI.3(G487, 80);
+      CSP1(@CODECOMMENT, 41);
+      COMPOPTI.3(CODECOMMENT, 80);
       COMPOPTI.2();
       goto L03FA;
 L01DA:
-      G50 := (L5 = 43);
+      OPT_D := (L5 = 43);
       goto L03FA;
 L01E1:
-      G45 := (L5 = 43);
+      OPT_E := (L5 = 43);
       goto L03FA;
 L01E8:
-      G30 := (L5 = 43);
+      OPT_F := (L5 = 43);
       goto L03FA;
 L01EF:
-      G52 := (L5 = 43);
+      GOTOOK := (L5 = 43);
       goto L03FA;
 L01F6:
       if ((L5 = 43) or (L5 = 45)) then begin
-        G47 := (L5 = 43);
+        IOCHECK := (L5 = 43);
       end else begin
         COMPOPTI.3(@L7, 40);
         if (L3 = 42) then begin
           G14 := (G14+1);
         end;
-        if G43 then begin
+        if LISTING then begin
           G14 := (G14+1);
           PASCALCO.4:ERRORWITHTEXT();
           G14 := (G14-1);
@@ -7606,7 +7605,7 @@ L01F6:
           PASCALCO.2:ERROR(406);
         end;
         COMMAND();
-        FOPEN(@L7, 1, 40, @G626, @L7, 1, 0);
+        FOPEN(@L7, 1, 40, @SOURCEFILE, @L7, 1, 0);
         if (CSP34() <> 0) then begin
           PASCALCO.2:ERROR(403);
         end;
@@ -7622,15 +7621,15 @@ L01F6:
       goto L03FA;
 L0275:
       if ((L5 = 43) or (L5 = 45)) then begin
-        G43 := (L5 = 43);
-        if G43 then begin
-          FOPEN(?, ?, ?, @G666, '*SYSTEM.LST.TEXT', 0, 0);
+        LISTING := (L5 = 43);
+        if LISTING then begin
+          FOPEN(?, ?, ?, @LISTFILE, '*SYSTEM.LST.TEXT', 0, 0);
         end;
       end else begin
         COMPOPTI.3(@L7, 40);
         COMMAND();
-        FOPEN(@L7, 1, 40, @G666, @L7, 0, 0);
-        G43 := (CSP34() = 0);
+        FOPEN(@L7, 1, 40, @LISTFILE, @L7, 0, 0);
+        LISTING := (CSP34() = 0);
         COMPOPTI.2();
       end;
       goto L03FA;
@@ -7649,50 +7648,50 @@ L02C4:
           L28 := ((L28*10)+(@L7^[L30]-48));
           L30 := (L30+1);
         end;
-        if ((L28 > G85) and (L28 < 31)) then begin
-          G85 := L28;
+        if ((L28 > NEXTSEG) and (L28 < 31)) then begin
+          NEXTSEG := L28;
         end;
         COMPOPTI.2();
       end else begin
-        G35 := (L5 = 43);
+        NOLOAD := (L5 = 43);
       end;
       goto L03FA;
 L0328:
-      G49 := (L5 = 45);
+      SHOWPROGRESS := (L5 = 45);
       goto L03FA;
 L032F:
-      FWRITECHAR(@G666, 12, 0);
+      FWRITECHAR(@LISTFILE, 12, 0);
       goto L03FA;
 L0339:
       if ((L5 = 43) or (L5 = 45)) then begin
-        G51 := (L5 = 43);
+        RANGECHECK := (L5 = 43);
       end else begin
         COMPOPTI.4();
       end;
       goto L03FA;
 L034D:
-      G34 := (L5 = 43);
-      G33 := (L4 = 43);
+      SWAPPING := (L5 = 43);
+      SWAPMORE := (L4 = 43);
       if (L4 in [$2800,$0000,$0000]) then begin
         G14 := (G14+1);
       end;
       goto L03FA;
 L036B:
-      G42 := (L5 = 43);
+      OPT_T := (L5 = 43);
       goto L03FA;
 L0372:
       if ((L5 = 43) or (L5 = 45)) then begin
-        G28 := (L5 = 45);
-        G51 := not (G28);
-        G47 := G51;
-        G39 := G51;
-        G52 := G28;
+        SYSCOMP := (L5 = 45);
+        RANGECHECK := not (SYSCOMP);
+        IOCHECK := RANGECHECK;
+        VARSTRING := RANGECHECK;
+        GOTOOK := SYSCOMP;
       end else begin
         if not (G36) then begin
-          FCLOSE(@G586, 0);
+          FCLOSE(@LIBFILE, 0);
           G29 := 1;
-          COMPOPTI.3(@G488, 40);
-          FOPEN(?, ?, ?, @G586, @G488, 1, 0);
+          COMPOPTI.3(@LIBNAME, 40);
+          FOPEN(?, ?, ?, @LIBFILE, @LIBNAME, 1, 0);
           if (CSP34() <> 0) then begin
             PASCALCO.2:ERROR(187);
           end;
@@ -7701,7 +7700,7 @@ L0372:
       end;
       goto L03FA;
 L03C3:
-      G39 := (L5 = 43);
+      VARSTRING := (L5 = 43);
       goto L03FA;
 L03CA:
       case <selector> of  { 67..86 }
@@ -7989,7 +7988,7 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   if (SY <> 18) then begin
     PASCALCO.2:ERROR(21);
   end;
-  if G43 then begin
+  if LISTING then begin
     G92 := (G92+1);
     G1^[G14] := 13;
     G14 := (G14+1);
@@ -7999,12 +7998,12 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   CSP9(@G22, @G91);
   G94 := (G91-G94);
   if G44 then begin
-    (@G335[@G479~[G13]{4per word,4 bits}*9w]+8)^ := 1;
+    (@G335[@G479~[LEVEL]{4per word,4 bits}*9w]+8)^ := 1;
     WRITELIN.1();
   end;
-  FCLOSE(@G586, 0);
-  FCLOSE(@G666, 1);
-  if G49 then begin
+  FCLOSE(@LIBFILE, 0);
+  FCLOSE(@LISTFILE, 1);
+  if SHOWPROGRESS then begin
     FWRITELN(I2,3);
   end;
   FWRITEINT(I2,3, G92, 0);
@@ -8016,7 +8015,7 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
     FWRITEINT(?, CSP24(I2,3, ((3600/flo(flt(G94)))*flt(G92))), 0);
     FWRITESTRING(I2,3, ' lines/min', 0);
   end;
-  if G49 then begin
+  if SHOWPROGRESS then begin
     FWRITELN(I2,3);
     FWRITESTRING(I2,3, 'Smallest available space = ', 0);
     FWRITEINT(I2,3, G89, 0);
@@ -8024,42 +8023,42 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   end;
   G9 := 0;
   CSP1(@G2, 650);
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    L2 := @G335[G13*9w];
+  while (LEVEL <= L1) do begin
+    L2 := @G335[LEVEL*9w];
     PASCALCO.21(L2^.f1);
     PASCALCO.21(L2^);
-    G13 := (G13+1);
+    LEVEL := (LEVEL+1);
   end;
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    CSP2((@G335[G13*9w]+2), 0, G2, G9, 8);
+  while (LEVEL <= L1) do begin
+    CSP2((@G335[LEVEL*9w]+2), 0, G2, G9, 8);
     G9 := (G9+8);
-    G13 := (G13+1);
+    LEVEL := (LEVEL+1);
   end;
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    PASCALCO.21(@G335[G13*9w]^.f8);
-    G13 := (G13+1);
+  while (LEVEL <= L1) do begin
+    PASCALCO.21(@G335[LEVEL*9w]^.f8);
+    LEVEL := (LEVEL+1);
   end;
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    PASCALCO.21(@G335[G13*9w]^.f7);
-    G13 := (G13+1);
+  while (LEVEL <= L1) do begin
+    PASCALCO.21(@G335[LEVEL*9w]^.f7);
+    LEVEL := (LEVEL+1);
   end;
-  G13 := 0;
+  LEVEL := 0;
   L1 := 15;
-  while (G13 <= L1) do begin
-    if (@G335[G13*9w]^.f6 <> 0) then begin
-      PASCALCO.21(PASCALCO.13(G13));
+  while (LEVEL <= L1) do begin
+    if (@G335[LEVEL*9w]^.f6 <> 0) then begin
+      PASCALCO.21(PASCALCO.13(LEVEL));
     end else begin
       PASCALCO.21(0);
     end;
-    G13 := (G13+1);
+    LEVEL := (LEVEL+1);
   end;
   CSP2(@G183, 0, @G185, 0, 4);
   PASCALCO.21(@G185[0]^);
@@ -8086,8 +8085,8 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   while (G9 < 432) do begin
     PASCALCO.20:EMIT(0);
   end;
-  if (G487 <> nil) then begin
-    CSP2(G487, 0, G2, G9, 80);
+  if (CODECOMMENT <> nil) then begin
+    CSP2(CODECOMMENT, 0, G2, G9, 80);
   end else begin
     CSP10(G2, G9, 80, 0);
   end;

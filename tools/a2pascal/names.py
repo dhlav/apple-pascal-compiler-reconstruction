@@ -67,6 +67,35 @@ GLOBALS_11: dict[int, str] = {
     61: "REALPTR",      # REAL      size 2 words
     66: "OUTPUTPTR",    # the OUTPUT file's identifier record
     67: "INPUTPTR",     # the INPUT file's identifier record
+
+    # Compiler-option state (finding 23). COMPOPTI.1 switches on the
+    # upper-cased option letter, so each of these is tied to its letter by
+    # the case table itself; the spellings are ours, the letters are not.
+    13:  "LEVEL",       # Zurich's `level`; 1 for the program block, and the
+                        # emitted LEX LEVEL byte is one less
+    28:  "SYSCOMP",     # $U-, compile at the system lexical level
+    30:  "OPT_F",       # $F, undocumented
+    33:  "SWAPMORE",    # $S++, the second swapping flag
+    34:  "SWAPPING",    # $S, selects PASCALCO.25 over PASCALCO.28
+    35:  "NOLOAD",      # $N
+    39:  "VARSTRING",   # $V
+    42:  "OPT_T",       # $T, undocumented
+    43:  "LISTING",     # $L
+    45:  "OPT_E",       # $E, undocumented
+    47:  "IOCHECK",     # $I
+    49:  "SHOWPROGRESS",  # NOT $Q -- true when quiet compiling is off
+    50:  "OPT_D",       # $D, undocumented
+    51:  "RANGECHECK",  # $R
+    52:  "GOTOOK",      # $G
+    85:  "NEXTSEG",     # $NS n, default 7, rejected unless < 31
+    487: "CODECOMMENT",  # $C, the 80-character codefile comment
+    488: "LIBNAME",    # $U filename, the library to search for units
+
+    # The four file variables (finding 10 listed them; finding 23 names them)
+    535: "INFOFILE",   # *SYSTEM.INFO, the unit symbol-table work file
+    586: "LIBFILE",    # SYSTEM.LIBRARY, or whatever $U filename named
+    626: "SOURCEFILE",  # the program text, and the $I include file
+    666: "LISTFILE",   # *SYSTEM.LST.TEXT, or whatever $L filename named
 }
 
 GLOBALS_13: dict[int, str] = {
@@ -83,6 +112,32 @@ GLOBALS_13: dict[int, str] = {
     64: "REALPTR",
     69: "OUTPUTPTR",
     70: "INPUTPTR",
+
+    # Finding 23, carried across by the correspondence table -- every one of
+    # these pairs is a 1.00-similarity match, and the 1.3 $U- arm sets the
+    # shifted numbers in the same order.
+    13:  "LEVEL",
+    28:  "SYSCOMP",
+    30:  "OPT_F",
+    34:  "SWAPMORE",
+    35:  "SWAPPING",
+    36:  "NOLOAD",
+    40:  "VARSTRING",
+    43:  "OPT_T",
+    44:  "LISTING",
+    46:  "OPT_E",
+    48:  "IOCHECK",
+    50:  "SHOWPROGRESS",
+    51:  "OPT_D",
+    52:  "RANGECHECK",
+    53:  "GOTOOK",
+    88:  "NEXTSEG",
+    605: "CODECOMMENT",
+    606: "LIBNAME",
+    665: "INFOFILE",
+    716: "LIBFILE",
+    756: "SOURCEFILE",
+    796: "LISTFILE",
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}

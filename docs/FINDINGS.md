@@ -1150,6 +1150,186 @@ All of this now lives in `tools/a2pascal/names.py`, and the lifter uses
 it, so `analysis/lifted/` reads `PASCALCO.10:SEARCHID` and `CHARPTR`
 instead of bare numbers.
 
+## 23. The Apple Pascal 1.3 manual, and the compiler's own option table
+
+**Source.** The Apple Pascal 1.3 manual set, scanned with an OCR text layer,
+read from `C:\dl\Image071217212805.pdf.duplex_text.pdf` (932 pages). **Not
+in this repo** — Apple copyright, same rule as Hyde. Page citations below
+are the manual's own part/page numbers, which is what to quote. The OCR is
+usable but not clean: it renders `{$S-}` as `{$5 --}` and mangles the option
+list on II-155 badly enough that the page had to be re-read as an image.
+Check anything load-bearing against the rendered page.
+
+This is the first vendor documentation in the project, and it lands on
+three things the binary had left open.
+
+### 23a. The procedure attribute table, and the function result area
+
+IV-33 gives the attribute-table layout field for field, and it matches the
+reader in `codefile.py` exactly. Two fields are worth quoting.
+
+**PARAMETER SIZE** — "This field specifies the number of bytes of
+parameters passed to a procedure from its calling procedure. *If the
+procedure is a function, this number includes the number of bytes to be
+reserved for the returned value.*" That is finding 22a, from the vendor,
+independently of the 154-out-of-154 census. VERIFIED SOURCE FACT.
+
+**RNP** (IV-73) — "DB is the number of words that should be returned as a
+function value (0 for procedures, 1 for nonreal functions, and 2 for real
+functions)." Consistent with the `RNP` census: all 19 functions in the
+compiler return one word, so none of them returns a real. Note the
+refinement the binary adds and the manual does not state: the caller
+reserves **two** words regardless — every one of the 19 has
+`param_size/2 - 2` real argument words, not `- 1`.
+
+**LEX LEVEL** — "the lexical level of the Pascal operating system is -1,
+the lexical level of a user program is 0, that of the first nested
+procedure is 1, and so forth." That closes the last open question in
+finding 16.
+
+### 23b. CGP is same-segment — a lifter bug
+
+IV-73: `CGP` is "Call global procedure. Call procedure number UB, which is
+at lexical level 1 **and in the same segment as the currently executing
+procedure**." The lifter had been resolving `CGP` against segment 1
+throughout, which is indistinguishable from the manual's rule everywhere in
+the compiler except one site — and that site exists:
+
+    DECLARAT.11, 1.1 $104D / 1.3 $106B
+        SLDC 4 / LDCI 512 / SLDC 1 / UNI / ADJ 4     { a four-word set }
+        CGP 1
+
+`DECLARAT.1` takes 8 bytes of parameters; `PASCALCO.1` takes 4. The set
+being pushed is four words. So the call is `DECLARAT.1`, the phase's own
+entry point, taking a symbol set — and the lifter had been rendering it as
+`PASCALCO.1` with the arguments truncated. Fixed; the one join in each
+release where the paths disagreed on stack depth at that point went away
+with it (91 → 89). VERIFIED BINARY FACT, and a good argument for reading
+the vendor documentation earlier than this.
+
+`CBP` (lex -1 or 0) never occurs in the compiler, so nothing rests on it.
+
+### 23c. `{$U-}`, and what the compiler was actually compiled with
+
+II-155: `{$U-}` "Tells the Compiler to compile the program at the system
+lexical level. Also sets certain other options as follows: R-, G+, I-, V-."
+
+`COMPOPTI.1` is a `case` on the upper-cased option letter over 67..86,
+`'C'`..`'V'`, and its `'U'` arm is that sentence in p-code:
+
+    85 'U':  if (L5 = '+') or (L5 = '-') then begin
+               SYSCOMP    := (L5 = '-');
+               RANGECHECK := not SYSCOMP;      { R- }
+               IOCHECK    := RANGECHECK;       { I- }
+               VARSTRING  := RANGECHECK;       { V- }
+               GOTOOK     := SYSCOMP;          { G+ }
+             end else ...open the $U library file...
+
+Four flags, exactly the four the manual names, each with the polarity the
+manual gives — and each is independently confirmed as that option's flag by
+its own arm of the same `case`: `'R'` writes `RANGECHECK`, `'I'` writes
+`IOCHECK`, `'V'` writes `VARSTRING`, `'G'` writes `GOTOOK`. Reading the
+letter-to-global mapping off the case table is a VERIFIED BINARY FACT; the
+spellings above are ours.
+
+That mapping names a block of globals. 1.1 numbering, 1.3 in
+`tools/a2pascal/names.py`:
+
+| letter | 1.1 global | meaning | default set by COMPINIT.9 |
+|---|---|---|---|
+| `$C` | 487 | codefile comment, `string[80]` | `nil` |
+| `$D` | 50 | undocumented | 0 |
+| `$E` | 45 | undocumented | 0 |
+| `$F` | 30 | undocumented | 0 |
+| `$G` | 52 | goto allowed | 0 — manual says `{$G-}` |
+| `$I` | 47 | I/O check (or include file) | 1 — `{$I+}` |
+| `$L` | 43 | listing | 0 — `{$L-}` |
+| `$N` | 35 | no load | 0 — `{$N-}` |
+| `$NS` | 85 | next segment number | 7 |
+| `$Q` | 49 | *inverted*: true when quiet is off | from `I3,14` |
+| `$R` | 51 | range check (or resident) | 1 — `{$R+}` |
+| `$S` | 34, 33 | swapping, and the `$S++` second flag | 0 — `{$S-}` |
+| `$T` | 42 | undocumented | 0 |
+| `$U` | 28 | compile at system level | 0 — `{$U+}` |
+| `$V` | 39 | varstring check | 1 — `{$V+}` |
+
+Every documented default in that last column is the manual's default. Four
+letters — `D`, `E`, `F`, `T` — are boolean option flags with no entry in
+the manual; they are named `OPT_D` and so on rather than guessed at.
+
+`$NS` is the sharpest of these. II-152: "the letters NS followed by an
+unsigned integer which should be in the range 7..57 for a 128K system and
+7..31 for a 64K system." The code parses at most two digits and accepts the
+value only `if (n > NEXTSEG) and (n < 31)` — the 64K bound, on the nose,
+with the default sitting at the bottom of the documented range.
+
+**And the compiler itself was not compiled with `{$U-}`.** `PASCALCO.1` has
+`lex=0`, which 23a says is the *user program* level; system level would be
+-1. The mechanism is visible in the compiler's own state: `G13` is Zurich's
+`level`, initialised to 1 by `COMPINIT.9` and reset to 0 in the `SYSCOMP`
+branch of `COMPINIT.1`, just before the program heading is parsed, and the
+emitted LEX LEVEL byte is one
+less than it. So `{$U-}` would have produced `lex=-1` for the outermost
+block. It did not. Nothing in either codefile carries a negative lex level
+— every system utility on both disks (`SYSTEM.LINKER`, `SYSTEM.ASSMBLER`,
+`LIBRARY.CODE`, `LIBMAP.CODE`) has exactly the same shape, one lex-0 main
+and everything else at 1 or deeper. STRONG INFERENCE, one step short of
+verified only because neither disk carries `SYSTEM.PASCAL`, which is the
+one artifact on hand that *was* built `{$U-}` (`GLOBALS.TEXT` line 2). If a
+boot disk is ever added to `evidence/`, that is the check to run.
+
+What the compiler *was* built with is partly recoverable the same way.
+There is not one `CHK` instruction in 18,458 p-code instructions across the
+1.1 compiler, against 85 `IXA` array indexings — `{$R+}` is the default and
+would have emitted them everywhere. So the source carries an explicit
+`{$R-}`, and given that it is full of `goto`, a `{$G+}` as well. Both are
+directives the reconstruction has to reproduce.
+
+### 23d. The four file variables
+
+Finding 16 listed four FIBs at words 535, 586, 626, 666 without knowing
+which was which. `PASCALCO.1` opens the whole program with four `FINIT`
+calls, and the option handler and the reader loops say what each one is:
+
+| 1.1 | 1.3 | file |
+|---|---|---|
+| 535 | 665 | `*SYSTEM.INFO[*]`, the unit symbol-table work file (`UNITPART.2`) |
+| 586 | 716 | the library — `SYSTEM.LIBRARY`, or the `$U filename` argument |
+| 626 | 756 | the source text, read two blocks at a time into `G1`; also what `$I filename` reopens |
+| 666 | 796 | the listing — `*SYSTEM.LST.TEXT`, or the `$L filename` argument |
+
+The window buffers keep the +300 offset in 1.1 (835, 886, 926, 966) and in
+1.3 (965, 1016, 1056, 1096). The internal layout of a FIB is still not
+resolved; only the identities are.
+
+`PASCALCO.1` in full is now four `FINIT`s, `COMPINIT.1`, a two-way branch on
+`SWAPPING` into `PASCALCO.28` or `PASCALCO.25`, and four `FCLOSE`s. That is
+the whole program body, and it confirms `G34` as the `$S` flag from a second
+direction.
+
+### 23e. Two more manuals, and what they confirm about 1.1
+
+Also on hand, also **not in this repo**:
+
+* `C:\dl\Apple_Pascal_Update_v1.1_text.pdf` — the Version 1.1 update notice
+  bound with the 1.2 addendum. Has an OCR layer, two-column, readable.
+* `C:\dl\Apple Pascal Language Reference Manual.pdf` — the 1980 edition,
+  Apple product #A2L0027, 120 pages of two-up scans with **no text layer**.
+  This is the 1.1-era language reference, so it is the right authority for
+  the standard-identifier table in finding 22b. It would have to be OCRed
+  first; that has not been done.
+
+Three things in the update notice line up with the 1.1 binary:
+
+* "Compiler options are no longer required to be capitalized." That is the
+  `if (L6 > 96) then L6 := L6 - 32` at the head of `COMPOPTI.1` — the arm
+  dispatch happens on the upper-cased letter, in both releases.
+* `$V` and `$NS` are both listed as *new in 1.1*, and both arms are present
+  in the 1.1 binary (`VARSTRING`, `NEXTSEG`).
+* 1.1 raised the codefile limit to 16 segments, "one for the program itself,
+  and up to 15" for the rest, against 6 before. `SYSTEM.COMPILER` has 15,
+  and could not have been built by its predecessor.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
@@ -1163,7 +1343,7 @@ instead of bare numbers.
   size depends on the `FSOFTBUF` variant, so the non-uniform spacing is
   plausible, but the exact layout has not been resolved and the parallel
   structure of the two groups is unexplained. Do not assume these are two
-  arrays.
+  arrays. (Which file is which *is* now known — finding 23d.)
 * One word of the 1222-word global area in 1.1 is unaccounted for.
 * ~~`$D1`-`$D6` are unidentified.~~ Resolved by finding 17: `STE`, `NOP`,
   `EFJ`, `NFJ`, `BPT`, `XIT`. Still none of them occur in SYSTEM.COMPILER.
@@ -1173,6 +1353,14 @@ instead of bare numbers.
   at 6, are inferred from the gap rather than observed (finding 22b).
 * Word 4 of the `identifier` variant part — the 13-word `klass` — has no
   name yet. `klass` 3 and 4 both need one.
-* Segment 1.1 PASCALCO proc 1 has `lex=0`; every other procedure in the
-  compiler has lex 1 or greater. Consistent with it being the outermost
-  program block, but the lex-level convention has not been pinned down.
+* ~~Segment 1.1 PASCALCO proc 1 has `lex=0`; the lex-level convention has
+  not been pinned down.~~ Resolved by finding 23a: OS is -1, user program
+  is 0, first nested procedure is 1. `PASCALCO.1` is an ordinary user
+  program main, so the compiler was **not** built `{$U-}` (23c).
+* Four compiler option letters — `$D`, `$E`, `$F`, `$T` — are boolean flags
+  in `COMPOPTI.1` with no entry in the 1.3 manual (finding 23c). An earlier
+  manual, or an Apple internal one, might name them.
+* `{$U-}` producing `lex=-1` is inferred, not observed: neither disk in
+  `evidence/` carries `SYSTEM.PASCAL`, the one artifact on hand known to
+  have been built that way. Adding a boot disk would settle it — the same
+  addition finding 6's `SYSTEM.LIBRARY` question is waiting on.

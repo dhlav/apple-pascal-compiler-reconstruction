@@ -62,6 +62,14 @@ Done, and reproducible via `python tools/build_all.py`:
    those needs a `function`, not a `procedure`, header with a matching
    result type.
 
+   Finding 23 supplies a second block, and a different *kind* of block: the
+   twenty-odd compiler-option flags, read off `COMPOPTI.1`'s case table and
+   cross-checked against `COMPINIT.9`'s defaults and the manual's. Those are
+   simple `BOOLEAN`s and a couple of `INTEGER`s, they cluster in the low
+   twenties-to-fifties, and their defaults are known — which makes them the
+   easiest run of the `VAR` block to lay out. Also the four file variables
+   (23d), now identified individually.
+
    Finding 22 supplies the first real block of it: twelve named globals in
    each release, and — more useful — the two record types nearly all of
    them point at, `structure` and `identifier`, with field offsets and two
@@ -154,7 +162,7 @@ Done, and reproducible via `python tools/build_all.py`:
      constructs rather than control flow is probably the single biggest
      remaining win.
 
-   Also open, and harder: 91 joins where the two paths disagree on stack
+   Also open, and harder: 89 joins where the two paths disagree on stack
    depth. Mostly UCSD sets, which are variable-length at runtime, so a
    static word-count model cannot always size them. Do not "fix" these by
    loosening the merge — the report is what makes a wrong callee arity
@@ -176,5 +184,13 @@ Done, and reproducible via `python tools/build_all.py`:
   passing check actually rules out.
 * Hyde's *P-Source* (finding 7a) settles p-machine questions directly. Use
   it before inferring.
+* The Apple Pascal 1.3 manual (finding 23) is the vendor's own account of
+  the p-machine, the codefile format and every compiler option. Use it
+  before inferring too — it caught a `CGP` bug the binary had been hiding.
+  Its OCR layer is unreliable for anything dense; re-read the page as an
+  image before quoting it.
+* The reconstructed source has to carry the directives the original had.
+  `{$R-}` is established (no `CHK` anywhere) and `{$G+}` is all but certain;
+  `{$U-}` is ruled out. See finding 23c.
 * When a 1.1 fact is established, push it through the correspondence table
   and confirm it holds in 1.3. Divergences are findings, not noise.

@@ -14,7 +14,8 @@ and where the inherited ChatGPT handoff was wrong. Then
 evidence/          original inputs, never modified
                    (two external sources are read in place and NOT copied
                    here: John Brooks' Apple Pascal 1.4 interpreter source,
-                   and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
+                   Peter Miller's ucsd-psystem-xc, and the Apple Pascal 1.3
+                   manual. See findings 17, 18, 23.)
   disks/           the two Apple Pascal .dsk images and ii0src.sdk
   reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
 tools/             all analysis code
@@ -73,6 +74,13 @@ with the `structform` and `klass` enumerations, and the standard types
 `INTEGER`, `REAL`, `CHAR`, `BOOLEAN`, `STRING`, `TEXT` and `INTERACTIVE`
 named by the compiler itself (finding 22). 1.3 adds two more, `BYTESTREAM`
 and `WORDSTREAM`.
+
+The Apple Pascal 1.3 manual (finding 23) settles the lex-level convention,
+confirms that a function's parameter area includes its result slot, and
+corrects the lifter's reading of `CGP`. Cross-reading it against
+`COMPOPTI.1` names the whole compiler-option block — `{$R-}`, `{$G+}` and
+the rest — and shows that `SYSTEM.COMPILER` itself was compiled with range
+checking off but *not* at the system lexical level.
 
 **All 287 procedures across the two releases lift to structured
 pseudo-Pascal** with the evaluation stack fully tracked, and **201 of them
