@@ -9,6 +9,7 @@ from a2pascal.codefile import CodeFile
 from a2pascal.pcode import disassemble, sweep_exit
 from a2pascal.lift import lift, render
 from a2pascal.structure import structure
+from a2pascal.names import procname
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "lifted"
@@ -50,10 +51,16 @@ for ver, fname in DISKS.items():
                 if i.mnemonic in ("RNP", "RBP"):
                     fn = f" : <{i.operands[0]} word result>" if i.operands[0] else ""
                     break
-            hdr = (f"\n{'function' if fn else 'procedure'} {seg.name}.{p.number}"
-                   f"(params {p.param_size // 2} words){fn};  "
+            nm = procname(seg.name, p.number, ver)
+            # A function's parameter area includes the two-word result
+            # slot the caller reserves, so its real argument count is two
+            # words fewer (tools/probes/probe_funcresult.py).
+            argw = p.param_size // 2 - (2 if fn else 0)
+            hdr = (f"\n{'function' if fn else 'procedure'} {seg.name}."
+                   f"{p.number}{':' + nm if nm else ''}"
+                   f"(args {argw} words){fn};  "
                    f"{{ locals {p.data_size // 2} words, lex {p.lex_level} }}")
-            blocks = lift(seg, p, cf)
+            blocks = lift(seg, p, cf, ver)
             if any(b.incomplete for b in blocks):
                 for b in blocks:
                     for s in b.stmts:

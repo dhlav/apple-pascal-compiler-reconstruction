@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.lift import lift, render
+from a2pascal.names import procname
 
 ROOT = Path(__file__).resolve().parent.parent
 DISKS = {
@@ -34,8 +35,11 @@ for spec in args:
         if i.mnemonic in ("RNP", "RBP"):
             fn = f" : <{i.operands[0]} word result>" if i.operands[0] else ""
             break
+    nm = procname(segname, int(num), ver)
+    argw = p.param_size // 2 - (2 if fn else 0)
     hdr = (f"{'function' if fn else 'procedure'} {segname}.{num}"
-           f"(params {p.param_size // 2} words){fn};  "
+           f"{':' + nm if nm else ''}"
+           f"(args {argw} words){fn};  "
            f"{{ locals {p.data_size // 2} words, lex {p.lex_level} }}")
-    print(render(lift(seg, p, cf), hdr))
+    print(render(lift(seg, p, cf, ver), hdr))
     print()

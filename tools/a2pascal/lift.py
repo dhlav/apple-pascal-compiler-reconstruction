@@ -23,6 +23,7 @@ from pathlib import Path
 
 from .pcode import Insn, disassemble, sweep_exit
 from .syscall import segment0_signatures
+from .names import globalname, procname
 
 _GLOBALS_TEXT = (Path(__file__).resolve().parents[2]
                  / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT")
@@ -55,9 +56,14 @@ except OSError:
 # (finding 19). They carry no p-code, so their signatures cannot be read
 # off a return instruction the way every other callee's can, and without
 # them the four procedures that call them cannot be lifted.
+# Native procedures carry no p-code to read a signature out of, so it has
+# to be supplied. The word count is the total the call pops, which for a
+# function includes the two-word result area the caller reserves
+# (tools/probes/probe_funcresult.py): TREESEARCH takes three arguments --
+# the same three 1.1 passes to CSP 8 -- plus that area, so five.
 NATIVE_SIG = {
     ("PASCALCO", 2): (2, False, "IDSEARCH"),
-    ("PASCALCO", 3): (3, True, "TREESEARCH"),
+    ("PASCALCO", 3): (5, True, "TREESEARCH"),
 }
 
 CSP_EFFECT = {
@@ -172,9 +178,14 @@ def split_blocks(stream: list[Insn]) -> list[Block]:
 
 
 class _Lifter:
-    def __init__(self, param_words: int, callee_words):
+    def __init__(self, param_words: int, callee_words, release: str = "1.1"):
         self.param_words = param_words
         self.callee_words = callee_words       # (kind, a, b) -> words popped
+        self.release = release
+
+    def g(self, n: int) -> str:
+        """Render a global by its recovered name where one is known."""
+        return globalname(n, self.release) or f"G{n}"
 
     def run(self, b: Block, entry: list[str] | None = None) -> list[str]:
         st: list[str] = list(entry or [])
@@ -227,13 +238,13 @@ class _Lifter:
                 elif m in ("SLDL", "LDL"):
                     st.append(f"L{o[0]}")
                 elif m in ("SLDO", "LDO"):
-                    st.append(f"G{o[0]}")
+                    st.append(self.g(o[0]))
                 elif m == "LOD":
                     st.append(f"I{o[0]},{o[1]}")
                 elif m == "LLA":
                     st.append(f"@L{o[0]}")
                 elif m == "LAO":
-                    st.append(f"@G{o[0]}")
+                    st.append(f"@{self.g(o[0])}")
                 elif m == "LDA":
                     st.append(f"@I{o[0]},{o[1]}")
                 elif m in ("SIND", "IND"):
@@ -269,7 +280,7 @@ class _Lifter:
                 elif m == "STL":
                     v = pop(); out.append(f"L{o[0]} := {v};")
                 elif m == "SRO":
-                    v = pop(); out.append(f"G{o[0]} := {v};")
+                    v = pop(); out.append(f"{self.g(o[0])} := {v};")
                 elif m == "STR":
                     v = pop(); out.append(f"I{o[0]},{o[1]} := {v};")
                 elif m == "STO":
@@ -325,6 +336,16 @@ class _Lifter:
                     if words is None:
                         raise KeyError(label)
                     args = [pop() for _ in range(words)][::-1]
+                    if isfn:
+                        # A function call reserves two words for the result
+                        # at the top of its own parameter area, and the
+                        # caller pushes them as two literal zeros -- 154 of
+                        # 154 function call sites across both releases, and
+                        # 0 of 2961 procedure call sites
+                        # (tools/probes/probe_funcresult.py). They are not
+                        # arguments, so they do not belong in the argument
+                        # list.
+                        args = args[:-2]
                     call = f"{label}({', '.join(args)})"
                     (st.append(call) if isfn else out.append(call + ";"))
                 elif m in ("FJP", "UJP", "RNP", "RBP", "NOP", "XJP"):
@@ -343,7 +364,7 @@ class _Lifter:
         return st
 
 
-def lift(seg, proc, cf) -> list[Block]:
+def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
     """Lift one procedure. `cf` supplies callee parameter sizes."""
     body, _ = disassemble(seg.data, proc.enter_ic, proc.exit_ic, proc.jtab)
     ex, _ = sweep_exit(seg.data, proc.exit_ic, proc.jtab - 8, proc.jtab)
@@ -351,6 +372,10 @@ def lift(seg, proc, cf) -> list[Block]:
     blocks = split_blocks(stream)
 
     segbynum = {s.seg_num: s for s in cf.segments}
+
+    def named(segname, num):
+        nm = procname(segname, num, release)
+        return f"{segname}.{num}" + (f":{nm}" if nm else "")
 
     def callee_words(mnem, ops):
         if mnem == "CXP":
@@ -360,14 +385,14 @@ def lift(seg, proc, cf) -> list[Block]:
                     name, words, is_fn = OS_SIG[n]
                     return words, name, is_fn
                 return None, f"OS.{n} arity unknown", False
-            tgt, label = segbynum.get(s), f"{segbynum[s].name}.{ops[1]}" \
-                if ops[0] in segbynum else f"seg{s}.{n}"
+            tgt = segbynum.get(s)
+            label = named(tgt.name, n) if tgt else f"seg{s}.{n}"
         elif mnem == "CGP":
             tgt, n = segbynum.get(1), ops[0]
-            label = f"{tgt.name}.{n}" if tgt else f"?.{n}"
+            label = named(tgt.name, n) if tgt else f"?.{n}"
         else:
             tgt, n = seg, ops[0]
-            label = f"{seg.name}.{n}"
+            label = named(seg.name, n)
         if tgt is None:
             return None, label, False
         p = next((x for x in tgt.procedures if x.number == n), None)
@@ -381,7 +406,7 @@ def lift(seg, proc, cf) -> list[Block]:
             if sig is None:
                 return None, label, False
             words, isfn, nm = sig
-            return words, f"{label} {nm}", isfn
+            return words, label if nm in label else f"{label} {nm}", isfn
         isfn = False
         for i in reversed(disassemble(tgt.data, p.enter_ic, p.exit_ic, p.jtab)[0]
                           + sweep_exit(tgt.data, p.exit_ic, p.jtab - 8, p.jtab)[0]):
@@ -390,7 +415,7 @@ def lift(seg, proc, cf) -> list[Block]:
                 break
         return p.param_size // 2, label, isfn
 
-    lifter = _Lifter(proc.param_size // 2, callee_words)
+    lifter = _Lifter(proc.param_size // 2, callee_words, release)
     addrs = [b.start for b in blocks]
     for k, b in enumerate(blocks):
         last = b.insns[-1]

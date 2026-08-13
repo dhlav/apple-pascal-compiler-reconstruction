@@ -11,7 +11,7 @@ listed verbatim.
 SEGMENT 1 PASCALCO
 ======================================================================
 
-procedure PASCALCO.1(params 2 words);  { locals 1355 words, lex 0 }
+procedure PASCALCO.1(args 2 words);  { locals 1355 words, lex 0 }
   FINIT(@G796, @G1096, -(2));
   FINIT(@G716, @G1016, -(1));
   FINIT(@G756, @G1056, -(1));
@@ -32,7 +32,7 @@ procedure PASCALCO.2;  { native 6502, not lifted }
 
 procedure PASCALCO.3;  { native 6502, not lifted }
 
-procedure PASCALCO.4(params 1 words);  { locals 92 words, lex 1 }
+procedure PASCALCO.4:ERROR(args 1 words);  { locals 92 words, lex 1 }
   if ((I2,12 <> G14) or (I2,11 <> G93)) then begin
     I2,11 := G93;
     I2,12 := G14;
@@ -84,23 +84,23 @@ L010E:
     end;
   end;
 
-procedure PASCALCO.5(params 0 words);  { locals 1 words, lex 1 }
+procedure PASCALCO.5(args 0 words);  { locals 1 words, lex 1 }
   G14 := 0;
   G98 := 0;
   if G33 then begin
     if (G32 and not (G37)) then begin
       CSP2(G1, G708, G2, 0, 1024);
-      PASCALCO.24(1);
+      PASCALCO.24:FLUSHBUFFER(1);
       G708 := 0;
     end;
   end;
   if G37 then begin
     if (G715 = 0) then begin
-      if (FBLOCKIO(I2,8, G1, 0, 2, G93, 1, 0, 0) <> 2) then begin
+      if (FBLOCKIO(I2,8, G1, 0, 2, G93, 1) <> 2) then begin
         G37 := 0;
       end;
     end else begin
-      if (FBLOCKIO(@G716, G1, 0, 2, G93, 1, 0, 0) <> 2) then begin
+      if (FBLOCKIO(@G716, G1, 0, 2, G93, 1) <> 2) then begin
         G37 := 0;
       end;
     end;
@@ -113,9 +113,9 @@ procedure PASCALCO.5(params 0 words);  { locals 1 words, lex 1 }
   end;
   if not (G37) then begin
     if G38 then begin
-      if (FBLOCKIO(@G756, G1, 0, 2, G93, 1, 0, 0) <> 2) then begin
+      if (FBLOCKIO(@G756, G1, 0, 2, G93, 1) <> 2) then begin
         if (CSP34() <> 0) then begin
-          PASCALCO.4(403);
+          PASCALCO.4:ERROR(403);
         end;
         FCLOSE(@G756, 0);
         G38 := 0;
@@ -126,8 +126,8 @@ procedure PASCALCO.5(params 0 words);  { locals 1 words, lex 1 }
     end;
   end;
   if not ((G38 or G37)) then begin
-    if (FBLOCKIO(I2,9, G1, 0, 2, G93, 1, 0, 0) <> 2) then begin
-      PASCALCO.4(401);
+    if (FBLOCKIO(I2,9, G1, 0, 2, G93, 1) <> 2) then begin
+      PASCALCO.4:ERROR(401);
     end;
   end;
   if (G14 = 0) then begin
@@ -137,7 +137,7 @@ procedure PASCALCO.5(params 0 words);  { locals 1 words, lex 1 }
   end;
   G93 := (G93+2);
 
-procedure PASCALCO.6(params 0 words);  { locals 53 words, lex 1 }
+procedure PASCALCO.6:ERRORWITHTEXT(args 0 words);  { locals 53 words, lex 1 }
   L1 := 58;
   if G39 then begin
     L2 := 68;
@@ -186,24 +186,20 @@ procedure PASCALCO.6(params 0 words);  { locals 53 words, lex 1 }
     CSP0();
   end;
 
-procedure PASCALCO.7(params 1 words);  { locals 3 words, lex 1 }
+procedure PASCALCO.7:ENTERID(args 1 words);  { locals 3 words, lex 1 }
   L3 := @G134[G8*4w]^;
   if (L3 = nil) then begin
     @G134[G8*4w]^ := L1;
   end else begin
-    L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
-L03A2:
-    { paths disagree on stack depth here }
-    if not ((L4 = 0)) then goto L03C2;
-    PASCALCO.4(101);
-    if (L2^.f4 = nil) then begin
-      L4 := 1;
-    end else begin
-      L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
+    L4 := PASCALCO.3:TREESEARCH(L3, @L2, L1);
+    while (L4 = 0) do begin
+      PASCALCO.4:ERROR(101);
+      if (L2^.f4 = nil) then begin
+        L4 := 1;
+      end else begin
+        L4 := PASCALCO.3:TREESEARCH(L2^.f4, @L2, L1);
+      end;
     end;
-    { paths disagree on stack depth here }
-    goto L03A2;
-L03C2:
     if (L4 = 1) then begin
       (L2+4)^ := L1;
     end else begin
@@ -213,7 +209,7 @@ L03C2:
   (L1+5)^ := nil;
   (L1+4)^ := nil;
 
-procedure PASCALCO.8(params 0 words);  { locals 5 words, lex 1 }
+procedure PASCALCO.8:INSYMBOL(args 0 words);  { locals 5 words, lex 1 }
   if G26 then begin
     G82 := G81;
     G26 := 0;
@@ -244,7 +240,7 @@ L0528:
   end;
   goto L076A;
 L0588:
-  PASCALCO.2 IDSEARCH(@G14, G1);
+  PASCALCO.2:IDSEARCH(@G14, G1);
   goto L076A;
 L058F:
   PASCALCO.28(125);
@@ -475,35 +471,34 @@ L076A:
   goto L0518;
   goto L0784;
 L077F:
-  PASCALCO.4(400);
+  PASCALCO.4:ERROR(400);
 L0784:
   G14 := (G14+1);
 
-procedure PASCALCO.9(params 2 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.9:SEARCHSECTION(args 2 words);  { locals 0 words, lex 1 }
   if (L2 <> nil) then begin
-    if (PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0) then begin
+    if (PASCALCO.3:TREESEARCH(L2, L1, @G17) = 0) then begin
     end else begin
       L1^ := nil;
     end;
   end else begin
     L1^ := nil;
   end;
-  { paths disagree on stack depth here }
 
-procedure PASCALCO.10(params 2 words);  { locals 2 words, lex 1 }
+procedure PASCALCO.10:SEARCHID(args 2 words);  { locals 2 words, lex 1 }
   G24 := G8;
   L4 := 0;
 L07CE:
   if not ((G24 >= L4)) then goto L0815;
   L3 := @G134[G24*4w]^;
   if not ((L3 <> nil)) then goto L080D;
-  if not ((PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0)) then goto L080A;
+  if not ((PASCALCO.3:TREESEARCH(L3, @L3, @G17) = 0)) then goto L080A;
   if not ((L2 in 1)) then goto L07FC;
   goto L085C;
   goto L0808;
 L07FC:
   if G54 then begin
-    PASCALCO.4(103);
+    PASCALCO.4:ERROR(103);
   end else begin
     L3 := nil;
   end;
@@ -513,12 +508,11 @@ L0808:
 L080A:
   L3 := nil;
 L080D:
-  { paths disagree on stack depth here }
   G24 := (G24-1);
   goto L07CE;
 L0815:
   if G54 then begin
-    PASCALCO.4(104);
+    PASCALCO.4:ERROR(104);
     if (L2 in 1) then begin
       L3 := G78;
     end else begin
@@ -545,14 +539,14 @@ L085C:
   { paths disagree on stack depth here }
   L1^ := L3;
 
-procedure PASCALCO.11(params 3 words);  { locals 1 words, lex 1 }
+procedure PASCALCO.11:GETBOUNDS(args 3 words);  { locals 1 words, lex 1 }
   L4 := L3;
   if (L4^.f1 = 1) then begin
     L2^ := L4^.f4;
     L1^ := L4^.f3;
   end else begin
     L2^ := 0;
-    if (L3 = G62) then begin
+    if (L3 = CHARPTR) then begin
       L1^ := 255;
     end else begin
       if (L3^.f3 <> nil) then begin
@@ -563,21 +557,21 @@ procedure PASCALCO.11(params 3 words);  { locals 1 words, lex 1 }
     end;
   end;
 
-procedure PASCALCO.12(params 3 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.12(args 3 words);  { locals 0 words, lex 1 }
   if (L3^ < L2) then begin
     L3^ := (L3^+1);
   end else begin
-    PASCALCO.4(L1);
+    PASCALCO.4:ERROR(L1);
   end;
 
-procedure PASCALCO.13(params 1 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.13(args 1 words);  { locals 0 words, lex 1 }
   if L1 then begin
     PASCALCO.12(@G88, 63, 354);
   end;
   PASCALCO.12(@G21, 15, 354);
   @G589~[G13]{4per word,4 bits} := G21;
 
-procedure PASCALCO.14(params 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.14(args 0 words);  { locals 0 words, lex 1 }
   G95 := (G95+1);
   G14 := (G14+1);
   if G50 then begin
@@ -590,14 +584,14 @@ procedure PASCALCO.14(params 0 words);  { locals 0 words, lex 1 }
     end;
   end;
   if G44 then begin
-    PASCALCO.6();
+    PASCALCO.6:ERRORWITHTEXT();
   end;
   G47 := 0;
   if (G1^[G14] = 0) then begin
     if not (G37) then begin
       G14 := (CSP11((1024-G14), 1, 0, G1, G14, 0)+G14);
       if (G14 <> 1024) then begin
-        PASCALCO.4(400);
+        PASCALCO.4:ERROR(400);
       end;
     end;
     PASCALCO.5();
@@ -619,7 +613,7 @@ procedure PASCALCO.14(params 0 words);  { locals 0 words, lex 1 }
     G96 := G9;
   end;
 
-function PASCALCO.15(params 3 words) : <1 word result>;  { locals 2 words, lex 1 }
+function PASCALCO.15(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
   L5 := 0;
   { unmodelled packed store of 2 }
   L4 := (@L5^[0] <> 0);
@@ -641,42 +635,42 @@ function PASCALCO.15(params 3 words) : <1 word result>;  { locals 2 words, lex 1
   { left on stack: @L5 }
   { left on stack: 3 }
 
-procedure PASCALCO.16(params 4 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.16(args 4 words);  { locals 0 words, lex 1 }
   while not ((G15 in @L1^<4w>)) do begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end;
 
-function PASCALCO.17(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+function PASCALCO.17:STRING(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
   if (L3 <> nil) then begin
     if (L3^.f1 = 5) then begin
-      L1 := (L3^.f4 and (L3^.f3 = G62));
+      L1 := (L3^.f4 and (L3^.f3 = CHARPTR));
     end;
   end;
 
-function PASCALCO.18(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+function PASCALCO.18:STRINGTYPE(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
-  if PASCALCO.17(L3, 0, 0) then begin
+  if PASCALCO.17:STRING(L3) then begin
     L1 := L3^.f7;
   end;
 
-function PASCALCO.19(params 3 words) : <1 word result>;  { locals 0 words, lex 1 }
+function PASCALCO.19:LONGSIZE(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := (((L3+3) div 4)+1);
 
-procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
+procedure PASCALCO.20:CONSTANT(args 6 words);  { locals 6 words, lex 1 }
   L7 := nil;
   L1^ := 0;
   if not ((G15 in @G129^<4w>)) then begin
-    PASCALCO.4(50);
+    PASCALCO.4:ERROR(50);
     PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G129^<4w>),4));
   end;
   if (G15 in @G129^<4w>) then begin
     if (G15 = 37) then begin
       if (G22 = 1) then begin
-        L7 := G62;
+        L7 := CHARPTR;
       end else begin
         CSP1(@L7, 9);
-        move(L7, G55, 9 words);
+        move(L7, STRINGPTR, 9 words);
         (L7+8)^ := G22;
         (L7+2)^ := nil;
         CSP1(@L10, 130);
@@ -684,7 +678,7 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
         G23 := L10;
       end;
       move(L1, @G23, 1 words);
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
       L9 := 0;
       if (G16 and (96 in 1)) then begin
@@ -693,20 +687,20 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
         end else begin
           L9 := 2;
         end;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
       if (G15 = 0) then begin
-        PASCALCO.10(adjust(1,1), @L8);
+        PASCALCO.10:SEARCHID(adjust(1,1), @L8);
         L12 := L8;
         L7 := L12^.f6;
         move(L1, (L12+9), 1 words);
         if (L9 <> 0) then begin
-          if (L7 = G12) then begin
+          if (L7 = INTPTR) then begin
             if (L9 = 2) then begin
               L1^ := -(L1^);
             end;
           end else begin
-            if (L7 = G64) then begin
+            if (L7 = REALPTR) then begin
               if (L9 = 2) then begin
                 CSP1(@L10, 3);
                 L10^ := 0;
@@ -714,7 +708,7 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
                 L1^ := L10;
               end;
             end else begin
-              if PASCALCO.21(L7, G63, 0, 0) then begin
+              if PASCALCO.21(L7, LONGPTR) then begin
                 if (L9 = 2) then begin
                   CSP1(@L10, 12);
                   move(L10, L1^, 130 words);
@@ -727,28 +721,28 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
                   L1^ := L10;
                 end;
               end else begin
-                PASCALCO.4(105);
+                PASCALCO.4:ERROR(105);
               end;
             end;
           end;
         end;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
         if (G15 = 35) then begin
           if (L9 = 2) then begin
             G23 := -(G23);
           end;
-          L7 := G12;
+          L7 := INTPTR;
           move(L1, @G23, 1 words);
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end else begin
           if (G15 = 36) then begin
             if (L9 = 2) then begin
               (G23+1)^ := -((G23+1)^<2w>)  {2 words};
             end;
-            L7 := G64;
+            L7 := REALPTR;
             move(L1, @G23, 1 words);
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
             if (G15 = 48) then begin
               if (L9 = 2) then begin
@@ -760,12 +754,12 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
                 end;
               end;
               CSP1(@L7, 2);
-              L7^ := PASCALCO.19(G22, 0, 0);
+              L7^ := PASCALCO.19:LONGSIZE(G22);
               (L7+1)^ := 3;
               move(L1, @G23, 1 words);
-              PASCALCO.8();
+              PASCALCO.8:INSYMBOL();
             end else begin
-              PASCALCO.4(106);
+              PASCALCO.4:ERROR(106);
               PASCALCO.16(?, ?, (G15 = 40), @L3^<4w>);
             end;
           end;
@@ -774,13 +768,13 @@ procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
     end;
     { paths disagree on stack depth here }
     if not ((G15 in @L3^<4w>)) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, ?, ?, @L3^<4w>);
     end;
   end;
   L2^ := L7;
 
-function PASCALCO.21(params 4 words) : <1 word result>;  { locals 6 words, lex 1 }
+function PASCALCO.21(args 2 words) : <1 word result>;  { locals 6 words, lex 1 }
   if (L4 = L3) then begin
     L1 := 1;
   end else begin
@@ -793,7 +787,7 @@ L0B75:
         L1 := 0;
         goto L0CAC;
 L0B7A:
-        L1 := PASCALCO.21(L4^.f2, L3^.f2, 0, 0);
+        L1 := PASCALCO.21(L4^.f2, L3^.f2);
         goto L0CAC;
 L0B86:
         L7 := 0;
@@ -813,7 +807,7 @@ L0B86:
           L10^ := L3^.f2;
           (L10+2)^ := G79;
           G79 := L9;
-          L7 := PASCALCO.21(L4^.f2, L3^.f2, 0, 0);
+          L7 := PASCALCO.21(L4^.f2, L3^.f2);
         end;
         L1 := L7;
         G79 := L8;
@@ -822,15 +816,15 @@ L0BE0:
         L1 := 1;
         goto L0CAC;
 L0BE5:
-        L1 := PASCALCO.21(L4^.f2, L3^.f2, 0, 0);
+        L1 := PASCALCO.21(L4^.f2, L3^.f2);
         goto L0CAC;
 L0BF1:
-        L7 := (PASCALCO.21(L4^.f3, L3^.f3, 0, 0) and (L4^.f4 = L3^.f4));
+        L7 := (PASCALCO.21(L4^.f3, L3^.f3) and (L4^.f4 = L3^.f4));
         if (L7 and L4^.f4) then begin
           L7 := (((L4^.f6 = L3^.f6) and (L4^.f5 = L3^.f5)) and (L4^.f7 = L3^.f7));
         end;
         if L7 then begin
-          if ((((not (PASCALCO.18(L4, 0, 0)) and (L4 <> G57)) and (L3 <> G57)) and (L4 <> G58)) and (L3 <> G58)) then begin
+          if ((((not (PASCALCO.18:STRINGTYPE(L4)) and (L4 <> BYTESTREAMPTR)) and (L3 <> BYTESTREAMPTR)) and (L4 <> WORDSTREAMPTR)) and (L3 <> WORDSTREAMPTR)) then begin
             L7 := (L4^ = L3^);
           end;
         end;
@@ -841,14 +835,14 @@ L0C47:
         L5 := L3^.f2;
         L7 := 1;
         while (((L6 <> nil) and (L5 <> nil)) and L7) do begin
-          L7 := PASCALCO.21(L6^.f6, L5^.f6, 0, 0);
+          L7 := PASCALCO.21(L6^.f6, L5^.f6);
           L6 := L6^.f7;
           L5 := L5^.f7;
         end;
         L1 := ((((L7 and (L6 = nil)) and (L5 = nil)) and (L4^.f3 = nil)) and (L3^.f3 = nil));
         goto L0CAC;
 L0C88:
-        L1 := PASCALCO.21(L4^.f2, L3^.f2, 0, 0);
+        L1 := PASCALCO.21(L4^.f2, L3^.f2);
         goto L0CAC;
 L0C94:
         case <selector> of  { 0..7 }
@@ -865,10 +859,10 @@ L0C94:
 L0CAC:
       end else begin
         if (L4^.f1 = 1) then begin
-          L1 := PASCALCO.21(L4^.f2, L3, 0, 0);
+          L1 := PASCALCO.21(L4^.f2, L3);
         end else begin
           if (L3^.f1 = 1) then begin
-            L1 := PASCALCO.21(L4, L3^.f2, 0, 0);
+            L1 := PASCALCO.21(L4, L3^.f2);
           end else begin
             L1 := 0;
           end;
@@ -877,13 +871,13 @@ L0CAC:
     end;
   end;
 
-procedure PASCALCO.22(params 1 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.22:EMIT(args 1 words);  { locals 0 words, lex 1 }
   G2^[G9] := L1;
   G9 := (G9+1);
 
-procedure PASCALCO.23(params 1 words);  { locals 1 words, lex 1 }
+procedure PASCALCO.23(args 1 words);  { locals 1 words, lex 1 }
   if G9 then begin
-    PASCALCO.22(0);
+    PASCALCO.22:EMIT(0);
   end;
   CSP2(@L1, 0, G2, G9, 2);
   if G30 then begin
@@ -893,7 +887,7 @@ procedure PASCALCO.23(params 1 words);  { locals 1 words, lex 1 }
   end;
   G9 := (G9+2);
 
-procedure PASCALCO.24(params 1 words);  { locals 3 words, lex 1 }
+procedure PASCALCO.24:FLUSHBUFFER(args 1 words);  { locals 3 words, lex 1 }
   L4 := 0;
   L3 := G9;
   repeat
@@ -906,8 +900,8 @@ procedure PASCALCO.24(params 1 words);  { locals 3 words, lex 1 }
     G1098 := (G1098+L2);
     if ((G1098 = 512) or L1) then begin
       if (I2,10 = 0) then begin
-        if (FBLOCKIO(I2,8, @G1099, 0, 1, G1097, 0, 0, 0) <> 1) then begin
-          PASCALCO.4(402);
+        if (FBLOCKIO(I2,8, @G1099, 0, 1, G1097, 0) <> 1) then begin
+          PASCALCO.4:ERROR(402);
         end;
       end;
       G1097 := (G1097+1);
@@ -916,7 +910,7 @@ procedure PASCALCO.24(params 1 words);  { locals 3 words, lex 1 }
     L3 := (L3-L2);
   until (L3 = 0);
 
-procedure PASCALCO.25(params 0 words);  { locals 2 words, lex 1 }
+procedure PASCALCO.25(args 0 words);  { locals 2 words, lex 1 }
   G9 := 0;
   L1 := (G99-1);
   L2 := 1;
@@ -928,14 +922,14 @@ procedure PASCALCO.25(params 0 words);  { locals 2 words, lex 1 }
     end;
     L1 := (L1-1);
   end;
-  PASCALCO.22(G13);
-  PASCALCO.22((G99-1));
+  PASCALCO.22:EMIT(G13);
+  PASCALCO.22:EMIT((G99-1));
   @G445[@G589~[G13]{4per word,4 bits}*9w]^ := (G89+G9);
-  PASCALCO.24(1);
+  PASCALCO.24:FLUSHBUFFER(1);
   G89 := 0;
   G49 := 0;
 
-procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
+procedure PASCALCO.26(args 4 words);  { locals 2 words, lex 1 }
   if ((G15 = 50) and not (G33)) then begin
     if (G35 or G1355) then begin
       UNITPART.1(?, ?, ?, adjust((@L1^<4w> + [$001C,$0000,$0000,$0200]),4));
@@ -943,7 +937,7 @@ procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
         CSP4(1, 26);
       end;
     end else begin
-      PASCALCO.4(408);
+      PASCALCO.4:ERROR(408);
     end;
   end;
   G31 := not (G33);
@@ -955,8 +949,8 @@ procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
       G9 := 0;
       G96 := 0;
       if (not (G28) or (G80 > 1)) then begin
-        if PASCALCO.29(@G134[G8*4w]^, 0, 0) then begin
-          PASCALCO.4(117);
+        if PASCALCO.29:ENTERUNDECL(@G134[G8*4w]^) then begin
+          PASCALCO.4:ERROR(117);
         end;
       end;
       if G33 then begin
@@ -968,18 +962,18 @@ procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
       end;
       G65 := nil;
       if (G15 = 19) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(17);
+        PASCALCO.4:ERROR(17);
       end;
       repeat
         BODYPART.1(?, ?, ?, adjust((@L1^<4w> + [$0020,$0000]),4), G84^.f7);
         L5 := ((G15 = G84^.f6) or (G33 and (G15 = 9)));
         if not (L5) then begin
           if (G84^.f6 = 3) then begin
-            PASCALCO.4(14);
+            PASCALCO.4:ERROR(14);
           end else begin
-            PASCALCO.4(6);
+            PASCALCO.4:ERROR(6);
           end;
           PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + [G84^.f6]),4));
           L5 := ((G15 = G84^.f6) or (G33 and (G15 = 9)));
@@ -987,18 +981,18 @@ procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
       until (L5 or (G15 in @G117^<4w>));
       if not (L5) then begin
         if (G84^.f6 = 3) then begin
-          PASCALCO.4(14);
+          PASCALCO.4:ERROR(14);
         end else begin
-          PASCALCO.4(6);
+          PASCALCO.4:ERROR(6);
         end;
         DECLARAT.1(?, ?, ?, @L1^<4w>);
       end else begin
         if (G15 = 3) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end;
         if (not ((G15 in [$0003,$8008,$0000])) and (G84^.f6 = 3)) then begin
           if not (not ((G33 and (G15 = 9)))) then goto L101E;
-          PASCALCO.4(6);
+          PASCALCO.4:ERROR(6);
           PASCALCO.16(?, ?, ?, @L1^<4w>);
           DECLARAT.1(?, ?, ?, @L1^<4w>);
           goto L1020;
@@ -1047,14 +1041,14 @@ L1022:
   until (G84 = nil);
   PASCALCO.25();
 
-procedure PASCALCO.27(params 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.27(args 0 words);  { locals 0 words, lex 1 }
   CSP9(@G22, @G97);
   PASCALCO.26(?, ?, ?, adjust(((@G117^<4w> + @G105^<4w>) - [$0020,$0000]),4));
 
-procedure PASCALCO.28(params 1 words);  { locals 1 words, lex 2 }
+procedure PASCALCO.28(args 1 words);  { locals 1 words, lex 2 }
   G14 := (G14+1);
   if (G1^[G14] = 36) then begin
-    if not (COMPOPTI.1(L1, 0, 0)) then begin
+    if not (COMPOPTI.1(L1)) then begin
       CSP4(1, 28);
     end;
   end;
@@ -1070,7 +1064,7 @@ L04CE:
   until ((G1^[(G14+1)] = 41) or (L1 = 125));
   G14 := (G14+1);
 
-function PASCALCO.29(params 3 words) : <1 word result>;  { locals 1 words, lex 2 }
+function PASCALCO.29:ENTERUNDECL(args 1 words) : <1 word result>;  { locals 1 words, lex 2 }
   L1 := 0;
   if (L3 <> nil) then begin
     L4 := L3;
@@ -1086,13 +1080,13 @@ function PASCALCO.29(params 3 words) : <1 word result>;  { locals 1 words, lex 2
         end;
       end;
     end;
-    if (PASCALCO.29(L4^.f4, 0, 0) or PASCALCO.29(L4^.f5, 0, 0)) then begin
+    if (PASCALCO.29:ENTERUNDECL(L4^.f4) or PASCALCO.29:ENTERUNDECL(L4^.f5)) then begin
       L1 := 1;
     end;
   end;
   { paths disagree on stack depth here }
 
-procedure PASCALCO.30(params 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.30(args 0 words);  { locals 0 words, lex 1 }
   goto L115C;
 L1138:
   if G34 then begin
@@ -1121,7 +1115,7 @@ L115C:
   goto L1138;
 L1176:
 
-procedure PASCALCO.31(params 0 words);  { locals 0 words, lex 2 }
+procedure PASCALCO.31(args 0 words);  { locals 0 words, lex 2 }
   goto L1123;
 L111C:
   PASCALCO.27();
@@ -1136,7 +1130,7 @@ L1128:
 SEGMENT 7 COMPINIT
 ======================================================================
 
-procedure COMPINIT.1(params 0 words);  { locals 304 words, lex 1 }
+procedure COMPINIT.1(args 0 words);  { locals 304 words, lex 1 }
   COMPINIT.11();
   COMPINIT.9();
   COMPINIT.10();
@@ -1213,7 +1207,7 @@ procedure COMPINIT.1(params 0 words);  { locals 304 words, lex 1 }
   (L304+1)^ := 0;
   G92 := CSP40();
   PASCALCO.5();
-  PASCALCO.8();
+  PASCALCO.8:INSYMBOL();
   COMPINIT.2();
   COMPINIT.3();
   COMPINIT.4();
@@ -1254,33 +1248,33 @@ procedure COMPINIT.1(params 0 words);  { locals 304 words, lex 1 }
   end;
   @G589~[G13]{4per word,4 bits} := G21;
   if (G15 = 33) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 0) then begin
       move((@G445[G21*9w]+2), @G17, 4 words);
       if (G68 <> nil) then begin
         move(G68, @G17, 4 words);
-        PASCALCO.7(G68);
+        PASCALCO.7:ENTERID(G68);
       end;
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 4) then begin
 L0F13:
       { paths disagree on stack depth here }
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       if not ((40 in (1 + @G117^<4w>))) then goto L0F13;
       if (G15 = 5) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(4);
+        PASCALCO.4:ERROR(4);
       end;
     end;
     { paths disagree on stack depth here }
     if (G15 = 3) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(14);
+      PASCALCO.4:ERROR(14);
     end;
   end;
   CSP32(@G83);
@@ -1296,66 +1290,66 @@ L0F13:
   (L304+9)^ := 0;
   (L304+8)^ := G83;
 
-procedure COMPINIT.2(params 0 words);  { locals 2 words, lex 2 }
-  CSP1(@G12, 3);
-  L2 := G12;
+procedure COMPINIT.2(args 0 words);  { locals 2 words, lex 2 }
+  CSP1(@INTPTR, 3);
+  L2 := INTPTR;
   L2^ := 1;
   (L2+1)^ := 0;
   (L2+2)^ := 0;
-  CSP1(@G64, 3);
-  L2 := G64;
+  CSP1(@REALPTR, 3);
+  L2 := REALPTR;
   L2^ := 2;
   (L2+1)^ := 0;
   (L2+2)^ := 0;
-  CSP1(@G63, 2);
-  L2 := G63;
-  L2^ := PASCALCO.19(((((16-1)*100) div 332)+1), 0, 0);
+  CSP1(@LONGPTR, 2);
+  L2 := LONGPTR;
+  L2^ := PASCALCO.19:LONGSIZE(((((16-1)*100) div 332)+1));
   (L2+1)^ := 3;
-  CSP1(@G62, 3);
-  L2 := G62;
+  CSP1(@CHARPTR, 3);
+  L2 := CHARPTR;
   L2^ := 1;
   (L2+1)^ := 0;
   (L2+2)^ := 0;
-  CSP1(@G61, 4);
-  L2 := G61;
+  CSP1(@BOOLPTR, 4);
+  L2 := BOOLPTR;
   L2^ := 1;
   (L2+1)^ := 0;
   (L2+2)^ := 1;
-  CSP1(@G59, 3);
-  L2 := G59;
+  CSP1(@NILPTR, 3);
+  L2 := NILPTR;
   L2^ := 1;
   (L2+1)^ := 2;
   (L2+2)^ := nil;
-  CSP1(@G60, 3);
-  L2 := G60;
+  CSP1(@TEXTPTR, 3);
+  L2 := TEXTPTR;
   L2^ := (300+1);
   (L2+1)^ := 7;
-  (L2+2)^ := G62;
-  CSP1(@G56, 3);
-  L2 := G56;
+  (L2+2)^ := CHARPTR;
+  CSP1(@INTERPTR, 3);
+  L2 := INTERPTR;
   L2^ := (300+1);
   (L2+1)^ := 7;
-  (L2+2)^ := G62;
-  CSP1(@G55, 9);
-  L2 := G55;
+  (L2+2)^ := CHARPTR;
+  CSP1(@STRINGPTR, 9);
+  L2 := STRINGPTR;
   (L2+1)^ := 5;
   L2^ := ((80+2) div 2);
   (L2+4)^ := 1;
   (L2+7)^ := 1;
-  (L2+2)^ := G12;
+  (L2+2)^ := INTPTR;
   (L2+5)^ := 8;
   (L2+6)^ := 2;
-  (L2+3)^ := G62;
+  (L2+3)^ := CHARPTR;
   (L2+8)^ := 80;
   CSP1(@L1, 5);
   L2 := L1;
   (L2+1)^ := 1;
   L2^ := 1;
-  (L2+2)^ := G12;
+  (L2+2)^ := INTPTR;
   (L2+4)^ := 0;
   (L2+3)^ := 32767;
-  CSP1(@G57, 8);
-  L2 := G57;
+  CSP1(@BYTESTREAMPTR, 8);
+  L2 := BYTESTREAMPTR;
   (L2+1)^ := 5;
   L2^ := 1;
   (L2+4)^ := 1;
@@ -1363,89 +1357,89 @@ procedure COMPINIT.2(params 0 words);  { locals 2 words, lex 2 }
   (L2+2)^ := L1;
   (L2+5)^ := 8;
   (L2+6)^ := 2;
-  (L2+3)^ := G62;
-  CSP1(@G58, 5);
-  L2 := G58;
+  (L2+3)^ := CHARPTR;
+  CSP1(@WORDSTREAMPTR, 5);
+  L2 := WORDSTREAMPTR;
   (L2+1)^ := 5;
   L2^ := 1;
   (L2+4)^ := 0;
   (L2+2)^ := L1;
-  (L2+3)^ := G12;
+  (L2+3)^ := INTPTR;
 
-procedure COMPINIT.3(params 0 words);  { locals 5 words, lex 2 }
+procedure COMPINIT.3(args 0 words);  { locals 5 words, lex 2 }
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'INTEGER ', 4 words);
-  (L4+6)^ := G12;
+  (L4+6)^ := INTPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'REAL    ', 4 words);
-  (L4+6)^ := G64;
+  (L4+6)^ := REALPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'CHAR    ', 4 words);
-  (L4+6)^ := G62;
+  (L4+6)^ := CHARPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'BOOLEAN ', 4 words);
-  (L4+6)^ := G61;
+  (L4+6)^ := BOOLPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'STRING  ', 4 words);
-  (L4+6)^ := G55;
+  (L4+6)^ := STRINGPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'TEXT    ', 4 words);
-  (L4+6)^ := G60;
+  (L4+6)^ := TEXTPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'INTERACT', 4 words);
-  (L4+6)^ := G56;
+  (L4+6)^ := INTERPTR;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
-  CSP1(@G70, 11);
-  L4 := G70;
+  PASCALCO.7:ENTERID(L2);
+  CSP1(@INPUTPTR, 11);
+  L4 := INPUTPTR;
   move(L4, @'INPUT   ', 4 words);
-  (L4+6)^ := G60;
+  (L4+6)^ := TEXTPTR;
   (L4+8)^ := 2;
   (L4+9)^ := 0;
   (L4+10)^ := 2;
-  PASCALCO.7(G70);
-  CSP1(@G69, 11);
-  L4 := G69;
+  PASCALCO.7:ENTERID(INPUTPTR);
+  CSP1(@OUTPUTPTR, 11);
+  L4 := OUTPUTPTR;
   move(L4, @'OUTPUT  ', 4 words);
-  (L4+6)^ := G60;
+  (L4+6)^ := TEXTPTR;
   (L4+8)^ := 2;
   (L4+9)^ := 0;
   (L4+10)^ := 3;
-  PASCALCO.7(G69);
+  PASCALCO.7:ENTERID(OUTPUTPTR);
   CSP1(@L2, 11);
   L4 := L2;
   move(L4, @'KEYBOARD', 4 words);
-  (L4+6)^ := G60;
+  (L4+6)^ := TEXTPTR;
   (L4+8)^ := 2;
   (L4+9)^ := 0;
   (L4+10)^ := 4;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   L1 := nil;
   L3 := 0;
   L4 := 1;
   while (L3 <= L4) do begin
     CSP1(@L2, 10);
     L5 := L2;
-    (L5+6)^ := G61;
+    (L5+6)^ := BOOLPTR;
     if (L3 = 0) then begin
       move(L5, @'FALSE   ', 4 words);
     end else begin
@@ -1454,42 +1448,42 @@ procedure COMPINIT.3(params 0 words);  { locals 5 words, lex 2 }
     (L5+7)^ := L1;
     (L5+9)^ := L3;
     (L5+8)^ := 1;
-    PASCALCO.7(L2);
+    PASCALCO.7:ENTERID(L2);
     L1 := L2;
     L3 := (L3+1);
   end;
-  (G61+3)^ := L2;
+  (BOOLPTR+3)^ := L2;
   CSP1(@L2, 10);
   L4 := L2;
   move(L4, @'NIL     ', 4 words);
-  (L4+6)^ := G59;
+  (L4+6)^ := NILPTR;
   (L4+7)^ := nil;
   (L4+9)^ := 0;
   (L4+8)^ := 1;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 10);
   L4 := L2;
   move(L4, @'MAXINT  ', 4 words);
-  (L4+6)^ := G12;
+  (L4+6)^ := INTPTR;
   (L4+8)^ := 1;
   (L4+9)^ := 32767;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'BYTESTRE', 4 words);
-  (L4+6)^ := G57;
+  (L4+6)^ := BYTESTREAMPTR;
   (L4+7)^ := nil;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'WORDSTRE', 4 words);
-  (L4+6)^ := G58;
+  (L4+6)^ := WORDSTREAMPTR;
   (L4+7)^ := nil;
   (L4+8)^ := 0;
-  PASCALCO.7(L2);
+  PASCALCO.7:ENTERID(L2);
 
-procedure COMPINIT.4(params 0 words);  { locals 5 words, lex 2 }
+procedure COMPINIT.4(args 0 words);  { locals 5 words, lex 2 }
   move(@L1, @'        ', 4 words);
   CSP1(@G78, 9);
   L5 := G78;
@@ -1549,20 +1543,20 @@ procedure COMPINIT.4(params 0 words);  { locals 5 words, lex 2 }
   (L5+9)^ := 1;
   (L5+13)^ := 0;
 
-procedure COMPINIT.5(params 1 words);  { locals 41 words, lex 2 }
+procedure COMPINIT.5(args 1 words);  { locals 41 words, lex 2 }
   @L2^ := L1  {string};
   if ((I1,258+@L2^[0]) < 511) then begin
     CSP2(@L2, 1, @I1,1, I1,258, @L2^[0]);
   end;
   I1,258 := (I1,258+@L2^[0]);
 
-procedure COMPINIT.6(params 1 words);  { locals 1 words, lex 2 }
+procedure COMPINIT.6(args 1 words);  { locals 1 words, lex 2 }
   move(L1, @'        ', 4 words);
   L2 := CSP11(8, 0, 46, @I1,1, I1,257, 0);
   CSP2(@I1,1, I1,257, L1, 0, L2);
   I1,257 := ((I1,257+L2)+1);
 
-procedure COMPINIT.7(params 0 words);  { locals 8 words, lex 2 }
+procedure COMPINIT.7(args 0 words);  { locals 8 words, lex 2 }
   I1,258 := 0;
   COMPINIT.5('READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.');
   COMPINIT.5('UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.');
@@ -1595,11 +1589,11 @@ L0744:
       end;
       (L8+9)^ := 2;
       (L8+10)^ := L2;
-      PASCALCO.7(L1);
+      PASCALCO.7:ENTERID(L1);
     end;
   end;
 
-procedure COMPINIT.8(params 0 words);  { locals 11 words, lex 2 }
+procedure COMPINIT.8(args 0 words);  { locals 11 words, lex 2 }
   I1,258 := 0;
   COMPINIT.5('ODD.CHR.XXX.ROUND.MARK.RELEASE.');
   COMPINIT.5('IORESULT.UNITBUSY.PWROFTEN.UNITWAIT.UNITCLEA.HALT.MEMAVAIL.');
@@ -1611,23 +1605,23 @@ procedure COMPINIT.8(params 0 words);  { locals 11 words, lex 2 }
     L6 := (7264 in 1);
     goto L08CE;
 L0830:
-    L3 := G61;
+    L3 := BOOLPTR;
     CSP1(@L1, 11);
     L11 := L1;
-    (L11+6)^ := G12;
+    (L11+6)^ := INTPTR;
     (L11+8)^ := 3;
     goto L08F0;
 L0848:
-    L3 := G62;
+    L3 := CHARPTR;
     goto L08F0;
 L084E:
     goto L0948;
     goto L08F0;
 L0852:
-    L3 := G12;
+    L3 := INTPTR;
     CSP1(@L1, 11);
     L11 := L1;
-    (L11+6)^ := G64;
+    (L11+6)^ := REALPTR;
     (L11+8)^ := 3;
     goto L08F0;
 L086A:
@@ -1643,18 +1637,18 @@ L086A:
     (L11+8)^ := 2;
     goto L08F0;
 L0896:
-    L3 := G12;
+    L3 := INTPTR;
     L1 := nil;
     goto L08F0;
 L089E:
-    L3 := G61;
+    L3 := BOOLPTR;
     CSP1(@L1, 11);
     L11 := L1;
-    (L11+6)^ := G12;
+    (L11+6)^ := INTPTR;
     (L11+8)^ := 3;
     goto L08F0;
 L08B6:
-    L3 := G64;
+    L3 := REALPTR;
     goto L08F0;
 L08BC:
     L3 := nil;
@@ -1664,7 +1658,7 @@ L08C1:
     L1 := nil;
     goto L08F0;
 L08C9:
-    L3 := G12;
+    L3 := INTPTR;
     goto L08F0;
 L08CE:
     case <selector> of  { 1..13 }
@@ -1708,12 +1702,12 @@ L08F0:
     end;
     (L11+6)^ := L3;
     (L11+7)^ := L1;
-    PASCALCO.7(L2);
+    PASCALCO.7:ENTERID(L2);
 L0948:
     { paths disagree on stack depth here }
   end;
 
-procedure COMPINIT.9(params 0 words);  { locals 2 words, lex 2 }
+procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
   if ((CSP40() < 0) or (CSP40() > 9950)) then begin
     G35 := 0;
   end else begin
@@ -1783,7 +1777,7 @@ procedure COMPINIT.9(params 0 words);  { locals 2 words, lex 2 }
   G30 := 0;
   @G186^ := adjust(0,4)  {4 words};
 
-procedure COMPINIT.10(params 0 words);  { locals 0 words, lex 2 }
+procedure COMPINIT.10(args 0 words);  { locals 0 words, lex 2 }
   @G129^ := adjust([$0001,$0138,$0000,$0001],4)  {4 words};
   16^ := adjust((1 + @G129^<4w>),4)  {4 words};
   @G121^ := adjust(([$7C00,$0002,$0000] + @G125^<4w>),4)  {4 words};
@@ -1796,7 +1790,7 @@ procedure COMPINIT.10(params 0 words);  { locals 0 words, lex 2 }
   { left on stack: @G125 }
   { left on stack: 12 }
 
-procedure COMPINIT.11(params 0 words);  { locals 1 words, lex 2 }
+procedure COMPINIT.11(args 0 words);  { locals 1 words, lex 2 }
   L1 := -(16607);
   if (L1^[0] <> 4) then begin
     FWRITELN(I3,3);
@@ -1814,14 +1808,14 @@ procedure COMPINIT.11(params 0 words);  { locals 1 words, lex 2 }
 SEGMENT 8 DECLARAT
 ======================================================================
 
-procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
+procedure DECLARAT.1(args 4 words);  { locals 11 words, lex 1 }
   @L1^<4w>^ := adjust((10 + 1),4)  {4 words};
   @L1^<4w>^ := adjust((1 + 1),4)  {4 words};
   repeat
     { paths disagree on stack depth here }
     L6 := 0;
     if (G15 = 49) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.10();
     end;
     if (G2 = nil) then begin
@@ -1829,23 +1823,23 @@ procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
     end;
     if (G15 = 27) then begin
       if (G33 and G32) then begin
-        PASCALCO.4(186);
+        PASCALCO.4:ERROR(186);
         PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - [$0800,$0000]),4));
       end else begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
       DECLARAT.15();
     end;
     if (G15 = 28) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.16();
     end;
     if (G15 = 29) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.17();
     end;
     if (G15 = 30) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.18();
     end;
     if (G80 = 1) then begin
@@ -1859,10 +1853,10 @@ procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
       end;
       repeat
         L5 := G15;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if (L5 = 33) then begin
           if G33 then begin
-            PASCALCO.4(185);
+            PASCALCO.4:ERROR(185);
             DECLARAT.19(31, 0);
           end else begin
             DECLARAT.19(L5, 1);
@@ -1875,7 +1869,7 @@ procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
     if (G15 <> 19) then begin
       if (not (((G37 or G33) and (G15 in [$0010,$0000,$0000,$0200]))) and (G15 <> 50)) then begin
         if (not ((G38 or L6)) or not ((G15 in @G117^<4w>))) then begin
-          PASCALCO.4(18);
+          PASCALCO.4:ERROR(18);
           PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - [$000C,$0000,$0000,$0000]),4));
         end;
       end;
@@ -1883,16 +1877,16 @@ procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
   until (G15 in (@G105^<4w> + [$0014,$0000,$0000,$0200]));
   G86 := 0;
 
-procedure DECLARAT.2(params 4 words);  { locals 0 words, lex 2 }
+procedure DECLARAT.2(args 4 words);  { locals 0 words, lex 2 }
   if not ((G15 in @L1^<4w>)) then begin
-    PASCALCO.4(6);
+    PASCALCO.4:ERROR(6);
     PASCALCO.16(?, ?, ?, @L1^<4w>);
   end;
 
-procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
+procedure DECLARAT.3(args 6 words);  { locals 13 words, lex 2 }
   L16 := 0;
   if not ((G15 in @G121^<4w>)) then begin
-    PASCALCO.4(10);
+    PASCALCO.4:ERROR(10);
     PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G121^<4w>),4));
   end;
   if (G15 in @G121^<4w>) then begin
@@ -1903,19 +1897,19 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
         DECLARAT.9();
       end else begin
         if (G15 = 43) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
           L16 := 1;
           if not ((G15 in @G101^<4w>)) then begin
-            PASCALCO.4(10);
+            PASCALCO.4:ERROR(10);
             PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G101^<4w>),4));
           end;
         end;
         if (G15 = 44) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
           if (G15 = 15) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
-            PASCALCO.4(11);
+            PASCALCO.4:ERROR(11);
           end;
           L8 := nil;
           repeat
@@ -1937,43 +1931,43 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
             L8^ := L13;
             if (L7 <> nil) then begin
               if (L7^.f1 <= 1) then begin
-                if (L7 = G64) then begin
-                  PASCALCO.4(109);
+                if (L7 = REALPTR) then begin
+                  PASCALCO.4:ERROR(109);
                   L7 := nil;
                 end else begin
-                  if (L7 = G12) then begin
-                    PASCALCO.4(149);
+                  if (L7 = INTPTR) then begin
+                    PASCALCO.4:ERROR(149);
                     L7 := nil;
                   end;
                 end;
                 (L9+2)^ := L7;
               end else begin
-                PASCALCO.4(113);
+                PASCALCO.4:ERROR(113);
                 L7 := nil;
               end;
             end;
             G11 := (G15 <> 1);
             if not (G11) then begin
-              PASCALCO.8();
+              PASCALCO.8:INSYMBOL();
             end;
           until G11;
           if (G15 = 16) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
-            PASCALCO.4(12);
+            PASCALCO.4:ERROR(12);
           end;
           if (G15 = 11) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
-            PASCALCO.4(8);
+            PASCALCO.4:ERROR(8);
           end;
           DECLARAT.3(?, ?, ?, @L3^<4w>, @L9, @L13);
           if (L9 <> nil) then begin
             if (L9^.f1 = 7) then begin
-              PASCALCO.4(108);
+              PASCALCO.4:ERROR(108);
             end;
           end;
-          if DECLARAT.5(L9, 0, 0) then begin
+          if DECLARAT.5(L9) then begin
             if ((L17+L17) <= 16) then begin
               L19 := L8;
               (L19+4)^ := 1;
@@ -1986,14 +1980,14 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
             L7 := L19^.f3;
             (L19+3)^ := L9;
             if (L19^.f2 <> nil) then begin
-              PASCALCO.11(L19^.f2, @L15, @L14);
+              PASCALCO.11:GETBOUNDS(L19^.f2, @L15, @L14);
               if L19^.f4 then begin
                 L13 := (((L14-L15)+L19^.f6) div L19^.f6);
               end else begin
                 L13 := (L13*((L14-L15)+1));
               end;
               if (L13 <= 0) then begin
-                PASCALCO.4(399);
+                PASCALCO.4:ERROR(399);
                 L13 := 1;
               end;
               L19^ := L13;
@@ -2003,7 +1997,7 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
           until (L8 = nil);
         end else begin
           if (G15 = 45) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
             L10 := G8;
             if (G8 < 12) then begin
               G8 := (G8+1);
@@ -2011,7 +2005,7 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
               L19^ := nil;
               (L19+1)^ := 3;
             end else begin
-              PASCALCO.4(250);
+              PASCALCO.4:ERROR(250);
             end;
             L12 := 0;
             L18 := 0;
@@ -2025,26 +2019,26 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
             (L19+1)^ := 6;
             G8 := L10;
             if (G15 = 9) then begin
-              PASCALCO.8();
+              PASCALCO.8:INSYMBOL();
             end else begin
-              PASCALCO.4(13);
+              PASCALCO.4:ERROR(13);
             end;
           end else begin
             if (G15 = 42) then begin
-              PASCALCO.8();
+              PASCALCO.8:INSYMBOL();
               if (G15 = 11) then begin
-                PASCALCO.8();
+                PASCALCO.8:INSYMBOL();
               end else begin
-                PASCALCO.4(8);
+                PASCALCO.4:ERROR(8);
               end;
               DECLARAT.4(?, ?, ?, @L3^<4w>, @L8, @L13);
               if (L8 <> nil) then begin
-                if (((L8^.f1 > 1) or (L8 = G12)) or (L8 = G64)) then begin
-                  PASCALCO.4(115);
+                if (((L8^.f1 > 1) or (L8 = INTPTR)) or (L8 = REALPTR)) then begin
+                  PASCALCO.4:ERROR(115);
                   L8 := nil;
                 end else begin
-                  if (L8 = G64) then begin
-                    PASCALCO.4(114);
+                  if (L8 = REALPTR) then begin
+                    PASCALCO.4:ERROR(114);
                     L8 := nil;
                   end;
                 end;
@@ -2054,10 +2048,10 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
               (L19+2)^ := L8;
               (L19+1)^ := 4;
               if (L8 <> nil) then begin
-                PASCALCO.11(L8, @L15, @L14);
+                PASCALCO.11:GETBOUNDS(L8, @L15, @L14);
                 L19^ := ((L14+16) div 16);
                 if (L19^ > 255) then begin
-                  PASCALCO.4(169);
+                  PASCALCO.4:ERROR(169);
                   L19^ := 1;
                 end;
               end else begin
@@ -2067,16 +2061,16 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
               if (G15 = 46) then begin
                 if G33 then begin
                   if not ((G32 or G46)) then begin
-                    PASCALCO.4(191);
+                    PASCALCO.4:ERROR(191);
                   end;
                 end;
-                PASCALCO.8();
+                PASCALCO.8:INSYMBOL();
                 CSP1(@L9, 3);
                 L19 := L9;
                 (L19+1)^ := 7;
                 (L19+2)^ := nil;
                 if (G15 = 11) then begin
-                  PASCALCO.8();
+                  PASCALCO.8:INSYMBOL();
                   DECLARAT.3(?, ?, ?, @L3^<4w>, @L8, @L13);
                 end else begin
                   L8 := nil;
@@ -2104,11 +2098,11 @@ procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
     L1^ := L2^^;
   end;
 
-procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
+procedure DECLARAT.4(args 6 words);  { locals 13 words, lex 3 }
   L1^ := 1;
   @L3^<4w>^ := adjust((34 + 1),4)  {4 words};
   if not ((G15 in @G125^<4w>)) then begin
-    PASCALCO.4(1);
+    PASCALCO.4:ERROR(1);
     PASCALCO.16(?, ?, @L14, adjust((@L3^<4w> + @G125^<4w>),4));
   end;
   { paths disagree on stack depth here }
@@ -2126,7 +2120,7 @@ procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
       L9 := nil;
       L12 := 0;
       repeat
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if (G15 = 0) then begin
           CSP1(@L10, 10);
           L18 := L10;
@@ -2135,114 +2129,114 @@ procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
           (L18+7)^ := L9;
           (L18+9)^ := L12;
           (L18+8)^ := 1;
-          PASCALCO.7(L10);
+          PASCALCO.7:ENTERID(L10);
           L12 := (L12+1);
           L9 := L10;
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end else begin
-          PASCALCO.4(2);
+          PASCALCO.4:ERROR(2);
         end;
         DECLARAT.2(?, ?, ?, @L14^<4w>);
       until (G15 <> 1);
       (L8+3)^ := L9;
       G8 := L11;
       if (G15 = 5) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(4);
+        PASCALCO.4:ERROR(4);
       end;
     end else begin
       if (G15 = 0) then begin
-        PASCALCO.10(adjust(1,1), @L10);
+        PASCALCO.10:SEARCHID(adjust(1,1), @L10);
         if (L10^.f8 = 1) then begin
           CSP1(@L8, 5);
           L18 := L8;
           L19 := L10;
           (L18+2)^ := L19^.f6;
           (L18+1)^ := 1;
-          if PASCALCO.18(L18^.f2, 0, 0) then begin
-            PASCALCO.4(148);
+          if PASCALCO.18:STRINGTYPE(L18^.f2) then begin
+            PASCALCO.4:ERROR(148);
             (L18+2)^ := nil;
           end;
           move((L18+4), (L19+9), 1 words);
           L18^ := 1;
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
           if (G15 = 2) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
-            PASCALCO.4(5);
+            PASCALCO.4:ERROR(5);
           end;
-          PASCALCO.20(?, ?, 3, @L3^<4w>, @L7, @L13);
+          PASCALCO.20:CONSTANT(?, ?, 3, @L3^<4w>, @L7, @L13);
           move((L8+3), @L13, 1 words);
           if (L8^.f2 <> L7) then begin
-            PASCALCO.4(107);
+            PASCALCO.4:ERROR(107);
           end;
         end else begin
           L8 := L10^.f6;
-          if (L8 = G55) then begin
-            PASCALCO.8();
+          if (L8 = STRINGPTR) then begin
+            PASCALCO.8:INSYMBOL();
             if (G15 = 15) then begin
-              PASCALCO.8();
-              PASCALCO.20(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
-              if (L7 = G12) then begin
+              PASCALCO.8:INSYMBOL();
+              PASCALCO.20:CONSTANT(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
+              if (L7 = INTPTR) then begin
                 if ((L13 <= 0) or (L13 > 255)) then begin
-                  PASCALCO.4(203);
+                  PASCALCO.4:ERROR(203);
                   L13 := 80;
                 end;
                 if (L13 <> 80) then begin
                   CSP1(@L8, 9);
-                  move(L8, G55, 9 words);
+                  move(L8, STRINGPTR, 9 words);
                   L18 := L8;
                   (L18+8)^ := L13;
                   L18^ := ((L13+2) div 2);
                 end;
               end else begin
-                PASCALCO.4(15);
+                PASCALCO.4:ERROR(15);
               end;
               if (G15 = 16) then begin
-                PASCALCO.8();
+                PASCALCO.8:INSYMBOL();
               end else begin
-                PASCALCO.4(12);
+                PASCALCO.4:ERROR(12);
               end;
             end;
             { paths disagree on stack depth here }
           end else begin
-            if (L8 = G12) then begin
-              PASCALCO.8();
+            if (L8 = INTPTR) then begin
+              PASCALCO.8:INSYMBOL();
               if (G15 = 15) then begin
-                PASCALCO.8();
+                PASCALCO.8:INSYMBOL();
                 CSP1(@L8, 2);
-                move(L8, G63, 9 words);
-                PASCALCO.20(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
-                if (L7 = G12) then begin
+                move(L8, LONGPTR, 9 words);
+                PASCALCO.20:CONSTANT(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
+                if (L7 = INTPTR) then begin
                   if ((L13 <= 0) or (L13 > 36)) then begin
-                    PASCALCO.4(203);
+                    PASCALCO.4:ERROR(203);
                   end else begin
-                    L8^ := PASCALCO.19(L13, 0, 0);
+                    L8^ := PASCALCO.19:LONGSIZE(L13);
                   end;
                 end else begin
-                  PASCALCO.4(15);
+                  PASCALCO.4:ERROR(15);
                 end;
                 if (G15 = 16) then begin
-                  PASCALCO.8();
+                  PASCALCO.8:INSYMBOL();
                 end else begin
-                  PASCALCO.4(12);
+                  PASCALCO.4:ERROR(12);
                 end;
               end;
               { paths disagree on stack depth here }
             end else begin
-              if ((L8 = G57) or (L8 = G58)) then begin
-                PASCALCO.4(103);
+              if ((L8 = BYTESTREAMPTR) or (L8 = WORDSTREAMPTR)) then begin
+                PASCALCO.4:ERROR(103);
               end else begin
                 if (L8^.f1 = 7) then begin
                   if G33 then begin
                     if not ((G32 or G46)) then begin
-                      PASCALCO.4(191);
+                      PASCALCO.4:ERROR(191);
                     end;
                   end;
                 end;
               end;
-              PASCALCO.8();
+              PASCALCO.8:INSYMBOL();
             end;
           end;
           { paths disagree on stack depth here }
@@ -2253,9 +2247,9 @@ procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
       end else begin
         CSP1(@L8, 5);
         (L8+1)^ := 1;
-        PASCALCO.20(?, ?, @L3^<4w>, adjust((4 + 1),4), @L7, @L13);
-        if PASCALCO.18(L7, 0, 0) then begin
-          PASCALCO.4(148);
+        PASCALCO.20:CONSTANT(?, ?, @L3^<4w>, adjust((4 + 1),4), @L7, @L13);
+        if PASCALCO.18:STRINGTYPE(L7) then begin
+          PASCALCO.4:ERROR(148);
           L7 := nil;
         end;
         L18 := L8;
@@ -2263,25 +2257,25 @@ procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
         move((L18+4), @L13, 1 words);
         L18^ := 1;
         if (G15 = 2) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end else begin
-          PASCALCO.4(5);
+          PASCALCO.4:ERROR(5);
         end;
-        PASCALCO.20(?, ?, ?, @L3^<4w>, @L7, @L13);
+        PASCALCO.20:CONSTANT(?, ?, ?, @L3^<4w>, @L7, @L13);
         move((L8+3), @L13, 1 words);
         if (L8^.f2 <> L7) then begin
-          PASCALCO.4(107);
+          PASCALCO.4:ERROR(107);
         end;
       end;
       if (L8 <> nil) then begin
         L18 := L8;
         if (L18^.f1 = 1) then begin
           if (L18^.f2 <> nil) then begin
-            if (L18^.f2 = G64) then begin
-              PASCALCO.4(399);
+            if (L18^.f2 = REALPTR) then begin
+              PASCALCO.4:ERROR(399);
             end else begin
               if (L18^.f4 > L18^.f3) then begin
-                PASCALCO.4(102);
+                PASCALCO.4:ERROR(102);
                 (L18+3)^ := L18^.f4;
               end;
             end;
@@ -2295,14 +2289,14 @@ procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
     L2^ := nil;
   end;
 
-function DECLARAT.5(params 3 words) : <1 word result>;  { locals 3 words, lex 3 }
+function DECLARAT.5(args 1 words) : <1 word result>;  { locals 3 words, lex 3 }
   L1 := 0;
   if ((L3 <> nil) and I1,16) then begin
     L6 := L3;
     goto L03D5;
 L0373:
-    if ((L3 <> G12) and (L3 <> G64)) then begin
-      PASCALCO.11(L3, @L5, @L4);
+    if ((L3 <> INTPTR) and (L3 <> REALPTR)) then begin
+      PASCALCO.11:GETBOUNDS(L3, @L5, @L4);
       if (L5 >= 0) then begin
         L1 := 1;
         I1,17 := 1;
@@ -2316,8 +2310,8 @@ L0373:
     end;
     goto L03E6;
 L03B1:
-    if DECLARAT.5(L6^.f2, 0, 0) then begin
-      PASCALCO.11(L6^.f2, @L5, @L4);
+    if DECLARAT.5(L6^.f2) then begin
+      PASCALCO.11:GETBOUNDS(L6^.f2, @L5, @L4);
       L4 := (L4+1);
       if (L4 < 16) then begin
         L1 := 1;
@@ -2337,13 +2331,13 @@ L03D5:
   end;
 L03E6:
 
-procedure DECLARAT.6(params 5 words);  { locals 21 words, lex 3 }
+procedure DECLARAT.6(args 5 words);  { locals 21 words, lex 3 }
   L7 := nil;
   L15 := nil;
   L6 := nil;
   @L2^<4w>^ := adjust((8 + 1),4)  {4 words};
   if not ((G15 in [$0020,$0001])) then begin
-    PASCALCO.4(19);
+    PASCALCO.4:ERROR(19);
     PASCALCO.16(?, ?, @L20, adjust((@L2^<4w> + [$0020,$0001]),4));
   end;
 L079D:
@@ -2364,30 +2358,30 @@ L079D:
       (L26+8)^ := 4;
       (L26+10)^ := 0;
       L8 := L10;
-      PASCALCO.7(L10);
-      PASCALCO.8();
+      PASCALCO.7:ENTERID(L10);
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end;
     if not ((6 in 1)) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, ?, G15, adjust((@L2^<4w> + [$0020,$000E]),4));
     end;
     { paths disagree on stack depth here }
     G11 := (G15 <> 1);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 2) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(5);
+    PASCALCO.4:ERROR(5);
   end;
   DECLARAT.3(?, ?, ?, adjust((@L2^<4w> + [$0020,$0008]),4), @L15, @L16);
   if (L15 <> nil) then begin
     if (L15^.f1 = 7) then begin
-      PASCALCO.4(108);
+      PASCALCO.4:ERROR(108);
     end;
   end;
   while (L8 <> L7) do begin
@@ -2399,9 +2393,9 @@ L079D:
   end;
   L7 := L10;
   if (G15 = 3) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if not ((G15 in [$0020,$0201])) then begin
-      PASCALCO.4(19);
+      PASCALCO.4:ERROR(19);
       PASCALCO.16(?, ?, ?, adjust((@L2^<4w> + [$0020,$0001]),4));
     end;
   end;
@@ -2421,10 +2415,10 @@ L0895:
     L1^ := nil;
   end;
 
-procedure DECLARAT.7(params 1 words);  { locals 2 words, lex 4 }
+procedure DECLARAT.7(args 1 words);  { locals 2 words, lex 4 }
   L2 := 0;
   L3 := L1;
-  if DECLARAT.5(L3^.f6, 0, 0) then begin
+  if DECLARAT.5(L3^.f6) then begin
     if ((I2,17+I2,18) > 16) then begin
       I2,12 := (I2,12+1);
       I2,18 := 0;
@@ -2459,14 +2453,14 @@ procedure DECLARAT.7(params 1 words);  { locals 2 words, lex 4 }
     end;
   end;
 
-procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
+procedure DECLARAT.8(args 0 words);  { locals 2 words, lex 4 }
   CSP1(@I1,15, 4);
   L2 := I1,15;
   (L2+2)^ := nil;
   (L2+3)^ := nil;
   (L2+1)^ := 8;
   I1,1^ := I1,15;
-  PASCALCO.8();
+  PASCALCO.8:INSYMBOL();
   if (G15 = 0) then begin
     if I2,16 then begin
       CSP1(@I1,10, 13);
@@ -2480,26 +2474,26 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
     (L2+10)^ := 0;
     L1 := 0;
     G54 := 0;
-    PASCALCO.10(adjust(1,1), @I1,9);
+    PASCALCO.10:SEARCHID(adjust(1,1), @I1,9);
     G54 := 1;
     if (I1,9 = nil) then begin
       L1 := 1;
       move(I1,10, @G17, 4 words);
-      PASCALCO.7(I1,10);
-      PASCALCO.8();
+      PASCALCO.7:ENTERID(I1,10);
+      PASCALCO.8:INSYMBOL();
       if (G15 = 2) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(5);
+        PASCALCO.4:ERROR(5);
       end;
     end;
     if (G15 = 0) then begin
-      PASCALCO.10(adjust(1,1), @I1,9);
+      PASCALCO.10:SEARCHID(adjust(1,1), @I1,9);
       I1,14 := I1,9^.f6;
       if (I1,14 <> nil) then begin
         if (I1,14^.f1 <= 1) then begin
-          if PASCALCO.21(G64, I1,14, 0, 0) then begin
-            PASCALCO.4(109);
+          if PASCALCO.21(REALPTR, I1,14) then begin
+            PASCALCO.4:ERROR(109);
           end;
           (I1,10+6)^ := I1,14;
           (I1,15+2)^ := I1,10;
@@ -2507,24 +2501,24 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
             DECLARAT.7(I1,10);
           end;
         end else begin
-          PASCALCO.4(110);
+          PASCALCO.4:ERROR(110);
         end;
       end;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
       PASCALCO.16(?, 1, @I1,2^<4w>, adjust((2064 + 1),4));
     end;
     { paths disagree on stack depth here }
   end else begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     PASCALCO.16(?, ?, @I1,2^<4w>, adjust((2064 + 1),4));
   end;
   I1,15^ := (I2,12+(I2,18 > 0));
   if (G15 = 11) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(8);
+    PASCALCO.4:ERROR(8);
   end;
   I1,14 := nil;
   I1,18 := I2,12;
@@ -2534,10 +2528,10 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
   repeat
     I1,13 := nil;
     repeat
-      PASCALCO.20(?, ?, @I1,2^<4w>, adjust((22 + 1),4), @I1,12, @I1,19);
+      PASCALCO.20:CONSTANT(?, ?, @I1,2^<4w>, adjust((22 + 1),4), @I1,12, @I1,19);
       if (I1,15^.f2 <> nil) then begin
-        if not (PASCALCO.21(I1,15^.f2^.f6, I1,12, 0, 0)) then begin
-          PASCALCO.4(111);
+        if not (PASCALCO.21(I1,15^.f2^.f6, I1,12)) then begin
+          PASCALCO.4:ERROR(111);
         end;
       end;
       CSP1(@I1,12, 5);
@@ -2550,18 +2544,18 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
       I1,13 := I1,12;
       G11 := (G15 <> 1);
       if not (G11) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     until G11;
     if (G15 = 2) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(5);
+      PASCALCO.4:ERROR(5);
     end;
     if (G15 = 4) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(9);
+      PASCALCO.4:ERROR(9);
     end;
     if (G15 = 5) then begin
       I1,13 := nil;
@@ -2583,14 +2577,14 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
       I1,12 := I1,11;
     end;
     if (G15 = 5) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.2(?, ?, ?, @I1,20^<4w>);
     end else begin
-      PASCALCO.4(4);
+      PASCALCO.4:ERROR(4);
     end;
     G11 := (G15 <> 3);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       I2,12 := I1,18;
       I2,18 := I1,24;
     end;
@@ -2599,17 +2593,17 @@ procedure DECLARAT.8(params 0 words);  { locals 2 words, lex 4 }
   I2,18 := I1,25;
   (I1,15+3)^ := I1,14;
 
-procedure DECLARAT.9(params 0 words);  { locals 1 words, lex 3 }
+procedure DECLARAT.9(args 0 words);  { locals 1 words, lex 3 }
   CSP1(@I1,9, 3);
   I1,2^ := I1,9;
   L1 := I1,9;
   (L1+2)^ := nil;
   L1^ := 1;
   (L1+1)^ := 2;
-  PASCALCO.8();
+  PASCALCO.8:INSYMBOL();
   if (G15 = 0) then begin
     G54 := 0;
-    PASCALCO.10(adjust(1,1), @I1,11);
+    PASCALCO.10:SEARCHID(adjust(1,1), @I1,11);
     G54 := 1;
     if (I1,11 = nil) then begin
       CSP1(@I1,11, 9);
@@ -2624,29 +2618,29 @@ procedure DECLARAT.9(params 0 words);  { locals 1 words, lex 3 }
         if ((I1,11^.f6^.f1 <> 7) or G28) then begin
           (I1,9+2)^ := I1,11^.f6;
         end else begin
-          PASCALCO.4(108);
+          PASCALCO.4:ERROR(108);
         end;
       end;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
   end;
   { paths disagree on stack depth here }
 
-procedure DECLARAT.10(params 0 words);  { locals 257 words, lex 2 }
+procedure DECLARAT.10(args 0 words);  { locals 257 words, lex 2 }
   if (G80 > 1) then begin
-    PASCALCO.4(189);
+    PASCALCO.4:ERROR(189);
   end;
   if (G33 and not (G32)) then begin
-    PASCALCO.4(192);
+    PASCALCO.4:ERROR(192);
   end;
   if not (G37) then begin
     G66 := nil;
   end;
   repeat
     if (G15 <> 0) then begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end else begin
       if G37 then begin
         L1 := G66;
@@ -2660,28 +2654,28 @@ L1180:
 L1184:
         goto L116F;
 L1186:
-        PASCALCO.4(188);
+        PASCALCO.4:ERROR(188);
 L118C:
       end else begin
         DECLARAT.11(@G17);
       end;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     G11 := (G15 <> 1);
     if G11 then begin
       if (G15 <> 3) then begin
-        PASCALCO.4(20);
+        PASCALCO.4:ERROR(20);
         goto L11A8;
       end;
 L11A8:
     end else begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 3) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(14);
+    PASCALCO.4:ERROR(14);
   end;
   if not (G37) then begin
     if G33 then begin
@@ -2690,7 +2684,7 @@ L11A8:
     G29 := 1;
   end;
 
-procedure DECLARAT.11(params 1 words);  { locals 22 words, lex 3 }
+procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
   move(@L2, L1, 4 words);
   L9 := 0;
   if G50 then begin
@@ -2739,7 +2733,7 @@ procedure DECLARAT.11(params 1 words);  { locals 22 words, lex 3 }
     if G41 then begin
       if L9 then begin
         if (G10 > 1) then begin
-          PASCALCO.4(350);
+          PASCALCO.4:ERROR(350);
         end;
       end else begin
         @G186^ := adjust((@G186^<4w> + [G87]),4)  {4 words};
@@ -2749,13 +2743,13 @@ procedure DECLARAT.11(params 1 words);  { locals 22 words, lex 3 }
       if G41 then begin
         @G186^ := adjust((@G186^<4w> + [G13]),4)  {4 words};
       end;
-      PASCALCO.7(L11);
+      PASCALCO.7:ENTERID(L11);
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 0) then begin
       if (@G17 = @'P       ') then begin
         @G186^ := adjust((@G186^<4w> + [$8000,$0000]),4)  {4 words};
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
       if (@G17 = @'L       ') then begin
         @G186^ := adjust((@G186^<4w> + [$4000,$0000]),4)  {4 words};
@@ -2777,7 +2771,7 @@ procedure DECLARAT.11(params 1 words);  { locals 22 words, lex 3 }
     end;
   end;
 
-procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
+procedure DECLARAT.12(args 1 words);  { locals 3 words, lex 4 }
   L1^ := 0;
   L2 := G71;
   while ((L2 <> nil) and not (L1^)) do begin
@@ -2806,13 +2800,13 @@ procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
   end else begin
     L1^ := 1;
     if G29 then begin
-      if (FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1, 0, 0) <> 1) then begin
+      if (FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1) <> 1) then begin
         FCLOSE(@G716, 0);
         FOPEN(?, ?, ?, @G716, '*SYSTEM.LIBRARY', 1, 0);
         if (CSP34() <> 0) then begin
           L1^ := 0;
         end else begin
-          if (FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1, 0, 0) <> 1) then begin
+          if (FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1) <> 1) then begin
             L1^ := 0;
           end else begin
             G715 := 1;
@@ -2826,13 +2820,13 @@ procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
       end;
     end;
     if L1^ then begin
-      if DECLARAT.13(0, 0) then begin
+      if DECLARAT.13() then begin
       end else begin
-        PASCALCO.4(190);
+        PASCALCO.4:ERROR(190);
         L1^ := 0;
       end;
     end else begin
-      PASCALCO.4(187);
+      PASCALCO.4:ERROR(187);
     end;
     if L1^ then begin
       I1,8 := @I2,114[L3]^;
@@ -2841,7 +2835,7 @@ procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
         G99 := 2;
       end else begin
         if G42 then begin
-          PASCALCO.4(353);
+          PASCALCO.4:ERROR(353);
         end;
         G13 := G88;
         PASCALCO.13(1);
@@ -2862,7 +2856,7 @@ procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
   end;
   { paths disagree on stack depth here }
   if (I1,8 = 0) then begin
-    PASCALCO.4(195);
+    PASCALCO.4:ERROR(195);
     L1^ := 0;
   end;
   if L1^ then begin
@@ -2872,15 +2866,15 @@ procedure DECLARAT.12(params 1 words);  { locals 3 words, lex 4 }
     G709 := (G93-2);
     G93 := I1,8;
     PASCALCO.5();
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end;
 
-function DECLARAT.13(params 2 words) : <1 word result>;  { locals 2 words, lex 5 }
-  I2,7 := DECLARAT.14(?, ?, @I1,3, 121, adjust(1,4), @L4, 0, 0);
+function DECLARAT.13(args 0 words) : <1 word result>;  { locals 2 words, lex 5 }
+  I2,7 := DECLARAT.14(?, ?, @I1,3, 121, adjust(1,4), @L4);
   L1 := L4;
   if L4 then begin
     if (97 in 1) then begin
-      if (DECLARAT.14(?, I2,7, @L3, 128, adjust(1,4), @L4, 0, 0) = 7) then begin
+      if (DECLARAT.14(?, I2,7, @L3, 128, adjust(1,4), @L4) = 7) then begin
         G41 := 1;
         I2,6 := G87;
         G87 := 0;
@@ -2894,7 +2888,7 @@ function DECLARAT.13(params 2 words) : <1 word result>;  { locals 2 words, lex 5
   end;
   { paths disagree on stack depth here }
 
-function DECLARAT.14(params 8 words) : <1 word result>;  { locals 1 words, lex 6 }
+function DECLARAT.14(args 6 words) : <1 word result>;  { locals 1 words, lex 6 }
   L8^ := 0;
   L3^ := 0;
   while ((L8^ <= 15) and not (L3^)) do begin
@@ -2915,7 +2909,7 @@ function DECLARAT.14(params 8 words) : <1 word result>;  { locals 1 words, lex 6
     L1 := -(1);
   end;
 
-procedure DECLARAT.15(params 0 words);  { locals 4 words, lex 2 }
+procedure DECLARAT.15(args 0 words);  { locals 4 words, lex 2 }
   repeat
     if (G15 = 35) then begin
       L3 := @G134[G8*4w];
@@ -2926,7 +2920,7 @@ procedure DECLARAT.15(params 0 words);  { locals 4 words, lex 2 }
           L1 := L1^.f1;
         end else begin
           L2 := 1;
-          PASCALCO.4(166);
+          PASCALCO.4:ERROR(166);
         end;
       end;
       if not (L2) then begin
@@ -2937,25 +2931,25 @@ procedure DECLARAT.15(params 0 words);  { locals 4 words, lex 2 }
         (L4+1)^ := L3^.f3;
         (L3+3)^ := L1;
       end;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(15);
+      PASCALCO.4:ERROR(15);
     end;
     DECLARAT.2(?, ?, ?, @I1,12^<4w>);
     G11 := (G15 <> 1);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 3) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(14);
+    PASCALCO.4:ERROR(14);
   end;
 
-procedure DECLARAT.16(params 0 words);  { locals 4 words, lex 2 }
+procedure DECLARAT.16(args 0 words);  { locals 4 words, lex 2 }
   if (G15 <> 0) then begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     PASCALCO.16(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
   end;
   while (G15 = 0) do begin
@@ -2965,29 +2959,29 @@ procedure DECLARAT.16(params 0 words);  { locals 4 words, lex 2 }
     (L4+6)^ := nil;
     (L4+7)^ := nil;
     (L4+8)^ := 1;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if ((G15 = 41) and (G16 = 13)) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(16);
+      PASCALCO.4:ERROR(16);
     end;
-    PASCALCO.20(?, ?, @I1,1^<4w>, adjust((8 + 1),4), @L2, @L3);
-    PASCALCO.7(L1);
+    PASCALCO.20:CONSTANT(?, ?, @I1,1^<4w>, adjust((8 + 1),4), @L2, @L3);
+    PASCALCO.7:ENTERID(L1);
     (L1+6)^ := L2;
     move((L1+9), @L3, 1 words);
     if (G15 = 3) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.2(?, ?, ?, @I1,8^<4w>);
     end else begin
       if not (((G15 = 9) and G33)) then begin
-        PASCALCO.4(14);
+        PASCALCO.4:ERROR(14);
       end;
     end;
   end;
 
-procedure DECLARAT.17(params 0 words);  { locals 6 words, lex 2 }
+procedure DECLARAT.17(args 0 words);  { locals 6 words, lex 2 }
   if (G15 <> 0) then begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     PASCALCO.16(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
   end;
   while (G15 = 0) do begin
@@ -2996,14 +2990,14 @@ procedure DECLARAT.17(params 0 words);  { locals 6 words, lex 2 }
     move(L6, @G17, 4 words);
     (L6+6)^ := nil;
     (L6+8)^ := 0;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if ((G15 = 41) and (G16 = 13)) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(16);
+      PASCALCO.4:ERROR(16);
     end;
     DECLARAT.3(?, ?, @I1,1^<4w>, adjust((8 + 1),4), @L4, @L5);
-    PASCALCO.7(L3);
+    PASCALCO.7:ENTERID(L3);
     (L3+6)^ := L4;
     L2 := G67;
     while (L2 <> nil) do begin
@@ -3019,20 +3013,20 @@ procedure DECLARAT.17(params 0 words);  { locals 6 words, lex 2 }
       L2 := L2^.f7;
     end;
     if (G15 = 3) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.2(?, ?, ?, @I1,8^<4w>);
     end else begin
       if not (((G15 = 9) and G33)) then begin
-        PASCALCO.4(14);
+        PASCALCO.4:ERROR(14);
       end;
     end;
   end;
   if (G67 <> nil) then begin
-    PASCALCO.4(117);
+    PASCALCO.4:ERROR(117);
     G67 := nil;
   end;
 
-procedure DECLARAT.18(params 0 words);  { locals 6 words, lex 2 }
+procedure DECLARAT.18(args 0 words);  { locals 6 words, lex 2 }
   L2 := nil;
 L13E5:
   repeat
@@ -3064,26 +3058,26 @@ L13E5:
           (L6+11)^ := 0;
         end;
       end;
-      PASCALCO.7(L3);
+      PASCALCO.7:ENTERID(L3);
       L2 := L3;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end;
     if not ((@I1,1^<4w> in ((6 + 1) + @G101^<4w>))) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, G15, @I1,1^<4w>, adjust(((14 + 1) + @G101^<4w>),4));
     end;
     { paths disagree on stack depth here }
     G11 := (G15 <> 1);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
     if not (G11) then goto L13E5;
     if (G15 = 2) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(5);
+      PASCALCO.4:ERROR(5);
     end;
     L1 := L2;
     DECLARAT.3(?, ?, @I1,1^<4w>, adjust(((8 + 1) + @G101^<4w>),4), @L4, @L5);
@@ -3103,23 +3097,23 @@ L13E5:
       end;
     end;
     if (G15 = 3) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.2(?, ?, ?, @I1,8^<4w>);
     end else begin
       if not (((G15 = 9) and G33)) then begin
-        PASCALCO.4(14);
+        PASCALCO.4:ERROR(14);
       end;
     end;
   until ((G15 <> 0) and not ((G15 in @G101^<4w>)));
   if (G67 <> nil) then begin
-    PASCALCO.4(117);
+    PASCALCO.4:ERROR(117);
     G67 := nil;
   end;
 
-procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
+procedure DECLARAT.19(args 2 words);  { locals 20 words, lex 2 }
   if L1 then begin
     if G49 then begin
-      PASCALCO.4(399);
+      PASCALCO.4:ERROR(399);
       G89 := 0;
       G1098 := 0;
     end;
@@ -3129,9 +3123,9 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     G99 := 1;
     L3 := G15;
     if (G15 in [$0001,$8000,$0000]) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(399);
+      PASCALCO.4:ERROR(399);
       L3 := 31;
     end;
     L2 := L3;
@@ -3148,7 +3142,7 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     if (G37 or (G33 and G32)) then begin
       L7 := 0;
     end else begin
-      PASCALCO.9(@G134[G8*4w]^, @L5);
+      PASCALCO.9:SEARCHSECTION(@G134[G8*4w]^, @L5);
       if (L5 <> nil) then begin
         if (L5^.f8 = 5) then begin
           L7 := ((L5^.f15 and (L2 = 31)) and (L5^.f13 = 0));
@@ -3160,7 +3154,7 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
           end;
         end;
         if not (L7) then begin
-          PASCALCO.4(160);
+          PASCALCO.4:ERROR(160);
         end;
       end else begin
         L7 := 0;
@@ -3207,7 +3201,7 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
       end else begin
         (L21+8)^ := 6;
       end;
-      PASCALCO.7(L5);
+      PASCALCO.7:ENTERID(L5);
     end else begin
       L4 := L5^.f7;
       while (L4 <> nil) do begin
@@ -3235,13 +3229,13 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
         G13 := L5^.f12;
         G99 := 2;
         if not (L1) then begin
-          PASCALCO.4(399);
+          PASCALCO.4:ERROR(399);
         end;
       end;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     L5 := G73;
   end;
   L11 := G80;
@@ -3252,7 +3246,7 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
   if (G80 < 8) then begin
     G80 := (G80+1);
   end else begin
-    PASCALCO.4(251);
+    PASCALCO.4:ERROR(251);
   end;
   if (G8 < 12) then begin
     G8 := (G8+1);
@@ -3266,7 +3260,7 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     (L21+2)^ := nil;
     (L21+1)^ := 0;
   end else begin
-    PASCALCO.4(250);
+    PASCALCO.4:ERROR(250);
   end;
   if (L2 = 31) then begin
     DECLARAT.20(?, ?, 8, adjust(1,4), @L4, L5);
@@ -3279,48 +3273,48 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
       (L5+7)^ := L4;
     end;
     if (G15 = 2) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       if (G15 = 0) then begin
         if L7 then begin
-          PASCALCO.4(122);
+          PASCALCO.4:ERROR(122);
         end;
-        PASCALCO.10(adjust(1,1), @L4);
+        PASCALCO.10:SEARCHID(adjust(1,1), @L4);
         L6 := L4^.f6;
         (L5+6)^ := L6;
         if (L6 <> nil) then begin
           if not ((7 in 1)) then begin
-            PASCALCO.4(120);
+            PASCALCO.4:ERROR(120);
             (L5+6)^ := nil;
           end;
         end;
         { paths disagree on stack depth here }
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(2);
+        PASCALCO.4:ERROR(2);
         PASCALCO.16(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
       end;
     end else begin
       if not (L7) then begin
-        PASCALCO.4(123);
+        PASCALCO.4:ERROR(123);
       end;
     end;
   end;
   if (G15 = 3) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(14);
+    PASCALCO.4:ERROR(14);
   end;
   if (G15 = 53) then begin
     if (G80 <> 2) then begin
-      PASCALCO.4(183);
+      PASCALCO.4:ERROR(183);
     end;
     if G33 then begin
       if (G32 and not (G37)) then begin
-        PASCALCO.4(184);
+        PASCALCO.4:ERROR(184);
       end;
     end;
     if L1 then begin
-      PASCALCO.4(399);
+      PASCALCO.4:ERROR(399);
     end;
     L21 := L5;
     (L21+15)^ := 0;
@@ -3339,11 +3333,11 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     end else begin
       (L5+16)^ := 1;
       G45 := 1;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       if (G15 = 3) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(14);
+        PASCALCO.4:ERROR(14);
       end;
       DECLARAT.2(?, ?, ?, @I1,1^<4w>);
     end;
@@ -3353,22 +3347,22 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     end else begin
       if ((G15 = 34) or (G33 and G32)) then begin
         if L7 then begin
-          PASCALCO.4(161);
+          PASCALCO.4:ERROR(161);
         end else begin
           (L5+15)^ := 1;
         end;
         if (G15 = 34) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
           if (G15 = 3) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end else begin
-            PASCALCO.4(14);
+            PASCALCO.4:ERROR(14);
           end;
         end;
         DECLARAT.2(?, ?, ?, @I1,1^<4w>);
       end else begin
         if L8 then begin
-          PASCALCO.4(7);
+          PASCALCO.4:ERROR(7);
         end;
         G86 := 1;
         I1,6 := 1;
@@ -3395,27 +3389,27 @@ procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
     G13 := L14;
   end;
 
-procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
+procedure DECLARAT.20(args 6 words);  { locals 10 words, lex 3 }
   L9 := nil;
   L14 := G10;
   if not ((@L3^<4w> in (16 + 1))) then begin
-    PASCALCO.4(7);
+    PASCALCO.4:ERROR(7);
     PASCALCO.16(?, G15, (@I2,1^<4w> + @L3^<4w>), adjust((16 + 1),4));
   end;
   { paths disagree on stack depth here }
   if (G15 = 4) then begin
     if I1,7 then begin
-      PASCALCO.4(119);
+      PASCALCO.4:ERROR(119);
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if not ((G15 in [$4000,$0001])) then begin
-      PASCALCO.4(7);
+      PASCALCO.4:ERROR(7);
       PASCALCO.16(?, ?, @I2,1^<4w>, adjust((33 + 1),4));
     end;
     while (G15 in [$4000,$0001]) do begin
       if (G15 = 30) then begin
         L12 := 1;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
         L12 := 0;
       end;
@@ -3423,7 +3417,7 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
       L15 := 0;
       repeat
         if (G15 <> 0) then begin
-          PASCALCO.4(2);
+          PASCALCO.4:ERROR(2);
         end else begin
           CSP1(@L10, 11);
           L16 := L10;
@@ -3436,36 +3430,36 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
             (L16+8)^ := 3;
           end;
           (L16+9)^ := G80;
-          PASCALCO.7(L10);
+          PASCALCO.7:ENTERID(L10);
           L8 := L10;
           L15 := (L15+1);
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end;
         if not ((@I2,1^<4w> in (46 + 1))) then begin
-          PASCALCO.4(7);
+          PASCALCO.4:ERROR(7);
           PASCALCO.16(?, G15, @I2,1^<4w>, adjust((46 + 1),4));
         end;
         { paths disagree on stack depth here }
         G11 := (G15 <> 1);
         if not (G11) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end;
       until G11;
       L11 := nil;
       if (G15 = 2) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if (G15 = 0) then begin
-          PASCALCO.10(adjust(1,1), @L10);
-          PASCALCO.8();
+          PASCALCO.10:SEARCHID(adjust(1,1), @L10);
+          PASCALCO.8:INSYMBOL();
           L11 := L10^.f6;
           L13 := 1;
           if (L11 <> nil) then begin
             if (L12 = 0) then begin
               if (L11^.f1 = 7) then begin
-                PASCALCO.4(121);
+                PASCALCO.4:ERROR(121);
               end else begin
-                if ((L11 = G57) or (L11 = G58)) then begin
-                  PASCALCO.4(7);
+                if ((L11 = BYTESTREAMPTR) or (L11 = WORDSTREAMPTR)) then begin
+                  PASCALCO.4:ERROR(7);
                 end else begin
                   if (L11^.f1 <= 4) then begin
                     L13 := L11^;
@@ -3476,7 +3470,7 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
           end;
           G10 := (G10+(L15*L13));
         end else begin
-          PASCALCO.4(2);
+          PASCALCO.4:ERROR(2);
         end;
         { paths disagree on stack depth here }
       end else begin
@@ -3484,11 +3478,11 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
           I1,8 := 1;
           G10 := (G10+(L15*1));
         end else begin
-          PASCALCO.4(5);
+          PASCALCO.4:ERROR(5);
         end;
       end;
       if not ((@I2,1^<4w> in (40 + 1))) then begin
-        PASCALCO.4(7);
+        PASCALCO.4:ERROR(7);
         PASCALCO.16(?, G15, @I2,1^<4w>, adjust((40 + 1),4));
       end;
       { paths disagree on stack depth here }
@@ -3505,18 +3499,18 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
         L9 := L7;
       end;
       if (G15 = 3) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if not ((G15 in (@I2,1^<4w> + [$4000,$0001]))) then begin
-          PASCALCO.4(7);
+          PASCALCO.4:ERROR(7);
           PASCALCO.16(?, ?, @I2,1^<4w>, adjust((33 + 1),4));
         end;
       end;
     end;
     if (G15 = 5) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       DECLARAT.2(?, ?, ?, adjust((@L3^<4w> + @I2,1^<4w>),4));
     end else begin
-      PASCALCO.4(4);
+      PASCALCO.4:ERROR(4);
     end;
     (L1+14)^ := G10;
     L7 := nil;
@@ -3553,17 +3547,17 @@ procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
 SEGMENT 9 BODYPART
 ======================================================================
 
-procedure BODYPART.1(params 5 words);  { locals 0 words, lex 1 }
+procedure BODYPART.1(args 5 words);  { locals 0 words, lex 1 }
   if (not (G35) or G34) then begin
     BODYPART.24();
   end else begin
     BODYPART.38();
   end;
 
-procedure BODYPART.2(params 3 words);  { locals 1 words, lex 2 }
+procedure BODYPART.2(args 3 words);  { locals 1 words, lex 2 }
   if (G706 > 128) then begin
-    if (FBLOCKIO(@G665, G707, 0, 1, G705, 0, 0, 0) <> 1) then begin
-      PASCALCO.4(402);
+    if (FBLOCKIO(@G665, G707, 0, 1, G705, 0) <> 1) then begin
+      PASCALCO.4:ERROR(402);
     end;
     G705 := (G705+1);
     G706 := 1;
@@ -3578,43 +3572,43 @@ procedure BODYPART.2(params 3 words);  { locals 1 words, lex 2 }
   G706 := (G706+1);
   { left on stack: L3 }
 
-procedure BODYPART.3(params 1 words);  { locals 4 words, lex 2 }
+procedure BODYPART.3(args 1 words);  { locals 4 words, lex 2 }
   if (L1 <> 38) then begin
-    PASCALCO.22((L1+128));
+    PASCALCO.22:EMIT((L1+128));
   end else begin
     L3 := G9;
     G91 := G9;
     if not (L3) then begin
-      PASCALCO.22(215);
+      PASCALCO.22:EMIT(215);
     end;
-    PASCALCO.22(166);
+    PASCALCO.22:EMIT(166);
     L4 := G5;
-    PASCALCO.22(L4^.f1);
+    PASCALCO.22:EMIT(L4^.f1);
     L2 := 1;
     L5 := L4^.f1;
     while (L2 <= L5) do begin
-      PASCALCO.22((L4+2)^[(L2-1)]);
+      PASCALCO.22:EMIT((L4+2)^[(L2-1)]);
       L2 := (L2+1);
     end;
     if L3 then begin
-      PASCALCO.22(215);
+      PASCALCO.22:EMIT(215);
     end;
   end;
 
-procedure BODYPART.4(params 1 words);  { locals 0 words, lex 2 }
+procedure BODYPART.4(args 1 words);  { locals 0 words, lex 2 }
   if ((L1 >= 0) and (L1 <= 127)) then begin
-    PASCALCO.22(L1);
+    PASCALCO.22:EMIT(L1);
   end else begin
-    PASCALCO.22((51+148));
-    PASCALCO.22((abs(L1) mod 256));
-    PASCALCO.22((abs(L1) div 256));
+    PASCALCO.22:EMIT((51+148));
+    PASCALCO.22:EMIT((abs(L1) mod 256));
+    PASCALCO.22:EMIT((abs(L1) div 256));
     if (L1 < 0) then begin
       BODYPART.3(17);
     end;
   end;
 
-procedure BODYPART.5(params 2 words);  { locals 3 words, lex 2 }
-  PASCALCO.22((L2+128));
+procedure BODYPART.5(args 2 words);  { locals 3 words, lex 2 }
+  PASCALCO.22:EMIT((L2+128));
   if (L2 = 51) then begin
     if (L1 = 2) then begin
       L4 := 2;
@@ -3632,7 +3626,7 @@ L0305:
 L0307:
     G3^ := L4;
     if (L4 > 1) then begin
-      PASCALCO.22(L4);
+      PASCALCO.22:EMIT(L4);
       L3 := L4;
       L5 := 1;
       while (L3 >= L5) do begin
@@ -3647,24 +3641,24 @@ L0307:
     end;
   end else begin
     if (L2 in [$C006,$3000,$6401,$4000,$0000]) then begin
-      PASCALCO.22(L1);
+      PASCALCO.22:EMIT(L1);
     end else begin
       if (G33 and (L2 in [$0A20,$0000,$0000])) then begin
         BODYPART.2(3, L1, G9);
-        PASCALCO.22(128);
-        PASCALCO.22(0);
+        PASCALCO.22:EMIT(128);
+        PASCALCO.22:EMIT(0);
       end else begin
         if (((L2 = 74) or (L2 = 41)) and (L1 <= 16)) then begin
           G9 := (G9-1);
           if (L2 = 41) then begin
-            PASCALCO.22((231+L1));
+            PASCALCO.22:EMIT((231+L1));
           end else begin
-            PASCALCO.22((215+L1));
+            PASCALCO.22:EMIT((215+L1));
           end;
         end else begin
           if ((L2 = 35) and (L1 <= 7)) then begin
             G9 := (G9-1);
-            PASCALCO.22((248+L1));
+            PASCALCO.22:EMIT((248+L1));
           end else begin
             BODYPART.28(L1);
           end;
@@ -3673,11 +3667,11 @@ L0307:
     end;
   end;
 
-procedure BODYPART.6(params 3 words);  { locals 0 words, lex 2 }
+procedure BODYPART.6(args 3 words);  { locals 0 words, lex 2 }
   if ((L3 = 64) or (L3 = 77)) then begin
-    PASCALCO.22((L3+128));
-    PASCALCO.22(L2);
-    PASCALCO.22(L1);
+    PASCALCO.22:EMIT((L3+128));
+    PASCALCO.22:EMIT(L2);
+    PASCALCO.22:EMIT(L1);
   end else begin
     if (L3 in [$00B3,$8000,$0000,$0000]) then begin
       if (L2 = 0) then begin
@@ -3697,19 +3691,19 @@ procedure BODYPART.6(params 3 words);  { locals 0 words, lex 2 }
         end else begin
           if (L2 < 0) then begin
             if (L3 = 54) then begin
-              PASCALCO.22(157);
+              PASCALCO.22:EMIT(157);
             end else begin
               if (L3 = 56) then begin
-                PASCALCO.22(209);
+                PASCALCO.22:EMIT(209);
               end else begin
-                PASCALCO.22(167);
+                PASCALCO.22:EMIT(167);
               end;
             end;
-            PASCALCO.22(-(L2));
+            PASCALCO.22:EMIT(-(L2));
             BODYPART.28(L1);
           end else begin
-            PASCALCO.22((L3+128));
-            PASCALCO.22((G80-L2));
+            PASCALCO.22:EMIT((L3+128));
+            PASCALCO.22:EMIT((G80-L2));
             BODYPART.28(L1);
           end;
         end;
@@ -3717,11 +3711,11 @@ procedure BODYPART.6(params 3 words);  { locals 0 words, lex 2 }
     end;
   end;
 
-procedure BODYPART.7(params 2 words);  { locals 0 words, lex 2 }
+procedure BODYPART.7(args 2 words);  { locals 0 words, lex 2 }
   @G186^ := adjust((@G186^<4w> + [L2]),4)  {4 words};
   BODYPART.6(77, L2, L1);
 
-procedure BODYPART.8(params 0 words);  { locals 4 words, lex 2 }
+procedure BODYPART.8(args 0 words);  { locals 4 words, lex 2 }
   if (G3 <> nil) then begin
     goto L06CE;
 L05FE:
@@ -3750,13 +3744,13 @@ L05FE:
         L2 := (L2+1);
       end;
     end else begin
-      if ((G3^.f1 = 0) and (G3 <> G64)) then begin
+      if ((G3^.f1 = 0) and (G3 <> REALPTR)) then begin
         BODYPART.4(G5);
       end else begin
-        if (G3 = G59) then begin
+        if (G3 = NILPTR) then begin
           BODYPART.3(31);
         end else begin
-          if (G3 = G64) then begin
+          if (G3 = REALPTR) then begin
             BODYPART.5(51, 2);
           end else begin
             BODYPART.5(51, 5);
@@ -3810,14 +3804,14 @@ L06DC:
     G4 := 2;
   end;
 
-procedure BODYPART.9(params 0 words);  { locals 0 words, lex 2 }
+procedure BODYPART.9(args 0 words);  { locals 0 words, lex 2 }
   if (G3 <> nil) then begin
     goto L07AC;
 L076C:
-    if PASCALCO.18(G3, 0, 0) then begin
+    if PASCALCO.18:STRINGTYPE(G3) then begin
       BODYPART.3(38);
     end else begin
-      PASCALCO.4(409);
+      PASCALCO.4:ERROR(409);
     end;
     goto L07B8;
 L0781:
@@ -3831,7 +3825,7 @@ L078B:
     end;
     goto L07AA;
 L0796:
-    PASCALCO.4(103);
+    PASCALCO.4:ERROR(103);
     goto L07AA;
 L079C:
     case <selector> of  { 0..2 }
@@ -3854,14 +3848,14 @@ L07B8:
     G6 := 0;
   end;
 
-procedure BODYPART.10(params 0 words);  { locals 0 words, lex 2 }
+procedure BODYPART.10(args 0 words);  { locals 0 words, lex 2 }
   if (G3 <> nil) then begin
     goto L0816;
 L07D6:
-    if PASCALCO.18(G3, 0, 0) then begin
+    if PASCALCO.18:STRINGTYPE(G3) then begin
       BODYPART.3(38);
     end else begin
-      PASCALCO.4(409);
+      PASCALCO.4:ERROR(409);
     end;
     goto L0822;
 L07EB:
@@ -3875,7 +3869,7 @@ L07F5:
     end;
     goto L0814;
 L0800:
-    PASCALCO.4(103);
+    PASCALCO.4:ERROR(103);
     goto L0814;
 L0806:
     case <selector> of  { 0..2 }
@@ -3904,10 +3898,10 @@ L0822:
     G5 := 4;
   end;
 
-procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
+procedure BODYPART.11(args 4 words);  { locals 13 words, lex 2 }
   BODYPART.34(?, ?, ?, adjust((@L1^<4w> + [$0200,$0000,$0000]),4));
   if (G15 = 41) then begin
-    L15 := ((G4 = 0) and (PASCALCO.18(G3, 0, 0) or (G3 = G62)));
+    L15 := ((G4 = 0) and (PASCALCO.18:STRINGTYPE(G3) or (G3 = CHARPTR)));
     if (G3 <> nil) then begin
       if (G3^.f1 <= 4) then begin
         BODYPART.8();
@@ -3921,9 +3915,9 @@ procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
     move(@L5, @G3, 5 words);
     L10 := G16;
     L13 := G91;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.34(?, ?, ?, @L1^<4w>);
-    L14 := ((G4 = 0) and (PASCALCO.18(G3, 0, 0) or (G3 = G62)));
+    L14 := ((G4 = 0) and (PASCALCO.18:STRINGTYPE(G3) or (G3 = CHARPTR)));
     if (G3 <> nil) then begin
       if (G3^.f1 <= 4) then begin
         BODYPART.8();
@@ -3934,14 +3928,14 @@ procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
     if ((L5 <> nil) and (G3 <> nil)) then begin
       if (L10 = 14) then begin
         if (G3^.f1 = 4) then begin
-          if PASCALCO.21(L5, G3^.f2, 0, 0) then begin
+          if PASCALCO.21(L5, G3^.f2) then begin
             BODYPART.3(11);
           end else begin
-            PASCALCO.4(129);
+            PASCALCO.4:ERROR(129);
             G3 := nil;
           end;
         end else begin
-          PASCALCO.4(130);
+          PASCALCO.4:ERROR(130);
           G3 := nil;
         end;
       end else begin
@@ -3950,7 +3944,7 @@ procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
           BODYPART.33(@L5);
         end;
         if L15 then begin
-          if PASCALCO.17(G3, 0, 0) then begin
+          if PASCALCO.17:STRING(G3) then begin
             if not (G3^.f7) then begin
               BODYPART.21(L13);
               BODYPART.37(@L5, G3);
@@ -3958,7 +3952,7 @@ procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
           end;
         end else begin
           if L14 then begin
-            if PASCALCO.17(L5, 0, 0) then begin
+            if PASCALCO.17:STRING(L5) then begin
               if not (L5^.f7) then begin
                 BODYPART.21(G91);
                 BODYPART.37(@G3, L5);
@@ -3966,17 +3960,17 @@ procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
             end;
           end;
         end;
-        if not (((L15 and PASCALCO.18(G3, 0, 0)) or (L14 and PASCALCO.18(L5, 0, 0)))) then goto L1B21;
+        if not (((L15 and PASCALCO.18:STRINGTYPE(G3)) or (L14 and PASCALCO.18:STRINGTYPE(L5)))) then goto L1B21;
         goto L1B87;
 L1B21:
-        if PASCALCO.21(L5, G3, 0, 0) then begin
+        if PASCALCO.21(L5, G3) then begin
           L12 := L5^;
           goto L1C08;
 L1B32:
-          if (L5 = G64) then begin
+          if (L5 = REALPTR) then begin
             L11 := 1;
           end else begin
-            if (L5 = G61) then begin
+            if (L5 = BOOLPTR) then begin
               L11 := 3;
             end else begin
               L11 := 0;
@@ -3985,7 +3979,7 @@ L1B32:
           goto L1C20;
 L1B4D:
           if (3840 in 1) then begin
-            PASCALCO.4(131);
+            PASCALCO.4:ERROR(131);
           end;
           L11 := 0;
           goto L1C20;
@@ -3994,53 +3988,53 @@ L1B60:
           goto L1C20;
 L1B65:
           if (2304 in 1) then begin
-            PASCALCO.4(132);
+            PASCALCO.4:ERROR(132);
           end;
           L11 := 4;
           goto L1C20;
 L1B78:
           L11 := 6;
-          if PASCALCO.17(L5, 0, 0) then begin
+          if PASCALCO.17:STRING(L5) then begin
             if L5^.f7 then begin
 L1B87:
               L11 := 2;
             end else begin
               L11 := 5;
-              if (L5 = G57) then begin
-                if (G3 = G57) then begin
-                  PASCALCO.4(129);
+              if (L5 = BYTESTREAMPTR) then begin
+                if (G3 = BYTESTREAMPTR) then begin
+                  PASCALCO.4:ERROR(129);
                 end else begin
                   L5 := G3;
                 end;
               end;
               if (L5^.f2 <> nil) then begin
-                PASCALCO.11(L5^.f2, @L17, @L16);
+                PASCALCO.11:GETBOUNDS(L5^.f2, @L17, @L16);
                 L12 := ((L16-L17)+1);
               end;
             end;
           end else begin
-            if (L5 = G58) then begin
-              if (G3 = G58) then begin
-                PASCALCO.4(129);
+            if (L5 = WORDSTREAMPTR) then begin
+              if (G3 = WORDSTREAMPTR) then begin
+                PASCALCO.4:ERROR(129);
               end else begin
                 L5 := G3;
                 L12 := L5^;
               end;
             end;
             if (3840 in 1) then begin
-              PASCALCO.4(131);
+              PASCALCO.4:ERROR(131);
             end;
           end;
           { paths disagree on stack depth here }
           goto L1C20;
 L1BEA:
           if (3840 in 1) then begin
-            PASCALCO.4(131);
+            PASCALCO.4:ERROR(131);
           end;
           L11 := 6;
           goto L1C20;
 L1BFD:
-          PASCALCO.4(133);
+          PASCALCO.4:ERROR(133);
           L11 := 0;
           goto L1C20;
 L1C08:
@@ -4094,30 +4088,30 @@ L1C5E:
           end;
 L1C72:
         end else begin
-          PASCALCO.4(129);
+          PASCALCO.4:ERROR(129);
         end;
       end;
     end;
-    G3 := G61;
+    G3 := BOOLPTR;
     G4 := 2;
   end;
 
-procedure BODYPART.12(params 4 words);  { locals 1 words, lex 2 }
+procedure BODYPART.12(args 4 words);  { locals 1 words, lex 2 }
   if (G15 = 0) then begin
-    PASCALCO.10(adjust((16 + 1),1), @L5);
-    PASCALCO.8();
+    PASCALCO.10:SEARCHID(adjust((16 + 1),1), @L5);
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     L5 := G76;
   end;
   { paths disagree on stack depth here }
   BODYPART.22(?, ?, ?, @L1^<4w>, L5);
 
-procedure BODYPART.13(params 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.13(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1^;
   (L2+11)^ := G99;
   if (G99 > 254) then begin
-    PASCALCO.4(251);
+    PASCALCO.4:ERROR(251);
   end else begin
     G99 := (G99+1);
   end;
@@ -4125,7 +4119,7 @@ procedure BODYPART.13(params 1 words);  { locals 1 words, lex 2 }
   G45 := 1;
   (L2+16)^ := 1;
 
-procedure BODYPART.14(params 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.14(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1;
   if (L2^.f8 = 3) then begin
     BODYPART.6(50, L2^.f9, L2^.f10);
@@ -4133,31 +4127,31 @@ procedure BODYPART.14(params 1 words);  { locals 1 words, lex 2 }
     BODYPART.6(54, L2^.f9, L2^.f10);
   end;
 
-procedure BODYPART.15(params 0 words);  { locals 0 words, lex 2 }
-  if (G3 = G61) then begin
-    PASCALCO.22(1);
-    PASCALCO.22(132);
+procedure BODYPART.15(args 0 words);  { locals 0 words, lex 2 }
+  if (G3 = BOOLPTR) then begin
+    PASCALCO.22:EMIT(1);
+    PASCALCO.22:EMIT(132);
   end;
 
-procedure BODYPART.16(params 2 words);  { locals 2 words, lex 2 }
+procedure BODYPART.16(args 2 words);  { locals 2 words, lex 2 }
   L4 := L1;
   if L4^ then begin
-    PASCALCO.22((L2+128));
+    PASCALCO.22:EMIT((L2+128));
     L3 := ((L4^.f1-G9)-1);
     if ((L3 >= 0) and (L3 <= 127)) then begin
-      PASCALCO.22(L3);
+      PASCALCO.22:EMIT(L3);
     end else begin
       if (L4^.f2 = 0) then begin
         (L4+2)^ := G627;
         if (G627 = 36) then begin
-          PASCALCO.4(254);
+          PASCALCO.4:ERROR(254);
         end else begin
           G627 := (G627+1);
         end;
         @G628[L4^.f2]^ := L4^.f1;
       end;
       L3 := -(L4^.f2);
-      PASCALCO.22(((248-L4^.f2)-L4^.f2));
+      PASCALCO.22:EMIT(((248-L4^.f2)-L4^.f2));
     end;
   end else begin
     CSP2((L4+1), 0, G2, G9, 2);
@@ -4170,20 +4164,20 @@ procedure BODYPART.16(params 2 words);  { locals 2 words, lex 2 }
     G9 := (G9+2);
   end;
 
-procedure BODYPART.17(params 1 words);  { locals 0 words, lex 2 }
+procedure BODYPART.17(args 1 words);  { locals 0 words, lex 2 }
   BODYPART.8();
-  if ((G3 <> G61) and (G3 <> nil)) then begin
-    PASCALCO.4(135);
+  if ((G3 <> BOOLPTR) and (G3 <> nil)) then begin
+    PASCALCO.4:ERROR(135);
   end;
   BODYPART.16(33, L1);
 
-procedure BODYPART.18(params 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.18(args 1 words);  { locals 1 words, lex 2 }
   CSP1(L1, 3);
   L2 := L1^;
   L2^ := 0;
   (L2+1)^ := 28000;
 
-procedure BODYPART.19(params 1 words);  { locals 3 words, lex 2 }
+procedure BODYPART.19(args 1 words);  { locals 3 words, lex 2 }
   L4 := L1;
   L2 := L4^.f1;
   L4^ := 1;
@@ -4202,7 +4196,7 @@ procedure BODYPART.19(params 1 words);  { locals 3 words, lex 2 }
   end;
   G9 := L4^.f1;
 
-procedure BODYPART.20(params 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.20(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1;
   if (L2^ <> nil) then begin
     goto L0747;
@@ -4211,7 +4205,7 @@ L0719:
     goto L0758;
 L0722:
     if (L2^.f3 <> 0) then begin
-      PASCALCO.4(409);
+      PASCALCO.4:ERROR(409);
     end else begin
       BODYPART.3(26);
     end;
@@ -4237,7 +4231,7 @@ L0747:
   end;
 L0758:
 
-procedure BODYPART.21(params 1 words);  { locals 0 words, lex 2 }
+procedure BODYPART.21(args 1 words);  { locals 0 words, lex 2 }
   if L1 then begin
     CSP3(G2, (L1+1), G2, (L1+2), (G2^[(L1+1)]+1));
     G2^[L1] := 215;
@@ -4248,7 +4242,7 @@ procedure BODYPART.21(params 1 words);  { locals 0 words, lex 2 }
     G2^[((L1+G2^[(L1+1)])+2)] := 215;
   end;
 
-procedure BODYPART.22(params 5 words);  { locals 10 words, lex 2 }
+procedure BODYPART.22(args 5 words);  { locals 10 words, lex 2 }
   L14 := L1;
   G3 := L14^.f6;
   G4 := 1;
@@ -4290,10 +4284,10 @@ L08E2:
   goto L0962;
 L0927:
   if (L14^.f9 <> 1) then begin
-    PASCALCO.4(150);
+    PASCALCO.4:ERROR(150);
   end else begin
     if not (L14^.f17) then begin
-      PASCALCO.4(103);
+      PASCALCO.4:ERROR(103);
     end else begin
       G5 := 0;
       G6 := (L14^.f10+1);
@@ -4318,7 +4312,7 @@ L0962:
     end;
   end;
   if not ((G15 in (@G113^<4w> + @L2^<4w>))) then begin
-    PASCALCO.4(59);
+    PASCALCO.4:ERROR(59);
     PASCALCO.16(?, ?, ?, adjust((@G113^<4w> + @L2^<4w>),4));
   end;
   while (G15 in @G113^<4w>) do begin
@@ -4327,25 +4321,25 @@ L0962:
         move(@L6, @G3, 5 words);
         if (L6 <> nil) then begin
           if (L6^.f1 <> 5) then begin
-            PASCALCO.4(138);
+            PASCALCO.4:ERROR(138);
             L6 := nil;
           end;
         end;
         BODYPART.9();
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         BODYPART.11(?, ?, ?, adjust((@L2^<4w> + [$0001,$0002]),4));
         BODYPART.8();
         BODYPART.15();
         if (G3 <> nil) then begin
           if (G3^.f1 <> 0) then begin
-            PASCALCO.4(113);
+            PASCALCO.4:ERROR(113);
           end;
         end;
         if (L6 <> nil) then begin
           L14 := L6;
-          if PASCALCO.21(L14^.f2, G3, 0, 0) then begin
-            if ((L14^.f2 <> nil) and not (PASCALCO.18(L6, 0, 0))) then begin
-              PASCALCO.11(L14^.f2, @L13, @L12);
+          if PASCALCO.21(L14^.f2, G3) then begin
+            if ((L14^.f2 <> nil) and not (PASCALCO.18:STRINGTYPE(L6))) then begin
+              PASCALCO.11:GETBOUNDS(L14^.f2, @L13, @L12);
               if G52 then begin
                 BODYPART.4(L13);
                 BODYPART.4(L12);
@@ -4361,7 +4355,7 @@ L0962:
               end;
             end;
           end else begin
-            PASCALCO.4(139);
+            PASCALCO.4:ERROR(139);
           end;
           G3 := L14^.f3;
           G4 := 1;
@@ -4371,7 +4365,7 @@ L0962:
             if L14^.f4 then begin
               if (L14^.f5 = 8) then begin
                 G5 := 4;
-                if (PASCALCO.18(L6, 0, 0) and G52) then begin
+                if (PASCALCO.18:STRINGTYPE(L6) and G52) then begin
                   BODYPART.3(27);
                   goto L0A70;
                 end;
@@ -4390,24 +4384,24 @@ L0A70:
         end;
       until (G15 <> 1);
       if (G15 = 16) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(12);
+        PASCALCO.4:ERROR(12);
       end;
     end else begin
       if (G15 = 18) then begin
         if (G3 <> nil) then begin
           if (G3^.f1 <> 6) then begin
-            PASCALCO.4(140);
+            PASCALCO.4:ERROR(140);
             G3 := nil;
           end;
         end;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if (G15 = 0) then begin
           if (G3 <> nil) then begin
-            PASCALCO.9(G3^.f2, @L11);
+            PASCALCO.9:SEARCHSECTION(G3^.f2, @L11);
             if (L11 = nil) then begin
-              PASCALCO.4(152);
+              PASCALCO.4:ERROR(152);
               G3 := nil;
             end else begin
               L14 := L11;
@@ -4420,7 +4414,7 @@ L0AF6:
               G6 := (G6+L14^.f9);
               goto L0B18;
 L0AFF:
-              PASCALCO.4(409);
+              PASCALCO.4:ERROR(409);
               goto L0B18;
 L0B07:
               case <selector> of  { 0..4 }
@@ -4446,9 +4440,9 @@ L0B18:
               end;
             end;
           end;
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end else begin
-          PASCALCO.4(2);
+          PASCALCO.4:ERROR(2);
         end;
       end else begin
         if (G3 <> nil) then begin
@@ -4463,9 +4457,9 @@ L0B18:
             end else begin
               G3 := L14^.f2;
               if (G3 = nil) then begin
-                PASCALCO.4(399);
+                PASCALCO.4:ERROR(399);
               end else begin
-                if (G3 = G62) then begin
+                if (G3 = CHARPTR) then begin
                   BODYPART.4(0);
                   G5 := 4;
                 end;
@@ -4477,29 +4471,29 @@ L0B18:
               end;
             end;
           end else begin
-            PASCALCO.4(141);
+            PASCALCO.4:ERROR(141);
           end;
         end;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     end;
     if not ((G15 in (@L2^<4w> + @G113^<4w>))) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, ?, ?, adjust((@L2^<4w> + @G113^<4w>),4));
     end;
   end;
 
-procedure BODYPART.23(params 5 words);  { locals 2 words, lex 2 }
+procedure BODYPART.23(args 5 words);  { locals 2 words, lex 2 }
   if (L1^.f9 = 2) then begin
     L7 := 1;
     L6 := L1^.f10;
     if (G15 = 4) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
       if (116 in 1) then begin
         L7 := 0;
       end else begin
-        PASCALCO.4(9);
+        PASCALCO.4:ERROR(9);
       end;
     end;
     { paths disagree on stack depth here }
@@ -4519,16 +4513,16 @@ procedure BODYPART.23(params 5 words);  { locals 2 words, lex 2 }
     { paths disagree on stack depth here }
     if L7 then begin
       if (G15 = 5) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(4);
+        PASCALCO.4:ERROR(4);
       end;
     end;
   end else begin
     BODYPART.31();
   end;
 
-procedure BODYPART.24(params 0 words);  { locals 19 words, lex 2 }
+procedure BODYPART.24(args 0 words);  { locals 19 words, lex 2 }
   BODY1.1();
   if G35 then begin
     BODYPART.27();
@@ -4537,7 +4531,7 @@ procedure BODYPART.24(params 0 words);  { locals 19 words, lex 2 }
   end;
   BODY3.1();
 
-procedure BODYPART.25(params 0 words);  { locals 2 words, lex 3 }
+procedure BODYPART.25(args 0 words);  { locals 2 words, lex 3 }
   if G50 then begin
     FWRITELN(I4,3);
     @I1,19[0]^ := CSP40();
@@ -4565,10 +4559,10 @@ procedure BODYPART.25(params 0 words);  { locals 2 words, lex 3 }
       if (L2^.f2 = nil) then begin
         BODYPART.4(-(1));
       end else begin
-        if (L1^.f6 = G56) then begin
+        if (L1^.f6 = INTERPTR) then begin
           BODYPART.4(0);
         end else begin
-          if (L2^.f2 = G62) then begin
+          if (L2^.f2 = CHARPTR) then begin
             BODYPART.4(-(2));
           end else begin
             BODYPART.4(L2^.f2^);
@@ -4589,11 +4583,11 @@ L0121:
     if not (not ((G15 in @G105^<4w>))) then goto L0121;
     G11 := (G15 <> 3);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
 
-procedure BODYPART.26(params 1 words);  { locals 0 words, lex 4 }
+procedure BODYPART.26(args 1 words);  { locals 0 words, lex 4 }
   if (L1^ <> nil) then begin
     BODYPART.26((L1^+7));
     if L1^^.f10 then begin
@@ -4601,7 +4595,7 @@ procedure BODYPART.26(params 1 words);  { locals 0 words, lex 4 }
     end;
   end;
 
-procedure BODYPART.27(params 0 words);  { locals 0 words, lex 3 }
+procedure BODYPART.27(args 0 words);  { locals 0 words, lex 3 }
   goto L0167;
 L0160:
   BODYPART.25();
@@ -4612,28 +4606,28 @@ L0167:
   goto L0160;
 L016C:
 
-procedure BODYPART.28(params 1 words);  { locals 0 words, lex 2 }
+procedure BODYPART.28(args 1 words);  { locals 0 words, lex 2 }
   if (L1 <= 127) then begin
-    PASCALCO.22(L1);
+    PASCALCO.22:EMIT(L1);
   end else begin
-    PASCALCO.22((128+(L1 div 256)));
-    PASCALCO.22((L1 mod 256));
+    PASCALCO.22:EMIT((128+(L1 div 256)));
+    PASCALCO.22:EMIT((L1 mod 256));
   end;
 
-procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
-  L2 := G70;
+procedure BODYPART.29(args 0 words);  { locals 2 words, lex 3 }
+  L2 := INPUTPTR;
   if ((G15 = 0) and I1,7) then begin
-    PASCALCO.10(adjust((16 + 1),1), @L1);
+    PASCALCO.10:SEARCHID(adjust((16 + 1),1), @L1);
     if (L1^.f6 <> nil) then begin
       if (L1^.f6^.f1 = 7) then begin
-        if (L1^.f6^.f2 = G62) then begin
-          PASCALCO.8();
+        if (L1^.f6^.f2 = CHARPTR) then begin
+          PASCALCO.8:INSYMBOL();
           L2 := L1;
           if not ((34 in 1)) then begin
-            PASCALCO.4(20);
+            PASCALCO.4:ERROR(20);
           end;
           if (G15 = 1) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end;
         end;
       end;
@@ -4641,7 +4635,7 @@ procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
     { paths disagree on stack depth here }
   end else begin
     if I1,7 then begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end;
   end;
   if (I1,7 and (G15 <> 5)) then begin
@@ -4649,28 +4643,28 @@ procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
       BODYPART.14(L2);
       BODYPART.12(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
       if (G5 = 4) then begin
-        PASCALCO.4(103);
+        PASCALCO.4:ERROR(103);
       end;
       BODYPART.9();
       if (G3 <> nil) then begin
-        if PASCALCO.21(G12, G3, 0, 0) then begin
+        if PASCALCO.21(INTPTR, G3) then begin
           BODYPART.6(77, 0, 12);
         end else begin
-          if PASCALCO.21(G64, G3, 0, 0) then begin
+          if PASCALCO.21(REALPTR, G3) then begin
             BODYPART.7(31, 3);
           end else begin
-            if PASCALCO.21(G63, G3, 0, 0) then begin
+            if PASCALCO.21(LONGPTR, G3) then begin
               BODYPART.4(G3^);
               BODYPART.7(30, 2);
             end else begin
-              if PASCALCO.21(G62, G3, 0, 0) then begin
+              if PASCALCO.21(CHARPTR, G3) then begin
                 BODYPART.6(77, 0, 16);
               end else begin
-                if PASCALCO.18(G3, 0, 0) then begin
+                if PASCALCO.18:STRINGTYPE(G3) then begin
                   BODYPART.4(G3^.f8);
                   BODYPART.6(77, 0, 18);
                 end else begin
-                  PASCALCO.4(125);
+                  PASCALCO.4:ERROR(125);
                 end;
               end;
             end;
@@ -4682,7 +4676,7 @@ procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
       end;
       G11 := (G15 <> 1);
       if not (G11) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     until G11;
   end;
@@ -4694,20 +4688,20 @@ procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
     end;
   end;
 
-procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
-  L4 := G69;
+procedure BODYPART.30(args 0 words);  { locals 8 words, lex 3 }
+  L4 := OUTPUTPTR;
   if ((G15 = 0) and I1,7) then begin
-    PASCALCO.10(adjust((82 + 1),1), @L3);
+    PASCALCO.10:SEARCHID(adjust((82 + 1),1), @L3);
     if (L3^.f6 <> nil) then begin
       if (L3^.f6^.f1 = 7) then begin
-        if (L3^.f6^.f2 = G62) then begin
-          PASCALCO.8();
+        if (L3^.f6^.f2 = CHARPTR) then begin
+          PASCALCO.8:INSYMBOL();
           L4 := L3;
           if not ((34 in 1)) then begin
-            PASCALCO.4(20);
+            PASCALCO.4:ERROR(20);
           end;
           if (G15 = 1) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
           end;
         end;
       end;
@@ -4726,18 +4720,18 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
         end else begin
           BODYPART.8();
           if (L8^.f1 = 3) then begin
-            BODYPART.4(PASCALCO.19(36, 0, 0));
+            BODYPART.4(PASCALCO.19:LONGSIZE(36));
             BODYPART.4(0);
             BODYPART.7(30, 4);
           end;
         end;
       end;
       if (G15 = 2) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         BODYPART.11(?, ?, @I1,2^<4w>, adjust((38 + 1),4));
         if (G3 <> nil) then begin
-          if (G3 <> G12) then begin
-            PASCALCO.4(20);
+          if (G3 <> INTPTR) then begin
+            PASCALCO.4:ERROR(20);
           end;
         end;
         BODYPART.8();
@@ -4745,23 +4739,23 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
       end else begin
         L2 := 1;
       end;
-      if (L1 = G12) then begin
+      if (L1 = INTPTR) then begin
         if L2 then begin
           BODYPART.4(0);
         end;
         BODYPART.6(77, 0, 13);
       end else begin
-        if (L1 = G64) then begin
+        if (L1 = REALPTR) then begin
           if L2 then begin
             BODYPART.4(0);
           end;
           if (G15 = 2) then begin
-            PASCALCO.8();
+            PASCALCO.8:INSYMBOL();
             BODYPART.11(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
             BODYPART.8();
             if (G3 <> nil) then begin
-              if (G3 <> G12) then begin
-                PASCALCO.4(125);
+              if (G3 <> INTPTR) then begin
+                PASCALCO.4:ERROR(125);
               end;
             end;
           end else begin
@@ -4769,28 +4763,28 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
           end;
           BODYPART.7(31, 4);
         end else begin
-          if PASCALCO.21(L1, G63, 0, 0) then begin
+          if PASCALCO.21(L1, LONGPTR) then begin
             if L2 then begin
               BODYPART.4(0);
             end;
             BODYPART.7(30, 3);
           end else begin
-            if (L1 = G62) then begin
+            if (L1 = CHARPTR) then begin
               if L2 then begin
                 BODYPART.4(0);
               end;
               BODYPART.6(77, 0, 17);
             end else begin
-              if PASCALCO.18(L1, 0, 0) then begin
+              if PASCALCO.18:STRINGTYPE(L1) then begin
                 if L2 then begin
                   BODYPART.4(0);
                 end;
                 BODYPART.6(77, 0, 19);
               end else begin
-                if (PASCALCO.17(L1, 0, 0) and (L1 <> G57)) then begin
+                if (PASCALCO.17:STRING(L1) and (L1 <> BYTESTREAMPTR)) then begin
                   L5 := 0;
                   if (L1^.f2 <> nil) then begin
-                    PASCALCO.11(L1^.f2, @L6, @L5);
+                    PASCALCO.11:GETBOUNDS(L1^.f2, @L6, @L5);
                     L5 := ((L5-L6)+1);
                   end;
                   if L2 then begin
@@ -4799,7 +4793,7 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
                   BODYPART.4(L5);
                   BODYPART.6(77, 0, 20);
                 end else begin
-                  PASCALCO.4(125);
+                  PASCALCO.4:ERROR(125);
                 end;
               end;
             end;
@@ -4811,7 +4805,7 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
       end;
       G11 := (G15 <> 1);
       if not (G11) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     until G11;
   end;
@@ -4823,20 +4817,20 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
     end;
   end;
 
-procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
+procedure BODYPART.31(args 0 words);  { locals 9 words, lex 3 }
   L9 := I1,1;
   L2 := L9^.f7;
   if (L9^.f9 = 1) then begin
     if (L9^.f13 <> 0) then begin
-      PASCALCO.4(399);
+      PASCALCO.4:ERROR(399);
     end;
   end;
   if (G15 = 4) then begin
     repeat
       if (L2 = nil) then begin
-        PASCALCO.4(126);
+        PASCALCO.4:ERROR(126);
       end;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       BODYPART.11(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
       L8 := G5;
       if ((G3 <> nil) and (L2 <> nil)) then begin
@@ -4844,7 +4838,7 @@ procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
         if ((L2^.f8 = 2) or (L3 <> nil)) then begin
           if (L2^.f8 = 3) then begin
             if (G3^.f1 <= 4) then begin
-              L4 := ((G3 = G62) and (G4 = 0));
+              L4 := ((G3 = CHARPTR) and (G4 = 0));
               L5 := ((L3^ <> G3^) or (G4 <> 1));
               BODYPART.8();
               if (L3^.f1 = 4) then begin
@@ -4858,10 +4852,10 @@ procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
                 end;
               end else begin
                 if (L3^.f1 = 3) then begin
-                  if (G3 = G12) then begin
+                  if (G3 = INTPTR) then begin
                     BODYPART.4(18);
                     BODYPART.7(30, 4);
-                    G3 := G63;
+                    G3 := LONGPTR;
                   end;
                   if L5 then begin
                     BODYPART.4(L3^);
@@ -4876,27 +4870,27 @@ procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
                     BODYPART.4(L3^.f3);
                     BODYPART.3(8);
                   end else begin
-                    if ((G3 = G12) and PASCALCO.21(L3, G64, 0, 0)) then begin
+                    if ((G3 = INTPTR) and PASCALCO.21(L3, REALPTR)) then begin
                       BODYPART.3(10);
-                      G3 := G64;
+                      G3 := REALPTR;
                     end else begin
-                      if (L4 and PASCALCO.18(L3, 0, 0)) then begin
-                        G3 := G55;
+                      if (L4 and PASCALCO.18:STRINGTYPE(L3)) then begin
+                        G3 := STRINGPTR;
                       end;
                     end;
                   end;
                 end;
               end;
             end else begin
-              L4 := (PASCALCO.18(G3, 0, 0) and (G4 = 0));
+              L4 := (PASCALCO.18:STRINGTYPE(G3) and (G4 = 0));
               BODYPART.9();
-              if (L4 and PASCALCO.17(L3, 0, 0)) then begin
+              if (L4 and PASCALCO.17:STRING(L3)) then begin
                 if not (L3^.f7) then begin
                   BODYPART.21(G91);
                   if (L3^.f2 <> nil) then begin
-                    PASCALCO.11(L3^.f2, @L7, @L6);
+                    PASCALCO.11:GETBOUNDS(L3^.f2, @L7, @L6);
                     if (((L6-L7)+1) <> G3^.f8) then begin
-                      PASCALCO.4(142);
+                      PASCALCO.4:ERROR(142);
                     end;
                   end;
                   G3 := L3;
@@ -4906,12 +4900,12 @@ procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
           end else begin
             if (G4 = 1) then begin
               if (G5 = 4) then begin
-                if (L3 = G57) then begin
+                if (L3 = BYTESTREAMPTR) then begin
                   BODYPART.3(2);
                   G5 := 1;
                   G6 := 0;
                 end else begin
-                  PASCALCO.4(103);
+                  PASCALCO.4:ERROR(103);
                 end;
               end;
               BODYPART.9();
@@ -4920,14 +4914,14 @@ procedure BODYPART.31(params 0 words);  { locals 9 words, lex 3 }
                 goto L1110;
 L10E5:
                 if (G3^ <> L3^) then begin
-                  PASCALCO.4(142);
+                  PASCALCO.4:ERROR(142);
                 end;
                 goto L111E;
 L10F4:
                 if L9^.f4 then begin
                   if L9^.f7 then begin
                     if ((L9^.f8 > G3^.f8) and G40) then begin
-                      PASCALCO.4(175);
+                      PASCALCO.4:ERROR(175);
                     end;
                   end;
                 end;
@@ -4942,22 +4936,22 @@ L1110:
               end;
 L111E:
             end else begin
-              PASCALCO.4(154);
+              PASCALCO.4:ERROR(154);
             end;
           end;
-          if not (PASCALCO.21(L3, G3, 0, 0)) then begin
-            if ((L3 <> G57) and (L3 <> G58)) then begin
-              PASCALCO.4(142);
+          if not (PASCALCO.21(L3, G3)) then begin
+            if ((L3 <> BYTESTREAMPTR) and (L3 <> WORDSTREAMPTR)) then begin
+              PASCALCO.4:ERROR(142);
             end else begin
               L9 := G3;
-              if (L3 = G57) then begin
+              if (L3 = BYTESTREAMPTR) then begin
                 if ((((L9^.f1 = 5) and L9^.f4) and (L9^.f6 = 2)) and (L9^.f5 = 8)) then begin
                 end else begin
-                  if ((G3 = G62) and (L8 = 4)) then begin
+                  if ((G3 = CHARPTR) and (L8 = 4)) then begin
                   end else begin
                     if ((L9^.f1 = 1) and (L9^.f3 = 255)) then begin
                     end else begin
-                      PASCALCO.4(142);
+                      PASCALCO.4:ERROR(142);
                     end;
                   end;
                 end;
@@ -4966,7 +4960,7 @@ L111E:
                 end else begin
                   if (L9^ = 1) then begin
                   end else begin
-                    PASCALCO.4(142);
+                    PASCALCO.4:ERROR(142);
                   end;
                 end;
               end;
@@ -4979,13 +4973,13 @@ L111E:
       end;
     until (G15 <> 1);
     if (G15 = 5) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(4);
+      PASCALCO.4:ERROR(4);
     end;
   end;
   if (L2 <> nil) then begin
-    PASCALCO.4(126);
+    PASCALCO.4:ERROR(126);
   end;
   L9 := I1,1;
   if (L9^.f9 = 1) then begin
@@ -5031,53 +5025,53 @@ L1209:
   end;
   G3 := I1,1^.f6;
 
-procedure BODYPART.32(params 2 words);  { locals 0 words, lex 3 }
-  if (((G3 = G64) or (L2^ = G64)) or L1) then begin
-    if (G3 = G12) then begin
+procedure BODYPART.32(args 2 words);  { locals 0 words, lex 3 }
+  if (((G3 = REALPTR) or (L2^ = REALPTR)) or L1) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.3(10);
-      G3 := G64;
+      G3 := REALPTR;
     end;
-    if (L2^ = G12) then begin
+    if (L2^ = INTPTR) then begin
       BODYPART.3(9);
-      L2^ := G64;
+      L2^ := REALPTR;
     end;
   end;
 
-procedure BODYPART.33(params 1 words);  { locals 0 words, lex 3 }
+procedure BODYPART.33(args 1 words);  { locals 0 words, lex 3 }
   if ((L1^^.f1 = 3) or (G3^.f1 = 3)) then begin
-    if (G3 = G12) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.4(18);
       BODYPART.7(30, 4);
-      G3 := G63;
+      G3 := LONGPTR;
     end else begin
-      if (L1^ = G12) then begin
+      if (L1^ = INTPTR) then begin
         BODYPART.4(14);
         BODYPART.7(30, 4);
-        L1^ := G63;
+        L1^ := LONGPTR;
       end;
     end;
   end;
 
-procedure BODYPART.34(params 4 words);  { locals 7 words, lex 3 }
+procedure BODYPART.34(args 4 words);  { locals 7 words, lex 3 }
   L11 := 0;
   if (G16 and (96 in 1)) then begin
     L11 := (G16 = 6);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end;
   BODYPART.35(?, ?, (G15 = 40), adjust((@L1^<4w> + [$0100,$0000,$0000]),4));
   if L11 then begin
     BODYPART.8();
-    if (G3 = G12) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.3(17);
     end else begin
-      if (G3 = G64) then begin
+      if (G3 = REALPTR) then begin
         BODYPART.3(18);
       end else begin
         if (G3^.f1 = 3) then begin
           BODYPART.4(6);
           BODYPART.7(30, 4);
         end else begin
-          PASCALCO.4(134);
+          PASCALCO.4:ERROR(134);
           G3 := nil;
         end;
       end;
@@ -5087,7 +5081,7 @@ procedure BODYPART.34(params 4 words);  { locals 7 words, lex 3 }
     BODYPART.8();
     move(@L5, @G3, 5 words);
     L10 := G16;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.35(?, ?, ?, adjust((@L1^<4w> + [$0100,$0000,$0000]),4));
     BODYPART.8();
     if ((L5 <> nil) and (G3 <> nil)) then begin
@@ -5095,20 +5089,20 @@ procedure BODYPART.34(params 4 words);  { locals 7 words, lex 3 }
 L18BA:
       BODYPART.32(@L5, 0);
       BODYPART.33(@L5);
-      if ((L5 = G12) and (G3 = G12)) then begin
+      if ((L5 = INTPTR) and (G3 = INTPTR)) then begin
         BODYPART.3(2);
       end else begin
-        if ((L5 = G64) and (G3 = G64)) then begin
+        if ((L5 = REALPTR) and (G3 = REALPTR)) then begin
           BODYPART.3(3);
         end else begin
           if ((G3^.f1 = 3) and (L5^.f1 = 3)) then begin
             BODYPART.4(2);
             BODYPART.7(30, 4);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3, 0, 0)) then begin
+            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3)) then begin
               BODYPART.3(28);
             end else begin
-              PASCALCO.4(134);
+              PASCALCO.4:ERROR(134);
               G3 := nil;
             end;
           end;
@@ -5118,20 +5112,20 @@ L18BA:
 L1913:
       BODYPART.32(@L5, 0);
       BODYPART.33(@L5);
-      if ((L5 = G12) and (G3 = G12)) then begin
+      if ((L5 = INTPTR) and (G3 = INTPTR)) then begin
         BODYPART.3(21);
       end else begin
-        if ((L5 = G64) and (G3 = G64)) then begin
+        if ((L5 = REALPTR) and (G3 = REALPTR)) then begin
           BODYPART.3(22);
         end else begin
           if ((G3^.f1 = 3) and (L5^.f1 = 3)) then begin
             BODYPART.4(4);
             BODYPART.7(30, 4);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3, 0, 0)) then begin
+            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3)) then begin
               BODYPART.3(5);
             end else begin
-              PASCALCO.4(134);
+              PASCALCO.4:ERROR(134);
               G3 := nil;
             end;
           end;
@@ -5139,10 +5133,10 @@ L1913:
       end;
       goto L1994;
 L196C:
-      if ((L5 = G61) and (G3 = G61)) then begin
+      if ((L5 = BOOLPTR) and (G3 = BOOLPTR)) then begin
         BODYPART.3(13);
       end else begin
-        PASCALCO.4(134);
+        PASCALCO.4:ERROR(134);
         G3 := nil;
       end;
       goto L1994;
@@ -5159,13 +5153,13 @@ L1994:
     end;
   end;
 
-procedure BODYPART.35(params 4 words);  { locals 7 words, lex 4 }
+procedure BODYPART.35(args 4 words);  { locals 7 words, lex 4 }
   BODYPART.36(?, ?, ?, adjust((@L1^<4w> + [$0080,$0000,$0000]),4));
   while (G15 = 39) do begin
     BODYPART.8();
     move(@L5, @G3, 5 words);
     L11 := G16;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.36(?, ?, ?, adjust((@L1^<4w> + [$0080,$0000,$0000]),4));
     BODYPART.8();
     if ((L5 <> nil) and (G3 <> nil)) then begin
@@ -5173,20 +5167,20 @@ procedure BODYPART.35(params 4 words);  { locals 7 words, lex 4 }
 L171E:
       BODYPART.32(@L5, 0);
       BODYPART.33(@L5);
-      if ((L5 = G12) and (G3 = G12)) then begin
+      if ((L5 = INTPTR) and (G3 = INTPTR)) then begin
         BODYPART.3(15);
       end else begin
-        if ((L5 = G64) and (G3 = G64)) then begin
+        if ((L5 = REALPTR) and (G3 = REALPTR)) then begin
           BODYPART.3(16);
         end else begin
           if ((G3^.f1 = 3) and (L5^.f1 = 3)) then begin
             BODYPART.4(8);
             BODYPART.7(30, 4);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3, 0, 0)) then begin
+            if ((L5^.f1 = 4) and PASCALCO.21(L5, G3)) then begin
               BODYPART.3(12);
             end else begin
-              PASCALCO.4(134);
+              PASCALCO.4:ERROR(134);
               G3 := nil;
             end;
           end;
@@ -5195,40 +5189,40 @@ L171E:
       goto L180E;
 L1777:
       BODYPART.32(@L5, 1);
-      if ((L5 = G64) and (G3 = G64)) then begin
+      if ((L5 = REALPTR) and (G3 = REALPTR)) then begin
         BODYPART.3(7);
       end else begin
-        PASCALCO.4(134);
+        PASCALCO.4:ERROR(134);
         G3 := nil;
       end;
       goto L180E;
 L1797:
       BODYPART.33(@L5);
-      if ((L5 = G12) and (G3 = G12)) then begin
+      if ((L5 = INTPTR) and (G3 = INTPTR)) then begin
         BODYPART.3(6);
       end else begin
         if ((L5^.f1 = 3) and (G3^.f1 = 3)) then begin
           BODYPART.4(10);
           BODYPART.7(30, 4);
         end else begin
-          PASCALCO.4(134);
+          PASCALCO.4:ERROR(134);
           G3 := nil;
         end;
       end;
       goto L180E;
 L17C8:
-      if ((L5 = G12) and (G3 = G12)) then begin
+      if ((L5 = INTPTR) and (G3 = INTPTR)) then begin
         BODYPART.3(14);
       end else begin
-        PASCALCO.4(134);
+        PASCALCO.4:ERROR(134);
         G3 := nil;
       end;
       goto L180E;
 L17E1:
-      if ((L5 = G61) and (G3 = G61)) then begin
+      if ((L5 = BOOLPTR) and (G3 = BOOLPTR)) then begin
         BODYPART.3(4);
       end else begin
-        PASCALCO.4(134);
+        PASCALCO.4:ERROR(134);
         G3 := nil;
       end;
       goto L180E;
@@ -5247,17 +5241,17 @@ L180E:
     end;
   end;
 
-procedure BODYPART.36(params 4 words);  { locals 18 words, lex 5 }
+procedure BODYPART.36(args 4 words);  { locals 18 words, lex 5 }
   if not ((G15 in @G109^<4w>)) then begin
-    PASCALCO.4(58);
+    PASCALCO.4:ERROR(58);
     PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + @G109^<4w>),4));
     G3 := nil;
   end;
   while (G15 in @G109^<4w>) do begin
     goto L162E;
 L13A3:
-    PASCALCO.10(adjust(1,1), @L5);
-    PASCALCO.8();
+    PASCALCO.10:SEARCHID(adjust(1,1), @L5);
+    PASCALCO.8:INSYMBOL();
     if (L5^.f8 = 6) then begin
       BODYPART.23(?, ?, 94, @L1^<4w>, L5);
       G4 := 2;
@@ -5280,66 +5274,66 @@ L13A3:
     end;
     goto L1698;
 L13FB:
-    G3 := G12;
+    G3 := INTPTR;
     G4 := 0;
     move(@G5, @G23, 1 words);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     goto L1698;
 L140C:
-    G3 := G64;
+    G3 := REALPTR;
     G4 := 0;
     move(@G5, @G23, 1 words);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     goto L1698;
 L141E:
     if (G22 = 1) then begin
-      G3 := G62;
+      G3 := CHARPTR;
     end else begin
       CSP1(@L9, 9);
-      move(L9, G55, 9 words);
+      move(L9, STRINGPTR, 9 words);
       (L9+8)^ := G22;
       G3 := L9;
     end;
     G4 := 0;
     move(@G5, @G23, 1 words);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     goto L1698;
 L144B:
     CSP1(@L9, 2);
-    move(L9, G63, 9 words);
-    L9^ := PASCALCO.19(G22, 0, 0);
+    move(L9, LONGPTR, 9 words);
+    L9^ := PASCALCO.19:LONGSIZE(G22);
     G3 := L9;
     G4 := 0;
     move(@G5, @G23, 1 words);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     goto L1698;
 L146F:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, @L1^<4w>, adjust((32 + 1),4));
     if (G15 = 5) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(4);
+      PASCALCO.4:ERROR(4);
     end;
     goto L1698;
 L148E:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.36(?, ?, ?, @L1^<4w>);
-    if ((G4 = 0) and (G3 = G61)) then begin
+    if ((G4 = 0) and (G3 = BOOLPTR)) then begin
       G5 := not (G5);
     end else begin
       BODYPART.8();
       BODYPART.3(19);
       if (G3 <> nil) then begin
-        if (G3 <> G61) then begin
-          PASCALCO.4(135);
+        if (G3 <> BOOLPTR) then begin
+          PASCALCO.4:ERROR(135);
           G3 := nil;
         end;
       end;
     end;
     goto L1698;
 L14C2:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     @L14^ := adjust(0,8)  {8 words};
     L8 := 0;
     CSP1(@L9, 3);
@@ -5350,16 +5344,16 @@ L14C2:
     if (G15 = 16) then begin
       G3 := L9;
       G4 := 0;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
       repeat
         BODYPART.11(?, ?, ?, adjust((@L1^<4w> + [$0001,$0006]),4));
         if (G3 <> nil) then begin
           if (G3^.f1 <> 0) then begin
-            PASCALCO.4(136);
+            PASCALCO.4:ERROR(136);
             G3 := nil;
           end else begin
-            if PASCALCO.21(L9^.f2, G3, 0, 0) then begin
+            if PASCALCO.21(L9^.f2, G3) then begin
               L7 := 0;
               L10 := 23;
               if ((G4 = 0) and (G5 <= 127)) then begin
@@ -5371,12 +5365,12 @@ L14C2:
               BODYPART.8();
               BODYPART.15();
               if (G15 = 2) then begin
-                PASCALCO.8();
+                PASCALCO.8:INSYMBOL();
                 L10 := 20;
                 BODYPART.11(?, ?, ?, adjust((@L1^<4w> + [$0001,$0002]),4));
-                if PASCALCO.21(L9^.f2, G3, 0, 0) then begin
+                if PASCALCO.21(L9^.f2, G3) then begin
                 end else begin
-                  PASCALCO.4(137);
+                  PASCALCO.4:ERROR(137);
                   G3 := nil;
                 end;
                 if L7 then begin
@@ -5404,19 +5398,19 @@ L14C2:
               (L9+2)^ := G3;
               G3 := L9;
             end else begin
-              PASCALCO.4(137);
+              PASCALCO.4:ERROR(137);
             end;
           end;
         end;
         G11 := (G15 <> 1);
         if not (G11) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end;
       until G11;
       if (G15 = 16) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(12);
+        PASCALCO.4:ERROR(12);
       end;
     end;
     if L8 then begin
@@ -5491,17 +5485,17 @@ L162E:
     end;
 L1698:
     if not ((G15 in @L1^<4w>)) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + @G109^<4w>),4));
     end;
   end;
 
-procedure BODYPART.37(params 2 words);  { locals 5 words, lex 3 }
-  if (L1 <> G57) then begin
+procedure BODYPART.37(args 2 words);  { locals 5 words, lex 3 }
+  if (L1 <> BYTESTREAMPTR) then begin
     if (L1^.f2 <> nil) then begin
-      PASCALCO.11(L1^.f2, @L4, @L3);
+      PASCALCO.11:GETBOUNDS(L1^.f2, @L4, @L3);
       if (((L3-L4)+1) <> L2^^.f8) then begin
-        PASCALCO.4(129);
+        PASCALCO.4:ERROR(129);
       end;
     end;
     L2^ := L1;
@@ -5510,14 +5504,14 @@ procedure BODYPART.37(params 2 words);  { locals 5 words, lex 3 }
     CSP1(@L5, 9);
     L7 := L5;
     (L7+1)^ := 1;
-    (L7+2)^ := G12;
+    (L7+2)^ := INTPTR;
     (L7+4)^ := 1;
     (L7+3)^ := L2^^.f8;
     (L6+2)^ := L5;
     (L6+7)^ := 0;
   end;
 
-procedure BODYPART.38(params 0 words);  { locals 0 words, lex 2 }
+procedure BODYPART.38(args 0 words);  { locals 0 words, lex 2 }
   goto L1CA3;
 L1C9C:
   BODYPART.24();
@@ -5532,7 +5526,7 @@ L1CA8:
 SEGMENT 10 ROUTINE
 ======================================================================
 
-procedure ROUTINE.1(params 6 words);  { locals 12 words, lex 2 }
+procedure ROUTINE.1(args 6 words);  { locals 12 words, lex 2 }
   @L3^<4w>^ := adjust((32 + 1),4)  {4 words};
   @L3^<4w>^ := adjust((2 + 1),4)  {4 words};
   @L7^ := adjust((@L11^<4w> + @L15^<4w>),4)  {4 words};
@@ -5617,36 +5611,36 @@ L0B1C:
   { left on stack: @L11 }
   { left on stack: @L15 }
 
-procedure ROUTINE.2(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.2(args 0 words);  { locals 0 words, lex 3 }
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(20);
+    PASCALCO.4:ERROR(20);
   end;
 
-procedure ROUTINE.3(params 0 words);  { locals 0 words, lex 3 }
-  if (G3 <> G12) then begin
-    PASCALCO.4(125);
+procedure ROUTINE.3(args 0 words);  { locals 0 words, lex 3 }
+  if (G3 <> INTPTR) then begin
+    PASCALCO.4:ERROR(125);
   end;
 
-procedure ROUTINE.4(params 5 words);  { locals 1 words, lex 3 }
+procedure ROUTINE.4(args 5 words);  { locals 1 words, lex 3 }
   BODYPART.11(?, ?, ?, @L2^<4w>);
-  if (((G4 = 0) and (G3 = G62)) or PASCALCO.18(G3, 0, 0)) then begin
+  if (((G4 = 0) and (G3 = CHARPTR)) or PASCALCO.18:STRINGTYPE(G3)) then begin
     if (G4 = 1) then begin
       BODYPART.9();
     end else begin
       if L1 then begin
-        PASCALCO.4(154);
+        PASCALCO.4:ERROR(154);
       end;
       if (G4 = 0) then begin
-        if (G3 = G62) then begin
+        if (G3 = CHARPTR) then begin
           L6 := G90;
           L6^ := 2;
           (L6+1)^ := 1;
           (L6+2)^[(1-1)] := G5;
           G5 := G90;
           CSP1(@G3, 9);
-          move(G3, G55, 9 words);
+          move(G3, STRINGPTR, 9 words);
           (G3+8)^ := 1;
         end;
         BODYPART.9();
@@ -5654,12 +5648,12 @@ procedure ROUTINE.4(params 5 words);  { locals 1 words, lex 3 }
     end;
   end else begin
     if (G3 <> nil) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
-    G3 := G55;
+    G3 := STRINGPTR;
   end;
 
-procedure ROUTINE.5(params 0 words);  { locals 10 words, lex 3 }
+procedure ROUTINE.5(args 0 words);  { locals 10 words, lex 3 }
   BODYPART.12(?, ?, ?, @I1,7^<4w>);
   BODYPART.9();
   L2 := nil;
@@ -5676,24 +5670,24 @@ procedure ROUTINE.5(params 0 words);  { locals 10 words, lex 3 }
         end;
       end;
     end else begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end;
   while (G15 = 1) do begin
-    PASCALCO.8();
-    PASCALCO.20(?, ?, ?, @I1,7^<4w>, @L1, @L8);
+    PASCALCO.8:INSYMBOL();
+    PASCALCO.20:CONSTANT(?, ?, ?, @I1,7^<4w>, @L1, @L8);
     L5 := (L5+1);
     if (L2 = nil) then begin
-      PASCALCO.4(158);
+      PASCALCO.4:ERROR(158);
     end else begin
       if (L2^.f1 <> 8) then begin
-        PASCALCO.4(162);
+        PASCALCO.4:ERROR(162);
       end else begin
         if (L2^.f2 <> nil) then begin
-          if (PASCALCO.18(L1, 0, 0) or (L1 = G64)) then begin
-            PASCALCO.4(159);
+          if (PASCALCO.18:STRINGTYPE(L1) or (L1 = REALPTR)) then begin
+            PASCALCO.4:ERROR(159);
           end else begin
-            if PASCALCO.21(L2^.f2^.f6, L1, 0, 0) then begin
+            if PASCALCO.21(L2^.f2^.f6, L1) then begin
               L1 := L2^.f3;
 L014A:
               if not ((L1 <> nil)) then goto L016A;
@@ -5711,7 +5705,7 @@ L016A:
               L7 := L2^;
               L2 := nil;
             end else begin
-              PASCALCO.4(125);
+              PASCALCO.4:ERROR(125);
             end;
           end;
         end;
@@ -5722,7 +5716,7 @@ L0177:
   BODYPART.4(L7);
   BODYPART.5(30, 1);
 
-procedure ROUTINE.6(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.6(args 0 words);  { locals 0 words, lex 3 }
   BODYPART.12(?, ?, ?, @I1,15^<4w>);
   BODYPART.10();
   ROUTINE.2();
@@ -5746,14 +5740,14 @@ procedure ROUTINE.6(params 0 words);  { locals 0 words, lex 3 }
     end;
   end;
 
-procedure ROUTINE.7(params 0 words);  { locals 2 words, lex 3 }
+procedure ROUTINE.7(args 0 words);  { locals 2 words, lex 3 }
   if (G15 = 0) then begin
-    PASCALCO.10(adjust(1,1), @L1);
-    PASCALCO.8();
+    PASCALCO.10:SEARCHID(adjust(1,1), @L1);
+    PASCALCO.8:INSYMBOL();
   end else begin
     if (G15 = 33) then begin
       L1 := G68;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
       L1 := nil;
     end;
@@ -5773,14 +5767,14 @@ procedure ROUTINE.7(params 0 words);  { locals 2 words, lex 3 }
       end;
       BODYPART.4(L2^.f11);
     end else begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end else begin
-    PASCALCO.4(125);
+    PASCALCO.4:ERROR(125);
   end;
   BODYPART.5(30, 4);
 
-procedure ROUTINE.8(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.8(args 0 words);  { locals 0 words, lex 3 }
   ROUTINE.3();
   ROUTINE.2();
   BODYPART.12(?, ?, ?, @I1,15^<4w>);
@@ -5790,7 +5784,7 @@ procedure ROUTINE.8(params 0 words);  { locals 0 words, lex 3 }
   BODYPART.8();
   ROUTINE.3();
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 1) then begin
       BODYPART.4(0);
     end else begin
@@ -5802,7 +5796,7 @@ procedure ROUTINE.8(params 0 words);  { locals 0 words, lex 3 }
     BODYPART.4(0);
   end;
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,11^<4w>);
     BODYPART.8();
     ROUTINE.3();
@@ -5815,7 +5809,7 @@ procedure ROUTINE.8(params 0 words);  { locals 0 words, lex 3 }
     BODYPART.5(30, 6);
   end;
 
-procedure ROUTINE.9(params 0 words);  { locals 2 words, lex 3 }
+procedure ROUTINE.9(args 0 words);  { locals 2 words, lex 3 }
   L2 := 0;
   L1 := G10;
   G10 := ((G10+(255 div 2))+1);
@@ -5834,7 +5828,7 @@ procedure ROUTINE.9(params 0 words);  { locals 2 words, lex 3 }
     BODYPART.6(50, G80, L1);
     G11 := (G15 <> 1);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (L2 < 255) then begin
@@ -5846,10 +5840,10 @@ procedure ROUTINE.9(params 0 words);  { locals 2 words, lex 3 }
     G25 := G10;
   end;
   CSP1(@G3, 9);
-  move(G3, G55, 9 words);
+  move(G3, STRINGPTR, 9 words);
   (G3+8)^ := L2;
 
-procedure ROUTINE.10(params 0 words);  { locals 2 words, lex 3 }
+procedure ROUTINE.10(args 0 words);  { locals 2 words, lex 3 }
   if (I1,1 = 19) then begin
     L1 := G10;
     G10 := ((G10+(255 div 2))+1);
@@ -5891,37 +5885,37 @@ procedure ROUTINE.10(params 0 words);  { locals 2 words, lex 3 }
     end;
   end;
 
-procedure ROUTINE.11(params 0 words);  { locals 0 words, lex 3 }
-  if PASCALCO.21(G63, G3, 0, 0) then begin
+procedure ROUTINE.11(args 0 words);  { locals 0 words, lex 3 }
+  if PASCALCO.21(LONGPTR, G3) then begin
   end else begin
-    if (G3 = G12) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.4(18);
       BODYPART.7(30, 4);
-      G3 := G63;
+      G3 := LONGPTR;
     end else begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end;
   ROUTINE.2();
   ROUTINE.4(?, ?, ?, @I1,11^<4w>, 1);
-  if PASCALCO.18(G3, 0, 0) then begin
+  if PASCALCO.18:STRINGTYPE(G3) then begin
     BODYPART.4(G3^.f8);
     BODYPART.4(12);
     BODYPART.7(30, 4);
   end else begin
-    PASCALCO.4(125);
+    PASCALCO.4:ERROR(125);
   end;
 
-procedure ROUTINE.12(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.12(args 0 words);  { locals 0 words, lex 3 }
   BODYPART.12(?, ?, ?, @I1,7^<4w>);
   BODYPART.9();
   if (G3 <> nil) then begin
     if (G3^.f1 <> 7) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end;
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 0) then begin
       if (@G17 = @'NORMAL  ') then begin
         BODYPART.4(0);
@@ -5935,14 +5929,14 @@ procedure ROUTINE.12(params 0 words);  { locals 0 words, lex 3 }
             if (@G17 = @'CRUNCH  ') then begin
               BODYPART.4(3);
             end else begin
-              PASCALCO.4(2);
+              PASCALCO.4:ERROR(2);
             end;
           end;
         end;
       end;
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
     end;
   end else begin
     BODYPART.4(0);
@@ -5952,27 +5946,27 @@ procedure ROUTINE.12(params 0 words);  { locals 0 words, lex 3 }
     BODYPART.5(30, 0);
   end;
 
-procedure ROUTINE.13(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.13(args 0 words);  { locals 0 words, lex 3 }
   BODYPART.12(?, ?, ?, @I1,7^<4w>);
   BODYPART.9();
   if (G3 <> nil) then begin
     if (G3^.f1 <> 7) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end else begin
       if (G3^.f2 = nil) then begin
-        PASCALCO.4(399);
+        PASCALCO.4:ERROR(399);
       end;
     end;
   end;
   goto L05D9;
 L0585:
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,11^<4w>);
     BODYPART.8();
     ROUTINE.3();
   end else begin
-    PASCALCO.4(20);
+    PASCALCO.4:ERROR(20);
   end;
   BODYPART.7(31, 2);
   goto L05F2;
@@ -5984,8 +5978,8 @@ L05AF:
   goto L05F2;
 L05B7:
   if (G3 <> nil) then begin
-    if (G3^.f2 <> G62) then begin
-      PASCALCO.4(399);
+    if (G3^.f2 <> CHARPTR) then begin
+      PASCALCO.4:ERROR(399);
     end;
   end;
   BODYPART.4(12);
@@ -6010,7 +6004,7 @@ L05F2:
     BODYPART.5(30, 0);
   end;
 
-procedure ROUTINE.14(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.14(args 0 words);  { locals 0 words, lex 3 }
   if (G3 <> nil) then begin
     ROUTINE.3();
   end;
@@ -6022,42 +6016,42 @@ procedure ROUTINE.14(params 0 words);  { locals 0 words, lex 3 }
       if (G16 = 12) then begin
         BODYPART.4(1);
       end else begin
-        PASCALCO.4(125);
+        PASCALCO.4:ERROR(125);
       end;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(125);
+    PASCALCO.4:ERROR(125);
   end;
   BODYPART.11(?, ?, ?, @I1,15^<4w>);
   BODYPART.8();
   if (G3 <> nil) then begin
-    if (G3 <> G62) then begin
-      PASCALCO.4(125);
+    if (G3 <> CHARPTR) then begin
+      PASCALCO.4:ERROR(125);
     end;
   end;
   ROUTINE.2();
   BODYPART.12(?, ?, ?, @I1,7^<4w>);
   BODYPART.10();
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,11^<4w>);
     BODYPART.8();
   end else begin
     BODYPART.4(0);
   end;
   BODYPART.5(30, 11);
-  G3 := G12;
+  G3 := INTPTR;
 
-procedure ROUTINE.15(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.15(args 0 words);  { locals 0 words, lex 3 }
   BODYPART.12(?, ?, ?, @I1,15^<4w>);
   BODYPART.9();
   if (G3 <> nil) then begin
     if (G3^.f1 <> 7) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end else begin
       if (G3^.f2 <> nil) then begin
-        PASCALCO.4(399);
+        PASCALCO.4:ERROR(399);
       end;
     end;
   end;
@@ -6069,7 +6063,7 @@ procedure ROUTINE.15(params 0 words);  { locals 0 words, lex 3 }
   BODYPART.8();
   ROUTINE.3();
   if (G15 = 1) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,11^<4w>);
     BODYPART.8();
     ROUTINE.3();
@@ -6087,20 +6081,20 @@ procedure ROUTINE.15(params 0 words);  { locals 0 words, lex 3 }
   if G48 then begin
     BODYPART.5(30, 0);
   end;
-  G3 := G12;
+  G3 := INTPTR;
 
-procedure ROUTINE.16(params 0 words);  { locals 1 words, lex 3 }
+procedure ROUTINE.16(args 0 words);  { locals 1 words, lex 3 }
   if (G15 = 0) then begin
-    PASCALCO.10(adjust((17 + 1),1), @L1);
-    PASCALCO.8();
+    PASCALCO.10:SEARCHID(adjust((17 + 1),1), @L1);
+    PASCALCO.8:INSYMBOL();
     if (L1^.f6 <> nil) then begin
       BODYPART.4((L1^.f6^*2));
     end;
   end;
   { paths disagree on stack depth here }
-  G3 := G12;
+  G3 := INTPTR;
 
-procedure ROUTINE.17(params 0 words);  { locals 0 words, lex 3 }
+procedure ROUTINE.17(args 0 words);  { locals 0 words, lex 3 }
   goto L09FB;
 L075F:
   if I1,2 then begin
@@ -6108,15 +6102,15 @@ L075F:
     BODYPART.9();
     if (G3 <> nil) then begin
       if (G3^.f1 <> 7) then begin
-        PASCALCO.4(125);
+        PASCALCO.4:ERROR(125);
       end else begin
-        if ((G3^.f2 <> G62) and (I1,1 = 6)) then begin
-          PASCALCO.4(399);
+        if ((G3^.f2 <> CHARPTR) and (I1,1 = 6)) then begin
+          PASCALCO.4:ERROR(399);
         end;
       end;
     end;
   end else begin
-    BODYPART.14(G70);
+    BODYPART.14(INPUTPTR);
   end;
   BODYPART.4(0);
   BODYPART.4(0);
@@ -6125,7 +6119,7 @@ L075F:
   end else begin
     BODYPART.6(77, 0, 11);
   end;
-  G3 := G61;
+  G3 := BOOLPTR;
   goto L0A52;
 L07BD:
   BODYPART.4(1);
@@ -6137,42 +6131,42 @@ L07BD:
         BODYPART.3(21);
       end;
     end else begin
-      PASCALCO.4(115);
+      PASCALCO.4:ERROR(115);
     end;
   end;
   goto L0A52;
 L07E5:
   if (G3 <> nil) then begin
     if ((G3^.f1 >= 4) or (G3^ <> 1)) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end;
-  G3 := G12;
+  G3 := INTPTR;
   goto L0A52;
 L07FE:
   if (G3 <> nil) then begin
-    if (G3 = G12) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.3(24);
     end else begin
-      if (G3 = G64) then begin
+      if (G3 = REALPTR) then begin
         BODYPART.3(25);
       end else begin
-        PASCALCO.4(125);
-        G3 := G12;
+        PASCALCO.4:ERROR(125);
+        G3 := INTPTR;
       end;
     end;
   end;
   goto L0A52;
 L0823:
   if (G3 <> nil) then begin
-    if (G3 = G12) then begin
+    if (G3 = INTPTR) then begin
       BODYPART.3(0);
     end else begin
-      if (G3 = G64) then begin
+      if (G3 = REALPTR) then begin
         BODYPART.3(1);
       end else begin
-        PASCALCO.4(125);
-        G3 := G12;
+        PASCALCO.4:ERROR(125);
+        G3 := INTPTR;
       end;
     end;
   end;
@@ -6181,7 +6175,7 @@ L0848:
   ROUTINE.4(?, ?, ?, @I1,11^<4w>, 0);
   BODYPART.4(0);
   BODYPART.3(62);
-  G3 := G12;
+  G3 := INTPTR;
   goto L0A52;
 L085D:
   ROUTINE.4(?, ?, ?, @I1,15^<4w>, 0);
@@ -6203,7 +6197,7 @@ L0891:
   BODYPART.4(0);
   BODYPART.4(0);
   BODYPART.6(77, 0, 27);
-  G3 := G12;
+  G3 := INTPTR;
   goto L0A52;
 L08B6:
   BODYPART.12(?, ?, ?, @I1,15^<4w>);
@@ -6211,7 +6205,7 @@ L08B6:
   ROUTINE.2();
   BODYPART.12(?, ?, ?, @I1,11^<4w>);
   BODYPART.9();
-  PASCALCO.4(124);
+  PASCALCO.4:ERROR(124);
   goto L0A52;
 L08D4:
   ROUTINE.2();
@@ -6221,7 +6215,7 @@ L08D4:
   BODYPART.12(?, ?, ?, @I1,11^<4w>);
   BODYPART.9();
   G3 := nil;
-  PASCALCO.4(124);
+  PASCALCO.4:ERROR(124);
   goto L0A52;
 L08F7:
   BODYPART.12(?, ?, ?, @I1,15^<4w>);
@@ -6242,17 +6236,17 @@ L0924:
   BODYPART.9();
   if (G3 <> nil) then begin
     if (G3^.f1 <> 7) then begin
-      PASCALCO.4(125);
+      PASCALCO.4:ERROR(125);
     end;
   end;
   if (G15 <> 1) then begin
     if (I1,1 = 33) then begin
       BODYPART.6(77, 0, 4);
     end else begin
-      PASCALCO.4(20);
+      PASCALCO.4:ERROR(20);
     end;
   end else begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     ROUTINE.4(?, ?, ?, @I1,11^<4w>, 0);
     if ((I1,1 = 28) or (I1,1 = 30)) then begin
       BODYPART.4(0);
@@ -6267,23 +6261,23 @@ L0924:
   end;
   goto L0A52;
 L098F:
-  if (G3 = G12) then begin
+  if (G3 = INTPTR) then begin
     BODYPART.3(10);
-    G3 := G64;
+    G3 := REALPTR;
   end;
   if (G3 <> nil) then begin
-    if (G3 = G64) then begin
+    if (G3 = REALPTR) then begin
       BODYPART.5(30, 23);
     end else begin
       if (G3^.f1 = 3) then begin
         BODYPART.4(20);
         BODYPART.7(30, 4);
       end else begin
-        PASCALCO.4(125);
+        PASCALCO.4:ERROR(125);
       end;
     end;
   end;
-  G3 := G12;
+  G3 := INTPTR;
   goto L0A52;
 L09C8:
   BODYPART.11(?, ?, ?, @I1,15^<4w>);
@@ -6349,7 +6343,7 @@ L0A52:
 SEGMENT 11 STATEMEN
 ======================================================================
 
-procedure STATEMEN.1(params 4 words);  { locals 6 words, lex 2 }
+procedure STATEMEN.1(args 4 words);  { locals 6 words, lex 2 }
   G81 := (G81+1);
   if (G15 = 35) then begin
     L6 := G8;
@@ -6362,7 +6356,7 @@ L0517:
     L10 := L7;
     if not ((L10^ = G23)) then goto L053A;
     if L10^.f2^ then begin
-      PASCALCO.4(165);
+      PASCALCO.4:ERROR(165);
     end;
     BODYPART.19(L10^.f2);
     goto L0546;
@@ -6372,13 +6366,13 @@ L053A:
 L053E:
     goto L0517;
 L0540:
-    PASCALCO.4(167);
+    PASCALCO.4:ERROR(167);
 L0546:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 2) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(5);
+      PASCALCO.4:ERROR(5);
     end;
   end;
   if G51 then begin
@@ -6386,7 +6380,7 @@ L0546:
     G47 := 1;
   end;
   if not ((@L1^<4w> in (1 + 1))) then begin
-    PASCALCO.4(6);
+    PASCALCO.4:ERROR(6);
     PASCALCO.16(?, ?, G15, @L1^<4w>);
   end;
   { paths disagree on stack depth here }
@@ -6395,8 +6389,8 @@ L0546:
     L9 := G10;
     goto L05F5;
 L0594:
-    PASCALCO.10(adjust((112 + 1),1), @L5);
-    PASCALCO.8();
+    PASCALCO.10:SEARCHID(adjust((112 + 1),1), @L5);
+    PASCALCO.8:INSYMBOL();
     if (L5^.f8 = 5) then begin
       BODYPART.23(G15, G133, 1, @L1^<4w>, L5);
     end else begin
@@ -6405,35 +6399,35 @@ L0594:
     { paths disagree on stack depth here }
     goto L0632;
 L05BB:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.4();
     goto L0632;
 L05C2:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.3();
     goto L0632;
 L05C9:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.5();
     goto L0632;
 L05D0:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     CASESTAT.1();
     goto L0632;
 L05D8:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.7();
     goto L0632;
 L05DF:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.6();
     goto L0632;
 L05E6:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     FORSTATE.1();
     goto L0632;
 L05EE:
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.8();
     goto L0632;
 L05F5:
@@ -6475,18 +6469,18 @@ L0632:
     G10 := L9;
     CSP33(@L8);
     if ((G9+100) > 1999) then begin
-      PASCALCO.4(253);
+      PASCALCO.4:ERROR(253);
       G9 := 0;
     end;
     if not ((G15 in [$0040,$0000,$0000,$2608])) then begin
-      PASCALCO.4(6);
+      PASCALCO.4:ERROR(6);
       PASCALCO.16(?, ?, ?, @L1^<4w>);
     end;
   end;
   { paths disagree on stack depth here }
   G81 := (G81-1);
 
-procedure STATEMEN.2(params 1 words);  { locals 9 words, lex 3 }
+procedure STATEMEN.2(args 1 words);  { locals 9 words, lex 3 }
   BODYPART.22(?, ?, @I1,1^<4w>, adjust((16384 + 1),4), L1);
   if (G15 = 14) then begin
     L9 := 0;
@@ -6496,12 +6490,12 @@ procedure STATEMEN.2(params 1 words);  { locals 9 words, lex 3 }
         BODYPART.9();
       end;
     end;
-    L7 := PASCALCO.17(G3, 0, 0);
+    L7 := PASCALCO.17:STRING(G3);
     move(@L2, @G3, 5 words);
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,1^<4w>);
     if (G4 = 0) then begin
-      L8 := ((G3 = G62) or PASCALCO.18(G3, 0, 0));
+      L8 := ((G3 = CHARPTR) or PASCALCO.18:STRINGTYPE(G3));
     end;
     if (G3 <> nil) then begin
       if (G3^.f1 <= 4) then begin
@@ -6511,40 +6505,40 @@ procedure STATEMEN.2(params 1 words);  { locals 9 words, lex 3 }
       end;
     end;
     if ((L2 <> nil) and (G3 <> nil)) then begin
-      if (G3 = G12) then begin
-        if PASCALCO.21(G64, L2, 0, 0) then begin
+      if (G3 = INTPTR) then begin
+        if PASCALCO.21(REALPTR, L2) then begin
           BODYPART.3(10);
-          G3 := G64;
+          G3 := REALPTR;
         end;
       end;
-      if PASCALCO.21(G63, L2, 0, 0) then begin
-        if (G3 = G12) then begin
+      if PASCALCO.21(LONGPTR, L2) then begin
+        if (G3 = INTPTR) then begin
           BODYPART.4(18);
           BODYPART.7(30, 4);
-          G3 := G63;
+          G3 := LONGPTR;
         end;
         if (G3^.f1 <> 3) then begin
-          PASCALCO.4(129);
-          G3 := G63;
+          PASCALCO.4:ERROR(129);
+          G3 := LONGPTR;
         end;
       end;
       if L7 then begin
         if L2^.f7 then begin
-          if (L8 and (G3 = G62)) then begin
-            G3 := G55;
+          if (L8 and (G3 = CHARPTR)) then begin
+            G3 := STRINGPTR;
             goto L00CD;
           end;
 L00CD:
         end else begin
-          if (L2 = G57) then begin
-            if PASCALCO.21(L2, G3, 0, 0) then begin
-              if (G3 = G57) then begin
-                PASCALCO.4(129);
+          if (L2 = BYTESTREAMPTR) then begin
+            if PASCALCO.21(L2, G3) then begin
+              if (G3 = BYTESTREAMPTR) then begin
+                PASCALCO.4:ERROR(129);
               end else begin
                 L2 := G3;
               end;
             end else begin
-              if (L8 and (G3 <> G62)) then begin
+              if (L8 and (G3 <> CHARPTR)) then begin
                 BODYPART.21(G91);
                 BODYPART.5(40, ((G3^.f8+1) div 2));
                 CSP4(11, 2);
@@ -6552,12 +6546,12 @@ L00CD:
             end;
           end;
           if (L2^.f2 <> nil) then begin
-            PASCALCO.11(L2^.f2, @L10, @L9);
+            PASCALCO.11:GETBOUNDS(L2^.f2, @L10, @L9);
             L9 := ((L9-L10)+1);
-            if (L8 and (G3 <> G62)) then begin
+            if (L8 and (G3 <> CHARPTR)) then begin
               BODYPART.21(G91);
               if (L9 <> G3^.f8) then begin
-                PASCALCO.4(129);
+                PASCALCO.4:ERROR(129);
               end;
               G3 := L2;
             end;
@@ -6566,7 +6560,7 @@ L00CD:
           end;
         end;
       end;
-      if PASCALCO.21(L2, G3, 0, 0) then begin
+      if PASCALCO.21(L2, G3) then begin
         goto L01DE;
 L0152:
         if G52 then begin
@@ -6597,9 +6591,9 @@ L0194:
             BODYPART.5(40, ((L9+1) div 2));
           end;
         end else begin
-          if (L2 = G58) then begin
-            if (G3 = G58) then begin
-              PASCALCO.4(129);
+          if (L2 = WORDSTREAMPTR) then begin
+            if (G3 = WORDSTREAMPTR) then begin
+              PASCALCO.4:ERROR(129);
             end else begin
               L2 := G3;
             end;
@@ -6611,7 +6605,7 @@ L01CE:
         BODYPART.5(40, L2^);
         goto L01F6;
 L01D6:
-        PASCALCO.4(146);
+        PASCALCO.4:ERROR(146);
         goto L01F6;
 L01DE:
         case <selector> of  { 0..7 }
@@ -6627,16 +6621,16 @@ L01DE:
         end;
 L01F6:
       end else begin
-        PASCALCO.4(129);
+        PASCALCO.4:ERROR(129);
       end;
     end;
   end else begin
-    PASCALCO.4(51);
+    PASCALCO.4:ERROR(51);
   end;
 
-procedure STATEMEN.3(params 0 words);  { locals 4 words, lex 3 }
+procedure STATEMEN.3(args 0 words);  { locals 4 words, lex 3 }
   if not (G53) then begin
-    PASCALCO.4(6);
+    PASCALCO.4:ERROR(6);
   end;
   if (G15 = 35) then begin
     L2 := 0;
@@ -6655,14 +6649,14 @@ procedure STATEMEN.3(params 0 words);  { locals 4 words, lex 3 }
       end;
     end;
     if not (L2) then begin
-      PASCALCO.4(167);
+      PASCALCO.4:ERROR(167);
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(15);
+    PASCALCO.4:ERROR(15);
   end;
 
-procedure STATEMEN.4(params 0 words);  { locals 0 words, lex 3 }
+procedure STATEMEN.4(args 0 words);  { locals 0 words, lex 3 }
 L0292:
   repeat
 L0292:
@@ -6670,16 +6664,16 @@ L0292:
     if not (not ((G15 in @G105^<4w>))) then goto L0292;
     G11 := (G15 <> 3);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 9) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(13);
+    PASCALCO.4:ERROR(13);
   end;
 
-procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
+procedure STATEMEN.5(args 0 words);  { locals 5 words, lex 3 }
   L5 := 0;
   BODYPART.11(?, ?, @I1,1^<4w>, adjust((4096 + 1),4));
   if not (L5) then begin
@@ -6687,9 +6681,9 @@ procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
     BODYPART.17(L2);
   end;
   if (G15 = 12) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(52);
+    PASCALCO.4:ERROR(52);
   end;
   STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8192 + 1),4));
   if L5 then begin
@@ -6705,7 +6699,7 @@ procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
       BODYPART.16(57, L1);
       BODYPART.19(L2);
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     STATEMEN.1(?, ?, ?, @I1,1^<4w>);
     if L5 then begin
       if not (L4) then begin
@@ -6720,7 +6714,7 @@ procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
     end;
   end;
 
-procedure STATEMEN.6(params 0 words);  { locals 1 words, lex 3 }
+procedure STATEMEN.6(args 0 words);  { locals 1 words, lex 3 }
   BODYPART.18(@L1);
   BODYPART.19(L1);
 L0373:
@@ -6730,40 +6724,40 @@ L0373:
     if not (not ((G15 in @G105^<4w>))) then goto L0373;
     G11 := (G15 <> 3);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 10) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,1^<4w>);
     BODYPART.17(L1);
   end else begin
-    PASCALCO.4(53);
+    PASCALCO.4:ERROR(53);
   end;
 
-procedure STATEMEN.7(params 0 words);  { locals 2 words, lex 3 }
+procedure STATEMEN.7(args 0 words);  { locals 2 words, lex 3 }
   BODYPART.18(@L2);
   BODYPART.19(L2);
   BODYPART.11(?, ?, @I1,1^<4w>, adjust((64 + 1),4));
   BODYPART.18(@L1);
   BODYPART.17(L1);
   if (G15 = 6) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(54);
+    PASCALCO.4:ERROR(54);
   end;
   STATEMEN.1(?, ?, ?, @I1,1^<4w>);
   BODYPART.16(57, L2);
   BODYPART.19(L1);
 
-procedure STATEMEN.8(params 0 words);  { locals 4 words, lex 3 }
+procedure STATEMEN.8(args 0 words);  { locals 4 words, lex 3 }
   L3 := 0;
   repeat
     if (G15 = 0) then begin
-      PASCALCO.10(adjust((16 + 1),1), @L1);
-      PASCALCO.8();
+      PASCALCO.10:SEARCHID(adjust((16 + 1),1), @L1);
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(2);
+      PASCALCO.4:ERROR(2);
       L1 := G76;
     end;
     { paths disagree on stack depth here }
@@ -6789,21 +6783,21 @@ procedure STATEMEN.8(params 0 words);  { locals 4 words, lex 3 }
             G10 := (G10+1);
           end;
         end else begin
-          PASCALCO.4(250);
+          PASCALCO.4:ERROR(250);
         end;
       end else begin
-        PASCALCO.4(140);
+        PASCALCO.4:ERROR(140);
       end;
     end;
     G11 := (G15 <> 1);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until G11;
   if (G15 = 6) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(54);
+    PASCALCO.4:ERROR(54);
   end;
   STATEMEN.1(?, ?, ?, @I1,1^<4w>);
   G8 := (G8-L3);
@@ -6812,7 +6806,7 @@ procedure STATEMEN.8(params 0 words);  { locals 4 words, lex 3 }
 SEGMENT 12 CASESTAT
 ======================================================================
 
-procedure CASESTAT.1(params 0 words);  { locals 14 words, lex 3 }
+procedure CASESTAT.1(args 0 words);  { locals 14 words, lex 3 }
   BODYPART.11(?, ?, @I1,1^<4w>, adjust((2054 + 1),4));
   BODYPART.8();
   BODYPART.15();
@@ -6820,15 +6814,15 @@ procedure CASESTAT.1(params 0 words);  { locals 14 words, lex 3 }
   BODYPART.16(57, L8);
   L2 := G3;
   if (L2 <> nil) then begin
-    if ((L2^.f1 <> 0) or (L2 = G64)) then begin
-      PASCALCO.4(144);
+    if ((L2^.f1 <> 0) or (L2 = REALPTR)) then begin
+      PASCALCO.4:ERROR(144);
       L2 := nil;
     end;
   end;
   if (G15 = 11) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(8);
+    PASCALCO.4:ERROR(8);
   end;
   L6 := nil;
   BODYPART.18(@L9);
@@ -6836,16 +6830,16 @@ procedure CASESTAT.1(params 0 words);  { locals 14 words, lex 3 }
   repeat
     L3 := nil;
     repeat
-      PASCALCO.20(?, ?, @I1,1^<4w>, adjust((6 + 1),4), @L1, @L7);
+      PASCALCO.20:CONSTANT(?, ?, @I1,1^<4w>, adjust((6 + 1),4), @L1, @L7);
       if (L2 <> nil) then begin
-        if PASCALCO.21(L2, L1, 0, 0) then begin
+        if PASCALCO.21(L2, L1) then begin
           L5 := L6;
           L4 := nil;
           while (L5 <> nil) do begin
             L14 := L5;
             if not ((L14^.f2 <= L7)) then goto L009C;
             if (L14^.f2 = L7) then begin
-              PASCALCO.4(156);
+              PASCALCO.4:ERROR(156);
             end;
             goto L00A5;
 L009C:
@@ -6864,18 +6858,18 @@ L00A5:
             L4^ := L3;
           end;
         end else begin
-          PASCALCO.4(147);
+          PASCALCO.4:ERROR(147);
         end;
       end;
       G11 := (G15 <> 1);
       if not (G11) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     until G11;
     if (G15 = 2) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(5);
+      PASCALCO.4:ERROR(5);
     end;
 L00EC:
     STATEMEN.1(?, ?, ?, adjust((@I1,1^<4w> + [$0040,$0000,$0000,$0008]),4));
@@ -6885,7 +6879,7 @@ L00EC:
     end;
     G11 := (G15 <> 3);
     if not (G11) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end;
   until ((G11 or (G15 = 9)) or (G15 = 54));
   BODYPART.19(L8);
@@ -6906,7 +6900,7 @@ L0141:
     L13 := G9;
     BODYPART.16(57, L10);
     if ((G9+((L11-L12)*2)) >= 1999) then begin
-      PASCALCO.4(302);
+      PASCALCO.4:ERROR(302);
     end else begin
       repeat
         L14 := L6;
@@ -6921,27 +6915,27 @@ L0141:
     end;
     BODYPART.19(L10);
     if (G15 = 54) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
       if (G15 = 3) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end;
     end;
     BODYPART.19(L9);
   end;
   if (G15 = 9) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(13);
+    PASCALCO.4:ERROR(13);
   end;
 
 ======================================================================
 SEGMENT 13 FORSTATE
 ======================================================================
 
-procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
+procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
   if (G15 = 0) then begin
-    PASCALCO.10(G133, @I1,5);
+    PASCALCO.10:SEARCHID(G133, @I1,5);
     L10 := I1,5;
     L1 := L10^.f6;
     L2 := 1;
@@ -6950,28 +6944,28 @@ procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
       L4 := L10^.f9;
       L5 := L10^.f10;
     end else begin
-      PASCALCO.4(155);
+      PASCALCO.4:ERROR(155);
       L1 := nil;
     end;
     if (L1 <> nil) then begin
-      if ((L1^.f1 > 1) or PASCALCO.21(G64, L1, 0, 0)) then begin
-        PASCALCO.4(143);
+      if ((L1^.f1 > 1) or PASCALCO.21(REALPTR, L1)) then begin
+        PASCALCO.4:ERROR(143);
         L1 := nil;
       end;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     PASCALCO.16(?, ?, @I1,1^<4w>, adjust((16832 + 1),4));
   end;
   if (G15 = 14) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, @I1,1^<4w>, adjust((448 + 1),4));
     if (G3 <> nil) then begin
       if (G3^.f1 <> 0) then begin
-        PASCALCO.4(144);
+        PASCALCO.4:ERROR(144);
       end else begin
-        if PASCALCO.21(L1, G3, 0, 0) then begin
+        if PASCALCO.21(L1, G3) then begin
           BODYPART.8();
           BODYPART.15();
           if (L1 <> nil) then begin
@@ -6983,24 +6977,24 @@ procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
           end;
           BODYPART.20(@L1);
         end else begin
-          PASCALCO.4(145);
+          PASCALCO.4:ERROR(145);
         end;
       end;
     end;
   end else begin
-    PASCALCO.4(51);
+    PASCALCO.4:ERROR(51);
     PASCALCO.16(?, ?, @I1,1^<4w>, adjust((448 + 1),4));
   end;
   BODYPART.18(@L8);
   if (384 in 1) then begin
     L7 := G15;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     BODYPART.11(?, G15, @I1,1^<4w>, adjust((64 + 1),4));
     if (G3 <> nil) then begin
       if (G3^.f1 <> 0) then begin
-        PASCALCO.4(144);
+        PASCALCO.4:ERROR(144);
       end else begin
-        if PASCALCO.21(L1, G3, 0, 0) then begin
+        if PASCALCO.21(L1, G3) then begin
           BODYPART.8();
           BODYPART.15();
           if (L1 <> nil) then begin
@@ -7022,20 +7016,20 @@ procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
             BODYPART.6(48, 0, 1);
           end;
         end else begin
-          PASCALCO.4(145);
+          PASCALCO.4:ERROR(145);
         end;
       end;
     end;
   end else begin
-    PASCALCO.4(55);
+    PASCALCO.4:ERROR(55);
     PASCALCO.16(?, G15, @I1,1^<4w>, adjust((64 + 1),4));
   end;
   BODYPART.18(@L9);
   BODYPART.16(33, L9);
   if (G15 = 6) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(54);
+    PASCALCO.4:ERROR(54);
   end;
   STATEMEN.1(?, ?, ?, @I1,1^<4w>);
   move(@G3, @L1, 5 words);
@@ -7054,7 +7048,7 @@ procedure FORSTATE.1(params 0 words);  { locals 10 words, lex 3 }
 SEGMENT 14 BODY1
 ======================================================================
 
-procedure BODY1.1(params 0 words);  { locals 2 words, lex 3 }
+procedure BODY1.1(args 0 words);  { locals 2 words, lex 3 }
   G627 := 1;
   I1,8 := 0;
   if (G80 = 1) then begin
@@ -7075,13 +7069,13 @@ procedure BODY1.1(params 0 words);  { locals 2 words, lex 3 }
             I1,2 := (I1,2-1);
             BODYPART.6(50, G80, L1^.f10);
             BODYPART.6(54, G80, I1,2);
-            if PASCALCO.17(L1^.f6, 0, 0) then begin
+            if PASCALCO.17:STRING(L1^.f6) then begin
               L2 := L1^.f6;
               if L2^.f7 then begin
                 BODYPART.5(42, L2^.f8);
               end else begin
                 if (L2^.f2 <> nil) then begin
-                  PASCALCO.11(L2^.f2, @I1,12, @I1,11);
+                  PASCALCO.11:GETBOUNDS(L2^.f2, @I1,12, @I1,11);
                   BODYPART.5(40, ((((I1,11-I1,12)+1)+1) div 2));
                   goto L00AA;
                 end;
@@ -7112,8 +7106,8 @@ L00AA:
   I1,3 := G65;
   if ((I1,3 <> nil) or I1,8) then begin
     I1,14 := G9;
-    PASCALCO.22(215);
-    PASCALCO.22(215);
+    PASCALCO.22:EMIT(215);
+    PASCALCO.22:EMIT(215);
     BODYPART.18(@I1,18);
     BODYPART.19(I1,18);
   end;
@@ -7122,11 +7116,11 @@ L00AA:
 SEGMENT 15 BODY3
 ======================================================================
 
-procedure BODY3.1(params 0 words);  { locals 2 words, lex 3 }
+procedure BODY3.1(args 0 words);  { locals 2 words, lex 3 }
   if (G15 = 9) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end else begin
-    PASCALCO.4(13);
+    PASCALCO.4:ERROR(13);
   end;
   I1,1 := G9;
   if not (G33) then begin
@@ -7162,14 +7156,14 @@ procedure BODY3.1(params 0 words);  { locals 2 words, lex 3 }
     L2 := L1^.f2;
     if not (L2^) then begin
       if (L2^.f1 <> 28000) then begin
-        PASCALCO.4(168);
+        PASCALCO.4:ERROR(168);
       end;
     end;
     I1,9 := L1^.f1;
   end;
   I1,10 := (G627-1);
   if G9 then begin
-    PASCALCO.22(0);
+    PASCALCO.22:EMIT(0);
   end;
   while (I1,10 > 0) do begin
     PASCALCO.23((G9-@G628[I1,10]^));
@@ -7185,17 +7179,17 @@ procedure BODY3.1(params 0 words);  { locals 2 words, lex 3 }
   end;
   PASCALCO.23((G9-I1,1));
   PASCALCO.23(G9);
-  PASCALCO.22(G100);
-  PASCALCO.22((G80-1));
+  PASCALCO.22:EMIT(G100);
+  PASCALCO.22:EMIT((G80-1));
   if not (G49) then begin
     G49 := 1;
     (@G445[@G589~[G13]{4per word,4 bits}*9w]+1)^ := G1097;
   end;
-  PASCALCO.24(0);
+  PASCALCO.24:FLUSHBUFFER(0);
   G89 := (G89+G9);
   @G190[G100]^ := (G89-2);
 
-procedure BODY3.2(params 0 words);  { locals 1 words, lex 4 }
+procedure BODY3.2(args 0 words);  { locals 1 words, lex 4 }
   I2,6 := I2,3;
   I2,4 := nil;
   while (I2,6 <> nil) do begin
@@ -7286,10 +7280,10 @@ procedure BODY3.2(params 0 words);  { locals 1 words, lex 4 }
 SEGMENT 16 WRITELIN
 ======================================================================
 
-procedure WRITELIN.1(params 0 words);  { locals 7 words, lex 1 }
+procedure WRITELIN.1(args 0 words);  { locals 7 words, lex 1 }
   G9 := 0;
   if G49 then begin
-    PASCALCO.4(399);
+    PASCALCO.4:ERROR(399);
   end;
   if G33 then begin
     L1 := G705;
@@ -7298,17 +7292,17 @@ procedure WRITELIN.1(params 0 words);  { locals 7 words, lex 1 }
   G22 := 1;
   L7 := 8;
   while (G22 <= L7) do begin
-    PASCALCO.22(32);
+    PASCALCO.22:EMIT(32);
     G22 := (G22+1);
   end;
   PASCALCO.23(0);
   PASCALCO.23(G25);
   PASCALCO.23(G87);
   PASCALCO.23(0);
-  PASCALCO.24(1);
+  PASCALCO.24:FLUSHBUFFER(1);
   G45 := 0;
 
-procedure WRITELIN.2(params 1 words);  { locals 8 words, lex 2 }
+procedure WRITELIN.2(args 1 words);  { locals 8 words, lex 2 }
   L4 := 0;
   L3 := (G9-4);
   if ((G706 <> 1) or (G705 <> 0)) then begin
@@ -7350,16 +7344,16 @@ procedure WRITELIN.2(params 1 words);  { locals 8 words, lex 2 }
     L7 := (L7+1);
   end;
 
-procedure WRITELIN.3(params 0 words);  { locals 0 words, lex 3 }
+procedure WRITELIN.3(args 0 words);  { locals 0 words, lex 3 }
   I2,1 := (I2,1+1);
   if (I2,1 > G705) then begin
     I2,1 := 0;
   end;
-  if (FBLOCKIO(@G665, G707, 0, 1, I2,1, 1, 0, 0) <> 1) then begin
-    PASCALCO.4(404);
+  if (FBLOCKIO(@G665, G707, 0, 1, I2,1, 1) <> 1) then begin
+    PASCALCO.4:ERROR(404);
   end;
 
-procedure WRITELIN.4(params 1 words);  { locals 1 words, lex 2 }
+procedure WRITELIN.4(args 1 words);  { locals 1 words, lex 2 }
   I1,3 := -(9999);
   I1,4 := G9;
   if (L1 <> nil) then begin
@@ -7470,7 +7464,7 @@ L0296:
     end;
     { paths disagree on stack depth here }
     if (G9 >= 1024) then begin
-      PASCALCO.24(0);
+      PASCALCO.24:FLUSHBUFFER(0);
       G9 := 0;
     end;
     WRITELIN.4(L1^.f5);
@@ -7481,7 +7475,7 @@ L0296:
 SEGMENT 17 UNITPART
 ======================================================================
 
-procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
+procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
   if (G2 = nil) then begin
     CSP1(@G2, 1000);
   end;
@@ -7495,17 +7489,17 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
     G9 := 1024;
     G32 := 1;
     if G38 then begin
-      PASCALCO.4(406);
+      PASCALCO.4:ERROR(406);
     end;
     if (G15 = 51) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(22);
+      PASCALCO.4:ERROR(22);
     end;
     DECLARAT.1(?, ?, ?, @L1^<4w>);
     if G42 then begin
       if (not (L6) and (G10 > 1)) then begin
-        PASCALCO.4(350);
+        PASCALCO.4:ERROR(350);
       end;
     end;
     G9 := ((G14-G708)+10);
@@ -7525,26 +7519,26 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
       G2^[(G14-G708)] := 13;
       G2^[((G14-G708)+1)] := 0;
     end;
-    PASCALCO.24(1);
+    PASCALCO.24:FLUSHBUFFER(1);
     if (G27 or (not (G27) and (G15 = 19))) then begin
       G32 := 0;
       if (G42 and not (L7)) then begin
-        PASCALCO.4(352);
+        PASCALCO.4:ERROR(352);
       end;
       if G27 then begin
         if (G15 <> 52) then begin
-          PASCALCO.4(23);
+          PASCALCO.4:ERROR(23);
           PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - @G105^<4w>),4));
         end else begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end;
       end;
       PASCALCO.26(?, ?, ?, adjust((@L1^<4w> - [$001C,$0000,$0000,$0000]),4));
       UNITPART.4();
       PASCALCO.25();
       if (([$C000,$0000] * @G186^<4w>) <> 0) then begin
-        if (FBLOCKIO(I2,8, @G1099, 0, 1, L8, 1, 0, 0) <> 1) then begin
-          PASCALCO.4(402);
+        if (FBLOCKIO(I2,8, @G1099, 0, 1, L8, 1) <> 1) then begin
+          PASCALCO.4:ERROR(402);
         end;
         if (31 in @G186^<4w>) then begin
           @G1099^[(L9+1)] := 80;
@@ -7552,8 +7546,8 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
         if (30 in @G186^<4w>) then begin
           @G1099^[(L9+3)] := 76;
         end;
-        if (FBLOCKIO(I2,8, @G1099, 0, 1, L8, 0, 0, 0) <> 1) then begin
-          PASCALCO.4(402);
+        if (FBLOCKIO(I2,8, @G1099, 0, 1, L8, 0) <> 1) then begin
+          PASCALCO.4:ERROR(402);
         end;
         @G186^ := adjust((@G186^<4w> - [$C000,$0000]),4)  {4 words};
       end;
@@ -7565,17 +7559,17 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
           (@G445[@G589~[G13]{4per word,4 bits}*9w]+8)^ := 5;
         end;
         if (G705 > 0) then begin
-          if (FBLOCKIO(@G665, G707, 0, 1, G705, 0, 0, 0) <> 1) then begin
-            PASCALCO.4(404);
+          if (FBLOCKIO(@G665, G707, 0, 1, G705, 0) <> 1) then begin
+            PASCALCO.4:ERROR(404);
           end;
         end;
         WRITELIN.1();
       end;
     end else begin
       if (G15 = 9) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(13);
+        PASCALCO.4:ERROR(13);
         PASCALCO.16(?, ?, ?, @L1^<4w>);
       end;
       if G71^.f10 then begin
@@ -7591,11 +7585,11 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
         (L10+1)^ := 0;
         L10^ := ((G10-1)*2);
         if (L10^ = 0) then begin
-          PASCALCO.4(355);
+          PASCALCO.4:ERROR(355);
         end;
       end else begin
         if (G10 > 1) then begin
-          PASCALCO.4(350);
+          PASCALCO.4:ERROR(350);
         end;
       end;
     end;
@@ -7603,9 +7597,9 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
     G33 := 0;
     if (G15 <> 18) then begin
       if (G15 = 3) then begin
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
       end else begin
-        PASCALCO.4(14);
+        PASCALCO.4:ERROR(14);
       end;
     end;
     L10 := G84;
@@ -7620,18 +7614,18 @@ procedure UNITPART.1(params 4 words);  { locals 6 words, lex 1 }
   until (G15 <> 50);
   FCLOSE(@G665, 0);
 
-procedure UNITPART.2(params 0 words);  { locals 0 words, lex 2 }
+procedure UNITPART.2(args 0 words);  { locals 0 words, lex 2 }
   FOPEN(?, ?, ?, @G665, '%SYSTEM.INFO[*]', 0, 0);
   if (CSP34() <> 0) then begin
-    PASCALCO.4(404);
+    PASCALCO.4:ERROR(404);
   end;
 
-procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
+procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
   if G33 then begin
-    PASCALCO.4(182);
+    PASCALCO.4:ERROR(182);
   end;
   if G49 then begin
-    PASCALCO.4(399);
+    PASCALCO.4:ERROR(399);
     G89 := 0;
     G1098 := 0;
   end;
@@ -7648,9 +7642,9 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
   G27 := 0;
   G33 := 1;
   G32 := 0;
-  PASCALCO.8();
+  PASCALCO.8:INSYMBOL();
   if (G15 <> 0) then begin
-    PASCALCO.4(2);
+    PASCALCO.4:ERROR(2);
     PASCALCO.16(?, ?, @L2^<4w>, adjust((8 + 1),4));
   end else begin
     L8 := 0;
@@ -7660,7 +7654,7 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
         L6 := L6^.f7;
       end else begin
         L8 := 1;
-        PASCALCO.4(101);
+        PASCALCO.4:ERROR(101);
       end;
     end;
     if not (L8) then begin
@@ -7675,11 +7669,11 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
       (L22+11)^ := 1;
       G71 := L6;
     end;
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
     if (G15 = 3) then begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
     end else begin
-      PASCALCO.4(14);
+      PASCALCO.4:ERROR(14);
     end;
     if (G15 = 0) then begin
       if (@G17 = @'INTRINSI') then begin
@@ -7687,15 +7681,15 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
         I1,7 := 0;
         I1,6 := 0;
         G87 := 1;
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         if (G15 = 0) then begin
           if (@G17 = @'CODE    ') then begin
-            PASCALCO.8();
-            PASCALCO.20(?, ?, @L2^<4w>, adjust((9 + 1),4), @L7, @L10);
-            if (L7 = G12) then begin
+            PASCALCO.8:INSYMBOL();
+            PASCALCO.20:CONSTANT(?, ?, @L2^<4w>, adjust((9 + 1),4), @L7, @L10);
+            if (L7 = INTPTR) then begin
               G13 := L10;
               if not ((G13 in [$FFFF,$FFFF,$FFFF,$FFFF])) then begin
-                PASCALCO.4(203);
+                PASCALCO.4:ERROR(203);
                 G13 := 1;
               end;
               PASCALCO.13(0);
@@ -7704,19 +7698,19 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
               (L22+6)^ := G13;
               I1,7 := 1;
             end else begin
-              PASCALCO.4(15);
+              PASCALCO.4:ERROR(15);
             end;
           end;
           if ((G15 = 0) and (@G17 = @'DATA    ')) then begin
-            PASCALCO.8();
-            PASCALCO.20(?, ?, @L2^<4w>, adjust((8 + 1),4), @L7, @L9);
-            if (L7 = G12) then begin
+            PASCALCO.8:INSYMBOL();
+            PASCALCO.20:CONSTANT(?, ?, @L2^<4w>, adjust((8 + 1),4), @L7, @L9);
+            if (L7 = INTPTR) then begin
               G87 := L9;
               if (((G87 < 0) or (G87 > 63)) or (G87 = G13)) then begin
                 if (G87 = G13) then begin
-                  PASCALCO.4(350);
+                  PASCALCO.4:ERROR(350);
                 end else begin
-                  PASCALCO.4(203);
+                  PASCALCO.4:ERROR(203);
                 end;
                 G87 := (G13+1);
               end;
@@ -7729,21 +7723,21 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
               I1,6 := 1;
               (L6+12)^ := 1;
             end else begin
-              PASCALCO.4(15);
+              PASCALCO.4:ERROR(15);
             end;
           end;
         end;
         if not (I1,7) then begin
-          PASCALCO.4(352);
+          PASCALCO.4:ERROR(352);
           (L6+10)^ := 0;
         end;
         if (G15 = 3) then begin
-          PASCALCO.8();
+          PASCALCO.8:INSYMBOL();
         end else begin
-          PASCALCO.4(14);
+          PASCALCO.4:ERROR(14);
         end;
       end else begin
-        PASCALCO.4(22);
+        PASCALCO.4:ERROR(22);
       end;
     end else begin
       G13 := G88;
@@ -7773,13 +7767,13 @@ procedure UNITPART.3(params 5 words);  { locals 18 words, lex 2 }
     (L22+3)^ := nil;
     (L22+1)^ := 0;
     if (L6 <> nil) then begin
-      PASCALCO.7(L6);
+      PASCALCO.7:ENTERID(L6);
     end;
   end else begin
-    PASCALCO.4(250);
+    PASCALCO.4:ERROR(250);
   end;
 
-procedure UNITPART.4(params 0 words);  { locals 3 words, lex 2 }
+procedure UNITPART.4(args 0 words);  { locals 3 words, lex 2 }
   L1 := G84;
   CSP1(@G84, 11);
   L2 := G84;
@@ -7805,7 +7799,7 @@ procedure UNITPART.4(params 0 words);  { locals 3 words, lex 2 }
   G80 := 2;
   G65 := nil;
   if (G15 = 19) then begin
-    PASCALCO.8();
+    PASCALCO.8:INSYMBOL();
   end;
   BODYPART.1(?, ?, (@I1,1^<4w> + [$0020,$0000]), adjust((512 - 1),4), G84^.f7);
   G10 := G84^.f5;
@@ -7815,7 +7809,7 @@ procedure UNITPART.4(params 0 words);  { locals 3 words, lex 2 }
 SEGMENT 18 COMPOPTI
 ======================================================================
 
-function COMPOPTI.1(params 3 words) : <1 word result>;  { locals 28 words, lex 1 }
+function COMPOPTI.1(args 1 words) : <1 word result>;  { locals 28 words, lex 1 }
   L1 := 1;
   if (G1^[(G14+1)] <> L3) then begin
     repeat
@@ -7835,7 +7829,7 @@ function COMPOPTI.1(params 3 words) : <1 word result>;  { locals 28 words, lex 1
       goto L03EF;
 L01C4:
       if (G80 > 1) then begin
-        PASCALCO.4(194);
+        PASCALCO.4:ERROR(194);
       end;
       CSP1(@G605, 41);
       COMPOPTI.3(G605, 80);
@@ -7863,16 +7857,16 @@ L01FC:
         end;
         if G44 then begin
           G14 := (G14+1);
-          PASCALCO.6();
+          PASCALCO.6:ERRORWITHTEXT();
           G14 := (G14-1);
         end;
         if (G38 or (G33 and G32)) then begin
-          PASCALCO.4(406);
+          PASCALCO.4:ERROR(406);
         end;
         COMMAND();
         FOPEN(@L7, 1, 40, @G756, @L7, 1, 0);
         if (CSP34() <> 0) then begin
-          PASCALCO.4(403);
+          PASCALCO.4:ERROR(403);
         end;
         G38 := 1;
         G714 := G14;
@@ -7880,7 +7874,7 @@ L01FC:
         G710 := (G93-2);
         G93 := 2;
         PASCALCO.5();
-        PASCALCO.8();
+        PASCALCO.8:INSYMBOL();
         CSP4(1, 8);
       end;
       goto L041E;
@@ -7963,7 +7957,7 @@ L0397:
           COMPOPTI.3(@G606, 40);
           FOPEN(?, ?, ?, @G716, @G606, 1, 0);
           if (CSP34() <> 0) then begin
-            PASCALCO.4(187);
+            PASCALCO.4:ERROR(187);
           end;
           COMPOPTI.2();
         end;
@@ -8001,11 +7995,11 @@ L041E:
     until (L4 <> 44);
   end;
 
-procedure COMPOPTI.2(params 0 words);  { locals 0 words, lex 2 }
+procedure COMPOPTI.2(args 0 words);  { locals 0 words, lex 2 }
   I1,1 := 0;
   CSP4(18, 1);
 
-procedure COMPOPTI.3(params 2 words);  { locals 3 words, lex 2 }
+procedure COMPOPTI.3(args 2 words);  { locals 3 words, lex 2 }
   G14 := (G14+2);
   L4 := CSP11(L1, 1, 32, G1, G14, 0);
   L5 := (L4+CSP11((L1-L4), 0, I1,3, G1, (G14+L4), 0));
@@ -8021,7 +8015,7 @@ procedure COMPOPTI.3(params 2 words);  { locals 3 words, lex 2 }
   CSP2(G1, (G14+L4), L2, 1, L5);
   G14 := ((((G14+L5)+L4)+L3)+1);
 
-procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
+procedure COMPOPTI.4(args 0 words);  { locals 4 words, lex 2 }
   G14 := (G14+2);
   L3 := 0;
   repeat
@@ -8029,7 +8023,7 @@ procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
     if (G1^[G14] = I1,3) then begin
       L3 := 1;
     end else begin
-      PASCALCO.8();
+      PASCALCO.8:INSYMBOL();
       if (G15 = 35) then begin
         COMPOPTI.5(G23);
       end else begin
@@ -8037,7 +8031,7 @@ procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
           L3 := 1;
         end else begin
           G54 := 0;
-          PASCALCO.10(adjust(1,1), @L2);
+          PASCALCO.10:SEARCHID(adjust(1,1), @L2);
           G54 := 1;
           if (L2 <> nil) then begin
             L4 := L2;
@@ -8049,7 +8043,7 @@ procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
               COMPOPTI.5(L4^.f12);
             end;
           end else begin
-            PASCALCO.4(273);
+            PASCALCO.4:ERROR(273);
           end;
         end;
       end;
@@ -8062,7 +8056,7 @@ procedure COMPOPTI.4(params 0 words);  { locals 4 words, lex 2 }
   G14 := ((G14+CSP11(80, 0, I1,3, G1, G14, 0))+1);
   COMPOPTI.2();
 
-procedure COMPOPTI.5(params 1 words);  { locals 2 words, lex 3 }
+procedure COMPOPTI.5(args 1 words);  { locals 2 words, lex 3 }
   CSP1(@L2, 13);
   L3 := L2;
   (L3+9)^ := L1;
@@ -8074,14 +8068,14 @@ procedure COMPOPTI.5(params 1 words);  { locals 2 words, lex 3 }
 SEGMENT 19 NUMSTRIN
 ======================================================================
 
-procedure NUMSTRIN.1(params 2 words);  { locals 0 words, lex 1 }
+procedure NUMSTRIN.1(args 2 words);  { locals 0 words, lex 1 }
   if L2 then begin
     NUMSTRIN.3();
   end else begin
     NUMSTRIN.2();
   end;
 
-procedure NUMSTRIN.2(params 0 words);  { locals 46 words, lex 2 }
+procedure NUMSTRIN.2(args 0 words);  { locals 46 words, lex 2 }
   L45 := 0;
   L44 := 0;
   L43 := 0;
@@ -8093,7 +8087,7 @@ L0012:
     G14 := (G14+1);
     L43 := (L43+1);
     if not ((G1^[G14] = 13)) then goto L002F;
-    PASCALCO.4(202);
+    PASCALCO.4:ERROR(202);
     PASCALCO.14();
     goto L0062;
 L002F:
@@ -8101,7 +8095,7 @@ L002F:
       @L1^[(L43-1)] := G1^[G14];
     end else begin
       if not (L45) then begin
-        PASCALCO.4(277);
+        PASCALCO.4:ERROR(277);
       end;
       L45 := 1;
     end;
@@ -8124,7 +8118,7 @@ L0062:
     G23 := G90;
   end;
 
-procedure NUMSTRIN.3(params 0 words);  { locals 16 words, lex 2 }
+procedure NUMSTRIN.3(args 0 words);  { locals 16 words, lex 2 }
   L10 := 1;
   L7 := 0;
   L6 := 0;
@@ -8146,7 +8140,7 @@ L00D4:
         G14 := (G14+1);
       end;
       if (G14 = L3) then begin
-        PASCALCO.4(201);
+        PASCALCO.4:ERROR(201);
       end;
       L7 := (G14-1);
     end;
@@ -8168,7 +8162,7 @@ L00D4:
     end;
     L6 := (G14-1);
     if (L6 < L2) then begin
-      PASCALCO.4(201);
+      PASCALCO.4:ERROR(201);
     end;
   end;
   if (L10 = 1) then begin
@@ -8191,7 +8185,7 @@ L00D4:
       G23 := L1;
     end else begin
       if ((L8-L4) >= 36) then begin
-        PASCALCO.4(203);
+        PASCALCO.4:ERROR(203);
         L4 := L8;
         L15 := L8;
       end;
@@ -8264,15 +8258,15 @@ L00D4:
 SEGMENT 20 FINISHUP
 ======================================================================
 
-procedure FINISHUP.1(params 0 words);  { locals 2 words, lex 1 }
+procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   if (G15 <> 18) then begin
-    PASCALCO.4(21);
+    PASCALCO.4:ERROR(21);
   end;
   if G44 then begin
     G95 := (G95+1);
     G1^[G14] := 13;
     G14 := (G14+1);
-    PASCALCO.6();
+    PASCALCO.6:ERRORWITHTEXT();
   end;
   I2,11 := 0;
   CSP9(@G22, @G94);
@@ -8334,7 +8328,7 @@ procedure FINISHUP.1(params 0 words);  { locals 2 words, lex 1 }
   G13 := 0;
   L1 := 15;
   while (G13 <= L1) do begin
-    PASCALCO.23(PASCALCO.15(G13, 0, 0));
+    PASCALCO.23(PASCALCO.15(G13));
     G13 := (G13+1);
   end;
   if G31 then begin
@@ -8351,10 +8345,10 @@ procedure FINISHUP.1(params 0 words);  { locals 2 words, lex 1 }
   end;
   G11 := 1;
   if (G9 >= 432) then begin
-    PASCALCO.4(407);
+    PASCALCO.4:ERROR(407);
   end;
   while (G9 < 432) do begin
-    PASCALCO.22(0);
+    PASCALCO.22:EMIT(0);
   end;
   if (G605 = nil) then begin
     CSP1(@G605, 41);
@@ -8365,4 +8359,4 @@ procedure FINISHUP.1(params 0 words);  { locals 2 words, lex 1 }
   G9 := (G9+80);
   G1097 := 0;
   G1098 := 0;
-  PASCALCO.24(1);
+  PASCALCO.24:FLUSHBUFFER(1);

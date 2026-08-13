@@ -35,10 +35,16 @@ Done, and reproducible via `python tools/build_all.py`:
 
 ## Next steps
 
-1. **Finish naming the PASCALCO service layer.** Eight routines are named
-   (finding 12). Still open: `PASCALCO.9`, `.15`, `.16`, `.17` — a family
-   sharing a 3-word parameter list that consults global 59. Read their
-   listings alongside the type-handling code in DECLARAT.
+1. ~~**Finish naming the PASCALCO service layer.**~~ **Done** (finding 22).
+   `.9`, `.15`, `.16`, `.17` are `GETBOUNDS`, `STRING`, `STRINGTYPE` and
+   `LONGSIZE`; `.5` = `ENTERID` and `.18` = `CONSTANT` came with them.
+   Fourteen routines are now named, in `tools/a2pascal/names.py`, and the
+   lifter renders them.
+
+   What is left of this track is the rest of PASCALCO — 15 of its 29
+   procedures still have no name — and the phase segments, none of which
+   have been touched. The method that worked: find code that builds a
+   structure out of constants and then *names* it, and read outwards.
 
    Do not promote any name into reconstructed source until its call sites
    agree on arity and argument kinds.
@@ -55,6 +61,14 @@ Done, and reproducible via `python tools/build_all.py`:
    procedures are functions, all returning one word — since every one of
    those needs a `function`, not a `procedure`, header with a matching
    result type.
+
+   Finding 22 supplies the first real block of it: twelve named globals in
+   each release, and — more useful — the two record types nearly all of
+   them point at, `structure` and `identifier`, with field offsets and two
+   enumerations (`structform`, `klass`). Those are `TYPE` declarations the
+   reconstruction needs verbatim, and they come with a constraint: get the
+   member order of `structform` wrong and every `form` comparison in the
+   compiler shifts. Two of its members are still inferred from the gap.
 
 3. **Match phases to the published UCSD compiler structure.** Segment names
    (DECLARAT, BODYPART, ROUTINE, STATEMEN, CASESTAT, FORSTATE, BODY1,
@@ -94,6 +108,13 @@ Done, and reproducible via `python tools/build_all.py`:
      localises the insertions to a few points; read off which offsets are
      new in 1.3 and classify them with the same evidence pipeline.
 
+     First two identified (finding 22b): 1.3 adds the standard types
+     `BYTESTREAM` and `WORDSTREAM`, at globals 57 and 58, entered by name
+     in COMPINIT alongside `INTEGER` and `STRING`. They are also the
+     cleanest available proof of what word 7 of a type descriptor means,
+     since `BYTESTREAM` is a packed char array that is deliberately *not*
+     a `STRING`.
+
 7. **Validation loop**, now in two tiers (finding 18).
 
    * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
@@ -119,9 +140,9 @@ Done, and reproducible via `python tools/build_all.py`:
      merge of predecessors', with `phi` for equal-depth disagreement and an
      explicit report for unequal depth. Unattributed stack values across
      both releases: 542 → 22.
-   * *Control-flow structuring — done, 69%* (finding 21).
-     `tools/a2pascal/structure.py`. **200 of 287 procedures come out with
-     no goto at all**; 1392 gotos remain over 6252 blocks. Both correctness
+   * *Control-flow structuring — done, 70%* (finding 21).
+     `tools/a2pascal/structure.py`. **201 of 287 procedures come out with
+     no goto at all**; 1390 gotos remain over 6252 blocks. Both correctness
      invariants — no dropped statements, no dangling gotos — hold at zero,
      and `tools/probes/probe_structure.py` re-checks them, so a regression
      here is visible rather than silent.
@@ -133,7 +154,7 @@ Done, and reproducible via `python tools/build_all.py`:
      constructs rather than control flow is probably the single biggest
      remaining win.
 
-   Also open, and harder: 95 joins where the two paths disagree on stack
+   Also open, and harder: 91 joins where the two paths disagree on stack
    depth. Mostly UCSD sets, which are variable-length at runtime, so a
    static word-count model cannot always size them. Do not "fix" these by
    loosening the merge — the report is what makes a wrong callee arity

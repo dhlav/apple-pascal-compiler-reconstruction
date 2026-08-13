@@ -20,6 +20,7 @@ evidence/          original inputs, never modified
 tools/             all analysis code
   a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
                    nufx.py syscall.py lift.py structure.py globals.py
+                   names.py -- recovered procedure and global names
   probes/          one-off scripts that established a format detail
   build_all.py     regenerates everything below
 build/             ii0src.po, the disk image unpacked from ii0src.sdk
@@ -62,11 +63,19 @@ including the `LOADSEGMENT`/`UNLOADSEGMENT` pair that drives the compiler's
 phase swapping.
 
 The compiler's global variables are mapped (sizes, shapes, access counts,
-users), and several service routines are identified — the error reporter,
-the scanner, the symbol-table search, the code-byte emitter.
+users), and fourteen PASCALCO service routines are identified — the error
+reporter, the scanner, the symbol-table search and entry, the code-byte
+emitter, `GETBOUNDS`, `CONSTANT`, the string predicates.
+
+Its two central data structures are recovered field by field from the code
+that initialises them: the type descriptor and the symbol-table entry,
+with the `structform` and `klass` enumerations, and the standard types
+`INTEGER`, `REAL`, `CHAR`, `BOOLEAN`, `STRING`, `TEXT` and `INTERACTIVE`
+named by the compiler itself (finding 22). 1.3 adds two more, `BYTESTREAM`
+and `WORDSTREAM`.
 
 **All 287 procedures across the two releases lift to structured
-pseudo-Pascal** with the evaluation stack fully tracked, and **200 of them
+pseudo-Pascal** with the evaluation stack fully tracked, and **201 of them
 come out with no `goto` at all** — real `if`/`while`/`repeat`/`case`
 (`analysis/lifted/`). `tools/show.py SEGMENT.N` prints a procedure's
 p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:

@@ -426,10 +426,10 @@ Identifications, in descending confidence:
   other user of word 9's neighbourhood, calls `FBLOCKIO`, and takes the
   address of word 969, inside the block buffer at 966.
 
-Not yet resolved: `PASCALCO.9`, `.15`, `.16`, `.17` are a family of small
-routines sharing a 3-word parameter list, three of them functions, that
-consult word 59 and each other. They look like the type-comparison helpers
-of a Pascal compiler, but nothing yet pins them down.
+~~Not yet resolved: `PASCALCO.9`, `.15`, `.16`, `.17`.~~ **Resolved by
+finding 22** — they are `GETBOUNDS`, `STRING`, `STRINGTYPE` and
+`LONGSIZE`, and the "3-word parameter list" they share turned out to be
+the clue: it is one real argument plus the two-word function result area.
 
 ## 13. Lifting p-code to pseudo-Pascal
 
@@ -1015,6 +1015,141 @@ itself and diff.
 Neither tool has been built or run yet; this finding is from reading the
 source.
 
+## 22. The compiler's own symbol table, read out of COMPINIT
+
+Two initialisation procedures in COMPINIT turn out to be the most
+informative code in the whole compiler, because they build the compiler's
+central data structures out of *constants* and then, immediately
+afterwards, attach names to them. `tools/probes/probe_stdtypes.py`
+recovers both mechanically from either disk.
+
+### 22a. A function call reserves a two-word result area
+
+**VERIFIED BINARY FACT.** This is the key that unlocked the rest.
+`PASCALCO.15` declares six parameter bytes — three words — but its body
+only ever reads the third of them, and every call site looks like
+
+```
+  SLDL 3 / SLDC 0 / SLDC 0 / CGP 15
+```
+
+The two zeros are not arguments. They are the result area the caller
+reserves: two words, enough for a `real`, sitting at the top of the
+callee's parameter block, and `RNP n` says how many of them carry a value
+back.
+
+`tools/probes/probe_funcresult.py` tests it with a control. Across both
+releases, **154 of 154 call sites whose target ends in `RNP n`, n > 0, are
+preceded by two pushes of zero — and 0 of 2961 procedure call sites are.**
+No function declares fewer than two parameter words. A cleaner separation
+is hard to ask for.
+
+Consequences, both now in the lifter:
+
+* A function's real argument count is `param_size/2 - 2`. Listings say
+  `args`, not `params`, and no longer print the placeholder zeros.
+* `TREESEARCH`'s native signature was wrong. Tribby's 1.2 listing declares
+  `.FUNC TreeSearch,3`, which was taken as three words popped; the
+  convention makes it three *arguments* plus the result area, so five.
+  With that fixed the call reads `TREESEARCH(L3, @L3, @G17)` — exactly the
+  three operands 1.1 passes to `CSP 8` — and one more procedure structures
+  cleanly.
+
+### 22b. The standard types, and the `structform` enumeration
+
+**VERIFIED BINARY FACT** for the mapping, since the compiler states it
+itself: the standard-identifier initialiser stores `LPA 'INTEGER '` into a
+symbol-table entry and then stores the type pointer into the same record.
+
+| 1.1 | 1.3 | name | descriptor |
+|-----|-----|------|------------|
+| G12 | G12 | `INTEGER` | size 1, form 0 scalar, standard |
+| G61 | G64 | `REAL` | size 2, form 0 scalar, standard |
+| G59 | G62 | `CHAR` | size 1, form 0 scalar, standard |
+| G58 | G61 | `BOOLEAN` | size 1, form 0 scalar, scalkind 1 declared |
+| G54 | G55 | `STRING` | size 41, form 5 arrays, packed, elt `CHAR`, len 80 |
+| G57 | G60 | `TEXT` | size 301, form 7 files, elt `CHAR` |
+| G55 | G56 | `INTERACTIVE` | size 301, form 7 files, elt `CHAR` |
+| G56 | G59 | (`nil`'s type) | size 1, form 2 pointer, elt nil |
+| G60 | G63 | (long integer) | form 3, size `LONGSIZE(5)` |
+| —   | G57 | `BYTESTREAM` | **1.3 only.** form 5 arrays, packed, elt `CHAR`, string flag **0** |
+| —   | G58 | `WORDSTREAM` | **1.3 only.** form 5 arrays, unpacked, elt `INTEGER` |
+
+The forms observed — 0, 1, 2, 3, 5, 7 — fix the enumeration as
+
+```
+  (scalar, subrange, pointer, longint, power, arrays, records, files, ...)
+```
+
+which is Zurich's list with `longint` inserted after `pointer`. That is
+**STRONG INFERENCE** on the two members never observed (`power` at 4,
+`records` at 6), and VERIFIED for the six that are. It matters: a
+reconstruction has to declare this type in the right order or every
+`form` comparison in the compiler shifts.
+
+`longint` being a distinct form is right for Apple Pascal, which has
+`integer[n]` long integers. `PASCALCO.17` sizes them: `((n+3) div 4) + 1`
+words for `n` decimal digits — four digits per word plus a header word.
+Its two constant arguments corroborate it. The default long-integer type
+is built with `n = (16-1)*100 div 332 + 1` = 5, the digits a 16-bit word
+holds (100/332 ≈ log₁₀2), and the one other constant call site passes
+**36**, UCSD's documented maximum long-integer length.
+
+### 22c. The two record layouts
+
+**VERIFIED BINARY FACT**, from the field offsets the initialiser writes.
+
+The type descriptor (`structure`): word 0 `size` in words, word 1 `form`,
+variant part from word 2. For `arrays` the variant is index type (2),
+element type (3), packed flag (4), element bits (5), elements per word
+(6), **string flag (7)**, declared length (8).
+
+Word 7 is the field that separates a declared `STRING` from any other
+packed array of char, and 1.3 proves it: `BYTESTREAM` is byte-for-byte a
+packed char array like `STRING` but sets word 7 to **0**. DECLARAT's
+`STRING[n]` handler confirms the rest — it `MOV`s all nine words of the
+standard descriptor, then overwrites word 8 with `n` and word 0 with
+`(n+2) div 2`, after range-checking `n` against 1..255 and reporting
+error 203.
+
+The symbol-table entry (`identifier`): words 0–3 the eight-character name,
+4 `llink`, 5 `rlink`, 6 `idtype`, 7 `next`, 8 `klass`, variant from 9.
+This is Zurich's record exactly, and it independently corroborates finding
+19 — the native `TREESEARCH` walks words 4 and 5 as its left and right
+subtree links. `klass` values 0..6 are all observed, with record sizes
+9, 10, 11, 11, 13, 18, 18 words; 0 = `types`, 1 = `konst`, 2 = `vars`
+(`INPUT` and `OUTPUT` are entered with it), 5 and 6 the two 18-word
+classes, i.e. `proc` and `func`.
+
+### 22d. Four more service routines named
+
+**STRONG INFERENCE** for all four; each matches a routine of the published
+Zurich/UCSD compiler line for line.
+
+* **`PASCALCO.9` = `GETBOUNDS(fsp; var fmin, fmax)`.** Sets both to 0;
+  for `form = subrange` reads the bounds out of the descriptor; for
+  `fsp = CHARPTR` sets `fmax := 255`; otherwise takes the last enumeration
+  constant's value from `fsp^.fconst^.values`. That last branch is what
+  identified word 9 of an `identifier` as the `konst` variant.
+* **`PASCALCO.15` = `STRING(fsp)`** — form is `arrays`, packed, element
+  type `CHAR`. The classic Zurich predicate.
+* **`PASCALCO.16` = `STRINGTYPE(fsp)`** — `STRING(fsp)` *and* the word-7
+  string flag. Used as a boolean at every call site.
+* **`PASCALCO.17` = `LONGSIZE(n)`** — see 22b. The name is invented; the
+  arithmetic is not.
+
+Two more fell out of reading the same code: **`PASCALCO.5` = `ENTERID`**
+(the standard-identifier initialiser builds a record and hands it to this
+routine, once per name) and **`PASCALCO.18` = `CONSTANT(fsys; var lsp,
+lvalu)`** (called with a symbol set and two `VAR` addresses to parse the
+bracketed length in `STRING[n]`). Also **`G15` = `SY`**, the current
+symbol: written 20 times inside `INSYMBOL` and nowhere else of substance,
+read 256 times.
+
+All of this now lives in `tools/a2pascal/names.py`, and the lifter uses
+it, so `analysis/lifted/` reads `PASCALCO.10:SEARCHID` and `CHARPTR`
+instead of bare numbers.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
@@ -1032,7 +1167,12 @@ source.
 * One word of the 1222-word global area in 1.1 is unaccounted for.
 * ~~`$D1`-`$D6` are unidentified.~~ Resolved by finding 17: `STE`, `NOP`,
   `EFJ`, `NFJ`, `BPT`, `XIT`. Still none of them occur in SYSTEM.COMPILER.
-* `PASCALCO.9`, `.15`, `.16`, `.17` (finding 12) are unnamed.
+* ~~`PASCALCO.9`, `.15`, `.16`, `.17` (finding 12) are unnamed.~~ Resolved
+  by finding 22.
+* Two members of the `structform` enumeration, `power` at 4 and `records`
+  at 6, are inferred from the gap rather than observed (finding 22b).
+* Word 4 of the `identifier` variant part — the 13-word `klass` — has no
+  name yet. `klass` 3 and 4 both need one.
 * Segment 1.1 PASCALCO proc 1 has `lex=0`; every other procedure in the
   compiler has lex 1 or greater. Consistent with it being the outermost
   program block, but the lex-level convention has not been pinned down.
