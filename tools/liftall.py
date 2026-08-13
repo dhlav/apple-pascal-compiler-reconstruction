@@ -8,6 +8,7 @@ from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.pcode import disassemble, sweep_exit
 from a2pascal.lift import lift, render
+from a2pascal.structure import structure
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "lifted"
@@ -31,7 +32,7 @@ for ver, fname in DISKS.items():
              "unknown stack effect was reached; the rest of that block is",
              "listed verbatim.",
              ""]
-    clean = total = 0
+    clean = total = gotos = structured = 0
     reasons = Counter()
     for seg in cf.segments:
         lines.append("=" * 70)
@@ -61,13 +62,18 @@ for ver, fname in DISKS.items():
                             break
             else:
                 clean += 1
-            lines.append(render(blocks, hdr))
+            text, g, nb = structure(blocks, hdr)
+            gotos += g
+            if g == 0:
+                structured += 1
+            lines.append(text)
         lines.append("")
 
     path = OUT / f"SYSTEM.COMPILER-{ver}.pas.txt"
     path.write_text("\n".join(lines), encoding="ascii", errors="replace")
-    print(f"[{ver}] {clean}/{total} procedures lifted with the stack fully "
-          f"tracked -> {path.name}")
+    print(f"[{ver}] {clean}/{total} lifted with the stack fully tracked; "
+          f"{structured}/{total} fully structured "
+          f"({gotos} gotos left) -> {path.name}")
     if reasons:
         print("      blocked by:", ", ".join(f"{k} x{v}"
                                              for k, v in reasons.most_common(12)))

@@ -192,16 +192,37 @@ def decode(code: bytes, addr: int, jtab: int | None = None) -> Insn:
             vals.append(words)
             parts.append(f"{n}w [" + " ".join(f"${x:04X}" for x in words) + "]")
         elif kind == "xjp":
+            # Layout, from Interp.s OpAC_XJP: the interpreter word-aligns
+            # IPC by setting bit 0, then min is at +1, max at +3, and the
+            # jump table at +7 (the handler's "adc #7").
+            #
+            # The two bytes at +5 are NOT a default pointer, which is how
+            # this was read before. Out-of-range does `addq.w #5; ZpIPC;
+            # JMP GetOp` -- it advances IPC by five and *executes* what is
+            # there. The compiler puts a two-byte UJP in that slot. The
+            # instruction's total length is the same either way, which is
+            # why the 287/287 sync check never noticed; the targets it
+            # produced were nonsense.
             if p % 2:
                 p += 1
             lo, hi = struct.unpack_from("<hh", code, p)
             p += 4
-            otherwise = selfrel(code, p)
+            defaddr = p
+            deflt = decode(code, p, jtab)
+            otherwise = deflt.target if deflt.target is not None else None
             p += 2
             table = [selfrel(code, p + 2 * i) for i in range(hi - lo + 1)]
             p += 2 * (hi - lo + 1)
+            # An arm may target the default slot itself, which just means
+            # "this value has no case of its own" -- the slot holds the UJP
+            # out of the statement. Resolve those to the same place, so no
+            # arm points into the middle of the XJP instruction.
+            if otherwise is not None:
+                table = [otherwise if t == defaddr else t for t in table]
             vals.extend([lo, hi, otherwise, table])
-            parts.append(f"{lo}..{hi} else ${otherwise:04X} ["
+            els = (f"${otherwise:04X}" if otherwise is not None
+                   else f"<{deflt.text}>")
+            parts.append(f"{lo}..{hi} else {els} ["
                          + " ".join(f"${t:04X}" for t in table) + "]")
 
     text = f"{mnem} " + ",".join(parts) if parts else mnem

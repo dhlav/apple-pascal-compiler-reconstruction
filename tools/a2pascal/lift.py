@@ -299,7 +299,14 @@ class _Lifter:
                     st.append(f"{pop()}")
                 elif m == "STP":
                     v, r = pop(), pop()
-                    out.append(f"{r} := {v};")
+                    # A store whose target came out as a bare literal means
+                    # the stack model already went wrong upstream. Render it
+                    # as the anomaly it is rather than as "8 := 2", which
+                    # reads like a fact about the program.
+                    if r.lstrip("-").isdigit():
+                        out.append(f"{{ unmodelled packed store of {v} }}")
+                    else:
+                        out.append(f"{r} := {v};")
                 elif m == "SGS":
                     st.append(f"[{pop()}]")
                 elif m == "SRS":

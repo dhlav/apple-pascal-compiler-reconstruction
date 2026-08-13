@@ -113,18 +113,25 @@ Done, and reproducible via `python tools/build_all.py`:
    cleaner target and the compiler that would have built 1.1's own source —
    then carry the result to 1.3 through the correspondence table.
 
-8. **Improve the lifter** (findings 13, 20). Half done.
+8. **Improve the lifter** (findings 13, 20, 21). Both halves done.
 
    * *Stack merging at joins — done.* Entry stacks are the fixed-point
      merge of predecessors', with `phi` for equal-depth disagreement and an
      explicit report for unequal depth. Unattributed stack values across
      both releases: 542 → 22.
-   * *Control-flow structuring — still open.* The output is still
-     `if not (c) then goto L`. Turning that into `if`/`while`/`repeat`/
-     `case` is the remaining prerequisite for stage two, compilable Pascal.
-     `XJP` already carries its full jump table, so `case` is the easiest
-     starting point; loops are recognisable as a back edge to a dominating
-     block.
+   * *Control-flow structuring — done, 69%* (finding 21).
+     `tools/a2pascal/structure.py`. **200 of 287 procedures come out with
+     no goto at all**; 1392 gotos remain over 6252 blocks. Both correctness
+     invariants — no dropped statements, no dangling gotos — hold at zero,
+     and `tools/probes/probe_structure.py` re-checks them, so a regression
+     here is visible rather than silent.
+
+     To push past 69%, look at what the structurer refuses: it rejects any
+     construct whose blocks jump outside it. That is the honest answer for
+     short-circuit boolean evaluation and for `exit`, and those are most of
+     what is left. Handling short-circuit `and`/`or` as expression-level
+     constructs rather than control flow is probably the single biggest
+     remaining win.
 
    Also open, and harder: 95 joins where the two paths disagree on stack
    depth. Mostly UCSD sets, which are variable-length at runtime, so a

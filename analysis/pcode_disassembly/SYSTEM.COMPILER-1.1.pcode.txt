@@ -783,7 +783,7 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   0610 82                           ADI
   0611 ab 0e                        SRO 14
   0613 b9 0b                        UJP $0620
-  0615 ac 3d 00 3e 00 b9 04 11 00 1d 00 L0615:  XJP 61..62 else $0161 [$060B $0601]
+  0615 ac 3d 00 3e 00 b9 04 11 00 1d 00 L0615:  XJP 61..62 else $0620 [$060B $0601]
   0620 b9 f0                L0620:  UJP $0732 (jtab-16)
   0622 29                   L0622:  SLDC 41
   0623 ab 0f                        SRO 15
@@ -810,7 +810,7 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   0640 0b                   L0640:  SLDC 11
   0641 ab 10                        SRO 16
   0643 b9 f0                L0643:  UJP $0732 (jtab-16)
-  0645 ac 09 00 7b 00 b9 f0 c5 00 04 00 06 00 08 00 0a 00 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 20 00 22 00 24 00 26 00 28 00 2a 00 2c 00 2e 00 f3 00 32 00 34 00 36 00 38 00 3a 00 3c 00 a0 01 2c 01 0f 01 ba 00 b4 00 10 01 b0 00 06 01 ac 00 aa 01 ac 01 ae 01 b0 01 b2 01 b4 01 b6 01 b8 01 ba 01 bc 01 06 01 f0 00 be 00 92 00 8c 00 6e 00 70 00 6c 01 6e 01 70 01 72 01 74 01 76 01 78 01 7a 01 7c 01 7e 01 80 01 82 01 84 01 86 01 88 01 8a 01 8c 01 8e 01 90 01 92 01 94 01 96 01 98 01 9a 01 9c 01 9e 01 26 01 a8 00 25 01 31 01 ae 00 b0 00 ac 01 ae 01 b0 01 b2 01 b4 01 b6 01 b8 01 ba 01 bc 01 be 01 c0 01 c2 01 c4 01 c6 01 c8 01 ca 01 cc 01 ce 01 d0 01 d2 01 d4 01 d6 01 d8 01 da 01 dc 01 de 01 d9 01 L0645:  XJP 9..123 else $-EA6F [$0587 $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $064A $0587 $064A $064A $064A $064A $064A $064A $04E8 $055E $057D $05D4 $05DC $0582 $05E4 $0590 $05EC $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $05A8 $05C0 $05F4 $0622 $062A $064A $064A $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $05CA $064A $05CF $05C5 $064A $064A $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0557]
+  0645 ac 09 00 7b 00 b9 f0 c5 00 04 00 06 00 08 00 0a 00 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 20 00 22 00 24 00 26 00 28 00 2a 00 2c 00 2e 00 f3 00 32 00 34 00 36 00 38 00 3a 00 3c 00 a0 01 2c 01 0f 01 ba 00 b4 00 10 01 b0 00 06 01 ac 00 aa 01 ac 01 ae 01 b0 01 b2 01 b4 01 b6 01 b8 01 ba 01 bc 01 06 01 f0 00 be 00 92 00 8c 00 6e 00 70 00 6c 01 6e 01 70 01 72 01 74 01 76 01 78 01 7a 01 7c 01 7e 01 80 01 82 01 84 01 86 01 88 01 8a 01 8c 01 8e 01 90 01 92 01 94 01 96 01 98 01 9a 01 9c 01 9e 01 26 01 a8 00 25 01 31 01 ae 00 b0 00 ac 01 ae 01 b0 01 b2 01 b4 01 b6 01 b8 01 ba 01 bc 01 be 01 c0 01 c2 01 c4 01 c6 01 c8 01 ca 01 cc 01 ce 01 d0 01 d2 01 d4 01 d6 01 d8 01 da 01 dc 01 de 01 d9 01 L0645:  XJP 9..123 else $0732 [$0587 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0732 $0587 $0732 $0732 $0732 $0732 $0732 $0732 $04E8 $055E $057D $05D4 $05DC $0582 $05E4 $0590 $05EC $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $04F0 $05A8 $05C0 $05F4 $0622 $062A $0732 $0732 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $05CA $0732 $05CF $05C5 $0732 $0732 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0550 $0557]
   0732 f6                   L0732:  SLDO 15
   0733 2f                           SLDC 47
   0734 c3                           EQUI
@@ -1799,7 +1799,7 @@ SEGMENT 1 PASCALCO  block=1 len=4486 mtype=pcode-lsb nproc=29
   0C0B cf 13                        CGP 19  ; local proc 19
   0C0D cc 01                        STL 1
   0C0F b9 17                        UJP $0C28
-  0C11 ac 00 00 07 00 b9 10 11 01 0e 01 04 01 ac 00 a9 00 9f 00 60 00 21 00 L0C11:  XJP 0..7 else $-4A3 [$0B07 $0B0C $0B18 $0B72 $0B77 $0B83 $0BC4 $0C05]
+  0C11 ac 00 00 07 00 b9 10 11 01 0e 01 04 01 ac 00 a9 00 9f 00 60 00 21 00 L0C11:  XJP 0..7 else $0C28 [$0B07 $0B0C $0B18 $0B72 $0B77 $0B83 $0BC4 $0C05]
   0C28 b9 25                L0C28:  UJP $0C4F
   0C2A db                   L0C2A:  SLDL 4
   0C2B f9                           SIND 1
@@ -3819,7 +3819,7 @@ SEGMENT 7 COMPINIT  block=10 len=3226 mtype=pcode-lsb nproc=10
   0803 f3                   L0803:  SLDO 12
   0804 cc 03                        STL 3
   0806 b9 22                        UJP $082A
-  0808 ac 00 01 00 0d 00 b9 1a a6 00 90 00 8c 00 8a 00 74 00 0c 00 4c 00 46 00 30 00 2c 00 16 00 2b 00 25 00 L0808:  XJP 1..13 else $-12AB [$076A $0782 $0788 $078C $07A4 $080E $07D0 $07D8 $07F0 $07F6 $080E $07FB $0803]
+  0808 ac 00 01 00 0d 00 b9 1a a6 00 90 00 8c 00 8a 00 74 00 0c 00 4c 00 46 00 30 00 2c 00 16 00 2b 00 25 00 L0808:  XJP 1..13 else $082A [$076A $0782 $0788 $078C $07A4 $082A $07D0 $07D8 $07F0 $07F6 $082A $07FB $0803]
   082A dd                   L082A:  SLDL 6
   082B a1 07                        FJP $0834
   082D c6 02                        LLA 2
@@ -5467,7 +5467,7 @@ SEGMENT 8 DECLARAT  block=17 len=7574 mtype=pcode-lsb nproc=20
   03B1 db                           SLDL 4
   03B2 b8 01 11                     STR 1,17
   03B5 b9 11                L03B5:  UJP $03C8
-  03B7 ac 00 00 04 00 b9 0a 69 00 6b 00 06 00 08 00 33 00 L03B7:  XJP 0..4 else $-6FD [$0355 $0355 $03BC $03BC $0393]
+  03B7 ac 00 00 04 00 b9 0a 69 00 6b 00 06 00 08 00 33 00 L03B7:  XJP 0..4 else $03C8 [$0355 $0355 $03C8 $03C8 $0393]
   ---- exit code (EXIT target) ----
   03C8 ad 01                L03C8:  RNP 1
   ---- jump table: 1 entry ----
@@ -9166,10 +9166,10 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   06AC 3e                   L06AC:  SLDC 62
   06AD ae 03                        CIP 3  ; local proc 3
   06AF b9 11                        UJP $06C2
-  06B1 ac 00 00 04 00 b9 0a 25 00 20 00 1c 00 19 00 14 00 L06B1:  XJP 0..4 else $-403 [$0693 $069A $06A0 $06A5 $06AC]
+  06B1 ac 00 00 04 00 b9 0a 25 00 20 00 1c 00 19 00 14 00 L06B1:  XJP 0..4 else $06C2 [$0693 $069A $06A0 $06A5 $06AC]
   06C2 b9 10                L06C2:  UJP $06D4
   06C4 b9 0e                L06C4:  UJP $06D4
-  06C6 ac 00 00 00 02 00 b9 06 d8 00 40 00 0e 00 L06C6:  XJP 0..2 else $0013 [$05F6 $0690 $06C4]
+  06C6 ac 00 00 00 02 00 b9 06 d8 00 40 00 0e 00 L06C6:  XJP 0..2 else $06D4 [$05F6 $0690 $06C4]
   06D4 ea                   L06D4:  SLDO 3
   06D5 cc 03                        STL 3
   06D7 da                           SLDL 3
@@ -9238,9 +9238,9 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   078E 67                   L078E:  SLDC 103
   078F cd 01 02                     CXP 1,2  ; PASCALCO.2
   0792 b9 0e                        UJP $07A2
-  0794 ac 00 00 00 02 00 b9 06 20 00 1b 00 12 00 L0794:  XJP 0..2 else $00E1 [$077C $0783 $078E]
+  0794 ac 00 00 00 02 00 b9 06 20 00 1b 00 12 00 L0794:  XJP 0..2 else $07A2 [$077C $0783 $078E]
   07A2 b9 0c                L07A2:  UJP $07B0
-  07A4 ac 00 00 00 01 00 b9 04 48 00 35 00 L07A4:  XJP 0..1 else $02F1 [$0764 $0779]
+  07A4 ac 00 00 00 01 00 b9 04 48 00 35 00 L07A4:  XJP 0..1 else $07B0 [$0764 $0779]
   07B0 01                   L07B0:  SLDC 1
   07B1 ab 04                        SRO 4
   07B3 01                           SLDC 1
@@ -9286,9 +9286,9 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   07F8 67                   L07F8:  SLDC 103
   07F9 cd 01 02                     CXP 1,2  ; PASCALCO.2
   07FC b9 0e                        UJP $080C
-  07FE ac 00 00 00 02 00 b9 06 20 00 1b 00 12 00 L07FE:  XJP 0..2 else $014B [$07E6 $07ED $07F8]
+  07FE ac 00 00 00 02 00 b9 06 20 00 1b 00 12 00 L07FE:  XJP 0..2 else $080C [$07E6 $07ED $07F8]
   080C b9 0c                L080C:  UJP $081A
-  080E ac 00 00 00 01 00 b9 04 48 00 35 00 L080E:  XJP 0..1 else $035B [$07CE $07E3]
+  080E ac 00 00 00 01 00 b9 04 48 00 35 00 L080E:  XJP 0..1 else $081A [$07CE $07E3]
   081A eb                   L081A:  SLDO 4
   081B 01                           SLDC 1
   081C cb                           NEQI
@@ -9589,7 +9589,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   1B0F 00                           SLDC 0
   1B10 cc 0b                        STL 11
   1B12 b9 18                        UJP $1B2C
-  1B14 ac 00 00 00 07 00 b9 10 ac 00 04 00 95 00 84 00 81 00 70 00 32 00 21 00 L1B14:  XJP 0..7 else $0A61 [$1A70 $1B1A $1A8B $1A9E $1AA3 $1AB6 $1AF6 $1B09]
+  1B14 ac 00 00 00 07 00 b9 10 ac 00 04 00 95 00 84 00 81 00 70 00 32 00 21 00 L1B14:  XJP 0..7 else $1B2C [$1A70 $1B2C $1A8B $1A9E $1AA3 $1AB6 $1AF6 $1B09]
   1B2C e2                   L1B2C:  SLDL 11
   1B2D 07                           SLDC 7
   1B2E c3                           EQUI
@@ -9634,7 +9634,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   1B65 e3                           SLDL 12
   1B66 ae 06                        CIP 6  ; local proc 6
   1B68 b9 14                        UJP $1B7E
-  1B6A ac 00 08 00 0d 00 b9 0c 32 00 2d 00 21 00 2a 00 1e 00 19 00 L1B6A:  XJP 8..13 else $0EB7 [$1B40 $1B47 $1B55 $1B4E $1B5C $1B63]
+  1B6A ac 00 08 00 0d 00 b9 0c 32 00 2d 00 21 00 2a 00 1e 00 19 00 L1B6A:  XJP 8..13 else $1B7E [$1B40 $1B47 $1B55 $1B4E $1B5C $1B63]
   1B7E b9 06                L1B7E:  UJP $1B86
   1B80 c7 81 00             L1B80:  LDCI 129
   1B83 cd 01 02                     CXP 1,2  ; PASCALCO.2
@@ -9971,7 +9971,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   073A 3f                   L073A:  SLDC 63
   073B ae 03                        CIP 3  ; local proc 3
   073D b9 11                        UJP $0750
-  073F ac 00 00 04 00 b9 0a 35 00 2e 00 1d 00 1a 00 14 00 L073F:  XJP 0..4 else $-375 [$0711 $071A $072D $0732 $073A]
+  073F ac 00 00 04 00 b9 0a 35 00 2e 00 1d 00 1a 00 14 00 L073F:  XJP 0..4 else $0750 [$0711 $071A $072D $0732 $073A]
   ---- exit code (EXIT target) ----
   0750 ad 00                L0750:  RNP 0
 
@@ -10157,7 +10157,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   0944 01                           SLDC 1
   0945 ab 07                        SRO 7
   0947 b9 11                L0947:  UJP $095A
-  0949 ac 02 00 06 00 b9 0a 87 00 af 00 7a 00 08 00 39 00 L0949:  XJP 2..6 else $-16B [$08C9 $08A3 $08DA $094E $091F]
+  0949 ac 02 00 06 00 b9 0a 87 00 af 00 7a 00 08 00 39 00 L0949:  XJP 2..6 else $095A [$08C9 $08A3 $08DA $095A $091F]
   095A ea                   L095A:  SLDO 3
   095B 9f                           LDCN
   095C cb                           NEQI
@@ -10435,7 +10435,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   0AF7 c7 90 01             L0AF7:  LDCI 400
   0AFA cd 01 02                     CXP 1,2  ; PASCALCO.2
   0AFD b9 11                        UJP $0B10
-  0AFF ac 00 00 04 00 b9 0a 21 00 1a 00 13 00 15 00 17 00 L0AFF:  XJP 0..4 else $004B [$0AE5 $0AEE $0AF7 $0AF7 $0AF7]
+  0AFF ac 00 00 04 00 b9 0a 21 00 1a 00 13 00 15 00 17 00 L0AFF:  XJP 0..4 else $0B10 [$0AE5 $0AEE $0AF7 $0AF7 $0AF7]
   0B10 e5                   L0B10:  SLDL 14
   0B11 a3 0a                        IND 10
   0B13 a1 0f                        FJP $0B24
@@ -11632,7 +11632,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   10E6 c7 af 00                     LDCI 175
   10E9 cd 01 02                     CXP 1,2  ; PASCALCO.2
   10EC b9 0e                L10EC:  UJP $10FC
-  10EE ac 00 03 00 05 00 b9 06 33 00 35 00 28 00 L10EE:  XJP 3..5 else $0A3B [$10C3 $10C3 $10D2]
+  10EE ac 00 03 00 05 00 b9 06 33 00 35 00 28 00 L10EE:  XJP 3..5 else $10FC [$10C3 $10C3 $10D2]
   10FC b9 06                L10FC:  UJP $1104
   10FE c7 9a 00             L10FE:  LDCI 154
   1101 cd 01 02                     CXP 1,2  ; PASCALCO.2
@@ -12088,7 +12088,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   18F6 9f                           LDCN
   18F7 ab 03                        SRO 3
   18F9 b9 0d                L18F9:  UJP $1908
-  18FB ac 05 00 07 00 b9 06 d4 00 7d 00 26 00 L18FB:  XJP 5..7 else $1247 [$182E $1887 $18E0]
+  18FB ac 05 00 07 00 b9 06 d4 00 7d 00 26 00 L18FB:  XJP 5..7 else $1908 [$182E $1887 $18E0]
   1908 b9 03                L1908:  UJP $190D
   190A 9f                   L190A:  LDCN
   190B ab 03                        SRO 3
@@ -12288,7 +12288,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   176B 9f                           LDCN
   176C ab 03                        SRO 3
   176E b9 12                L176E:  UJP $1782
-  1770 ac 00 00 00 04 00 b9 0a e6 00 8f 00 27 00 73 00 44 00 L1770:  XJP 0..4 else $0CBD [$1692 $16EB $1755 $170B $173C]
+  1770 ac 00 00 00 04 00 b9 0a e6 00 8f 00 27 00 73 00 44 00 L1770:  XJP 0..4 else $1782 [$1692 $16EB $1755 $170B $173C]
   1782 b9 03                L1782:  UJP $1787
   1784 9f                   L1784:  LDCN
   1785 ab 03                        SRO 3
@@ -12723,7 +12723,7 @@ SEGMENT 9 BODYPART  block=32 len=7208 mtype=pcode-lsb nproc=37
   159D 00                           SLDC 0
   159E ab 04                        SRO 4
   15A0 b9 6a                L15A0:  UJP $160C
-  15A2 ac 00 00 00 30 00 b9 62 93 02 04 00 06 00 08 00 cf 01 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 92 01 22 00 24 00 26 00 28 00 2a 00 2c 00 2e 00 30 00 32 00 34 00 36 00 38 00 3a 00 3c 00 3e 00 40 00 42 00 44 00 46 00 81 02 72 02 62 02 f4 01 50 00 52 00 54 00 56 00 58 00 5a 00 5c 00 5e 00 60 00 4b 02 L15A2:  XJP 0..48 else $-4D11 [$1317 $15A8 $15A8 $15A8 $13E3 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $1436 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $136F $1380 $1392 $1402 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $15A8 $13BF]
+  15A2 ac 00 00 00 30 00 b9 62 93 02 04 00 06 00 08 00 cf 01 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 92 01 22 00 24 00 26 00 28 00 2a 00 2c 00 2e 00 30 00 32 00 34 00 36 00 38 00 3a 00 3c 00 3e 00 40 00 42 00 44 00 46 00 81 02 72 02 62 02 f4 01 50 00 52 00 54 00 56 00 58 00 5a 00 5c 00 5e 00 60 00 4b 02 L15A2:  XJP 0..48 else $160C [$1317 $160C $160C $160C $13E3 $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $1436 $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $160C $136F $1380 $1392 $1402 $160C $160C $160C $160C $160C $160C $160C $160C $160C $13BF]
   160C f6                   L160C:  SLDO 15
   160D c6 01                        LLA 1
   160F bc 04                        LDM 4
@@ -12866,7 +12866,7 @@ SEGMENT 10 ROUTINE  block=47 len=2902 mtype=pcode-lsb nproc=17
   0AD8 b9 4c                        UJP $0B26
   0ADA ce 0b                L0ADA:  CLP 11  ; local proc 11
   0ADC b9 48                        UJP $0B26
-  0ADE ac 00 0c 00 2b 00 b9 40 38 00 36 00 38 00 36 00 0a 00 0c 00 38 00 3a 00 12 00 3a 00 3c 00 3a 00 1a 00 1c 00 1e 00 46 00 22 00 24 00 26 00 46 00 44 00 2c 00 48 00 4a 00 48 00 46 00 48 00 38 00 54 00 4a 00 48 00 6a 00 L0ADE:  XJP 12..43 else $-35D5 [$0AAE $0AB2 $0AB2 $0AB6 $0AE4 $0AE4 $0ABA $0ABA $0AE4 $0ABE $0ABE $0AC2 $0AE4 $0AE4 $0AE4 $0ABE $0AE4 $0AE4 $0AE4 $0AC6 $0ACA $0AE4 $0ACA $0ACA $0ACE $0AD2 $0AD2 $0AE4 $0ACA $0AD6 $0ADA $0ABA]
+  0ADE ac 00 0c 00 2b 00 b9 40 38 00 36 00 38 00 36 00 0a 00 0c 00 38 00 3a 00 12 00 3a 00 3c 00 3a 00 1a 00 1c 00 1e 00 46 00 22 00 24 00 26 00 46 00 44 00 2c 00 48 00 4a 00 48 00 46 00 48 00 38 00 54 00 4a 00 48 00 6a 00 L0ADE:  XJP 12..43 else $0B26 [$0AAE $0AB2 $0AB2 $0AB6 $0B26 $0B26 $0ABA $0ABA $0B26 $0ABE $0ABE $0AC2 $0B26 $0B26 $0B26 $0ABE $0B26 $0B26 $0B26 $0AC6 $0ACA $0B26 $0ACA $0ACA $0ACE $0AD2 $0AD2 $0B26 $0ACA $0AD6 $0ADA $0ABA]
   ---- exit code (EXIT target) ----
   0B26 ad 00                L0B26:  RNP 0
 
@@ -13691,7 +13691,7 @@ SEGMENT 10 ROUTINE  block=47 len=2902 mtype=pcode-lsb nproc=17
   05DB 11                           SLDC 17
   05DC cd 09 06                     CXP 9,6  ; BODYPART.6
   05DF b9 19                        UJP $05FA
-  05E1 ac 20 00 28 00 b9 12 5b 00 04 00 3d 00 37 00 0a 00 0c 00 0e 00 10 00 39 00 L05E1:  XJP 32..40 else $-CD3 [$058D $05E6 $05AF $05B7 $05E6 $05E6 $05E6 $05E6 $05BF]
+  05E1 ac 20 00 28 00 b9 12 5b 00 04 00 3d 00 37 00 0a 00 0c 00 0e 00 10 00 39 00 L05E1:  XJP 32..40 else $05FA [$058D $05FA $05AF $05B7 $05FA $05FA $05FA $05FA $05BF]
   05FA a9 2f                L05FA:  LDO 47
   05FC a1 05                        FJP $0603
   05FE 1e                           SLDC 30
@@ -14250,7 +14250,7 @@ SEGMENT 10 ROUTINE  block=47 len=2902 mtype=pcode-lsb nproc=17
   09FF 0c                           SLDC 12
   0A00 cd 09 05                     CXP 9,5  ; BODYPART.5
   0A03 b9 57                        UJP $0A5C
-  0A05 ac 05 00 2c 00 b9 50 a5 02 a7 02 4b 02 4d 02 27 02 10 02 ed 01 10 00 12 00 14 00 16 00 d2 01 bf 01 1c 00 1e 00 91 01 22 00 24 00 26 00 74 01 57 01 35 01 2e 00 0c 01 0e 01 10 01 36 00 38 00 16 01 3c 00 3e 00 40 00 42 00 44 00 b7 00 48 00 4a 00 4c 00 4e 00 88 00 L0A05:  XJP 5..44 else $-46AF [$0767 $0767 $07C5 $07C5 $07ED $0806 $082B $0A0A $0A0A $0A0A $0A0A $0850 $0865 $0A0A $0A0A $0899 $0A0A $0A0A $0A0A $08BE $08DD $0901 $0A0A $092E $092E $092E $0A0A $0A0A $092E $0A0A $0A0A $0A0A $0A0A $0A0A $0999 $0A0A $0A0A $0A0A $0A0A $09D2]
+  0A05 ac 05 00 2c 00 b9 50 a5 02 a7 02 4b 02 4d 02 27 02 10 02 ed 01 10 00 12 00 14 00 16 00 d2 01 bf 01 1c 00 1e 00 91 01 22 00 24 00 26 00 74 01 57 01 35 01 2e 00 0c 01 0e 01 10 01 36 00 38 00 16 01 3c 00 3e 00 40 00 42 00 44 00 b7 00 48 00 4a 00 4c 00 4e 00 88 00 L0A05:  XJP 5..44 else $0A5C [$0767 $0767 $07C5 $07C5 $07ED $0806 $082B $0A5C $0A5C $0A5C $0A5C $0850 $0865 $0A5C $0A5C $0899 $0A5C $0A5C $0A5C $08BE $08DD $0901 $0A5C $092E $092E $092E $0A5C $0A5C $092E $0A5C $0A5C $0A5C $0A5C $0A5C $0999 $0A5C $0A5C $0A5C $0A5C $09D2]
   ---- exit code (EXIT target) ----
   0A5C ad 00                L0A5C:  RNP 0
   ---- jump table: 2 entries ----
@@ -14409,7 +14409,7 @@ SEGMENT 11 STATEMEN  block=53 len=1598 mtype=pcode-lsb nproc=8
   05A5 cd 01 06             L05A5:  CXP 1,6  ; PASCALCO.6
   05A8 ce 08                        CLP 8  ; local proc 8
   05AA b9 3e                        UJP $05EA
-  05AC ac 00 00 00 1a 00 b9 36 69 00 04 00 06 00 08 00 0a 00 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 20 00 22 00 24 00 26 00 68 00 5c 00 57 00 4a 00 53 00 47 00 41 00 6f 00 L05AC:  XJP 0..26 else $-3107 [$054B $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $05B2 $0572 $0580 $0587 $0596 $058F $059D $05A5 $0579]
+  05AC ac 00 00 00 1a 00 b9 36 69 00 04 00 06 00 08 00 0a 00 0c 00 0e 00 10 00 12 00 14 00 16 00 18 00 1a 00 1c 00 1e 00 20 00 22 00 24 00 26 00 68 00 5c 00 57 00 4a 00 53 00 47 00 41 00 6f 00 L05AC:  XJP 0..26 else $05EA [$054B $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $05EA $0572 $0580 $0587 $0596 $058F $059D $05A5 $0579]
   05EA c6 08                L05EA:  LLA 8
   05EC 9e 21                        CSP 33  ; CSP RELEASE
   05EE f0                           SLDO 9
@@ -14686,7 +14686,7 @@ SEGMENT 11 STATEMEN  block=53 len=1598 mtype=pcode-lsb nproc=8
   0181 c7 92 00             L0181:  LDCI 146
   0184 cd 01 02                     CXP 1,2  ; PASCALCO.2
   0187 b9 17                        UJP $01A0
-  0189 ac 00 00 07 00 b9 10 56 00 7e 00 5a 00 55 00 6b 00 44 00 23 00 1d 00 L0189:  XJP 0..7 else $-F2B [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
+  0189 ac 00 00 07 00 b9 10 56 00 7e 00 5a 00 55 00 6b 00 44 00 23 00 1d 00 L0189:  XJP 0..7 else $01A0 [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
   01A0 b9 06                L01A0:  UJP $01A8
   01A2 c7 81 00             L01A2:  LDCI 129
   01A5 cd 01 02                     CXP 1,2  ; PASCALCO.2
@@ -16727,7 +16727,7 @@ SEGMENT 16 WRITELIN  block=62 len=818 mtype=pcode-lsb nproc=4
   0271 b6 01 04             L0271:  LOD 1,4
   0274 ab 09                        SRO 9
   0276 b9 16                L0276:  UJP $028E
-  0278 ac 00 01 00 07 00 b9 0e 5c 01 38 01 3a 01 08 00 bd 00 bf 00 43 00 L0278:  XJP 1..7 else $-C3B [$0124 $014A $014A $027E $01CB $01CB $0249]
+  0278 ac 00 01 00 07 00 b9 0e 5c 01 38 01 3a 01 08 00 bd 00 bf 00 43 00 L0278:  XJP 1..7 else $028E [$0124 $014A $014A $028E $01CB $01CB $0249]
   028E b6 01 03             L028E:  LOD 1,3
   0291 c7 0f 27                     LDCI 9999
   0294 91                           NGI
@@ -18041,7 +18041,7 @@ SEGMENT 18 COMPOPTI  block=68 len=1060 mtype=pcode-lsb nproc=4
   03C5 c3                           EQUI
   03C6 ab 27                        SRO 39
   03C8 b9 30                        UJP $03FA
-  03CA ac 00 43 00 56 00 b9 28 14 02 fa 01 f5 01 f0 01 eb 01 0c 00 e8 01 10 00 12 00 6f 01 16 00 24 01 1a 00 bd 00 c6 00 b7 00 a5 00 89 00 84 00 35 00 L03CA:  XJP 67..86 else $-24E9 [$01BE $01DA $01E1 $01E8 $01EF $03D0 $01F6 $03D0 $03D0 $0275 $03D0 $02C4 $03D0 $032F $0328 $0339 $034D $036B $0372 $03C3]
+  03CA ac 00 43 00 56 00 b9 28 14 02 fa 01 f5 01 f0 01 eb 01 0c 00 e8 01 10 00 12 00 6f 01 16 00 24 01 1a 00 bd 00 c6 00 b7 00 a5 00 89 00 84 00 35 00 L03CA:  XJP 67..86 else $03FA [$01BE $01DA $01E1 $01E8 $01EF $03FA $01F6 $03FA $03FA $0275 $03FA $02C4 $03FA $032F $0328 $0339 $034D $036B $0372 $03C3]
   03FA f5                   L03FA:  SLDO 14
   03FB 03                           SLDC 3
   03FC 82                           ADI

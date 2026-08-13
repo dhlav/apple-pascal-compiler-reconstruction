@@ -541,7 +541,7 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
       082A  FJP $082F
       082C  SLDC 0
   from BODYPART.11 at $1B32 via CIP
-      1B14  XJP 0..7 else $0A61 [$1A70 $1B1A $1A8B $1A9E $1AA3 $1AB6 $1AF6 $1B09]
+      1B14  XJP 0..7 else $1B2C [$1A70 $1B2C $1A8B $1A9E $1AA3 $1AB6 $1AF6 $1B09]
       1B2C  SLDL 11
       1B2D  SLDC 7
       1B2E  EQUI
@@ -1433,7 +1433,7 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
       054F  SLDC 0
   from ROUTINE.13 at $0600 via CXP
       05DF  UJP $05FA
-      05E1  XJP 32..40 else $-CD3 [$058D $05E6 $05AF $05B7 $05E6 $05E6 $05E6 $05E6 $05BF]
+      05E1  XJP 32..40 else $05FA [$058D $05FA $05AF $05B7 $05FA $05FA $05FA $05FA $05BF]
       05FA  LDO 47
       05FC  FJP $0603
       05FE  SLDC 30
@@ -2563,7 +2563,7 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
   from BODYPART.22 at $0B15 via CIP
       0AFA  CXP 1,2
       0AFD  UJP $0B10
-      0AFF  XJP 0..4 else $004B [$0AE5 $0AEE $0AF7 $0AF7 $0AF7]
+      0AFF  XJP 0..4 else $0B10 [$0AE5 $0AEE $0AF7 $0AF7 $0AF7]
       0B10  SLDL 14
       0B11  IND 10
       0B13  FJP $0B24
@@ -6339,7 +6339,7 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
       1B65  SLDL 12
       1B66  CIP 6
       1B68  UJP $1B7E
-      1B6A  XJP 8..13 else $0EB7 [$1B40 $1B47 $1B55 $1B4E $1B5C $1B63]
+      1B6A  XJP 8..13 else $1B7E [$1B40 $1B47 $1B55 $1B4E $1B5C $1B63]
       1B7E  UJP $1B86
       1B80  LDCI 129
   from BODYPART.12 at $0C07 via CXP
@@ -6591,7 +6591,7 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
       10E6  LDCI 175
       10E9  CXP 1,2
       10EC  UJP $10FC
-      10EE  XJP 3..5 else $0A3B [$10C3 $10C3 $10D2]
+      10EE  XJP 3..5 else $10FC [$10C3 $10C3 $10D2]
       10FC  UJP $1104
       10FE  LDCI 154
   from BODYPART.30 at $1111 via CXP
@@ -7045,11 +7045,11 @@ Apple Pascal 1.1 SYSTEM.COMPILER call sites
       0181  LDCI 146
       0184  CXP 1,2
       0187  UJP $01A0
-      0189  XJP 0..7 else $-F2B [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
+      0189  XJP 0..7 else $01A0 [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
       01A0  UJP $01A8
       01A2  LDCI 129
   from STATEMEN.2 at $01AB via CXP
-      0189  XJP 0..7 else $-F2B [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
+      0189  XJP 0..7 else $01A0 [$013A $0114 $013A $0141 $012D $0156 $0179 $0181]
       01A0  UJP $01A8
       01A2  LDCI 129
       01A5  CXP 1,2

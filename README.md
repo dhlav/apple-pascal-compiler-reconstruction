@@ -19,7 +19,7 @@ evidence/          original inputs, never modified
   reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
 tools/             all analysis code
   a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
-                   nufx.py syscall.py lift.py globals.py
+                   nufx.py syscall.py lift.py structure.py globals.py
   probes/          one-off scripts that established a format detail
   build_all.py     regenerates everything below
 build/             ii0src.po, the disk image unpacked from ii0src.sdk
@@ -65,15 +65,20 @@ The compiler's global variables are mapped (sizes, shapes, access counts,
 users), and several service routines are identified — the error reporter,
 the scanner, the symbol-table search, the code-byte emitter.
 
-**All 287 procedures across the two releases lift to expression-level
-pseudo-Pascal** with the evaluation stack fully tracked
+**All 287 procedures across the two releases lift to structured
+pseudo-Pascal** with the evaluation stack fully tracked, and **200 of them
+come out with no `goto` at all** — real `if`/`while`/`repeat`/`case`
 (`analysis/lifted/`). `tools/show.py SEGMENT.N` prints a procedure's
 p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:
 
 ```
-procedure PASCALCO.20(params 1 words);  { locals 0 words, lex 1 }
-  G2^[G9] := L1;
-  G9 := (G9+1);
+  L5 := G1^[G14];
+  L4 := 0;  L3 := 0;
+  while ((L5 in [$03FF,$0000,$0000,$0000]) and (L4 < 4)) do begin
+    L3 := ((L3*10)+(L5-48));       { 48 is '0' -- the number scanner }
+    L4 := (L4+1);
+    L5 := G1^[(G14+L4)];
+  end;
 ```
 
 The eventual target is **1.3**, but analysis leads with 1.1 and transfers:

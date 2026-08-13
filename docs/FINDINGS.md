@@ -685,6 +685,93 @@ any of the four `Interp*.s` copies or the `Kernel128*` variants; all
 dispatch to "not implemented". Plan step 6's native-code track gets no help
 here.
 
+## 21. Control-flow structuring, and an XJP layout error it exposed
+
+Plan step 8's second half. `tools/a2pascal/structure.py` turns the lifted
+block graph back into `if`/`while`/`repeat`/`case`, by recursive descent
+over the blocks in address order — which works because a Pascal compiler
+emits structured source as linear code with forward branches out of each
+construct.
+
+Nothing is forced. A region that does not match a pattern exactly stays as
+the blocks and gotos it always was, so the output remains faithful and the
+unstructured remainder stays countable.
+
+**Checked before measured.** Rewriting a goto graph is exactly the kind of
+transformation that can look better and say something different, so
+`tools/probes/probe_structure.py` asserts two invariants on all 287
+procedures before reporting any success rate: every block's statements
+appear in the output (nothing dropped, nothing duplicated into two arms),
+and every surviving `goto` has a label. Both now pass at **0 violations**.
+The first pass of the structurer failed the first invariant 703 times — it
+was dropping the block that carried a construct's terminal jump, along with
+whatever real statements sat ahead of that jump. Constructs now *absorb*
+the jump and still emit the block.
+
+**Result: 200 of 287 procedures (69%) come out with no goto at all**, and
+1392 gotos remain across 6252 basic blocks.
+
+### 21a. XJP has no "otherwise" pointer
+
+Chasing the last dangling gotos found a decoder error that had been live
+since the beginning. `pcode.py` read the two bytes after XJP's min/max as a
+self-relative pointer to the default case. They are not.
+
+`Interp.s` `OpAC_XJP` handles an out-of-range selector with
+`addq.w #5; ZpIPC; JMP GetOp` — it advances IPC by five and **executes what
+is there**. The compiler puts a two-byte `UJP` in that slot. The jump table
+starts at +7, which the handler's `adc #7` confirms.
+
+The instruction's total length is identical either way, which is precisely
+why the 287/287 sync check never caught it — the same blind spot as the
+short-form off-by-eight in finding 7. What it produced instead was garbage
+targets: `XJP 9..123 else $-EA6F`, `else $-4A3`. Those now read `else
+$0732`, `else $0C28`.
+
+A second detail falls out: an arm may target the default slot itself, which
+just means that value has no case of its own. Those are resolved to the
+same destination as the default, so no arm points into the middle of the
+XJP instruction. That was the source of every remaining dangling goto.
+
+Case dispatch was also simply invisible in the rendered output before this
+— `render` emitted nothing at all for an XJP block.
+
+### 21b. What the output looks like now
+
+The compiler's number scanner, recovered end to end:
+
+```
+  L5 := G1^[G14];
+  L4 := 0;
+  L3 := 0;
+  while ((L5 in [$03FF,$0000,$0000,$0000]) and (L4 < 4)) do begin
+    L3 := ((L3*10)+(L5-48));
+    L4 := (L4+1);
+    L5 := G1^[(G14+L4)];
+  end;
+```
+
+`48` is `'0'`, and the set is the digit set. And the symbol-table insert,
+built on the native TREESEARCH of finding 19:
+
+```
+  L4 := CSP8(L3, @L2, L1);
+  while (L4 = 0) do begin
+    PASCALCO.2(101);
+    if (L2^.f4 = nil) then begin
+      L4 := 1;
+    end else begin
+      L4 := CSP8(L2^.f4, @L2, L1);
+    end;
+  end;
+```
+
+**A caution about reading these.** In the handful of procedures where the
+stack model has already broken down, a packed store could render as
+`8 := 2` — an assignment to a literal, which reads like a fact about the
+program and is not one. Those now render as `{ unmodelled packed store }`
+instead. There were 5 per release out of ~1900 statements.
+
 ## 20. Merging evaluation stacks at control-flow joins
 
 Plan step 8's first half. The lifter used to carry a stack forward only
