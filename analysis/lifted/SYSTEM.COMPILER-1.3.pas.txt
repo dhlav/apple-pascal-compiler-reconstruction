@@ -97,17 +97,13 @@ procedure PASCALCO.5(params 0 words);  { locals 1 words, lex 1 }
 L01AE:
   if not (G37) then goto L01FA;
   if not ((G715 = 0)) then goto L01D0;
-  if not ((FBLOCKIO(0, 2, G93, 1, 0, 0) <> 2)) then goto L01CE;
+  if not ((FBLOCKIO(I2,8, G1, 0, 2, G93, 1, 0, 0) <> 2)) then goto L01CE;
   G37 := 0;
-  { left on stack: I2,8 }
-  { left on stack: G1 }
 L01CE:
   goto L01E5;
 L01D0:
-  if not ((FBLOCKIO(0, 2, G93, 1, 0, 0) <> 2)) then goto L01E5;
+  if not ((FBLOCKIO(@G716, G1, 0, 2, G93, 1, 0, 0) <> 2)) then goto L01E5;
   G37 := 0;
-  { left on stack: @G716 }
-  { left on stack: G1 }
 L01E5:
   if not (G37) then goto L01EB;
   goto L01FA;
@@ -118,11 +114,9 @@ L01EB:
 L01FA:
   if not (not (G37)) then goto L0239;
   if not (G38) then goto L0239;
-  if not ((FBLOCKIO(0, 2, G93, 1, 0, 0) <> 2)) then goto L0239;
+  if not ((FBLOCKIO(@G756, G1, 0, 2, G93, 1, 0, 0) <> 2)) then goto L0239;
   if not ((CSP34() <> 0)) then goto L0220;
   PASCALCO.4(403);
-  { left on stack: @G756 }
-  { left on stack: G1 }
 L0220:
   FCLOSE(@G756, 0);
   G38 := 0;
@@ -131,10 +125,8 @@ L0220:
   G98 := G713;
 L0239:
   if not (not ((G38 or G37))) then goto L0258;
-  if not ((FBLOCKIO(0, 2, G93, 1, 0, 0) <> 2)) then goto L0258;
+  if not ((FBLOCKIO(I2,9, G1, 0, 2, G93, 1, 0, 0) <> 2)) then goto L0258;
   PASCALCO.4(401);
-  { left on stack: I2,9 }
-  { left on stack: G1 }
 L0258:
   if not ((G14 = 0)) then goto L0267;
   if not ((G1^[0] = 16)) then goto L0267;
@@ -199,9 +191,8 @@ procedure PASCALCO.7(params 1 words);  { locals 3 words, lex 1 }
   goto L03D3;
 L0398:
   L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
-  { left on stack: L3 }
-  { left on stack: @L2 }
 L03A2:
+  { paths disagree on stack depth here }
   if not ((L4 = 0)) then goto L03C2;
   PASCALCO.4(101);
   if not ((L2^.f4 = nil)) then goto L03B5;
@@ -209,9 +200,8 @@ L03A2:
   goto L03C0;
 L03B5:
   L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
-  { left on stack: L2^.f4 }
-  { left on stack: @L2 }
 L03C0:
+  { paths disagree on stack depth here }
   goto L03A2;
 L03C2:
   if not ((L4 = 1)) then goto L03CE;
@@ -231,7 +221,6 @@ L0515:
   G16 := 15;
 L0518:
   G15 := 47;
-  { left on stack: G1^[G14] }
   goto L067D;
   NUMSTRIN.1(0, @L1);
   goto L076A;
@@ -239,16 +228,14 @@ L0518:
   L4 := 0;
   L3 := 0;
 L0533:
-  if not ((([$03FF,$0000,$0000,$0000] in 4) and (L4 < 4))) then goto L055D;
+  if not (((L5 in [$03FF,$0000,$0000,$0000]) and (L4 < 4))) then goto L055D;
   L3 := ((L3*10)+(L5-48));
   L4 := (L4+1);
   L5 := G1^[(G14+L4)];
-  { left on stack: L5 }
   goto L0533;
 L055D:
-  if not (([$0020,$03FF,$4000,$0000,$0000] in 5)) then goto L0576;
+  if not ((L5 in [$0020,$03FF,$4000,$0000,$0000])) then goto L0576;
   NUMSTRIN.1(1, @L1);
-  { left on stack: L5 }
   goto L0586;
 L0576:
   G14 := ((G14+L4)-1);
@@ -317,7 +304,6 @@ L05F6:
   goto L076A;
   G15 := 41;
   G16 := 8;
-  { left on stack: G1^[(G14+1)] }
   goto L064D;
   G16 := 12;
   G14 := (G14+1);
@@ -356,8 +342,6 @@ L0784:
 procedure PASCALCO.9(params 2 words);  { locals 0 words, lex 1 }
   if not ((L2 <> nil)) then goto L07B8;
   if not ((PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0)) then goto L07B3;
-  { left on stack: L2 }
-  { left on stack: L1 }
   goto L07B6;
 L07B3:
   L1^ := nil;
@@ -366,6 +350,7 @@ L07B6:
 L07B8:
   L1^ := nil;
 L07BB:
+  { paths disagree on stack depth here }
 
 procedure PASCALCO.10(params 2 words);  { locals 2 words, lex 1 }
   G24 := G8;
@@ -376,9 +361,6 @@ L07CE:
   if not ((L3 <> nil)) then goto L080D;
   if not ((PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0)) then goto L080A;
   if not ((L2 in 1)) then goto L07FC;
-  { left on stack: L3 }
-  { left on stack: @L3 }
-  { left on stack: L3^.f8 }
   goto L085C;
   goto L0808;
 L07FC:
@@ -388,10 +370,12 @@ L07FC:
 L0805:
   L3 := nil;
 L0808:
+  { paths disagree on stack depth here }
   goto L080D;
 L080A:
   L3 := nil;
 L080D:
+  { paths disagree on stack depth here }
   G24 := (G24-1);
   goto L07CE;
 L0815:
@@ -399,31 +383,27 @@ L0815:
   PASCALCO.4(104);
   if not ((L2 in 1)) then goto L0828;
   L3 := G78;
-  { left on stack: 0 }
   goto L085C;
 L0828:
   if not ((L2 in 1)) then goto L0834;
   L3 := G76;
-  { left on stack: 3 }
   goto L085C;
 L0834:
   if not ((L2 in 1)) then goto L0840;
   L3 := G74;
-  { left on stack: 4 }
   goto L085C;
 L0840:
   if not ((L2 in 1)) then goto L084C;
   L3 := G77;
-  { left on stack: 1 }
   goto L085C;
 L084C:
   if not ((L2 in 1)) then goto L0858;
   L3 := G73;
-  { left on stack: 5 }
   goto L085C;
 L0858:
   L3 := G72;
 L085C:
+  { paths disagree on stack depth here }
   L1^ := L3;
 
 procedure PASCALCO.11(params 3 words);  { locals 1 words, lex 1 }
@@ -509,14 +489,11 @@ function PASCALCO.15(params 3 words) : <1 word result>;  { locals 2 words, lex 1
   L4 := (@L5^[0] <> 0);
   if not (G30) then goto L0D09;
   L4 := (L4 = 0);
-  { left on stack: @L5 }
-  { left on stack: 4 }
 L0D09:
   if not (L4) then goto L0D12;
   8 := 1;
-  { left on stack: @L5 }
-  { left on stack: 4 }
 L0D12:
+  { paths disagree on stack depth here }
   0 := @G445[L3*9w]^.f6;
   12 := 0;
   13 := 6;
@@ -530,9 +507,8 @@ L0D12:
 
 procedure PASCALCO.16(params 4 words);  { locals 0 words, lex 1 }
 L08F6:
-  if not (not ((@L1^<4w> in 4))) then goto L0904;
+  if not (not ((G15 in @L1^<4w>))) then goto L0904;
   PASCALCO.8();
-  { left on stack: G15 }
   goto L08F6;
 L0904:
 
@@ -555,15 +531,14 @@ function PASCALCO.19(params 3 words) : <1 word result>;  { locals 0 words, lex 1
 procedure PASCALCO.20(params 6 words);  { locals 6 words, lex 1 }
   L7 := nil;
   L1^ := 0;
-  if not (not ((@G129^<4w> in 4))) then goto L098A;
+  if not (not ((G15 in @G129^<4w>))) then goto L098A;
   PASCALCO.4(50);
-  PASCALCO.16(G15, @L3^<4w>, 4, adjust((@G129^<4w> + 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G129^<4w>),4));
 L098A:
-  if not ((@G129^<4w> in 4)) then goto L0B37;
+  if not ((G15 in @G129^<4w>)) then goto L0B37;
   if not ((G15 = 37)) then goto L09D3;
   if not ((G22 = 1)) then goto L09A5;
   L7 := G62;
-  { left on stack: G15 }
   goto L09CA;
 L09A5:
   CSP1(@L7, 9);
@@ -582,7 +557,6 @@ L09D3:
   if not ((G16 and (96 in 1))) then goto L09EF;
   if not ((G16 = 5)) then goto L09EA;
   L9 := 1;
-  { left on stack: (G15 = 40) }
   goto L09ED;
 L09EA:
   L9 := 2;
@@ -598,7 +572,6 @@ L09EF:
   if not ((L7 = G12)) then goto L0A1F;
   if not ((L9 = 2)) then goto L0A1D;
   L1^ := -(L1^);
-  { left on stack: 2 }
 L0A1D:
   goto L0A8A;
 L0A1F:
@@ -668,11 +641,12 @@ L0B00:
   goto L0B24;
 L0B1B:
   PASCALCO.4(106);
-  PASCALCO.16(?, ?, ?, @L3^<4w>);
+  PASCALCO.16(?, ?, (G15 = 40), @L3^<4w>);
 L0B24:
-  if not (not ((@L3^<4w> in 4))) then goto L0B37;
+  { paths disagree on stack depth here }
+  if not (not ((G15 in @L3^<4w>))) then goto L0B37;
   PASCALCO.4(6);
-  PASCALCO.16(?, ?, G15, @L3^<4w>);
+  PASCALCO.16(?, ?, ?, @L3^<4w>);
 L0B37:
   L2^ := L7;
 
@@ -686,7 +660,6 @@ L0B5C:
   goto L0CD3;
 L0B6A:
   if not ((L4^.f1 = L3^.f1)) then goto L0CAE;
-  { left on stack: L4^.f1 }
   goto L0C94;
   L1 := 0;
   goto L0CAC;
@@ -788,10 +761,8 @@ L0D9D:
   G1098 := (G1098+L2);
   if not (((G1098 = 512) or L1)) then goto L0DED;
   if not ((I2,10 = 0)) then goto L0DE1;
-  if not ((FBLOCKIO(0, 1, G1097, 0, 0, 0) <> 1)) then goto L0DE1;
+  if not ((FBLOCKIO(I2,8, @G1099, 0, 1, G1097, 0, 0, 0) <> 1)) then goto L0DE1;
   PASCALCO.4(402);
-  { left on stack: I2,8 }
-  { left on stack: @G1099 }
 L0DE1:
   G1097 := (G1097+1);
   G1098 := 0;
@@ -824,7 +795,7 @@ L0E3C:
 procedure PASCALCO.26(params 4 words);  { locals 2 words, lex 1 }
   if not (((G15 = 50) and not (G33))) then goto L0F0F;
   if not ((G35 or G1355)) then goto L0F0A;
-  UNITPART.1(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0200] + 4),4));
+  UNITPART.1(?, ?, ?, adjust((@L1^<4w> + [$001C,$0000,$0000,$0200]),4));
   if not ((G15 = 18)) then goto L0F08;
   CSP4(1, 26);
 L0F08:
@@ -846,9 +817,8 @@ L0F17:
 L0F42:
   if not (G33) then goto L0F60;
   if not ((G84^.f10^.f7 = G68)) then goto L0F60;
-  if not (([$0008,$0200] in 2)) then goto L0F60;
+  if not ((G15 in [$0008,$0200])) then goto L0F60;
   CSP4(1, 26);
-  { left on stack: G15 }
 L0F60:
   G65 := nil;
   if not ((G15 = 19)) then goto L0F6C;
@@ -857,7 +827,7 @@ L0F60:
 L0F6C:
   PASCALCO.4(17);
 L0F6F:
-  BODYPART.1(?, @L1^<4w>, 4, adjust(([$0020,$0000] + 2),4), G84^.f7);
+  BODYPART.1(?, ?, ?, adjust((@L1^<4w> + [$0020,$0000]),4), G84^.f7);
   L5 := ((G15 = G84^.f6) or (G33 and (G15 = 9)));
   if not (not (L5)) then goto L0FC1;
   if not ((G84^.f6 = 3)) then goto L0FA2;
@@ -866,14 +836,13 @@ L0F6F:
 L0FA2:
   PASCALCO.4(6);
 L0FA5:
-  PASCALCO.16(?, ?, @L1^<4w>, adjust((4 + [G84^.f6]),4));
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + [G84^.f6]),4));
   L5 := ((G15 = G84^.f6) or (G33 and (G15 = 9)));
 L0FC1:
-  if not ((G15 or (@G117^<4w> in 4))) then goto L0F6F;
+  if not ((L5 or (G15 in @G117^<4w>))) then goto L0F6F;
   if not (not (L5)) then goto L0FE8;
   if not ((G84^.f6 = 3)) then goto L0FDC;
   PASCALCO.4(14);
-  { left on stack: L5 }
   goto L0FDF;
 L0FDC:
   PASCALCO.4(6);
@@ -884,10 +853,10 @@ L0FE8:
   if not ((G15 = 3)) then goto L0FEF;
   PASCALCO.8();
 L0FEF:
-  if not ((not (([$0003,$8008,$0000] in 3)) and (G84^.f6 = 3))) then goto L1022;
+  if not ((not ((G15 in [$0003,$8008,$0000])) and (G84^.f6 = 3))) then goto L1022;
   if not (not ((G33 and (G15 = 9)))) then goto L101E;
   PASCALCO.4(6);
-  PASCALCO.16(?, ?, G15, @L1^<4w>);
+  PASCALCO.16(?, ?, ?, @L1^<4w>);
   DECLARAT.1(?, ?, ?, @L1^<4w>);
   goto L1020;
 L101E:
@@ -918,24 +887,23 @@ L1062:
   CSP33((G84+8));
 L1080:
   G84 := G84^.f10;
-  G86 := ([$0003,$8000,$0000] in 3);
-  { left on stack: G15 }
+  G86 := (G15 in [$0003,$8000,$0000]);
 L1094:
   goto L10D3;
 L1096:
   DECLARAT.1(?, ?, ?, @L1^<4w>);
   if not ((G80 = 0)) then goto L10D3;
   if not ((G15 = 50)) then goto L10D3;
-  UNITPART.1(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0200] + 4),4));
-  if not (([$0003,$8000,$0000] in 3)) then goto L10D3;
-  DECLARAT.1(?, ?, G15, @L1^<4w>);
+  UNITPART.1(?, ?, ?, adjust((@L1^<4w> + [$001C,$0000,$0000,$0200]),4));
+  if not ((G15 in [$0003,$8000,$0000])) then goto L10D3;
+  DECLARAT.1(?, ?, ?, @L1^<4w>);
 L10D3:
   if not ((G84 = nil)) then goto L0F17;
   PASCALCO.25();
 
 procedure PASCALCO.27(params 0 words);  { locals 0 words, lex 1 }
   CSP9(@G22, @G97);
-  PASCALCO.26(@G117^<4w>, 4, (@G105^<4w> + 4), adjust(([$0020,$0000] - 2),4));
+  PASCALCO.26(?, ?, ?, adjust(((@G117^<4w> + @G105^<4w>) - [$0020,$0000]),4));
 
 procedure PASCALCO.28(params 1 words);  { locals 1 words, lex 2 }
   G14 := (G14+1);
@@ -967,11 +935,11 @@ function PASCALCO.29(params 3 words) : <1 word result>;  { locals 1 words, lex 2
   FWRITELN(I3,3);
   FWRITEBYTES(I3,3, L4, 8, 8);
   FWRITESTRING(I3,3, ' undefined', 0);
-  { left on stack: L4^.f8 }
 L0EBA:
   if not ((PASCALCO.29(L4^.f4, 0, 0) or PASCALCO.29(L4^.f5, 0, 0))) then goto L0ECC;
   L1 := 1;
 L0ECC:
+  { paths disagree on stack depth here }
 
 procedure PASCALCO.30(params 0 words);  { locals 0 words, lex 1 }
   goto L115C;
@@ -1046,14 +1014,10 @@ L0C59:
   if not ((@L259^[L302] = 58)) then goto L0CBE;
   L303 := 1;
   L304 := L302;
-  { left on stack: @L259 }
-  { left on stack: 1 }
-  { left on stack: 80 }
 L0C7E:
   if not ((L303 <= L304)) then goto L0CBE;
-  if not (([$07FF,$FFFE,$0000,$0000,$0000,$0000,$0000,$0000] in 8)) then goto L0CB4;
+  if not ((@L259^[L303] in [$07FF,$FFFE,$0000,$0000,$0000,$0000,$0000,$0000])) then goto L0CB4;
   @L259^[L303] := (@L259^[L303]-32);
-  { left on stack: @L259^[L303] }
 L0CB4:
   L303 := (L303+1);
   goto L0C7E;
@@ -1062,7 +1026,7 @@ L0CBE:
   G50 := 0;
   G1356 := 1;
 L0CE3:
-  FOPEN(@G796, @L259, 0, 0);
+  FOPEN(@L259, 1, 80, @G796, @L259, 0, 0);
   L300 := (CSP34() = 0);
   if not (L300) then goto L0D03;
   G1357 := 1;
@@ -1114,9 +1078,7 @@ L0DC5:
   G13 := 0;
   G88 := 1;
   G85 := 1;
-  4^ := adjust(([$0004,$0000,$0000,$0000] + 4),4)  {4 words};
-  { left on stack: @G117 }
-  { left on stack: @G117^<4w> }
+  @G117^ := adjust((@G117^<4w> + [$0004,$0000,$0000,$0000]),4)  {4 words};
   goto L0ED0;
 L0E26:
   G8 := 1;
@@ -1161,16 +1123,16 @@ L0F0B:
   PASCALCO.8();
   if not ((G15 = 4)) then goto L0F30;
 L0F13:
+  { paths disagree on stack depth here }
   PASCALCO.8();
-  if not ((1 in (@G117^<4w> + 4))) then goto L0F13;
+  if not ((40 in (1 + @G117^<4w>))) then goto L0F13;
   if not ((G15 = 5)) then goto L0F2C;
   PASCALCO.8();
-  { left on stack: G15 }
-  { left on stack: 40 }
   goto L0F30;
 L0F2C:
   PASCALCO.4(4);
 L0F30:
+  { paths disagree on stack depth here }
   if not ((G15 = 3)) then goto L0F3A;
   PASCALCO.8();
   goto L0F3E;
@@ -1473,14 +1435,12 @@ L071D:
   COMPINIT.6(@L4);
   L2 := (L2+1);
   if not (G43) then goto L0744;
-  if not (([$1D0D,$001E,$2484] in 3)) then goto L0744;
-  { left on stack: L2 }
+  if not ((L2 in [$1D0D,$001E,$2484])) then goto L0744;
   goto L0790;
 L0744:
-  L3 := ([$02F0,$0219,$8FE0] in 3);
+  L3 := (L2 in [$02F0,$0219,$8FE0]);
   if not (L3) then goto L075C;
   CSP1(@L1, 11);
-  { left on stack: L2 }
   goto L0761;
 L075C:
   CSP1(@L1, 11);
@@ -1513,8 +1473,6 @@ L0811:
   COMPINIT.6(@L7);
   L5 := (L5+1);
   L6 := (7264 in 1);
-  { left on stack: L5 }
-  { left on stack: L5 }
   goto L08CE;
   L3 := G61;
   CSP1(@L1, 11);
@@ -1563,6 +1521,7 @@ L0811:
   goto L08F0;
 L08CE:
 L08F0:
+  { paths disagree on stack depth here }
   if not (L6) then goto L08FA;
   CSP1(@L2, 11);
   goto L08FF;
@@ -1591,6 +1550,7 @@ L093A:
   (L11+7)^ := L1;
   PASCALCO.7(L2);
 L0948:
+  { paths disagree on stack depth here }
   goto L0811;
 L094A:
 
@@ -1668,25 +1628,16 @@ L09D4:
   @G186^ := adjust(0,4)  {4 words};
 
 procedure COMPINIT.10(params 0 words);  { locals 0 words, lex 2 }
-  [$0001,$0138,$0000,$0001]^ := adjust(4,4)  {4 words};
-  1^ := adjust((@G129^<4w> + 4),4)  {4 words};
-  3^ := adjust((@G125^<4w> + 4),4)  {4 words};
-  [$7400,$0000,$0000]^ := adjust(3,4)  {4 words};
-  [$0002,$0003,$F808,$0000]^ := adjust(4,4)  {4 words};
-  [$0006,$8000]^ := adjust(2,4)  {4 words};
-  [$0001,$0078,$0000,$8011]^ := adjust(4,4)  {4 words};
-  [$07F8,$0000]^ := adjust(2,4)  {4 words};
+  @G129^ := adjust([$0001,$0138,$0000,$0001],4)  {4 words};
+  16^ := adjust((1 + @G129^<4w>),4)  {4 words};
+  @G121^ := adjust(([$7C00,$0002,$0000] + @G125^<4w>),4)  {4 words};
+  @G101^ := adjust([$7400,$0000,$0000],4)  {4 words};
+  @G117^ := adjust([$0002,$0003,$F808,$0000],4)  {4 words};
+  @G113^ := adjust([$0006,$8000],4)  {4 words};
+  @G109^ := adjust([$0001,$0078,$0000,$8011],4)  {4 words};
+  @G105^ := adjust([$07F8,$0000],4)  {4 words};
   G133 := adjust(1,1);
-  { left on stack: @G129 }
   { left on stack: @G125 }
-  { left on stack: 16 }
-  { left on stack: @G121 }
-  { left on stack: [$7C00,$0002,$0000] }
-  { left on stack: @G101 }
-  { left on stack: @G117 }
-  { left on stack: @G113 }
-  { left on stack: @G109 }
-  { left on stack: @G105 }
   { left on stack: 12 }
 
 procedure COMPINIT.11(params 0 words);  { locals 1 words, lex 2 }
@@ -1708,13 +1659,10 @@ SEGMENT 8 DECLARAT
 ======================================================================
 
 procedure DECLARAT.1(params 4 words);  { locals 11 words, lex 1 }
-  4^ := adjust((10 + 1),4)  {4 words};
-  4^ := adjust((1 + 1),4)  {4 words};
-  { left on stack: @L12 }
-  { left on stack: @L1^<4w> }
-  { left on stack: @L8 }
-  { left on stack: @L1^<4w> }
+  @L1^<4w>^ := adjust((10 + 1),4)  {4 words};
+  @L1^<4w>^ := adjust((1 + 1),4)  {4 words};
 L1C58:
+  { paths disagree on stack depth here }
   L6 := 0;
   if not ((G15 = 49)) then goto L1C65;
   PASCALCO.8();
@@ -1726,7 +1674,7 @@ L1C71:
   if not ((G15 = 27)) then goto L1C9C;
   if not ((G33 and G32)) then goto L1C97;
   PASCALCO.4(186);
-  PASCALCO.16(?, @L1^<4w>, 4, adjust(([$0800,$0000] - 2),4));
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - [$0800,$0000]),4));
   goto L1C9A;
 L1C97:
   PASCALCO.8();
@@ -1748,11 +1696,10 @@ L1CBA:
   if not ((G80 = 1)) then goto L1CC3;
   G85 := G8;
 L1CC3:
-  if not (([$0003,$8000,$0000] in 3)) then goto L1D13;
+  if not ((G15 in [$0003,$8000,$0000])) then goto L1D13;
   if not (G33) then goto L1CDF;
   if not ((G32 and not (G37))) then goto L1CDF;
   G27 := 1;
-  { left on stack: G15 }
 L1CDF:
   L5 := G15;
   PASCALCO.8();
@@ -1768,36 +1715,32 @@ L1CFE:
 L1D00:
   DECLARAT.19(L5, 0);
 L1D04:
-  { left on stack: G15 }
-  if not (not (([$0003,$8000,$0000] in 3))) then goto L1CDF;
+  if not (not ((G15 in [$0003,$8000,$0000]))) then goto L1CDF;
 L1D13:
   if not ((G15 <> 19)) then goto L1D5D;
-  if not ((not ((G15 and ([$0010,$0000,$0000,$0200] in 4))) and (G15 <> 50))) then goto L1D5D;
-  if not ((G15 or not ((@G117^<4w> in 4)))) then goto L1D5D;
+  if not ((not (((G37 or G33) and (G15 in [$0010,$0000,$0000,$0200]))) and (G15 <> 50))) then goto L1D5D;
+  if not ((not ((G38 or L6)) or not ((G15 in @G117^<4w>)))) then goto L1D5D;
   PASCALCO.4(18);
-  PASCALCO.16(not ((G38 or L6)), @L1^<4w>, 4, adjust(([$000C,$0000,$0000,$0000] - 4),4));
-  { left on stack: (G37 or G33) }
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - [$000C,$0000,$0000,$0000]),4));
 L1D5D:
-  if not ((4 in ([$0014,$0000,$0000,$0200] + 4))) then goto L1C58;
+  if not ((G15 in (@G105^<4w> + [$0014,$0000,$0000,$0200]))) then goto L1C58;
   G86 := 0;
-  { left on stack: G15 }
-  { left on stack: @G105^<4w> }
 
 procedure DECLARAT.2(params 4 words);  { locals 0 words, lex 2 }
-  if not (not ((@L1^<4w> in 4))) then goto L0015;
+  if not (not ((G15 in @L1^<4w>))) then goto L0015;
   PASCALCO.4(6);
-  PASCALCO.16(?, ?, G15, @L1^<4w>);
+  PASCALCO.16(?, ?, ?, @L1^<4w>);
 L0015:
 
 procedure DECLARAT.3(params 6 words);  { locals 13 words, lex 2 }
   L16 := 0;
-  if not (not ((@G121^<4w> in 4))) then goto L0997;
+  if not (not ((G15 in @G121^<4w>))) then goto L0997;
   PASCALCO.4(10);
-  PASCALCO.16(G15, @L3^<4w>, 4, adjust((@G121^<4w> + 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G121^<4w>),4));
 L0997:
-  if not ((@G121^<4w> in 4)) then goto L0CC7;
-  if not ((@G125^<4w> in 4)) then goto L09B3;
-  DECLARAT.4(?, G15, G15, @L3^<4w>, L2, L1);
+  if not ((G15 in @G121^<4w>)) then goto L0CC7;
+  if not ((G15 in @G125^<4w>)) then goto L09B3;
+  DECLARAT.4(?, ?, ?, @L3^<4w>, L2, L1);
   goto L0CBF;
 L09B3:
   if not ((G15 = 17)) then goto L09BC;
@@ -1807,9 +1750,9 @@ L09BC:
   if not ((G15 = 43)) then goto L09E5;
   PASCALCO.8();
   L16 := 1;
-  if not (not ((@G101^<4w> in 4))) then goto L09E5;
+  if not (not ((G15 in @G101^<4w>))) then goto L09E5;
   PASCALCO.4(10);
-  PASCALCO.16(G15, @L3^<4w>, 4, adjust((@G101^<4w> + 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L3^<4w> + @G101^<4w>),4));
 L09E5:
   if not ((G15 = 44)) then goto L0B4B;
   PASCALCO.8();
@@ -1836,7 +1779,7 @@ L0A25:
   (L19+4)^ := 0;
   (L19+1)^ := 5;
   L8 := L9;
-  DECLARAT.4(?, @L3^<4w>, 4, adjust(([$0001,$0802] + 2),4), @L7, @L13);
+  DECLARAT.4(?, ?, ?, adjust((@L3^<4w> + [$0001,$0802]),4), @L7, @L13);
   L8^ := L13;
   if not ((L7 <> nil)) then goto L0A83;
   if not ((L7^.f1 <= 1)) then goto L0A7C;
@@ -1920,7 +1863,7 @@ L0B74:
 L0B7A:
   L12 := 0;
   L18 := 0;
-  DECLARAT.6(@L3^<4w>, 4, (8 - 1), adjust((512 + 1),4), @L8);
+  DECLARAT.6(?, @L3^<4w>, (8 - 1), adjust((512 + 1),4), @L8);
   L12 := (L12+(L18 > 0));
   CSP1(@L9, 4);
   L19 := L9;
@@ -2013,17 +1956,15 @@ L0CDA:
 
 procedure DECLARAT.4(params 6 words);  { locals 13 words, lex 3 }
   L1^ := 1;
-  4^ := adjust((34 + 1),4)  {4 words};
-  if not (not ((@G125^<4w> in 4))) then goto L0051;
+  @L3^<4w>^ := adjust((34 + 1),4)  {4 words};
+  if not (not ((G15 in @G125^<4w>))) then goto L0051;
   PASCALCO.4(1);
-  PASCALCO.16(G15, @L3^<4w>, 4, adjust((@G125^<4w> + 4),4));
-  { left on stack: @L14 }
-  { left on stack: @L3^<4w> }
+  PASCALCO.16(?, ?, @L14, adjust((@L3^<4w> + @G125^<4w>),4));
 L0051:
-  if not ((@G125^<4w> in 4)) then goto L0341;
+  { paths disagree on stack depth here }
+  if not ((G15 in @G125^<4w>)) then goto L0341;
   if not ((G15 = 4)) then goto L00F8;
   L11 := G8;
-  { left on stack: G15 }
 L0062:
   if not ((@G134[G8*4w]^.f1 <> 0)) then goto L0074;
   G8 := (G8-1);
@@ -2077,7 +2018,6 @@ L00F8:
   if not (PASCALCO.18(L18^.f2, 0, 0)) then goto L013C;
   PASCALCO.4(148);
   (L18+2)^ := nil;
-  { left on stack: 3 }
 L013C:
   move((L18+4), (L19+9), 1 words);
   L18^ := 1;
@@ -2088,7 +2028,7 @@ L013C:
 L0157:
   PASCALCO.4(5);
 L015B:
-  PASCALCO.20(?, ?, ?, @L3^<4w>, @L7, @L13);
+  PASCALCO.20(?, ?, 3, @L3^<4w>, @L7, @L13);
   move((L8+3), @L13, 1 words);
   if not ((L8^.f2 <> L7)) then goto L0177;
   PASCALCO.4(107);
@@ -2100,7 +2040,7 @@ L0179:
   PASCALCO.8();
   if not ((G15 = 15)) then goto L01F2;
   PASCALCO.8();
-  PASCALCO.20(?, @L3^<4w>, 4, adjust(([$0001,$0000] + 2),4), @L7, @L13);
+  PASCALCO.20(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
   if not ((L7 = G12)) then goto L01E0;
   if not (((L13 <= 0) or (L13 > 255))) then goto L01BE;
   PASCALCO.4(203);
@@ -2123,6 +2063,7 @@ L01E4:
 L01EE:
   PASCALCO.4(12);
 L01F2:
+  { paths disagree on stack depth here }
   goto L0285;
 L01F4:
   if not ((L8 = G12)) then goto L0259;
@@ -2131,7 +2072,7 @@ L01F4:
   PASCALCO.8();
   CSP1(@L8, 2);
   move(L8, G63, 9 words);
-  PASCALCO.20(?, @L3^<4w>, 4, adjust(([$0001,$0000] + 2),4), @L7, @L13);
+  PASCALCO.20(?, ?, 3, adjust((@L3^<4w> + [$0001,$0000]),4), @L7, @L13);
   if not ((L7 = G12)) then goto L0245;
   if not (((L13 <= 0) or (L13 > 36))) then goto L023B;
   PASCALCO.4(203);
@@ -2149,6 +2090,7 @@ L0249:
 L0253:
   PASCALCO.4(12);
 L0257:
+  { paths disagree on stack depth here }
   goto L0285;
 L0259:
   if not (((L8 = G57) or (L8 = G58))) then goto L026A;
@@ -2162,6 +2104,7 @@ L026A:
 L0282:
   PASCALCO.8();
 L0285:
+  { paths disagree on stack depth here }
   if not ((L8 <> nil)) then goto L028E;
   L1^ := L8^;
 L028E:
@@ -2169,7 +2112,7 @@ L028E:
 L0290:
   CSP1(@L8, 5);
   (L8+1)^ := 1;
-  PASCALCO.20(?, @L3^<4w>, 4, adjust((4 + 1),4), @L7, @L13);
+  PASCALCO.20(?, ?, @L3^<4w>, adjust((4 + 1),4), @L7, @L13);
   if not (PASCALCO.18(L7, 0, 0)) then goto L02BC;
   PASCALCO.4(148);
   L7 := nil;
@@ -2212,7 +2155,6 @@ function DECLARAT.5(params 3 words) : <1 word result>;  { locals 3 words, lex 3 
   L1 := 0;
   if not (((L3 <> nil) and I1,16)) then goto L03E6;
   L6 := L3;
-  { left on stack: L6^.f1 }
   goto L03D5;
   if not (((L3 <> G12) and (L3 <> G64))) then goto L03AF;
   PASCALCO.11(L3, @L5, @L4);
@@ -2243,13 +2185,12 @@ procedure DECLARAT.6(params 5 words);  { locals 21 words, lex 3 }
   L7 := nil;
   L15 := nil;
   L6 := nil;
-  4^ := adjust((8 + 1),4)  {4 words};
-  if not (not (([$0020,$0001] in 2))) then goto L079D;
+  @L2^<4w>^ := adjust((8 + 1),4)  {4 words};
+  if not (not ((G15 in [$0020,$0001]))) then goto L079D;
   PASCALCO.4(19);
-  PASCALCO.16(G15, @L2^<4w>, 4, adjust(([$0020,$0001] + 2),4));
-  { left on stack: @L20 }
-  { left on stack: @L2^<4w> }
+  PASCALCO.16(?, ?, @L20, adjust((@L2^<4w> + [$0020,$0001]),4));
 L079D:
+  { paths disagree on stack depth here }
   if not ((G15 = 0)) then goto L0895;
   L8 := L7;
 L07A5:
@@ -2275,8 +2216,9 @@ L07E8:
 L07EC:
   if not (not ((6 in 1))) then goto L0809;
   PASCALCO.4(6);
-  PASCALCO.16(G15, @L2^<4w>, 4, adjust(([$0020,$000E] + 2),4));
+  PASCALCO.16(?, ?, G15, adjust((@L2^<4w> + [$0020,$000E]),4));
 L0809:
+  { paths disagree on stack depth here }
   G11 := (G15 <> 1);
   if not (not (G11)) then goto L0815;
   PASCALCO.8();
@@ -2288,7 +2230,7 @@ L0815:
 L0822:
   PASCALCO.4(5);
 L0826:
-  DECLARAT.3(?, @L2^<4w>, 4, adjust(([$0020,$0008] + 2),4), @L15, @L16);
+  DECLARAT.3(?, ?, ?, adjust((@L2^<4w> + [$0020,$0008]),4), @L15, @L16);
   if not ((L15 <> nil)) then goto L084B;
   if not ((L15^.f1 = 7)) then goto L084B;
   PASCALCO.4(108);
@@ -2304,9 +2246,9 @@ L0866:
   L7 := L10;
   if not ((G15 = 3)) then goto L0893;
   PASCALCO.8();
-  if not (not (([$0020,$0201] in 2))) then goto L0893;
+  if not (not ((G15 in [$0020,$0201]))) then goto L0893;
   PASCALCO.4(19);
-  PASCALCO.16(G15, @L2^<4w>, 4, adjust(([$0020,$0001] + 2),4));
+  PASCALCO.16(?, ?, ?, adjust((@L2^<4w> + [$0020,$0001]),4));
 L0893:
   goto L079D;
 L0895:
@@ -2394,7 +2336,6 @@ L04F2:
   PASCALCO.8();
   if not ((G15 = 2)) then goto L0542;
   PASCALCO.8();
-  { left on stack: 1 }
   goto L0546;
 L0542:
   PASCALCO.4(5);
@@ -2406,7 +2347,6 @@ L0546:
   if not ((I1,14^.f1 <= 1)) then goto L0597;
   if not (PASCALCO.21(G64, I1,14, 0, 0)) then goto L057B;
   PASCALCO.4(109);
-  { left on stack: 1 }
 L057B:
   (I1,10+6)^ := I1,14;
   (I1,15+2)^ := I1,10;
@@ -2421,12 +2361,13 @@ L059B:
   goto L05B4;
 L05A0:
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,2^<4w>, 4, adjust((2064 + 1),4));
+  PASCALCO.16(?, 1, @I1,2^<4w>, adjust((2064 + 1),4));
 L05B4:
+  { paths disagree on stack depth here }
   goto L05CA;
 L05B6:
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,2^<4w>, 4, adjust((2064 + 1),4));
+  PASCALCO.16(?, ?, @I1,2^<4w>, adjust((2064 + 1),4));
 L05CA:
   I1,15^ := (I2,12+(I2,18 > 0));
   if not ((G15 = 11)) then goto L05E1;
@@ -2443,7 +2384,7 @@ L05E5:
 L0601:
   I1,13 := nil;
 L0605:
-  PASCALCO.20(?, @I1,2^<4w>, 4, adjust((22 + 1),4), @I1,12, @I1,19);
+  PASCALCO.20(?, ?, @I1,2^<4w>, adjust((22 + 1),4), @I1,12, @I1,19);
   if not ((I1,15^.f2 <> nil)) then goto L0635;
   if not (not (PASCALCO.21(I1,15^.f2^.f6, I1,12, 0, 0))) then goto L0635;
   PASCALCO.4(111);
@@ -2477,7 +2418,7 @@ L0692:
   I1,13 := nil;
   goto L06AD;
 L069D:
-  DECLARAT.6(?, @I1,2^<4w>, 4, adjust((40 + 1),4), @I1,13);
+  DECLARAT.6(?, ?, @I1,2^<4w>, adjust((40 + 1),4), @I1,13);
 L06AD:
   if not ((I2,12 > I1,17)) then goto L06C4;
   I1,17 := I2,12;
@@ -2532,7 +2473,6 @@ procedure DECLARAT.9(params 0 words);  { locals 1 words, lex 3 }
   (L1+7)^ := G67;
   (L1+8)^ := 0;
   G67 := I1,11;
-  { left on stack: 1 }
   goto L0961;
 L093D:
   if not ((I1,11^.f6 <> nil)) then goto L0961;
@@ -2547,6 +2487,7 @@ L0961:
 L0966:
   PASCALCO.4(2);
 L096A:
+  { paths disagree on stack depth here }
 
 procedure DECLARAT.10(params 0 words);  { locals 257 words, lex 2 }
   if not ((G80 > 1)) then goto L1146;
@@ -2639,7 +2580,6 @@ L0FFA:
   L7^ := (104 in 1);
   if not (L23^.f10) then goto L1033;
   (L23+9)^ := G13;
-  { left on stack: (L23+10) }
 L1033:
   (L23+12)^ := (G41 and not (L9));
   if not (L23^.f12) then goto L104A;
@@ -2653,41 +2593,35 @@ L1057:
   G10 := 1;
 L105A:
   G94 := G95;
-  PASCALCO.1(4, adjust((512 + 1),4));
+  PASCALCO.1(@I2,1^<4w>, adjust((512 + 1),4));
   if not (G41) then goto L1092;
   if not (L9) then goto L1081;
   if not ((G10 > 1)) then goto L107F;
   PASCALCO.4(350);
-  { left on stack: @I2,1^<4w> }
 L107F:
   goto L1092;
 L1081:
-  @G186^<4w>^ := adjust((4 + [G87]),4)  {4 words};
-  { left on stack: @G186 }
+  @G186^ := adjust((@G186^<4w> + [G87]),4)  {4 words};
 L1092:
   if not (L11^.f10) then goto L10AF;
   if not (G41) then goto L10AB;
-  @G186^<4w>^ := adjust((4 + [G13]),4)  {4 words};
-  { left on stack: @G186 }
+  @G186^ := adjust((@G186^<4w> + [G13]),4)  {4 words};
 L10AB:
   PASCALCO.7(L11);
 L10AF:
   PASCALCO.8();
   if not ((G15 = 0)) then goto L1108;
   if not ((@G17 = @'P       ')) then goto L10E1;
-  4^ := adjust(([$8000,$0000] + 2),4)  {4 words};
+  @G186^ := adjust((@G186^<4w> + [$8000,$0000]),4)  {4 words};
   PASCALCO.8();
-  { left on stack: @G186 }
-  { left on stack: @G186^<4w> }
 L10E1:
   if not ((@G17 = @'L       ')) then goto L1108;
-  4^ := adjust(([$4000,$0000] + 2),4)  {4 words};
-  { left on stack: @G186 }
-  { left on stack: @G186^<4w> }
+  @G186^ := adjust((@G186^<4w> + [$4000,$0000]),4)  {4 words};
 L1108:
   G93 := 9999;
   PASCALCO.5();
 L1110:
+  { paths disagree on stack depth here }
   if not (G41) then goto L1118;
   G10 := L17;
 L1118:
@@ -2723,7 +2657,6 @@ L0DE2:
   if not (L2^.f12) then goto L0E30;
   I1,6 := G87;
   G87 := L2^.f13;
-  { left on stack: I1,7 }
   goto L0E34;
 L0E30:
   I1,9 := 1;
@@ -2733,19 +2666,15 @@ L0E34:
 L0E3A:
   L1^ := 1;
   if not (G29) then goto L0EA9;
-  if not ((FBLOCKIO(0, 1, 0, 1, 0, 0) <> 1)) then goto L0E9E;
+  if not ((FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1, 0, 0) <> 1)) then goto L0E9E;
   FCLOSE(@G716, 0);
-  FOPEN(@G716, '*SYSTEM.LIBRARY', 1, 0);
+  FOPEN(?, ?, ?, @G716, '*SYSTEM.LIBRARY', 1, 0);
   if not ((CSP34() <> 0)) then goto L0E80;
   L1^ := 0;
-  { left on stack: @G716 }
-  { left on stack: @I2,2 }
   goto L0E9C;
 L0E80:
-  if not ((FBLOCKIO(0, 1, 0, 1, 0, 0) <> 1)) then goto L0E98;
+  if not ((FBLOCKIO(@G716, @I2,2, 0, 1, 0, 1, 0, 0) <> 1)) then goto L0E98;
   L1^ := 0;
-  { left on stack: @G716 }
-  { left on stack: @I2,2 }
   goto L0E9C;
 L0E98:
   G715 := 1;
@@ -2773,8 +2702,6 @@ L0EC6:
   if not (G41) then goto L0EE9;
   G13 := 0;
   G99 := 2;
-  { left on stack: @I2,130[L3] }
-  { left on stack: 8 }
   goto L0F36;
 L0EE9:
   if not (G42) then goto L0EF3;
@@ -2796,6 +2723,7 @@ L0F2E:
   (L4+7)^ := 0;
   G99 := 2;
 L0F36:
+  { paths disagree on stack depth here }
   if not ((I1,8 = 0)) then goto L0F46;
   PASCALCO.4(195);
   L1^ := 0;
@@ -2819,15 +2747,13 @@ function DECLARAT.13(params 2 words) : <1 word result>;  { locals 2 words, lex 5
   G41 := 1;
   I2,6 := G87;
   G87 := 0;
-  { left on stack: @I3,130[L3] }
-  { left on stack: 8 }
   goto L0DB1;
 L0DA2:
   if not ((96 in 1)) then goto L0DB1;
   G41 := 1;
   I2,9 := 1;
-  { left on stack: I2,7 }
 L0DB1:
+  { paths disagree on stack depth here }
 
 function DECLARAT.14(params 8 words) : <1 word result>;  { locals 1 words, lex 6 }
   L8^ := 0;
@@ -2836,9 +2762,8 @@ L0D00:
   if not (((L8^ <= 15) and not (L3^))) then goto L0D41;
   if not ((@I4,34[L8^*4w] = @I3,2)) then goto L0D39;
   L9 := @I4,98[L8^]^;
-  if not ((@L4^<4w> in 4)) then goto L0D31;
+  if not ((L9 in @L4^<4w>)) then goto L0D31;
   L3^ := 1;
-  { left on stack: L9 }
   goto L0D37;
 L0D31:
   L8^ := (L8^+1);
@@ -2902,7 +2827,7 @@ L125F:
 procedure DECLARAT.16(params 0 words);  { locals 4 words, lex 2 }
   if not ((G15 <> 0)) then goto L1287;
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((1 + 1),4));
+  PASCALCO.16(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
 L1287:
   if not ((G15 = 0)) then goto L12FF;
   CSP1(@L1, 10);
@@ -2918,7 +2843,7 @@ L1287:
 L12B9:
   PASCALCO.4(16);
 L12BD:
-  PASCALCO.20(?, @I1,1^<4w>, 4, adjust((8 + 1),4), @L2, @L3);
+  PASCALCO.20(?, ?, @I1,1^<4w>, adjust((8 + 1),4), @L2, @L3);
   PASCALCO.7(L1);
   (L1+6)^ := L2;
   move((L1+9), @L3, 1 words);
@@ -2936,7 +2861,7 @@ L12FF:
 procedure DECLARAT.17(params 0 words);  { locals 6 words, lex 2 }
   if not ((G15 <> 0)) then goto L1325;
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((1 + 1),4));
+  PASCALCO.16(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
 L1325:
   if not ((G15 = 0)) then goto L13C2;
   CSP1(@L3, 9);
@@ -2951,7 +2876,7 @@ L1325:
 L1352:
   PASCALCO.4(16);
 L1356:
-  DECLARAT.3(?, @I1,1^<4w>, 4, adjust((8 + 1),4), @L4, @L5);
+  DECLARAT.3(?, ?, @I1,1^<4w>, adjust((8 + 1),4), @L4, @L5);
   PASCALCO.7(L3);
   (L3+6)^ := L4;
   L2 := G67;
@@ -3024,13 +2949,11 @@ L1449:
 L1455:
   PASCALCO.4(2);
 L1459:
-  if not (not (((6 + 1) in (@G101^<4w> + 4)))) then goto L1485;
+  if not (not ((@I1,1^<4w> in ((6 + 1) + @G101^<4w>)))) then goto L1485;
   PASCALCO.4(6);
-  PASCALCO.16(@I1,1^<4w>, 4, (14 + 1), adjust((@G101^<4w> + 4),4));
-  { left on stack: G15 }
-  { left on stack: @I1,1^<4w> }
-  { left on stack: 4 }
+  PASCALCO.16(?, G15, @I1,1^<4w>, adjust(((14 + 1) + @G101^<4w>),4));
 L1485:
+  { paths disagree on stack depth here }
   G11 := (G15 <> 1);
   if not (not (G11)) then goto L1491;
   PASCALCO.8();
@@ -3043,7 +2966,7 @@ L149E:
   PASCALCO.4(5);
 L14A2:
   L1 := L2;
-  DECLARAT.3(@I1,1^<4w>, 4, (8 + 1), adjust((@G101^<4w> + 4),4), @L4, @L5);
+  DECLARAT.3(?, ?, @I1,1^<4w>, adjust(((8 + 1) + @G101^<4w>),4), @L4, @L5);
 L14BC:
   if not ((L2 <> nil)) then goto L14FF;
   L6 := L2;
@@ -3067,11 +2990,10 @@ L1510:
   if not (not (((G15 = 9) and G33))) then goto L151D;
   PASCALCO.4(14);
 L151D:
-  if not ((G15 and not ((@G101^<4w> in 4)))) then goto L13E5;
+  if not (((G15 <> 0) and not ((G15 in @G101^<4w>)))) then goto L13E5;
   if not ((G67 <> nil)) then goto L1538;
   PASCALCO.4(117);
   G67 := nil;
-  { left on stack: (G15 <> 0) }
 L1538:
 
 procedure DECLARAT.19(params 2 words);  { locals 20 words, lex 2 }
@@ -3086,9 +3008,8 @@ L17E8:
   L12 := G99;
   G99 := 1;
   L3 := G15;
-  if not (([$0001,$8000,$0000] in 3)) then goto L180B;
+  if not ((G15 in [$0001,$8000,$0000])) then goto L180B;
   PASCALCO.8();
-  { left on stack: G15 }
   goto L1814;
 L180B:
   PASCALCO.4(399);
@@ -3261,14 +3182,13 @@ L1A76:
   if not (not ((7 in 1))) then goto L1A9E;
   PASCALCO.4(120);
   (L5+6)^ := nil;
-  { left on stack: 1 }
-  { left on stack: L6^.f1 }
 L1A9E:
+  { paths disagree on stack depth here }
   PASCALCO.8();
   goto L1AB5;
 L1AA3:
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((8 + 1),4));
+  PASCALCO.16(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
 L1AB5:
   goto L1ABF;
 L1AB7:
@@ -3372,26 +3292,24 @@ L1C25:
 procedure DECLARAT.20(params 6 words);  { locals 10 words, lex 3 }
   L9 := nil;
   L14 := G10;
-  if not (not ((4 in (16 + 1)))) then goto L1575;
+  if not (not ((@L3^<4w> in (16 + 1)))) then goto L1575;
   PASCALCO.4(7);
-  PASCALCO.16(@I2,1^<4w>, 4, (@L3^<4w> + 4), adjust((16 + 1),4));
-  { left on stack: G15 }
-  { left on stack: @L3^<4w> }
+  PASCALCO.16(?, G15, (@I2,1^<4w> + @L3^<4w>), adjust((16 + 1),4));
 L1575:
+  { paths disagree on stack depth here }
   if not ((G15 = 4)) then goto L17B8;
   if not (I1,7) then goto L1583;
   PASCALCO.4(119);
 L1583:
   PASCALCO.8();
-  if not (not (([$4000,$0001] in 2))) then goto L15A5;
+  if not (not ((G15 in [$4000,$0001]))) then goto L15A5;
   PASCALCO.4(7);
-  PASCALCO.16(G15, @I2,1^<4w>, 4, adjust((33 + 1),4));
+  PASCALCO.16(?, ?, @I2,1^<4w>, adjust((33 + 1),4));
 L15A5:
-  if not (([$4000,$0001] in 2)) then goto L172E;
+  if not ((G15 in [$4000,$0001])) then goto L172E;
   if not ((G15 = 30)) then goto L15BD;
   L12 := 1;
   PASCALCO.8();
-  { left on stack: G15 }
   goto L15C0;
 L15BD:
   L12 := 0;
@@ -3420,11 +3338,11 @@ L15F9:
   L15 := (L15+1);
   PASCALCO.8();
 L160E:
-  if not (not ((4 in (46 + 1)))) then goto L162E;
+  if not (not ((@I2,1^<4w> in (46 + 1)))) then goto L162E;
   PASCALCO.4(7);
-  PASCALCO.16(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((46 + 1),4));
-  { left on stack: G15 }
+  PASCALCO.16(?, G15, @I2,1^<4w>, adjust((46 + 1),4));
 L162E:
+  { paths disagree on stack depth here }
   G11 := (G15 <> 1);
   if not (not (G11)) then goto L163A;
   PASCALCO.8();
@@ -3442,7 +3360,6 @@ L163A:
   if not ((L12 = 0)) then goto L1691;
   if not ((L11^.f1 = 7)) then goto L1676;
   PASCALCO.4(121);
-  { left on stack: 1 }
   goto L1691;
 L1676:
   if not (((L11 = G57) or (L11 = G58))) then goto L1687;
@@ -3457,6 +3374,7 @@ L1691:
 L169A:
   PASCALCO.4(2);
 L169E:
+  { paths disagree on stack depth here }
   goto L16B6;
 L16A0:
   if not ((L12 = 1)) then goto L16B2;
@@ -3466,11 +3384,11 @@ L16A0:
 L16B2:
   PASCALCO.4(5);
 L16B6:
-  if not (not ((4 in (40 + 1)))) then goto L16D6;
+  if not (not ((@I2,1^<4w> in (40 + 1)))) then goto L16D6;
   PASCALCO.4(7);
-  PASCALCO.16(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((40 + 1),4));
-  { left on stack: G15 }
+  PASCALCO.16(?, G15, @I2,1^<4w>, adjust((40 + 1),4));
 L16D6:
+  { paths disagree on stack depth here }
   L7 := L8;
   L10 := nil;
 L16DC:
@@ -3487,16 +3405,15 @@ L16F2:
 L16FF:
   if not ((G15 = 3)) then goto L172C;
   PASCALCO.8();
-  if not (not ((4 in ([$4000,$0001] + 2)))) then goto L172C;
+  if not (not ((G15 in (@I2,1^<4w> + [$4000,$0001])))) then goto L172C;
   PASCALCO.4(7);
-  PASCALCO.16(@I2,1^<4w>, @I2,1^<4w>, 4, adjust((33 + 1),4));
-  { left on stack: G15 }
+  PASCALCO.16(?, ?, @I2,1^<4w>, adjust((33 + 1),4));
 L172C:
   goto L15A5;
 L172E:
   if not ((G15 = 5)) then goto L1748;
   PASCALCO.8();
-  DECLARAT.2(?, @L3^<4w>, 4, adjust((@I2,1^<4w> + 4),4));
+  DECLARAT.2(?, ?, ?, adjust((@L3^<4w> + @I2,1^<4w>),4));
   goto L174C;
 L1748:
   PASCALCO.4(4);
@@ -3548,10 +3465,8 @@ L1CC4:
 
 procedure BODYPART.2(params 3 words);  { locals 1 words, lex 2 }
   if not ((G706 > 128)) then goto L01C6;
-  if not ((FBLOCKIO(0, 1, G705, 0, 0, 0) <> 1)) then goto L01BA;
+  if not ((FBLOCKIO(@G665, G707, 0, 1, G705, 0, 0, 0) <> 1)) then goto L01BA;
   PASCALCO.4(402);
-  { left on stack: @G665 }
-  { left on stack: G707 }
 L01BA:
   G705 := (G705+1);
   G706 := 1;
@@ -3559,13 +3474,13 @@ L01C6:
   L4 := G707[(G706-1)*2w];
   if not ((G133 in 1)) then goto L01E5;
   (L4+1)^ := ((L2+63)+1);
-  { left on stack: L3 }
   goto L01EA;
 L01E5:
   (L4+1)^ := L2;
 L01EA:
   L4^ := (G89+L1);
   G706 := (G706+1);
+  { left on stack: L3 }
 
 procedure BODYPART.3(params 1 words);  { locals 4 words, lex 2 }
   if not ((L1 <> 38)) then goto L0213;
@@ -3641,16 +3556,14 @@ L0333:
 L0348:
   goto L03CA;
 L034A:
-  if not (([$C006,$3000,$6401,$4000,$0000] in 5)) then goto L0362;
+  if not ((L2 in [$C006,$3000,$6401,$4000,$0000])) then goto L0362;
   PASCALCO.22(L1);
-  { left on stack: L2 }
   goto L03CA;
 L0362:
-  if not ((L2 and ([$0A20,$0000,$0000] in 3))) then goto L0384;
+  if not ((G33 and (L2 in [$0A20,$0000,$0000]))) then goto L0384;
   BODYPART.2(3, L1, G9);
   PASCALCO.22(128);
   PASCALCO.22(0);
-  { left on stack: G33 }
   goto L03CA;
 L0384:
   if not ((((L2 = 74) or (L2 = 41)) and (L1 <= 16))) then goto L03AF;
@@ -3678,10 +3591,9 @@ procedure BODYPART.6(params 3 words);  { locals 0 words, lex 2 }
   PASCALCO.22(L1);
   goto L047E;
 L03F7:
-  if not (([$00B3,$8000,$0000,$0000] in 4)) then goto L0422;
+  if not ((L3 in [$00B3,$8000,$0000,$0000])) then goto L0422;
   if not ((L2 = 0)) then goto L0412;
   BODYPART.3((L3+20));
-  { left on stack: L3 }
   goto L0420;
 L0412:
   BODYPART.5(L3, (L2+L2));
@@ -3719,13 +3631,11 @@ L046C:
 L047E:
 
 procedure BODYPART.7(params 2 words);  { locals 0 words, lex 2 }
-  @G186^<4w>^ := adjust((4 + [L2]),4)  {4 words};
+  @G186^ := adjust((@G186^<4w> + [L2]),4)  {4 words};
   BODYPART.6(77, L2, L1);
-  { left on stack: @G186 }
 
 procedure BODYPART.8(params 0 words);  { locals 4 words, lex 2 }
   if not ((G3 <> nil)) then goto L06F9;
-  { left on stack: G4 }
   goto L06CE;
   if not ((G3^.f1 = 3)) then goto L066B;
   L3 := G5;
@@ -3770,7 +3680,6 @@ L0692:
   BODYPART.5(51, 5);
 L0696:
   goto L06DC;
-  { left on stack: G5 }
   goto L06B9;
   BODYPART.6(54, G6, G7);
   goto L06CA;
@@ -3797,7 +3706,6 @@ L06F9:
 
 procedure BODYPART.9(params 0 words);  { locals 0 words, lex 2 }
   if not ((G3 <> nil)) then goto L07C1;
-  { left on stack: G4 }
   goto L07AC;
   if not (PASCALCO.18(G3, 0, 0)) then goto L0779;
   BODYPART.3(38);
@@ -3806,7 +3714,6 @@ L0779:
   PASCALCO.4(409);
 L077F:
   goto L07B8;
-  { left on stack: G5 }
   goto L079C;
   BODYPART.6(50, G6, G7);
   goto L07AA;
@@ -3828,7 +3735,6 @@ L07C1:
 
 procedure BODYPART.10(params 0 words);  { locals 0 words, lex 2 }
   if not ((G3 <> nil)) then goto L083A;
-  { left on stack: G4 }
   goto L0816;
   if not (PASCALCO.18(G3, 0, 0)) then goto L07E3;
   BODYPART.3(38);
@@ -3837,7 +3743,6 @@ L07E3:
   PASCALCO.4(409);
 L07E9:
   goto L0822;
-  { left on stack: G5 }
   goto L0806;
   BODYPART.6(50, G6, G7);
   goto L0814;
@@ -3864,7 +3769,7 @@ L0837:
 L083A:
 
 procedure BODYPART.11(params 4 words);  { locals 13 words, lex 2 }
-  BODYPART.34(?, @L1^<4w>, 4, adjust(([$0200,$0000,$0000] + 3),4));
+  BODYPART.34(?, ?, ?, adjust((@L1^<4w> + [$0200,$0000,$0000]),4));
   if not ((G15 = 41)) then goto L1C81;
   L15 := ((G4 = 0) and (PASCALCO.18(G3, 0, 0) or (G3 = G62)));
   if not ((G3 <> nil)) then goto L1A5A;
@@ -3930,7 +3835,6 @@ L1B0C:
 L1B21:
   if not (PASCALCO.21(L5, G3, 0, 0)) then goto L1C74;
   L12 := L5^;
-  { left on stack: L5^.f1 }
   goto L1C08;
   if not ((L5 = G64)) then goto L1B3D;
   L11 := 1;
@@ -3945,7 +3849,6 @@ L1B4B:
   goto L1C20;
   if not ((3840 in 1)) then goto L1B5B;
   PASCALCO.4(131);
-  { left on stack: L10 }
 L1B5B:
   L11 := 0;
   goto L1C20;
@@ -3953,7 +3856,6 @@ L1B5B:
   goto L1C20;
   if not ((2304 in 1)) then goto L1B73;
   PASCALCO.4(132);
-  { left on stack: L10 }
 L1B73:
   L11 := 4;
   goto L1C20;
@@ -3988,12 +3890,11 @@ L1BD3:
 L1BDA:
   if not ((3840 in 1)) then goto L1BE8;
   PASCALCO.4(131);
-  { left on stack: L10 }
 L1BE8:
+  { paths disagree on stack depth here }
   goto L1C20;
   if not ((3840 in 1)) then goto L1BF8;
   PASCALCO.4(131);
-  { left on stack: L10 }
 L1BF8:
   L11 := 6;
   goto L1C20;
@@ -4002,13 +3903,13 @@ L1BF8:
   goto L1C20;
 L1C08:
 L1C20:
+  { paths disagree on stack depth here }
   if not ((L11 = 7)) then goto L1C31;
   BODYPART.4(L10);
   BODYPART.4(16);
   BODYPART.7(30, 4);
   goto L1C72;
 L1C31:
-  { left on stack: L10 }
   goto L1C5E;
   BODYPART.6(53, L11, L12);
   goto L1C72;
@@ -4036,13 +3937,12 @@ procedure BODYPART.12(params 4 words);  { locals 1 words, lex 2 }
   if not ((G15 = 0)) then goto L0C0E;
   PASCALCO.10(adjust((16 + 1),1), @L5);
   PASCALCO.8();
-  { left on stack: G133 }
-  { left on stack: 1 }
   goto L0C16;
 L0C0E:
   PASCALCO.4(2);
   L5 := G76;
 L0C16:
+  { paths disagree on stack depth here }
   BODYPART.22(?, ?, ?, @L1^<4w>, L5);
 
 procedure BODYPART.13(params 1 words);  { locals 1 words, lex 2 }
@@ -4146,7 +4046,6 @@ L05E4:
 procedure BODYPART.20(params 1 words);  { locals 1 words, lex 2 }
   L2 := L1;
   if not ((L2^ <> nil)) then goto L0758;
-  { left on stack: L2^.f2 }
   goto L0747;
   BODYPART.6(56, L2^.f3, L2^.f4);
   goto L0758;
@@ -4182,7 +4081,6 @@ procedure BODYPART.22(params 5 words);  { locals 10 words, lex 2 }
   L14 := L1;
   G3 := L14^.f6;
   G4 := 1;
-  { left on stack: L14^.f8 }
   goto L0951;
   G6 := L14^.f9;
   G7 := L14^.f10;
@@ -4235,13 +4133,11 @@ L0962:
   BODYPART.9();
   G5 := 3;
 L0977:
-  if not (not ((4 in (@L2^<4w> + 4)))) then goto L099B;
+  if not (not ((G15 in (@G113^<4w> + @L2^<4w>)))) then goto L099B;
   PASCALCO.4(59);
-  PASCALCO.16(@G113^<4w>, @G113^<4w>, 4, adjust((@L2^<4w> + 4),4));
-  { left on stack: G15 }
+  PASCALCO.16(?, ?, ?, adjust((@G113^<4w> + @L2^<4w>),4));
 L099B:
-  if not ((@G113^<4w> in 4)) then goto L0BD7;
-  { left on stack: G15 }
+  if not ((G15 in @G113^<4w>)) then goto L0BD7;
   if not ((G15 = 15)) then goto L0AA6;
 L09A9:
   move(@L6, @G3, 5 words);
@@ -4252,7 +4148,7 @@ L09A9:
 L09C3:
   BODYPART.9();
   PASCALCO.8();
-  BODYPART.11(?, @L2^<4w>, 4, adjust(([$0001,$0002] + 2),4));
+  BODYPART.11(?, ?, ?, adjust((@L2^<4w> + [$0001,$0002]),4));
   BODYPART.8();
   BODYPART.15();
   if not ((G3 <> nil)) then goto L09ED;
@@ -4330,7 +4226,6 @@ L0ABF:
 L0AE3:
   L14 := L11;
   G3 := L14^.f6;
-  { left on stack: G5 }
   goto L0B07;
   G7 := (G7+L14^.f9);
   goto L0B18;
@@ -4388,10 +4283,9 @@ L0BA8:
 L0BAE:
   PASCALCO.8();
 L0BB1:
-  if not (not ((4 in (@G113^<4w> + 4)))) then goto L0BD5;
+  if not (not ((G15 in (@L2^<4w> + @G113^<4w>)))) then goto L0BD5;
   PASCALCO.4(6);
-  PASCALCO.16(@L2^<4w>, @L2^<4w>, 4, adjust((@G113^<4w> + 4),4));
-  { left on stack: G15 }
+  PASCALCO.16(?, ?, ?, adjust((@L2^<4w> + @G113^<4w>),4));
 L0BD5:
   goto L099B;
 L0BD7:
@@ -4406,27 +4300,26 @@ procedure BODYPART.23(params 5 words);  { locals 2 words, lex 2 }
 L129D:
   if not ((116 in 1)) then goto L12A8;
   L7 := 0;
-  { left on stack: L6 }
   goto L12AC;
 L12A8:
   PASCALCO.4(9);
 L12AC:
-  if not (([$0490,$0200,$6F80] in 3)) then goto L12C8;
-  BODYPART.11(L6, @L2^<4w>, 4, adjust((34 + 1),4));
+  { paths disagree on stack depth here }
+  if not ((L6 in [$0490,$0200,$6F80])) then goto L12C8;
+  BODYPART.11(?, ?, @L2^<4w>, adjust((34 + 1),4));
   BODYPART.8();
 L12C8:
   if not ((6 in 1)) then goto L12D2;
   BODYPART.29();
-  { left on stack: L6 }
   goto L12E5;
 L12D2:
   if not ((24 in 1)) then goto L12DC;
   BODYPART.30();
-  { left on stack: L6 }
   goto L12E5;
 L12DC:
-  ROUTINE.1(?, ?, ?, @L2^<4w>, L7, L6);
+  ROUTINE.1(?, L6, L6, @L2^<4w>, L7, L6);
 L12E5:
+  { paths disagree on stack depth here }
   if not (L7) then goto L12F6;
   if not ((G15 = 5)) then goto L12F2;
   PASCALCO.8();
@@ -4496,12 +4389,11 @@ L0118:
   if not (I1,8) then goto L0121;
   BODYPART.26(@G66);
 L0121:
-  STATEMEN.1(?, @I2,2^<4w>, 4, adjust((520 + 1),4));
-  if not (not ((@G105^<4w> in 4))) then goto L0121;
+  STATEMEN.1(?, ?, @I2,2^<4w>, adjust((520 + 1),4));
+  if not (not ((G15 in @G105^<4w>))) then goto L0121;
   G11 := (G15 <> 3);
   if not (not (G11)) then goto L0147;
   PASCALCO.8();
-  { left on stack: G15 }
 L0147:
   if not (G11) then goto L0121;
 
@@ -4543,13 +4435,11 @@ procedure BODYPART.29(params 0 words);  { locals 2 words, lex 3 }
   L2 := L1;
   if not (not ((34 in 1))) then goto L0CD3;
   PASCALCO.4(20);
-  { left on stack: G133 }
-  { left on stack: 1 }
-  { left on stack: G15 }
 L0CD3:
   if not ((G15 = 1)) then goto L0CDB;
   PASCALCO.8();
 L0CDB:
+  { paths disagree on stack depth here }
   goto L0CE6;
 L0CDD:
   if not (I1,7) then goto L0CE6;
@@ -4558,7 +4448,7 @@ L0CE6:
   if not ((I1,7 and (G15 <> 5))) then goto L0D83;
 L0CEF:
   BODYPART.14(L2);
-  BODYPART.12(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  BODYPART.12(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
   if not ((G5 = 4)) then goto L0D08;
   PASCALCO.4(103);
 L0D08:
@@ -4615,17 +4505,15 @@ procedure BODYPART.30(params 0 words);  { locals 8 words, lex 3 }
   L4 := L3;
   if not (not ((34 in 1))) then goto L0DEB;
   PASCALCO.4(20);
-  { left on stack: G133 }
-  { left on stack: 1 }
-  { left on stack: G15 }
 L0DEB:
   if not ((G15 = 1)) then goto L0DF3;
   PASCALCO.8();
 L0DF3:
+  { paths disagree on stack depth here }
   if not ((I1,7 and (G15 <> 5))) then goto L0F42;
 L0DFC:
   BODYPART.14(L4);
-  BODYPART.11(?, @I1,2^<4w>, 4, adjust((38 + 1),4));
+  BODYPART.11(?, ?, @I1,2^<4w>, adjust((38 + 1),4));
   L1 := G3;
   if not ((L1 <> nil)) then goto L0E38;
   L8 := L1;
@@ -4641,7 +4529,7 @@ L0E21:
 L0E38:
   if not ((G15 = 2)) then goto L0E62;
   PASCALCO.8();
-  BODYPART.11(?, @I1,2^<4w>, 4, adjust((38 + 1),4));
+  BODYPART.11(?, ?, @I1,2^<4w>, adjust((38 + 1),4));
   if not ((G3 <> nil)) then goto L0E5B;
   if not ((G3 <> G12)) then goto L0E5B;
   PASCALCO.4(20);
@@ -4665,7 +4553,7 @@ L0E77:
 L0E83:
   if not ((G15 = 2)) then goto L0EAA;
   PASCALCO.8();
-  BODYPART.11(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  BODYPART.11(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
   BODYPART.8();
   if not ((G3 <> nil)) then goto L0EA8;
   if not ((G3 <> G12)) then goto L0EA8;
@@ -4743,7 +4631,7 @@ L0F8E:
   PASCALCO.4(126);
 L0F97:
   PASCALCO.8();
-  BODYPART.11(?, @I1,2^<4w>, 4, adjust((34 + 1),4));
+  BODYPART.11(?, ?, @I1,2^<4w>, adjust((34 + 1),4));
   L8 := G5;
   if not (((G3 <> nil) and (L2 <> nil))) then goto L119E;
   L3 := L2^.f6;
@@ -4823,7 +4711,6 @@ L10D7:
   BODYPART.9();
   if not ((L3 <> nil)) then goto L111E;
   L9 := L3;
-  { left on stack: L9^.f1 }
   goto L1110;
   if not ((G3^ <> L3^)) then goto L10F2;
   PASCALCO.4(142);
@@ -4956,9 +4843,8 @@ procedure BODYPART.34(params 4 words);  { locals 7 words, lex 3 }
   if not ((G16 and (96 in 1))) then goto L1841;
   L11 := (G16 = 6);
   PASCALCO.8();
-  { left on stack: (G15 = 40) }
 L1841:
-  BODYPART.35(?, @L1^<4w>, 4, adjust(([$0100,$0000,$0000] + 3),4));
+  BODYPART.35(?, ?, (G15 = 40), adjust((@L1^<4w> + [$0100,$0000,$0000]),4));
   if not (L11) then goto L1886;
   BODYPART.8();
   if not ((G3 = G12)) then goto L1863;
@@ -4982,10 +4868,9 @@ L1886:
   move(@L5, @G3, 5 words);
   L10 := G16;
   PASCALCO.8();
-  BODYPART.35(?, @L1^<4w>, 4, adjust(([$0100,$0000,$0000] + 3),4));
+  BODYPART.35(?, ?, ?, adjust((@L1^<4w> + [$0100,$0000,$0000]),4));
   BODYPART.8();
   if not (((L5 <> nil) and (G3 <> nil))) then goto L1996;
-  { left on stack: L10 }
   goto L1987;
   BODYPART.32(@L5, 0);
   BODYPART.33(@L5);
@@ -5051,17 +4936,16 @@ L1999:
 L199B:
 
 procedure BODYPART.35(params 4 words);  { locals 7 words, lex 4 }
-  BODYPART.36(?, @L1^<4w>, 4, adjust(([$0080,$0000,$0000] + 3),4));
+  BODYPART.36(?, ?, ?, adjust((@L1^<4w> + [$0080,$0000,$0000]),4));
 L16EA:
   if not ((G15 = 39)) then goto L1815;
   BODYPART.8();
   move(@L5, @G3, 5 words);
   L11 := G16;
   PASCALCO.8();
-  BODYPART.36(?, @L1^<4w>, 4, adjust(([$0080,$0000,$0000] + 3),4));
+  BODYPART.36(?, ?, ?, adjust((@L1^<4w> + [$0080,$0000,$0000]),4));
   BODYPART.8();
   if not (((L5 <> nil) and (G3 <> nil))) then goto L1810;
-  { left on stack: L11 }
   goto L17FC;
   BODYPART.32(@L5, 0);
   BODYPART.33(@L5);
@@ -5135,14 +5019,12 @@ L1813:
 L1815:
 
 procedure BODYPART.36(params 4 words);  { locals 18 words, lex 5 }
-  if not (not ((@G109^<4w> in 4))) then goto L1397;
+  if not (not ((G15 in @G109^<4w>))) then goto L1397;
   PASCALCO.4(58);
-  PASCALCO.16(G15, @L1^<4w>, 4, adjust((@G109^<4w> + 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + @G109^<4w>),4));
   G3 := nil;
 L1397:
-  if not ((@G109^<4w> in 4)) then goto L16B8;
-  { left on stack: G15 }
-  { left on stack: G15 }
+  if not ((G15 in @G109^<4w>)) then goto L16B8;
   goto L162E;
   PASCALCO.10(adjust(1,1), @L5);
   PASCALCO.8();
@@ -5158,8 +5040,9 @@ L13C2:
   move(@G5, (L22+9), 1 words);
   goto L13E5;
 L13DE:
-  BODYPART.22(?, ?, ?, @L1^<4w>, L5);
+  BODYPART.22(?, ?, 94, @L1^<4w>, L5);
 L13E5:
+  { paths disagree on stack depth here }
   if not ((G3 <> nil)) then goto L13F9;
   L22 := G3;
   if not ((L22^.f1 = 1)) then goto L13F9;
@@ -5198,7 +5081,7 @@ L143D:
   PASCALCO.8();
   goto L1698;
   PASCALCO.8();
-  BODYPART.11(?, @L1^<4w>, 4, adjust((32 + 1),4));
+  BODYPART.11(?, ?, @L1^<4w>, adjust((32 + 1),4));
   if not ((G15 = 5)) then goto L1488;
   PASCALCO.8();
   goto L148C;
@@ -5234,7 +5117,7 @@ L14C0:
   PASCALCO.8();
   goto L15E5;
 L14F7:
-  BODYPART.11(?, @L1^<4w>, 4, adjust(([$0001,$0006] + 2),4));
+  BODYPART.11(?, ?, ?, adjust((@L1^<4w> + [$0001,$0006]),4));
   if not ((G3 <> nil)) then goto L15C8;
   if not ((G3^.f1 <> 0)) then goto L151E;
   PASCALCO.4(136);
@@ -5255,7 +5138,7 @@ L1540:
   if not ((G15 = 2)) then goto L1593;
   PASCALCO.8();
   L10 := 20;
-  BODYPART.11(?, @L1^<4w>, 4, adjust(([$0001,$0002] + 2),4));
+  BODYPART.11(?, ?, ?, adjust((@L1^<4w> + [$0001,$0002]),4));
   if not (PASCALCO.21(L9^.f2, G3, 0, 0)) then goto L1570;
   goto L1579;
 L1570:
@@ -5276,8 +5159,7 @@ L1591:
 L1593:
   if not (L7) then goto L15AA;
   G9 := L11;
-  @L14^<8w>^ := adjust((8 + [L12..L13]),8)  {8 words};
-  { left on stack: @L14 }
+  @L14^ := adjust((@L14^<8w> + [L12..L13]),8)  {8 words};
   goto L15B8;
 L15AA:
   BODYPART.3(L10);
@@ -5305,31 +5187,28 @@ L15E1:
   PASCALCO.4(12);
 L15E5:
   if not (L8) then goto L1614;
-  if not ((8 <> 0)) then goto L160F;
-  @L14^<8w>^ := adjust(8,8)  {8 words};
+  if not ((@L14^<8w> <> 0)) then goto L160F;
+  (G90+1)^ := adjust(@L14^<8w>,8)  {8 words};
   G90^ := 1;
   G5 := G90;
   G4 := 0;
   BODYPART.8();
   BODYPART.3(28);
-  { left on stack: @L14^<8w> }
-  { left on stack: (G90+1) }
 L160F:
   G4 := 2;
   goto L162C;
 L1614:
-  @L14^<8w>^ := adjust(8,8)  {8 words};
+  (G90+1)^ := adjust(@L14^<8w>,8)  {8 words};
   G90^ := 1;
   G5 := G90;
   G4 := 0;
-  { left on stack: (G90+1) }
 L162C:
   goto L1698;
 L162E:
 L1698:
-  if not (not ((@L1^<4w> in 4))) then goto L16B6;
+  if not (not ((G15 in @L1^<4w>))) then goto L16B6;
   PASCALCO.4(6);
-  PASCALCO.16(G15, @L1^<4w>, 4, adjust((@G109^<4w> + 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> + @G109^<4w>),4));
 L16B6:
   goto L1397;
 L16B8:
@@ -5371,21 +5250,13 @@ SEGMENT 10 ROUTINE
 ======================================================================
 
 procedure ROUTINE.1(params 6 words);  { locals 12 words, lex 2 }
-  4^ := adjust((32 + 1),4)  {4 words};
-  4^ := adjust((2 + 1),4)  {4 words};
-  4^ := adjust((@L15^<4w> + 4),4)  {4 words};
-  if not (not (([$0F7D,$88EC,$F000] in 3))) then goto L0AA1;
+  @L3^<4w>^ := adjust((32 + 1),4)  {4 words};
+  @L3^<4w>^ := adjust((2 + 1),4)  {4 words};
+  @L7^ := adjust((@L11^<4w> + @L15^<4w>),4)  {4 words};
+  if not (not ((L1 in [$0F7D,$88EC,$F000]))) then goto L0AA1;
   ROUTINE.17();
-  { left on stack: @L11 }
-  { left on stack: @L3^<4w> }
-  { left on stack: @L15 }
-  { left on stack: @L3^<4w> }
-  { left on stack: @L7 }
-  { left on stack: @L11^<4w> }
-  { left on stack: L1 }
   goto L0B1C;
 L0AA1:
-  { left on stack: L1 }
   goto L0AD4;
   ROUTINE.5();
   goto L0B1C;
@@ -5413,6 +5284,8 @@ L0AA1:
   goto L0B1C;
 L0AD4:
 L0B1C:
+  { left on stack: @L11 }
+  { left on stack: @L15 }
 
 procedure ROUTINE.2(params 0 words);  { locals 0 words, lex 3 }
   if not ((G15 = 1)) then goto L000A;
@@ -5550,7 +5423,6 @@ procedure ROUTINE.7(params 0 words);  { locals 2 words, lex 3 }
   if not ((G15 = 0)) then goto L020D;
   PASCALCO.10(adjust(1,1), @L1);
   PASCALCO.8();
-  { left on stack: 96 }
   goto L021E;
 L020D:
   if not ((G15 = 33)) then goto L021B;
@@ -5560,6 +5432,7 @@ L020D:
 L021B:
   L1 := nil;
 L021E:
+  { paths disagree on stack depth here }
   if not ((L1 <> nil)) then goto L0260;
   L2 := L1;
   if not ((L2^.f9 = 1)) then goto L025A;
@@ -5776,7 +5649,6 @@ L0574:
   if not ((G3^.f2 = nil)) then goto L0580;
   PASCALCO.4(399);
 L0580:
-  { left on stack: I1,1 }
   goto L05D9;
   if not ((G15 = 1)) then goto L059C;
   PASCALCO.8();
@@ -5895,13 +5767,11 @@ procedure ROUTINE.16(params 0 words);  { locals 1 words, lex 3 }
   PASCALCO.8();
   if not ((L1^.f6 <> nil)) then goto L074A;
   BODYPART.4((L1^.f6^*2));
-  { left on stack: G133 }
-  { left on stack: 1 }
 L074A:
+  { paths disagree on stack depth here }
   G3 := G12;
 
 procedure ROUTINE.17(params 0 words);  { locals 0 words, lex 3 }
-  { left on stack: I1,1 }
   goto L09FB;
   if not (I1,2) then goto L0795;
   BODYPART.12(?, ?, ?, @I1,11^<4w>);
@@ -6134,25 +6004,24 @@ L0557:
   BODYPART.5(85, (G95+1));
   G47 := 1;
 L0566:
-  if not (not ((4 in (1 + 1)))) then goto L057E;
+  if not (not ((@L1^<4w> in (1 + 1)))) then goto L057E;
   PASCALCO.4(6);
-  PASCALCO.16(?, G15, @L1^<4w>, @L1^<4w>);
+  PASCALCO.16(?, ?, G15, @L1^<4w>);
 L057E:
-  if not ((4 in (1 + 1))) then goto L0670;
+  { paths disagree on stack depth here }
+  if not ((@G105^<4w> in (1 + 1))) then goto L0670;
   CSP32(@L8);
   L9 := G10;
-  { left on stack: G15 }
-  { left on stack: @G105^<4w> }
-  { left on stack: G15 }
   goto L05F5;
   PASCALCO.10(adjust((112 + 1),1), @L5);
   PASCALCO.8();
   if not ((L5^.f8 = 5)) then goto L05B6;
-  BODYPART.23(?, G133, 1, @L1^<4w>, L5);
+  BODYPART.23(G15, G133, 1, @L1^<4w>, L5);
   goto L05B9;
 L05B6:
   STATEMEN.2(L5);
 L05B9:
+  { paths disagree on stack depth here }
   goto L0632;
   PASCALCO.8();
   STATEMEN.4();
@@ -6180,6 +6049,7 @@ L05B9:
   goto L0632;
 L05F5:
 L0632:
+  { paths disagree on stack depth here }
   if not ((G10 > G25)) then goto L063B;
   G25 := G10;
 L063B:
@@ -6189,14 +6059,15 @@ L063B:
   PASCALCO.4(253);
   G9 := 0;
 L0654:
-  if not (not (([$0040,$0000,$0000,$2608] in 4))) then goto L0670;
+  if not (not ((G15 in [$0040,$0000,$0000,$2608]))) then goto L0670;
   PASCALCO.4(6);
-  PASCALCO.16(?, ?, G15, @L1^<4w>);
+  PASCALCO.16(?, ?, ?, @L1^<4w>);
 L0670:
+  { paths disagree on stack depth here }
   G81 := (G81-1);
 
 procedure STATEMEN.2(params 1 words);  { locals 9 words, lex 3 }
-  BODYPART.22(?, @I1,1^<4w>, 4, adjust((16384 + 1),4), L1);
+  BODYPART.22(?, ?, @I1,1^<4w>, adjust((16384 + 1),4), L1);
   if not ((G15 = 14)) then goto L0200;
   L9 := 0;
   L8 := 0;
@@ -6272,7 +6143,6 @@ L0142:
   G3 := L2;
 L0145:
   if not (PASCALCO.21(L2, G3, 0, 0)) then goto L01F8;
-  { left on stack: L2^.f1 }
   goto L01DE;
   if not (G52) then goto L0164;
   BODYPART.4(L2^.f4);
@@ -6361,12 +6231,11 @@ L0281:
 
 procedure STATEMEN.4(params 0 words);  { locals 0 words, lex 3 }
 L0292:
-  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((520 + 1),4));
-  if not (not ((@G105^<4w> in 4))) then goto L0292;
+  STATEMEN.1(?, ?, @I1,1^<4w>, adjust((520 + 1),4));
+  if not (not ((G15 in @G105^<4w>))) then goto L0292;
   G11 := (G15 <> 3);
   if not (not (G11)) then goto L02B7;
   PASCALCO.8();
-  { left on stack: G15 }
 L02B7:
   if not (G11) then goto L0292;
   if not ((G15 = 9)) then goto L02C4;
@@ -6378,7 +6247,7 @@ L02C8:
 
 procedure STATEMEN.5(params 0 words);  { locals 5 words, lex 3 }
   L5 := 0;
-  BODYPART.11(?, @I1,1^<4w>, 4, adjust((4096 + 1),4));
+  BODYPART.11(?, ?, @I1,1^<4w>, adjust((4096 + 1),4));
   if not (not (L5)) then goto L02F8;
   BODYPART.18(@L2);
   BODYPART.17(L2);
@@ -6389,7 +6258,7 @@ L02F8:
 L0302:
   PASCALCO.4(52);
 L0306:
-  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((8192 + 1),4));
+  STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8192 + 1),4));
   if not (L5) then goto L0323;
   if not (L4) then goto L0320;
   G9 := L3;
@@ -6423,12 +6292,11 @@ procedure STATEMEN.6(params 0 words);  { locals 1 words, lex 3 }
   BODYPART.18(@L1);
   BODYPART.19(L1);
 L0373:
-  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((1032 + 1),4));
-  if not (not ((@G105^<4w> in 4))) then goto L0373;
+  STATEMEN.1(?, ?, @I1,1^<4w>, adjust((1032 + 1),4));
+  if not (not ((G15 in @G105^<4w>))) then goto L0373;
   G11 := (G15 <> 3);
   if not (not (G11)) then goto L0398;
   PASCALCO.8();
-  { left on stack: G15 }
 L0398:
   if not (G11) then goto L0373;
   if not ((G15 = 10)) then goto L03B1;
@@ -6443,7 +6311,7 @@ L03B5:
 procedure STATEMEN.7(params 0 words);  { locals 2 words, lex 3 }
   BODYPART.18(@L2);
   BODYPART.19(L2);
-  BODYPART.11(?, @I1,1^<4w>, 4, adjust((64 + 1),4));
+  BODYPART.11(?, ?, @I1,1^<4w>, adjust((64 + 1),4));
   BODYPART.18(@L1);
   BODYPART.17(L1);
   if not ((G15 = 6)) then goto L03F0;
@@ -6462,14 +6330,13 @@ L0413:
   if not ((G15 = 0)) then goto L042B;
   PASCALCO.10(adjust((16 + 1),1), @L1);
   PASCALCO.8();
-  { left on stack: G133 }
-  { left on stack: 1 }
   goto L0433;
 L042B:
   PASCALCO.4(2);
   L1 := G76;
 L0433:
-  BODYPART.22(?, @I1,1^<4w>, 4, adjust((66 + 1),4), L1);
+  { paths disagree on stack depth here }
+  BODYPART.22(?, ?, @I1,1^<4w>, adjust((66 + 1),4), L1);
   if not ((G3 <> nil)) then goto L04B7;
   if not ((G3^.f1 = 6)) then goto L04B1;
   if not ((G8 < 12)) then goto L04A9;
@@ -6518,7 +6385,7 @@ SEGMENT 12 CASESTAT
 ======================================================================
 
 procedure CASESTAT.1(params 0 words);  { locals 14 words, lex 3 }
-  BODYPART.11(?, @I1,1^<4w>, 4, adjust((2054 + 1),4));
+  BODYPART.11(?, ?, @I1,1^<4w>, adjust((2054 + 1),4));
   BODYPART.8();
   BODYPART.15();
   BODYPART.18(@L8);
@@ -6541,7 +6408,7 @@ L004A:
 L0057:
   L3 := nil;
 L005A:
-  PASCALCO.20(?, @I1,1^<4w>, 4, adjust((6 + 1),4), @L1, @L7);
+  PASCALCO.20(?, ?, @I1,1^<4w>, adjust((6 + 1),4), @L1, @L7);
   if not ((L2 <> nil)) then goto L00CF;
   if not (PASCALCO.21(L2, L1, 0, 0)) then goto L00C9;
   L5 := L6;
@@ -6585,11 +6452,10 @@ L00DB:
 L00E8:
   PASCALCO.4(5);
 L00EC:
-  STATEMEN.1(?, @I1,1^<4w>, 4, adjust(([$0040,$0000,$0000,$0008] + 4),4));
-  if not (not ((@G105^<4w> in 4))) then goto L00EC;
+  STATEMEN.1(?, ?, ?, adjust((@I1,1^<4w> + [$0040,$0000,$0000,$0008]),4));
+  if not (not ((G15 in @G105^<4w>))) then goto L00EC;
   if not ((L3 <> nil)) then goto L0117;
   BODYPART.16(57, L9);
-  { left on stack: G15 }
 L0117:
   G11 := (G15 <> 3);
   if not (not (G11)) then goto L0123;
@@ -6632,7 +6498,7 @@ L01AB:
   BODYPART.19(L10);
   if not ((G15 = 54)) then goto L01CD;
   PASCALCO.8();
-  STATEMEN.1(?, @I1,1^<4w>, 4, adjust((8 + 1),4));
+  STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
   if not ((G15 = 3)) then goto L01CD;
   PASCALCO.8();
 L01CD:
@@ -6673,11 +6539,11 @@ L0056:
   goto L006F;
 L005B:
   PASCALCO.4(2);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((16832 + 1),4));
+  PASCALCO.16(?, ?, @I1,1^<4w>, adjust((16832 + 1),4));
 L006F:
   if not ((G15 = 14)) then goto L00D4;
   PASCALCO.8();
-  BODYPART.11(?, @I1,1^<4w>, 4, adjust((448 + 1),4));
+  BODYPART.11(?, ?, @I1,1^<4w>, adjust((448 + 1),4));
   if not ((G3 <> nil)) then goto L00D2;
   if not ((G3^.f1 <> 0)) then goto L009A;
   PASCALCO.4(144);
@@ -6700,13 +6566,13 @@ L00D2:
   goto L00E8;
 L00D4:
   PASCALCO.4(51);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((448 + 1),4));
+  PASCALCO.16(?, ?, @I1,1^<4w>, adjust((448 + 1),4));
 L00E8:
   BODYPART.18(@L8);
   if not ((384 in 1)) then goto L0184;
   L7 := G15;
   PASCALCO.8();
-  BODYPART.11(G15, @I1,1^<4w>, 4, adjust((64 + 1),4));
+  BODYPART.11(?, G15, @I1,1^<4w>, adjust((64 + 1),4));
   if not ((G3 <> nil)) then goto L0182;
   if not ((G3^.f1 <> 0)) then goto L011C;
   PASCALCO.4(144);
@@ -6740,7 +6606,7 @@ L0182:
   goto L0196;
 L0184:
   PASCALCO.4(55);
-  PASCALCO.16(?, @I1,1^<4w>, 4, adjust((64 + 1),4));
+  PASCALCO.16(?, G15, @I1,1^<4w>, adjust((64 + 1),4));
 L0196:
   BODYPART.18(@L9);
   BODYPART.16(33, L9);
@@ -6856,9 +6722,8 @@ L020F:
   I1,6 := L1^.f7;
   goto L020F;
 L0236:
-  if not ((I1,8 or (@G186^<4w> and ((4 <> 0) or (not (G36) and (G66 <> nil)))))) then goto L0256;
+  if not (((I1,3 <> nil) or (I1,8 and ((@G186^<4w> <> 0) or (not (G36) and (G66 <> nil)))))) then goto L0256;
   BODY3.2();
-  { left on stack: (I1,3 <> nil) }
 L0256:
   if not ((I2,1 = nil)) then goto L0263;
   BODYPART.3(86);
@@ -6959,10 +6824,9 @@ L00B4:
   L1 := 30;
 L00C0:
   if not ((I2,15 >= L1)) then goto L00E8;
-  if not ((@G186^<4w> in 4)) then goto L00DE;
+  if not ((I2,15 in @G186^<4w>)) then goto L00DE;
   BODYPART.4(I2,15);
   BODYPART.5(30, 22);
-  { left on stack: I2,15 }
 L00DE:
   I2,15 := (I2,15-1);
   goto L00C0;
@@ -6980,10 +6844,9 @@ L00E8:
   L1 := 31;
 L0122:
   if not ((I2,15 <= L1)) then goto L014A;
-  if not ((@G186^<4w> in 4)) then goto L0140;
+  if not ((I2,15 in @G186^<4w>)) then goto L0140;
   BODYPART.4(I2,15);
   BODYPART.5(30, 21);
-  { left on stack: I2,15 }
 L0140:
   I2,15 := (I2,15+1);
   goto L0122;
@@ -7100,10 +6963,8 @@ procedure WRITELIN.3(params 0 words);  { locals 0 words, lex 3 }
   if not ((I2,1 > G705)) then goto L0015;
   I2,1 := 0;
 L0015:
-  if not ((FBLOCKIO(0, 1, I2,1, 1, 0, 0) <> 1)) then goto L0030;
+  if not ((FBLOCKIO(@G665, G707, 0, 1, I2,1, 1, 0, 0) <> 1)) then goto L0030;
   PASCALCO.4(404);
-  { left on stack: @G665 }
-  { left on stack: G707 }
 L0030:
 
 procedure WRITELIN.4(params 1 words);  { locals 1 words, lex 2 }
@@ -7114,8 +6975,6 @@ procedure WRITELIN.4(params 1 words);  { locals 1 words, lex 2 }
   if not ((238 in 1)) then goto L02A5;
   CSP2(L2, 0, G2, G9, 8);
   G9 := (G9+8);
-  { left on stack: L2^.f8 }
-  { left on stack: L2^.f8 }
   goto L0280;
   if not (((L2^.f6^ = 1) and not (G33))) then goto L0149;
   PASCALCO.23(8);
@@ -7190,8 +7049,8 @@ L0218:
   PASCALCO.23(L2^.f11);
   PASCALCO.23(I1,2);
   PASCALCO.23(nil);
-  { left on stack: I1,5 }
 L024F:
+  { paths disagree on stack depth here }
   goto L0296;
   if not ((((G33 and not (G42)) and L2^.f10) and L2^.f11)) then goto L0279;
   PASCALCO.23(1);
@@ -7206,9 +7065,11 @@ L027E:
   goto L0296;
 L0280:
 L0296:
+  { paths disagree on stack depth here }
   if not ((I1,3 <> -(9999))) then goto L02A5;
   WRITELIN.2(I1,3);
 L02A5:
+  { paths disagree on stack depth here }
   if not ((G9 >= 1024)) then goto L02B3;
   PASCALCO.24(0);
   G9 := 0;
@@ -7276,38 +7137,28 @@ L04A1:
   if not (G27) then goto L04C3;
   if not ((G15 <> 52)) then goto L04C0;
   PASCALCO.4(23);
-  PASCALCO.16(?, @L1^<4w>, 4, adjust((@G105^<4w> - 4),4));
+  PASCALCO.16(?, ?, ?, adjust((@L1^<4w> - @G105^<4w>),4));
   goto L04C3;
 L04C0:
   PASCALCO.8();
 L04C3:
-  PASCALCO.26(?, @L1^<4w>, 4, adjust(([$001C,$0000,$0000,$0000] - 4),4));
+  PASCALCO.26(?, ?, ?, adjust((@L1^<4w> - [$001C,$0000,$0000,$0000]),4));
   UNITPART.4();
   PASCALCO.25();
-  if not (((@G186^<4w> * 4) <> 0)) then goto L055C;
-  if not ((FBLOCKIO(0, 1, L8, 1, 0, 0) <> 1)) then goto L050A;
+  if not ((([$C000,$0000] * @G186^<4w>) <> 0)) then goto L055C;
+  if not ((FBLOCKIO(I2,8, @G1099, 0, 1, L8, 1, 0, 0) <> 1)) then goto L050A;
   PASCALCO.4(402);
-  { left on stack: [$C000,$0000] }
-  { left on stack: 2 }
-  { left on stack: I2,8 }
-  { left on stack: @G1099 }
 L050A:
-  if not ((@G186^<4w> in 4)) then goto L051C;
+  if not ((31 in @G186^<4w>)) then goto L051C;
   @G1099^[(L9+1)] := 80;
-  { left on stack: 31 }
 L051C:
-  if not ((@G186^<4w> in 4)) then goto L052E;
+  if not ((30 in @G186^<4w>)) then goto L052E;
   @G1099^[(L9+3)] := 76;
-  { left on stack: 30 }
 L052E:
-  if not ((FBLOCKIO(0, 1, L8, 0, 0, 0) <> 1)) then goto L0547;
+  if not ((FBLOCKIO(I2,8, @G1099, 0, 1, L8, 0, 0, 0) <> 1)) then goto L0547;
   PASCALCO.4(402);
-  { left on stack: I2,8 }
-  { left on stack: @G1099 }
 L0547:
-  4^ := adjust(([$C000,$0000] - 2),4)  {4 words};
-  { left on stack: @G186 }
-  { left on stack: @G186^<4w> }
+  @G186^ := adjust((@G186^<4w> - [$C000,$0000]),4)  {4 words};
 L055C:
   if not (not (G42)) then goto L0564;
   G45 := 1;
@@ -7317,10 +7168,8 @@ L0564:
   (@G445[@G589~[G13]{4per word,4 bits}*9w]+8)^ := 5;
 L057D:
   if not ((G705 > 0)) then goto L059F;
-  if not ((FBLOCKIO(0, 1, G705, 0, 0, 0) <> 1)) then goto L059F;
+  if not ((FBLOCKIO(@G665, G707, 0, 1, G705, 0, 0, 0) <> 1)) then goto L059F;
   PASCALCO.4(404);
-  { left on stack: @G665 }
-  { left on stack: G707 }
 L059F:
   WRITELIN.1();
 L05A2:
@@ -7374,7 +7223,7 @@ L0632:
   FCLOSE(@G665, 0);
 
 procedure UNITPART.2(params 0 words);  { locals 0 words, lex 2 }
-  FOPEN(@G665, '%SYSTEM.INFO[*]', 0, 0);
+  FOPEN(?, ?, ?, @G665, '%SYSTEM.INFO[*]', 0, 0);
   if not ((CSP34() <> 0)) then goto L0026;
   PASCALCO.4(404);
 L0026:
@@ -7404,7 +7253,7 @@ L004D:
   PASCALCO.8();
   if not ((G15 <> 0)) then goto L0093;
   PASCALCO.4(2);
-  PASCALCO.16(?, @L2^<4w>, 4, adjust((8 + 1),4));
+  PASCALCO.16(?, ?, @L2^<4w>, adjust((8 + 1),4));
   goto L02A8;
 L0093:
   L8 := 0;
@@ -7449,13 +7298,12 @@ L0104:
   if not ((G15 = 0)) then goto L0236;
   if not ((@G17 = @'CODE    ')) then goto L019B;
   PASCALCO.8();
-  PASCALCO.20(?, @L2^<4w>, 4, adjust((9 + 1),4), @L7, @L10);
+  PASCALCO.20(?, ?, @L2^<4w>, adjust((9 + 1),4), @L7, @L10);
   if not ((L7 = G12)) then goto L0197;
   G13 := L10;
-  if not (not (([$FFFF,$FFFF,$FFFF,$FFFF] in 4))) then goto L0178;
+  if not (not ((G13 in [$FFFF,$FFFF,$FFFF,$FFFF]))) then goto L0178;
   PASCALCO.4(203);
   G13 := 1;
-  { left on stack: G13 }
 L0178:
   PASCALCO.13(0);
   L22 := @G445[G21*9w];
@@ -7468,7 +7316,7 @@ L0197:
 L019B:
   if not (((G15 = 0) and (@G17 = @'DATA    '))) then goto L0236;
   PASCALCO.8();
-  PASCALCO.20(?, @L2^<4w>, 4, adjust((8 + 1),4), @L7, @L9);
+  PASCALCO.20(?, ?, @L2^<4w>, adjust((8 + 1),4), @L7, @L9);
   if not ((L7 = G12)) then goto L0232;
   G87 := L9;
   if not ((((G87 < 0) or (G87 > 63)) or (G87 = G13))) then goto L01F6;
@@ -7569,7 +7417,7 @@ procedure UNITPART.4(params 0 words);  { locals 3 words, lex 2 }
   if not ((G15 = 19)) then goto L038A;
   PASCALCO.8();
 L038A:
-  BODYPART.1(@I1,1^<4w>, 4, ([$0020,$0000] + 2), adjust((512 - 1),4), G84^.f7);
+  BODYPART.1(?, ?, (@I1,1^<4w> + [$0020,$0000]), adjust((512 - 1),4), G84^.f7);
   G10 := G84^.f5;
   G84 := G84^.f10;
 
@@ -7593,7 +7441,6 @@ L01B7:
   if not ((L6 > 96)) then goto L01C1;
   L6 := (L6-32);
 L01C1:
-  { left on stack: L6 }
   goto L03EF;
   if not ((G80 > 1)) then goto L01D0;
   PASCALCO.4(194);
@@ -7627,12 +7474,9 @@ L022C:
   PASCALCO.4(406);
 L023C:
   COMMAND();
-  FOPEN(@G756, @L7, 1, 0);
+  FOPEN(@L7, 1, 40, @G756, @L7, 1, 0);
   if not ((CSP34() <> 0)) then goto L0259;
   PASCALCO.4(403);
-  { left on stack: @L7 }
-  { left on stack: 1 }
-  { left on stack: 40 }
 L0259:
   G38 := 1;
   G714 := G14;
@@ -7647,18 +7491,15 @@ L0279:
   if not (((L5 = 43) or (L5 = 45))) then goto L02B2;
   G44 := (L5 = 43);
   if not ((G44 and not (G1357))) then goto L02B0;
-  FOPEN(@G796, '*SYSTEM.LST.TEXT[*]', 0, 0);
+  FOPEN(?, ?, ?, @G796, '*SYSTEM.LST.TEXT[*]', 0, 0);
 L02B0:
   goto L02D6;
 L02B2:
   COMPOPTI.3(@L7, 40);
   if not (not (G1357)) then goto L02D4;
   COMMAND();
-  FOPEN(@G796, @L7, 0, 0);
+  FOPEN(@L7, 1, 40, @G796, @L7, 0, 0);
   G44 := (CSP34() = 0);
-  { left on stack: @L7 }
-  { left on stack: 1 }
-  { left on stack: 40 }
 L02D4:
   COMPOPTI.2();
 L02D6:
@@ -7703,10 +7544,9 @@ L0368:
   goto L041E;
   G35 := (L5 = 43);
   G34 := (L4 = 43);
-  if not (([$2800,$0000,$0000] in 3)) then goto L038E;
+  if not ((L4 in [$2800,$0000,$0000])) then goto L038E;
   G14 := (G14+1);
   L4 := G1^[(G14+3)];
-  { left on stack: L4 }
 L038E:
   goto L041E;
   G43 := (L5 = 43);
@@ -7723,7 +7563,7 @@ L03B8:
   FCLOSE(@G716, 0);
   G29 := 1;
   COMPOPTI.3(@G606, 40);
-  FOPEN(@G716, @G606, 1, 0);
+  FOPEN(?, ?, ?, @G716, @G606, 1, 0);
   if not ((CSP34() <> 0)) then goto L03E4;
   PASCALCO.4(187);
 L03E4:
@@ -7785,7 +7625,6 @@ L010C:
   if not ((L4^.f8 = 7)) then goto L0138;
   if not (L4^.f10) then goto L0136;
   COMPOPTI.5(L4^.f9);
-  { left on stack: 224 }
 L0136:
   goto L013D;
 L0138:
@@ -7795,6 +7634,7 @@ L013D:
 L013F:
   PASCALCO.4(273);
 L0145:
+  { paths disagree on stack depth here }
   if not ((G1^[G14] = 44)) then goto L0151;
   G14 := (G14+1);
 L0151:

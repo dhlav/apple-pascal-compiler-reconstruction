@@ -113,11 +113,24 @@ Done, and reproducible via `python tools/build_all.py`:
    cleaner target and the compiler that would have built 1.1's own source —
    then carry the result to 1.3 through the correspondence table.
 
-8. **Improve the lifter** (finding 13). Two concrete gaps: merge
-   predecessor stacks at control-flow joins so argument lists that straddle
-   a join resolve, and add structuring so `if not (c) then goto L` becomes
-   `if`/`while`/`repeat`/`case`. Both are prerequisites for stage two —
-   turning pseudo-Pascal into compilable Pascal.
+8. **Improve the lifter** (findings 13, 20). Half done.
+
+   * *Stack merging at joins — done.* Entry stacks are the fixed-point
+     merge of predecessors', with `phi` for equal-depth disagreement and an
+     explicit report for unequal depth. Unattributed stack values across
+     both releases: 542 → 22.
+   * *Control-flow structuring — still open.* The output is still
+     `if not (c) then goto L`. Turning that into `if`/`while`/`repeat`/
+     `case` is the remaining prerequisite for stage two, compilable Pascal.
+     `XJP` already carries its full jump table, so `case` is the easiest
+     starting point; loops are recognisable as a back edge to a dominating
+     block.
+
+   Also open, and harder: 95 joins where the two paths disagree on stack
+   depth. Mostly UCSD sets, which are variable-length at runtime, so a
+   static word-count model cannot always size them. Do not "fix" these by
+   loosening the merge — the report is what makes a wrong callee arity
+   findable, which is how finding 20a was found.
 
 ## Working rules
 

@@ -136,6 +136,12 @@ class Block:
     branch: int | None = None
     incomplete: bool = False
     underflow: bool = False
+    # Evaluation stack on entry and exit, after the fixed point below has
+    # settled. Kept because a depth disagreement between two predecessors
+    # is almost always a wrong callee signature somewhere upstream, and
+    # these are what make that diagnosable.
+    entry_stack: list = field(default_factory=list)
+    exit_stack: list = field(default_factory=list)
 
 
 def _targets(stream: list[Insn]) -> set[int]:
@@ -174,6 +180,18 @@ class _Lifter:
         st: list[str] = list(entry or [])
         out = b.stmts
 
+        # Width in machine words of each slot, where known. A slot is one
+        # value in this model but can be several words on the real stack --
+        # LDM n pushes n. Only used to recognise a set's length word; None
+        # means "one word, or unknown", which is the safe default.
+        wid: list[int | None] = [None] * len(st)
+
+        def push(v, w=None):
+            st.append(v)
+            wid.append(w)
+            while len(wid) > len(st):
+                wid.pop()
+
         def pop():
             if not st:
                 # Underflow within a block is not automatically wrong -- a
@@ -182,15 +200,28 @@ class _Lifter:
                 # and the arity solver must not treat it as a clean fit.
                 b.underflow = True
                 return "?"
+            if wid:
+                wid.pop()
             return st.pop()
 
         for k, i in enumerate(b.insns):
             m, o = i.mnemonic, i.operands
             try:
-                if m == "SLDC":
-                    st.append(str(o[0]))
-                elif m == "LDCI":
-                    st.append(str(o[0]))
+                if m in ("SLDC", "LDCI"):
+                    # A UCSD set lives on the stack as its data words with a
+                    # length word pushed on top, and the set operators pop
+                    # that length. Modelling the data as one slot but the
+                    # length as a second slot makes UNI/INT/DIF pair the
+                    # wrong operands -- they union a set with a length.
+                    # So when a constant equals the width of the slot just
+                    # pushed, it is that slot's length word: absorb it, and
+                    # a raw set becomes exactly one slot like every other
+                    # value. Interp.s Op8B_INN and OpA0_ADJ both pop this
+                    # length word first, which is what fixes the pairing.
+                    if st and wid and wid[-1] == o[0]:
+                        wid[-1] = None          # now a complete raw set
+                    else:
+                        push(str(o[0]))
                 elif m == "LDCN":
                     st.append("nil")
                 elif m in ("SLDL", "LDL"):
@@ -212,13 +243,16 @@ class _Lifter:
                     idx, a = pop(), pop()
                     st.append(f"{a}^[{idx}]")
                 elif m == "LDM":
-                    st.append(f"{pop()}^<{o[0]}w>")
+                    # pops the source address (Interp.s OpBC_LDM), pushes
+                    # o[0] words as one slot
+                    push(f"{pop()}^<{o[0]}w>", o[0])
                 elif m == "LSA":
                     st.append(repr(o[0].decode("ascii", "replace")))
                 elif m == "LPA":
                     st.append("@" + repr(o[0].decode("ascii", "replace")))
                 elif m == "LDC":
-                    st.append("[" + ",".join(f"${w:04X}" for w in o[0]) + "]")
+                    push("[" + ",".join(f"${w:04X}" for w in o[0]) + "]",
+                         len(o[0]))
                 elif m == "IXA":
                     idx, a = pop(), pop()
                     st.append(f"{a}[{idx}]" if o[0] == 1 else f"{a}[{idx}*{o[0]}w]")
@@ -363,34 +397,86 @@ def lift(seg, proc, cf) -> list[Block]:
         else:
             b.fallthrough = addrs[k + 1] if k + 1 < len(addrs) else None
 
-    # Predecessor counts, so a stack can be carried across an edge only when
-    # it is unambiguous which stack arrives.
-    preds: dict[int, int] = {b.start: 0 for b in blocks}
+    # --- successors and predecessors ------------------------------------
+    byaddr = {b.start: b for b in blocks}
     for b in blocks:
-        for t in (b.branch, b.fallthrough):
-            if t in preds:
-                preds[t] += 1
+        s = []
         if b.insns[-1].mnemonic == "XJP":
             o = b.insns[-1].operands
-            for t in [o[2], *o[3]]:
-                if t in preds:
-                    preds[t] += 1
+            s = [o[2], *o[3]]
+        else:
+            s = [t for t in (b.fallthrough, b.branch) if t is not None]
+        b.succs = [t for t in s if t in byaddr]
+    preds: dict[int, list[int]] = {b.start: [] for b in blocks}
+    for b in blocks:
+        for t in b.succs:
+            preds[t].append(b.start)
 
-    # An argument list can straddle a block boundary, so carry the residual
-    # stack forward along a fallthrough edge when the successor has exactly
-    # one predecessor. Anywhere else, start empty and report the residue.
-    exits: dict[int, list[str]] = {}
-    for k, b in enumerate(blocks):
-        entry = None
-        if k and blocks[k - 1].fallthrough == b.start and preds[b.start] == 1:
-            entry = exits.get(blocks[k - 1].start)
-        exits[b.start] = lifter.run(b, entry)
+    # --- entry stacks, by fixed point ------------------------------------
+    #
+    # An argument list can straddle a block boundary, so a block's entry
+    # stack is whatever its predecessors leave behind. The earlier version
+    # only carried a stack along a single-predecessor fallthrough edge,
+    # which lost every argument list that spanned a join -- the bulk of the
+    # "left on stack" residue.
+    #
+    # Merge rule at a join: identical stacks merge to themselves. Stacks of
+    # equal depth whose slots differ merge slotwise to `phi(a, b)`, which is
+    # a real value the program computes two ways and is worth showing.
+    # Stacks of *different* depth are not reconciled -- that means the two
+    # paths disagree about how much is live, so nothing can be said with
+    # confidence and the block starts empty. Recorded rather than guessed.
+    def merge(stacks):
+        stacks = [s for s in stacks if s is not None]
+        if not stacks:
+            return []
+        if len({len(s) for s in stacks}) != 1:
+            return None                      # depth conflict: give up
+        out = []
+        for slots in zip(*stacks):
+            uniq = list(dict.fromkeys(slots))
+            out.append(uniq[0] if len(uniq) == 1
+                       else "phi(" + ", ".join(uniq) + ")")
+        return out
 
-    for k, b in enumerate(blocks):
-        residue = exits.get(b.start) or []
-        carried = (k + 1 < len(blocks) and b.fallthrough == blocks[k + 1].start
-                   and preds[blocks[k + 1].start] == 1)
-        if residue and not carried:
+    entry_of: dict[int, list[str] | None] = {b.start: None for b in blocks}
+    # None means "not yet known", which is different from "known to be
+    # empty". Seeding these to [] instead makes every not-yet-visited
+    # predecessor look like an empty stack, and the first join with a real
+    # argument list on one side then reports a false depth conflict.
+    exits: dict[int, list[str] | None] = {b.start: None for b in blocks}
+    conflict: set[int] = set()
+
+    # Iterate to a fixed point. Bounded because a p-code procedure's CFG is
+    # small and the merge only ever widens; the cap is a guard against a
+    # pathological loop, not an expected outcome.
+    for _ in range(len(blocks) + 4):
+        changed = False
+        conflict = set()
+        for b in blocks:
+            e = ([] if b.start == blocks[0].start
+                 else merge([exits[p] for p in preds[b.start]]))
+            if e is None:
+                conflict.add(b.start)
+                e = []
+            if e != entry_of[b.start]:
+                entry_of[b.start] = e
+                changed = True
+            b.stmts = []
+            b.cond = None
+            b.incomplete = b.underflow = False
+            exits[b.start] = lifter.run(b, list(e))
+        if not changed:
+            break
+
+    for b in blocks:
+        b.entry_stack = list(entry_of[b.start] or [])
+        b.exit_stack = list(exits[b.start] or [])
+    for b in blocks:
+        if b.start in conflict:
+            b.stmts.insert(0, "{ paths disagree on stack depth here }")
+        residue = exits[b.start]
+        if residue and not b.succs:
             for leftover in residue:
                 b.stmts.append(f"{{ left on stack: {leftover} }}")
     return blocks

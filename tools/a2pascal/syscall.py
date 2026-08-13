@@ -74,18 +74,52 @@ def csp_name(n: int) -> str:
 
 
 # Parameter word counts for the UCSD calling convention.
-#   VAR parameter            -> 1 word (an address)
 #   value scalar / pointer   -> 1 word
 #   value REAL               -> 2 words
-#   value structured (STRING, records) -> 1 word (address; callee copies)
+#   VAR parameter            -> 1 word (an address)
+#
+# A type-based rule for wider VAR parameters was tried and rejected. The
+# CSPs do pass packed references as (base, index) pairs, so the same was
+# expected here, and FBLOCKIO's call sites do push eight words against six
+# declared parameters. But no assignment of two-word types reproduces the
+# call sites: making FIB two words fixes FBLOCKIO and immediately breaks
+# FCLOSE, whose sites supply two words for the same declaration.
+#
+# The resolution is finding 8. GLOBALS.TEXT is the *generic UCSD II.0*
+# operating system, not Apple's. Where Apple's segment 0 disagrees with it,
+# the call sites are the evidence and the declaration is not. Individual
+# routines are therefore overridden below from call-site evidence rather
+# than by inventing a rule that fits one routine and breaks another.
 _REAL = {"REAL"}
+VAR_TWO_WORD: set[str] = set()
+
+# name -> parameter words, where Apple's segment 0 demonstrably differs
+# from the UCSD II.0 declaration. Solved by tools/probes/probe_os_arity.py,
+# which picks the arity minimising unattributed stack values and stack-depth
+# disagreements across all 287 procedures, and reports the margin.
+OS_WORD_OVERRIDE: dict[str, int] = {
+    # 24 call sites; the declared 6 leaves two words stranded at every one
+    # of them, and 8 balances by a margin of 20 over any other count.
+    "FBLOCKIO": 8,     # UCSD II.0 declares 6
+    # 13 call sites, margin 4. Weaker than FBLOCKIO but consistent, and
+    # Apple extending FOPEN is unsurprising given its file system.
+    "FOPEN": 7,        # UCSD II.0 declares 4
+    # Deliberately absent: CXP 0,43. The compiler calls it five times, and
+    # GLOBALS.TEXT's 43rd forward declaration is COMMAND, but the segment-0
+    # numbering is only *verified* to 29 (finding 18, against Miller's
+    # table), so proc 43's identity is an extrapolation. Its best arity
+    # wins by a margin of 1, which is not evidence. Left as declared.
+}
 
 
-def _param_words(decl: str) -> int:
-    """Word count of one 'a,b: TYPE' group, given VAR-ness is handled by caller."""
+def _param_words(decl: str, is_var: bool = False) -> int:
+    """Word count of one 'a,b: TYPE' group."""
     names, _, typ = decl.partition(":")
     n = len([x for x in names.split(",") if x.strip()])
-    return n * (2 if typ.strip().upper() in _REAL else 1)
+    t = typ.strip().upper()
+    if is_var:
+        return n * (2 if t in VAR_TWO_WORD else 1)
+    return n * (2 if t in _REAL else 1)
 
 
 def segment0_signatures(globals_text: Path) -> dict[int, tuple[str, int, bool]]:
@@ -116,7 +150,8 @@ def segment0_signatures(globals_text: Path) -> dict[int, tuple[str, int, bool]]:
                 grp = grp.strip()
                 if not grp:
                     continue
-                words += _param_words(re.sub(r"^VAR\s+", "", grp, flags=re.I))
-        out[n] = (name, words, is_fn)
+                stripped = re.sub(r"^VAR\s+", "", grp, flags=re.I)
+                words += _param_words(stripped, is_var=stripped != grp)
+        out[n] = (name, OS_WORD_OVERRIDE.get(name, words), is_fn)
         n += 1
     return out

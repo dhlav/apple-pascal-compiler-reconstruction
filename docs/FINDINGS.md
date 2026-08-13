@@ -685,6 +685,88 @@ any of the four `Interp*.s` copies or the `Kernel128*` variants; all
 dispatch to "not implemented". Plan step 6's native-code track gets no help
 here.
 
+## 20. Merging evaluation stacks at control-flow joins
+
+Plan step 8's first half. The lifter used to carry a stack forward only
+along a single-predecessor fallthrough edge, so every argument list that
+spanned a branch was abandoned and printed as `{ left on stack: ... }`.
+A block's entry stack is now the merge of its predecessors' exit stacks,
+computed to a fixed point over the CFG.
+
+The merge rule: identical stacks merge to themselves; equal-depth stacks
+whose slots differ merge slotwise to `phi(a, b)`, a real value the program
+computes two ways; unequal-depth stacks are **not** reconciled, because
+that means the model has lost track on at least one path. Those are
+reported as `{ paths disagree on stack depth here }` rather than papered
+over. `Block.entry_stack` / `exit_stack` are kept for diagnosis.
+
+That reporting immediately paid for itself: a depth disagreement is almost
+never a real property of the program, it is a wrong callee arity upstream,
+and it points at the guilty join. Two came out of it.
+
+### 20a. Apple's segment 0 is not UCSD II.0's
+
+`FBLOCKIO` is declared in `GLOBALS.TEXT` with six parameters. Its 24 call
+sites all push eight words, leaving its first two arguments stranded.
+
+The tempting fix — VAR parameters of packed types take two words, as the
+CSPs do (finding 17) — is wrong, and `tools/probes/probe_var_words.py`
+keeps the record. Making `FIB` two words fixes `FBLOCKIO` and breaks
+`FCLOSE`, which carries the same `VAR F: FIB` and whose sites supply one
+word. No rule can be right and wrong about one declaration.
+
+The explanation is finding 8. `GLOBALS.TEXT` is the *generic* UCSD II.0
+operating system; Apple's segment 0 is a derivative. Its declarations are
+a good default, not evidence about these disks.
+
+So each routine is checked against the call sites instead, by
+`tools/probes/probe_os_arity.py`. Of the 15 segment-0 routines the compiler
+calls, **12 are confirmed exactly as declared** — GLOBALS.TEXT is right
+about Apple far more often than not. Two are overridden:
+
+* `FBLOCKIO` 6 → **8** words. 24 call sites, margin 20. Not in doubt.
+* `FOPEN` 4 → **7** words. 13 call sites, margin 4. Weaker, and adopted as
+  STRONG INFERENCE.
+
+Not adopted: `CXP 0,43`, called five times. `GLOBALS.TEXT`'s 43rd forward
+declaration is `COMMAND`, but the segment-0 numbering is only *verified* to
+29 (finding 18, against Miller's table), so proc 43's identity is an
+extrapolation, and its best arity wins by a margin of 1. Left as declared
+and recorded here as open.
+
+### 20b. A set's length word belongs to the set
+
+A UCSD set sits on the stack as its data words with a **length word pushed
+on top** — visible directly in `Interp.s`, where `Op8B_INN` and `OpA0_ADJ`
+both pop that length before touching the data. The lifter modelled the data
+as one slot but the length as a second slot, so `UNI`/`INT`/`DIF` paired
+the wrong operands: they unioned a set with a length word.
+
+Now a constant push whose value equals the width of the slot just pushed is
+recognised as that slot's length word and absorbed, making a raw set
+exactly one slot like every other value. Slot widths are tracked for this;
+`LDM n` also now pops its source address, which `OpBC_LDM` does and the
+model did not.
+
+Set expressions come out as Pascal after this. One that previously left a
+dangling address now reads:
+
+```
+  @L14^ := adjust((@L14^<8w> + [L12..L13]), 8)  { 8 words };
+```
+
+### Effect
+
+Across all 287 procedures, unattributed stack values fall from **542 to
+22**, and the newly-reported depth disagreements settle at **95**. One
+procedure, `BODYPART.35`, goes from 9 disagreements to 1.
+
+What remains is genuinely hard rather than merely unfinished: UCSD sets are
+variable-length at runtime, so a static word-count model cannot always know
+a set's size, and the residual cases are mostly that. Control-flow
+structuring — `if`/`while`/`repeat`/`case` in place of the current
+conditional gotos — is still open, and is the other half of plan step 8.
+
 ## 19. The 1.3 native procedures, disassembled
 
 `analysis/native/PASCALCO-1.3-native.asm.txt`, from
