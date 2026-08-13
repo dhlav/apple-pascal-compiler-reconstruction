@@ -48,6 +48,18 @@ except OSError:
 # supplies the ten that tools/probes/probe_csp_arity.py could not reach. The
 # two that probe did solve, 34 and 40, are confirmed exactly: they are
 # IORESULT and MEMAVAIL, both zero-argument word-returning functions.
+# (segment, procedure number) -> (param words, is function, name).
+#
+# Only Apple Pascal 1.3 has native procedures, and only these two: the
+# hand-coded IDSEARCH and TREESEARCH that replaced 1.1's CSP 7 and CSP 8
+# (finding 19). They carry no p-code, so their signatures cannot be read
+# off a return instruction the way every other callee's can, and without
+# them the four procedures that call them cannot be lifted.
+NATIVE_SIG = {
+    ("PASCALCO", 2): (2, False, "IDSEARCH"),
+    ("PASCALCO", 3): (3, True, "TREESEARCH"),
+}
+
 CSP_EFFECT = {
     0: (0, 0),    # IOCHECK    -- inspects IOResult, touches no stack
     1: (2, 0),    # NEW(ptr, nwords)
@@ -80,17 +92,23 @@ CSP_EFFECT = {
     38: (1, 0),   # UNITCLEAR(unit)
     39: (0, 0),   # HALT
     40: (0, 1),   # MEMAVAIL -> integer
-    # 7 IDSEARCH and 8 TREESEARCH are the two the interpreter cannot settle:
-    # every version of Interp.s dispatches them to "not implemented", because
-    # they exist only to serve the compiler and the runtime-only system drops
-    # them. So these stay STRONG INFERENCE, resting on 1.1 call sites alone.
+    # 7 IDSEARCH and 8 TREESEARCH are the two the 1.4 interpreter cannot
+    # settle: every version of Interp.s dispatches them to "not implemented",
+    # because they serve only the compiler and the runtime-only system drops
+    # them. They are pinned instead by 1.3's native reimplementations, which
+    # are disassembled in analysis/native/ (finding 19).
     #
-    # 8 was (3, 0) and is now (2, 0): probe_csp_check found (2, 0) balances
-    # two more procedures, over four call sites, and nothing argues the other
-    # way now that the source-derived entries have removed the noise that
-    # earlier masked the difference.
-    7: (2, 0),    # IDSEARCH
-    8: (2, 0),    # TREESEARCH
+    # IDSEARCH takes two VAR parameters and returns nothing.
+    #
+    # TREESEARCH is a *function* of three arguments returning an integer, so
+    # (3, 1). The binary cannot distinguish this from (2, 0) -- both are a
+    # net -1 word, both balance 117 procedures, and the balance test sees
+    # only the net. The split comes from the procedure's own code: it pops
+    # three parameter addresses and pushes a one-word result. This is the
+    # limit of balance testing stated plainly, and the reason finding 14's
+    # method needed a source to check it against.
+    7: (2, 0),    # IDSEARCH(VAR idrec, VAR id)
+    8: (3, 1),    # TREESEARCH(root, VAR node, VAR name) -> integer
 }
 
 BINOP = {
@@ -312,8 +330,17 @@ def lift(seg, proc, cf) -> list[Block]:
         if tgt is None:
             return None, label, False
         p = next((x for x in tgt.procedures if x.number == n), None)
-        if p is None or p.is_native:
+        if p is None:
             return None, label, False
+        if p.is_native:
+            # A native procedure has no p-code to read a signature out of,
+            # so it has to be supplied. Both of the two that exist are
+            # known from finding 19.
+            sig = NATIVE_SIG.get((tgt.name, n))
+            if sig is None:
+                return None, label, False
+            words, isfn, nm = sig
+            return words, f"{label} {nm}", isfn
         isfn = False
         for i in reversed(disassemble(tgt.data, p.enter_ic, p.exit_ic, p.jtab)[0]
                           + sweep_exit(tgt.data, p.exit_ic, p.jtab - 8, p.jtab)[0]):

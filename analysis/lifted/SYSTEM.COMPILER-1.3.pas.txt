@@ -198,9 +198,9 @@ procedure PASCALCO.7(params 1 words);  { locals 3 words, lex 1 }
   @G134[G8*4w]^ := L1;
   goto L03D3;
 L0398:
-  { stack tracking stopped: 'PASCALCO.3' }
-  { CGP 3 }
-  { STL 4 }
+  L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
+  { left on stack: L3 }
+  { left on stack: @L2 }
 L03A2:
   if not ((L4 = 0)) then goto L03C2;
   PASCALCO.4(101);
@@ -208,9 +208,9 @@ L03A2:
   L4 := 1;
   goto L03C0;
 L03B5:
-  { stack tracking stopped: 'PASCALCO.3' }
-  { CGP 3 }
-  { STL 4 }
+  L4 := PASCALCO.3 TREESEARCH(L1, 0, 0);
+  { left on stack: L2^.f4 }
+  { left on stack: @L2 }
 L03C0:
   goto L03A2;
 L03C2:
@@ -257,9 +257,7 @@ L0576:
   G23 := L3;
 L0586:
   goto L076A;
-  { stack tracking stopped: 'PASCALCO.2' }
-  { CGP 2 }
-  { UJP $076A (jtab-18) }
+  PASCALCO.2 IDSEARCH(@G14, G1);
   goto L076A;
   PASCALCO.28(125);
   goto L0518;
@@ -357,12 +355,9 @@ L0784:
 
 procedure PASCALCO.9(params 2 words);  { locals 0 words, lex 1 }
   if not ((L2 <> nil)) then goto L07B8;
-  { stack tracking stopped: 'PASCALCO.3' }
-  { CGP 3 }
-  { SLDC 0 }
-  { EQUI }
-  { FJP $07B3 }
-  goto L07B3;
+  if not ((PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0)) then goto L07B3;
+  { left on stack: L2 }
+  { left on stack: L1 }
   goto L07B6;
 L07B3:
   L1^ := nil;
@@ -379,13 +374,10 @@ L07CE:
   if not ((G24 >= L4)) then goto L0815;
   L3 := @G134[G24*4w]^;
   if not ((L3 <> nil)) then goto L080D;
-  { stack tracking stopped: 'PASCALCO.3' }
-  { CGP 3 }
-  { SLDC 0 }
-  { EQUI }
-  { FJP $080A }
-  goto L080A;
+  if not ((PASCALCO.3 TREESEARCH(@G17, 0, 0) = 0)) then goto L080A;
   if not ((L2 in 1)) then goto L07FC;
+  { left on stack: L3 }
+  { left on stack: @L3 }
   { left on stack: L3^.f8 }
   goto L085C;
   goto L0808;

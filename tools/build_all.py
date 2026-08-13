@@ -15,6 +15,7 @@ STEPS = [
     ("segment/procedure maps", "map_compiler.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
+    ("native 6502 listings", "disasm6502.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),

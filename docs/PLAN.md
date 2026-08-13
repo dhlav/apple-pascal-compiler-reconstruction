@@ -77,10 +77,19 @@ Done, and reproducible via `python tools/build_all.py`:
    not cover — anything that walks only procedure bodies will miss it.
 
 6. **Work the 1.3 delta.** Two 1.3-only tracks:
-   * A 6502 disassembler for the two native procedures, and a
-     reconstruction of `IDSEARCH`/`TREESEARCH` in assembly. 1.1's
-     `CSP 7`/`CSP 8` call sites give the required semantics; note
-     `TREESEARCH` gained two parameters.
+   * *Native procedures — disassembly done* (finding 19). Both are
+     disassembled cleanly in `analysis/native/`, identified as `IDSEARCH`
+     (PASCALCO.2) and `TREESEARCH` (PASCALCO.3), and their signatures are
+     known, so all 287 procedures now lift. The reserved-word table
+     embedded in IDSEARCH is decoded, including the compiler's `SY`/`OP`
+     symbol codes for all 42 reserved words — feed those into step 2, since
+     a reconstruction has to declare that enumeration.
+
+     What remains: turn the two listings into assembly source that
+     reassembles to the same bytes, and identify the word-data block each
+     carries after its last `RTS` (probably linker relocation lists).
+     `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is a good
+     structural model but is 1.2 — corroboration, not authority.
    * Account for the ~130-word growth in globals. The correspondence table
      localises the insertions to a few points; read off which offsets are
      new in 1.3 and classify them with the same evidence pipeline.

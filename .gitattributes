@@ -8,6 +8,7 @@
 
 # Analysis output is plain ASCII; keep it stable across platforms.
 *.txt  text eol=lf
+*.asm  text eol=lf
 *.md   text eol=lf
 *.py   text eol=lf
 *.json text eol=lf

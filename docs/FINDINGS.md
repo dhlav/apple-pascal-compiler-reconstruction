@@ -146,6 +146,10 @@ pulling arguments off the p-machine stack.
 
 ## 6a. The two native procedures are IDSEARCH and TREESEARCH
 
+> **See finding 19**, which disassembles both, establishes which is which
+> from the call sites, and decodes the reserved-word table inside IDSEARCH.
+
+
 **STRONG INFERENCE**, from matched call sites; see
 `tools/probes/probe_idsearch_13.py`.
 
@@ -680,6 +684,104 @@ labelled inference and is now source-backed:
 any of the four `Interp*.s` copies or the `Kernel128*` variants; all
 dispatch to "not implemented". Plan step 6's native-code track gets no help
 here.
+
+## 19. The 1.3 native procedures, disassembled
+
+`analysis/native/PASCALCO-1.3-native.asm.txt`, from
+`tools/disasm6502.py` over a plain NMOS 6502 decoder in
+`tools/a2pascal/m6502.py`. This is plan step 6's first track.
+
+**Which is which.** PASCALCO procedure 2 is `IDSEARCH` (794 bytes) and
+procedure 3 is `TREESEARCH` (142 bytes). VERIFIED BINARY FACT, by
+correspondence rather than by reading the code: 1.1 issues `CSP 7` once and
+`CSP 8` four times, and 1.3 has exactly five matching call sites at the same
+offsets in the same segment, `CGP 2` where 1.1 had `CSP 7 IDSEARCH` and
+`CGP 3` at all four `CSP 8 TREESEARCH` sites.
+
+```
+   1.1                              1.3
+   $0553  CSP 7  IDSEARCH           $058B  CGP 2
+   $038A  CSP 8  TREESEARCH         $039E  CGP 3
+   $03A6  CSP 8                     $03BC  CGP 3
+   $076F  CSP 8                     $07AB  CGP 3
+   $07AC  CSP 8                     $07EA  CGP 3
+```
+
+**They are linked into PASCALCO, not an intrinsic unit.** Worth stating
+because the natural assumption is otherwise. They are procedures 2 and 3 of
+the `PASCALCO` segment itself, reached by `CGP` — call *global* procedure,
+same segment. An intrinsic unit would be a separate segment reached by `CXP`
+with its own segment number, and would need a `SYSTEM.LIBRARY`, which is on
+neither evidence disk. `LIBRARY.CODE` and `LIBMAP.CODE` on the 1.3 disk are
+the librarian utilities, whose segments are named `LIBRARIA` and `LIBMAP`.
+The build almost certainly did assemble them separately and merge them with
+the UCSD Linker — that is exactly what produces native procedures inside a
+Pascal segment, and it is what the procedure-number-zero marker denotes
+(finding 17) — but the artifact on the disk has them inside PASCALCO.
+
+**The reserved-word table.** IDSEARCH carries its own data, and a linear
+sweep walks straight into it. Carved out and decoded in
+`tools/probes/probe_reserved_words.py`:
+
+* `$12E0`-`$1313` — 26 little-endian offsets from `$11F2`, one per initial
+  letter. The seven letters that begin no Pascal reserved word — H J K Q X
+  Y Z — all point at one shared 3-byte slot at `$1314` whose count is 1 and
+  whose name field is `$40 $23 ...`, unmatchable by construction.
+* `$1317`-`$14CE` — per letter, a one-byte count then that many 10-byte
+  entries: the name padded to eight characters, a symbol class `SY`, and an
+  operator sub-code `OP`.
+
+The parse is checked four ways and passes all of them: every count equals
+the number of Pascal reserved words for its letter, the 19 lists tile
+`$1317..$14CE` with **zero gaps and zero overlaps**, and the 42 names
+recovered are exactly the reserved words of UCSD Pascal — none missing,
+none extra.
+
+The `SY`/`OP` values are the compiler's own symbol enumeration, which is
+otherwise very hard to recover and which a reconstruction has to declare.
+They are internally consistent in a way that argues they are read
+correctly: `AND`, `DIV` and `MOD` all carry `SY=$27` with `OP` 2, 3 and 4 —
+one symbol class for the multiplying operators, distinguished by operator
+code — while `OR` is `$28/07`, `IN` is `$29/0E` and `NOT` is `$26/00`,
+each its own class. `PROGRAM` and `SEGMENT` share `$21`.
+
+**Independent corroboration.** Dave Tribby disassembled the 1.2
+`SYSTEM.APPLE` versions of both routines and published commented 6502
+source (`evidence/reference/`). It is a different release, so it is
+corroboration and not authority — where the two differ, the 1.3 binary
+wins. Comparing it against the table extracted here:
+
+* **41 of 41 of his entries match exactly**, name, `SY` and `OP`.
+* **1.3 adds one reserved word: `OTHERWISE`, `SY=$36`.** A genuine 1.2 → 1.3
+  language change, visible only by having both.
+* His empty-letter sentinel `NUM0 .BYTE 001,040,023` is byte-for-byte the
+  unexplained 3-byte slot at `$1314` above, which it now explains.
+* His entry code — `PLA STA RTN / PLA STA RTN+1 / PLA TAY / PLA TAX / PLA
+  STA PARAM1 / PLA STA PARAM1+1` — matches the 1.3 disassembly instruction
+  for instruction, with `RTN` = `$7E` and `PARAM1` = `$94`. The zero-page
+  *allocation* differs: 1.3 puts its scratch in `$7E`-`$8F`, the
+  interpreter's floating-point accumulator area, where 1.2 used a low base.
+
+**It settles CSP 7 and 8, which nothing else could.** Tribby's declarations
+are `.PROC IDSearch,2` and `.FUNC TreeSearch,3`. So `IDSEARCH` is `(2, 0)`
+and `TREESEARCH` is a three-argument *function*, `(3, 1)`.
+
+The binary cannot separate `(3,1)` from `(2,0)`: both are a net −1 word,
+both balance 117 procedures, and balance testing sees only the net. That is
+worth recording as the method's ceiling — finding 14's technique constrains
+a CSP's net stack effect and never its split. Adopting `(3,1)` keeps the
+best score the binary allows and matches the only source that states the
+signature.
+
+**Still open.** Both procedures carry a block of word data between their
+last `RTS` and their attribute table — `$14CE`-`$150C` in IDSEARCH,
+`$1592`-`$15A0` in TREESEARCH. Linker relocation lists are the obvious
+guess, since the 26 index words are absolute references needing fixup, but
+the values have not been made to fit and are emitted as raw bytes rather
+than described as something they may not be.
+
+With the data carved out, IDSEARCH disassembles to 138 instructions with no
+undecodable bytes, landing exactly on its end address.
 
 ## 18. Peter Miller's `ucsd-psystem-xc`
 

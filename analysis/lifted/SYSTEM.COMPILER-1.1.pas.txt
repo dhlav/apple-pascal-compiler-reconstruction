@@ -191,8 +191,7 @@ procedure PASCALCO.5(params 1 words);  { locals 3 words, lex 1 }
   @G131[G8*4w]^ := L1;
   goto L03BD;
 L0386:
-  CSP8(@L2, L1);
-  L4 := L3;
+  L4 := CSP8(L3, @L2, L1);
 L038E:
   if not ((L4 = 0)) then goto L03AC;
   PASCALCO.2(101);
@@ -200,8 +199,7 @@ L038E:
   L4 := 1;
   goto L03AA;
 L03A1:
-  CSP8(@L2, L1);
-  L4 := L2^.f4;
+  L4 := CSP8(L2^.f4, @L2, L1);
 L03AA:
   goto L038E;
 L03AC:
@@ -346,8 +344,7 @@ L074C:
 
 procedure PASCALCO.7(params 2 words);  { locals 0 words, lex 1 }
   if not ((L2 <> nil)) then goto L077C;
-  CSP8(L1, @G17);
-  if not ((L2 = 0)) then goto L0777;
+  if not ((CSP8(L2, L1, @G17) = 0)) then goto L0777;
   goto L077A;
 L0777:
   L1^ := nil;
@@ -364,8 +361,7 @@ L0792:
   if not ((G24 >= L4)) then goto L07D7;
   L3 := @G131[G24*4w]^;
   if not ((L3 <> nil)) then goto L07CF;
-  CSP8(@L3, @G17);
-  if not ((L3 = 0)) then goto L07CC;
+  if not ((CSP8(L3, @L3, @G17) = 0)) then goto L07CC;
   if not ((L2 in 1)) then goto L07BE;
   { left on stack: L3^.f8 }
   goto L081E;

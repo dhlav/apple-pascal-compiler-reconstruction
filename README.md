@@ -16,14 +16,15 @@ evidence/          original inputs, never modified
                    here: John Brooks' Apple Pascal 1.4 interpreter source,
                    and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
   disks/           the two Apple Pascal .dsk images and ii0src.sdk
-  reference/       Neil Parker, "Undocumented Secrets of Apple Pascal"
+  reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
 tools/             all analysis code
-  a2pascal/        disk.py codefile.py pcode.py textfile.py nufx.py syscall.py
+  a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
+                   nufx.py syscall.py lift.py globals.py
   probes/          one-off scripts that established a format detail
   build_all.py     regenerates everything below
 build/             ii0src.po, the disk image unpacked from ii0src.sdk
 reference_source/  UCSD II.0 operating system source, extracted
-analysis/          procedure_maps/  pcode_disassembly/  callgraph/
+analysis/          procedure_maps/  pcode_disassembly/  native/  callgraph/
                    global_map/      globals-*.txt, correspondence-1.1-to-1.3.txt
                    procedures/      per-procedure evidence profiles
 legacy/            the inherited ChatGPT phase archive, unaltered
@@ -64,7 +65,7 @@ The compiler's global variables are mapped (sizes, shapes, access counts,
 users), and several service routines are identified — the error reporter,
 the scanner, the symbol-table search, the code-byte emitter.
 
-**283 of 287 procedures across the two releases lift to expression-level
+**All 287 procedures across the two releases lift to expression-level
 pseudo-Pascal** with the evaluation stack fully tracked
 (`analysis/lifted/`). `tools/show.py SEGMENT.N` prints a procedure's
 p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:

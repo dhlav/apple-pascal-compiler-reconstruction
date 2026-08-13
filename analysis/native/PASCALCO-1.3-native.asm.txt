@@ -1,0 +1,345 @@
+Apple Pascal 1.3 SYSTEM.COMPILER -- native 6502 procedures
+source image : Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk
+
+Disassembled by tools/a2pascal/m6502.py. Addresses are offsets
+within the PASCALCO segment, not absolute memory addresses: the
+segment is relocated at load time, so any absolute operand below
+is a segment-relative reference that the loader fixes up.
+VERIFIED BINARY FACT for the bytes; the naming is finding 19.
+
+====================================================================
+PASCALCO.2  IDSEARCH
+  bytes $11F2..$150C  (794 bytes, 138 instructions)
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  11F2 68                PLA
+  11F3 85 7e             STA $7E
+  11F5 68                PLA
+  11F6 85 7f             STA $7F
+  11F8 68                PLA
+  11F9 a8                TAY
+  11FA 68                PLA
+  11FB aa                TAX
+  11FC 68                PLA
+  11FD 85 94             STA $94
+  11FF 68                PLA
+  1200 85 95             STA $95
+  1202 98                TYA
+  1203 a0 00             LDY #$00
+  1205 18                CLC
+  1206 71 94             ADC ($94),Y
+  1208 85 96             STA $96
+  120A 8a                TXA
+  120B c8                INY
+  120C 71 94             ADC ($94),Y
+  120E 85 97             STA $97
+  1210 a9 20             LDA #$20
+  1212 a2 07             LDX #$07
+  1214 95 88     L1214:  STA $88,X
+  1216 ca                DEX
+  1217 d0 fb             BNE $1214
+  1219 88                DEY
+  121A b1 96             LDA ($96),Y
+  121C c9 61             CMP #$61
+  121E 90 07             BCC $1227
+  1220 c9 7b             CMP #$7B
+  1222 b0 03             BCS $1227
+  1224 38                SEC
+  1225 e9 20             SBC #$20
+  1227 85 88     L1227:  STA $88
+  1229 c8        L1229:  INY
+  122A b1 96             LDA ($96),Y
+  122C c9 7b             CMP #$7B
+  122E b0 04             BCS $1234
+  1230 c9 61             CMP #$61
+  1232 b0 16             BCS $124A
+  1234 c9 30     L1234:  CMP #$30
+  1236 90 04             BCC $123C
+  1238 c9 3a             CMP #$3A
+  123A 90 10             BCC $124C
+  123C c9 41     L123C:  CMP #$41
+  123E 90 15             BCC $1255
+  1240 c9 5b             CMP #$5B
+  1242 90 08             BCC $124C
+  1244 c9 5f             CMP #$5F
+  1246 d0 0d             BNE $1255
+  1248 f0 df             BEQ $1229
+  124A e9 20     L124A:  SBC #$20
+  124C e8        L124C:  INX
+  124D e0 08             CPX #$08
+  124F b0 d8             BCS $1229
+  1251 95 88             STA $88,X
+  1253 90 d4             BCC $1229
+  1255 88        L1255:  DEY
+  1256 98                TYA
+  1257 a0 00             LDY #$00
+  1259 18                CLC
+  125A 71 94             ADC ($94),Y
+  125C 91 94             STA ($94),Y
+  125E c8                INY
+  125F b1 94             LDA ($94),Y
+  1261 69 00             ADC #$00
+  1263 91 94             STA ($94),Y
+  1265 a5 88             LDA $88
+  1267 0a                ASL A
+  1268 a8                TAY
+  1269 b9 6c 00          LDA $006C,Y
+  126C 85 92             STA $92
+  126E b9 6d 00          LDA $006D,Y
+  1271 85 93             STA $93
+  1273 a0 00             LDY #$00
+  1275 b1 92             LDA ($92),Y
+  1277 85 90             STA $90
+  1279 a2 00     L1279:  LDX #$00
+  127B a0 01             LDY #$01
+  127D e8        L127D:  INX
+  127E c8                INY
+  127F b1 92             LDA ($92),Y
+  1281 d5 88             CMP $88,X
+  1283 f0 11             BEQ $1296
+  1285 c6 90             DEC $90
+  1287 f0 32             BEQ $12BB
+  1289 a5 92             LDA $92
+  128B 18                CLC
+  128C 69 0a             ADC #$0A
+  128E 85 92             STA $92
+  1290 90 02             BCC $1294
+  1292 e6 93             INC $93
+  1294 d0 e3     L1294:  BNE $1279
+  1296 e0 07     L1296:  CPX #$07
+  1298 d0 e3             BNE $127D
+  129A c8                INY
+  129B b1 92             LDA ($92),Y
+  129D 85 86             STA $86
+  129F c8                INY
+  12A0 b1 92             LDA ($92),Y
+  12A2 85 87             STA $87
+  12A4 a0 02             LDY #$02
+  12A6 a5 86             LDA $86
+  12A8 91 94             STA ($94),Y
+  12AA c8                INY
+  12AB a9 00             LDA #$00
+  12AD 91 94             STA ($94),Y
+  12AF c8                INY
+  12B0 a5 87             LDA $87
+  12B2 91 94             STA ($94),Y
+  12B4 c8                INY
+  12B5 a9 00             LDA #$00
+  12B7 91 94             STA ($94),Y
+  12B9 f0 1e             BEQ $12D9
+  12BB a9 00     L12BB:  LDA #$00
+  12BD a0 02             LDY #$02
+  12BF 91 94             STA ($94),Y
+  12C1 c8                INY
+  12C2 91 94             STA ($94),Y
+  12C4 c8                INY
+  12C5 c8                INY
+  12C6 91 94             STA ($94),Y
+  12C8 88                DEY
+  12C9 a9 15             LDA #$15
+  12CB 91 94             STA ($94),Y
+  12CD a0 0e             LDY #$0E
+  12CF a2 07             LDX #$07
+  12D1 88        L12D1:  DEY
+  12D2 b5 88             LDA $88,X
+  12D4 91 94             STA ($94),Y
+  12D6 ca                DEX
+  12D7 10 f8             BPL $12D1
+  12D9 a5 7f     L12D9:  LDA $7F
+  12DB 48                PHA
+  12DC a5 7e             LDA $7E
+  12DE 48                PHA
+  12DF 60                RTS
+
+  ---- data $12E0..$1314: letter index: 26 little-endian offsets from $11F2
+  12E0 25 01     .word $0125   ; A -> $1317
+  12E2 3a 01     .word $013A   ; B -> $132C
+  12E4 45 01     .word $0145   ; C -> $1337
+  12E6 5a 01     .word $015A   ; D -> $134C
+  12E8 79 01     .word $0179   ; E -> $136B
+  12EA 98 01     .word $0198   ; F -> $138A
+  12EC c1 01     .word $01C1   ; G -> $13B3
+  12EE 22 01     .word $0122   ; H -> $1314
+  12F0 cc 01     .word $01CC   ; I -> $13BE
+  12F2 22 01     .word $0122   ; J -> $1314
+  12F4 22 01     .word $0122   ; K -> $1314
+  12F6 f5 01     .word $01F5   ; L -> $13E7
+  12F8 00 02     .word $0200   ; M -> $13F2
+  12FA 0b 02     .word $020B   ; N -> $13FD
+  12FC 16 02     .word $0216   ; O -> $1408
+  12FE 35 02     .word $0235   ; P -> $1427
+  1300 22 01     .word $0122   ; Q -> $1314
+  1302 54 02     .word $0254   ; R -> $1446
+  1304 69 02     .word $0269   ; S -> $145B
+  1306 7e 02     .word $027E   ; T -> $1470
+  1308 9d 02     .word $029D   ; U -> $148F
+  130A bc 02     .word $02BC   ; V -> $14AE
+  130C c7 02     .word $02C7   ; W -> $14B9
+  130E 22 01     .word $0122   ; X -> $1314
+  1310 22 01     .word $0122   ; Y -> $1314
+  1312 22 01     .word $0122   ; Z -> $1314
+
+
+  ---- data $1314..$14CE: reserved-word table: per letter, a count then 10-byte entries of name[8], SY, OP
+  1317 02        .byte 2        ; count
+  1318           .ascii 'AND     '  .byte $27,$02   ; AND  SY=$27 OP=$02
+  1322           .ascii 'ARRAY   '  .byte $2C,$00   ; ARRAY  SY=$2C OP=$00
+  132C 01        .byte 1        ; count
+  132D           .ascii 'BEGIN   '  .byte $13,$00   ; BEGIN  SY=$13 OP=$00
+  1337 02        .byte 2        ; count
+  1338           .ascii 'CASE    '  .byte $15,$00   ; CASE  SY=$15 OP=$00
+  1342           .ascii 'CONST   '  .byte $1C,$00   ; CONST  SY=$1C OP=$00
+  134C 03        .byte 3        ; count
+  134D           .ascii 'DO      '  .byte $06,$00   ; DO  SY=$06 OP=$00
+  1357           .ascii 'DIV     '  .byte $27,$03   ; DIV  SY=$27 OP=$03
+  1361           .ascii 'DOWNTO  '  .byte $08,$00   ; DOWNTO  SY=$08 OP=$00
+  136B 03        .byte 3        ; count
+  136C           .ascii 'END     '  .byte $09,$00   ; END  SY=$09 OP=$00
+  1376           .ascii 'ELSE    '  .byte $0D,$00   ; ELSE  SY=$0D OP=$00
+  1380           .ascii 'EXTERNAL'  .byte $35,$00   ; EXTERNAL  SY=$35 OP=$00
+  138A 04        .byte 4        ; count
+  138B           .ascii 'FOR     '  .byte $18,$00   ; FOR  SY=$18 OP=$00
+  1395           .ascii 'FUNCTION'  .byte $20,$00   ; FUNCTION  SY=$20 OP=$00
+  139F           .ascii 'FILE    '  .byte $2E,$00   ; FILE  SY=$2E OP=$00
+  13A9           .ascii 'FORWARD '  .byte $22,$00   ; FORWARD  SY=$22 OP=$00
+  13B3 01        .byte 1        ; count
+  13B4           .ascii 'GOTO    '  .byte $1A,$00   ; GOTO  SY=$1A OP=$00
+  13BE 04        .byte 4        ; count
+  13BF           .ascii 'IF      '  .byte $14,$00   ; IF  SY=$14 OP=$00
+  13C9           .ascii 'IN      '  .byte $29,$0E   ; IN  SY=$29 OP=$0E
+  13D3           .ascii 'IMPLEMEN'  .byte $34,$00   ; IMPLEMEN  SY=$34 OP=$00
+  13DD           .ascii 'INTERFAC'  .byte $33,$00   ; INTERFAC  SY=$33 OP=$00
+  13E7 01        .byte 1        ; count
+  13E8           .ascii 'LABEL   '  .byte $1B,$00   ; LABEL  SY=$1B OP=$00
+  13F2 01        .byte 1        ; count
+  13F3           .ascii 'MOD     '  .byte $27,$04   ; MOD  SY=$27 OP=$04
+  13FD 01        .byte 1        ; count
+  13FE           .ascii 'NOT     '  .byte $26,$00   ; NOT  SY=$26 OP=$00
+  1408 03        .byte 3        ; count
+  1409           .ascii 'OF      '  .byte $0B,$00   ; OF  SY=$0B OP=$00
+  1413           .ascii 'OR      '  .byte $28,$07   ; OR  SY=$28 OP=$07
+  141D           .ascii 'OTHERWIS'  .byte $36,$00   ; OTHERWIS  SY=$36 OP=$00
+  1427 03        .byte 3        ; count
+  1428           .ascii 'PROCEDUR'  .byte $1F,$00   ; PROCEDUR  SY=$1F OP=$00
+  1432           .ascii 'PACKED  '  .byte $2B,$00   ; PACKED  SY=$2B OP=$00
+  143C           .ascii 'PROGRAM '  .byte $21,$00   ; PROGRAM  SY=$21 OP=$00
+  1446 02        .byte 2        ; count
+  1447           .ascii 'REPEAT  '  .byte $16,$00   ; REPEAT  SY=$16 OP=$00
+  1451           .ascii 'RECORD  '  .byte $2D,$00   ; RECORD  SY=$2D OP=$00
+  145B 02        .byte 2        ; count
+  145C           .ascii 'SET     '  .byte $2A,$00   ; SET  SY=$2A OP=$00
+  1466           .ascii 'SEGMENT '  .byte $21,$00   ; SEGMENT  SY=$21 OP=$00
+  1470 03        .byte 3        ; count
+  1471           .ascii 'THEN    '  .byte $0C,$00   ; THEN  SY=$0C OP=$00
+  147B           .ascii 'TO      '  .byte $07,$00   ; TO  SY=$07 OP=$00
+  1485           .ascii 'TYPE    '  .byte $1D,$00   ; TYPE  SY=$1D OP=$00
+  148F 03        .byte 3        ; count
+  1490           .ascii 'UNTIL   '  .byte $0A,$00   ; UNTIL  SY=$0A OP=$00
+  149A           .ascii 'USES    '  .byte $31,$00   ; USES  SY=$31 OP=$00
+  14A4           .ascii 'UNIT    '  .byte $32,$00   ; UNIT  SY=$32 OP=$00
+  14AE 01        .byte 1        ; count
+  14AF           .ascii 'VAR     '  .byte $1E,$00   ; VAR  SY=$1E OP=$00
+  14B9 02        .byte 2        ; count
+  14BA           .ascii 'WHILE   '  .byte $17,$00   ; WHILE  SY=$17 OP=$00
+  14C4           .ascii 'WITH    '  .byte $19,$00   ; WITH  SY=$19 OP=$00
+
+
+  ---- data $14CE..$150C: unidentified trailing data, after the last RTS
+  14CE 00 00 66 02 63 02 f4 01
+  14D6 f4 01 f4 01 f4 01 f4 01
+  14DE f4 01 f4 01 f4 01 f4 01
+  14E6 f4 01 f4 01 f4 01 f4 01
+  14EE f4 01 f4 01 f4 01 f4 01
+  14F6 f4 01 f4 01 f4 01 f4 01
+  14FE f4 01 f4 01 f4 01 f4 01
+  1506 f4 01 1c 00 00 00
+
+
+====================================================================
+PASCALCO.3  TREESEARCH
+  bytes $1512..$15A0  (142 bytes, 76 instructions)
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  1512 68                PLA
+  1513 85 84             STA $84
+  1515 68                PLA
+  1516 85 85             STA $85
+  1518 68                PLA
+  1519 68                PLA
+  151A 68                PLA
+  151B 68                PLA
+  151C 68                PLA
+  151D 85 82             STA $82
+  151F 68                PLA
+  1520 85 83             STA $83
+  1522 68                PLA
+  1523 85 7e             STA $7E
+  1525 68                PLA
+  1526 85 7f             STA $7F
+  1528 68                PLA
+  1529 85 80             STA $80
+  152B 68                PLA
+  152C 85 81             STA $81
+  152E a2 08             LDX #$08
+  1530 a0 ff             LDY #$FF
+  1532 ca        L1532:  DEX
+  1533 30 37             BMI $156C
+  1535 c8                INY
+  1536 b1 82             LDA ($82),Y
+  1538 d1 80             CMP ($80),Y
+  153A f0 f6             BEQ $1532
+  153C 30 17             BMI $1555
+  153E a0 08             LDY #$08
+  1540 b1 80             LDA ($80),Y
+  1542 aa                TAX
+  1543 c8                INY
+  1544 b1 80             LDA ($80),Y
+  1546 c9 00             CMP #$00
+  1548 d0 04             BNE $154E
+  154A e0 00             CPX #$00
+  154C f0 2c             BEQ $157A
+  154E 86 80     L154E:  STX $80
+  1550 85 81             STA $81
+  1552 4c 1c 00          JMP $001C
+  1555 a0 0a     L1555:  LDY #$0A
+  1557 b1 80             LDA ($80),Y
+  1559 aa                TAX
+  155A c8                INY
+  155B b1 80             LDA ($80),Y
+  155D c9 00             CMP #$00
+  155F d0 04             BNE $1565
+  1561 e0 00             CPX #$00
+  1563 f0 0e             BEQ $1573
+  1565 86 80     L1565:  STX $80
+  1567 85 81             STA $81
+  1569 4c 1c 00          JMP $001C
+  156C a9 00     L156C:  LDA #$00
+  156E 48                PHA
+  156F 48                PHA
+  1570 4c 6e 00          JMP $006E
+  1573 a9 ff     L1573:  LDA #$FF
+  1575 48                PHA
+  1576 48                PHA
+  1577 4c 6e 00          JMP $006E
+  157A a9 00     L157A:  LDA #$00
+  157C 48                PHA
+  157D a9 01             LDA #$01
+  157F 48                PHA
+  1580 a0 00             LDY #$00
+  1582 a5 80             LDA $80
+  1584 91 7e             STA ($7E),Y
+  1586 c8                INY
+  1587 a5 81             LDA $81
+  1589 91 7e             STA ($7E),Y
+  158B a5 85             LDA $85
+  158D 48                PHA
+  158E a5 84             LDA $84
+  1590 48                PHA
+  1591 60                RTS
+
+  ---- data $1592..$15A0: unidentified trailing data, after the last RTS
+  1592 00 00 41 00 2c 00 27 00
+  159A 22 00 04 00 00 00
+
