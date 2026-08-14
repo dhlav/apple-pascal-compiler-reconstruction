@@ -1264,8 +1264,10 @@ they do is finding 24a.
 `$NS` is the sharpest of these. II-152: "the letters NS followed by an
 unsigned integer which should be in the range 7..57 for a 128K system and
 7..31 for a 64K system." The code parses at most two digits and accepts the
-value only `if (n > NEXTSEG) and (n < 31)` — the 64K bound, on the nose,
-with the default sitting at the bottom of the documented range.
+value only `if (n > NEXTSEG) and (n < 31)` in **1.1** — the 64K bound, on
+the nose, with the default sitting at the bottom of the documented range.
+1.3 raises it to 63, the 128K bound; see finding 27a, which corrects the
+version confusion in an earlier draft of this paragraph.
 
 **And the compiler itself was not compiled with `{$U-}`.** `PASCALCO.1` has
 `lex=0`, which 23a says is the *user program* level; system level would be
@@ -1728,6 +1730,99 @@ initialised in `COMPINIT.10` to a one-word set `{2,3}` and then passed to
 almost certainly `klass` codes 2 and 3 — `vars` and `field` — and not
 symbols at all. It is left alone until the `klass` enumeration of finding
 22 is settled.
+
+## 27. Eight more PASCALCO routines, and a name that was wrong
+
+Naming continued from finding 26, using the vendor's error list as the
+lever: a routine that raises error 354 is doing something about segment
+numbers whatever else it does. **VERIFIED BINARY FACT** for every
+behaviour; spellings are ours except `COMPTYPES`, which is Pascal-P's.
+
+| 1.1 | 1.3 | name | what forces it |
+|---|---|---|---|
+| `.3` | `.5` | `NEXTBLOCK` | reads two blocks into `SOURCEBUF` from the include file, the source or the workfile; raises **401** "Unexpected end of input" |
+| `.10` | `.12` | `BUMPSEG` | `if n^ < limit then n^ := n^ + 1 else ERROR(e)`; both call sites pass **354** "Too many segments for segment dictionary" |
+| `.11` | `.13` | `NEWSEGMENT` | bumps `NEXTSEG` and `SEGSLOT`, then records `SEGSLOT` in a packed 4-bit table |
+| `.19` | `.21` | `COMPTYPES` | 35 call sites; recursive on `form`, with a pair list to terminate on mutually recursive pointers |
+| `.21` | `.23` | `EMITWORD` | emits one word, byte-swapped under `{$F+}` (finding 24a) |
+| `.24` | `.26` | `BLOCK` | dispatches `unitsy` to `UNITPART`; raises **408** "(*$S+*) needed to compile units" |
+| `.26` | `.28` | `COMMENT` | scans to the closing delimiter it is passed — `}` or `*` — and sends a leading `$` to `COMPOPTI.1` |
+
+`COMPTYPES` is the highest-confidence name in the project after `EMIT`. It
+is Pascal-P's `comptypes(fsp1, fsp2): boolean` instruction for
+instruction, including the detail that matters most: a list of
+already-compared type pairs, threaded through global 76, which is what
+stops it looping on `type p = ^rec; rec = record next: p end`.
+
+Globals named with them: `CODEBUF` (2) and `CODEINX` (9), the code buffer
+and the count of bytes in it that `EMIT` appends to and `FLUSHBUFFER`
+writes out 512 bytes at a time — raising **402** "Error in write to code
+file" — plus `LCBASE` (86 / 89), the bytes of the current procedure
+already flushed, so that the location counter is `LCBASE + CODEINX`;
+`SOURCEBLOCK` (90 / 93); and `SEGSLOT` (21 in both).
+
+### 27a. 1.3 raises the segment limit from 31 to 63
+
+**VERIFIED BINARY FACT**, and a clean 1.1 → 1.3 delta. Both places that
+bound a segment number move together:
+
+| | 1.1 | 1.3 |
+|---|---|---|
+| `NEWSEGMENT`'s call to `BUMPSEG` | `(@NEXTSEG, 31, 354)` | `(@NEXTSEG, 63, 354)` |
+| `COMPOPTI.1`'s `$NS` arm | `if (n > NEXTSEG) and (n < 31)` | `if (n > NEXTSEG) and (n < 63)` |
+
+The codefile-slot bound stays at 15 in both, which is the 16-segment
+codefile limit finding 23e found in the 1.1 update notice.
+
+This **corrects finding 23c**, which quoted the 1.3 manual's "7..57 for a
+128K system and 7..31 for a 64K system" against the *1.1* binary's 31 and
+called it "the 64K bound, on the nose". It is the 64K bound, but it is
+1.1's; 1.3 uses the 128K bound, and the manual's 57 is simply more
+conservative than the code's 63.
+
+### 27b. Global 13 is not the lexical level — an open contradiction
+
+Finding 23c named global 13 `LEVEL`, "Zurich's `level`; 1 for the program
+block, and the emitted LEX LEVEL byte is one less". That description is
+accurate. It is **global 96** that answers to it.
+
+Three things establish this, and `tools/probes/probe_attribtable.py`
+checks all of them across both disks:
+
+* **Procedures are laid out contiguously**, body then attribute table:
+  sorted by `enter_ic`, every procedure's `jtab + 2` is the next one's
+  `enter_ic`, 287 for 287 with **0 gaps**. So the last two bytes a
+  procedure emits are `JTAB+0` and `JTAB+1`, in that order.
+* `PASCALCO.23`'s last two instructions are `EMIT(G13)` then
+  `EMIT(G96 - 1)`. With the layout above, `G13` supplies `JTAB+0` and
+  `G96 - 1` supplies `JTAB+1`.
+* **`JTAB+0` is the procedure number** — 1..N within each segment, never
+  the segment number, which would make all ten of `COMPINIT`'s read 7.
+  And **`JTAB+1` is the lexical level**, which the *shape* of its
+  distribution settles rather than its range:
+
+      JTAB+0   1:15  2:11  3:10  4:9  5:6 ... 37:1     a per-segment index
+      JTAB+1   0:1   1:33  2:57  3:43  4:5  5:2  6:1   a nesting histogram
+
+  Exactly **one** procedure in the whole compiler has `JTAB+1 = 0`, and it
+  is the program block. A count of jump-table entries would put dozens
+  there, since most procedures have no backward branch.
+
+Global 96 behaves accordingly everywhere else too: 1 for the main program,
+2 on entering a segment procedure, `+1` and `-1` around nesting, saved and
+restored across it, and loaded from an identifier record's field 2 when a
+procedure is re-entered. That is `level`.
+
+What global 13 *is* remains unresolved, and one site fits neither reading:
+`LEVEL := NEXTSEG`, at three places, assigns a segment number to it. It
+also indexes a packed 4-bit table that `NEWSEGMENT` writes the codefile
+slot into, which would make it a segment number — but then `EMIT(G13)`
+could not be producing a procedure number. **The name is left in place
+rather than changed**, with a caution in `names.py`, so the listings do
+not churn twice; changing it is worth doing once the answer is actually
+known. Note that finding 23c's `{$U-}` argument does not rest on this: it
+rests on `PASCALCO.1`'s recorded `lex=0` and on segment numbering, neither
+of which is affected.
 
 ## 16. Open questions
 

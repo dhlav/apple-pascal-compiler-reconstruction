@@ -43,8 +43,16 @@ Done, and reproducible via `python tools/build_all.py`:
 
    The phase segments are now started too: `BODYPART.3/4/5/6/27` are the
    compiler's five code emitters, and `BODYPART.25` its block-body
-   generator (finding 24c). `PASCALCO.12:NEXTLINE` and `PASCALCO.14:SKIP`
-   came out of finding 26, which leaves 13 of PASCALCO's 29 unnamed. Those five are the routines every other phase
+   generator (finding 24c). `NEXTLINE` and `SKIP` came out of finding 26,
+   and `NEXTBLOCK`, `BUMPSEG`, `NEWSEGMENT`, `COMPTYPES`, `EMITWORD`,
+   `BLOCK` and `COMMENT` out of finding 27 — **24 of PASCALCO's 29 are now
+   named**, and the five left are `.13` (the second `$F` site, task 11),
+   `.23`, `.25`, `.28` and `.29`.
+
+   The lever that worked in finding 27 is worth reusing: the manual's
+   error list (II-3E) names what every `ERROR(n)` means, so a routine's
+   error numbers say what it is for before its code is understood.
+   `BUMPSEG` was named off error 354 alone. Those five are the routines every other phase
    calls to produce output, so naming them makes the code-generation half
    of the compiler readable in a way the service layer did not.
 
@@ -230,4 +238,12 @@ Done, and reproducible via `python tools/build_all.py`:
   `{$R-}` is established (no `CHK` anywhere) and `{$G+}` is all but certain;
   `{$U-}` is ruled out. See finding 23c.
 * When a 1.1 fact is established, push it through the correspondence table
-  and confirm it holds in 1.3. Divergences are findings, not noise.
+  and confirm it holds in 1.3. Divergences are findings, not noise — the
+  segment limit moving from 31 to 63 (finding 27a) was found that way, and
+  it corrected a version confusion in finding 23c.
+* A recovered name can be wrong, and the way that shows up is a second
+  routine behaving more like the name than the one holding it. Finding 27b
+  is the worked example: global 96 does everything global 13 was named
+  for. When that happens, write the evidence down and leave the name
+  alone until the answer is actually known — renaming twice is worse than
+  renaming late.

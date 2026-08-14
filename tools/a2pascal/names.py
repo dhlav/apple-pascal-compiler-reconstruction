@@ -32,6 +32,21 @@ PASCALCO_11: dict[int, str] = {
                          # dot, write the listing line                  fdg 26
     14: "SKIP",          # `while not (SY in fsys) do INSYMBOL` -- Pascal-P's
                          # error recovery, called after 37 of the ERROR sites
+    # --- finding 27 ---------------------------------------------------------
+    3:  "NEXTBLOCK",     # read the next two source blocks into SOURCEBUF;
+                         # error 401 "Unexpected end of input" if it cannot
+    10: "BUMPSEG",       # (var n; limit, err) -- bounded increment. Both call
+                         # sites are segment counters and both pass error 354,
+                         # "Too many segments for segment dictionary".
+    11: "NEWSEGMENT",    # allocate the next segment number and codefile slot
+    19: "COMPTYPES",     # Pascal-P's comptypes(fsp1, fsp2): boolean -- 35 call
+                         # sites, recursive on `form`, with a pair list to
+                         # terminate on mutually recursive pointer types
+    21: "EMITWORD",      # emit one word, byte-swapped under {$F+}
+    24: "BLOCK",         # the outer block: dispatches `unitsy` to UNITPART and
+                         # raises error 408, "(*$S+*) needed to compile units"
+    26: "COMMENT",       # scan a comment to its closing delimiter, which is the
+                         # argument; a leading `$` goes to COMPOPTI.1
     18: "CONSTANT",      # parse a constant (fsys; var lsp, lvalu)
     20: "EMIT",          # the code-byte emitter (finding 12, VERIFIED)
     22: "FLUSHBUFFER",   # code-buffer flush (finding 12)
@@ -173,6 +188,14 @@ GLOBALS_11: dict[int, str] = {
     # The scanner's working set (finding 26). All six carry the same
     # operand number in 1.3 except LINENUMBER.
     1:   "SOURCEBUF",   # the source line buffer, indexed by CHINDEX
+    2:   "CODEBUF",     # the code the compiler is generating, byte-indexed by
+                        # CODEINX; FLUSHBUFFER writes it out 512 bytes at a
+                        # time and raises error 402 if the write fails
+    9:   "CODEINX",     # bytes currently in CODEBUF; EMIT appends one
+    21:  "SEGSLOT",     # codefile slot for the segment being compiled, 0..15
+    86:  "LCBASE",      # bytes of this procedure already flushed, so the
+                        # current location counter is LCBASE + CODEINX
+    90:  "SOURCEBLOCK", # next block number to read from the source file
     14:  "CHINDEX",     # scan position within SOURCEBUF
     16:  "OP",          # the operator qualifying SY; see OPERATORS
     22:  "LGTH",        # length of the scanned string or long constant
@@ -204,8 +227,17 @@ GLOBALS_11: dict[int, str] = {
     # Compiler-option state (finding 23). COMPOPTI.1 switches on the
     # upper-cased option letter, so each of these is tied to its letter by
     # the case table itself; the spellings are ours, the letters are not.
-    13:  "LEVEL",       # Zurich's `level`; 1 for the program block, and the
-                        # emitted LEX LEVEL byte is one less
+    # CAUTION: this name is under review -- see the open question in finding
+    # 27. The behaviour finding 23c described ("Zurich's `level`, 1 for the
+    # program block, emitted LEX LEVEL byte one less") is what global 96
+    # does, not this one: 96 is set to 1 for the main program and 2 for a
+    # segment procedure, incremented and decremented around nesting, saved
+    # and restored across it, and it is `G96 - 1` that ENDPROC emits into the
+    # byte the codefile reader reads as LEX LEVEL. What global 13 is has not
+    # been settled, and `LEVEL := NEXTSEG` at three sites fits neither
+    # reading. Left named rather than renamed so the listings do not churn
+    # twice.
+    13:  "LEVEL",
     28:  "SYSCOMP",     # $U-, compile at the system lexical level
     30:  "OPT_F",       # $F, emit byte-swapped p-code (finding 24a)
     # Unit-compilation state. Written only in UNITPART, and UNITPART.3 --
@@ -245,10 +277,15 @@ GLOBALS_13: dict[int, str] = {
     # Finding 26. The scanner's globals did not move between releases
     # except the line counter; the six symbol sets all shifted by +3.
     1:   "SOURCEBUF",
+    2:   "CODEBUF",
+    9:   "CODEINX",
     14:  "CHINDEX",
     16:  "OP",
+    21:  "SEGSLOT",
     22:  "LGTH",
     23:  "VAL",
+    89:  "LCBASE",       # 1.1 global 86, +3
+    93:  "SOURCEBLOCK",  # 1.1 global 90, +3
     95:  "LINENUMBER",   # 1.1 global 92, +3
     101: "TYPEDELS",     # 1.1 global 98,  +3
     105: "STATBEGSYS",   # 1.1 global 102, +3
