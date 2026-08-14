@@ -228,7 +228,7 @@ def main() -> int:
                     writers.add(procname(s.name, p.number, ver)
                                 or f"{s.name}.{p.number}")
         expect = {"ONEUNIT", "PROCDECLARATION", "NEWPROC", "UNITPART",
-                  "WRITELINKERINFO", "COMPINIT.9"}
+                  "WRITELINKERINFO", "INITSCALARS"}
         if writers != expect:
             bad.append(f"{ver}: LINKINFO is stored into by {sorted(writers)}, "
                        f"expected {sorted(expect)}")

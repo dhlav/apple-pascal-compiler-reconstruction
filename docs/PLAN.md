@@ -35,7 +35,7 @@ Done, and reproducible via `python tools/build_all.py`:
 
 ## Next steps
 
-1. ~~**Finish naming the PASCALCO service layer.**~~ **Done** (finding 22).
+   ~~**Finish naming the PASCALCO service layer.**~~ **Done** (finding 22).
    `.9`, `.15`, `.16`, `.17` are `GETBOUNDS`, `ISSTRING`, `STRINGTYPE` and
    `LONGSIZE`; `.5` = `ENTERID` and `.18` = `CONSTANT` came with them.
    Fourteen routines are now named, in `tools/a2pascal/names.py`, and the
@@ -103,6 +103,16 @@ Done, and reproducible via `python tools/build_all.py`:
    rather than a convenience: the level is emitted into every
    `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
    procedure at the wrong depth changes the code bytes.
+
+1. ~~**Finish naming the PASCALCO service layer.**~~ **Done, and then
+   some** — finding 37 closes the last five segments, so **every one of
+   Apple Pascal 1.1's 142 procedures has a name**, and 144 of 1.3's 147.
+   What is left of this track is only the three procedures 1.3 adds
+   (`COMPINIT.11`, `BODYPART.26`, `COMPOPTI.5`), which belong with task
+   10, and tightening the seven spellings that are still ours.
+
+   The notes below are kept for the levers, which transfer to the global
+   map and to the 1.3 delta.
 
    Finding 36 closes `BODYPART` — **37 of 37** — which with `PASCALCO`,
    `DECLARAT`, `ROUTINE` and `STATEMEN` leaves only `COMPINIT`,

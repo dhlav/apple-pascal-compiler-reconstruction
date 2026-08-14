@@ -32,8 +32,14 @@ PASCALCO_11: dict[int, str] = {
                          # Finding 29.
     16: "STRGTYPE",    # is fsp a *declared* STRING?        finding 22
     17: "DECSIZE",      # words for an n-digit long integer  finding 22
-    12: "NEXTLINE",      # advance LINENUMBER and CHINDEX, echo the progress
-                         # dot, write the listing line                  fdg 26
+    12: "CHECKEND",      # II.0's CHECKEND (procs.a.text:142), line for
+                         # line: SCREENDOTS + 1, SYMCURSOR + 1, the
+                         # progress dot and `<nnnn>` every 50 under NOISY,
+                         # PRINTLINE under LIST, BPTONLINE := false,
+                         # GETNEXTPAGE at end of buffer, then the tab and
+                         # blank scan and LINEINFO := LC or IC. Was called
+                         # NEXTLINE here, which described it but was not
+                         # its name -- finding 37b.
     14: "SKIP",          # `while not (SY in fsys) do INSYMBOL` -- Pascal-P's
                          # error recovery, called after 37 of the ERROR sites
     # --- finding 27 ---------------------------------------------------------
@@ -421,6 +427,93 @@ BODYPART_REST: dict[int, str] = {
                        # division PASCALCO.28/.29 make one level up.
 }
 
+# --- finding 37: the remaining segments -----------------------------------
+#
+# COMPINIT is II.0's, procedure for procedure and in II.0's order: the
+# segment procedure calls exactly seven nested procedures, which is what
+# compinit.text declares. The two that are not II.0's, .5 and .6, are one
+# space optimisation -- rather than an eight-byte string constant per
+# standard identifier, Apple packs the names into one dotted literal and
+# pulls them out again.
+COMPINITS: dict[int, str] = {
+    2:  "ENTSTDTYPES",   # calls DECSIZE, which the long-integer
+                         # descriptor needs, and nothing else
+    3:  "ENTSTDNAMES",   # 14 string literals, and ENTERID
+    4:  "ENTUNDECL",     # builds the `undeclared` records; the only one
+                         # of the seven that calls nothing at all
+    5:  "PUTNAMES",      # OURS. Append a literal batch of `.`-separated
+                         # names to the pool at local 1, bounded at 511.
+                         # ENTSPCPROCS calls it five times, ENTSTDPROCS
+                         # twice, each with one string constant.
+    6:  "NEXTNAME",      # OURS. (var name) -- blank the eight characters,
+                         # SCAN to the next `.`, MOVELEFT the name out,
+                         # step the cursor past it. Called once each, from
+                         # inside the loop.
+    7:  "ENTSPCPROCS",
+    8:  "ENTSTDPROCS",
+    9:  "INITSCALARS",   # stores into 40-odd scalar globals and calls
+                         # nothing
+    10: "INITSETS",      # `LAO 126; LDC 4w; STM 4` and the rest -- the
+                         # eight `set of symbol` follow-sets, four words
+                         # each. Finding 26c said COMPINIT.9; it is .10.
+}
+
+# WRITELIN is II.0's WRITELINKERINFO with its two nested procedures, and
+# the nesting is the giveaway: GETNEXTBLOCK is the only thing at lex 3 in
+# the segment and the only BLOCKIO, and GLOBALSEARCH recurses -- it walks
+# the symbol tree -- and calls GETREFS, which is II.0's arrangement.
+WRITELINS: dict[int, str] = {
+    2: "GETREFS",        # (id, length) in II.0; Apple passes one word
+    3: "GETNEXTBLOCK",
+    4: "GLOBALSEARCH",   # (fcp), recursive, and WRITELINKERINFO's only
+                         # callee here
+}
+
+UNITPARTS: dict[int, str] = {
+    2: "OPENREFFILE",    # the only FOPEN in the segment
+    3: "UNITDECLARATION",  # (fsys; var umarkp) = 10 bytes
+    4: "UNITBODY",       # OURS. II.0 compiles the implementation inline
+                         # in UNITPART's body; Apple factored it out. The
+                         # only caller of BODYPART outside PASCALCO.
+}
+
+# NUMSTRIN is the scanner's two sub-scanners, made a segment of their own:
+# II.0's STRING and NUMBER (procs.a.text:265 and :302), which INSYMBOL
+# calls. NUMSTRIN.1 is a two-line dispatcher, `if flag then NUMBER else
+# STRING`, and INSYMBOL passes 0 at one site and 1 at the other.
+#
+# STRING shadows the predeclared type name, which is legal here and safer
+# than it was in II.0: Apple has it at lex 2 inside NUMSTRIN, so the
+# shadow cannot reach the STRING-typed globals. See finding 35c.
+NUMSTRINS: dict[int, str] = {
+    2: "STRING",         # calls ERROR and CHECKEND, II.0's STRING exactly
+                         # -- `error(202); CHECKEND; goto 1` on an
+                         # unterminated string. 90 bytes of locals for
+                         # II.0's `T: packed array [1..80] of char`.
+    3: "NUMBER",         # calls ERROR alone; 643 bytes, the real and
+                         # long-integer conversion
+}
+
+# COMPOPTI has no counterpart at all: II.0 handles compiler options inline
+# in COMMENTER. All three spellings are ours.
+# BODY3 is the tail of II.0's BODY, from `if sy = endsy` to WRITECODE,
+# and BODY3.1 emits it in II.0's order step for step. BODY3.2 is Apple's:
+# it emits GEN1(30, 21 GETSEG) and GEN1(30, 22 RELSEG) for the units in
+# USINGLIST, four of each, with GENLABEL/PUTLABEL/GENJMP(57 UJP) around
+# them. II.0 emits the GETSEG loop at the head of BODY and the RELSEG loop
+# at the tail; Apple emits both from here.
+BODY3S: dict[int, str] = {2: "UNITSEGS"}      # OURS
+
+COMPOPTIS: dict[int, str] = {
+    2: "BADOPT",         # OURS. Eight bytes: clear a flag in COMPOPTI's
+                         # frame, then `CSP 4` EXIT of segment 18
+                         # procedure 1 -- abandon the option
+    3: "OPTWORD",        # OURS. SCAN past blanks, then to the delimiter
+                         # in the parameter, and hand back the substring
+    4: "OPTLIST",        # OURS. INSYMBOL round a list, taking intconst
+                         # and identifiers; the only SEARCHID here
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
@@ -431,8 +524,14 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
            | {("ROUTINE", n): s for n, s in ROUTINES.items()}
+           | {("COMPINIT", n): s for n, s in COMPINITS.items()}
+           | {("WRITELIN", n): s for n, s in WRITELINS.items()}
+           | {("UNITPART", n): s for n, s in UNITPARTS.items()}
+           | {("NUMSTRIN", n): s for n, s in NUMSTRINS.items()}
+           | {("COMPOPTI", n): s for n, s in COMPOPTIS.items()}
+           | {("BODY3", n): s for n, s in BODY3S.items()}
            | {("BODYPART", n): s for n, s in BODYPART_MORE.items()}
-           | {("COMPINIT", 7): "ENTSPCPROCS"},
+           ,
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
     # The segment procedures keep procedure number 1 in 1.3 too: the two
@@ -446,8 +545,14 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
            | {("ROUTINE", n): s for n, s in ROUTINES.items()}
+           | {("COMPINIT", n): s for n, s in COMPINITS.items()}
+           | {("WRITELIN", n): s for n, s in WRITELINS.items()}
+           | {("UNITPART", n): s for n, s in UNITPARTS.items()}
+           | {("NUMSTRIN", n): s for n, s in NUMSTRINS.items()}
+           | {("COMPOPTI", n): s for n, s in COMPOPTIS.items()}
+           | {("BODY3", n): s for n, s in BODY3S.items()}
            | {("BODYPART", n): s for n, s in BODYPART_MORE.items()}
-           | {("COMPINIT", 7): "ENTSPCPROCS"},
+           ,
 }
 
 # --- the scanner's two enumerations (finding 26) ---------------------------
@@ -566,8 +671,9 @@ GLOBALS_11: dict[int, str] = {
     23:  "VAL",         # the scanned value, or a pointer to it
     92:  "SCREENDOTS",  # what `< n >` prints, and what {$D+} emits
 
-    # The six `set of symbol` follow-sets, initialised in COMPINIT.9 and
-    # each identified by the error its guard raises (finding 26).
+    # The eight `set of symbol` follow-sets, initialised in
+    # COMPINIT.10:INITSETS -- finding 26c said .9, which is INITSCALARS
+    # (finding 37a) -- and each identified by the error its guard raises.
     98:  "TYPEDELS",     # error 10, "Error in type"
     102: "STATBEGSYS",   # the statement loops
     106: "FACBEGSYS",    # error 58, "Error in factor (bad expression)"
@@ -592,6 +698,9 @@ GLOBALS_11: dict[int, str] = {
     # Each was placed by reading DECLARAT.10:USESDECLARATION against II.0's
     # source line for line, and each lands exactly where the drift column of
     # analysis/global_map/vardecl-ii0.txt said it would.
+    91:  "STARTDOTS",   # II.0 85, drift +6 -- the dot count when the page
+                        # began; CHECKEND breaks the line every 50 dots
+                        # since it
     44:  "LINKINFO",    # OURS. Apple merged II.0's two flags into one:
                         # PROCDECLARATION and USESDECLARATION set it, which
                         # is II.0's DLINKERINFO, and NEWPROC sets it too,
@@ -766,6 +875,7 @@ GLOBALS_13: dict[int, str] = {
 
     # Finding 34c. TEST does not move; the other three carry the same +1/+3
     # shift as their neighbours, and 1.3's DECLARAT.10/.12 confirm all four.
+    94:  "STARTDOTS",   # 1.1 global 91, +3
     45:  "LINKINFO",    # 1.1 global 44, +1 -- confirmed in 1.3's NEWPROC
     11:  "TEST",
     37:  "USING",

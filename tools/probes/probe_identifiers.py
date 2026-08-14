@@ -30,7 +30,10 @@ silent aliasing of two different variables at worst. So:
   * no name may fold onto a predeclared identifier (Table F-2B) either,
     because *"the Compiler will accept it but the original Pascal
     identifier will become unavailable within the scope of the new
-    meaning"* -- a silent breakage rather than a diagnostic;
+    meaning"* -- a silent breakage rather than a diagnostic. The one
+    exception is spelled out at the check itself: a *nested* procedure
+    whose name II.0 also uses for a procedure, where the scope of the new
+    meaning cannot reach the outermost one;
   * every name longer than eight characters is listed, because what we
     write is not what the compiler will see. Those are allowed only where
     the spelling is forced by evidence (Pascal-P's, or Apple's own).
@@ -45,8 +48,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from a2pascal.disk import PascalDisk
+from a2pascal.codefile import CodeFile
 from a2pascal.names import (GLOBALS_11, GLOBALS_13, OPERATORS, PROC_NAMES,
-                            SYMBOLS)
+                            SYMBOLS, procname)
+
+DISKS = {
+    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
+    "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
+}
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 NATIVE = ROOT / "analysis" / "native" / "PASCALCO-1.3-native.asm.txt"
@@ -88,25 +98,28 @@ WORDSTREAM WRITE WRITELN
 
 # Predeclared identifiers we deliberately shadow, with the reason. Empty:
 # nothing in the naming currently needs to.
-def ucsd_nested_procedures() -> set[str]:
-    """Identifiers II.0 declares as a procedure inside another procedure.
-
-    Redeclaring a predeclared identifier is legal -- the manual says the
-    compiler "will accept it" -- and only costs the original meaning
-    *within the scope of the new meaning*. II.0 does exactly that six
-    times, all at lexical level 3 inside ROUTINE: CLOSE, CONCAT, EXIT,
-    SCAN, SIZEOF and STR are the standard procedures' own handlers, named
-    after the procedures they compile. Apple compiled that source, so
-    those six shadowings are demonstrably safe.
-
-    The set is read out of the source rather than listed here, and only
-    indented declarations count, so a name invented for the outermost
-    scope can never buy its way in. Finding 35.
-    """
+def ucsd_procedures() -> set[str]:
+    """Identifiers II.0 declares as a procedure or a function."""
     out: set[str] = set()
     for f in sorted(II0_SOURCE.glob("*.text")):
-        out |= set(re.findall(r"^[ 	]+(?:PROCEDURE|FUNCTION)[ 	]+([A-Z][A-Z0-9]*)",
-                              f.read_text(errors="replace").upper(), re.M))
+        out |= set(re.findall(r"(?:PROCEDURE|FUNCTION)[ 	]+([A-Z][A-Z0-9]*)",
+                              f.read_text(errors="replace").upper()))
+    return out
+
+
+def apple_lex_levels() -> dict[str, dict[str, int]]:
+    """release -> name -> the lexical level Apple declares it at."""
+    out: dict[str, dict[str, int]] = {}
+    for ver, dsk in DISKS.items():
+        disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / dsk)
+        e = disk.find("SYSTEM.COMPILER")
+        cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
+        out[ver] = {}
+        for seg in cf.segments:
+            for p in seg.procedures:
+                nm = procname(seg.name, p.number, ver)
+                if nm:
+                    out[ver][nm] = p.lex_level
     return out
 
 
@@ -125,7 +138,19 @@ def main() -> int:
     bad, over = [], {}
     words = reserved_words()
     predeclared = {fold(w) for w in PREDECLARED}
-    shadowable = {fold(w) for w in ucsd_nested_procedures()} & predeclared
+    # Redeclaring a predeclared identifier is legal -- the manual says the
+    # compiler "will accept it" -- and costs the original meaning only
+    # *within the scope of the new meaning*. So a shadow is allowed when
+    # both halves of that are evidenced: II.0 declares a procedure of the
+    # name (Apple's own compiler accepted the source), and Apple declares
+    # it at lexical level 2 or deeper, so the shadow cannot reach the
+    # program's outermost scope where the intrinsic is needed. Seven names
+    # qualify -- CLOSE, CONCAT, EXIT, SCAN, SIZEOF, STR and STRING, the
+    # standard procedures' own handlers, named after what they compile.
+    # Both halves are required: an invented name fails the first, and a
+    # global fails the second. Finding 35c, extended by finding 37.
+    lex = apple_lex_levels()
+    ucsd_procs = {fold(w) for w in ucsd_procedures()}
     if len(words) < 40:
         bad.append(f"only {len(words)} reserved words found -- has the "
                    f"native listing changed?")
@@ -155,9 +180,10 @@ def main() -> int:
                 bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
                            f"which is a reserved word -- the compiler would "
                            f"refuse the declaration")
-            shadow_ok = (folded in shadowable
+            shadow_ok = (folded in ucsd_procs
                          and all(not w.startswith("global ")
-                                 for n in spellings for w in whence[n]))
+                                 for n in spellings for w in whence[n])
+                         and all(lex[rel].get(n, 0) >= 2 for n in spellings))
             if folded in predeclared and not shadow_ok:
                 bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
                            f"a predeclared identifier -- declaring it takes "
@@ -166,9 +192,9 @@ def main() -> int:
         print(f"{rel}: {len(pool)} distinct identifiers from "
               f"{len(sources)} names, no two alike in 8 characters, none "
               f"folding onto any of {len(words)} reserved words or "
-              f"{len(predeclared)} predeclared identifiers except the "
-              f"{len(shadowable)} that II.0 itself shadows with a nested "
-              f"procedure")
+              f"{len(predeclared)} predeclared identifiers except where "
+              f"II.0 names a procedure the same and Apple declares it at "
+              f"lex 2 or deeper")
 
     backed = ucsd_identifiers() | EXTRA_BACKED
     unvetted = sorted(set(over) - backed)

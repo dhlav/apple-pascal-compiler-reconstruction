@@ -165,6 +165,25 @@ it. Five more `BODYPART` names fall out of who calls what:
 with `BLOCKIO`, which calls the first two in that order, separating the
 pair that nothing else could.
 
+**Every procedure in Apple Pascal 1.1 now has a name — 142 of 142**
+(finding 37). 1.3 has 147, and the three without one are new in 1.3.
+
+The last five segments went the same way as the rest. `COMPINIT`'s
+segment procedure calls *exactly seven* of its nine procedures, which is
+how many `compinit.text` declares — the other two are Apple's own space
+optimisation, packing the standard identifiers into one dotted literal
+instead of an eight-byte constant apiece. `WRITELIN` is
+`WRITELINKERINFO`, `GETREFS`, `GETNEXTBLOCK` and `GLOBALSEARCH`;
+`NUMSTRIN` is the scanner's `STRING` and `NUMBER`, made a segment of
+their own.
+
+It also corrected two names. `PASCALCO.12` was `NEXTLINE`, a name of ours
+that described it; it is II.0's `CHECKEND`, line for line, down to the
+`'<' SCREENDOTS:4 '>'` every fifty dots — which named global 91 as
+`STARTDOTS` at exactly the drift the alignment predicted. And the eight
+follow-sets are initialised in `COMPINIT.10`, not `.9`: `.9` writes
+single words with `SRO`, `.10` writes four-word sets.
+
 `BODYPART` is finished too — 37 of 37 in 1.1 (finding 36) — and it turned
 up the one thing the codefile had been half-telling us all along. II.0's
 `BODY` is a single procedure; Apple made it four, and **named two of them

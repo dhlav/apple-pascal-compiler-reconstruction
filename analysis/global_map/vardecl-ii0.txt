@@ -91,7 +91,7 @@ that stretch; each step up is a variable Apple inserted.
    82 STRGCSTIC          1      -       
    83 SMALLESTSPACE      1      -       
    84 SYMBLK             1     90     +6
-   85 STARTDOTS          1      -       
+   85 STARTDOTS          1     91     +6
    86 SCREENDOTS         1     92     +6
    87 LINEINFO           1     93     +6
    88 LOWTIME            1      -       
@@ -140,4 +140,4 @@ that stretch; each step up is a variable Apple inserted.
   690 CURBYTE            1      -       
   691 DISKBUF          256      -       
 ------------------------------------------------------------
-125 II.0 variables; 71 of them are names we have recovered in Apple, in 11 runs of constant drift.
+125 II.0 variables; 72 of them are names we have recovered in Apple, in 11 runs of constant drift.

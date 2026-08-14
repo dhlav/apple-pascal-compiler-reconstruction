@@ -2887,7 +2887,7 @@ separately. Apple has **one** flag. Global 44 (45 in 1.3) is stored into
 by exactly the union of II.0's two sets —
 
 ```
-  COMPINIT.9  := false        ONEUNIT         := true   (DLINKERINFO)
+  INITSCALARS := false        ONEUNIT         := true   (DLINKERINFO)
   WRITELINKERINFO := false    PROCDECLARATION := true   (DLINKERINFO)
                               NEWPROC         := true   (CLINKERINFO)
                               UNITPART        := true
@@ -2916,6 +2916,105 @@ and Apple writes `if INMODULE then if not (ININTERFACE or OPT_E) then
 error(191)`. So **`{$E+}` permits a file variable private to a unit's
 implementation**, which the p-System otherwise forbids. The third reader
 is `BODY`. The letter is still all we have for the name.
+
+## 37. The last five segments — every procedure in 1.1 now has a name
+
+*Confidence: VERIFIED BINARY FACT for the shapes; STRONG INFERENCE for
+the II.0 spellings; SPECULATION for the seven that are ours.
+`tools/probes/probe_segments_rest.py`.*
+
+### 37a. COMPINIT calls exactly II.0's seven
+
+`compinit.text` declares seven procedures inside `COMPINIT`. Apple's
+segment has nine, and the segment procedure calls **exactly seven** of
+them — the other two are called only from `ENTSPCPROCS` and
+`ENTSTDPROCS`. So the seven are II.0's, in II.0's order:
+
+```
+  .2 ENTSTDTYPES   the only caller of DECSIZE, which the long-integer
+                   descriptor needs
+  .3 ENTSTDNAMES   fourteen string literals and ENTERID
+  .4 ENTUNDECL     the only one of the seven that calls nothing at all
+  .7 ENTSPCPROCS   .8 ENTSTDPROCS
+  .9 INITSCALARS   stores into forty-odd scalar globals
+ .10 INITSETS      `LAO 126; LDC 4w; STM 4` and its seven siblings
+```
+
+The two that are not II.0's are one space optimisation. Rather than an
+eight-byte string constant per standard identifier, `PUTNAMES` (ours)
+appends a `.`-separated batch of names to a pool — `ENTSPCPROCS` calls it
+five times, `ENTSTDPROCS` twice, each with one string constant — and
+`NEXTNAME` (ours) takes them out one at a time, blanking eight characters
+and `SCAN`ning to the next `.`. Each is called once, inside the loop.
+
+**This corrects finding 26c on one point.** It said the eight follow-sets
+were initialised in `COMPINIT.9`. They are initialised in `COMPINIT.10`:
+`.9` is `INITSCALARS` and writes single words with `SRO`, `.10` is
+`INITSETS` and writes four-word sets with `LAO`/`STM`. The assignment of
+each set to its *name*, which was the substance of 26c, is untouched.
+
+### 37b. `PASCALCO.12` is `CHECKEND`, not `NEXTLINE`
+
+`NEXTLINE` was a name of ours that described the behaviour. The routine
+is II.0's `CHECKEND` (`procs.a.text:142`), and it reproduces it line for
+line:
+
+```
+  SCREENDOTS := SCREENDOTS + 1;  SYMCURSOR := SYMCURSOR + 1;
+  if NOISY then begin write('.');
+      if (SCREENDOTS - STARTDOTS) mod 50 = 0 then
+        begin writeln; write('<', SCREENDOTS:4, '>') end end;
+  if LIST then PRINTLINE;
+  BPTONLINE := false;
+  if SYMBUFP^[SYMCURSOR] = chr(0) then GETNEXTPAGE else ...
+```
+
+`'.'` is `SLDC 46`, `'<'` and `'>'` are 60 and 62, the field width is 4
+and the modulus 50 — all literals in the p-code. It also names **global
+91 (94 in 1.3) as `STARTDOTS`**, II.0's offset 85 at the +6 drift the
+alignment predicted, and `CHECKEND` is its only reader on either disk
+apart from `FINISHUP`, which II.0 has not got.
+
+### 37c. The rest
+
+| segment | | |
+|---|---|---|
+| `WRITELIN` | `GETREFS`, `GETNEXTBLOCK`, `GLOBALSEARCH` | `GETNEXTBLOCK` is the only thing at lex 3 in the segment and the only `BLOCKIO`; `GLOBALSEARCH` recurses — it walks the symbol tree — and calls `GETREFS`, which is II.0's arrangement |
+| `UNITPART` | `OPENREFFILE`, `UNITDECLARATION`, `UNITBODY` | `OPENREFFILE` is the only `FOPEN`; `UNITDECLARATION` takes `(fsys; var umarkp)` = 10 bytes; `UNITBODY` is **ours** — II.0 compiles the implementation inline in `UNITPART`'s body, and it is the only caller of `BODYPART` outside `PASCALCO` |
+| `NUMSTRIN` | `STRING`, `NUMBER` | the scanner's two sub-scanners, made a segment. `.1` is a two-line dispatcher. `STRING` calls `ERROR` and `CHECKEND` — II.0's `error(202); CHECKEND; goto 1` on an unterminated string — and has 90 bytes of locals for II.0's `T: packed array [1..80] of char`. `NUMBER` calls `ERROR` alone |
+| `COMPOPTI` | `BADOPT`, `OPTWORD`, `OPTLIST` | **all ours.** II.0 handles options inline in `COMMENTER`. `BADOPT` is eight bytes: clear a flag in `COMPOPTI`'s frame, then `CSP 4` EXIT of segment 18 procedure 1 |
+| `BODY3` | `UNITSEGS` | **ours.** It emits `GEN1(30, 21 GETSEG)` and `GEN1(30, 22 RELSEG)` four times each, and is the **only** procedure on either disk that emits either. II.0 emits the GETSEG loop at the head of `BODY` and the RELSEG loop at its tail; Apple emits both from here |
+
+`BODY3.1` is confirmed as the tail of II.0's `BODY` in the process — its
+emissions run `INSYMBOL`/`ERROR(13)`, `GEN2(50 LDA)`, `GENLDC(0)`,
+`GEN2(77,0,6 FCLOSE)`, `UNITSEGS`, `GEN0(86 XIT)`, the `RBP`/`RNP`,
+`ERROR(168)` and then the `GENWORD` sequence and `WRITECODE`, which is
+`bodypart.e.text:516-573` step for step.
+
+### 37d. The count
+
+**142 of 142 procedures in Apple Pascal 1.1 now have a name.** 1.3 has
+147; the three without one — `COMPINIT.11`, `BODYPART.26` and
+`COMPOPTI.5` — are new in 1.3, and the probe checks that two of them are
+*appended* at the end of their segments rather than inserted, which is
+why 1.1's numbering carries over unshifted.
+
+`STRING` forced the shadowing rule of finding 35c to be stated properly.
+A predeclared identifier may be redeclared — the manual says the
+compiler "will accept it" — and the cost falls only *within the scope of
+the new meaning*. So `probe_identifiers.py` now allows a shadow when both
+halves of that are evidenced: II.0 names a procedure the same (Apple's
+compiler accepted that source) **and** Apple declares it at lexical level
+2 or deeper, read from the attribute tables, so the shadow cannot reach
+the outermost scope. An invented name fails the first test and a global
+fails the second; both confirmed by mutation. Seven names qualify:
+`CLOSE`, `CONCAT`, `EXIT`, `SCAN`, `SIZEOF`, `STR` and `STRING`.
+
+Separately, `tools/show.py` was printing the **wrong procedure** for the
+last one in every segment: the disassembly's `SEGMENT` header sits at the
+end of the previous procedure's block, so each segment's last procedure
+was being filed under the next segment's name. Fixed; that was the
+long-standing "`COMPINIT.10` not found".
 
 ## 16. Open questions
 

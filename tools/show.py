@@ -15,12 +15,15 @@ blocks = text.split("\n--- procedure ")
 seg = None
 index = {}
 for b in blocks:
-    m = re.search(r"^SEGMENT \d+ (\w+)", b, re.M)
-    if m:
-        seg = m.group(1)
+    # The SEGMENT header for the *next* segment sits at the end of the
+    # previous procedure's block, so this block still belongs to the
+    # segment named before it. Index first, then move on.
     n = re.match(r"(\d+)", b)
     if n and seg:
         index[f"{seg}.{n.group(1)}"] = "--- procedure " + b.split("\n====")[0]
+    m = re.search(r"^SEGMENT \d+ (\w+)", b, re.M)
+    if m:
+        seg = m.group(1)
 
 for key in args:
     print(index.get(key.upper(), f"<{key} not found>").rstrip())

@@ -466,7 +466,7 @@ L067D:
 L076A:
   if not ((SY = 47)) then goto L0784;
   if not ((SYMBUFP^[SYMCURSOR] = 13)) then goto L077F;
-  PASCALCO.14:NEXTLINE();
+  PASCALCO.14:CHECKEND();
   G26 := 1;
   goto L0518;
   goto L0784;
@@ -571,12 +571,12 @@ procedure PASCALCO.13:NEWSEG(args 1 words);  { locals 0 words, lex 1 }
   PASCALCO.12:BUMPSEG(@SEGSLOT, 15, 354);
   @G589~[SEG]{4per word,4 bits} := SEGSLOT;
 
-procedure PASCALCO.14:NEXTLINE(args 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.14:CHECKEND(args 0 words);  { locals 0 words, lex 1 }
   SCREENDOTS := (SCREENDOTS+1);
   SYMCURSOR := (SYMCURSOR+1);
   if NOISY then begin
     FWRITECHAR(I2,3, 46, 0);
-    if (((SCREENDOTS-G94) mod 50) = 0) then begin
+    if (((SCREENDOTS-STARTDOTS) mod 50) = 0) then begin
       FWRITELN(I2,3);
       FWRITECHAR(I2,3, 60, 0);
       FWRITEINT(I2,3, SCREENDOTS, 4);
@@ -1058,7 +1058,7 @@ L04CE:
 L04CE:
     SYMCURSOR := (SYMCURSOR+1);
     while (SYMBUFP^[SYMCURSOR] = 13) do begin
-      PASCALCO.14:NEXTLINE();
+      PASCALCO.14:CHECKEND();
     end;
     if not ((SYMBUFP^[SYMCURSOR] = L1)) then goto L04CE;
   until ((SYMBUFP^[(SYMCURSOR+1)] = 41) or (L1 = 125));
@@ -1132,8 +1132,8 @@ SEGMENT 7 COMPINIT
 
 procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 304 words, lex 1 }
   COMPINIT.11();
-  COMPINIT.9();
-  COMPINIT.10();
+  COMPINIT.9:INITSCALARS();
+  COMPINIT.10:INITSETS();
   LEVEL := 0;
   TOP := 0;
   G1356 := 0;
@@ -1208,11 +1208,11 @@ procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 304 words, lex 1 }
   G92 := CSP40();
   PASCALCO.5:GETNEXTPAGE();
   PASCALCO.8:INSYMBOL();
-  COMPINIT.2();
-  COMPINIT.3();
-  COMPINIT.4();
+  COMPINIT.2:ENTSTDTYPES();
+  COMPINIT.3:ENTSTDNAMES();
+  COMPINIT.4:ENTUNDECL();
   COMPINIT.7:ENTSPCPROCS();
-  COMPINIT.8();
+  COMPINIT.8:ENTSTDPROCS();
   if SYSCOMP then begin
     G68 := nil;
     SEG := 0;
@@ -1290,7 +1290,7 @@ L0F13:
   (L304+9)^ := 0;
   (L304+8)^ := G83;
 
-procedure COMPINIT.2(args 0 words);  { locals 2 words, lex 2 }
+procedure COMPINIT.2:ENTSTDTYPES(args 0 words);  { locals 2 words, lex 2 }
   CSP1(@INTPTR, 3);
   L2 := INTPTR;
   L2^ := 1;
@@ -1366,7 +1366,7 @@ procedure COMPINIT.2(args 0 words);  { locals 2 words, lex 2 }
   (L2+2)^ := L1;
   (L2+3)^ := INTPTR;
 
-procedure COMPINIT.3(args 0 words);  { locals 5 words, lex 2 }
+procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'INTEGER ', 4 words);
@@ -1483,7 +1483,7 @@ procedure COMPINIT.3(args 0 words);  { locals 5 words, lex 2 }
   (L4+8)^ := 0;
   PASCALCO.7:ENTERID(L2);
 
-procedure COMPINIT.4(args 0 words);  { locals 5 words, lex 2 }
+procedure COMPINIT.4:ENTUNDECL(args 0 words);  { locals 5 words, lex 2 }
   move(@L1, @'        ', 4 words);
   CSP1(@G78, 9);
   L5 := G78;
@@ -1543,14 +1543,14 @@ procedure COMPINIT.4(args 0 words);  { locals 5 words, lex 2 }
   (L5+9)^ := 1;
   (L5+13)^ := 0;
 
-procedure COMPINIT.5(args 1 words);  { locals 41 words, lex 2 }
+procedure COMPINIT.5:PUTNAMES(args 1 words);  { locals 41 words, lex 2 }
   @L2^ := L1  {string};
   if ((I1,258+@L2^[0]) < 511) then begin
     CSP2(@L2, 1, @I1,1, I1,258, @L2^[0]);
   end;
   I1,258 := (I1,258+@L2^[0]);
 
-procedure COMPINIT.6(args 1 words);  { locals 1 words, lex 2 }
+procedure COMPINIT.6:NEXTNAME(args 1 words);  { locals 1 words, lex 2 }
   move(L1, @'        ', 4 words);
   L2 := CSP11(8, 0, 46, @I1,1, I1,257, 0);
   CSP2(@I1,1, I1,257, L1, 0, L2);
@@ -1558,15 +1558,15 @@ procedure COMPINIT.6(args 1 words);  { locals 1 words, lex 2 }
 
 procedure COMPINIT.7:ENTSPCPROCS(args 0 words);  { locals 8 words, lex 2 }
   I1,258 := 0;
-  COMPINIT.5('READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.');
-  COMPINIT.5('UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.');
-  COMPINIT.5('MOVELEFT.MOVERIGH.EXIT.IDSEARCH.TREESEAR.TIME.FILLCHAR.');
-  COMPINIT.5('OPENNEW.OPENOLD.REWRITE.CLOSE.SEEK.RESET.GET.PUT.SCAN.');
-  COMPINIT.5('BLOCKREA.BLOCKWRI.TRUNC.PAGE.SIZEOF.STR.GOTOXY.UNITSTAT.');
+  COMPINIT.5:PUTNAMES('READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.');
+  COMPINIT.5:PUTNAMES('UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.');
+  COMPINIT.5:PUTNAMES('MOVELEFT.MOVERIGH.EXIT.IDSEARCH.TREESEAR.TIME.FILLCHAR.');
+  COMPINIT.5:PUTNAMES('OPENNEW.OPENOLD.REWRITE.CLOSE.SEEK.RESET.GET.PUT.SCAN.');
+  COMPINIT.5:PUTNAMES('BLOCKREA.BLOCKWRI.TRUNC.PAGE.SIZEOF.STR.GOTOXY.UNITSTAT.');
   I1,257 := 0;
   L2 := 0;
   while (I1,257 < I1,258) do begin
-    COMPINIT.6(@L4);
+    COMPINIT.6:NEXTNAME(@L4);
     L2 := (L2+1);
     if TINY then begin
       if not ((L2 in {2,7,10,13,17,18,19,20,32,34,35,40,42,43,44})) then goto L0744;
@@ -1593,14 +1593,14 @@ L0744:
     end;
   end;
 
-procedure COMPINIT.8(args 0 words);  { locals 11 words, lex 2 }
+procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
   I1,258 := 0;
-  COMPINIT.5('ODD.CHR.XXX.ROUND.MARK.RELEASE.');
-  COMPINIT.5('IORESULT.UNITBUSY.PWROFTEN.UNITWAIT.UNITCLEA.HALT.MEMAVAIL.');
+  COMPINIT.5:PUTNAMES('ODD.CHR.XXX.ROUND.MARK.RELEASE.');
+  COMPINIT.5:PUTNAMES('IORESULT.UNITBUSY.PWROFTEN.UNITWAIT.UNITCLEA.HALT.MEMAVAIL.');
   I1,257 := 0;
   L5 := 0;
   while (I1,257 < I1,258) do begin
-    COMPINIT.6(@L7);
+    COMPINIT.6:NEXTNAME(@L7);
     L5 := (L5+1);
     L6 := (7264 in 1);
     goto L08CE;
@@ -1707,7 +1707,7 @@ L0948:
     { paths disagree on stack depth here }
   end;
 
-procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
+procedure COMPINIT.9:INITSCALARS(args 0 words);  { locals 2 words, lex 2 }
   if ((CSP40() < 0) or (CSP40() > 9950)) then begin
     SWAPPING := 0;
   end else begin
@@ -1722,7 +1722,7 @@ procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
   LIST := 0;
   SYMBLK := 2;
   SCREENDOTS := 0;
-  G94 := 0;
+  STARTDOTS := 0;
   SEG := 0;
   L1 := 15;
   while (SEG <= L1) do begin
@@ -1777,7 +1777,7 @@ procedure COMPINIT.9(args 0 words);  { locals 2 words, lex 2 }
   FLIPBYTES := 0;
   @G186^ := adjust(0,4)  {4 words};
 
-procedure COMPINIT.10(args 0 words);  { locals 0 words, lex 2 }
+procedure COMPINIT.10:INITSETS(args 0 words);  { locals 0 words, lex 2 }
   @CONSTBEGSYS^ := adjust({ident,intconst,realconst,stringconst,addop,longconst},4)  {4 words};
   16^ := adjust((1 + @CONSTBEGSYS^<4w>),4)  {4 words};
   @TYPEBEGSYS^ := adjust(({arrow,setsy,packedsy,arraysy,recordsy,filesy} + @SIMPTYPEBEGSYS^<4w>),4)  {4 words};
@@ -2728,7 +2728,7 @@ procedure DECLARAT.11:ONEUNIT(args 1 words);  { locals 22 words, lex 3 }
     end else begin
       LC := 1;
     end;
-    G94 := SCREENDOTS;
+    STARTDOTS := SCREENDOTS;
     DECLARAT.1:DECLARATIONPART(?, (L23+10), @I2,1^<4w>, adjust((512 + 1),4));
     if G41 then begin
       if L9 then begin
@@ -7095,7 +7095,7 @@ L00AA:
       I1,6 := L1^.f7;
     end;
   end;
-  G94 := SCREENDOTS;
+  STARTDOTS := SCREENDOTS;
   LCMAX := LC;
   I1,9 := @G134[TOP*4w]^.f3;
   while (I1,9 <> nil) do begin
@@ -7133,7 +7133,7 @@ procedure BODY3.1:BODY3(args 0 words);  { locals 2 words, lex 3 }
     end;
   end;
   if ((I1,3 <> nil) or (I1,8 and ((@G186^<4w> <> 0) or (not (NOLOAD) and (USINGLIST <> nil))))) then begin
-    BODY3.2();
+    BODY3.2:UNITSEGS();
   end;
   if (I2,1 = nil) then begin
     BODYPART.3:GEN0(86);
@@ -7188,7 +7188,7 @@ procedure BODY3.1:BODY3(args 0 words);  { locals 2 words, lex 3 }
   SEGINX := (SEGINX+IC);
   @PROCTABLE[CURPROC]^ := (SEGINX-2);
 
-procedure BODY3.2(args 0 words);  { locals 1 words, lex 4 }
+procedure BODY3.2:UNITSEGS(args 0 words);  { locals 1 words, lex 4 }
   I2,6 := I2,3;
   I2,4 := nil;
   while (I2,6 <> nil) do begin
@@ -7287,7 +7287,7 @@ procedure WRITELIN.1:WRITELINKERINFO(args 0 words);  { locals 7 words, lex 1 }
   if INMODULE then begin
     L1 := G705;
   end;
-  WRITELIN.4(@G134[G85*4w]^);
+  WRITELIN.4:GLOBALSEARCH(@G134[G85*4w]^);
   LGTH := 1;
   L7 := 8;
   while (LGTH <= L7) do begin
@@ -7301,7 +7301,7 @@ procedure WRITELIN.1:WRITELINKERINFO(args 0 words);  { locals 7 words, lex 1 }
   PASCALCO.24:WRITECODE(1);
   LINKINFO := 0;
 
-procedure WRITELIN.2(args 1 words);  { locals 8 words, lex 2 }
+procedure WRITELIN.2:GETREFS(args 1 words);  { locals 8 words, lex 2 }
   L4 := 0;
   L3 := (IC-4);
   if ((G706 <> 1) or (G705 <> 0)) then begin
@@ -7323,7 +7323,7 @@ procedure WRITELIN.2(args 1 words);  { locals 8 words, lex 2 }
         L7 := (L7+1);
       end;
       if (L5 < G705) then begin
-        WRITELIN.3();
+        WRITELIN.3:GETNEXTBLOCK();
       end;
       L5 := (L5+1);
     end;
@@ -7343,7 +7343,7 @@ procedure WRITELIN.2(args 1 words);  { locals 8 words, lex 2 }
     L7 := (L7+1);
   end;
 
-procedure WRITELIN.3(args 0 words);  { locals 0 words, lex 3 }
+procedure WRITELIN.3:GETNEXTBLOCK(args 0 words);  { locals 0 words, lex 3 }
   I2,1 := (I2,1+1);
   if (I2,1 > G705) then begin
     I2,1 := 0;
@@ -7352,7 +7352,7 @@ procedure WRITELIN.3(args 0 words);  { locals 0 words, lex 3 }
     PASCALCO.4:ERROR(404);
   end;
 
-procedure WRITELIN.4(args 1 words);  { locals 1 words, lex 2 }
+procedure WRITELIN.4:GLOBALSEARCH(args 1 words);  { locals 1 words, lex 2 }
   I1,3 := -(9999);
   I1,4 := IC;
   if (L1 <> nil) then begin
@@ -7458,7 +7458,7 @@ L0280:
 L0296:
       { paths disagree on stack depth here }
       if (I1,3 <> -(9999)) then begin
-        WRITELIN.2(I1,3);
+        WRITELIN.2:GETREFS(I1,3);
       end;
     end;
     { paths disagree on stack depth here }
@@ -7466,8 +7466,8 @@ L0296:
       PASCALCO.24:WRITECODE(0);
       IC := 0;
     end;
-    WRITELIN.4(L1^.f5);
-    WRITELIN.4(L1^.f4);
+    WRITELIN.4:GLOBALSEARCH(L1^.f5);
+    WRITELIN.4:GLOBALSEARCH(L1^.f4);
   end;
 
 ======================================================================
@@ -7478,12 +7478,12 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   if (CODEP = nil) then begin
     CSP1(@CODEP, 1000);
   end;
-  UNITPART.2();
+  UNITPART.2:OPENREFFILE();
   repeat
     FRESET(@REFFILE);
     G706 := 1;
     G705 := 0;
-    UNITPART.3(?, ?, ?, @L1^<4w>, @L5);
+    UNITPART.3:UNITDECLARATION(?, ?, ?, @L1^<4w>, @L5);
     G708 := SYMCURSOR;
     IC := 1024;
     ININTERFACE := 1;
@@ -7533,7 +7533,7 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
         end;
       end;
       PASCALCO.26:BLOCK(?, ?, ?, adjust((@L1^<4w> - {50,51,52}),4));
-      UNITPART.4();
+      UNITPART.4:UNITBODY();
       PASCALCO.25:FINISHSEG();
       if (({30,31} * @G186^<4w>) <> 0) then begin
         if (FBLOCKIO(I2,8, @G1099, 0, 1, L8, 1) <> 1) then begin
@@ -7613,13 +7613,13 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   until (SY <> 50);
   FCLOSE(@REFFILE, 0);
 
-procedure UNITPART.2(args 0 words);  { locals 0 words, lex 2 }
+procedure UNITPART.2:OPENREFFILE(args 0 words);  { locals 0 words, lex 2 }
   FOPEN(?, ?, ?, @REFFILE, '%SYSTEM.INFO[*]', 0, 0);
   if (CSP34() <> 0) then begin
     PASCALCO.4:ERROR(404);
   end;
 
-procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
+procedure UNITPART.3:UNITDECLARATION(args 5 words);  { locals 18 words, lex 2 }
   if INMODULE then begin
     PASCALCO.4:ERROR(182);
   end;
@@ -7772,7 +7772,7 @@ procedure UNITPART.3(args 5 words);  { locals 18 words, lex 2 }
     PASCALCO.4:ERROR(250);
   end;
 
-procedure UNITPART.4(args 0 words);  { locals 3 words, lex 2 }
+procedure UNITPART.4:UNITBODY(args 0 words);  { locals 3 words, lex 2 }
   L1 := G84;
   CSP1(@G84, 11);
   L2 := G84;
@@ -7831,8 +7831,8 @@ L01C4:
         PASCALCO.4:ERROR(194);
       end;
       CSP1(@COMMENT, 41);
-      COMPOPTI.3(COMMENT, 80);
-      COMPOPTI.2();
+      COMPOPTI.3:OPTWORD(COMMENT, 80);
+      COMPOPTI.2:BADOPT();
       goto L041E;
 L01E0:
       DEBUGGING := (L5 = 43);
@@ -7850,7 +7850,7 @@ L01FC:
       if ((L5 = 43) or (L5 = 45)) then begin
         IOCHECK := (L5 = 43);
       end else begin
-        COMPOPTI.3(@L7, 40);
+        COMPOPTI.3:OPTWORD(@L7, 40);
         if (L3 = 42) then begin
           SYMCURSOR := (SYMCURSOR+1);
         end;
@@ -7884,19 +7884,19 @@ L027B:
           FOPEN(?, ?, ?, @LP, '*SYSTEM.LST.TEXT[*]', 0, 0);
         end;
       end else begin
-        COMPOPTI.3(@L7, 40);
+        COMPOPTI.3:OPTWORD(@L7, 40);
         if not (G1357) then begin
           COMMAND();
           FOPEN(@L7, 1, 40, @LP, @L7, 0, 0);
           LIST := (CSP34() = 0);
         end;
-        COMPOPTI.2();
+        COMPOPTI.2:BADOPT();
       end;
       goto L041E;
 L02D8:
       if ((L5 = 83) or (L5 = 115)) then begin
         SYMCURSOR := (SYMCURSOR+1);
-        COMPOPTI.3(@L7, 40);
+        COMPOPTI.3:OPTWORD(@L7, 40);
         L28 := 0;
         L29 := @L7^[0];
         if (L29 > 2) then begin
@@ -7911,7 +7911,7 @@ L02D8:
         if ((L28 > NEXTSEG) and (L28 < 63)) then begin
           NEXTSEG := L28;
         end;
-        COMPOPTI.2();
+        COMPOPTI.2:BADOPT();
       end else begin
         NOLOAD := (L5 = 43);
       end;
@@ -7928,7 +7928,7 @@ L0356:
       if ((L5 = 43) or (L5 = 45)) then begin
         RANGECHECK := (L5 = 43);
       end else begin
-        COMPOPTI.4();
+        COMPOPTI.4:OPTLIST();
       end;
       goto L041E;
 L036A:
@@ -7953,12 +7953,12 @@ L0397:
         if not (USING) then begin
           FCLOSE(@LIBRARY, 0);
           G29 := 1;
-          COMPOPTI.3(@SYSTEMLIB, 40);
+          COMPOPTI.3:OPTWORD(@SYSTEMLIB, 40);
           FOPEN(?, ?, ?, @LIBRARY, @SYSTEMLIB, 1, 0);
           if (CSP34() <> 0) then begin
             PASCALCO.4:ERROR(187);
           end;
-          COMPOPTI.2();
+          COMPOPTI.2:BADOPT();
         end;
       end;
       goto L041E;
@@ -7994,11 +7994,11 @@ L041E:
     until (L4 <> 44);
   end;
 
-procedure COMPOPTI.2(args 0 words);  { locals 0 words, lex 2 }
+procedure COMPOPTI.2:BADOPT(args 0 words);  { locals 0 words, lex 2 }
   I1,1 := 0;
   CSP4(18, 1);
 
-procedure COMPOPTI.3(args 2 words);  { locals 3 words, lex 2 }
+procedure COMPOPTI.3:OPTWORD(args 2 words);  { locals 3 words, lex 2 }
   SYMCURSOR := (SYMCURSOR+2);
   L4 := CSP11(L1, 1, 32, SYMBUFP, SYMCURSOR, 0);
   L5 := (L4+CSP11((L1-L4), 0, I1,3, SYMBUFP, (SYMCURSOR+L4), 0));
@@ -8014,7 +8014,7 @@ procedure COMPOPTI.3(args 2 words);  { locals 3 words, lex 2 }
   CSP2(SYMBUFP, (SYMCURSOR+L4), L2, 1, L5);
   SYMCURSOR := ((((SYMCURSOR+L5)+L4)+L3)+1);
 
-procedure COMPOPTI.4(args 0 words);  { locals 4 words, lex 2 }
+procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
   SYMCURSOR := (SYMCURSOR+2);
   L3 := 0;
   repeat
@@ -8053,7 +8053,7 @@ procedure COMPOPTI.4(args 0 words);  { locals 4 words, lex 2 }
     end;
   until L3;
   SYMCURSOR := ((SYMCURSOR+CSP11(80, 0, I1,3, SYMBUFP, SYMCURSOR, 0))+1);
-  COMPOPTI.2();
+  COMPOPTI.2:BADOPT();
 
 procedure COMPOPTI.5(args 1 words);  { locals 2 words, lex 3 }
   CSP1(@L2, 13);
@@ -8069,12 +8069,12 @@ SEGMENT 19 NUMSTRIN
 
 procedure NUMSTRIN.1:NUMSTRIN(args 2 words);  { locals 0 words, lex 1 }
   if L2 then begin
-    NUMSTRIN.3();
+    NUMSTRIN.3:NUMBER();
   end else begin
-    NUMSTRIN.2();
+    NUMSTRIN.2:STRING();
   end;
 
-procedure NUMSTRIN.2(args 0 words);  { locals 46 words, lex 2 }
+procedure NUMSTRIN.2:STRING(args 0 words);  { locals 46 words, lex 2 }
   L45 := 0;
   L44 := 0;
   L43 := 0;
@@ -8087,7 +8087,7 @@ L0012:
     L43 := (L43+1);
     if not ((SYMBUFP^[SYMCURSOR] = 13)) then goto L002F;
     PASCALCO.4:ERROR(202);
-    PASCALCO.14:NEXTLINE();
+    PASCALCO.14:CHECKEND();
     goto L0062;
 L002F:
     if (L43 <= 80) then begin
@@ -8117,7 +8117,7 @@ L0062:
     VAL := G90;
   end;
 
-procedure NUMSTRIN.3(args 0 words);  { locals 16 words, lex 2 }
+procedure NUMSTRIN.3:NUMBER(args 0 words);  { locals 16 words, lex 2 }
   L10 := 1;
   L7 := 0;
   L6 := 0;
@@ -8268,8 +8268,8 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     PASCALCO.6:PRINTLINE();
   end;
   I2,11 := 0;
-  CSP9(@LGTH, @G94);
-  G97 := (G94-G97);
+  CSP9(@LGTH, @STARTDOTS);
+  G97 := (STARTDOTS-G97);
   if LINKINFO then begin
     (@G445[@G589~[SEG]{4per word,4 bits}*9w]+8)^ := 1;
     WRITELIN.1:WRITELINKERINFO();
