@@ -70,7 +70,6 @@ def main() -> int:
                            f"shallower lexical level than procedure 1, so "
                            f"procedure 1 is not the segment procedure")
 
-            want = seg.name
             # The program block is the only thing at lex 0; a SEGMENT
             # procedure is declared inside something, so lex >= 1.
             expect = "== 0" if seg.name == "PASCALCO" else ">= 1"
@@ -78,10 +77,14 @@ def main() -> int:
                 bad.append(f"{ver} {seg.name}: procedure 1 is at lex "
                            f"{first.lex_level}, expected {expect}")
 
+            # names.py carries the full identifier wherever the UCSD II.0
+            # source supplies it (finding 32); the codefile holds only its
+            # first eight characters, so compare on those.
             got = procname(seg.name, 1, ver)
-            if got != want:
+            if got is None or got.upper()[:8] != seg.name.upper():
                 bad.append(f"{ver} {seg.name}: names.py calls procedure 1 "
-                           f"{got!r}, the segment dictionary says {want!r}")
+                           f"{got!r}, whose first eight characters are not "
+                           f"the segment dictionary's {seg.name!r}")
 
             depths.add(first.lex_level)
             rows.append((first.lex_level, seg.name, first.param_size // 2))

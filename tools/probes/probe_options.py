@@ -29,11 +29,11 @@ DISKS = {
 # Letters whose arm does something other than set one flag from the
 # argument (C, I, L, N, P, R, S, U) are checked separately or not at all.
 SIMPLE = {
-    "D": "OPT_D", "E": "OPT_E", "F": "OPT_F", "G": "GOTOOK",
-    "Q": "SHOWPROGRESS", "T": "OPT_T", "V": "VARSTRING",
+    "D": "DEBUGGING", "E": "OPT_E", "F": "FLIPBYTES", "G": "GOTOOK",
+    "Q": "NOISY", "T": "TINY", "V": "VARSTRG",
 }
 # The globals {$U-} must write, per the manual.
-U_ARM = {"SYSCOMP", "RANGECHECK", "IOCHECK", "VARSTRING", "GOTOOK"}
+U_ARM = {"SYSCOMP", "RANGECHECK", "IOCHECK", "VARSTRG", "GOTOOK"}
 
 
 def arms(seg, proc):

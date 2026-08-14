@@ -51,20 +51,26 @@ from a2pascal.names import (GLOBALS_11, GLOBALS_13, OPERATORS, PROC_NAMES,
 ROOT = Path(__file__).resolve().parent.parent.parent
 NATIVE = ROOT / "analysis" / "native" / "PASCALCO-1.3-native.asm.txt"
 
-# Long spellings that are forced by evidence rather than chosen by us, so
-# their truncation is a fact about the original source and not a trap we
-# introduced. Pascal-P's own identifiers, and Apple's.
-EVIDENCE_BACKED = {
-    # Zurich P2 / Pascal-P procedures and variables (findings 22, 26, 27)
-    "COMPTYPES", "SEARCHSECTION", "ENTERUNDECL", "GETBOUNDS",
-    "CONSTBEGSYS", "SIMPTYPEBEGSYS", "TYPEBEGSYS", "BLOCKBEGSYS",
-    "SELECTSYS", "FACBEGSYS", "STATBEGSYS",
-    # the SYMBOL enumeration (finding 26a) -- one member per reserved word
-    "SEMICOLON", "FORWARDSY", "REALCONST", "STRINGCONST", "LONGCONST",
-    "INTERFACESY", "IMPLEMENTATIONSY", "EXTERNALSY", "OTHERWISESY",
-    # Apple's own, read off the 1.3 native code (finding 19)
-    "TREESEARCH",
+# Long spellings are allowed only where the evidence forces them rather
+# than our choosing them. That set is not hard-coded: it is read out of the
+# UCSD II.0 compiler source in evidence/, so a name claimed to be UCSD's
+# has to actually appear there (finding 32). A handful predate it.
+II0_SOURCE = ROOT / "evidence" / "reference" / "ucsd-ii0-compiler"
+
+EXTRA_BACKED = {
+    "TREESEARCH",       # Apple's own, off the 1.3 native code (finding 19)
+    "IMPLEMENTATIONSY", # (kept only so the finding-29 text stays checkable)
 }
+
+
+def ucsd_identifiers() -> set[str]:
+    """Every identifier that appears in the UCSD II.0 compiler source."""
+    out: set[str] = set()
+    for f in sorted(II0_SOURCE.glob("*.text")):
+        out |= set(re.findall(r"[A-Z][A-Z0-9]{2,}",
+                              f.read_text(errors="replace").upper()))
+    return out
+
 
 # Apple Pascal's predeclared identifiers, Table F-2B of the 1.3 manual,
 # transcribed in full. Legal to redeclare, but doing so costs the original
@@ -137,9 +143,11 @@ def main() -> int:
               f"folding onto any of {len(words)} reserved words or "
               f"{len(predeclared)} predeclared identifiers")
 
-    unvetted = sorted(set(over) - EVIDENCE_BACKED)
-    print(f"{len(over)} names exceed 8 characters; {len(EVIDENCE_BACKED)} of "
-          f"those spellings are forced by evidence, {len(unvetted)} are ours:")
+    backed = ucsd_identifiers() | EXTRA_BACKED
+    unvetted = sorted(set(over) - backed)
+    print(f"{len(over)} names exceed 8 characters; "
+          f"{len(over) - len(unvetted)} of "
+          f"those spellings are UCSD's own, {len(unvetted)} are ours:")
     for name in unvetted:
         print(f"    {name:22s} -> {fold(name):8s}  ({over[name]})")
 

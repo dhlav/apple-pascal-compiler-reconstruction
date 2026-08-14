@@ -17,6 +17,7 @@ evidence/          original inputs, never modified
                    and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
   disks/           the two Apple Pascal .dsk images and ii0src.sdk
   reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
+    ucsd-ii0-compiler/  the UCSD Pascal II.0 compiler source, 15 files
     manuals/       the Apple Pascal 1.3 manual set, the 1980 language
                    reference, the 1.1 update notice, Hyde's P-Source --
                    scans plus their OCR. Copyrighted; this repo is private.
@@ -72,14 +73,14 @@ phase swapping.
 The compiler's global variables are mapped (sizes, shapes, access counts,
 users), and **all 29 of PASCALCO's procedures are named** — the error
 reporter, the scanner, the symbol-table search and entry, the code-byte
-emitter, `COMPTYPES`, `BLOCK`, `NEXTBLOCK`, `NEWSEGMENT`, `SKIP`,
+emitter, `COMPTYPES`, `BLOCK`, `GETNEXTPAGE`, `NEWSEG`, `SKIP`,
 `NEXTLINE` and the rest. Two levers did most of it. One is the manual's
 error list: a routine that raises "Too many segments for segment
 dictionary" is doing something about segment numbers whatever else it
 does. The other is that the manual documents the compiler's *output*
 formats, so a routine that writes one can be named column by column —
 Part II's description of the compiled listing names five globals at once,
-and the codefile's procedure dictionary identifies `ENDSEGMENT`
+and the codefile's procedure dictionary identifies `FINISHSEG`
 (finding 28).
 
 Naming the last of them overturned a previous conclusion. `PASCALCO.23`
@@ -103,6 +104,45 @@ listings now read
 ```
   until (SY in (STATBEGSYS + {endsy,unitsy,implsy}));
 ```
+
+The **UCSD Pascal II.0 compiler source** is now in `evidence/` (finding
+32) — the Zurich P2 descendant that Apple's compiler descends from in
+turn. It is not an answer key: Apple changed things, and where the two
+disagree the binary wins. But it makes everything derived from the bytes
+alone checkable against a document written by the compiler's authors, and
+`tools/probes/probe_ucsd_source.py` does that. **All eight numeric bounds
+recovered from bare constants in the binary are named and matched** —
+`MAXCODE = 1299`, `MAXJTAB = 24`, `MAXSEG = 15`, `MAXPROCNUM = 149`,
+`MAXLEVEL = 8`, `MAXADDR = 28000`, `STRGLGTH = 255`, `DEFSTRGLGTH = 80`.
+`OPERATOR` matches 16 of 16 members and `SYMBOL` 54 of 55, the one
+difference being Apple dropping `SEPARATE` for `OTHERWISE`. `FINISHSEG`
+and `PRINTLINE` reproduce line for line and column for column.
+
+It also corrected fifty-six names. `EMIT`/`EMITWORD` are `GENBYTE`/
+`GENWORD`, the emitter family is `GEN0`/`GENLDC`/`GEN1`/`GEN2`/`GENBIG`/
+`GENJMP`, `FLUSHBUFFER` is `WRITECODE`, `ENDSEGMENT` is `FINISHSEG`,
+`ERRORWITHTEXT` is `PRINTLINE`, and the segment `WRITELIN` is
+`WRITELINKERINFO` — a name no amount of staring at the binary would have
+produced. `probe_identifiers.py` now reads the II.0 source rather than a
+hand-kept list, and requires every name over eight characters to appear
+there; all 53 do.
+
+Inside the phase segments, the statement grammar and the expression chain
+are recovered (finding 31). Each of `STATEMEN`'s seven statement parsers
+is pinned twice over — by the reserved word it demands, through a symbol
+code recovered separately, and by the error number it raises when that
+word is missing, which Apple's error list glosses in English. `while`
+demands `dosy` and raises 54, "'DO' expected"; `with` raises 250, "Too
+many scopes of nested identifiers", which only a construct that opens a
+scope can. `BODYPART.11` → `.33` → `.34` → `.35` sit at lexical levels 2,
+3, 4 and 5, each declared inside the one before, which is Pascal-P's
+`expression → simpleexpression → term → factor` exactly.
+
+That also recovers the compiler's busiest data structure. Globals 3–7 are
+Pascal-P's `gattr`, field for field: the global map had already sized word
+3 as a five-word record whose words 4–7 are addressed individually, at 202
+accesses, and `BODYPART.8:LOAD` shows it emitting `LOD <word 6>, <word 7>`
+— which only a lexical level and an offset can be.
 
 Fifteen more names needed no inference: the manual says the codefile's
 SEGNAME field holds *"the first eight characters of the … SEGMENT

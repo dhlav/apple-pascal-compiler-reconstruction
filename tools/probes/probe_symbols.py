@@ -48,8 +48,8 @@ WORD_EXCEPTIONS = {
     # These four cannot use the `<word>sy` spelling: folded to eight
     # significant characters it would *be* the reserved word. Finding 29.
     "INTERFAC": ("intersy", None),      # the table stores 8 characters
-    "EXTERNAL": ("externsy", None),
-    "IMPLEMEN": ("implsy", None),
+    "EXTERNAL": ("externlsy", None),
+    "IMPLEMEN": ("implesy", None),
     "OTHERWIS": ("otherwsy", None),
     "PROCEDUR": ("procsy", None),
     "FUNCTION": ("funcsy", None),

@@ -19,49 +19,49 @@ shifted, because the ~130-word growth is not uniform.
 # them is what makes the other segments readable.
 PASCALCO_11: dict[int, str] = {
     2:  "ERROR",         # the error reporter (finding 12, VERIFIED)
-    4:  "ERRORWITHTEXT", # listing-file error writer (finding 12, VERIFIED)
+    4:  "PRINTLINE", # listing-file error writer (finding 12, VERIFIED)
     5:  "ENTERID",       # enter an identifier record into the symbol table
     6:  "INSYMBOL",      # the scanner (finding 12)
     7:  "SEARCHSECTION", # single-scope identifier search (finding 12)
     8:  "SEARCHID",      # full symbol-table search (finding 12)
     9:  "GETBOUNDS",     # (fsp; var fmin, fmax)              finding 22
-    15: "ISSTRING",      # is fsp a packed array of char?     finding 22
+    15: "PAOFCHAR",      # is fsp a packed array of char?     finding 22
                          # Pascal-P calls this `string`, which Apple could
                          # not: STRING is predeclared, and shadowing it would
                          # take the *type* away from LIBNAME and CODECOMMENT.
                          # Finding 29.
-    16: "STRINGTYPE",    # is fsp a *declared* STRING?        finding 22
-    17: "LONGSIZE",      # words for an n-digit long integer  finding 22
+    16: "STRGTYPE",    # is fsp a *declared* STRING?        finding 22
+    17: "DECSIZE",      # words for an n-digit long integer  finding 22
     12: "NEXTLINE",      # advance LINENUMBER and CHINDEX, echo the progress
                          # dot, write the listing line                  fdg 26
     14: "SKIP",          # `while not (SY in fsys) do INSYMBOL` -- Pascal-P's
                          # error recovery, called after 37 of the ERROR sites
     # --- finding 27 ---------------------------------------------------------
-    3:  "NEXTBLOCK",     # read the next two source blocks into SOURCEBUF;
+    3:  "GETNEXTPAGE",     # read the next two source blocks into SOURCEBUF;
                          # error 401 "Unexpected end of input" if it cannot
     10: "BUMPSEG",       # (var n; limit, err) -- bounded increment. Both call
                          # sites are segment counters and both pass error 354,
                          # "Too many segments for segment dictionary".
-    11: "NEWSEGMENT",    # allocate the next segment number and codefile slot
+    11: "NEWSEG",    # allocate the next segment number and codefile slot
     19: "COMPTYPES",     # Pascal-P's comptypes(fsp1, fsp2): boolean -- 35 call
                          # sites, recursive on `form`, with a pair list to
                          # terminate on mutually recursive pointer types
-    21: "EMITWORD",      # emit one word, byte-swapped under {$F+}
+    21: "GENWORD",      # emit one word, byte-swapped under {$F+}
     24: "BLOCK",         # the outer block: dispatches `unitsy` to UNITPART and
                          # raises error 408, "(*$S+*) needed to compile units"
-    26: "COMMENT",       # scan a comment to its closing delimiter, which is the
+    26: "COMMENTER",       # scan a comment to its closing delimiter, which is the
                          # argument; a leading `$` goes to COMPOPTI.1
     18: "CONSTANT",      # parse a constant (fsys; var lsp, lvalu)
-    20: "EMIT",          # the code-byte emitter (finding 12, VERIFIED)
-    22: "FLUSHBUFFER",   # code-buffer flush (finding 12)
-    27: "ENTERUNDECL",   # undeclared-identifier reporter (finding 12)
+    20: "GENBYTE",          # the code-byte emitter (finding 12, VERIFIED)
+    22: "WRITECODE",   # code-buffer flush (finding 12)
+    27: "FINDFORW",   # undeclared-identifier reporter (finding 12)
     # --- finding 28 ---------------------------------------------------------
     13: "SEGINFO",       # build a segment dictionary's SEGINFO word: segment
                          # number in bits 0-7, machine type in 8-11 (2 =
                          # p-code LSB, or 1 = MSB under {$F+}), 0 in bit 12,
                          # version 2 in 13-15. The layout matches the one
                          # tools/a2pascal/codefile.py reads at block 0.
-    23: "ENDSEGMENT",    # close the current segment: emit the procedure
+    23: "FINISHSEG",    # close the current segment: emit the procedure
                          # dictionary from PROCDICT, then the segment number
                          # and procedure count, record the segment's length
                          # and reset LCBASE. See tools/probes/probe_segtail.py
@@ -96,13 +96,13 @@ PASCALCO_13: dict[int, str] = {
 #
 # The spellings are ours; the arities and behaviour are the binary's.
 BODYPART_EMIT: dict[int, str] = {
-    3:  "EMITOP",     # (op)             opcode alone; pads with NOP before LSA
-    4:  "EMITCONST",  # (v)              push integer v: short SLDC, or LDCI+NGI
-    5:  "EMITOP1",    # (op, arg)        opcode + one operand byte
-    6:  "EMITOP2",    # (op, lex, off)   picks the short form when it can
+    3:  "GEN0",     # (op)             opcode alone; pads with NOP before LSA
+    4:  "GENLDC",  # (v)              push integer v: short SLDC, or LDCI+NGI
+    5:  "GEN1",    # (op, arg)        opcode + one operand byte
+    6:  "GEN2",    # (op, lex, off)   picks the short form when it can
     25: "BODY",       # emits FINIT per file variable and the unit-init CXPs,
                       # then loops over statements while SY starts one
-    27: "EMITBIG",    # (n)  the BIG encoding: one byte, or two with bit 7 set
+    27: "GENBIG",    # (n)  the BIG encoding: one byte, or two with bit 7 set
 }
 
 # --- finding 30: the segment procedures name themselves --------------------
@@ -117,12 +117,59 @@ BODYPART_EMIT: dict[int, str] = {
 # Apple Pascal can tell for the rest, which is what matters, since the
 # compiler distinguishes nothing beyond eight characters.
 SEGMENT_PROCS: dict[str, str] = {
-    "PASCALCO": "PASCALCO",   # the program itself; PASCALCO.1 is lex 0
-    "COMPINIT": "COMPINIT", "DECLARAT": "DECLARAT", "BODYPART": "BODYPART",
-    "ROUTINE":  "ROUTINE",  "STATEMEN": "STATEMEN", "CASESTAT": "CASESTAT",
-    "FORSTATE": "FORSTATE", "BODY1":    "BODY1",    "BODY3":    "BODY3",
-    "WRITELIN": "WRITELIN", "UNITPART": "UNITPART", "COMPOPTI": "COMPOPTI",
+    "PASCALCO": "PASCALCOMPILER",   # the program itself; PASCALCO.1 is lex 0
+    "COMPINIT": "COMPINIT", "DECLARAT": "DECLARATIONPART", "BODYPART": "BODYPART",
+    "ROUTINE":  "ROUTINE",  "STATEMEN": "STATEMENT", "CASESTAT": "CASESTATEMENT",
+    "FORSTATE": "FORSTATEMENT", "BODY1":    "BODY1",    "BODY3":    "BODY3",
+    "WRITELIN": "WRITELINKERINFO", "UNITPART": "UNITPART", "COMPOPTI": "COMPOPTI",
     "NUMSTRIN": "NUMSTRIN", "FINISHUP": "FINISHUP",
+}
+
+# --- finding 31: the expression parser and the statement parser ------------
+#
+# Pascal-P spellings throughout. What licenses them is not resemblance but
+# the segment dictionary: `CASESTAT` and `FORSTATE` are the first eight
+# characters of two SEGMENT procedures (finding 30), and Pascal-P's names
+# for those are `casestatement` and `forstatement`, which truncate to
+# exactly that. Apple kept Zurich's statement names, so their siblings are
+# Zurich's too.
+#
+# The expression chain is confirmed by the lexical levels rather than by
+# the names: BODYPART.11 calls .33 calls .34 calls .35, at lex 2, 3, 4 and
+# 5 -- each declared inside the one before, which is Pascal-P's nesting of
+# expression / simpleexpression / term / factor exactly. `factor` recurses
+# into `expression` for a parenthesised subexpression, and into itself.
+STATEMENTS: dict[tuple[str, int], str] = {
+    ("STATEMEN", 2): "ASSIGNMENT",   # the only child that parses a variable
+                                     # and takes its identifier record
+    ("STATEMEN", 3): "GOTOSTATEMENT",      # no expression, one EMITJUMP
+    ("STATEMEN", 4): "COMPOUNDSTATEMENT",  # ERROR/INSYMBOL/STATEMENT only
+    ("STATEMEN", 5): "IFSTATEMENT",        # thensy or ERROR(52); elsesy arm
+    ("STATEMEN", 6): "REPEATSTATEMENT",    # untilsy or ERROR(53)
+    ("STATEMEN", 7): "WHILESTATEMENT",     # dosy or ERROR(54)
+    ("STATEMEN", 8): "WITHSTATEMENT",      # SEARCHID for the record fields
+}
+
+# BODYPART, 1.1 numbering. .33/.34/.35 shift by +1 in 1.3; the rest keep
+# their numbers (the correspondence table matches .11 and .17 to
+# themselves, and .8/.18/.19 are byte-identical at the same numbers).
+EXPRESSIONS: dict[int, str] = {
+    8:  "LOAD",        # Pascal-P's `load`: bring GATTR onto the stack. A
+                       # case over GATKIND -- a constant becomes EMITCONST,
+                       # NIL an LDCN, a real or a set a multi-word LDC, a
+                       # variable `LOD GATLEVEL, GATDPLMT`.
+    11: "EXPRESSION",  # parses through SIMPLEEXPRESSION, then a relational
+                       # operator if SY = relop
+    17: "GENFJP",      # LOAD, then ERROR(135) "Type of operand must be
+                       # boolean" unless GATTYPTR = BOOLPTR, then FJP to the
+                       # label. The spelling is ours; Pascal-P splits it.
+    18: "GENLABEL",    # NEW(l, 3): a 3-word label record, undefined, with
+                       # 28000 as the end-of-chain sentinel
+    19: "PUTLABEL",    # define the label at CODEINX and walk its chain of
+                       # forward references, patching each
+    33: "SIMPLEEXPRESSION",
+    34: "TERM",
+    35: "FACTOR",
 }
 
 # --- finding 28b: the rest of the code-generation tail ---------------------
@@ -139,7 +186,7 @@ CODEGEN: dict[tuple[str, int], str] = {
     ("BODYPART", 13): "NEWPROC",       # assign the next procedure number to
                                        # an identifier record; ERROR(251) at
                                        # 149. Clears its PROCDICT slot.
-    ("BODYPART", 16): "EMITJUMP",      # (op, target) -- short displacement if
+    ("BODYPART", 16): "GENJMP",      # (op, target) -- short displacement if
                                        # it fits in 0..127, otherwise a slot
                                        # in JTABLE and a negative index
 }
@@ -148,8 +195,10 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
            | {("BODYPART", n): s for n, s in BODYPART_EMIT.items()}
+           | {("BODYPART", n): s for n, s in EXPRESSIONS.items()}
+           | STATEMENTS
            | CODEGEN
-           | {("COMPINIT", 7): "ENTERSTDIDENTS"},
+           | {("COMPINIT", 7): "ENTSPCPROCS"},
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
     # The segment procedures keep procedure number 1 in 1.3 too: the two
@@ -158,8 +207,11 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
            | {("BODYPART", (n + 1 if n == 27 else n)): s
               for n, s in BODYPART_EMIT.items()}
+           | {("BODYPART", (n + 1 if n >= 33 else n)): s
+              for n, s in EXPRESSIONS.items()}
+           | STATEMENTS
            | CODEGEN
-           | {("COMPINIT", 7): "ENTERSTDIDENTS"},
+           | {("COMPINIT", 7): "ENTSPCPROCS"},
 }
 
 # --- the scanner's two enumerations (finding 26) ---------------------------
@@ -215,8 +267,8 @@ SYMBOLS: dict[int, str] = {
     # PROGRAM, PROCEDURE and FUNCTION. The four spellings below are
     # SPECULATION; that the originals were *not* the unabbreviated forms
     # is a VERIFIED BINARY FACT. See finding 29.
-    51: "intersy",      52: "implsy",
-    53: "externsy",     54: "otherwsy",     # OTHERWISE is 1.3-only
+    51: "intersy",      52: "implesy",
+    53: "externlsy",     54: "otherwsy",     # OTHERWISE is 1.3-only
 }
 
 # `OP` qualifies `mulop`/`addop`/`relop`, and is 15 for everything else.
@@ -263,20 +315,20 @@ GLOBALS_11: dict[int, str] = {
 
     # The scanner's working set (finding 26). All six carry the same
     # operand number in 1.3 except LINENUMBER.
-    1:   "SOURCEBUF",   # the source line buffer, indexed by CHINDEX
-    2:   "CODEBUF",     # the code the compiler is generating, byte-indexed by
+    1:   "SYMBUFP",   # the source line buffer, indexed by CHINDEX
+    2:   "CODEP",     # the code the compiler is generating, byte-indexed by
                         # CODEINX; FLUSHBUFFER writes it out 512 bytes at a
                         # time and raises error 402 if the write fails
-    9:   "CODEINX",     # bytes currently in CODEBUF; EMIT appends one
+    9:   "IC",     # bytes currently in CODEBUF; EMIT appends one
     21:  "SEGSLOT",     # codefile slot for the segment being compiled, 0..15
-    86:  "LCBASE",      # bytes of this procedure already flushed, so the
+    86:  "SEGINX",      # bytes of this procedure already flushed, so the
                         # current location counter is LCBASE + CODEINX
-    90:  "SOURCEBLOCK", # next block number to read from the source file
-    14:  "CHINDEX",     # scan position within SOURCEBUF
+    90:  "SYMBLK", # next block number to read from the source file
+    14:  "SYMCURSOR",     # scan position within SOURCEBUF
     16:  "OP",          # the operator qualifying SY; see OPERATORS
     22:  "LGTH",        # length of the scanned string or long constant
     23:  "VAL",         # the scanned value, or a pointer to it
-    92:  "LINENUMBER",  # what `< n >` prints, and what {$D+} emits
+    92:  "SCREENDOTS",  # what `< n >` prints, and what {$D+} emits
 
     # The six `set of symbol` follow-sets, initialised in COMPINIT.9 and
     # each identified by the error its guard raises (finding 26).
@@ -289,13 +341,13 @@ GLOBALS_11: dict[int, str] = {
     122: "SIMPTYPEBEGSYS",  # error 1, "Error in simple type"
     126: "CONSTBEGSYS",  # error 50, "Error in constant"
 
-    54: "STRINGPTR",    # STRING    the standard string[80] descriptor
-    55: "INTERPTR",     # INTERACTIVE
+    54: "STRGPTR",    # STRING    the standard string[80] descriptor
+    55: "INTRACTVPTR",     # INTERACTIVE
     56: "NILPTR",       # form pointer, element type nil
     57: "TEXTPTR",      # TEXT
     58: "BOOLPTR",      # BOOLEAN   scalar, scalkind = declared
     59: "CHARPTR",      # CHAR
-    60: "LONGPTR",      # the default long-integer type, form 3
+    60: "LONGINTPTR",      # the default long-integer type, form 3
     61: "REALPTR",      # REAL      size 2 words
     66: "OUTPUTPTR",    # the OUTPUT file's identifier record
     67: "INPUTPTR",     # the INPUT file's identifier record
@@ -304,29 +356,61 @@ GLOBALS_11: dict[int, str] = {
     # upper-cased option letter, so each of these is tied to its letter by
     # the case table itself; the spellings are ours, the letters are not.
     28:  "SYSCOMP",     # $U-, compile at the system lexical level
-    30:  "OPT_F",       # $F, emit byte-swapped p-code (finding 24a)
+    30:  "FLIPBYTES",       # $F, emit byte-swapped p-code (finding 24a)
     # Unit-compilation state. Written only in UNITPART, and UNITPART.3 --
     # which errors 182 if INUNIT is already set, i.e. no nested units --
     # saves LEVEL and the segment counter and then sets INUNIT, clears
     # ININTERFACE. ININTERFACE goes true between the unit heading and
     # `SY = IMPLEMENTATION`. Finding 24b.
     31:  "ININTERFACE",
-    32:  "INUNIT",
+    32:  "INMODULE",
     33:  "SWAPMORE",    # $S++, the second swapping flag
     34:  "SWAPPING",    # $S, selects PASCALCO.25 over PASCALCO.28
     35:  "NOLOAD",      # $N
-    39:  "VARSTRING",   # $V
-    42:  "OPT_T",       # $T, undocumented
-    43:  "LISTING",     # $L
+    39:  "VARSTRG",   # $V
+    42:  "TINY",       # $T, undocumented
+    43:  "LIST",     # $L
     45:  "OPT_E",       # $E, undocumented
     47:  "IOCHECK",     # $I
-    49:  "SHOWPROGRESS",  # NOT $Q -- true when quiet compiling is off
-    50:  "OPT_D",       # $D, undocumented
+    49:  "NOISY",  # NOT $Q -- true when quiet compiling is off
+    50:  "DEBUGGING",       # $D, undocumented
     51:  "RANGECHECK",  # $R
     52:  "GOTOOK",      # $G
     85:  "NEXTSEG",     # $NS n, default 7, rejected unless < 31
-    487: "CODECOMMENT",  # $C, the 80-character codefile comment
-    488: "LIBNAME",    # $U filename, the library to search for units
+    487: "COMMENT",  # $C, the 80-character codefile comment
+    488: "SYSTEMLIB",    # $U filename, the library to search for units
+
+    # --- finding 31: GATTR, Pascal-P's `gattr` -------------------------------
+    #
+    # The global map had already sized word 3 as a 5-word record "MOV 5
+    # word(s) x7 ... words 4..7 are also addressed individually, so these
+    # are its fields", at 202 accesses -- the most-used global in the
+    # compiler. BODYPART.8:LOAD says what the fields are: it switches on
+    # word 4 and, in the variable arm, emits `LOD <word 6>, <word 7>`,
+    # which only a lexical level and an offset can be. That is Pascal-P's
+    #     attr = record typtr: stp; case kind: attrkind of
+    #                    cst:   (cval: valu);
+    #                    varbl: (vlevel: levrange; dplmt: addrrange) end
+    # field for field and in order. The GAT prefix is ours; the fields are
+    # Pascal-P's.
+    3:   "GATTYPTR",   # the type of the expression built so far
+    4:   "GATKIND",    # 0 = cst, and the case selector in LOAD
+    5:   "GATCVAL",    # a constant's value
+    6:   "GATVLEV",   # a variable's lexical level -- LOD's first operand
+    7:   "GATDPLMT",   # ...and its offset -- LOD's second
+
+    # --- finding 32: named from the UCSD II.0 compiler source ---------------
+    8:   "TOP",         # top of DISPLAY -- DISPLAY[TOP] is indexed by it
+    46:  "BPTONLINE",   # PRINTLINE prints '*' instead of ':' when set
+    48:  "CODEINSEG",   # FINISHSEG clears it; true once a segment has code
+    95:  "LINESTART",   # SYMBUFP index where the current line begins
+    131: "DISPLAY",     # ARRAY [DISPRANGE] OF a 4-word record, indexed by TOP
+    335: "SEGTABLE",    # ARRAY [SEGRANGE] OF (DISKADDR, CODELENG, SEGNAME,
+                        # SEGKIND, TEXTADDR); Apple's entry is 9 words
+    479: "SEGMAP",   # Apple-only: SEG -> SEGTABLE index, 4 bits per entry.
+                        # II.0 needs none, because SEGRANGE is 0..MAXSEG and
+                        # SEG indexes SEGTABLE directly; Apple lets segment
+                        # numbers run past 15 (finding 27a) and so must map.
 
     # --- finding 28: the compiled-listing columns ----------------------------
     #
@@ -338,18 +422,18 @@ GLOBALS_11: dict[int, str] = {
     # nesting within the code part)". The routine writes exactly that, in
     # that order, so five globals are named by the vendor's own column
     # headings.
-    13:  "SEGNUM",      # column 2. Was called LEVEL; see finding 28. This is
+    13:  "SEG",      # column 2. Was called LEVEL; see finding 28. This is
                         # what `SEGNUM := NEXTSEG` assigns, what indexes
                         # G479 to reach a codefile slot, and what
                         # ENDSEGMENT emits as the segment tail's low byte.
-    97:  "PROCNUM",     # column 3, the procedure being compiled
+    97:  "CURPROC",     # column 3, the procedure being compiled
     38:  "DP",          # true in a declaration part -- Pascal-P's `dp`.
                         # Selects the 'D' in column 4 and LC over CODEINX
                         # for column 5.
-    79:  "LISTLEVEL",   # column 4's digit, `(LISTLEVEL mod 10) + 48`
-    93:  "LISTCOUNT",   # column 5: LC in a declaration part, CODEINX in a
+    79:  "BEGSTMTLEV",   # column 4's digit, `(LISTLEVEL mod 10) + 48`
+    93:  "LINEINFO",   # column 5: LC in a declaration part, CODEINX in a
                         # body
-    78:  "STATLEVEL",   # the live statement-nesting counter LISTLEVEL is
+    78:  "STMTLEV",   # the live statement-nesting counter LISTLEVEL is
                         # latched from; +1/-1 around a structured statement
     10:  "LC",          # the data location counter, in words
     25:  "LCMAX",       # high-water mark of LC: `if LC > LCMAX then
@@ -370,18 +454,18 @@ GLOBALS_11: dict[int, str] = {
                         # and capped by ERROR(251) "Too many nested
                         # procedures or functions" at 149. ENDSEGMENT emits
                         # `NEXTPROC - 1` as the segment's procedure count.
-    185: "PROCDICT",    # PROCDICT[n] is procedure n's attribute-table
+    185: "PROCTABLE",    # PROCDICT[n] is procedure n's attribute-table
                         # address, filled in by BODY3.1 and turned into
                         # self-relative pointers by ENDSEGMENT
-    509: "JTABINX",     # next free long-jump slot, 1..24; ERROR(253)
+    509: "NEXTJTAB",     # next free long-jump slot, 1..24; ERROR(253)
                         # "Procedure too long" when it fills
-    510: "JTABLE",      # the long-jump targets, emitted below JTAB-10
+    510: "JTAB",      # the long-jump targets, emitted below JTAB-10
 
     # The four file variables (finding 10 listed them; finding 23 names them)
-    535: "INFOFILE",   # *SYSTEM.INFO, the unit symbol-table work file
-    586: "LIBFILE",    # SYSTEM.LIBRARY, or whatever $U filename named
-    626: "SOURCEFILE",  # the program text, and the $I include file
-    666: "LISTFILE",   # *SYSTEM.LST.TEXT, or whatever $L filename named
+    535: "REFFILE",   # *SYSTEM.INFO, the unit symbol-table work file
+    586: "LIBRARY",    # SYSTEM.LIBRARY, or whatever $U filename named
+    626: "INCLFILE",  # the program text, and the $I include file
+    666: "LP",   # *SYSTEM.LST.TEXT, or whatever $L filename named
 }
 
 GLOBALS_13: dict[int, str] = {
@@ -390,17 +474,17 @@ GLOBALS_13: dict[int, str] = {
 
     # Finding 26. The scanner's globals did not move between releases
     # except the line counter; the six symbol sets all shifted by +3.
-    1:   "SOURCEBUF",
-    2:   "CODEBUF",
-    9:   "CODEINX",
-    14:  "CHINDEX",
+    1:   "SYMBUFP",
+    2:   "CODEP",
+    9:   "IC",
+    14:  "SYMCURSOR",
     16:  "OP",
     21:  "SEGSLOT",
     22:  "LGTH",
     23:  "VAL",
-    89:  "LCBASE",       # 1.1 global 86, +3
-    93:  "SOURCEBLOCK",  # 1.1 global 90, +3
-    95:  "LINENUMBER",   # 1.1 global 92, +3
+    89:  "SEGINX",       # 1.1 global 86, +3
+    93:  "SYMBLK",  # 1.1 global 90, +3
+    95:  "SCREENDOTS",   # 1.1 global 92, +3
     101: "TYPEDELS",     # 1.1 global 98,  +3
     105: "STATBEGSYS",   # 1.1 global 102, +3
     109: "FACBEGSYS",    # 1.1 global 106, +3
@@ -410,8 +494,8 @@ GLOBALS_13: dict[int, str] = {
     125: "SIMPTYPEBEGSYS",  # 1.1 global 122, +3
     129: "CONSTBEGSYS",  # 1.1 global 126, +3
 
-    55: "STRINGPTR",
-    56: "INTERPTR",
+    55: "STRGPTR",
+    56: "INTRACTVPTR",
     # 1.3 only: a packed char array that is not a STRING, and an unpacked
     # integer one. Not BYTESTREAMPTR/WORDSTREAMPTR -- folded to eight
     # significant characters those are the predeclared type names
@@ -422,7 +506,7 @@ GLOBALS_13: dict[int, str] = {
     60: "TEXTPTR",
     61: "BOOLPTR",
     62: "CHARPTR",
-    63: "LONGPTR",
+    63: "LONGINTPTR",
     64: "REALPTR",
     69: "OUTPUTPTR",
     70: "INPUTPTR",
@@ -430,45 +514,55 @@ GLOBALS_13: dict[int, str] = {
     # Finding 23, carried across by the correspondence table -- every one of
     # these pairs is a 1.00-similarity match, and the 1.3 $U- arm sets the
     # shifted numbers in the same order.
-    13:  "SEGNUM",
+    13:  "SEG",
     28:  "SYSCOMP",
-    30:  "OPT_F",
+    30:  "FLIPBYTES",
     32:  "ININTERFACE",   # 1.1 global 31, +1
-    33:  "INUNIT",        # 1.1 global 32, +1
+    33:  "INMODULE",        # 1.1 global 32, +1
     34:  "SWAPMORE",
     35:  "SWAPPING",
     36:  "NOLOAD",
-    40:  "VARSTRING",
-    43:  "OPT_T",
-    44:  "LISTING",
+    40:  "VARSTRG",
+    43:  "TINY",
+    44:  "LIST",
     46:  "OPT_E",
     48:  "IOCHECK",
-    50:  "SHOWPROGRESS",
-    51:  "OPT_D",
+    50:  "NOISY",
+    51:  "DEBUGGING",
     52:  "RANGECHECK",
     53:  "GOTOOK",
     88:  "NEXTSEG",
-    605: "CODECOMMENT",
-    606: "LIBNAME",
-    665: "INFOFILE",
-    716: "LIBFILE",
-    756: "SOURCEFILE",
-    796: "LISTFILE",
+    605: "COMMENT",
+    606: "SYSTEMLIB",
+    665: "REFFILE",
+    716: "LIBRARY",
+    756: "INCLFILE",
+    796: "LP",
 
-    # Finding 28, carried across by the correspondence table (every pair
-    # below is a 1.00-similarity match).
+    # Findings 28 and 31, carried across by the correspondence table (every
+    # pair below is a 1.00-similarity match). GATTR keeps words 3..7 in
+    # 1.3, with the same 5-word record shape in the global map.
+    3:   "GATTYPTR",
+    4:   "GATKIND",
+    5:   "GATCVAL",
+    6:   "GATVLEV",
+    7:   "GATDPLMT",
+    8:   "TOP",
+    47:  "BPTONLINE",   # 1.1 global 46, +1
+    49:  "CODEINSEG",   # 1.1 global 48, +1
+    98:  "LINESTART",   # 1.1 global 95, +3
     10:  "LC",
     25:  "LCMAX",
     39:  "DP",          # 1.1 global 38,  +1
     80:  "LEVEL",       # 1.1 global 77,  +3
-    81:  "STATLEVEL",   # 1.1 global 78,  +3
-    82:  "LISTLEVEL",   # 1.1 global 79,  +3
-    96:  "LISTCOUNT",   # 1.1 global 93,  +3
+    81:  "STMTLEV",   # 1.1 global 78,  +3
+    82:  "BEGSTMTLEV",   # 1.1 global 79,  +3
+    96:  "LINEINFO",   # 1.1 global 93,  +3
     99:  "NEXTPROC",    # 1.1 global 96,  +3
-    100: "PROCNUM",     # 1.1 global 97,  +3
-    190: "PROCDICT",    # 1.1 global 185, +5
-    627: "JTABINX",     # 1.1 global 509, +118
-    628: "JTABLE",      # 1.1 global 510, +118
+    100: "CURPROC",     # 1.1 global 97,  +3
+    190: "PROCTABLE",    # 1.1 global 185, +5
+    627: "NEXTJTAB",     # 1.1 global 509, +118
+    628: "JTAB",      # 1.1 global 510, +118
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}

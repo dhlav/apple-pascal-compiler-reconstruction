@@ -2223,6 +2223,244 @@ procedure of the program block, so the reconstruction cannot declare it
 beside `DECLARAT`; and `BODY1`/`BODY3` at lex 3 cannot sit beside
 `BODYPART.25` unless `BODYPART.25` is itself at lex 3, which it is.
 
+## 31. The statement grammar, the expression chain, and `GATTR`
+
+Seventeen names in the phase segments, and the first real block of task
+#6's typed declaration order.
+
+### 31a. Each statement parser identifies itself twice
+
+VERIFIED BINARY FACT for the identifications; the spellings are STRONG
+INFERENCE. `STATEMEN` has eight procedures: procedure 1 is the segment
+procedure (finding 30) and the other seven are the arms of Pascal's
+statement grammar — minus `case` and `for`, which Apple moved into
+segments of their own, leaving exactly seven. Each one is pinned
+*twice, independently*: by the reserved word it demands, through a
+recovered `SY` code, and by the error number it raises when that word is
+missing, which Apple's own error list glosses in English.
+
+| procedure | demands | raises | Apple's gloss |
+|---|---|---|---|
+| `STATEMEN.2` `ASSIGNMENT` | `becomes` | 51 | "':=' expected" |
+| `STATEMEN.3` `GOTOSTATEMENT` | `intconst` | 15, 167 | "Integer expected", "Undeclared label" |
+| `STATEMEN.4` `COMPOUNDSTATEMENT` | `endsy` | 13 | "'END' expected" |
+| `STATEMEN.5` `IFSTATEMENT` | `thensy` | 52 | "'THEN' expected" |
+| `STATEMEN.6` `REPEATSTATEMENT` | `untilsy` | 53 | "'UNTIL' expected" |
+| `STATEMEN.7` `WHILESTATEMENT` | `dosy` | 54 | "'DO' expected" |
+| `STATEMEN.8` `WITHSTATEMENT` | `dosy` | 54, 140, **250** | …, "Type of variable must be record", "Too many scopes of nested identifiers" |
+| `CASESTAT.1` | `ofsy` | 8, 13, 156 | "'OF' expected", …, "Multidefined case label" |
+| `FORSTATE.1` | `becomes`, `dosy` | 51, **55**, 54, 143 | …, "'TO' or 'DOWNTO' expected in for statement", … |
+
+Nothing forces a `while` parser to raise 54 rather than 52 except its
+being a `while` parser. Two of the seven have no keyword of their own and
+fall to the second column alone: `ASSIGNMENT` demands `becomes` and raises
+51, and `WITHSTATEMENT` raises **250**, "Too many scopes of nested
+identifiers" — which only a construct that *opens a scope* can, and none
+of its siblings do. `tools/probes/probe_statements.py` checks all nine
+across both releases; mutating either the demanded symbol or the expected
+error fails it.
+
+The spellings are Pascal-P's, and what licenses them is not resemblance
+but the segment dictionary. `CASESTAT` and `FORSTATE` are the first eight
+characters of two SEGMENT procedures (finding 30), and Pascal-P's names
+for those statements are `casestatement` and `forstatement`, which
+truncate to exactly those eight characters. Apple kept Zurich's names for
+this family, so their siblings are Zurich's too.
+
+### 31b. The expression chain, confirmed by lexical level
+
+VERIFIED BINARY FACT. `BODYPART.11` calls `.33` calls `.34` calls `.35`,
+and the four sit at lexical levels 2, 3, 4 and 5 — each declared inside
+the one before. That is Pascal-P's
+
+```
+  expression → simpleexpression → term → factor
+```
+
+nesting and all, with `factor` recursing into `expression` for a
+parenthesised subexpression and into itself. `expression` parses through
+`simpleexpression` and then handles a relational operator if `SY = relop`,
+which is the same routine's shape in Pascal-P. The lexical levels are
+independent of the names: they are bytes in the attribute tables.
+
+Three more came with them. `BODYPART.18:GENLABEL` is `NEW(l, 3)` — a
+three-word label record, marked undefined, with 28000 as the
+end-of-chain sentinel. `BODYPART.19:PUTLABEL` defines the label at
+`CODEINX` and walks its chain of forward references, patching each.
+`BODYPART.17:GENFJP` calls `LOAD`, raises 135 "Type of operand must be
+boolean" unless the type is `BOOLPTR`, and emits `FJP` to a label; the
+spelling is ours, since Pascal-P splits that into two.
+
+### 31c. Globals 3–7 are `gattr`
+
+STRONG INFERENCE, from two directions that were derived separately.
+
+The global map has said since finding 10 that word 3 is a five-word record
+— *"MOV 5 word(s) x7 … spans 5 words but words 4..7 are also addressed
+individually, so these are its fields"* — at **202 accesses in 1.1 and 216
+in 1.3, the most-used global in the compiler.** That is what a Pascal-P
+compiler's `gattr` looks like, and nothing else does.
+
+`BODYPART.8:LOAD` then says what the fields are. It switches on word 4 and,
+in the variable arm, emits `LOD <word 6>, <word 7>` — and `EMITOP2`'s
+operands are `(op, lex, offset)` (finding 24c), so word 6 can only be a
+lexical level and word 7 an offset. The constant arm reads word 5:
+`EMITCONST(word 5)` for an ordinal, `LDCN` when the type is `NILPTR`, a
+two-word `LDC` for a real and a five-word one for a set. So:
+
+```
+  attr = record
+           typtr:  stp;              { global 3  GATTYPTR }
+           case kind: attrkind of    { global 4  GATKIND, 0 = cst }
+             cst:   (cval: valu);    { global 5  GATCVAL }
+             varbl: (vlevel: levrange;   { global 6  GATLEVEL }
+                     dplmt: addrrange)   { global 7  GATDPLMT }
+         end
+```
+
+field for field and in order. The `GAT` prefix is ours — the reconstruction
+will write `GATTR.TYPTR` once the lifter can render record fields — but
+the field names and their order are Pascal-P's, and the order is forced by
+the offsets rather than chosen.
+
+This is the second record recovered field by field, after finding 22's
+`structure` and `identifier`, and it is the one the code generator runs
+on: every `LOAD`, every comparison, every assignment reads it.
+
+## 32. The UCSD II.0 compiler source
+
+Dave supplied the source of the UCSD Pascal II.0 compiler — *"BASED ON
+ZURICH P2 PORTABLE COMPILER, EXTENSIVLY MODIFIED BY ROGER T. SUMNER,
+SHAWN FANNING AND ALBERT A. HOFFMAN, 1976..1979"* — now in
+`evidence/reference/ucsd-ii0-compiler/`, 15 files. Apple Pascal's
+`SYSTEM.COMPILER` is a descendant of it.
+
+**It is not an answer key.** Apple changed things, and where the two
+disagree the binary wins. Its value is twofold: it settles spellings the
+binary can never carry, and it is an independent document against which
+everything derived from the bytes alone can be checked.
+
+### 32a. What the check found
+
+`tools/probes/probe_ucsd_source.py`. Every numeric bound this project hit
+as a bare constant in a comparison is named in `compglbls.text`, and
+**all eight match**:
+
+| recovered from | value | source name |
+|---|---|---|
+| `if IC + 100 > 1299 then ERROR(253)` (finding 28e) | 1299 | `MAXCODE` |
+| the long-jump table filling (finding 28b) | 24 | `MAXJTAB` |
+| `BUMPSEG(SEGSLOT, 15, 354)` (finding 27) | 15 | `MAXSEG` |
+| `ERROR(251)` above 149 procedures (finding 28a) | 149 | `MAXPROCNUM` |
+| `if LEVEL < 8 then LEVEL := LEVEL + 1` (finding 28b) | 8 | `MAXLEVEL` |
+| `GENLABEL`'s end-of-chain sentinel (finding 31b) | 28000 | `MAXADDR` |
+| `STRING[n]` range-checked against 1..255 (finding 22) | 255 | `STRGLGTH` |
+| the `$C` comment read to 80 characters | 80 | `DEFSTRGLGTH` |
+
+Nothing about the constant 1299 announces itself as a code-buffer size.
+
+The two scanner enumerations of finding 26, recovered from the
+reserved-word table and the scanner's case arms: **`OPERATOR` matches
+16 of 16, `SYMBOL` matches 54 of 55**, member for member by position. The
+one difference is Apple's: slot 54 is `SEPARATSY` in II.0 and OTHERWISE in
+Apple, and 1.3's reserved-word table has no SEPARATE. The probe declares
+that one change explicitly and fails on any other.
+
+Finding 22's `identifier` record is confirmed field for field —
+`NAME: ALPHA; LLINK, RLINK: CTP; IDTYPE: STP; NEXT: CTP; CASE KLASS` — as
+is finding 31c's reading of `GATTR`. Finding 28a's `FINISHSEG` turns out
+to be reproducible line by line:
+
+```
+  PROCEDURE FINISHSEG;                     our lift of PASCALCO.23
+  BEGIN IC := 0;                             IC := 0;
+    FOR I := NEXTPROC-1 DOWNTO 1 DO          for i := NEXTPROC-1 downto 1
+      IF PROCTABLE[I] = 0 THEN GENWORD(0)      if PROCTABLE[i] = 0 ...
+      ELSE GENWORD(SEGINX+IC-PROCTABLE[I]);    else GENWORD(SEGINX+IC-...)
+    GENBYTE(SEG); GENBYTE(NEXTPROC-1);       GENBYTE(SEG); GENBYTE(...)
+    SEGTABLE[SEG].CODELENG := SEGINX+IC;     SEGTABLE[...] := SEGINX+IC
+    WRITECODE(TRUE); SEGINX := 0;            WRITECODE(1); SEGINX := 0
+```
+
+and `PRINTLINE` matches finding 28c's column reading field width for field
+width:
+
+```
+  WRITE(LP,SCREENDOTS:6,SEG:4,CURPROC:5,STARORC,DORLEV,LINEINFO:6,' ');
+```
+
+### 32b. Names corrected
+
+Some inferences were exactly right — `GENLABEL`, `PUTLABEL`, `GENFJP`,
+`LOAD`, `EXPRESSION`, `SIMPLEEXPRESSION`, `TERM`, `BODY`, `ROUTINE`,
+`ERROR`, `ENTERID`, `INSYMBOL`, `SEARCHSECTION`, `SEARCHID`, `GETBOUNDS`,
+`SKIP`, `CONSTANT`, `COMPTYPES`, `BLOCK`, `LCMAX`, `LEVEL`, `DP`,
+`GOTOOK`, `RANGECHECK`, `IOCHECK`, `SYSCOMP`, `ININTERFACE`, `NEXTSEG`,
+`NEXTPROC`, `LINESTART`, all eight symbol-set globals, and all nine
+statement parsers including `CASESTATEMENT` and `FORSTATEMENT`, which
+finding 31a had predicted from the segment names.
+
+Fifty-six were not. The substantive ones:
+
+| ours | UCSD's | note |
+|---|---|---|
+| `EMIT` / `EMITWORD` | `GENBYTE` / `GENWORD` | |
+| `EMITOP` `EMITCONST` `EMITOP1` `EMITOP2` `EMITBIG` `EMITJUMP` | `GEN0` `GENLDC` `GEN1` `GEN2` `GENBIG` `GENJMP` | finding 24c's whole emitter family |
+| `FLUSHBUFFER` | `WRITECODE` | and its argument is `FORCEBUF` |
+| `ENDSEGMENT` | `FINISHSEG` | |
+| `ERRORWITHTEXT` | `PRINTLINE` | |
+| `NEXTBLOCK` | `GETNEXTPAGE` | |
+| `COMMENT` | `COMMENTER` | its argument is `STOPPER: CHAR` |
+| `ENTERUNDECL` | `FINDFORW` | it reports undefined **forward** declarations |
+| `ISSTRING` | `PAOFCHAR` | |
+| `STRINGTYPE` / `LONGSIZE` | `STRGTYPE` / `DECSIZE` | |
+| `CODEBUF` / `SOURCEBUF` | `CODEP` / `SYMBUFP` | |
+| `CODEINX` / `SEGNUM` / `PROCNUM` | `IC` / `SEG` / `CURPROC` | |
+| `LCBASE` | `SEGINX` | |
+| `PROCDICT` / `JTABLE` / `JTABINX` | `PROCTABLE` / `JTAB` / `NEXTJTAB` | |
+| `LINENUMBER` / `LISTCOUNT` | `SCREENDOTS` / `LINEINFO` | the listing columns |
+| `STATLEVEL` / `LISTLEVEL` | `STMTLEV` / `BEGSTMTLEV` | |
+| `OPT_F` `OPT_T` `OPT_D` `LISTING` `SHOWPROGRESS` | `FLIPBYTES` `TINY` `DEBUGGING` `LIST` `NOISY` | finding 24a's option flags |
+| `INUNIT` | `INMODULE` | II.0 calls units *modules* |
+| `LISTFILE` `LIBFILE` `INFOFILE` | `LP` `LIBRARY` `REFFILE` | |
+| `ENTERSTDIDENTS` | `ENTSPCPROCS` | 43 names in the same order; Apple adds `UNITSTAT` as the 44th, which is exactly the difference finding 24a recorded |
+
+`probe_identifiers.py` no longer hard-codes which long spellings are
+allowed. It reads the II.0 source and requires that any name over eight
+characters actually appear there, so a name claimed to be UCSD's has to be
+UCSD's. **All 53 now are; none are ours.**
+
+### 32c. A correction to finding 29c
+
+Finding 29c argued that `PASCALCO.15` could not be called `STRING`
+because the type is predeclared and the compiler needs it. The rename was
+right — UCSD calls it `PAOFCHAR` — but the argument was too strong. II.0
+*does* declare `PROCEDURE STRING`, and legally: it comes after every
+`STRING`-typed declaration in a one-pass language, so nothing later needs
+the type. It is a different routine from `PAOFCHAR` — the scanner's
+string-literal reader, which Apple moved into the `NUMSTRIN` segment
+along with `NUMBER`.
+
+### 32d. What Apple changed
+
+Worth recording, because these are the places the reconstruction cannot
+copy II.0:
+
+* **Segmentation.** II.0 declares six segment procedures —
+  `PASCALCOMPILER`, `COMPINIT`, `DECLARATIONPART`, `BODYPART`,
+  `WRITELINKERINFO`, `UNITPART`. Apple has fifteen, promoting `ROUTINE`,
+  `STATEMENT`, `CASESTATEMENT`, `FORSTATEMENT`, `BODY`, the compiler
+  options, `NUMBER`/`STRING` and the finish-up code into segments of
+  their own to fit the Apple II. `WRITELIN` is `WRITELINKERINFO` — a name
+  no amount of staring at the binary would have produced.
+* **Segment numbering.** II.0's `SEGRANGE` is `0..MAXSEG` and `SEG`
+  indexes `SEGTABLE` directly. Apple lets segment numbers run past 15
+  (finding 27a) and adds a packed 4-bit `SEG` → slot map, global 479.
+* **The option letters.** `$E` has no II.0 counterpart: II.0 raises error
+  191 unconditionally for a file variable in a module's private part,
+  where Apple gates it on a flag (finding 24a).
+* **`OTHERWISE` for `SEPARATE`**, as above.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

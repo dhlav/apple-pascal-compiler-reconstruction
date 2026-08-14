@@ -84,6 +84,13 @@ Done, and reproducible via `python tools/build_all.py`:
    reconstruct Y from X's own logic and diff it against the bytes —
    `probe_segtail.py` is the pattern.
 
+   Finding 32 supersedes most of this track's guesswork: the UCSD II.0
+   compiler source is now in `evidence/`, and 56 names were corrected
+   against it. It is not an answer key — Apple changed the segmentation,
+   the segment numbering and the option letters — but any name we invent
+   should now be checked against it first, and `probe_identifiers.py`
+   requires every spelling over eight characters to appear there.
+
    Finding 30 then added fifteen names for free, and a rule worth keeping
    ahead of all the levers above: **before inventing a name, ask whether
    the artifact already carries one.** The codefile's SEGNAME field holds
