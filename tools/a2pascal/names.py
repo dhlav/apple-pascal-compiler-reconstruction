@@ -42,9 +42,38 @@ PASCALCO_13: dict[int, str] = {
     **{n + 2: s for n, s in PASCALCO_11.items()},
 }
 
+# --- the code emitters, in BODYPART (finding 24c) --------------------------
+#
+# These four sit on top of PASCALCO.20:EMIT (which writes one byte) and are
+# the compiler's whole code-generation interface. What identifies them is
+# that their opcode argument is the opcode *minus 128*: BODYPART.5's 15
+# distinct literal arguments all land on one-operand opcodes, and the
+# `+20` and `-13` adjustments inside BODYPART.6 map each two-operand
+# addressing opcode onto its short form ($B3 LDC -> $C7 LDCI, $B2 LDA ->
+# $C6 LLA, $B6 LOD -> $CA LDL, $B8 STR -> $CC STL, and the six comparisons
+# onto their integer variants). See tools/probes/probe_emitters.py.
+#
+# The spellings are ours; the arities and behaviour are the binary's.
+BODYPART_EMIT: dict[int, str] = {
+    3:  "EMITOP",     # (op)             opcode alone; pads with NOP before LSA
+    4:  "EMITCONST",  # (v)              push integer v: short SLDC, or LDCI+NGI
+    5:  "EMITOP1",    # (op, arg)        opcode + one operand byte
+    6:  "EMITOP2",    # (op, lex, off)   picks the short form when it can
+    25: "BODY",       # emits FINIT per file variable and the unit-init CXPs,
+                      # then loops over statements while SY starts one
+    27: "EMITBIG",    # (n)  the BIG encoding: one byte, or two with bit 7 set
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
-    "1.1": {("PASCALCO", n): s for n, s in PASCALCO_11.items()},
-    "1.3": {("PASCALCO", n): s for n, s in PASCALCO_13.items()},
+    "1.1": {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
+           | {("BODYPART", n): s for n, s in BODYPART_EMIT.items()}
+           | {("COMPINIT", 7): "ENTERSTDIDENTS"},
+    # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
+    # correspondence table matches 3..6 and 25 to themselves.
+    "1.3": {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
+           | {("BODYPART", (n + 1 if n == 27 else n)): s
+              for n, s in BODYPART_EMIT.items()}
+           | {("COMPINIT", 7): "ENTERSTDIDENTS"},
 }
 
 # --- compiler globals ------------------------------------------------------
@@ -74,7 +103,14 @@ GLOBALS_11: dict[int, str] = {
     13:  "LEVEL",       # Zurich's `level`; 1 for the program block, and the
                         # emitted LEX LEVEL byte is one less
     28:  "SYSCOMP",     # $U-, compile at the system lexical level
-    30:  "OPT_F",       # $F, undocumented
+    30:  "OPT_F",       # $F, emit byte-swapped p-code (finding 24a)
+    # Unit-compilation state. Written only in UNITPART, and UNITPART.3 --
+    # which errors 182 if INUNIT is already set, i.e. no nested units --
+    # saves LEVEL and the segment counter and then sets INUNIT, clears
+    # ININTERFACE. ININTERFACE goes true between the unit heading and
+    # `SY = IMPLEMENTATION`. Finding 24b.
+    31:  "ININTERFACE",
+    32:  "INUNIT",
     33:  "SWAPMORE",    # $S++, the second swapping flag
     34:  "SWAPPING",    # $S, selects PASCALCO.25 over PASCALCO.28
     35:  "NOLOAD",      # $N
@@ -119,6 +155,8 @@ GLOBALS_13: dict[int, str] = {
     13:  "LEVEL",
     28:  "SYSCOMP",
     30:  "OPT_F",
+    32:  "ININTERFACE",   # 1.1 global 31, +1
+    33:  "INUNIT",        # 1.1 global 32, +1
     34:  "SWAPMORE",
     35:  "SWAPPING",
     36:  "NOLOAD",

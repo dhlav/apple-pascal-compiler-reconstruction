@@ -24,7 +24,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
 
 === BODYPART.1  -- 2 call site(s)
   from PASCALCO.26 at $0F81 via CXP
-      0F74  LDC 2w [$0020 $0000]
+      0F74  LDC 2w [$0000 $0020]
       0F7A  SLDC 2
       0F7B  UNI
       0F7C  ADJ 4
@@ -2266,7 +2266,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.17 at $0562 via CIP
   from BODYPART.22 at $09DA via CIP
       09CC  SLDC 4
-      09CD  LDC 2w [$0001 $0002]
+      09CD  LDC 2w [$0002 $0001]
       09D4  SLDC 2
       09D5  UNI
       09D6  ADJ 4
@@ -2329,7 +2329,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       1889  FJP $199B (jtab-18)
   from BODYPART.34 at $18AC via CIP
       189D  SLDC 4
-      189E  LDC 3w [$0100 $0000 $0000]
+      189E  LDC 3w [$0000 $0000 $0100]
       18A6  SLDC 3
       18A7  UNI
       18A8  ADJ 4
@@ -2343,7 +2343,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       16ED  FJP $1815 (jtab-18)
   from BODYPART.35 at $1710 via CIP
       1701  SLDC 4
-      1702  LDC 3w [$0080 $0000 $0000]
+      1702  LDC 3w [$0000 $0000 $0080]
       170A  SLDC 3
       170B  UNI
       170C  ADJ 4
@@ -2768,7 +2768,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.22 at $09D8 via CIP
       09CA  LDM 4
       09CC  SLDC 4
-      09CD  LDC 2w [$0001 $0002]
+      09CD  LDC 2w [$0002 $0001]
       09D4  SLDC 2
       09D5  UNI
       09D6  ADJ 4
@@ -2817,14 +2817,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.36 at $1506 via CIP
       14F9  LDM 4
       14FB  SLDC 4
-      14FC  LDC 2w [$0001 $0006]
+      14FC  LDC 2w [$0006 $0001]
       1502  SLDC 2
       1503  UNI
       1504  ADJ 4
   from BODYPART.36 at $1562 via CIP
       1554  LDM 4
       1556  SLDC 4
-      1557  LDC 2w [$0001 $0002]
+      1557  LDC 2w [$0002 $0001]
       155E  SLDC 2
       155F  UNI
       1560  ADJ 4
@@ -3161,7 +3161,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       1A51  EQUI
       1A52  FJP $1A56
   from BODYPART.22 at $09DC via CIP
-      09CD  LDC 2w [$0001 $0002]
+      09CD  LDC 2w [$0002 $0001]
       09D4  SLDC 2
       09D5  UNI
       09D6  ADJ 4
@@ -3807,7 +3807,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.11 at $1A2A via CLP
       1A1A  LDM 4
       1A1C  SLDC 4
-      1A1D  LDC 3w [$0200 $0000 $0000]
+      1A1D  LDC 3w [$0000 $0000 $0200]
       1A26  SLDC 3
       1A27  UNI
       1A28  ADJ 4
@@ -3823,14 +3823,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.34 at $1852 via CLP
       1843  LDM 4
       1845  SLDC 4
-      1846  LDC 3w [$0100 $0000 $0000]
+      1846  LDC 3w [$0000 $0000 $0100]
       184E  SLDC 3
       184F  UNI
       1850  ADJ 4
   from BODYPART.34 at $18AA via CLP
       189B  LDM 4
       189D  SLDC 4
-      189E  LDC 3w [$0100 $0000 $0000]
+      189E  LDC 3w [$0000 $0000 $0100]
       18A6  SLDC 3
       18A7  UNI
       18A8  ADJ 4
@@ -3839,14 +3839,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from BODYPART.35 at $16E8 via CLP
       16D8  LDM 4
       16DA  SLDC 4
-      16DB  LDC 3w [$0080 $0000 $0000]
+      16DB  LDC 3w [$0000 $0000 $0080]
       16E4  SLDC 3
       16E5  UNI
       16E6  ADJ 4
   from BODYPART.35 at $170E via CLP
       16FF  LDM 4
       1701  SLDC 4
-      1702  LDC 3w [$0080 $0000 $0000]
+      1702  LDC 3w [$0000 $0000 $0080]
       170A  SLDC 3
       170B  UNI
       170C  ADJ 4
@@ -4159,7 +4159,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       1096  LLA 1
       1098  LDM 4
   from PASCALCO.26 at $10D0 via CXP
-      10C0  LDC 3w [$0003 $8000 $0000]
+      10C0  LDC 3w [$0000 $8000 $0003]
       10C8  SLDC 3
       10C9  INN
       10CA  FJP $10D3
@@ -4275,7 +4275,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       0C9A  LLA 8
       0C9C  LLA 13
   from DECLARAT.6 at $083A via CIP
-      082B  LDC 2w [$0020 $0008]
+      082B  LDC 2w [$0008 $0020]
       0832  SLDC 2
       0833  UNI
       0834  ADJ 4
@@ -4305,7 +4305,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       09AD  SLDL 2
       09AE  SLDL 1
   from DECLARAT.3 at $0A48 via CLP
-      0A39  LDC 2w [$0001 $0802]
+      0A39  LDC 2w [$0802 $0001]
       0A40  SLDC 2
       0A41  UNI
       0A42  ADJ 4
@@ -4546,7 +4546,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       0520  SLDC 0
       0521  LLA 1
   from PASCALCO.8 at $0571 via CXP
-      055E  LDC 5w [$0020 $03FF $4000 $0000 $0000]
+      055E  LDC 5w [$0000 $0000 $4000 $03FF $0020]
       056A  SLDC 5
       056B  INN
       056C  FJP $0576
@@ -6030,7 +6030,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       0328  FJP $0336
       032A  SLDC 102
   from DECLARAT.6 at $0788 via CXP
-      077C  LDC 2w [$0020 $0001]
+      077C  LDC 2w [$0001 $0020]
       0782  SLDC 2
       0783  INN
       0784  LNOT
@@ -6065,7 +6065,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       0845  FJP $084B
       0847  SLDC 108
   from DECLARAT.6 at $087E via CXP
-      0872  LDC 2w [$0020 $0201]
+      0872  LDC 2w [$0201 $0020]
       0878  SLDC 2
       0879  INN
       087A  LNOT
@@ -6481,7 +6481,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       157D  FJP $1583
       157F  SLDC 119
   from DECLARAT.20 at $1594 via CXP
-      1587  LDC 2w [$4000 $0001]
+      1587  LDC 2w [$0001 $4000]
       158E  SLDC 2
       158F  INN
       1590  LNOT
@@ -7355,7 +7355,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       0649  FJP $0654
       064B  LDCI 253
   from STATEMEN.1 at $0666 via CXP
-      0655  LDC 4w [$0040 $0000 $0000 $2608]
+      0655  LDC 4w [$2608 $0000 $0000 $0040]
       0660  SLDC 4
       0661  INN
       0662  LNOT
@@ -8273,7 +8273,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       1C5D  EQUI
       1C5E  FJP $1C65
   from DECLARAT.1 at $1C97 via CXP
-      1C88  LDC 2w [$0800 $0000]
+      1C88  LDC 2w [$0000 $0800]
       1C8E  SLDC 2
       1C8F  DIF
       1C90  ADJ 4
@@ -8624,7 +8624,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       10AC  CXP 1,7
   from DECLARAT.11 at $10DE via CXP
       10D1  SLDC 4
-      10D2  LDC 2w [$8000 $0000]
+      10D2  LDC 2w [$0000 $8000]
       10D8  SLDC 2
       10D9  UNI
       10DA  ADJ 4
@@ -8730,7 +8730,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from DECLARAT.19 at $1806 via CXP
       17F7  STL 3
       17F9  SLDO 15
-      17FA  LDC 3w [$0001 $8000 $0000]
+      17FA  LDC 3w [$0000 $8000 $0001]
       1802  SLDC 3
       1803  INN
       1804  FJP $180B
@@ -9889,14 +9889,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from DECLARAT.1 at $1C92 via CXP
       1C85  LDM 4
       1C87  SLDC 4
-      1C88  LDC 2w [$0800 $0000]
+      1C88  LDC 2w [$0000 $0800]
       1C8E  SLDC 2
       1C8F  DIF
       1C90  ADJ 4
   from DECLARAT.1 at $1D5A via CXP
       1D48  LDM 4
       1D4A  SLDC 4
-      1D4B  LDC 4w [$000C $0000 $0000 $0000]
+      1D4B  LDC 4w [$0000 $0000 $0000 $000C]
       1D56  SLDC 4
       1D57  DIF
       1D58  ADJ 4
@@ -9931,21 +9931,21 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from DECLARAT.6 at $079A via CXP
       078D  LDM 4
       078F  SLDC 4
-      0790  LDC 2w [$0020 $0001]
+      0790  LDC 2w [$0001 $0020]
       0796  SLDC 2
       0797  UNI
       0798  ADJ 4
   from DECLARAT.6 at $0806 via CXP
       07F9  LDM 4
       07FB  SLDC 4
-      07FC  LDC 2w [$0020 $000E]
+      07FC  LDC 2w [$000E $0020]
       0802  SLDC 2
       0803  UNI
       0804  ADJ 4
   from DECLARAT.6 at $0890 via CXP
       0883  LDM 4
       0885  SLDC 4
-      0886  LDC 2w [$0020 $0001]
+      0886  LDC 2w [$0001 $0020]
       088C  SLDC 2
       088D  UNI
       088E  ADJ 4
@@ -10349,14 +10349,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       015F  LLA 7
       0161  LLA 13
   from DECLARAT.4 at $01A2 via CXP
-      0193  LDC 2w [$0001 $0000]
+      0193  LDC 2w [$0000 $0001]
       019A  SLDC 2
       019B  UNI
       019C  ADJ 4
       019E  LLA 7
       01A0  LLA 13
   from DECLARAT.4 at $0222 via CXP
-      0213  LDC 2w [$0001 $0000]
+      0213  LDC 2w [$0000 $0001]
       021A  SLDC 2
       021B  UNI
       021C  ADJ 4
@@ -10773,7 +10773,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       030F  SLDL 4
   from BODYPART.5 at $035D via CXP
       034A  SLDL 2
-      034B  LDC 5w [$C006 $3000 $6401 $4000 $0000]
+      034B  LDC 5w [$0000 $4000 $6401 $3000 $C006]
       0358  SLDC 5
       0359  INN
       035A  FJP $0362
@@ -11434,7 +11434,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
       10D6  EQUI
       10D7  FJP $0F17 (jtab-16)
   from UNITPART.1 at $04DB via CXP
-      04C8  LDC 4w [$001C $0000 $0000 $0000]
+      04C8  LDC 4w [$0000 $0000 $0000 $001C]
       04D2  SLDC 4
       04D3  DIF
       04D4  ADJ 4
@@ -11445,14 +11445,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from PASCALCO.27 at $110C via CGP
       10FF  SLDC 4
       1100  UNI
-      1101  LDC 2w [$0020 $0000]
+      1101  LDC 2w [$0000 $0020]
       1108  SLDC 2
       1109  DIF
       110A  ADJ 4
   from UNITPART.1 at $04D6 via CXP
       04C5  LDM 4
       04C7  SLDC 4
-      04C8  LDC 4w [$001C $0000 $0000 $0000]
+      04C8  LDC 4w [$0000 $0000 $0000 $001C]
       04D2  SLDC 4
       04D3  DIF
       04D4  ADJ 4
@@ -11939,7 +11939,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
 === ROUTINE.17  -- 1 call site(s)
   from ROUTINE.1 at $0A9D via CLP
       0A8F  SLDL 1
-      0A90  LDC 3w [$0F7D $88EC $F000]
+      0A90  LDC 3w [$F000 $88EC $0F7D]
       0A98  SLDC 3
       0A99  INN
       0A9A  LNOT
@@ -11998,7 +11998,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from CASESTAT.1 at $0100 via CXP
       00EF  LDM 4
       00F1  SLDC 4
-      00F2  LDC 4w [$0040 $0000 $0000 $0008]
+      00F2  LDC 4w [$0008 $0000 $0000 $0040]
       00FC  SLDC 4
       00FD  UNI
       00FE  ADJ 4
@@ -12084,14 +12084,14 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
   from PASCALCO.26 at $0EFC via CXP
       0EEB  LDM 4
       0EED  SLDC 4
-      0EEE  LDC 4w [$001C $0000 $0000 $0200]
+      0EEE  LDC 4w [$0200 $0000 $0000 $001C]
       0EF8  SLDC 4
       0EF9  UNI
       0EFA  ADJ 4
   from PASCALCO.26 at $10BC via CXP
       10AA  LDM 4
       10AC  SLDC 4
-      10AD  LDC 4w [$001C $0000 $0000 $0200]
+      10AD  LDC 4w [$0200 $0000 $0000 $001C]
       10B8  SLDC 4
       10B9  UNI
       10BA  ADJ 4
@@ -12117,7 +12117,7 @@ Apple Pascal 1.3 SYSTEM.COMPILER call sites
 === UNITPART.4  -- 1 call site(s)
   from UNITPART.1 at $04D9 via CLP
       04C7  SLDC 4
-      04C8  LDC 4w [$001C $0000 $0000 $0000]
+      04C8  LDC 4w [$0000 $0000 $0000 $001C]
       04D2  SLDC 4
       04D3  DIF
       04D4  ADJ 4

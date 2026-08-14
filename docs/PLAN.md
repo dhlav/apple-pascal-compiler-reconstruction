@@ -41,10 +41,19 @@ Done, and reproducible via `python tools/build_all.py`:
    Fourteen routines are now named, in `tools/a2pascal/names.py`, and the
    lifter renders them.
 
+   The phase segments are now started too: `BODYPART.3/4/5/6/27` are the
+   compiler's five code emitters, and `BODYPART.25` its block-body
+   generator (finding 24c). Those five are the routines every other phase
+   calls to produce output, so naming them makes the code-generation half
+   of the compiler readable in a way the service layer did not.
+
    What is left of this track is the rest of PASCALCO — 15 of its 29
-   procedures still have no name — and the phase segments, none of which
-   have been touched. The method that worked: find code that builds a
-   structure out of constants and then *names* it, and read outwards.
+   procedures still have no name — and the rest of the phase segments. The
+   method that worked twice now: find code that builds a structure out of
+   constants and then *names* it, and read outwards. For the emitters the
+   naming lever was different and worth remembering — the *encoding* itself
+   identified them, because `opcode - 128` is a claim the opcode table can
+   refute.
 
    Do not promote any name into reconstructed source until its call sites
    agree on arity and argument kinds.
@@ -69,6 +78,16 @@ Done, and reproducible via `python tools/build_all.py`:
    twenties-to-fifties, and their defaults are known — which makes them the
    easiest run of the `VAR` block to lay out. Also the four file variables
    (23d), now identified individually.
+
+   Finding 24 adds the syntactic sets — `G98`, `G102`, `G114` and the rest
+   are `SET OF SYMBOL` constants initialised in `COMPINIT`, and now that
+   `LDC`'s word order is right they read out as reserved-word lists
+   directly. They are `VAR`s with known initialisers, which makes them
+   among the easiest declarations to write back out; the blocker is that
+   the reconstruction must first declare the `SYMBOL` enumeration in the
+   exact order finding 19's `SY` codes give. A worthwhile follow-up for the
+   lifter: render set members by reserved-word name rather than by number,
+   which would make every `SY in ...` test in the compiler self-explaining.
 
    Finding 22 supplies the first real block of it: twelve named globals in
    each release, and — more useful — the two record types nearly all of
@@ -186,9 +205,18 @@ Done, and reproducible via `python tools/build_all.py`:
   it before inferring.
 * The Apple Pascal 1.3 manual (finding 23) is the vendor's own account of
   the p-machine, the codefile format and every compiler option. Use it
-  before inferring too — it caught a `CGP` bug the binary had been hiding.
-  Its OCR layer is unreliable for anything dense; re-read the page as an
-  image before quoting it.
+  before inferring too — it caught a `CGP` bug the binary had been hiding,
+  and its Part IV Ch. 4 validated the whole opcode table at once
+  (finding 25). All the manuals now live in
+  `evidence/reference/manuals/`, with their OCR flattened into
+  `analysis/reference/*.txt` by `tools/reference_text.py` — grep that.
+  The OCR is unreliable for anything dense; re-read the page as an image
+  with `tools/pdfpage.py` before quoting it.
+* Neil Parker's *Undocumented Secrets of Apple Pascal* covers what the
+  manuals do not — the undocumented compiler options, the `{$U-}`
+  convention, on-disk structures. Treat it as a lead, not an authority: it
+  resolved three option letters (finding 24a) and got `SYSTEM.COMPILER`'s
+  own `{$U-}` status wrong (24e).
 * The reconstructed source has to carry the directives the original had.
   `{$R-}` is established (no `CHK` anywhere) and `{$G+}` is all but certain;
   `{$U-}` is ruled out. See finding 23c.

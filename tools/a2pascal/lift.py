@@ -25,6 +25,12 @@ from .pcode import Insn, disassemble, sweep_exit
 from .syscall import segment0_signatures
 from .names import globalname, procname
 
+# Instructions that decide what a two-word LDC constant was: real
+# arithmetic means it is a REAL, a set operator means it is a set.
+REAL_OPS = {"ADR", "SBR", "MPR", "DVR", "NGR", "ABR", "SQR", "FLT", "FLO"}
+SET_OPS = {"UNI", "INT", "DIF", "INN", "SGS", "ADJ"}
+CMP_OPS = {"EQU", "NEQ", "LES", "LEQ", "GRT", "GEQ"}   # operand 2 = REAL
+
 _GLOBALS_TEXT = (Path(__file__).resolve().parents[2]
                  / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT")
 try:
@@ -178,10 +184,43 @@ def split_blocks(stream: list[Insn]) -> list[Block]:
 
 
 class _Lifter:
-    def __init__(self, param_words: int, callee_words, release: str = "1.1"):
+    def __init__(self, param_words: int, callee_words, release: str = "1.1",
+                 sets_only: bool = False):
         self.param_words = param_words
         self.callee_words = callee_words       # (kind, a, b) -> words popped
         self.release = release
+        # True when nothing in this procedure touches a real, so a two-word
+        # LDC cannot be a REAL constant and must be a set. See `ldc`.
+        self.sets_only = sets_only
+
+    def ldc(self, words: list[int], after=()) -> str:
+        """Render a multi-word constant.
+
+        A set's word j carries members 16j..16j+15, which is far more
+        readable than the words -- `{19,20,21,22,23,24,25,26}` rather than
+        `[$0000,$07F8]`. But LDC also loads REAL constants, which are two
+        words, so members are only shown where the constant cannot be one:
+        three words or more, a procedure with no real arithmetic in it, or
+        -- for the one site where a procedure does both -- an instruction
+        that consumes the value as a set before anything consumes it as a
+        real. `after` is the rest of the block.
+        """
+        if len(words) == 2 and not self.sets_only:
+            for i in after:
+                if i.mnemonic in SET_OPS:
+                    break
+                if i.mnemonic in REAL_OPS:
+                    return "[" + ",".join(f"${w:04X}" for w in words) + "]"
+            else:
+                return "[" + ",".join(f"${w:04X}" for w in words) + "]"
+            return "{" + ",".join(
+                str(16 * j + b) for j, w in enumerate(words)
+                for b in range(16) if w >> b & 1) + "}"
+        if len(words) >= 3 or self.sets_only:
+            ms = [16 * j + b for j, w in enumerate(words)
+                  for b in range(16) if w >> b & 1]
+            return "{" + ",".join(str(m) for m in ms) + "}"
+        return "[" + ",".join(f"${w:04X}" for w in words) + "]"
 
     def g(self, n: int) -> str:
         """Render a global by its recovered name where one is known."""
@@ -262,8 +301,7 @@ class _Lifter:
                 elif m == "LPA":
                     st.append("@" + repr(o[0].decode("ascii", "replace")))
                 elif m == "LDC":
-                    push("[" + ",".join(f"${w:04X}" for w in o[0]) + "]",
-                         len(o[0]))
+                    push(self.ldc(o[0], b.insns[k + 1:]), len(o[0]))
                 elif m == "IXA":
                     idx, a = pop(), pop()
                     st.append(f"{a}[{idx}]" if o[0] == 1 else f"{a}[{idx}*{o[0]}w]")
@@ -420,7 +458,15 @@ def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
                 break
         return p.param_size // 2, label, isfn
 
-    lifter = _Lifter(proc.param_size // 2, callee_words, release)
+    # Real arithmetic anywhere in the procedure means a two-word LDC might
+    # be a REAL constant rather than a set. Only nine such instructions
+    # exist in the whole compiler -- it folds real constants at compile
+    # time -- so almost every procedure gets the readable rendering.
+    sets_only = not any(i.mnemonic in REAL_OPS
+                        or (i.mnemonic in CMP_OPS and i.operands[0] == 2)
+                        for i in stream)
+
+    lifter = _Lifter(proc.param_size // 2, callee_words, release, sets_only)
     addrs = [b.start for b in blocks]
     for k, b in enumerate(blocks):
         last = b.insns[-1]

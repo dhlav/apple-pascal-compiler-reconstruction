@@ -618,7 +618,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0530 00                           SLDC 0
   0531 cc 03                        STL 3
   0533 dc                   L0533:  SLDL 5
-  0534 b3 04 ff 03 00 00 00 00 00 00         LDC 4w [$03FF $0000 $0000 $0000]
+  0534 b3 04 ff 03 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $03FF]
   053E 04                           SLDC 4
   053F 8b                           INN
   0540 db                           SLDL 4
@@ -646,7 +646,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0559 cc 05                        STL 5
   055B b9 f6                        UJP $0533 (jtab-10)
   055D dc                   L055D:  SLDL 5
-  055E b3 05 20 00 ff 03 00 40 00 00 00 00         LDC 5w [$0020 $03FF $4000 $0000 $0000]
+  055E b3 05 20 00 ff 03 00 40 00 00 00 00         LDC 5w [$0000 $0000 $4000 $03FF $0020]
   056A 05                           SLDC 5
   056B 8b                           INN
   056C a1 08                        FJP $0576
@@ -2132,7 +2132,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0EE9 c6 01                        LLA 1
   0EEB bc 04                        LDM 4
   0EED 04                           SLDC 4
-  0EEE b3 04 1c 00 00 00 00 00 00 02         LDC 4w [$001C $0000 $0000 $0200]
+  0EEE b3 04 1c 00 00 00 00 00 00 02         LDC 4w [$0200 $0000 $0000 $001C]
   0EF8 04                           SLDC 4
   0EF9 9c                           UNI
   0EFA a0 04                        ADJ 4
@@ -2189,7 +2189,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0F4D c3                           EQUI
   0F4E a1 10                        FJP $0F60
   0F50 f6                           SLDO 15
-  0F51 b3 02 00 08 00 00 02         LDC 2w [$0008 $0200]
+  0F51 b3 02 00 08 00 00 02         LDC 2w [$0200 $0008]
   0F58 02                           SLDC 2
   0F59 8b                           INN
   0F5A a1 04                        FJP $0F60
@@ -2209,7 +2209,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0F6F c6 01                L0F6F:  LLA 1
   0F71 bc 04                        LDM 4
   0F73 04                           SLDC 4
-  0F74 b3 02 20 00 00 00            LDC 2w [$0020 $0000]
+  0F74 b3 02 20 00 00 00            LDC 2w [$0000 $0020]
   0F7A 02                           SLDC 2
   0F7B 9c                           UNI
   0F7C a0 04                        ADJ 4
@@ -2291,7 +2291,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   0FEB a1 02                        FJP $0FEF
   0FED cf 08                        CGP 8  ; local proc 8
   0FEF f6                   L0FEF:  SLDO 15
-  0FF0 b3 03 03 00 08 80 00 00         LDC 3w [$0003 $8008 $0000]
+  0FF0 b3 03 03 00 08 80 00 00         LDC 3w [$0000 $8008 $0003]
   0FF8 03                           SLDC 3
   0FF9 8b                           INN
   0FFA 93                           LNOT
@@ -2383,7 +2383,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   1082 a3 0a                        IND 10
   1084 ab 54                        SRO 84
   1086 f6                           SLDO 15
-  1087 b3 03 00 03 00 00 80 00 00         LDC 3w [$0003 $8000 $0000]
+  1087 b3 03 00 03 00 00 80 00 00         LDC 3w [$0000 $8000 $0003]
   1090 03                           SLDC 3
   1091 8b                           INN
   1092 ab 56                        SRO 86
@@ -2402,13 +2402,13 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   10A8 c6 01                        LLA 1
   10AA bc 04                        LDM 4
   10AC 04                           SLDC 4
-  10AD b3 04 00 1c 00 00 00 00 00 00 02         LDC 4w [$001C $0000 $0000 $0200]
+  10AD b3 04 00 1c 00 00 00 00 00 00 02         LDC 4w [$0200 $0000 $0000 $001C]
   10B8 04                           SLDC 4
   10B9 9c                           UNI
   10BA a0 04                        ADJ 4
   10BC cd 11 01                     CXP 17,1  ; UNITPART.1
   10BF f6                           SLDO 15
-  10C0 b3 03 03 00 00 80 00 00         LDC 3w [$0003 $8000 $0000]
+  10C0 b3 03 03 00 00 80 00 00         LDC 3w [$0000 $8000 $0003]
   10C8 03                           SLDC 3
   10C9 8b                           INN
   10CA a1 07                        FJP $10D3
@@ -2439,7 +2439,7 @@ SEGMENT 1 PASCALCO  block=1 len=5606 mtype=6502 nproc=31
   10FD bc 04                        LDM 4
   10FF 04                           SLDC 4
   1100 9c                           UNI
-  1101 b3 02 00 20 00 00 00         LDC 2w [$0020 $0000]
+  1101 b3 02 00 20 00 00 00         LDC 2w [$0000 $0020]
   1108 02                           SLDC 2
   1109 85                           DIF
   110A a0 04                        ADJ 4
@@ -2718,7 +2718,7 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
   0C87 c6 81 03                     LLA 259
   0C8A ca 81 2f                     LDL 303
   0C8D be                           LDB
-  0C8E b3 08 ff 07 fe ff 00 00 00 00 00 00 00 00 00 00 00 00         LDC 8w [$07FF $FFFE $0000 $0000 $0000 $0000 $0000 $0000]
+  0C8E b3 08 ff 07 fe ff 00 00 00 00 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $0000 $0000 $FFFE $07FF]
   0CA0 08                           SLDC 8
   0CA1 8b                           INN
   0CA2 a1 10                        FJP $0CB4
@@ -2867,7 +2867,7 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
   0E0E a5 75                        LAO 117
   0E10 bc 04                        LDM 4
   0E12 04                           SLDC 4
-  0E13 b3 04 00 04 00 00 00 00 00 00 00         LDC 4w [$0004 $0000 $0000 $0000]
+  0E13 b3 04 00 04 00 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $0004]
   0E1E 04                           SLDC 4
   0E1F 9c                           UNI
   0E20 a0 04                        ADJ 4
@@ -4029,13 +4029,13 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
   0731 a9 2b                        LDO 43
   0733 a1 0f                        FJP $0744
   0735 d9                           SLDL 2
-  0736 b3 03 0d 1d 1e 00 84 24         LDC 3w [$1D0D $001E $2484]
+  0736 b3 03 0d 1d 1e 00 84 24         LDC 3w [$2484 $001E $1D0D]
   073E 03                           SLDC 3
   073F 8b                           INN
   0740 a1 02                        FJP $0744
   0742 b9 4c                        UJP $0790
   0744 d9                   L0744:  SLDL 2
-  0745 b3 03 00 f0 02 19 02 e0 8f         LDC 3w [$02F0 $0219 $8FE0]
+  0745 b3 03 00 f0 02 19 02 e0 8f         LDC 3w [$8FE0 $0219 $02F0]
   074E 03                           SLDC 3
   074F 8b                           INN
   0750 cc 03                        STL 3
@@ -4467,7 +4467,7 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
 
 --- procedure 10  lex=2 params=0 data=0 enter=$0A74 exit=$0B02 jtab=$0B0C
   0A74 a5 80 81                     LAO 129
-  0A77 b3 04 00 01 00 38 01 00 00 01 00         LDC 4w [$0001 $0138 $0000 $0001]
+  0A77 b3 04 00 01 00 38 01 00 00 01 00         LDC 4w [$0001 $0000 $0138 $0001]
   0A82 04                           SLDC 4
   0A83 a0 04                        ADJ 4
   0A85 bd 04                        STM 4
@@ -4481,7 +4481,7 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
   0A92 a0 04                        ADJ 4
   0A94 bd 04                        STM 4
   0A96 a5 79                        LAO 121
-  0A98 b3 03 00 7c 02 00 00 00         LDC 3w [$7C00 $0002 $0000]
+  0A98 b3 03 00 7c 02 00 00 00         LDC 3w [$0000 $0002 $7C00]
   0AA0 03                           SLDC 3
   0AA1 a5 7d                        LAO 125
   0AA3 bc 04                        LDM 4
@@ -4490,27 +4490,27 @@ SEGMENT 7 COMPINIT  block=12 len=4032 mtype=pcode-lsb nproc=11
   0AA7 a0 04                        ADJ 4
   0AA9 bd 04                        STM 4
   0AAB a5 65                        LAO 101
-  0AAD b3 03 00 00 74 00 00 00 00         LDC 3w [$7400 $0000 $0000]
+  0AAD b3 03 00 00 74 00 00 00 00         LDC 3w [$0000 $0000 $7400]
   0AB6 03                           SLDC 3
   0AB7 a0 04                        ADJ 4
   0AB9 bd 04                        STM 4
   0ABB a5 75                        LAO 117
-  0ABD b3 04 00 02 00 03 00 08 f8 00 00         LDC 4w [$0002 $0003 $F808 $0000]
+  0ABD b3 04 00 02 00 03 00 08 f8 00 00         LDC 4w [$0000 $F808 $0003 $0002]
   0AC8 04                           SLDC 4
   0AC9 a0 04                        ADJ 4
   0ACB bd 04                        STM 4
   0ACD a5 71                        LAO 113
-  0ACF b3 02 00 06 00 00 80         LDC 2w [$0006 $8000]
+  0ACF b3 02 00 06 00 00 80         LDC 2w [$8000 $0006]
   0AD6 02                           SLDC 2
   0AD7 a0 04                        ADJ 4
   0AD9 bd 04                        STM 4
   0ADB a5 6d                        LAO 109
-  0ADD b3 04 00 01 00 78 00 00 00 11 80         LDC 4w [$0001 $0078 $0000 $8011]
+  0ADD b3 04 00 01 00 78 00 00 00 11 80         LDC 4w [$8011 $0000 $0078 $0001]
   0AE8 04                           SLDC 4
   0AE9 a0 04                        ADJ 4
   0AEB bd 04                        STM 4
   0AED a5 69                        LAO 105
-  0AEF b3 02 00 f8 07 00 00         LDC 2w [$07F8 $0000]
+  0AEF b3 02 00 f8 07 00 00         LDC 2w [$0000 $07F8]
   0AF6 02                           SLDC 2
   0AF7 a0 04                        ADJ 4
   0AF9 bd 04                        STM 4
@@ -4616,7 +4616,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1C83 c6 01                        LLA 1
   1C85 bc 04                        LDM 4
   1C87 04                           SLDC 4
-  1C88 b3 02 00 08 00 00            LDC 2w [$0800 $0000]
+  1C88 b3 02 00 08 00 00            LDC 2w [$0000 $0800]
   1C8E 02                           SLDC 2
   1C8F 85                           DIF
   1C90 a0 04                        ADJ 4
@@ -4649,7 +4649,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1CC0 ef                           SLDO 8
   1CC1 ab 55                        SRO 85
   1CC3 f6                   L1CC3:  SLDO 15
-  1CC4 b3 03 03 00 00 80 00 00         LDC 3w [$0003 $8000 $0000]
+  1CC4 b3 03 03 00 00 80 00 00         LDC 3w [$0000 $8000 $0003]
   1CCC 03                           SLDC 3
   1CCD 8b                           INN
   1CCE a1 43                        FJP $1D13
@@ -4685,7 +4685,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1D01 00                           SLDC 0
   1D02 ce 13                        CLP 19  ; local proc 19
   1D04 f6                   L1D04:  SLDO 15
-  1D05 b3 03 00 03 00 00 80 00 00         LDC 3w [$0003 $8000 $0000]
+  1D05 b3 03 00 03 00 00 80 00 00         LDC 3w [$0000 $8000 $0003]
   1D0E 03                           SLDC 3
   1D0F 8b                           INN
   1D10 93                           LNOT
@@ -4698,7 +4698,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1D1A a9 21                        LDO 33
   1D1C 8d                           LOR
   1D1D f6                           SLDO 15
-  1D1E b3 04 10 00 00 00 00 00 00 02         LDC 4w [$0010 $0000 $0000 $0200]
+  1D1E b3 04 10 00 00 00 00 00 00 02         LDC 4w [$0200 $0000 $0000 $0010]
   1D28 04                           SLDC 4
   1D29 8b                           INN
   1D2A 84                           LAND
@@ -4725,7 +4725,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1D46 c6 01                        LLA 1
   1D48 bc 04                        LDM 4
   1D4A 04                           SLDC 4
-  1D4B b3 04 00 0c 00 00 00 00 00 00 00         LDC 4w [$000C $0000 $0000 $0000]
+  1D4B b3 04 00 0c 00 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $000C]
   1D56 04                           SLDC 4
   1D57 85                           DIF
   1D58 a0 04                        ADJ 4
@@ -4734,7 +4734,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1D5E a5 69                        LAO 105
   1D60 bc 04                        LDM 4
   1D62 04                           SLDC 4
-  1D63 b3 04 00 14 00 00 00 00 00 00 02         LDC 4w [$0014 $0000 $0000 $0200]
+  1D63 b3 04 00 14 00 00 00 00 00 00 02         LDC 4w [$0200 $0000 $0000 $0014]
   1D6E 04                           SLDC 4
   1D6F 9c                           UNI
   1D70 8b                           INN
@@ -4886,7 +4886,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   0A34 c6 03                        LLA 3
   0A36 bc 04                        LDM 4
   0A38 04                           SLDC 4
-  0A39 b3 02 00 01 00 02 08         LDC 2w [$0001 $0802]
+  0A39 b3 02 00 01 00 02 08         LDC 2w [$0802 $0001]
   0A40 02                           SLDC 2
   0A41 9c                           UNI
   0A42 a0 04                        ADJ 4
@@ -5563,7 +5563,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   018E c6 03                        LLA 3
   0190 bc 04                        LDM 4
   0192 04                           SLDC 4
-  0193 b3 02 00 01 00 00 00         LDC 2w [$0001 $0000]
+  0193 b3 02 00 01 00 00 00         LDC 2w [$0000 $0001]
   019A 02                           SLDC 2
   019B 9c                           UNI
   019C a0 04                        ADJ 4
@@ -5640,7 +5640,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   020E c6 03                        LLA 3
   0210 bc 04                        LDM 4
   0212 04                           SLDC 4
-  0213 b3 02 00 01 00 00 00         LDC 2w [$0001 $0000]
+  0213 b3 02 00 01 00 00 00         LDC 2w [$0000 $0001]
   021A 02                           SLDC 2
   021B 9c                           UNI
   021C a0 04                        ADJ 4
@@ -5940,7 +5940,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   0777 a0 04                        ADJ 4
   0779 bd 04                        STM 4
   077B f6                           SLDO 15
-  077C b3 02 20 00 01 00            LDC 2w [$0020 $0001]
+  077C b3 02 20 00 01 00            LDC 2w [$0001 $0020]
   0782 02                           SLDC 2
   0783 8b                           INN
   0784 93                           LNOT
@@ -5950,7 +5950,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   078B c6 02                        LLA 2
   078D bc 04                        LDM 4
   078F 04                           SLDC 4
-  0790 b3 02 20 00 01 00            LDC 2w [$0020 $0001]
+  0790 b3 02 20 00 01 00            LDC 2w [$0001 $0020]
   0796 02                           SLDC 2
   0797 9c                           UNI
   0798 a0 04                        ADJ 4
@@ -6014,7 +6014,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   07F7 c6 02                        LLA 2
   07F9 bc 04                        LDM 4
   07FB 04                           SLDC 4
-  07FC b3 02 20 00 0e 00            LDC 2w [$0020 $000E]
+  07FC b3 02 20 00 0e 00            LDC 2w [$000E $0020]
   0802 02                           SLDC 2
   0803 9c                           UNI
   0804 a0 04                        ADJ 4
@@ -6040,7 +6040,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   0826 c6 02                L0826:  LLA 2
   0828 bc 04                        LDM 4
   082A 04                           SLDC 4
-  082B b3 02 00 20 00 08 00         LDC 2w [$0020 $0008]
+  082B b3 02 00 20 00 08 00         LDC 2w [$0008 $0020]
   0832 02                           SLDC 2
   0833 9c                           UNI
   0834 a0 04                        ADJ 4
@@ -6084,7 +6084,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   086C a1 25                        FJP $0893
   086E cd 01 08                     CXP 1,8  ; PASCALCO.8
   0871 f6                           SLDO 15
-  0872 b3 02 20 00 01 02            LDC 2w [$0020 $0201]
+  0872 b3 02 20 00 01 02            LDC 2w [$0201 $0020]
   0878 02                           SLDC 2
   0879 8b                           INN
   087A 93                           LNOT
@@ -6094,7 +6094,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   0881 c6 02                        LLA 2
   0883 bc 04                        LDM 4
   0885 04                           SLDC 4
-  0886 b3 02 20 00 01 00            LDC 2w [$0020 $0001]
+  0886 b3 02 20 00 01 00            LDC 2w [$0001 $0020]
   088C 02                           SLDC 2
   088D 9c                           UNI
   088E a0 04                        ADJ 4
@@ -6973,7 +6973,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   10CC a5 80 ba                     LAO 186
   10CF bc 04                        LDM 4
   10D1 04                           SLDC 4
-  10D2 b3 02 00 80 00 00            LDC 2w [$8000 $0000]
+  10D2 b3 02 00 80 00 00            LDC 2w [$0000 $8000]
   10D8 02                           SLDC 2
   10D9 9c                           UNI
   10DA a0 04                        ADJ 4
@@ -6988,7 +6988,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   10F6 a5 80 ba                     LAO 186
   10F9 bc 04                        LDM 4
   10FB 04                           SLDC 4
-  10FC b3 02 00 40 00 00            LDC 2w [$4000 $0000]
+  10FC b3 02 00 40 00 00            LDC 2w [$0000 $4000]
   1102 02                           SLDC 2
   1103 9c                           UNI
   1104 a0 04                        ADJ 4
@@ -7962,7 +7962,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   17F6 f6                           SLDO 15
   17F7 cc 03                        STL 3
   17F9 f6                           SLDO 15
-  17FA b3 03 01 00 00 80 00 00         LDC 3w [$0001 $8000 $0000]
+  17FA b3 03 01 00 00 80 00 00         LDC 3w [$0000 $8000 $0001]
   1802 03                           SLDC 3
   1803 8b                           INN
   1804 a1 05                        FJP $180B
@@ -8651,7 +8651,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1580 cd 01 04                     CXP 1,4  ; PASCALCO.4
   1583 cd 01 08             L1583:  CXP 1,8  ; PASCALCO.8
   1586 f6                           SLDO 15
-  1587 b3 02 00 00 40 01 00         LDC 2w [$4000 $0001]
+  1587 b3 02 00 00 40 01 00         LDC 2w [$0001 $4000]
   158E 02                           SLDC 2
   158F 8b                           INN
   1590 93                           LNOT
@@ -8667,7 +8667,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   15A0 a0 04                        ADJ 4
   15A2 cd 01 10                     CXP 1,16  ; PASCALCO.16
   15A5 f6                   L15A5:  SLDO 15
-  15A6 b3 02 00 40 01 00            LDC 2w [$4000 $0001]
+  15A6 b3 02 00 40 01 00            LDC 2w [$0001 $4000]
   15AC 02                           SLDC 2
   15AD 8b                           INN
   15AE a1 f0                        FJP $172E (jtab-16)
@@ -8905,7 +8905,7 @@ SEGMENT 8 DECLARAT  block=20 len=7600 mtype=pcode-lsb nproc=20
   1708 b2 02 01                     LDA 2,1
   170B bc 04                        LDM 4
   170D 04                           SLDC 4
-  170E b3 02 00 40 01 00            LDC 2w [$4000 $0001]
+  170E b3 02 00 40 01 00            LDC 2w [$0001 $4000]
   1714 02                           SLDC 2
   1715 9c                           UNI
   1716 8b                           INN
@@ -9291,7 +9291,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   0346 ae 04                        CIP 4  ; local proc 4
   0348 b9 f2                L0348:  UJP $03CA (jtab-14)
   034A d9                   L034A:  SLDL 2
-  034B b3 05 00 06 c0 00 30 01 64 00 40 00 00         LDC 5w [$C006 $3000 $6401 $4000 $0000]
+  034B b3 05 00 06 c0 00 30 01 64 00 40 00 00         LDC 5w [$0000 $4000 $6401 $3000 $C006]
   0358 05                           SLDC 5
   0359 8b                           INN
   035A a1 06                        FJP $0362
@@ -9300,7 +9300,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   0360 b9 68                        UJP $03CA
   0362 a9 21                L0362:  LDO 33
   0364 d9                           SLDL 2
-  0365 b3 03 00 20 0a 00 00 00 00         LDC 3w [$0A20 $0000 $0000]
+  0365 b3 03 00 20 0a 00 00 00 00         LDC 3w [$0000 $0000 $0A20]
   036E 03                           SLDC 3
   036F 8b                           INN
   0370 84                           LAND
@@ -9389,7 +9389,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   03F2 cd 01 16                     CXP 1,22  ; PASCALCO.22
   03F5 b9 f6                        UJP $047E (jtab-10)
   03F7 da                   L03F7:  SLDL 3
-  03F8 b3 04 b3 00 00 80 00 00 00 00         LDC 4w [$00B3 $8000 $0000 $0000]
+  03F8 b3 04 b3 00 00 80 00 00 00 00         LDC 4w [$0000 $0000 $8000 $00B3]
   0402 04                           SLDC 4
   0403 8b                           INN
   0404 a1 1c                        FJP $0422
@@ -9776,7 +9776,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   1A18 c6 01                        LLA 1
   1A1A bc 04                        LDM 4
   1A1C 04                           SLDC 4
-  1A1D b3 03 00 00 02 00 00 00 00         LDC 3w [$0200 $0000 $0000]
+  1A1D b3 03 00 00 02 00 00 00 00         LDC 3w [$0000 $0000 $0200]
   1A26 03                           SLDC 3
   1A27 9c                           UNI
   1A28 a0 04                        ADJ 4
@@ -10724,7 +10724,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   09C8 c6 02                        LLA 2
   09CA bc 04                        LDM 4
   09CC 04                           SLDC 4
-  09CD b3 02 00 01 00 02 00         LDC 2w [$0001 $0002]
+  09CD b3 02 00 01 00 02 00         LDC 2w [$0002 $0001]
   09D4 02                           SLDC 2
   09D5 9c                           UNI
   09D6 a0 04                        ADJ 4
@@ -11100,7 +11100,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   12A8 09                   L12A8:  SLDC 9
   12A9 cd 01 04                     CXP 1,4  ; PASCALCO.4
   12AC dd                   L12AC:  SLDL 6
-  12AD b3 03 00 90 04 00 02 80 6f         LDC 3w [$0490 $0200 $6F80]
+  12AD b3 03 00 90 04 00 02 80 6f         LDC 3w [$6F80 $0200 $0490]
   12B6 03                           SLDC 3
   12B7 8b                           INN
   12B8 a1 0e                        FJP $12C8
@@ -12476,7 +12476,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   1841 c6 01                L1841:  LLA 1
   1843 bc 04                        LDM 4
   1845 04                           SLDC 4
-  1846 b3 03 00 01 00 00 00 00         LDC 3w [$0100 $0000 $0000]
+  1846 b3 03 00 01 00 00 00 00         LDC 3w [$0000 $0000 $0100]
   184E 03                           SLDC 3
   184F 9c                           UNI
   1850 a0 04                        ADJ 4
@@ -12527,7 +12527,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   1899 c6 01                        LLA 1
   189B bc 04                        LDM 4
   189D 04                           SLDC 4
-  189E b3 03 00 01 00 00 00 00         LDC 3w [$0100 $0000 $0000]
+  189E b3 03 00 01 00 00 00 00         LDC 3w [$0000 $0000 $0100]
   18A6 03                           SLDC 3
   18A7 9c                           UNI
   18A8 a0 04                        ADJ 4
@@ -12701,7 +12701,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   16D6 c6 01                        LLA 1
   16D8 bc 04                        LDM 4
   16DA 04                           SLDC 4
-  16DB b3 03 00 80 00 00 00 00 00         LDC 3w [$0080 $0000 $0000]
+  16DB b3 03 00 80 00 00 00 00 00         LDC 3w [$0000 $0000 $0080]
   16E4 03                           SLDC 3
   16E5 9c                           UNI
   16E6 a0 04                        ADJ 4
@@ -12720,7 +12720,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   16FD c6 01                        LLA 1
   16FF bc 04                        LDM 4
   1701 04                           SLDC 4
-  1702 b3 03 80 00 00 00 00 00         LDC 3w [$0080 $0000 $0000]
+  1702 b3 03 80 00 00 00 00 00         LDC 3w [$0000 $0000 $0080]
   170A 03                           SLDC 3
   170B 9c                           UNI
   170C a0 04                        ADJ 4
@@ -13131,7 +13131,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   14F7 c6 01                L14F7:  LLA 1
   14F9 bc 04                        LDM 4
   14FB 04                           SLDC 4
-  14FC b3 02 01 00 06 00            LDC 2w [$0001 $0006]
+  14FC b3 02 01 00 06 00            LDC 2w [$0006 $0001]
   1502 02                           SLDC 2
   1503 9c                           UNI
   1504 a0 04                        ADJ 4
@@ -13189,7 +13189,7 @@ SEGMENT 9 BODYPART  block=35 len=7454 mtype=pcode-lsb nproc=38
   1552 c6 01                        LLA 1
   1554 bc 04                        LDM 4
   1556 04                           SLDC 4
-  1557 b3 02 00 01 00 02 00         LDC 2w [$0001 $0002]
+  1557 b3 02 00 01 00 02 00         LDC 2w [$0002 $0001]
   155E 02                           SLDC 2
   155F 9c                           UNI
   1560 a0 04                        ADJ 4
@@ -13467,7 +13467,7 @@ SEGMENT 10 ROUTINE  block=50 len=2892 mtype=pcode-lsb nproc=17
   0A8B a0 04                        ADJ 4
   0A8D bd 04                        STM 4
   0A8F d8                           SLDL 1
-  0A90 b3 03 7d 0f ec 88 00 f0         LDC 3w [$0F7D $88EC $F000]
+  0A90 b3 03 7d 0f ec 88 00 f0         LDC 3w [$F000 $88EC $0F7D]
   0A98 03                           SLDC 3
   0A99 8b                           INN
   0A9A 93                           LNOT
@@ -15061,7 +15061,7 @@ SEGMENT 11 STATEMEN  block=56 len=1690 mtype=pcode-lsb nproc=8
   0651 00                           SLDC 0
   0652 ab 09                        SRO 9
   0654 f6                   L0654:  SLDO 15
-  0655 b3 04 00 40 00 00 00 00 00 08 26         LDC 4w [$0040 $0000 $0000 $2608]
+  0655 b3 04 00 40 00 00 00 00 00 08 26         LDC 4w [$2608 $0000 $0000 $0040]
   0660 04                           SLDC 4
   0661 8b                           INN
   0662 93                           LNOT
@@ -15960,7 +15960,7 @@ SEGMENT 12 CASESTAT  block=60 len=512 mtype=pcode-lsb nproc=1
   00EC b2 01 01             L00EC:  LDA 1,1
   00EF bc 04                        LDM 4
   00F1 04                           SLDC 4
-  00F2 b3 04 40 00 00 00 00 00 08 00         LDC 4w [$0040 $0000 $0000 $0008]
+  00F2 b3 04 40 00 00 00 00 00 08 00         LDC 4w [$0008 $0000 $0000 $0040]
   00FC 04                           SLDC 4
   00FD 9c                           UNI
   00FE a0 04                        ADJ 4
@@ -17655,14 +17655,14 @@ SEGMENT 17 UNITPART  block=67 len=1664 mtype=pcode-lsb nproc=4
   04C3 c6 01                L04C3:  LLA 1
   04C5 bc 04                        LDM 4
   04C7 04                           SLDC 4
-  04C8 b3 04 1c 00 00 00 00 00 00 00         LDC 4w [$001C $0000 $0000 $0000]
+  04C8 b3 04 1c 00 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $001C]
   04D2 04                           SLDC 4
   04D3 85                           DIF
   04D4 a0 04                        ADJ 4
   04D6 cd 01 1a                     CXP 1,26  ; PASCALCO.26
   04D9 ce 04                        CLP 4  ; local proc 4
   04DB cd 01 19                     CXP 1,25  ; PASCALCO.25
-  04DE b3 02 00 c0 00 00            LDC 2w [$C000 $0000]
+  04DE b3 02 00 c0 00 00            LDC 2w [$0000 $C000]
   04E4 02                           SLDC 2
   04E5 a5 80 ba                     LAO 186
   04E8 bc 04                        LDM 4
@@ -17727,7 +17727,7 @@ SEGMENT 17 UNITPART  block=67 len=1664 mtype=pcode-lsb nproc=4
   054A a5 80 ba                     LAO 186
   054D bc 04                        LDM 4
   054F 04                           SLDC 4
-  0550 b3 02 00 c0 00 00            LDC 2w [$C000 $0000]
+  0550 b3 02 00 c0 00 00            LDC 2w [$0000 $C000]
   0556 02                           SLDC 2
   0557 85                           DIF
   0558 a0 04                        ADJ 4
@@ -18404,7 +18404,7 @@ SEGMENT 17 UNITPART  block=67 len=1664 mtype=pcode-lsb nproc=4
   038A b2 01 01             L038A:  LDA 1,1
   038D bc 04                        LDM 4
   038F 04                           SLDC 4
-  0390 b3 02 20 00 00 00            LDC 2w [$0020 $0000]
+  0390 b3 02 20 00 00 00            LDC 2w [$0000 $0020]
   0396 02                           SLDC 2
   0397 9c                           UNI
   0398 c7 00 02                     LDCI 512
@@ -18756,7 +18756,7 @@ SEGMENT 18 COMPOPTI  block=71 len=1098 mtype=pcode-lsb nproc=5
   0371 c3                           EQUI
   0372 ab 22                        SRO 34
   0374 db                           SLDL 4
-  0375 b3 03 00 00 28 00 00 00 00         LDC 3w [$2800 $0000 $0000]
+  0375 b3 03 00 00 28 00 00 00 00         LDC 3w [$0000 $0000 $2800]
   037E 03                           SLDC 3
   037F 8b                           INN
   0380 a1 0c                        FJP $038E

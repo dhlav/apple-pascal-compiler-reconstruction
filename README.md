@@ -13,11 +13,13 @@ and where the inherited ChatGPT handoff was wrong. Then
 ```
 evidence/          original inputs, never modified
                    (two external sources are read in place and NOT copied
-                   here: John Brooks' Apple Pascal 1.4 interpreter source,
-                   Peter Miller's ucsd-psystem-xc, and the Apple Pascal 1.3
-                   manual. See findings 17, 18, 23.)
+                   here: John Brooks' Apple Pascal 1.4 interpreter source
+                   and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
   disks/           the two Apple Pascal .dsk images and ii0src.sdk
   reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
+    manuals/       the Apple Pascal 1.3 manual set, the 1980 language
+                   reference, the 1.1 update notice, Hyde's P-Source --
+                   scans plus their OCR. Copyrighted; this repo is private.
 tools/             all analysis code
   a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
                    nufx.py syscall.py lift.py structure.py globals.py
@@ -29,6 +31,7 @@ reference_source/  UCSD II.0 operating system source, extracted
 analysis/          procedure_maps/  pcode_disassembly/  native/  callgraph/
                    global_map/      globals-*.txt, correspondence-1.1-to-1.3.txt
                    procedures/      per-procedure evidence profiles
+                   reference/       the manuals' OCR, flattened for grep
 legacy/            the inherited ChatGPT phase archive, unaltered
 docs/              FINDINGS.md, PLAN.md
 ```
@@ -55,6 +58,9 @@ unknown opcodes. Its opcode table is cross-checked against three
 independent sources — Hyde's *P-Source* (1983), John Brooks' Apple Pascal
 1.4 interpreter, and Peter Miller's `ucsd-psystem-xc` — which agree with it
 and, on the one point where they disagree with each other, against Hyde.
+It has since been held against Apple's own table, Part IV Ch. 4 of the 1.3
+manual: **85 numbered opcodes and all four short-form ranges agree,
+mnemonic and parameters**, with nothing to change (finding 25).
 Calls into the runtime are named by cross-referencing the UCSD II.0 OS
 source, so listings read like `CXP 0,3  ; OS.3 FINIT`; that numbering also
 matches Miller's table 28 out of 28.
@@ -75,6 +81,13 @@ with the `structform` and `klass` enumerations, and the standard types
 named by the compiler itself (finding 22). 1.3 adds two more, `BYTESTREAM`
 and `WORDSTREAM`.
 
+Every compiler option is accounted for, including the four letters no
+manual documents: `$D` emits a `BPT` before each statement, `$F`
+byte-swaps the code it generates, `$T` drops fifteen named built-ins to
+save symbol-table space, and `$E` — undocumented anywhere, recovered from
+the binary alone — lets a unit's implementation part own file variables
+(finding 24).
+
 The Apple Pascal 1.3 manual (finding 23) settles the lex-level convention,
 confirms that a function's parameter area includes its result slot, and
 corrects the lifter's reading of `CGP`. Cross-reading it against
@@ -91,7 +104,7 @@ p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:
 ```
   L5 := G1^[G14];
   L4 := 0;  L3 := 0;
-  while ((L5 in [$03FF,$0000,$0000,$0000]) and (L4 < 4)) do begin
+  while ((L5 in {48,49,50,51,52,53,54,55,56,57}) and (L4 < 4)) do begin
     L3 := ((L3*10)+(L5-48));       { 48 is '0' -- the number scanner }
     L4 := (L4+1);
     L5 := G1^[(G14+L4)];

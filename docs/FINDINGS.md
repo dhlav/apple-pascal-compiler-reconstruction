@@ -242,8 +242,9 @@ Most useful parts:
   addresses, one per non-SLDC opcode.
 * Index, pp. 453-462 — fastest way to locate a mnemonic.
 
-`tools/pdfpage.py` renders pages to PNG for reading. The book is not
-redistributed in this repo; point the tool at your own copy.
+`tools/pdfpage.py` renders pages to PNG for reading. The scan is in
+`evidence/reference/manuals/` and has **no text layer**, so it cannot be
+grepped — page numbers and the index are the way in.
 
 ## 8. ii0src.sdk is the UCSD II.0 *operating system*, not the compiler
 
@@ -1153,8 +1154,10 @@ instead of bare numbers.
 ## 23. The Apple Pascal 1.3 manual, and the compiler's own option table
 
 **Source.** The Apple Pascal 1.3 manual set, scanned with an OCR text layer,
-read from `C:\dl\Image071217212805.pdf.duplex_text.pdf` (932 pages). **Not
-in this repo** — Apple copyright, same rule as Hyde. Page citations below
+932 pages —
+`evidence/reference/manuals/Image071217212805.pdf.duplex_text.pdf`, with the
+OCR flattened to `analysis/reference/apple-ii-pascal-1.3-manual.txt` by
+`tools/reference_text.py`. Page citations below
 are the manual's own part/page numbers, which is what to quote. The OCR is
 usable but not clean: it renders `{$S-}` as `{$5 --}` and mangles the option
 list on II-155 badly enough that the page had to be re-read as an image.
@@ -1238,9 +1241,9 @@ That mapping names a block of globals. 1.1 numbering, 1.3 in
 | letter | 1.1 global | meaning | default set by COMPINIT.9 |
 |---|---|---|---|
 | `$C` | 487 | codefile comment, `string[80]` | `nil` |
-| `$D` | 50 | undocumented | 0 |
-| `$E` | 45 | undocumented | 0 |
-| `$F` | 30 | undocumented | 0 |
+| `$D` | 50 | debug: `BPT` before every statement (24a) | 0 |
+| `$E` | 45 | file variables in a unit's implementation (24a) | 0 |
+| `$F` | 30 | flip: byte-swap emitted words (24a) | 0 |
 | `$G` | 52 | goto allowed | 0 — manual says `{$G-}` |
 | `$I` | 47 | I/O check (or include file) | 1 — `{$I+}` |
 | `$L` | 43 | listing | 0 — `{$L-}` |
@@ -1249,13 +1252,14 @@ That mapping names a block of globals. 1.1 numbering, 1.3 in
 | `$Q` | 49 | *inverted*: true when quiet is off | from `I3,14` |
 | `$R` | 51 | range check (or resident) | 1 — `{$R+}` |
 | `$S` | 34, 33 | swapping, and the `$S++` second flag | 0 — `{$S-}` |
-| `$T` | 42 | undocumented | 0 |
+| `$T` | 42 | tiny: omit 15 built-ins (24a) | 0 |
 | `$U` | 28 | compile at system level | 0 — `{$U+}` |
 | `$V` | 39 | varstring check | 1 — `{$V+}` |
 
 Every documented default in that last column is the manual's default. Four
 letters — `D`, `E`, `F`, `T` — are boolean option flags with no entry in
-the manual; they are named `OPT_D` and so on rather than guessed at.
+the manual. They were named `OPT_D` and so on rather than guessed at; what
+they do is finding 24a.
 
 `$NS` is the sharpest of these. II-152: "the letters NS followed by an
 unsigned integer which should be in the range 7..57 for a 128K system and
@@ -1309,15 +1313,26 @@ direction.
 
 ### 23e. Two more manuals, and what they confirm about 1.1
 
-Also on hand, also **not in this repo**:
+Both are now in `evidence/reference/manuals/`, with OCR text in
+`analysis/reference/`:
 
-* `C:\dl\Apple_Pascal_Update_v1.1_text.pdf` — the Version 1.1 update notice
-  bound with the 1.2 addendum. Has an OCR layer, two-column, readable.
-* `C:\dl\Apple Pascal Language Reference Manual.pdf` — the 1980 edition,
-  Apple product #A2L0027, 120 pages of two-up scans with **no text layer**.
-  This is the 1.1-era language reference, so it is the right authority for
-  the standard-identifier table in finding 22b. It would have to be OCRed
-  first; that has not been done.
+* `Apple_Pascal_Update_v1.1_text.pdf` — the Version 1.1 update notice
+  bound with the 1.2 addendum. Two-column, readable.
+* `Apple Pascal Language Reference Manual.pdf` — the 1980 edition,
+  Apple product #A2L0027, 120 pages of two-up scans. This is the 1.1-era
+  language reference, so it is the right authority for the standard-
+  identifier table in finding 22b. It has since been OCRed.
+
+  Its option summary (p. 70) is the 1.0 set — ten letters, `C G I L N P Q
+  R S U`, with neither `$V` nor `$NS`, which is what dates it: the update
+  notice lists both as new in 1.1. Like the 1.3 manual it documents none of
+  `$D`, `$E`, `$F`, `$T`, so those four were undocumented from the
+  beginning rather than dropped from the documentation later. With one
+  slip: the page's syntax example for combining options is
+
+  > `(*$option,option*)` Example: `(*$F-,S+,G+*)`
+
+  — `$F`, in a manual that never says what `$F` is.
 
 Three things in the update notice line up with the 1.1 binary:
 
@@ -1329,6 +1344,258 @@ Three things in the update notice line up with the 1.1 binary:
 * 1.1 raised the codefile limit to 16 segments, "one for the program itself,
   and up to 15" for the rest, against 6 before. `SYSTEM.COMPILER` has 15,
   and could not have been built by its predecessor.
+
+## 24. The undocumented option letters, the code emitters, and `LDC`'s word order
+
+**Source.** Neil Parker, *Undocumented Secrets of Apple Pascal*,
+`evidence/reference/Undocumented Secrets of Apple Pascal.html`. Parker
+worked from the UCSD II.0 source; the compiler binary is the check, and in
+one place below it contradicts him.
+
+This finding closes the four-open-letters question left by finding 23c, and
+it turned up a decoder bug that had been silently corrupting every set
+constant in the corpus.
+
+### 24a. `$D`, `$E`, `$F`, `$T`
+
+They are undocumented in the strong sense. Table 14-1, III-241, is the
+manual's complete option summary, and it lists thirteen forms — `$C`, `$G`,
+`$I±`, `$I filename`, `$L±`, `$L filename`, `$N`, `$NS`, `$P`, `$Q`, `$R±`,
+`$R name`, `$S`, `$U±`, `$U filename`, `$V`. Not one of `D`, `E`, `F`, `T`
+appears anywhere in it. All four nevertheless have live arms in
+`COMPOPTI.1` in **both** releases (1.1 lines 7580-7680 of the lifted
+listing), each writing its own boolean, each defaulted to 0 by `COMPINIT.9`.
+
+**`$D` — Debug. VERIFIED BINARY FACT.** `STATEMEN.1`, immediately after the
+statement's leading symbol is consumed:
+
+    if OPT_D then begin
+      BODYPART.5:EMITOP1(85, (G92+1));
+      G46 := 1;
+    end;
+
+`85 + 128 = 213 = $D5 = BPT`, and IV-76 gives `BPT 213 B` —
+"Breakpoint. Not used (acts as a NOP)" — one `B` parameter, which is
+exactly the one operand `EMITOP1` emits. `G92` is the line counter. So
+`{$D+}` emits `BPT <line>` before every statement, which is Parker's
+description confirmed instruction for instruction. The corollary is a fact
+about the artifact rather than the option: **there is not one `BPT` in
+either release**, so `SYSTEM.COMPILER` was compiled `{$D-}`.
+
+**`$T` — Tiny. VERIFIED BINARY FACT, and the omit list is now recovered.**
+Parker could only say Apple's list was "probably similar" to II.0's.
+`COMPINIT.7` spells the standard identifiers out as a run of `LSA` string
+literals, 44 names in order, then walks them with a 1-based counter:
+
+    if OPT_T then begin
+      if not ((L2 in {2,7,10,13,17,18,19,20,32,34,35,40,42,43,44}))
+        then goto L067E;
+    end else begin
+    L067E:
+      ...enter the identifier...
+
+Being *in* the set means falling past the enter block, so the set is the
+omit list. Resolved against the names, Apple omits fifteen:
+
+> `COPY DELETE GET GOTOXY INSERT PAGE POS PRED PUT READLN SEEK SQR STR
+> UNITREAD UNITSTAT`
+
+II.0's fifteen, as Parker gives them, differ in exactly two places: II.0
+omits `SUCC` and Apple does not, and Apple omits `UNITSTAT`, which does not
+exist in II.0. Everything else matches, which is a good sign for both
+lists.
+
+**`$F` — Flip. VERIFIED BINARY FACT for the mechanism.** `PASCALCO.21`, the
+routine that emits one *word* into the code buffer, ends:
+
+    if OPT_F then begin
+      L2 := G2^[G9];
+      G2^[G9] := G2^[(G9+1)];
+      G2^[(G9+1)] := L2;
+    end;
+
+— a byte swap of the word just written, which is Parker's "opposite byte
+order from that normally used by the host computer". `OPT_F` is read at one
+other site, `PASCALCO.13`, where it inverts a boolean rather than swapping
+anything; that site is not yet understood and is not claimed here.
+
+**`$E` — not in Parker, and not in any manual on hand.** Both of its uses
+are about file variables inside units, and both make sense only together:
+
+* `DECLARAT.3` and `.4`, on `SY = 46` (`FILE`, from the reserved-word table
+  of finding 19) — `if INUNIT then if not (ININTERFACE or OPT_E) then
+  ERROR(191)`. A file variable may be declared in a unit's *interface*
+  freely, but in its implementation part only under `{$E+}`.
+* `BODYPART.25`, the block-body generator —
+  `if (not INUNIT or OPT_E) then` … walk the block's file variables and
+  emit `FINIT` for each. Inside a unit, no `FINIT` is generated unless
+  `{$E+}`.
+
+So `$E` is a single switch over "this unit may own file variables, and is
+responsible for initialising them". Naming it is left open; `OPT_E` is what
+`names.py` calls it. STRONG INFERENCE for the reading, VERIFIED BINARY FACT
+for the two gates.
+
+### 24b. `ININTERFACE` and `INUNIT`
+
+**VERIFIED BINARY FACT.** 1.1 globals 31 and 32; 1.3 globals 32 and 33,
+carried across by the correspondence table. Both are written only in
+`UNITPART`. `UNITPART.3` raises error 182 if `INUNIT` is already set —
+units do not nest — then saves `LEVEL` and the segment counter, sets
+`INUNIT` and clears `ININTERFACE`. `ININTERFACE` is true between the unit
+heading and `SY = IMPLEMENTATION` (`$34 = 52`). They are what `$E` above is
+tested against, and they are the state the reconstruction needs for
+`UNITPART` to be writable at all.
+
+### 24c. The code emitters
+
+**VERIFIED BINARY FACT.** `PASCALCO.20:EMIT(b)` writes one byte
+(finding 12). Sitting on top of it, in `BODYPART`, is the compiler's entire
+code-generation interface — five routines whose *opcode argument is the
+opcode minus 128*:
+
+| 1.1 | 1.3 | name | signature |
+|---|---|---|---|
+| `BODYPART.3` | `.3` | `EMITOP` | `(op)` — opcode alone; pads with `NOP` before `LSA` |
+| `BODYPART.4` | `.4` | `EMITCONST` | `(v)` — push integer `v`: short `SLDC`, or `LDCI`+`NGI` |
+| `BODYPART.5` | `.5` | `EMITOP1` | `(op, arg)` — opcode + one operand byte |
+| `BODYPART.6` | `.6` | `EMITOP2` | `(op, lex, off)` — picks the short form when it can |
+| `BODYPART.27` | `.28` | `EMITBIG` | `(n)` — the `B` encoding |
+
+The spellings are ours. The numbering claim is the binary's, and
+`tools/probes/probe_emitters.py` is two checks it could fail:
+
+* **`EMITOP1`'s literal opcodes.** It emits exactly one operand byte, so
+  every literal `op` passed to it must name a one-operand instruction.
+  Only 37 of the 128 opcodes in `$80-$FF` qualify. All **15** distinct
+  literals in each release land inside those 37.
+* **`EMITOP2`'s `+20`.** When the operand it would emit is the degenerate
+  one — lex level 0, or an integer comparison — it adds 20 to the opcode
+  and emits the short form instead. That is a claim about the *encoding*,
+  and the encoding either has that structure or it does not:
+
+  `LDA $B2 → LLA $C6`, `LDC $B3 → LDCI $C7`, `LOD $B6 → LDL $CA`,
+  `STR $B8 → STL $CC`, and `EQU/GEQ/GRT/LEQ/LES/NEQ $AF-$B7 →
+  EQUI/GEQI/GRTI/LEQI/LESI/NEQI $C3-$CB`.
+
+  Ten pairs, all exactly 20 apart. (The `-13` in the same routine is the
+  second adjustment on the same path.)
+
+`EMITBIG` reproduces the `B` encoding the decoder assumes: one byte for
+values under 128, otherwise two with bit 7 set on the first. IV-58 states
+the same rule, with an OCR flaw — it says bit 7 "is cleared", where both
+the binary and the two-byte case's own arithmetic say set.
+
+`BODYPART.25:BODY` is the block-body generator that uses them. It emits
+`BODYPART.6(77, 0, 3)` — `CXP 0,3`, `FINIT` — once per file variable, with
+the `+300` window-buffer offset of finding 23d visible in the second
+`EMITOP2` of each pair, then the `CXP seg,1` unit-initialisation calls,
+then loops over statements while `SY` is in `G102`.
+
+### 24d. `LDC` stores its words in reverse — and every set constant was wrong
+
+**VERIFIED BINARY FACT, and VERIFIED SOURCE FACT.** `LDC UB` is followed by
+`UB` words of inline constant. The decoder was reading the first word in
+the code stream as word 0 of the value. It is the last one.
+
+For a set that renames every member — word *j* carries members
+*16j..16j+15* — so the error was invisible in a sync check and total in the
+output. Four independent readings, each gibberish under the old order:
+
+* **`COMPINIT.7`'s two sets** are indexed by position in a 44-name list the
+  same procedure spells out in ASCII. The old order put members at 0, 45
+  and 47; the new one puts all 32 inside 1..44. And `SET2` comes out as
+  *exactly* the seventeen value-returning built-ins — `EOF EOLN PRED SUCC
+  ORD SQR ABS CONCAT LENGTH COPY POS TREESEAR SCAN BLOCKREA BLOCKWRI TRUNC
+  SIZEOF` — which is a fact about Pascal, decided nowhere in this decoder.
+* **`G102`**, tested at the head of every statement loop, is exactly the
+  eight reserved words that can start a statement: `BEGIN IF CASE REPEAT
+  WHILE FOR WITH GOTO`.
+* **`G114`** is exactly the nine that can open a declaration part:
+  `BEGIN LABEL CONST TYPE VAR PROCEDURE FUNCTION PROGRAM/SEGMENT USES`
+  (`$21` is both `PROGRAM` and `SEGMENT`), and `UNITPART` later adds `UNIT`
+  to it — `G114 := G114 + {50}`.
+* **`G98`** is exactly the four structured-type words: `SET ARRAY RECORD
+  FILE`.
+* **`BODYPART.6`'s** comparison set is exactly `EQU GEQ GRT LEQ LES NEQ`.
+
+`tools/probes/probe_ldc_order.py` runs the first of those and additionally
+asserts the *opposite* order fails, so the probe cannot pass vacuously.
+
+Apple then states it outright. IV-61, "Formats of Constants in P-Code":
+
+> All reals, sets, and long integers are word-aligned and in REVERSE word
+> order, that is, the higher-order bits of the real or set are in
+> lower-numbered memory locations.
+
+and IV-64 for the instruction itself: "`LDC 179 UB,<data>` — Load
+multiple-word constant. Fetch the word-aligned `<data>` of UB words **in
+reverse word order**, and push the data." `LDM` and `STM` say the same. The
+binary was read first and the manual agrees with it.
+
+The renderer in `tools/a2pascal/lift.py` now prints set members rather than
+words. `LDC` also loads two-word `REAL` constants, so members are shown
+only where the constant cannot be one: three words or more, a procedure
+with no real arithmetic anywhere in it, or — for the single site that has
+both — an instruction that consumes the value as a set before anything
+consumes it as a real. There are nine real-arithmetic instructions in the
+entire compiler, so almost every procedure takes the readable path.
+
+### 24e. Parker on `{$U-}`, and why he is wrong about this binary
+
+Parker lists `SYSTEM.COMPILER` among the codefiles compiled `{$U-}`, and
+gives four criteria for telling: a `{$U-}` program has its main body at lex
+−1 in **segment 0**, its segment procedures numbered from 1, exits through
+`XIT` rather than `RBP`, and takes no argument words.
+
+Every one of them says the opposite here. `PASCALCO` is segment **1**; the
+phase segments are **7-20**, not 1, 2, 3…; `PASCALCO.1` is **lex 0**, the
+user-program level of 23a; and it ends in `RBP`. Finding 23c reached the
+same conclusion from `COMPOPTI.1`'s `'U'` arm and the absence of `CHK`.
+Parker is corroborated on the *criteria* and contradicted on the *file*.
+
+One thing he supplies that nothing else did: a `{$U+}` main program is
+passed "two useless words" of arguments. That is `PASCALCO.1`'s 4-byte
+parameter block, which finding 22a had counted but not explained.
+
+## 25. The decoder's opcode table, against Apple's
+
+**VERIFIED SOURCE FACT.** Everything in `tools/a2pascal/pcode.py` came from
+Hyde's *P-Source*, John Brooks' 1.4 interpreter and semantic probes against
+the binaries (finding 7) — no vendor documentation. Part IV, Chapter 4 of
+the 1.3 manual, "The P-Machine Instruction Set" (IV-57..IV-76), is vendor
+documentation: every opcode by decimal number with its parameter list, then
+repeated as Table 4-1 in numerical order.
+
+`tools/probes/probe_manual_opcodes.py` transcribes Apple's table and holds
+the decoder against it. **85 numbered opcodes and all four short-form
+ranges agree, mnemonic and parameters.** Nothing had to be changed. That
+covers both corrections of finding 7 — the `$D8`/`$E8`/`$F8` boundaries and
+`$D0 LPA` — and promotes `$D7 NOP`, previously STRONG INFERENCE, to stated
+fact (215 NOP, "sometimes used to reserve space in the code for later
+additions").
+
+Three decoder entries are *not* in Apple's table: `$D2 NOP`, `$D3 EFJ`,
+`$D4 NFJ`, carried from Brooks so an unexpected byte reports as itself.
+None occurs in `SYSTEM.COMPILER`, and 210-212 are simply unassigned in the
+manual, so there is no conflict — but they remain the weakest rows.
+
+Details the manual settles that the decoder had inferred:
+
+* The comparison type codes are Apple's: `2` reals, `4` strings, `6`
+  booleans, `8` sets, `10` byte arrays, `12` words — matching `CMP_TYPES`
+  exactly. It also confirms that `10` and `12` alone carry an extra `B`
+  operand (the byte count), which is the conditional branch in the `cmp`
+  decoder.
+* `XJP`'s layout (IV-72) is the one finding 21 recovered from the
+  interpreter: `W1` min, `W2` max, the case table of `W2-W1+1`
+  self-relative words, `W3` past the table — and out-of-range points IPC at
+  `W3`, not at a default pointer.
+* `RNP DB` is "0 for procedures, 1 for nonreal functions, 2 for real
+  functions", already quoted in 23a.
+* Sets on the evaluation stack carry a length word that `ADJ` strips before
+  a store; sets in an activation record do not. That is why every set
+  constant in the listing is followed by `adjust(…, n)`.
 
 ## 16. Open questions
 
@@ -1357,9 +1624,14 @@ Three things in the update notice line up with the 1.1 binary:
   not been pinned down.~~ Resolved by finding 23a: OS is -1, user program
   is 0, first nested procedure is 1. `PASCALCO.1` is an ordinary user
   program main, so the compiler was **not** built `{$U-}` (23c).
-* Four compiler option letters — `$D`, `$E`, `$F`, `$T` — are boolean flags
-  in `COMPOPTI.1` with no entry in the 1.3 manual (finding 23c). An earlier
-  manual, or an Apple internal one, might name them.
+* ~~Four compiler option letters — `$D`, `$E`, `$F`, `$T` — are boolean
+  flags in `COMPOPTI.1` with no entry in the 1.3 manual.~~ Resolved by
+  finding 24a: `$D` Debug, `$F` Flip and `$T` Tiny from Parker, each
+  confirmed in the binary, with the `{$T+}` omit list recovered exactly;
+  `$E` identified from the binary alone as the "unit may own file
+  variables" gate. Still open, narrowly: what `$E` was *called*, and the
+  second `OPT_F` site in `PASCALCO.13`, which inverts a boolean rather
+  than swapping bytes.
 * `{$U-}` producing `lex=-1` is inferred, not observed: neither disk in
   `evidence/` carries `SYSTEM.PASCAL`, the one artifact on hand known to
   have been built that way. Adding a boot disk would settle it — the same

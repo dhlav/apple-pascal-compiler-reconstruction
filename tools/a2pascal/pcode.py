@@ -187,7 +187,12 @@ def decode(code: bytes, addr: int, jtab: int | None = None) -> Insn:
             # the word block is word-aligned relative to the segment
             if p % 2:
                 p += 1
+            # LDC stores its words in *reverse* order: the last word in the
+            # code stream is word 0 of the value. Reversing here is what makes
+            # the operand mean what the p-machine puts on the stack, so a set
+            # constant's word j holds members 16j..16j+15 (finding 24d).
             words = [struct.unpack_from("<H", code, p + 2 * i)[0] for i in range(n)]
+            words.reverse()
             p += 2 * n
             vals.append(words)
             parts.append(f"{n}w [" + " ".join(f"${x:04X}" for x in words) + "]")

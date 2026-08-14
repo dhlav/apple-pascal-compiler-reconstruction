@@ -9,6 +9,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 STEPS = [
+    ("reference manual text", "reference_text.py"),
     ("volume directories", "dump_dir.py"),
     ("unpack ii0src.sdk", "unpack_ii0src.py"),
     ("extract UCSD II.0 source", "extract_ii0src.py"),
