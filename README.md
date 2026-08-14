@@ -104,6 +104,22 @@ listings now read
   until (SY in (STATBEGSYS + {endsy,unitsy,implsy}));
 ```
 
+Fifteen more names needed no inference: the manual says the codefile's
+SEGNAME field holds *"the first eight characters of the … SEGMENT
+procedure … name that was translated into the corresponding segment"*, so
+the segment dictionary has been carrying identifiers out of Apple's source
+all along. Procedure 1 of each segment is that segment procedure, and its
+lexical level is the depth at which Apple declared it — which recovers the
+compiler's declaration skeleton, identical in both releases (finding 30):
+
+```
+  PASCALCO                                    lex 0   the program
+    COMPINIT  DECLARAT  BODYPART  WRITELIN    lex 1
+    UNITPART  COMPOPTI  NUMSTRIN  FINISHUP
+      ROUTINE   STATEMEN                      lex 2
+        BODY1  BODY3  CASESTAT  FORSTATE      lex 3
+```
+
 Every recovered name has to survive a constraint the reconstruction cannot
 ignore: **Apple Pascal keeps only the first eight significant characters**
 of an identifier, ignoring underscores and folding case — implemented

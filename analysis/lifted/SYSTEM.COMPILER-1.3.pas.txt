@@ -11,18 +11,18 @@ listed verbatim.
 SEGMENT 1 PASCALCO
 ======================================================================
 
-procedure PASCALCO.1(args 2 words);  { locals 1355 words, lex 0 }
+procedure PASCALCO.1:PASCALCO(args 2 words);  { locals 1355 words, lex 0 }
   FINIT(@LISTFILE, @G1096, -(2));
   FINIT(@LIBFILE, @G1016, -(1));
   FINIT(@SOURCEFILE, @G1056, -(1));
   FINIT(@INFOFILE, @G965, -(1));
-  COMPINIT.1();
+  COMPINIT.1:COMPINIT();
   if not (SWAPPING) then begin
     PASCALCO.30:HOLDMOST();
   end else begin
     PASCALCO.27:COMPILE();
   end;
-  FINISHUP.1();
+  FINISHUP.1:FINISHUP();
   FCLOSE(@LISTFILE, 0);
   FCLOSE(@LIBFILE, 0);
   FCLOSE(@SOURCEFILE, 0);
@@ -219,7 +219,7 @@ L0518:
   SY := 47;
   goto L067D;
 L0520:
-  NUMSTRIN.1(0, @L1);
+  NUMSTRIN.1:NUMSTRIN(0, @L1);
   goto L076A;
 L0528:
   L5 := SOURCEBUF^[CHINDEX];
@@ -231,7 +231,7 @@ L0528:
     L5 := SOURCEBUF^[(CHINDEX+L4)];
   end;
   if (L5 in {46,48,49,50,51,52,53,54,55,56,57,69}) then begin
-    NUMSTRIN.1(1, @L1);
+    NUMSTRIN.1:NUMSTRIN(1, @L1);
   end else begin
     CHINDEX := ((CHINDEX+L4)-1);
     SY := 35;
@@ -932,7 +932,7 @@ procedure PASCALCO.25:ENDSEGMENT(args 0 words);  { locals 2 words, lex 1 }
 procedure PASCALCO.26:BLOCK(args 4 words);  { locals 2 words, lex 1 }
   if ((SY = 50) and not (INUNIT)) then begin
     if (SWAPPING or G1355) then begin
-      UNITPART.1(?, ?, ?, adjust((@L1^<4w> + {9,50,51,52}),4));
+      UNITPART.1:UNITPART(?, ?, ?, adjust((@L1^<4w> + {9,50,51,52}),4));
       if (SY = 18) then begin
         CSP4(1, 26);
       end;
@@ -967,7 +967,7 @@ procedure PASCALCO.26:BLOCK(args 4 words);  { locals 2 words, lex 1 }
         PASCALCO.4:ERROR(17);
       end;
       repeat
-        BODYPART.1(?, ?, ?, adjust((@L1^<4w> + {21}),4), G84^.f7);
+        BODYPART.1:BODYPART(?, ?, ?, adjust((@L1^<4w> + {21}),4), G84^.f7);
         L5 := ((SY = G84^.f6) or (INUNIT and (SY = 9)));
         if not (L5) then begin
           if (G84^.f6 = 3) then begin
@@ -985,7 +985,7 @@ procedure PASCALCO.26:BLOCK(args 4 words);  { locals 2 words, lex 1 }
         end else begin
           PASCALCO.4:ERROR(6);
         end;
-        DECLARAT.1(?, ?, ?, @L1^<4w>);
+        DECLARAT.1:DECLARAT(?, ?, ?, @L1^<4w>);
       end else begin
         if (SY = 3) then begin
           PASCALCO.8:INSYMBOL();
@@ -994,7 +994,7 @@ procedure PASCALCO.26:BLOCK(args 4 words);  { locals 2 words, lex 1 }
           if not (not ((INUNIT and (SY = 9)))) then goto L101E;
           PASCALCO.4:ERROR(6);
           PASCALCO.16:SKIP(?, ?, ?, @L1^<4w>);
-          DECLARAT.1(?, ?, ?, @L1^<4w>);
+          DECLARAT.1:DECLARAT(?, ?, ?, @L1^<4w>);
           goto L1020;
 L101E:
           goto L1022;
@@ -1011,7 +1011,7 @@ L1022:
             end;
             if (G45 and (LEVEL = 1)) then begin
               (@G445[@G589~[SEGNUM]{4per word,4 bits}*9w]+8)^ := 1;
-              WRITELIN.1();
+              WRITELIN.1:WRITELIN();
             end;
             NEXTPROC := L6^.f2;
             SEGNUM := L6^.f4;
@@ -1028,12 +1028,12 @@ L1022:
         end;
       end;
     end else begin
-      DECLARAT.1(?, ?, ?, @L1^<4w>);
+      DECLARAT.1:DECLARAT(?, ?, ?, @L1^<4w>);
       if (LEVEL = 0) then begin
         if (SY = 50) then begin
-          UNITPART.1(?, ?, ?, adjust((@L1^<4w> + {9,50,51,52}),4));
+          UNITPART.1:UNITPART(?, ?, ?, adjust((@L1^<4w> + {9,50,51,52}),4));
           if (SY in {procsy,funcsy,progsy}) then begin
-            DECLARAT.1(?, ?, ?, @L1^<4w>);
+            DECLARAT.1:DECLARAT(?, ?, ?, @L1^<4w>);
           end;
         end;
       end;
@@ -1048,7 +1048,7 @@ procedure PASCALCO.27:COMPILE(args 0 words);  { locals 0 words, lex 1 }
 procedure PASCALCO.28:COMMENT(args 1 words);  { locals 1 words, lex 2 }
   CHINDEX := (CHINDEX+1);
   if (SOURCEBUF^[CHINDEX] = 36) then begin
-    if not (COMPOPTI.1(L1)) then begin
+    if not (COMPOPTI.1:COMPOPTI(L1)) then begin
       CSP4(1, 28);
     end;
   end;
@@ -1130,7 +1130,7 @@ L1128:
 SEGMENT 7 COMPINIT
 ======================================================================
 
-procedure COMPINIT.1(args 0 words);  { locals 304 words, lex 1 }
+procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 304 words, lex 1 }
   COMPINIT.11();
   COMPINIT.9();
   COMPINIT.10();
@@ -1808,7 +1808,7 @@ procedure COMPINIT.11(args 0 words);  { locals 1 words, lex 2 }
 SEGMENT 8 DECLARAT
 ======================================================================
 
-procedure DECLARAT.1(args 4 words);  { locals 11 words, lex 1 }
+procedure DECLARAT.1:DECLARAT(args 4 words);  { locals 11 words, lex 1 }
   @L1^<4w>^ := adjust((10 + 1),4)  {4 words};
   @L1^<4w>^ := adjust((1 + 1),4)  {4 words};
   repeat
@@ -2729,7 +2729,7 @@ procedure DECLARAT.11(args 1 words);  { locals 22 words, lex 3 }
       LC := 1;
     end;
     G94 := LINENUMBER;
-    DECLARAT.1(?, (L23+10), @I2,1^<4w>, adjust((512 + 1),4));
+    DECLARAT.1:DECLARAT(?, (L23+10), @I2,1^<4w>, adjust((512 + 1),4));
     if G41 then begin
       if L9 then begin
         if (LC > 1) then begin
@@ -3546,7 +3546,7 @@ procedure DECLARAT.20(args 6 words);  { locals 10 words, lex 3 }
 SEGMENT 9 BODYPART
 ======================================================================
 
-procedure BODYPART.1(args 5 words);  { locals 0 words, lex 1 }
+procedure BODYPART.1:BODYPART(args 5 words);  { locals 0 words, lex 1 }
   if (not (SWAPPING) or SWAPMORE) then begin
     BODYPART.24();
   end else begin
@@ -4506,7 +4506,7 @@ procedure BODYPART.23(args 5 words);  { locals 2 words, lex 2 }
       if (24 in 1) then begin
         BODYPART.30();
       end else begin
-        ROUTINE.1(?, L6, L6, @L2^<4w>, L7, L6);
+        ROUTINE.1:ROUTINE(?, L6, L6, @L2^<4w>, L7, L6);
       end;
     end;
     { paths disagree on stack depth here }
@@ -4522,13 +4522,13 @@ procedure BODYPART.23(args 5 words);  { locals 2 words, lex 2 }
   end;
 
 procedure BODYPART.24(args 0 words);  { locals 19 words, lex 2 }
-  BODY1.1();
+  BODY1.1:BODY1();
   if SWAPPING then begin
     BODYPART.27();
   end else begin
     BODYPART.25:BODY();
   end;
-  BODY3.1:ENDPROC();
+  BODY3.1:BODY3();
 
 procedure BODYPART.25:BODY(args 0 words);  { locals 2 words, lex 3 }
   if SHOWPROGRESS then begin
@@ -4578,7 +4578,7 @@ procedure BODYPART.25:BODY(args 0 words);  { locals 2 words, lex 3 }
 L0121:
   repeat
 L0121:
-    STATEMEN.1(?, ?, @I2,2^<4w>, adjust((520 + 1),4));
+    STATEMEN.1:STATEMEN(?, ?, @I2,2^<4w>, adjust((520 + 1),4));
     if not (not ((SY in @STATBEGSYS^<4w>))) then goto L0121;
     G11 := (SY <> 3);
     if not (G11) then begin
@@ -5525,7 +5525,7 @@ L1CA8:
 SEGMENT 10 ROUTINE
 ======================================================================
 
-procedure ROUTINE.1(args 6 words);  { locals 12 words, lex 2 }
+procedure ROUTINE.1:ROUTINE(args 6 words);  { locals 12 words, lex 2 }
   @L3^<4w>^ := adjust((32 + 1),4)  {4 words};
   @L3^<4w>^ := adjust((2 + 1),4)  {4 words};
   @L7^ := adjust((@L11^<4w> + @L15^<4w>),4)  {4 words};
@@ -6342,7 +6342,7 @@ L0A52:
 SEGMENT 11 STATEMEN
 ======================================================================
 
-procedure STATEMEN.1(args 4 words);  { locals 6 words, lex 2 }
+procedure STATEMEN.1:STATEMEN(args 4 words);  { locals 6 words, lex 2 }
   STATLEVEL := (STATLEVEL+1);
   if (SY = 35) then begin
     L6 := G8;
@@ -6411,7 +6411,7 @@ L05C9:
     goto L0632;
 L05D0:
     PASCALCO.8:INSYMBOL();
-    CASESTAT.1();
+    CASESTAT.1:CASESTAT();
     goto L0632;
 L05D8:
     PASCALCO.8:INSYMBOL();
@@ -6423,7 +6423,7 @@ L05DF:
     goto L0632;
 L05E6:
     PASCALCO.8:INSYMBOL();
-    FORSTATE.1();
+    FORSTATE.1:FORSTATE();
     goto L0632;
 L05EE:
     PASCALCO.8:INSYMBOL();
@@ -6659,7 +6659,7 @@ procedure STATEMEN.4(args 0 words);  { locals 0 words, lex 3 }
 L0292:
   repeat
 L0292:
-    STATEMEN.1(?, ?, @I1,1^<4w>, adjust((520 + 1),4));
+    STATEMEN.1:STATEMEN(?, ?, @I1,1^<4w>, adjust((520 + 1),4));
     if not (not ((SY in @STATBEGSYS^<4w>))) then goto L0292;
     G11 := (SY <> 3);
     if not (G11) then begin
@@ -6684,7 +6684,7 @@ procedure STATEMEN.5(args 0 words);  { locals 5 words, lex 3 }
   end else begin
     PASCALCO.4:ERROR(52);
   end;
-  STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8192 + 1),4));
+  STATEMEN.1:STATEMEN(?, ?, @I1,1^<4w>, adjust((8192 + 1),4));
   if L5 then begin
     if L4 then begin
       CODEINX := L3;
@@ -6699,7 +6699,7 @@ procedure STATEMEN.5(args 0 words);  { locals 5 words, lex 3 }
       BODYPART.19(L2);
     end;
     PASCALCO.8:INSYMBOL();
-    STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+    STATEMEN.1:STATEMEN(?, ?, ?, @I1,1^<4w>);
     if L5 then begin
       if not (L4) then begin
         CODEINX := L3;
@@ -6719,7 +6719,7 @@ procedure STATEMEN.6(args 0 words);  { locals 1 words, lex 3 }
 L0373:
   repeat
 L0373:
-    STATEMEN.1(?, ?, @I1,1^<4w>, adjust((1032 + 1),4));
+    STATEMEN.1:STATEMEN(?, ?, @I1,1^<4w>, adjust((1032 + 1),4));
     if not (not ((SY in @STATBEGSYS^<4w>))) then goto L0373;
     G11 := (SY <> 3);
     if not (G11) then begin
@@ -6745,7 +6745,7 @@ procedure STATEMEN.7(args 0 words);  { locals 2 words, lex 3 }
   end else begin
     PASCALCO.4:ERROR(54);
   end;
-  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  STATEMEN.1:STATEMEN(?, ?, ?, @I1,1^<4w>);
   BODYPART.16:EMITJUMP(57, L2);
   BODYPART.19(L1);
 
@@ -6798,14 +6798,14 @@ procedure STATEMEN.8(args 0 words);  { locals 4 words, lex 3 }
   end else begin
     PASCALCO.4:ERROR(54);
   end;
-  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  STATEMEN.1:STATEMEN(?, ?, ?, @I1,1^<4w>);
   G8 := (G8-L3);
 
 ======================================================================
 SEGMENT 12 CASESTAT
 ======================================================================
 
-procedure CASESTAT.1(args 0 words);  { locals 14 words, lex 3 }
+procedure CASESTAT.1:CASESTAT(args 0 words);  { locals 14 words, lex 3 }
   BODYPART.11(?, ?, @I1,1^<4w>, adjust((2054 + 1),4));
   BODYPART.8();
   BODYPART.15();
@@ -6871,7 +6871,7 @@ L00A5:
       PASCALCO.4:ERROR(5);
     end;
 L00EC:
-    STATEMEN.1(?, ?, ?, adjust((@I1,1^<4w> + {3,54}),4));
+    STATEMEN.1:STATEMEN(?, ?, ?, adjust((@I1,1^<4w> + {3,54}),4));
     if not (not ((SY in @STATBEGSYS^<4w>))) then goto L00EC;
     if (L3 <> nil) then begin
       BODYPART.16:EMITJUMP(57, L9);
@@ -6915,7 +6915,7 @@ L0141:
     BODYPART.19(L10);
     if (SY = 54) then begin
       PASCALCO.8:INSYMBOL();
-      STATEMEN.1(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
+      STATEMEN.1:STATEMEN(?, ?, @I1,1^<4w>, adjust((8 + 1),4));
       if (SY = 3) then begin
         PASCALCO.8:INSYMBOL();
       end;
@@ -6932,7 +6932,7 @@ L0141:
 SEGMENT 13 FORSTATE
 ======================================================================
 
-procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
+procedure FORSTATE.1:FORSTATE(args 0 words);  { locals 10 words, lex 3 }
   if (SY = 0) then begin
     PASCALCO.10:SEARCHID(G133, @I1,5);
     L10 := I1,5;
@@ -7030,7 +7030,7 @@ procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
   end else begin
     PASCALCO.4:ERROR(54);
   end;
-  STATEMEN.1(?, ?, ?, @I1,1^<4w>);
+  STATEMEN.1:STATEMEN(?, ?, ?, @I1,1^<4w>);
   move(@G3, @L1, 5 words);
   BODYPART.8();
   BODYPART.4:EMITCONST(1);
@@ -7047,7 +7047,7 @@ procedure FORSTATE.1(args 0 words);  { locals 10 words, lex 3 }
 SEGMENT 14 BODY1
 ======================================================================
 
-procedure BODY1.1(args 0 words);  { locals 2 words, lex 3 }
+procedure BODY1.1:BODY1(args 0 words);  { locals 2 words, lex 3 }
   JTABINX := 1;
   I1,8 := 0;
   if (LEVEL = 1) then begin
@@ -7115,7 +7115,7 @@ L00AA:
 SEGMENT 15 BODY3
 ======================================================================
 
-procedure BODY3.1:ENDPROC(args 0 words);  { locals 2 words, lex 3 }
+procedure BODY3.1:BODY3(args 0 words);  { locals 2 words, lex 3 }
   if (SY = 9) then begin
     PASCALCO.8:INSYMBOL();
   end else begin
@@ -7279,7 +7279,7 @@ procedure BODY3.2(args 0 words);  { locals 1 words, lex 4 }
 SEGMENT 16 WRITELIN
 ======================================================================
 
-procedure WRITELIN.1(args 0 words);  { locals 7 words, lex 1 }
+procedure WRITELIN.1:WRITELIN(args 0 words);  { locals 7 words, lex 1 }
   CODEINX := 0;
   if G49 then begin
     PASCALCO.4:ERROR(399);
@@ -7474,7 +7474,7 @@ L0296:
 SEGMENT 17 UNITPART
 ======================================================================
 
-procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
+procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   if (CODEBUF = nil) then begin
     CSP1(@CODEBUF, 1000);
   end;
@@ -7495,7 +7495,7 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
     end else begin
       PASCALCO.4:ERROR(22);
     end;
-    DECLARAT.1(?, ?, ?, @L1^<4w>);
+    DECLARAT.1:DECLARAT(?, ?, ?, @L1^<4w>);
     if G42 then begin
       if (not (L6) and (LC > 1)) then begin
         PASCALCO.4:ERROR(350);
@@ -7562,7 +7562,7 @@ procedure UNITPART.1(args 4 words);  { locals 6 words, lex 1 }
             PASCALCO.4:ERROR(404);
           end;
         end;
-        WRITELIN.1();
+        WRITELIN.1:WRITELIN();
       end;
     end else begin
       if (SY = 9) then begin
@@ -7800,7 +7800,7 @@ procedure UNITPART.4(args 0 words);  { locals 3 words, lex 2 }
   if (SY = 19) then begin
     PASCALCO.8:INSYMBOL();
   end;
-  BODYPART.1(?, ?, (@I1,1^<4w> + {21}), adjust((512 - 1),4), G84^.f7);
+  BODYPART.1:BODYPART(?, ?, (@I1,1^<4w> + {21}), adjust((512 - 1),4), G84^.f7);
   LC := G84^.f5;
   G84 := G84^.f10;
 
@@ -7808,7 +7808,7 @@ procedure UNITPART.4(args 0 words);  { locals 3 words, lex 2 }
 SEGMENT 18 COMPOPTI
 ======================================================================
 
-function COMPOPTI.1(args 1 words) : <1 word result>;  { locals 28 words, lex 1 }
+function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words, lex 1 }
   L1 := 1;
   if (SOURCEBUF^[(CHINDEX+1)] <> L3) then begin
     repeat
@@ -8067,7 +8067,7 @@ procedure COMPOPTI.5(args 1 words);  { locals 2 words, lex 3 }
 SEGMENT 19 NUMSTRIN
 ======================================================================
 
-procedure NUMSTRIN.1(args 2 words);  { locals 0 words, lex 1 }
+procedure NUMSTRIN.1:NUMSTRIN(args 2 words);  { locals 0 words, lex 1 }
   if L2 then begin
     NUMSTRIN.3();
   end else begin
@@ -8257,7 +8257,7 @@ L00D4:
 SEGMENT 20 FINISHUP
 ======================================================================
 
-procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
+procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
   if (SY <> 18) then begin
     PASCALCO.4:ERROR(21);
   end;
@@ -8272,7 +8272,7 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   G97 := (G94-G97);
   if G45 then begin
     (@G445[@G589~[SEGNUM]{4per word,4 bits}*9w]+8)^ := 1;
-    WRITELIN.1();
+    WRITELIN.1:WRITELIN();
   end;
   CSP33(@G83);
   FCLOSE(@LIBFILE, 0);

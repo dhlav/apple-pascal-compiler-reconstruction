@@ -105,10 +105,36 @@ BODYPART_EMIT: dict[int, str] = {
     27: "EMITBIG",    # (n)  the BIG encoding: one byte, or two with bit 7 set
 }
 
+# --- finding 30: the segment procedures name themselves --------------------
+#
+# Procedure 1 of every segment is that segment's SEGMENT procedure, and the
+# 1.3 manual says the codefile's SEGNAME field holds "the first eight
+# characters of the user program, unit, SEGMENT procedure, SEGMENT function,
+# or assembly-language procedure name that was translated into the
+# corresponding segment". So these fifteen names are read straight off the
+# segment dictionary. They are exact wherever the identifier was eight
+# characters or fewer -- BODY1, BODY3 and ROUTINE -- and exact as far as
+# Apple Pascal can tell for the rest, which is what matters, since the
+# compiler distinguishes nothing beyond eight characters.
+SEGMENT_PROCS: dict[str, str] = {
+    "PASCALCO": "PASCALCO",   # the program itself; PASCALCO.1 is lex 0
+    "COMPINIT": "COMPINIT", "DECLARAT": "DECLARAT", "BODYPART": "BODYPART",
+    "ROUTINE":  "ROUTINE",  "STATEMEN": "STATEMEN", "CASESTAT": "CASESTAT",
+    "FORSTATE": "FORSTATE", "BODY1":    "BODY1",    "BODY3":    "BODY3",
+    "WRITELIN": "WRITELIN", "UNITPART": "UNITPART", "COMPOPTI": "COMPOPTI",
+    "NUMSTRIN": "NUMSTRIN", "FINISHUP": "FINISHUP",
+}
+
 # --- finding 28b: the rest of the code-generation tail ---------------------
 #
-# These three keep their numbers across releases (correspondence table:
-# BODYPART.13 -> .13, BODYPART.16 -> .16, BODY3.1 -> BODY3.1).
+# These keep their numbers across releases (correspondence table:
+# BODYPART.13 -> .13, BODYPART.16 -> .16).
+#
+# BODY3.1 is *not* in here. It emits the whole attribute table -- long-jump
+# table, data size, param size, exit IC, enter IC, procedure number and LEX
+# LEVEL, low address first -- so "ENDPROC" described it well, but it is the
+# SEGMENT procedure of segment BODY3 and the codefile therefore names it:
+# it is `BODY3`. Finding 30.
 CODEGEN: dict[tuple[str, int], str] = {
     ("BODYPART", 13): "NEWPROC",       # assign the next procedure number to
                                        # an identifier record; ERROR(251) at
@@ -116,21 +142,20 @@ CODEGEN: dict[tuple[str, int], str] = {
     ("BODYPART", 16): "EMITJUMP",      # (op, target) -- short displacement if
                                        # it fits in 0..127, otherwise a slot
                                        # in JTABLE and a negative index
-    ("BODY3", 1):     "ENDPROC",       # close a procedure: pad, then the
-                                       # long-jump table, data size, param
-                                       # size, exit IC, enter IC, procedure
-                                       # number and LEX LEVEL -- the whole
-                                       # attribute table, low address first
 }
 
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
-    "1.1": {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
+    "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
+           | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
            | {("BODYPART", n): s for n, s in BODYPART_EMIT.items()}
            | CODEGEN
            | {("COMPINIT", 7): "ENTERSTDIDENTS"},
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
-    "1.3": {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
+    # The segment procedures keep procedure number 1 in 1.3 too: the two
+    # natives take PASCALCO.2 and .3, not .1.
+    "1.3": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
+           | {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
            | {("BODYPART", (n + 1 if n == 27 else n)): s
               for n, s in BODYPART_EMIT.items()}
            | CODEGEN

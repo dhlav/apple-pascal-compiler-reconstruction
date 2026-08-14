@@ -1,7 +1,7 @@
 """How are procedures laid out, and what are the two bytes at JTAB?
 
 Finding 4 read the attribute table as `JTAB+0` procedure number, `JTAB+1`
-lexical level. `BODY3.1:ENDPROC` is the routine that writes it, and its
+lexical level. `BODY3.1:BODY3` is the routine that writes it, and its
 last two instructions are `EMIT(PROCNUM)` then `EMIT(LEVEL - 1)`. Which
 byte each of those lands on depends on a layout fact that had never been
 checked: that a procedure's attribute table is the *end* of it, with the

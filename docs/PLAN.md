@@ -36,7 +36,7 @@ Done, and reproducible via `python tools/build_all.py`:
 ## Next steps
 
 1. ~~**Finish naming the PASCALCO service layer.**~~ **Done** (finding 22).
-   `.9`, `.15`, `.16`, `.17` are `GETBOUNDS`, `STRING`, `STRINGTYPE` and
+   `.9`, `.15`, `.16`, `.17` are `GETBOUNDS`, `ISSTRING`, `STRINGTYPE` and
    `LONGSIZE`; `.5` = `ENTERID` and `.18` = `CONSTANT` came with them.
    Fourteen routines are now named, in `tools/a2pascal/names.py`, and the
    lifter renders them.
@@ -46,11 +46,12 @@ Done, and reproducible via `python tools/build_all.py`:
    generator (finding 24c). `NEXTLINE` and `SKIP` came out of finding 26,
    and `NEXTBLOCK`, `BUMPSEG`, `NEWSEGMENT`, `COMPTYPES`, `EMITWORD`,
    `BLOCK` and `COMMENT` out of finding 27. Finding 28 finished the
-   segment with `MAKESEGINFO`, `ENDSEGMENT`, `COMPILE`,
-   `COMPILERESIDENT` and `COMPILEHOLDINGROUTINE` — **all 29 of PASCALCO's
+   segment with `SEGINFO`, `ENDSEGMENT`, `COMPILE`,
+   `HOLDMOST` and `HOLDROUT` — **all 29 of PASCALCO's
    procedures are now named**, and it carried three code-generation
-   routines in the phase segments with it: `BODY3.1:ENDPROC`,
-   `BODYPART.13:ALLOCPROCNUM` and `BODYPART.16:EMITJUMP`.
+   routines in the phase segments with it: `BODY3.1` (which
+   finding 30 then showed the codefile already names, `BODY3`),
+   `BODYPART.13:NEWPROC` and `BODYPART.16:EMITJUMP`.
 
    The lever that worked in finding 27 is worth reusing: the manual's
    error list (II-3E) names what every `ERROR(n)` means, so a routine's
@@ -82,6 +83,19 @@ Done, and reproducible via `python tools/build_all.py`:
    was about `PASCALCO.23`. When the claim is "routine X emits Y",
    reconstruct Y from X's own logic and diff it against the bytes —
    `probe_segtail.py` is the pattern.
+
+   Finding 30 then added fifteen names for free, and a rule worth keeping
+   ahead of all the levers above: **before inventing a name, ask whether
+   the artifact already carries one.** The codefile's SEGNAME field holds
+   the first eight characters of each segment procedure's identifier, so
+   procedure 1 of every segment names itself — and one name invented two
+   findings earlier, `BODY3.1:ENDPROC`, turned out to be `BODY3`.
+
+   The same finding recovers the declaration skeleton from the segment
+   procedures' lexical levels, which is a constraint on the reconstruction
+   rather than a convenience: the level is emitted into every
+   `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
+   procedure at the wrong depth changes the code bytes.
 
    What is left of this track is the phase segments beyond those three. The
    method that worked twice now: find code that builds a structure out of

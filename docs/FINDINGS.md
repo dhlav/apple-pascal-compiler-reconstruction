@@ -1973,7 +1973,7 @@ operand order of `STP`'s packed-field pointer as (address, width, right
 bit). Machine type 2 is p-code LSB and 1 is p-code MSB, which is the
 codefile-level consequence of `{$F+}` (finding 24a) that was previously
 only inferred from the byte-swapping in `EMITWORD`. Named
-**`MAKESEGINFO`**; the spelling is ours.
+**`SEGINFO`**; the spelling is ours.
 
 ### 28e. Two error numbers, and a 1.1 → 1.3 split
 
@@ -1996,16 +1996,16 @@ and why the 1980 manual's 254 means something else entirely. The
 
 ### 28f. What is left
 
-`COMPILE`, `COMPILERESIDENT` and `COMPILEHOLDINGROUTINE` (`PASCALCO.25`,
+`COMPILE`, `HOLDMOST` and `HOLDROUT` (`PASCALCO.25`,
 `.28`, `.29`) are the compilation driver and two nested wrappers whose
 only job is to hold phase segments in memory across it:
 
 ```
-  PASCALCO.1:  if SWAPPING then COMPILE else COMPILERESIDENT
-  COMPILERESIDENT:      load 8,9,19,11,12,13,14,15
-                        if SWAPMORE then COMPILE else COMPILEHOLDINGROUTINE
-                        unload them in reverse
-  COMPILEHOLDINGROUTINE:  load 10; COMPILE; unload 10
+  PASCALCO.1:  if SWAPPING then COMPILE else HOLDMOST
+  HOLDMOST:    load 8,9,19,11,12,13,14,15
+               if SWAPMORE then COMPILE else HOLDROUT
+               unload them in reverse
+  HOLDROUT:    load 10; COMPILE; unload 10
 ```
 
 The load order — `DECLARAT, BODYPART, NUMSTRIN, STATEMEN, CASESTAT,
@@ -2139,6 +2139,89 @@ now `HOLDMOST` and `HOLDROUT`, with `SEGINFO` and `NEWPROC` for
 `MAKESEGINFO` and `ALLOCPROCNUM`. **Working rule from here: a name we
 invent is eight significant characters or fewer, so that what we write is
 what the compiler sees.**
+
+## 30. The segment procedures name themselves, and give the source's shape
+
+Fifteen names that did not have to be inferred at all: they have been
+sitting in the segment dictionary since the first week of the project,
+and finding 29's work on the 8-character rule is what showed they were
+identifiers rather than labels.
+
+### 30a. SEGNAME is an identifier out of Apple's source
+
+VERIFIED SOURCE FACT. The 1.3 manual, on the codefile's segment
+dictionary:
+
+> Each element of the SEGNAME array is an eight-character array that
+> contains the first eight characters of the user program, unit, SEGMENT
+> procedure, SEGMENT function, or assembly-language procedure name that
+> was translated into the corresponding segment. If the name is shorter
+> than eight characters, it is padded on the right by spaces; if the name
+> is longer than eight characters, it is truncated to the first eight
+> characters.
+
+Combine that with finding 29 — the compiler distinguishes nothing past
+the eighth character — and an eight-character SEGNAME *is* the identifier,
+not an abbreviation of it. Where the name is shorter, the padding proves
+there was nothing more, so `BODY1`, `BODY3` and `ROUTINE` are exact and
+complete.
+
+`tools/probes/probe_segprocs.py` checks that procedure 1 of every segment
+is the segment procedure — no procedure in a segment sits at a shallower
+lexical level than procedure 1, `PASCALCO.1` alone is at lex 0 — and that
+`names.py` assigns exactly the dictionary's spelling, so the registry
+cannot drift from the disk.
+
+### 30b. A name of mine was already taken
+
+Finding 28b named `BODY3.1` **`ENDPROC`** for what it does: it emits the
+whole attribute table. But `BODY3.1` is the segment procedure of segment
+`BODY3`, so the codefile has been telling us its name all along. It is
+`BODY3`, and the description belongs in a comment. Retracted and
+corrected; the behaviour in 28b is unaffected.
+
+That is the second time in three findings that a conclusion about naming
+was reached without checking what the codefile already said. The rule to
+take from it: **before inventing a name, ask whether the artifact carries
+one.** Segment procedures do. So does the program.
+
+### 30c. The compiler's declaration skeleton
+
+VERIFIED BINARY FACT for the depths; the parents are STRONG INFERENCE from
+the call graph. Each segment procedure's lexical level is the depth at
+which Apple declared it, and both releases give the identical shape:
+
+```
+  PASCALCO                                    lex 0   the program
+    COMPINIT  DECLARAT  BODYPART  WRITELIN    lex 1   declared in the program
+    UNITPART  COMPOPTI  NUMSTRIN  FINISHUP
+      ROUTINE   STATEMEN                      lex 2
+        BODY1  BODY3  CASESTAT  FORSTATE      lex 3
+```
+
+with every level from 0 to 3 occupied and no gap — a gap would mean a
+segment procedure declared inside nothing. All 29 of PASCALCO's other
+procedures are at lex 1, which is what makes them the service layer: they
+are declared in the program block, so every phase can see them.
+
+The parents follow from the call graph. `ROUTINE` and `STATEMEN` are
+reached only from `BODYPART.23` and `BODYPART.25`, both inside
+`BODYPART.1`, so both are declared there. `CASESTAT` and `FORSTATE` are
+called only by `STATEMEN.1` — the `case` and `for` arms of the statement
+parser lifted out into their own segments. `BODY1` and `BODY3` are called
+only by `BODYPART.24`, a 16-byte procedure with 38 words of locals that
+does nothing but call them; the shared frame is why `BODY3` reaches its
+caller's variables as intermediate-level references.
+
+This is the outline the reconstruction has to reproduce, and it is
+stronger evidence than it looks: the lexical level is emitted into every
+`LOD`/`LDA`/`STR` and into every attribute table, so getting the nesting
+wrong changes the code bytes and the recompile fails.
+
+Note also what the depths rule *out*. `ROUTINE` at lex 2 cannot be a
+procedure of the program block, so the reconstruction cannot declare it
+beside `DECLARAT`; and `BODY1`/`BODY3` at lex 3 cannot sit beside
+`BODYPART.25` unless `BODYPART.25` is itself at lex 3, which it is.
 
 ## 16. Open questions
 
