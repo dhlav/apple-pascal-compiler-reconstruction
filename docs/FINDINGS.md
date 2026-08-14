@@ -2461,6 +2461,30 @@ copy II.0:
   where Apple gates it on a flag (finding 24a).
 * **`OTHERWISE` for `SEPARATE`**, as above.
 
+### 32e. The files, and their hashes
+
+SHA-256, first 16 hex digits. `.gitattributes` now marks
+everything under `evidence/` as never-normalised, so these
+round-trip byte for byte on any platform.
+
+| file | bytes | sha256 |
+|---|---|---|
+| `block.text` | 4,621 | `fa6d3089af9ec72b…` |
+| `bodypart.a.text` | 13,049 | `0e2c168ced3a4de5…` |
+| `bodypart.b.text` | 10,037 | `5ef338ac63916f77…` |
+| `bodypart.c.text` | 12,672 | `5793eaa81d5c16e6…` |
+| `bodypart.d.text` | 12,706 | `a4f31f712aeaeb4e…` |
+| `bodypart.e.text` | 16,543 | `0ec84f2f0318735f…` |
+| `compglbls.text` | 12,033 | `356ccc776eeaec39…` |
+| `compiler.text` | 414 | `a61a6ce00d7cb0e9…` |
+| `compinit.text` | 12,172 | `8922e2b104fb41b5…` |
+| `decpart.a.text` | 14,844 | `85e1370cb510acfd…` |
+| `decpart.b.text` | 8,675 | `5de9f58cf0a927f0…` |
+| `decpart.c.text` | 10,627 | `270922e55d203ebb…` |
+| `procs.a.text` | 14,295 | `55445808d41f5919…` |
+| `procs.b.text` | 8,060 | `66a9e676f23671a7…` |
+| `unitpart.text` | 10,585 | `380bc74229b0b941…` |
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
