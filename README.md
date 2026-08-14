@@ -70,10 +70,12 @@ including the `LOADSEGMENT`/`UNLOADSEGMENT` pair that drives the compiler's
 phase swapping.
 
 The compiler's global variables are mapped (sizes, shapes, access counts,
-users), and sixteen PASCALCO service routines are identified — the error
+users), and **24 of PASCALCO's 29 procedures are named** — the error
 reporter, the scanner, the symbol-table search and entry, the code-byte
-emitter, `GETBOUNDS`, `CONSTANT`, the string predicates, `SKIP` and
-`NEXTLINE`.
+emitter, `COMPTYPES`, `BLOCK`, `NEXTBLOCK`, `NEWSEGMENT`, `SKIP`,
+`NEXTLINE` and the rest. The lever for most of them is the manual's error
+list: a routine that raises "Too many segments for segment dictionary" is
+doing something about segment numbers whatever else it does.
 
 Both of the scanner's enumerations are recovered **complete and gapless**
 (finding 26): `SYMBOL` at 0..54 and `OPERATOR` at 0..15, from the
