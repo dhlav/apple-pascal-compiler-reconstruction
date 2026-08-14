@@ -23,7 +23,7 @@ from pathlib import Path
 
 from .pcode import Insn, disassemble, sweep_exit
 from .syscall import segment0_signatures
-from .names import globalname, procname
+from .names import SYMBOLS, SYMBOL_SET_NAMES, globalname, procname
 
 # Instructions that decide what a two-word LDC constant was: real
 # arithmetic means it is a REAL, a set operator means it is a set.
@@ -193,7 +193,34 @@ class _Lifter:
         # LDC cannot be a REAL constant and must be a set. See `ldc`.
         self.sets_only = sets_only
 
-    def ldc(self, words: list[int], after=()) -> str:
+    @staticmethod
+    def _members(words: list[int]) -> list[int]:
+        return [16 * j + b for j, w in enumerate(words)
+                for b in range(16) if w >> b & 1]
+
+    def _set(self, words: list[int], under: str | None) -> str:
+        """Render a set constant, by symbol name where that is warranted.
+
+        `under` is whatever the LDC was pushed on top of, which is what
+        says whether these numbers are symbol codes. Two shapes qualify,
+        and nothing else does:
+
+            LDO SY ; LDC ... ; ADJ n ; INN          `SY in <set>`
+            LAO STATBEGSYS ; LDC ... ; ADJ n ; STM  the COMPINIT setup
+
+        Restricting it this way matters. Plenty of set constants in the
+        compiler are not symbol sets at all -- the scanner tests source
+        characters against `{48..57}`, and COMPINIT indexes its
+        standard-identifier table with two more -- and naming those would
+        be worse than leaving them as numbers, not better.
+        """
+        ms = self._members(words)
+        base = (under or "").lstrip("@").rstrip("^").split("<")[0].rstrip("^")
+        if base == "SY" or base in SYMBOL_SET_NAMES:
+            return "{" + ",".join(SYMBOLS.get(m, str(m)) for m in ms) + "}"
+        return "{" + ",".join(str(m) for m in ms) + "}"
+
+    def ldc(self, words: list[int], after=(), under=None) -> str:
         """Render a multi-word constant.
 
         A set's word j carries members 16j..16j+15, which is far more
@@ -213,13 +240,9 @@ class _Lifter:
                     return "[" + ",".join(f"${w:04X}" for w in words) + "]"
             else:
                 return "[" + ",".join(f"${w:04X}" for w in words) + "]"
-            return "{" + ",".join(
-                str(16 * j + b) for j, w in enumerate(words)
-                for b in range(16) if w >> b & 1) + "}"
+            return self._set(words, under)
         if len(words) >= 3 or self.sets_only:
-            ms = [16 * j + b for j, w in enumerate(words)
-                  for b in range(16) if w >> b & 1]
-            return "{" + ",".join(str(m) for m in ms) + "}"
+            return self._set(words, under)
         return "[" + ",".join(f"${w:04X}" for w in words) + "]"
 
     def g(self, n: int) -> str:
@@ -301,7 +324,8 @@ class _Lifter:
                 elif m == "LPA":
                     st.append("@" + repr(o[0].decode("ascii", "replace")))
                 elif m == "LDC":
-                    push(self.ldc(o[0], b.insns[k + 1:]), len(o[0]))
+                    push(self.ldc(o[0], b.insns[k + 1:],
+                                   st[-1] if st else None), len(o[0]))
                 elif m == "IXA":
                     idx, a = pop(), pop()
                     st.append(f"{a}[{idx}]" if o[0] == 1 else f"{a}[{idx}*{o[0]}w]")

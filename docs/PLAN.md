@@ -43,7 +43,8 @@ Done, and reproducible via `python tools/build_all.py`:
 
    The phase segments are now started too: `BODYPART.3/4/5/6/27` are the
    compiler's five code emitters, and `BODYPART.25` its block-body
-   generator (finding 24c). Those five are the routines every other phase
+   generator (finding 24c). `PASCALCO.12:NEXTLINE` and `PASCALCO.14:SKIP`
+   came out of finding 26, which leaves 13 of PASCALCO's 29 unnamed. Those five are the routines every other phase
    calls to produce output, so naming them makes the code-generation half
    of the compiler readable in a way the service layer did not.
 
@@ -79,15 +80,15 @@ Done, and reproducible via `python tools/build_all.py`:
    easiest run of the `VAR` block to lay out. Also the four file variables
    (23d), now identified individually.
 
-   Finding 24 adds the syntactic sets — `G98`, `G102`, `G114` and the rest
-   are `SET OF SYMBOL` constants initialised in `COMPINIT`, and now that
-   `LDC`'s word order is right they read out as reserved-word lists
-   directly. They are `VAR`s with known initialisers, which makes them
-   among the easiest declarations to write back out; the blocker is that
-   the reconstruction must first declare the `SYMBOL` enumeration in the
-   exact order finding 19's `SY` codes give. A worthwhile follow-up for the
-   lifter: render set members by reserved-word name rather than by number,
-   which would make every `SY in ...` test in the compiler self-explaining.
+   ~~Finding 24 adds the syntactic sets.~~ **Done, and it went further than
+   planned** (finding 26). Both of the scanner's enumerations are recovered
+   complete and gapless — `SYMBOL` at 0..54 and `OPERATOR` at 0..15 — which
+   are two `TYPE` declarations the reconstruction can now write out
+   verbatim, and the member *order* is forced, not chosen. Eight globals
+   hold a `set of symbol`, each identified by the error its guard raises,
+   and two of the eight are built at run time from the one below
+   (`constbegsys` ⊂ `simptypebegsys` ⊂ `typebegsys`), so their declaration
+   order is forced too.
 
    Finding 22 supplies the first real block of it: twelve named globals in
    each release, and — more useful — the two record types nearly all of
@@ -212,6 +213,14 @@ Done, and reproducible via `python tools/build_all.py`:
   `analysis/reference/*.txt` by `tools/reference_text.py` — grep that.
   The OCR is unreliable for anything dense; re-read the page as an image
   with `tools/pdfpage.py` before quoting it.
+* The compiler is a direct descendant of the Zurich P2 / Pascal-P
+  compiler, and finding 26b puts that beyond doubt: its `operator`
+  enumeration survives verbatim, all sixteen members in the published
+  order. Published Pascal-P source is therefore a legitimate source of
+  *names* — but only names. Every structure taken from it has to be
+  re-derived from the binary before it is written down, and where Apple
+  diverged (`longconst`, `PROGRAM` and `SEGMENT` sharing a code) the
+  binary is what says so.
 * Neil Parker's *Undocumented Secrets of Apple Pascal* covers what the
   manuals do not — the undocumented compiler options, the `{$U-}`
   convention, on-disk structures. Treat it as a lead, not an authority: it

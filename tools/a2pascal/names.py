@@ -28,6 +28,10 @@ PASCALCO_11: dict[int, str] = {
     15: "STRING",        # is fsp a packed array of char?     finding 22
     16: "STRINGTYPE",    # is fsp a *declared* STRING?        finding 22
     17: "LONGSIZE",      # words for an n-digit long integer  finding 22
+    12: "NEXTLINE",      # advance LINENUMBER and CHINDEX, echo the progress
+                         # dot, write the listing line                  fdg 26
+    14: "SKIP",          # `while not (SY in fsys) do INSYMBOL` -- Pascal-P's
+                         # error recovery, called after 37 of the ERROR sites
     18: "CONSTANT",      # parse a constant (fsys; var lsp, lvalu)
     20: "EMIT",          # the code-byte emitter (finding 12, VERIFIED)
     22: "FLUSHBUFFER",   # code-buffer flush (finding 12)
@@ -76,6 +80,85 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | {("COMPINIT", 7): "ENTERSTDIDENTS"},
 }
 
+# --- the scanner's two enumerations (finding 26) ---------------------------
+#
+# `SY` (global 15) and `OP` (global 16) are set together by the scanner for
+# every token. Both enumerations are recovered complete, and neither has a
+# gap: SYMBOLS covers 0..54 with nothing left over, OPERATORS covers 0..15.
+#
+# Where each code comes from:
+#   * 6..13, 19..34, 38..46, 49..54 -- the reserved-word table embedded in
+#     1.3's native IDSEARCH, which stores `SY` and `OP` beside each word
+#     (finding 19). Those are the binary's own bytes.
+#   * 0..5, 14..18, 35, 37, 39..41, 47 -- `PASCALCO.6:INSYMBOL`, whose body
+#     is one `case` over the source character with a `SY := n` in each arm.
+#     Reading the arm's character off the case table names the code.
+#   * 36, 48 -- `NUMSTRIN`, the number scanner: the float path sets 36, the
+#     BCD path that errors 203 past 36 digits sets 48.
+#
+# The spellings are the Zurich P2 / Pascal-P ones, which is inference, not
+# evidence -- but see finding 26 for how far the structure corroborates it:
+# six symbol *sets* land on the errors the vendor's table says they should,
+# and OPERATORS matches Pascal-P's `operator` enumeration 16 for 16 in
+# order.
+SYMBOLS: dict[int, str] = {
+    0:  "ident",
+    1:  "comma",        2:  "colon",        # `..` also scans as colon
+    3:  "semicolon",    4:  "lparent",      5:  "rparent",
+    6:  "dosy",         7:  "tosy",         8:  "downtosy",
+    9:  "endsy",        10: "untilsy",      11: "ofsy",
+    12: "thensy",       13: "elsesy",       14: "becomes",
+    15: "lbrack",       16: "rbrack",       17: "arrow",
+    18: "period",
+    19: "beginsy",      20: "ifsy",         21: "casesy",
+    22: "repeatsy",     23: "whilesy",      24: "forsy",
+    25: "withsy",       26: "gotosy",       27: "labelsy",
+    28: "constsy",      29: "typesy",       30: "varsy",
+    31: "procsy",       32: "funcsy",
+    33: "progsy",       # PROGRAM and SEGMENT share this code
+    34: "forwardsy",
+    35: "intconst",     36: "realconst",    37: "stringconst",
+    38: "notsy",        39: "mulop",        40: "addop",
+    41: "relop",        42: "setsy",        43: "packedsy",
+    44: "arraysy",      45: "recordsy",     46: "filesy",
+    47: "othersy",      # anything illegal; INSYMBOL then raises error 400
+    48: "longconst",    # INTEGER[n] literal -- an Apple/UCSD extension
+    49: "usessy",       50: "unitsy",       51: "interfacesy",
+    52: "implementationsy",
+    53: "externalsy",   54: "otherwisesy",  # OTHERWISE is 1.3-only
+}
+
+# `OP` qualifies `mulop`/`addop`/`relop`, and is 15 for everything else.
+# This is Pascal-P's `operator` enumeration in its published order, all
+# sixteen members, which is the single strongest piece of evidence that
+# this compiler is that compiler's descendant.
+OPERATORS: dict[int, str] = {
+    0:  "mul",      # *
+    1:  "rdiv",     # /
+    2:  "andop",    # AND
+    3:  "idiv",     # DIV
+    4:  "imod",     # MOD
+    5:  "plus",     # +
+    6:  "minus",    # -
+    7:  "orop",     # OR
+    8:  "ltop",     # <
+    9:  "leop",     # <=
+    10: "geop",     # >=
+    11: "gtop",     # >
+    12: "neop",     # <>
+    13: "eqop",     # =
+    14: "inop",     # IN
+    15: "noop",     # no operator
+}
+
+# The globals that hold a `set of symbol`, and are therefore the ones whose
+# members should be printed by name. Each is initialised once in COMPINIT
+# and then tested against `SY`. See SYMBOL_SETS below for the numbers.
+SYMBOL_SET_NAMES = {
+    "CONSTBEGSYS", "SIMPTYPEBEGSYS", "TYPEBEGSYS", "TYPEDELS",
+    "BLOCKBEGSYS", "SELECTSYS", "FACBEGSYS", "STATBEGSYS",
+}
+
 # --- compiler globals ------------------------------------------------------
 #
 # Operand numbers as they appear in `LDO n` / `SRO n`. The standard type
@@ -86,6 +169,27 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
 GLOBALS_11: dict[int, str] = {
     12: "INTPTR",       # INTEGER   size 1 word, form scalar, standard
     15: "SY",           # current symbol; written 20x in INSYMBOL, read 256x
+
+    # The scanner's working set (finding 26). All six carry the same
+    # operand number in 1.3 except LINENUMBER.
+    1:   "SOURCEBUF",   # the source line buffer, indexed by CHINDEX
+    14:  "CHINDEX",     # scan position within SOURCEBUF
+    16:  "OP",          # the operator qualifying SY; see OPERATORS
+    22:  "LGTH",        # length of the scanned string or long constant
+    23:  "VAL",         # the scanned value, or a pointer to it
+    92:  "LINENUMBER",  # what `< n >` prints, and what {$D+} emits
+
+    # The six `set of symbol` follow-sets, initialised in COMPINIT.9 and
+    # each identified by the error its guard raises (finding 26).
+    98:  "TYPEDELS",     # error 10, "Error in type"
+    102: "STATBEGSYS",   # the statement loops
+    106: "FACBEGSYS",    # error 58, "Error in factor (bad expression)"
+    110: "SELECTSYS",    # error 59, "Error in variable"
+    114: "BLOCKBEGSYS",  # error 18, "Error in declaration part"
+    118: "TYPEBEGSYS",    # error 10, at the head of the type parser
+    122: "SIMPTYPEBEGSYS",  # error 1, "Error in simple type"
+    126: "CONSTBEGSYS",  # error 50, "Error in constant"
+
     54: "STRINGPTR",    # STRING    the standard string[80] descriptor
     55: "INTERPTR",     # INTERACTIVE
     56: "NILPTR",       # form pointer, element type nil
@@ -136,6 +240,25 @@ GLOBALS_11: dict[int, str] = {
 
 GLOBALS_13: dict[int, str] = {
     12: "INTPTR",
+    15: "SY",
+
+    # Finding 26. The scanner's globals did not move between releases
+    # except the line counter; the six symbol sets all shifted by +3.
+    1:   "SOURCEBUF",
+    14:  "CHINDEX",
+    16:  "OP",
+    22:  "LGTH",
+    23:  "VAL",
+    95:  "LINENUMBER",   # 1.1 global 92, +3
+    101: "TYPEDELS",     # 1.1 global 98,  +3
+    105: "STATBEGSYS",   # 1.1 global 102, +3
+    109: "FACBEGSYS",    # 1.1 global 106, +3
+    113: "SELECTSYS",    # 1.1 global 110, +3
+    117: "BLOCKBEGSYS",  # 1.1 global 114, +3
+    121: "TYPEBEGSYS",     # 1.1 global 118, +3
+    125: "SIMPTYPEBEGSYS",  # 1.1 global 122, +3
+    129: "CONSTBEGSYS",  # 1.1 global 126, +3
+
     55: "STRINGPTR",
     56: "INTERPTR",
     57: "BYTESTREAMPTR",   # 1.3 only -- a packed char array that is not a

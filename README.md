@@ -70,9 +70,24 @@ including the `LOADSEGMENT`/`UNLOADSEGMENT` pair that drives the compiler's
 phase swapping.
 
 The compiler's global variables are mapped (sizes, shapes, access counts,
-users), and fourteen PASCALCO service routines are identified — the error
+users), and sixteen PASCALCO service routines are identified — the error
 reporter, the scanner, the symbol-table search and entry, the code-byte
-emitter, `GETBOUNDS`, `CONSTANT`, the string predicates.
+emitter, `GETBOUNDS`, `CONSTANT`, the string predicates, `SKIP` and
+`NEXTLINE`.
+
+Both of the scanner's enumerations are recovered **complete and gapless**
+(finding 26): `SYMBOL` at 0..54 and `OPERATOR` at 0..15, from the
+reserved-word table in the native `IDSEARCH`, the `case` over source
+characters inside `INSYMBOL`, and the number scanner. `OPERATOR` turns out
+to be the Zurich P2 / Pascal-P `operator` enumeration verbatim — all
+sixteen members in the published order — which settles what this compiler
+descends from. Eight globals hold a `set of symbol`, and each is pinned by
+the error its guard raises against the vendor's error list, so the
+listings now read
+
+```
+  until (SY in (STATBEGSYS + {endsy,unitsy,implementationsy}));
+```
 
 Its two central data structures are recovered field by field from the code
 that initialises them: the type descriptor and the symbol-table entry,

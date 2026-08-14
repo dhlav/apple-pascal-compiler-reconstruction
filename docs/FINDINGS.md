@@ -1597,6 +1597,138 @@ Details the manual settles that the decoder had inferred:
   a store; sets in an activation record do not. That is why every set
   constant in the listing is followed by `adjust(…, n)`.
 
+## 26. The scanner's two enumerations, and eight symbol sets
+
+**VERIFIED BINARY FACT** for every code below; the *spellings* are the
+Zurich P2 / Pascal-P ones and are STRONG INFERENCE, for the reasons in 26c.
+
+`SY` (global 15) and `OP` (global 16) are written together by the scanner
+for every token, and between them they are the compiler's whole idea of
+what it is looking at. Both enumerations are now recovered **complete and
+with no gap**: `SYMBOLS` covers 0..54 with 55 entries, `OPERATORS` covers
+0..15 with 16. `tools/probes/probe_symbols.py` checks all of it.
+
+### 26a. `SYMBOL`, from three places at once
+
+No single source names all 55. Three do, between them, and they overlap
+enough to cross-check:
+
+* **6..13, 19..34, 38..46, 49..54** — the reserved-word table embedded in
+  1.3's native `IDSEARCH` (finding 19) stores an `SY` and an `OP` beside
+  each of its 42 words. Those are the binary's own bytes.
+* **0..5, 14..18, 35, 37, 39..41, 47** — `PASCALCO.6:INSYMBOL` is one
+  `case` over the source character, with a `SY := n` in each arm. The
+  character names the code: the arm for `[` assigns 15, so 15 is `lbrack`.
+* **36, 48** — `NUMSTRIN`, the number scanner. The floating path sets 36;
+  the BCD path — the one that raises error 203 past 36 digits, which is
+  `INTEGER[n]` — sets 48.
+
+Three of the arms look one character ahead and so have two outcomes each,
+and all three are the classic Pascal ambiguities: `.` is `period` alone
+but `colon` in `..`, `:` is `colon` alone but `becomes` in `:=`, and `(`
+is `lparent` unless it opens a `(*` comment. `SY := 47` is what an
+unrecognised character gets, and `INSYMBOL` immediately tests for 47 and
+raises **error 400, "Illegal character in text"** — which is the vendor
+naming `othersy` for us.
+
+Two details worth carrying into the reconstruction. `PROGRAM` and
+`SEGMENT` **share** code 33, so they are one enumeration constant, not
+two. And 48, `longconst`, has no counterpart in Pascal-P at all; it is the
+UCSD/Apple long-integer literal.
+
+### 26b. `OPERATOR` is Pascal-P's, verbatim
+
+`OP` qualifies `mulop`, `addop` and `relop`, and is 15 otherwise. Reading
+it off the reserved-word table (`AND`=2, `DIV`=3, `MOD`=4, `OR`=7,
+`IN`=14) and off the scanner (`*`=0, `/`=1, `+`=5, `-`=6, `<`=8, `<=`=9,
+`>=`=10, `>`=11, `<>`=12, `=`=13) gives every slot from 0 to 15:
+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| `mul` | `rdiv` | `andop` | `idiv` | `imod` | `plus` | `minus` | `orop` |
+
+| 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|
+| `ltop` | `leop` | `geop` | `gtop` | `neop` | `eqop` | `inop` | `noop` |
+
+That is Pascal-P's `operator` enumeration in its published order, all
+sixteen members, nothing added and nothing moved. It is the strongest
+single piece of evidence so far that this compiler is a direct descendant
+of the Zurich P2 compiler, and it is why the spellings elsewhere in this
+finding are worth more than a guess.
+
+### 26c. Eight symbol sets, each pinned by the error it guards
+
+Eight globals hold a `set of symbol`. `COMPINIT.10` does nothing but
+initialise them — one `LAO`/`LDC`/`ADJ 4`/`STM 4` each — and each is then
+tested against `SY` at the head of a parser that raises a *specific* error
+when the test fails. The Apple Pascal error list (II-3E) says what those
+errors mean, so the error number is an independent statement of what each
+set is for, from the vendor, with no inference in between:
+
+| 1.1 | 1.3 | name | members | guard raises |
+|---|---|---|---|---|
+| 126 | 129 | `constbegsys` | ident intconst realconst stringconst addop longconst | **50** "Error in constant" |
+| 122 | 125 | `simptypebegsys` | `constbegsys + [lparent]` | **1** "Error in simple type" |
+| 118 | 121 | `typebegsys` | `simptypebegsys + [arrow, setsy, packedsy, arraysy, recordsy, filesy]` | **10** "Error in type" |
+| 98 | 101 | `typedels` | setsy arraysy recordsy filesy | **10**, after `PACKED` |
+| 114 | 117 | `blockbegsys` | beginsy labelsy constsy typesy varsy procsy funcsy progsy usessy | **18** "Error in declaration part" |
+| 110 | 113 | `selectsys` | lbrack arrow period | **59** "Error in variable" |
+| 106 | 109 | `facbegsys` | ident lparent lbrack intconst realconst stringconst notsy longconst | **58** "Error in factor (bad expression)" |
+| 102 | 105 | `statbegsys` | beginsy ifsy casesy repeatsy whilesy forsy withsy gotosy | — drives the statement loops |
+
+Error 10 does not separate `typebegsys` from `typedels` — `DECLARAT.3`
+raises it twice, once at entry and once after `PACKED` — but their
+memberships do, and `typedels` is exactly Pascal-P's. `statbegsys` has no
+error of its own because it is a loop condition rather than a guard; its
+membership is the eight statement-starting words and nothing else.
+
+Two of these are built at run time out of the one below them, which is why
+their rows give an expression rather than a list. That nesting —
+`constbegsys` ⊂ `simptypebegsys` ⊂ `typebegsys` — is itself Pascal-P's
+structure, and it means the reconstruction has to emit them in that order.
+
+`UNITPART` later adds `unitsy` to `blockbegsys`, which is visible as
+`BLOCKBEGSYS := BLOCKBEGSYS + [unitsy]`.
+
+### 26d. What this changes in the listings
+
+`tools/a2pascal/lift.py` now prints set members by symbol name, but only
+where the constant is genuinely a symbol set: the value has to be pushed
+on top of `SY` (an `SY in ...` test) or on top of one of the eight globals
+(the `COMPINIT` setup). That restriction matters — the scanner tests
+source characters against `{48..57}` and `COMPINIT.7` indexes its
+standard-identifier table with two more sets, and naming *those* members
+would be actively wrong. The compiler now reads as, for instance,
+
+    until (SY in (STATBEGSYS + {endsy,unitsy,implementationsy}));
+
+Named with them: `PASCALCO.14:SKIP`, whose entire body is
+`while not (SY in fsys) do INSYMBOL` — Pascal-P's `skip`, and the routine
+called immediately after 37 of the compiler's `ERROR` sites; and
+`PASCALCO.12:NEXTLINE`, which advances `LINENUMBER`, echoes the progress
+dot and writes the listing line. Plus the scanner's working set:
+`SOURCEBUF` (global 1), `CHINDEX` (14), `OP` (16), `LGTH` (22), `VAL` (23)
+and `LINENUMBER` (92 in 1.1, 95 in 1.3).
+
+### 26e. A stack-model gap this exposed
+
+A set small enough to build inline is pushed as immediate `SLDC`s — data
+word first, then the length word — rather than as an `LDC` block. The
+lifter models a set as one stack slot, so those two words desynchronise
+it, and `COMPINIT.10` comes out with `16^ := adjust((1 + CONSTBEGSYS),4)`
+where the target should be `SIMPTYPEBEGSYS`. The p-code is unambiguous and
+the table above is read from it directly; it is the *rendering* that is
+wrong. This is the same class as the 89 depth conflicts of finding 20 and
+is recorded here rather than papered over.
+
+Also unresolved, and deliberately not named: 1.1 global 130 is
+initialised in `COMPINIT.10` to a one-word set `{2,3}` and then passed to
+`SEARCHID`. Pascal-P's `searchid` takes a `set of idclass`, so those are
+almost certainly `klass` codes 2 and 3 — `vars` and `field` — and not
+symbols at all. It is left alone until the `klass` enumeration of finding
+22 is settled.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
