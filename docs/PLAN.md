@@ -104,6 +104,15 @@ Done, and reproducible via `python tools/build_all.py`:
    `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
    procedure at the wrong depth changes the code bytes.
 
+   Finding 35 closes `ROUTINE` as well — **seventeen of seventeen** — and
+   adds the sharpest lever yet for the remaining segments: **a routine
+   that emits code names itself**, because the opcode it emits is a
+   literal operand in the binary and II.0's comment says what that opcode
+   is. Prefer this to call sets wherever the routine is a code generator.
+   It also gave five `BODYPART` names for free, and one warning worth
+   carrying: `BODYPART.7` has II.0's `GENNR` *role* but not its body, so
+   check the body before adopting a name, not just the call sites.
+
    Finding 34 closes `DECLARAT`, the first whole phase segment: **twenty of
    twenty named**, at identical numbers in both releases. The lever there
    is the one to reuse on `ROUTINE`, `UNITPART` and the rest of

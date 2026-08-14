@@ -2707,6 +2707,114 @@ nothing else, and `SRO 11` immediately after `TEST := sy <> comma` is what
 the binary does — in *both* releases, where it does not move.
 
 
+## 35. `ROUTINE`, the standard procedures, named by the code they emit
+
+*Confidence: VERIFIED BINARY FACT for the emitted opcodes; STRONG
+INFERENCE for the fourteen II.0 spellings; SPECULATION for the three that
+are ours. `tools/probes/probe_routine.py`.*
+
+### 35a. Each handler emits its own run-time call
+
+`ROUTINE(LKEY)` in `bodypart.b.text` is a `case` over the standard
+procedures, and every arm ends by emitting the p-code that calls the
+run-time. Those opcodes are **literal operands in Apple's binary** —
+`GEN1(30(*CSP*), 4(*XIT*))` compiles to `SLDC 30; SLDC 4; CXP 9,5` — so
+the source's own comments name the arms, and the binary can disagree.
+
+It does not. Every distinctive run-time number is emitted by **exactly
+one** procedure, and it is the one the source says:
+
+```
+  CSP  1   NEW                ROUTINE.5   NEWSTMT
+  CSP  10, 2, 3               ROUTINE.6   MOVE      fillchar, moveleft/right
+  CSP  4   XIT                ROUTINE.7   EXIT
+  CSP  5, 6                   ROUTINE.8   UNITIO    unitread, unitwrite
+  CXP 0,23 SCONCAT            ROUTINE.9   CONCAT
+  CXP 0,25 0,26 0,29          ROUTINE.10  COPYDELETE  scopy, sdelete, gotoxy
+  GENLDC 18 DCVT, 12 DSTR     ROUTINE.11  STR
+  CXP 0,6  FCLOSE             ROUTINE.12  CLOSE
+  CXP 0,7  0,8  FGET FPUT     ROUTINE.13  GETPUTETC
+  CSP  11  SCN                ROUTINE.14  SCAN
+  CXP 0,28 BLOCKIO            ROUTINE.15  BLOCKIO
+  (39 bytes, one CTP local)   ROUTINE.16  SIZEOF
+```
+
+Ownership is the point. This is not "ROUTINE.7 looks like `EXIT`" — it is
+"ROUTINE.7 is the only procedure in the segment that emits CSP 4, and CSP
+4 is XIT", which no rearrangement of the names survives. `ROUTINE.11` is
+confirmed further, line for line: `COMPTYPES(LONGINTPTR, TYPTR)`, then
+`GENLDC(18)` and `GENNR` on the integer path, `TYPTR := LONGINTPTR`, error
+125, the comma, `STRGVAR(fsys + [rparent], true)`, `STRGTYPE`,
+`GENLDC(MAXLENG)`, `GENLDC(12)`, `GENNR`, error 116.
+
+### 35b. Apple moved `ROUTINE` out of `CALL`
+
+II.0 declares `ROUTINE(LKEY: INTEGER)` inside `CALL`, at lexical level 3.
+Apple could not: a SEGMENT procedure that swaps in and out has to sit
+directly inside `BODYPART`. So `ROUTINE.1` is at **lex 2 and takes 12
+bytes** where II.0's takes 2 — `FSYS` and `FCP` came down with it — and
+`STRGVAR`, which II.0 declares as `ROUTINE`'s sibling in `CALL`, moved
+inside, because four of the handlers need it.
+
+Three of the seventeen are Apple's own factorings:
+
+* **`GETCOMMA`** (ours), 14 bytes:
+  `if sy = comma then insymbol else error(20)`. II.0 writes it inline.
+* **`CHECKINT`** (ours), 9 bytes:
+  `if GATTR.TYPTR <> INTPTR then error(125)`. Apple drops II.0's
+  `<> nil` guard, so a type that is already in error raises 125 again.
+* **`SPECIALS`** (ours), 762 bytes: the cases II.0's `CALL` keeps inline,
+  in the `else` arm of `if LKEY in [...] then ROUTINE(LKEY)`. Its emitted
+  constants are that `case` in order — `CXP 0,10`/`0,11` for eof and
+  eoln, `GEN0` of ADI, SBI, SQI, SQR, ABI and ABR for pred/succ, sqr and
+  abs, `CXP 0,24` and `0,27` for idsearch and pos, `CSP 9` for time,
+  `CXP 0,4`/`0,5` for reset and open, `CSP 23` and `GENLDC(20)` for trunc.
+
+`READ`, `WRITE` and `CALLNONSPECIAL` are *not* here: `ROUTINE.1` calls
+only `.5`…`.17`, and no procedure in the segment emits the FREADINT /
+FWRITEINT family. They stayed in `BODYPART` with `CALL`.
+
+### 35c. Six of the names shadow predeclared identifiers, legally
+
+`CLOSE`, `CONCAT`, `EXIT`, `SCAN`, `SIZEOF` and `STR` are all Apple
+Pascal *intrinsics*, and II.0 names its handlers after the procedures
+they compile. That is legal — the manual says the compiler "will accept
+it", and only the *scope of the new meaning* loses the original — and
+Apple demonstrably compiled that source.
+
+So `probe_identifiers.py` was too strict: it assumed a single outermost
+scope. It now allows a shadowing name when the name is one II.0 itself
+declares as a **nested** procedure, read out of the source rather than
+listed, and only for a procedure name — a global that shadows an
+intrinsic still fails, and so does an invented procedure name. Both
+confirmed by mutation.
+
+### 35d. Five more `BODYPART` names fall out
+
+`ROUTINE`'s handlers call into `BODYPART`, and which handler calls what
+identifies the callee against II.0:
+
+| | | |
+|---|---|---|
+| `BODYPART.2` | `LINKERREF` | `(klass; id, addr)` = 6 bytes; the only `BLOCKIO` in the segment, and called by `GEN1` and by `EXIT` — II.0's two call sites |
+| `BODYPART.9` | `LOADADDRESS` | called by `STRGVAR`, `CLOSE`, `GETPUTETC` |
+| `BODYPART.10` | `BYTEADDRESS` | called by `MOVE`, `UNITIO`, `SCAN` |
+| `BODYPART.12` | `VARIABLE` | `(fsys)` = 8 bytes, 39 bytes long: `SEARCHID`, else `error(2)` and `UVARPTR`, then `SELECTOR` |
+| `BODYPART.22` | `SELECTOR` | `(fsys; fcp)` = 10 bytes, the largest procedure in `BODYPART`, and `VARIABLE`'s only callee |
+
+`LOADADDRESS` and `BYTEADDRESS` are the pair worth spelling out, because
+nothing about either procedure alone would separate them: `MOVE` and
+`SCAN` call one, `CLOSE` and `GETPUTETC` call the other, and **`BLOCKIO`
+calls both** — `VARIABLE; LOADADDRESS` then `VARIABLE; BYTEADDRESS`,
+which is exactly how `bodypart.b.text` writes it.
+
+`BODYPART.7` is `GENNR`'s *role* but not II.0's body, and the difference
+matters. II.0 emits `GEN1(79 CGP, PFNUMOF[extproc])` and keeps a
+`PFNUMOF` table; Apple emits `GEN2(77 CXP, seg, proc)` and instead adds
+the segment to a two-word set at global 183. **Apple has no `PFNUMOF`** —
+which is direct support for finding 33c's open question about the two
+words missing around `DISPLAY`, though it does not settle the count.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

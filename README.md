@@ -148,8 +148,24 @@ against II.0's `USESDECLARATION` line for line named four more globals —
 offset the drift column had already reserved for it, in both releases
 (finding 34c).
 
-**`DECLARAT` is the first phase segment finished: twenty of twenty
-procedures named** (finding 34), at identical numbers in 1.1 and 1.3.
+**`DECLARAT` and `ROUTINE` are finished** — twenty of twenty and
+seventeen of seventeen procedures named, at identical numbers in 1.1 and
+1.3 (findings 34 and 35).
+
+`ROUTINE` is the standard procedures, and it carries the strongest naming
+evidence in the project: every handler ends by emitting the p-code that
+calls the run-time, and those opcodes are *literal operands* in Apple's
+binary. `GEN1(30(*CSP*), 4(*XIT*))` compiles to `SLDC 30; SLDC 4; CXP 9,5`.
+Every distinctive run-time number turns out to be emitted by exactly one
+procedure, and it is the one the source says — CSP 4 by `EXIT`, CSP 11 by
+`SCAN`, `CXP 0,23` by `CONCAT`, `CXP 0,28` by `BLOCKIO`. That is
+ownership, not resemblance, and no rearrangement of the names survives
+it. Five more `BODYPART` names fall out of who calls what:
+`LOADADDRESS`, `BYTEADDRESS`, `VARIABLE`, `SELECTOR` and `LINKERREF` —
+with `BLOCKIO`, which calls the first two in that order, separating the
+pair that nothing else could.
+
+`DECLARAT` is the declaration part.
 Seventeen are II.0's, matched jointly on three things the binary fixes
 and the source fixes independently — parameter size, lexical nesting and
 call set. `PACKABLE` is the only procedure that both recurses and calls

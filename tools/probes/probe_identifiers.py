@@ -88,7 +88,26 @@ WORDSTREAM WRITE WRITELN
 
 # Predeclared identifiers we deliberately shadow, with the reason. Empty:
 # nothing in the naming currently needs to.
-SHADOW_OK: dict[str, str] = {}
+def ucsd_nested_procedures() -> set[str]:
+    """Identifiers II.0 declares as a procedure inside another procedure.
+
+    Redeclaring a predeclared identifier is legal -- the manual says the
+    compiler "will accept it" -- and only costs the original meaning
+    *within the scope of the new meaning*. II.0 does exactly that six
+    times, all at lexical level 3 inside ROUTINE: CLOSE, CONCAT, EXIT,
+    SCAN, SIZEOF and STR are the standard procedures' own handlers, named
+    after the procedures they compile. Apple compiled that source, so
+    those six shadowings are demonstrably safe.
+
+    The set is read out of the source rather than listed here, and only
+    indented declarations count, so a name invented for the outermost
+    scope can never buy its way in. Finding 35.
+    """
+    out: set[str] = set()
+    for f in sorted(II0_SOURCE.glob("*.text")):
+        out |= set(re.findall(r"^[ 	]+(?:PROCEDURE|FUNCTION)[ 	]+([A-Z][A-Z0-9]*)",
+                              f.read_text(errors="replace").upper(), re.M))
+    return out
 
 
 def fold(name: str) -> str:
@@ -106,6 +125,7 @@ def main() -> int:
     bad, over = [], {}
     words = reserved_words()
     predeclared = {fold(w) for w in PREDECLARED}
+    shadowable = {fold(w) for w in ucsd_nested_procedures()} & predeclared
     if len(words) < 40:
         bad.append(f"only {len(words)} reserved words found -- has the "
                    f"native listing changed?")
@@ -114,6 +134,7 @@ def main() -> int:
         # Everything that would be declared in the program's outermost
         # scope: globals, procedures, and both enumerations' members.
         pool: dict[str, set[str]] = {}
+        whence: dict[str, set[str]] = {}
         sources = (
             [(s, f"global {n}") for n, s in glob.items()]
             + [(s, f"{seg}.{n}") for (seg, n), s in PROC_NAMES[rel].items()]
@@ -122,6 +143,7 @@ def main() -> int:
         )
         for name, where in sources:
             pool.setdefault(fold(name), set()).add(name)
+            whence.setdefault(name, set()).add(where)
             if len(name.replace("_", "")) > 8:
                 over.setdefault(name, where)
 
@@ -133,7 +155,10 @@ def main() -> int:
                 bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
                            f"which is a reserved word -- the compiler would "
                            f"refuse the declaration")
-            if folded in predeclared and folded not in SHADOW_OK:
+            shadow_ok = (folded in shadowable
+                         and all(not w.startswith("global ")
+                                 for n in spellings for w in whence[n]))
+            if folded in predeclared and not shadow_ok:
                 bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
                            f"a predeclared identifier -- declaring it takes "
                            f"the original meaning away for the whole scope")
@@ -141,7 +166,9 @@ def main() -> int:
         print(f"{rel}: {len(pool)} distinct identifiers from "
               f"{len(sources)} names, no two alike in 8 characters, none "
               f"folding onto any of {len(words)} reserved words or "
-              f"{len(predeclared)} predeclared identifiers")
+              f"{len(predeclared)} predeclared identifiers except the "
+              f"{len(shadowable)} that II.0 itself shadows with a nested "
+              f"procedure")
 
     backed = ucsd_identifiers() | EXTRA_BACKED
     unvetted = sorted(set(over) - backed)

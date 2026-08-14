@@ -268,6 +268,93 @@ DECLARATIONS: dict[int, str] = {
     20: "PARAMETERLIST",     # 12 bytes; called by PROCDECLARATION alone
 }
 
+# --- finding 35: ROUTINE, the standard procedures and functions -----------
+#
+# The segment names itself (finding 30), and it is II.0's `ROUTINE(LKEY)`
+# from bodypart.b.text -- but Apple could not leave it nested inside
+# `CALL`, because a SEGMENT procedure that swaps in and out has to sit
+# directly inside BODYPART. So ROUTINE.1 is at lex 2 and takes 12 bytes
+# where II.0's takes 2: `FSYS` and `FCP` came down with it.
+#
+# Sixteen procedures sit at lex 3 beneath it. Twelve are II.0's, and each
+# is fixed by the p-code it emits -- the CSP and CXP numbers are literal
+# operands to GEN1 and GEN2, so the source's own comments name them:
+#
+#     ROUTINE.5   GEN1(30,1)                        CSP 1   NEW
+#     ROUTINE.6   GEN1(30,10) (30,2) (30,3)         FLC MVL MVR
+#     ROUTINE.7   GEN1(30,4)                        XIT
+#     ROUTINE.8   GEN1(30,5) (30,6)                 UNITREAD UNITWRITE
+#     ROUTINE.9   GEN2(56,0,LLC) ... CXP 0,23       SCONCAT
+#     ROUTINE.10  CXP 0,25  0,29  0,26              SCOPY GOTOXY SDELETE
+#     ROUTINE.11  GENLDC(18) GENLDC(12) + GENNR     DCVT DSTR
+#     ROUTINE.12  CXP 0,6                           FCLOSE
+#     ROUTINE.13  CXP 0,7  0,8  0,17                FGET FPUT
+#     ROUTINE.14  GEN1(30,11)                       SCN
+#     ROUTINE.15  CXP 0,28                          BLOCKIO
+#     ROUTINE.16  (39 bytes, one CTP local)         SIZEOF
+#
+# in the source's own declaration order, which is also Apple's numbering.
+ROUTINES: dict[int, str] = {
+    2:  "GETCOMMA",   # OURS. 14 bytes: `if sy = comma then insymbol else
+                      # error(20)`, which II.0 writes inline everywhere.
+    3:  "CHECKINT",   # OURS. 9 bytes: `if GATTR.TYPTR <> INTPTR then
+                      # error(125)`. Apple drops II.0's `<> nil` guard.
+    4:  "STRGVAR",    # (fsys; mustbevar) = 10 bytes. EXPRESSION, STRGTYPE,
+                      # LOADADDRESS, error 154 -- II.0's body exactly.
+                      # II.0 declares it in CALL; Apple moved it in here,
+                      # because four of ROUTINE's handlers need it.
+    5:  "NEWSTMT",    # `new`, `mark`, `release`
+    6:  "MOVE",       # `moveleft`, `moveright`, `fillchar`
+    7:  "EXIT",       # SEARCHID for the procedure, then CSP 4
+    8:  "UNITIO",     # `unitread`, `unitwrite`, `unitbusy`, `unitwait`
+    9:  "CONCAT",
+    10: "COPYDELETE", # `copy`, `delete`, `insert`, and `gotoxy`
+    11: "STR",
+    12: "CLOSE",
+    13: "GETPUTETC",
+    14: "SCAN",
+    15: "BLOCKIO",
+    16: "SIZEOF",
+    17: "SPECIALS",   # OURS. II.0 writes these cases inline in CALL, in
+                      # the `else` arm of `if LKEY in [...] then ROUTINE`:
+                      # eof/eoln, pred/succ, ord, sqr, abs, length, insert,
+                      # pos, idsearch, treesearch, time, open/reset/rewrite
+                      # and trunc. Its 762 bytes emit CXP 0,10 0,11 0,24
+                      # 0,27 0,4 0,5 and CSP 7 8 9 0 23 12, and GEN0 of
+                      # ADI, SBI, SQI, SQR, ABI and ABR -- the source's
+                      # cases in the source's order.
+}
+
+# --- finding 35b: the BODYPART routines ROUTINE's call sets force --------
+#
+# Each of these is pinned by which of ROUTINE's handlers calls it, matched
+# against which of II.0's handlers calls what. LOADADDRESS and BYTEADDRESS
+# are the pair worth spelling out: MOVE and SCAN call one, CLOSE and
+# GETPUTETC call the other, BLOCKIO calls both in that order -- exactly as
+# bodypart.b.text has them.
+BODYPART_MORE: dict[int, str] = {
+    2:  "LINKERREF",   # (klass; id, addr) = 6 bytes; the only BLOCKIO in
+                       # BODYPART -- it appends to REFFILE. Called by GEN1
+                       # and by EXIT, both of which II.0 has calling it.
+    7:  "GENNR",       # II.0's role, not II.0's body: it records a
+                       # non-resident support segment and emits the call
+                       # to it. Apple emits `GEN2(77 CXP, seg, proc)` and
+                       # tracks the segments in a two-word set at global
+                       # 183, where II.0 emits `GEN1(79 CGP, PFNUMOF[..])`
+                       # and keeps PFNUMOF. Apple has no PFNUMOF -- see
+                       # finding 33c's open question. Called from LOAD,
+                       # EXPRESSION, SIMPLEEXPRESSION, TERM, ASSIGNMENT,
+                       # STR and the read/write handlers: II.0's GENNR
+                       # sites exactly.
+    9:  "LOADADDRESS",
+    10: "BYTEADDRESS",
+    12: "VARIABLE",    # (fsys) = 8 bytes, 39 bytes long: SEARCHID, else
+                       # error(2) and UVARPTR, then SELECTOR. Four lines
+                       # in II.0 and four here.
+    22: "SELECTOR",    # (fsys; fcp) = 10 bytes, and the largest procedure
+                       # in BODYPART; VARIABLE's only callee
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
@@ -276,6 +363,8 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | STATEMENTS
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
+           | {("ROUTINE", n): s for n, s in ROUTINES.items()}
+           | {("BODYPART", n): s for n, s in BODYPART_MORE.items()}
            | {("COMPINIT", 7): "ENTSPCPROCS"},
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
@@ -290,6 +379,8 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | STATEMENTS
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
+           | {("ROUTINE", n): s for n, s in ROUTINES.items()}
+           | {("BODYPART", n): s for n, s in BODYPART_MORE.items()}
            | {("COMPINIT", 7): "ENTSPCPROCS"},
 }
 
