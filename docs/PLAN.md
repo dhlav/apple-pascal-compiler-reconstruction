@@ -114,7 +114,17 @@ Done, and reproducible via `python tools/build_all.py`:
    Do not promote any name into reconstructed source until its call sites
    agree on arity and argument kinds.
 
-2. **Extend the global map into a declaration order.** The map now knows
+2. **Extend the global map into a declaration order.** ~~Not started.~~
+   **Well advanced** (finding 33). `tools/vardecl.py` is a `build_all.py`
+   step: it lays out II.0's `VAR` block under the compiler's own
+   allocation rule and aligns it by name against Apple's globals, into
+   `analysis/global_map/vardecl-ii0.txt`. 67 names matched, drift
+   non-decreasing through the scalar region. **The rule that makes this
+   work at all: a `VAR` declaration allocates its identifiers backwards.**
+   What is left is the unnamed stretches between the matched runs, and the
+   two words Apple appears to have removed around `DISPLAY`/`PFNUMOF`.
+
+   Original notes follow. The map now knows
    sizes and shapes; the remaining step is to lay the objects out in
    declaration order and give them types, which is what a reconstructed
    `VAR` block has to reproduce. Words 3..7 (a record with addressed

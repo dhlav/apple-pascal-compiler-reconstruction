@@ -127,6 +127,21 @@ produced. `probe_identifiers.py` now reads the II.0 source rather than a
 hand-kept list, and requires every name over eight characters to appear
 there; all 53 do.
 
+It also settled the rule the reconstruction's `VAR` block has to obey
+(finding 33). `VARDECLARATION` collects a declaration's identifiers by
+*prepending* them to a list, then walks that list assigning addresses — so
+**a `VAR` declaration allocates backwards**: `VAR LC,IC: ADDRRANGE` puts
+`IC` at the lower offset. That is a prediction about Apple's binary, and
+it holds **18 declaration groups, 86 names, across both releases**
+(`probe_vardecl.py`). None of those names came from declaration order;
+the eight symbol-set globals were each assigned by the error its guard
+raises (finding 26c) and come out in exactly reverse order, all eight.
+
+`tools/vardecl.py` lays II.0's `VAR` block out under that rule and aligns
+it against Apple's globals: 67 matched names, differing only by a drift
+that never decreases through the scalar region. The first sixteen words of
+Apple's global area are II.0's, in order.
+
 Inside the phase segments, the statement grammar and the expression chain
 are recovered (finding 31). Each of `STATEMEN`'s seven statement parsers
 is pinned twice over — by the reserved word it demands, through a symbol

@@ -2485,6 +2485,108 @@ round-trip byte for byte on any platform.
 | `procs.b.text` | 8,060 | `66a9e676f23671a7…` |
 | `unitpart.text` | 10,585 | `380bc74229b0b941…` |
 
+## 33. A `VAR` declaration allocates backwards
+
+The rule the reconstruction's `VAR` block has to obey, and the one thing
+that would have made it impossible to get right by guessing.
+
+### 33a. The rule
+
+VERIFIED SOURCE FACT. `VARDECLARATION`, in `decpart.b.text`, collects the
+identifiers of one declaration by **prepending** them to a list:
+
+```
+  NXT := NIL;
+  REPEAT ...
+    NEW(LCP);
+    WITH LCP^ DO BEGIN NAME := ID; NEXT := NXT; ... END;
+    ENTERID(LCP); NXT := LCP;
+  UNTIL TEST;
+```
+
+and then walks that list assigning addresses:
+
+```
+  WHILE NXT <> NIL DO
+    WITH NXT^ DO BEGIN IDTYPE := LSP; VADDR := LC;
+                       LC := LC + LSIZE; NXT := NEXT END;
+```
+
+The last identifier written is the head of the list, so it gets the
+*lowest* address. **`VAR LC,IC: ADDRRANGE` allocates IC first.**
+
+This matters because every `LDO` and `SRO` in the binary carries a global
+offset. A reconstruction that writes `VAR CURPROC, NEXTPROC` where Apple
+wrote it the other way round produces different code bytes and fails the
+recompile — and the failure would be silent in the source, since the
+declaration reads identically either way.
+
+### 33b. The binary agrees, 86 times
+
+VERIFIED BINARY FACT. This is a prediction about Apple's globals, not just
+a fact about UCSD's source, and `tools/probes/probe_vardecl.py` tests it:
+for every II.0 declaration where two or more identifiers are names this
+project recovered independently, their Apple offsets must come out in
+reverse declaration order. **18 declaration groups, 86 names, all
+reversed, across both releases.**
+
+None of those names came from declaration order. They came from
+behaviour, from error numbers, and from the listing columns. Four that
+had puzzled me are now explained rather than merely observed:
+
+| declared | allocated | how the name was recovered |
+|---|---|---|
+| `LC,IC` | IC 9, LC 10 | IC from `CODEP^[IC] := byte`; LC from the listing's word count |
+| `BEGSTMTLEV,STMTLEV` | STMTLEV 78, BEGSTMTLEV 79 | `BEGSTMTLEV := STMTLEV` in `PRINTLINE` |
+| `CURPROC,NEXTPROC` | NEXTPROC 96, CURPROC 97 | `CURPROC` is the listing's third column; `NEXTPROC` is bounded by ERROR(251) |
+| the eight `SETOFSYS` | TYPEDELS 98 … CONSTBEGSYS 126 | finding 26c, each by the error its guard raises |
+
+The eight symbol sets are the sharpest of these. One declaration, eight
+identifiers, and finding 26c assigned every one of them from the error
+list — `constbegsys` guards "Error in constant", `facbegsys` guards "Error
+in factor", and so on. They come out in **exactly** reverse declaration
+order, all eight. Two entirely independent methods, the same answer.
+
+It also explains the one thing that had looked like Apple reordering the
+head of the block: II.0 declares `CODEP` and `SYMBUFP` on separate lines,
+in that order, but Apple has `SYMBUFP` at 1 and `CODEP` at 2. Under the
+rule that is not a reordering — it is Apple merging the two into one
+declaration, `VAR CODEP, SYMBUFP: ...`, which allocates `SYMBUFP` first.
+
+### 33c. The whole `VAR` block, aligned
+
+`tools/vardecl.py` (now a `build_all.py` step) lays out II.0's `VAR` block
+under the rule and aligns it by name against Apple's recovered globals,
+writing `analysis/global_map/vardecl-ii0.txt`. 125 II.0 variables, **67 of
+them matched to a name we recovered in Apple**, and — the useful part —
+the offsets differ only by a *drift* that never decreases through the
+scalar region:
+
+```
+  offsets 1..16    drift  0   TOP, IC, LC, INTPTR, SEG, SYMCURSOR, SY, OP
+  LGTH..DP         drift +1   Apple has one extra word after ID
+  TINY..REALPTR    drift +3   two more option flags ($V, $E)
+  OUTPUTPTR        drift +4
+  LEVEL..STMTLEV   drift +5
+  NEXTSEG..DISPLAY drift +6   including all eight symbol sets
+```
+
+A run of constant drift means Apple kept II.0's order for that whole
+stretch; each step up is a variable Apple inserted. The first sixteen
+words of Apple's global area are II.0's, in order.
+
+The aggregate sizes fall out of Apple's own spacing and corroborate II.0's
+types independently: `PROCTABLE` is 335 − 185 = **150** words
+(`ARRAY [0..MAXPROCNUM] OF INTEGER`), `SYSTEMLIB` is 509 − 488 = **21**
+(`STRING[40]`, 41 bytes), `JTAB` is 535 − 510 = **25**
+(`ARRAY [0..MAXJTAB]`), and the file variables are 40 words apart —
+II.0's `NILFILESIZE = 40`.
+
+Two words are still unaccounted for around `DISPLAY`/`PFNUMOF`, where the
+drift steps *down* by 2: Apple removed something there, most likely
+`PFNUMOF`, the non-resident-procedure list, whose six entries are for a
+runtime Apple does not have. Not yet confirmed.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

@@ -21,6 +21,7 @@ STEPS = [
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
+    ("II.0 VAR block alignment", "vardecl.py"),
     ("lift to pseudo-Pascal", "liftall.py"),
 ]
 
