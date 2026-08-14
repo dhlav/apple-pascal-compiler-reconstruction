@@ -355,11 +355,78 @@ BODYPART_MORE: dict[int, str] = {
                        # in BODYPART; VARIABLE's only callee
 }
 
+# --- finding 36: the rest of BODYPART ------------------------------------
+#
+# With these, all 37 of BODYPART's procedures are named (38 in 1.3).
+#
+# The shape of the segment is II.0's, with one large exception. II.0's
+# `BODY` is a single procedure; Apple split it into four, and named two of
+# the pieces itself: the codefile carries SEGMENT procedures BODY1 and
+# BODY3 (finding 30). All three pieces sit at lex 3 as siblings inside
+# BODYPART.24, which holds the 38 bytes of locals they share -- so
+# BODYPART.24 is `BODY`, and the middle piece, between BODY1 and BODY3,
+# is BODY2. That is inference from the two names Apple did leave behind,
+# not a reading of the binary.
+def bp13(n: int) -> int:
+    """1.1's BODYPART numbering in 1.3.
+
+    1.3 has 38 procedures where 1.1 has 37, and the insertion is at 26: a
+    26-byte procedure at lex 4 nested inside BODY2, with no counterpart in
+    1.1. Everything from 1.1's 26 upward therefore shifts by one, which is
+    what the attribute tables show pair for pair -- 1.1's HOLDSTMT (0
+    params, lex 3, 4 bytes) is 1.3's 27, GENBIG (2 params, 31 bytes) its
+    28, and READ, WRITE and CALLNONSPECIAL its 29, 30 and 31.
+    """
+    return n + 1 if n >= 26 else n
+
+
+BODYPART_REST: dict[int, str] = {
+    14: "LOADIDADDR",  # (fcp) -- `if klass = actualvars then GEN2(50 LDA,
+                       # ...) else GEN2(54 LOD, ...)`, II.0's body with the
+                       # VLEV = 1 short forms dropped. Called by READ,
+                       # WRITE and SPECIALS -- II.0's three call sites.
+    15: "MASKBOOL",    # OURS. 16 bytes: `if GATTR.TYPTR = BOOLPTR then
+                       # begin GENBYTE(1); GENBYTE(132) end`, which emits
+                       # `SLDC 1; LAND` -- a boolean masked to 0/1 before
+                       # it is used as an ordinal. Called from EXPRESSION,
+                       # SELECTOR, FACTOR, CASESTATEMENT and
+                       # FORSTATEMENT. II.0 has no counterpart.
+    20: "STORE",       # (var fattr) = 2 bytes; called by ASSIGNMENT and
+                       # FORSTATEMENT, II.0's two call sites
+    21: "STRGTOPA",    # (fic) = 2 bytes, and calls nothing at all -- it
+                       # patches code already emitted. Called from
+                       # EXPRESSION, CALLNONSPECIAL and ASSIGNMENT.
+    23: "CALL",        # (fsys; fcp) = 10 bytes; calls READ, WRITE,
+                       # CALLNONSPECIAL and ROUTINE.1 -- II.0's CALL
+                       # exactly, minus the arms that went into ROUTINE
+    24: "BODY",        # 38 bytes of locals, and calls BODY1, BODY2 and
+                       # BODY3 in that order
+    25: "BODY2",       # the middle of Apple's split; the NOISY
+                       # `<name> [nnnnn words]` line and the statement loop
+    26: "HOLDSTMT",    # OURS. LOADSEGMENT(11 = STATEMEN); BODY2;
+                       # UNLOADSEGMENT(11). BODY takes this path under
+                       # {$S+}. Compare PASCALCO.28 HOLDMOST.
+    28: "READ",
+    29: "WRITE",       # the only caller of DECSIZE here -- writing a long
+                       # integer needs its digit count -- and of PAOFCHAR
+    30: "CALLNONSPECIAL",  # calls LINKERREF and NEWPROC, which is what a
+                       # call to a not-yet-declared or separate procedure
+                       # needs; 640 bytes, the largest of the three
+    31: "FLOATIT",     # (var fsp; forcefloat) = 4 bytes
+    32: "STRETCHIT",   # (var fsp) = 2 bytes
+    36: "MAKEPA",      # (var strgfsp; pafsp) = 4 bytes
+    37: "HOLDRTN",     # OURS. LOADSEGMENT(10 = ROUTINE); BODY;
+                       # UNLOADSEGMENT(10). BODYPART.1 takes this path when
+                       # swapping is on and {$S++} is off -- the same
+                       # division PASCALCO.28/.29 make one level up.
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
            | {("BODYPART", n): s for n, s in BODYPART_EMIT.items()}
            | {("BODYPART", n): s for n, s in EXPRESSIONS.items()}
+           | {("BODYPART", n): s for n, s in BODYPART_REST.items()}
            | STATEMENTS
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
@@ -372,10 +439,9 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     # natives take PASCALCO.2 and .3, not .1.
     "1.3": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
-           | {("BODYPART", (n + 1 if n == 27 else n)): s
-              for n, s in BODYPART_EMIT.items()}
-           | {("BODYPART", (n + 1 if n >= 33 else n)): s
-              for n, s in EXPRESSIONS.items()}
+           | {("BODYPART", bp13(n)): s for n, s in BODYPART_EMIT.items()}
+           | {("BODYPART", bp13(n)): s for n, s in EXPRESSIONS.items()}
+           | {("BODYPART", bp13(n)): s for n, s in BODYPART_REST.items()}
            | STATEMENTS
            | CODEGEN
            | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
@@ -526,6 +592,12 @@ GLOBALS_11: dict[int, str] = {
     # Each was placed by reading DECLARAT.10:USESDECLARATION against II.0's
     # source line for line, and each lands exactly where the drift column of
     # analysis/global_map/vardecl-ii0.txt said it would.
+    44:  "LINKINFO",    # OURS. Apple merged II.0's two flags into one:
+                        # PROCDECLARATION and USESDECLARATION set it, which
+                        # is II.0's DLINKERINFO, and NEWPROC sets it too,
+                        # which is II.0's CLINKERINFO. Cleared by COMPINIT
+                        # and by WRITELINKERINFO; read by BLOCK, UNITPART
+                        # and FINISHUP. Finding 36c.
     11:  "TEST",        # II.0 11, drift +0 -- the parsers' loop flag
     36:  "USING",       # II.0 35, drift +1 -- inside a `uses` of a unit that
                         # the enclosing program already listed
@@ -694,6 +766,7 @@ GLOBALS_13: dict[int, str] = {
 
     # Finding 34c. TEST does not move; the other three carry the same +1/+3
     # shift as their neighbours, and 1.3's DECLARAT.10/.12 confirm all four.
+    45:  "LINKINFO",    # 1.1 global 44, +1 -- confirmed in 1.3's NEWPROC
     11:  "TEST",
     37:  "USING",
     66:  "USINGLIST",

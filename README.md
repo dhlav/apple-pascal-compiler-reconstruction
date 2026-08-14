@@ -165,6 +165,16 @@ it. Five more `BODYPART` names fall out of who calls what:
 with `BLOCKIO`, which calls the first two in that order, separating the
 pair that nothing else could.
 
+`BODYPART` is finished too — 37 of 37 in 1.1 (finding 36) — and it turned
+up the one thing the codefile had been half-telling us all along. II.0's
+`BODY` is a single procedure; Apple made it four, and **named two of them
+itself**, as the SEGMENT procedures `BODY1` and `BODY3`. `BODYPART.24`
+calls `BODY1`, then a local procedure, then `BODY3`, holds the 38 bytes
+of locals all three share, and all three sit one lexical level inside it
+as siblings. So `.24` is `BODY` and the piece between `BODY1` and `BODY3`
+is `BODY2` — which also corrects a name: `.25` had been recorded as
+`BODY`, and `BODY` is its parent.
+
 `DECLARAT` is the declaration part.
 Seventeen are II.0's, matched jointly on three things the binary fixes
 and the source fixes independently — parameter size, lexical nesting and

@@ -104,6 +104,14 @@ Done, and reproducible via `python tools/build_all.py`:
    `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
    procedure at the wrong depth changes the code bytes.
 
+   Finding 36 closes `BODYPART` — **37 of 37** — which with `PASCALCO`,
+   `DECLARAT`, `ROUTINE` and `STATEMEN` leaves only `COMPINIT`,
+   `UNITPART`, `COMPOPTI`, `NUMSTRIN`, `FINISHUP`, `WRITELIN` and the
+   three one-procedure segments. It also corrected a name of ours:
+   `BODYPART.25` was `BODY`, and `BODY` turned out to be its *parent*,
+   `.24` — the fourth reminder that a name should be placed against the
+   structure around it, not against its own body alone.
+
    Finding 35 closes `ROUTINE` as well — **seventeen of seventeen** — and
    adds the sharpest lever yet for the remaining segments: **a routine
    that emits code names itself**, because the opcode it emits is a

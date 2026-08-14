@@ -2815,6 +2815,108 @@ the segment to a two-word set at global 183. **Apple has no `PFNUMOF`** —
 which is direct support for finding 33c's open question about the two
 words missing around `DISPLAY`, though it does not settle the count.
 
+## 36. `BODYPART`, all of it, and what Apple did to II.0's `BODY`
+
+*Confidence: VERIFIED BINARY FACT for the shapes and the emitted
+constants; STRONG INFERENCE for the II.0 spellings and for `BODY2`;
+SPECULATION for `MASKBOOL`, `HOLDSTMT` and `HOLDRTN`.
+`tools/probes/probe_bodypart.py`.*
+
+### 36a. Apple split II.0's `BODY` into four
+
+II.0's `BODY` is one procedure. Apple made it four, and **named two of
+them itself**: the codefile carries SEGMENT procedures `BODY1` and
+`BODY3` (finding 30). The binary fixes the rest of the shape:
+
+* `BODYPART.24` calls **`BODY1`, then a local procedure, then `BODY3`**,
+  in that order, and nothing else;
+* it carries **38 bytes of locals** where the piece it calls carries 4 —
+  that frame is what the three pieces share;
+* `BODY1.1`, `BODYPART.25` and `BODY3.1` all sit at the **same lexical
+  level, one deeper than 24**. They are siblings declared inside it.
+
+So `BODYPART.24` is `BODY` and `BODYPART.25` is the sibling between
+`BODY1` and `BODY3`. Naming it **`BODY2`** is the inference; everything
+else here is read off the attribute tables. This also **corrects a name**:
+`BODYPART.25` was recorded as `BODY`, and `BODY` is its parent.
+
+Two more procedures exist only to control swapping, and they follow the
+division `PASCALCO.28`/`.29` make one level up:
+
+```
+  BODYPART.1   if (not SWAPPING) or SWAPMORE then BODY else HOLDRTN
+  BODYPART.37  HOLDRTN   LOADSEGMENT(10 ROUTINE);  BODY;   UNLOADSEGMENT
+  BODYPART.26  HOLDSTMT  LOADSEGMENT(11 STATEMEN); BODY2;  UNLOADSEGMENT
+  BODYPART.24  BODY      BODY1; if SWAPPING then HOLDSTMT else BODY2; BODY3
+```
+
+Both spellings are ours. The segment numbers are not: the probe resolves
+10 and 11 through the codefile's own dictionary, so holding the wrong
+segment fails.
+
+### 36b. The other thirteen
+
+| | | what pins it |
+|---|---|---|
+| `.14` | `LOADIDADDR` | emits `GEN2(50 LDA, …)` or `GEN2(54 LOD, …)` on `klass = actualvars` — II.0's body with the `VLEV = 1` short forms dropped. Called by `READ`, `WRITE` and `SPECIALS`: II.0's three sites |
+| `.15` | `MASKBOOL` | **ours.** 16 bytes: `if GATTR.TYPTR = BOOLPTR then begin GENBYTE(1); GENBYTE(132) end` — it emits `SLDC 1; LAND`, masking a boolean to 0/1 before it is used as an ordinal. II.0 has no counterpart |
+| `.20` | `STORE` | `(var fattr)`; called by `ASSIGNMENT` and `FORSTATEMENT`, II.0's two sites |
+| `.21` | `STRGTOPA` | `(fic)`, and **calls nothing at all** — it patches code already emitted |
+| `.23` | `CALL` | `(fsys; fcp)`; calls `READ`, `WRITE`, `CALLNONSPECIAL` and `ROUTINE` — II.0's `CALL` minus the arms that went into `ROUTINE` |
+| `.28` | `READ` | |
+| `.29` | `WRITE` | one of only two callers of `DECSIZE` in the segment, which is what writing a long integer needs; `READ` is not among them |
+| `.30` | `CALLNONSPECIAL` | calls `LINKERREF` and `NEWPROC` — what a call to a not-yet-declared or separate procedure needs |
+| `.31` | `FLOATIT` | `(var fsp; forcefloat)` = 4 bytes |
+| `.32` | `STRETCHIT` | `(var fsp)` = 2 bytes |
+| `.36` | `MAKEPA` | `(var strgfsp; pafsp)`; calls `GETBOUNDS` |
+
+That completes the segment: **37 of 37 in 1.1**. 1.3 has 38, and the
+insertion is at **26** — a 26-byte procedure at lex 4 nested inside
+`BODY2`, with no counterpart in 1.1. Everything from 1.1's 26 upward
+shifts by one, which is what the attribute tables show pair for pair, so
+`names.py` now carries a single `bp13()` shift for the whole segment
+instead of the two ad-hoc rules it had. 1.3's new `.26` is deliberately
+left unnamed.
+
+### 36c. Apple merged the two linker-info flags
+
+II.0 keeps `DLINKERINFO` and `CLINKERINFO`: the first set by
+`USESDECLARATION` and `PROCDECLARATION`, the second by `GENNR`'s
+`ASSIGN`, both cleared by `WRITELINKERINFO`, and `block.text` tests them
+separately. Apple has **one** flag. Global 44 (45 in 1.3) is stored into
+by exactly the union of II.0's two sets —
+
+```
+  COMPINIT.9  := false        ONEUNIT         := true   (DLINKERINFO)
+  WRITELINKERINFO := false    PROCDECLARATION := true   (DLINKERINFO)
+                              NEWPROC         := true   (CLINKERINFO)
+                              UNITPART        := true
+```
+
+— and read by `BLOCK`, `UNITPART` and `FINISHUP`. Since it is neither of
+II.0's names, it gets one of ours: `LINKINFO`.
+
+`BODYPART.13`, already called `NEWPROC`, is now placed exactly: it is
+II.0's `ASSIGN` generalised from the six non-resident support routines to
+any identifier record — `LCP^.PFNAME := NEXTPROC`, `error(251)` above
+`MAXPROCNUM = 149`, `PROCTABLE[PFNAME] := 0`, `LINKINFO := true`.
+
+### 36d. What `{$E}` does
+
+Chasing global 44 settled half of finding 24's second loose end. Global
+45 (46 in 1.3) is `OPT_E`, set by `COMPOPTI` from the option letter, and
+it is read in exactly three places. Two of them are `TYP` and
+`SIMPLETYPE`, where II.0 writes
+
+```pascal
+IF INMODULE THEN IF NOT ININTERFACE THEN ERROR(191); (*NO PRIVATE FILES*)
+```
+
+and Apple writes `if INMODULE then if not (ININTERFACE or OPT_E) then
+error(191)`. So **`{$E+}` permits a file variable private to a unit's
+implementation**, which the p-System otherwise forbids. The third reader
+is `BODY`. The letter is still all we have for the name.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
