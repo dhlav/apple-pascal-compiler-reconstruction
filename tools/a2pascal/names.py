@@ -51,6 +51,24 @@ PASCALCO_11: dict[int, str] = {
     20: "EMIT",          # the code-byte emitter (finding 12, VERIFIED)
     22: "FLUSHBUFFER",   # code-buffer flush (finding 12)
     27: "ENTERUNDECL",   # undeclared-identifier reporter (finding 12)
+    # --- finding 28 ---------------------------------------------------------
+    13: "MAKESEGINFO",   # build a segment dictionary's SEGINFO word: segment
+                         # number in bits 0-7, machine type in 8-11 (2 =
+                         # p-code LSB, or 1 = MSB under {$F+}), 0 in bit 12,
+                         # version 2 in 13-15. The layout matches the one
+                         # tools/a2pascal/codefile.py reads at block 0.
+    23: "ENDSEGMENT",    # close the current segment: emit the procedure
+                         # dictionary from PROCDICT, then the segment number
+                         # and procedure count, record the segment's length
+                         # and reset LCBASE. See tools/probes/probe_segtail.py
+    25: "COMPILE",       # stamp the start time, call BLOCK with the outermost
+                         # fsys, then FINISHUP.1 -- the whole compilation
+    28: "COMPILERESIDENT",   # hold DECLARAT, BODYPART, NUMSTRIN, STATEMEN,
+                         # CASESTAT, FORSTATE, BODY1 and BODY3 in memory
+                         # across the call to COMPILE. PASCALCO.1 takes this
+                         # path unless {$S+}.
+    29: "COMPILEHOLDINGROUTINE",  # ...and ROUTINE as well, when the second
+                         # swapping flag {$S++} is off
 }
 
 # 1.3: the two natives take slots 2 and 3, everything from 1.1's 2 upward
@@ -83,15 +101,35 @@ BODYPART_EMIT: dict[int, str] = {
     27: "EMITBIG",    # (n)  the BIG encoding: one byte, or two with bit 7 set
 }
 
+# --- finding 28b: the rest of the code-generation tail ---------------------
+#
+# These three keep their numbers across releases (correspondence table:
+# BODYPART.13 -> .13, BODYPART.16 -> .16, BODY3.1 -> BODY3.1).
+CODEGEN: dict[tuple[str, int], str] = {
+    ("BODYPART", 13): "ALLOCPROCNUM",  # assign the next procedure number to
+                                       # an identifier record; ERROR(251) at
+                                       # 149. Clears its PROCDICT slot.
+    ("BODYPART", 16): "EMITJUMP",      # (op, target) -- short displacement if
+                                       # it fits in 0..127, otherwise a slot
+                                       # in JTABLE and a negative index
+    ("BODY3", 1):     "ENDPROC",       # close a procedure: pad, then the
+                                       # long-jump table, data size, param
+                                       # size, exit IC, enter IC, procedure
+                                       # number and LEX LEVEL -- the whole
+                                       # attribute table, low address first
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
            | {("BODYPART", n): s for n, s in BODYPART_EMIT.items()}
+           | CODEGEN
            | {("COMPINIT", 7): "ENTERSTDIDENTS"},
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
     "1.3": {("PASCALCO", n): s for n, s in PASCALCO_13.items()}
            | {("BODYPART", (n + 1 if n == 27 else n)): s
               for n, s in BODYPART_EMIT.items()}
+           | CODEGEN
            | {("COMPINIT", 7): "ENTERSTDIDENTS"},
 }
 
@@ -227,17 +265,6 @@ GLOBALS_11: dict[int, str] = {
     # Compiler-option state (finding 23). COMPOPTI.1 switches on the
     # upper-cased option letter, so each of these is tied to its letter by
     # the case table itself; the spellings are ours, the letters are not.
-    # CAUTION: this name is under review -- see the open question in finding
-    # 27. The behaviour finding 23c described ("Zurich's `level`, 1 for the
-    # program block, emitted LEX LEVEL byte one less") is what global 96
-    # does, not this one: 96 is set to 1 for the main program and 2 for a
-    # segment procedure, incremented and decremented around nesting, saved
-    # and restored across it, and it is `G96 - 1` that ENDPROC emits into the
-    # byte the codefile reader reads as LEX LEVEL. What global 13 is has not
-    # been settled, and `LEVEL := NEXTSEG` at three sites fits neither
-    # reading. Left named rather than renamed so the listings do not churn
-    # twice.
-    13:  "LEVEL",
     28:  "SYSCOMP",     # $U-, compile at the system lexical level
     30:  "OPT_F",       # $F, emit byte-swapped p-code (finding 24a)
     # Unit-compilation state. Written only in UNITPART, and UNITPART.3 --
@@ -262,6 +289,55 @@ GLOBALS_11: dict[int, str] = {
     85:  "NEXTSEG",     # $NS n, default 7, rejected unless < 31
     487: "CODECOMMENT",  # $C, the 80-character codefile comment
     488: "LIBNAME",    # $U filename, the library to search for units
+
+    # --- finding 28: the compiled-listing columns ----------------------------
+    #
+    # PASCALCO.4:ERRORWITHTEXT writes the listing line, and Part II of the
+    # 1.3 manual says what its columns are: "the line number, the segment
+    # number, the procedure number, and the number of bytes or words (bytes
+    # for code, words for data) ... a D for declaration, or an integer from
+    # 0 through 9 to designate the lexical level (the level of statement
+    # nesting within the code part)". The routine writes exactly that, in
+    # that order, so five globals are named by the vendor's own column
+    # headings.
+    13:  "SEGNUM",      # column 2. Was called LEVEL; see finding 28. This is
+                        # what `SEGNUM := NEXTSEG` assigns, what indexes
+                        # G479 to reach a codefile slot, and what
+                        # ENDSEGMENT emits as the segment tail's low byte.
+    97:  "PROCNUM",     # column 3, the procedure being compiled
+    38:  "DP",          # true in a declaration part -- Pascal-P's `dp`.
+                        # Selects the 'D' in column 4 and LC over CODEINX
+                        # for column 5.
+    79:  "LISTLEVEL",   # column 4's digit, `(LISTLEVEL mod 10) + 48`
+    93:  "LISTCOUNT",   # column 5: LC in a declaration part, CODEINX in a
+                        # body
+    78:  "STATLEVEL",   # the live statement-nesting counter LISTLEVEL is
+                        # latched from; +1/-1 around a structured statement
+    10:  "LC",          # the data location counter, in words
+    25:  "LCMAX",       # high-water mark of LC: `if LC > LCMAX then
+                        # LCMAX := LC` at four sites, reset from LC at the
+                        # head of each body. Zurich's `lcmax`; it becomes
+                        # the procedure's data size in the attribute table.
+
+    # --- finding 28: procedure numbering and the lexical level ---------------
+    77:  "LEVEL",       # Zurich's `level`. 0 before the program heading, 1
+                        # for the program block, +1 on entering a nested
+                        # procedure and capped at 8, saved and restored
+                        # across nesting. It is the LEX operand BODYPART.6
+                        # emits into every LOD/LDA/STR, and BODY3.1 emits
+                        # `LEVEL - 1` into the attribute table's LEX LEVEL
+                        # byte -- which matches the manual's convention of
+                        # 0 for a user program (IV-24).
+    96:  "NEXTPROC",    # next free procedure number in this segment, 1-based
+                        # and capped by ERROR(251) "Too many nested
+                        # procedures or functions" at 149. ENDSEGMENT emits
+                        # `NEXTPROC - 1` as the segment's procedure count.
+    185: "PROCDICT",    # PROCDICT[n] is procedure n's attribute-table
+                        # address, filled in by BODY3.1 and turned into
+                        # self-relative pointers by ENDSEGMENT
+    509: "JTABINX",     # next free long-jump slot, 1..24; ERROR(253)
+                        # "Procedure too long" when it fills
+    510: "JTABLE",      # the long-jump targets, emitted below JTAB-10
 
     # The four file variables (finding 10 listed them; finding 23 names them)
     535: "INFOFILE",   # *SYSTEM.INFO, the unit symbol-table work file
@@ -312,7 +388,7 @@ GLOBALS_13: dict[int, str] = {
     # Finding 23, carried across by the correspondence table -- every one of
     # these pairs is a 1.00-similarity match, and the 1.3 $U- arm sets the
     # shifted numbers in the same order.
-    13:  "LEVEL",
+    13:  "SEGNUM",
     28:  "SYSCOMP",
     30:  "OPT_F",
     32:  "ININTERFACE",   # 1.1 global 31, +1
@@ -336,6 +412,21 @@ GLOBALS_13: dict[int, str] = {
     716: "LIBFILE",
     756: "SOURCEFILE",
     796: "LISTFILE",
+
+    # Finding 28, carried across by the correspondence table (every pair
+    # below is a 1.00-similarity match).
+    10:  "LC",
+    25:  "LCMAX",
+    39:  "DP",          # 1.1 global 38,  +1
+    80:  "LEVEL",       # 1.1 global 77,  +3
+    81:  "STATLEVEL",   # 1.1 global 78,  +3
+    82:  "LISTLEVEL",   # 1.1 global 79,  +3
+    96:  "LISTCOUNT",   # 1.1 global 93,  +3
+    99:  "NEXTPROC",    # 1.1 global 96,  +3
+    100: "PROCNUM",     # 1.1 global 97,  +3
+    190: "PROCDICT",    # 1.1 global 185, +5
+    627: "JTABINX",     # 1.1 global 509, +118
+    628: "JTABLE",      # 1.1 global 510, +118
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}

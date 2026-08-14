@@ -45,19 +45,35 @@ Done, and reproducible via `python tools/build_all.py`:
    compiler's five code emitters, and `BODYPART.25` its block-body
    generator (finding 24c). `NEXTLINE` and `SKIP` came out of finding 26,
    and `NEXTBLOCK`, `BUMPSEG`, `NEWSEGMENT`, `COMPTYPES`, `EMITWORD`,
-   `BLOCK` and `COMMENT` out of finding 27 — **24 of PASCALCO's 29 are now
-   named**, and the five left are `.13` (the second `$F` site, task 11),
-   `.23`, `.25`, `.28` and `.29`.
+   `BLOCK` and `COMMENT` out of finding 27. Finding 28 finished the
+   segment with `MAKESEGINFO`, `ENDSEGMENT`, `COMPILE`,
+   `COMPILERESIDENT` and `COMPILEHOLDINGROUTINE` — **all 29 of PASCALCO's
+   procedures are now named**, and it carried three code-generation
+   routines in the phase segments with it: `BODY3.1:ENDPROC`,
+   `BODYPART.13:ALLOCPROCNUM` and `BODYPART.16:EMITJUMP`.
 
    The lever that worked in finding 27 is worth reusing: the manual's
    error list (II-3E) names what every `ERROR(n)` means, so a routine's
    error numbers say what it is for before its code is understood.
-   `BUMPSEG` was named off error 354 alone. Those five are the routines every other phase
-   calls to produce output, so naming them makes the code-generation half
-   of the compiler readable in a way the service layer did not.
+   `BUMPSEG` was named off error 354 alone.
 
-   What is left of this track is the rest of PASCALCO — 15 of its 29
-   procedures still have no name — and the rest of the phase segments. The
+   Finding 28 added a second lever, and it is the better one where it
+   applies: **the manual documents the compiler's own output formats**, so
+   a routine that writes one is named column by column. `ERRORWITHTEXT`
+   fell to Part II's description of the compiled listing — five globals
+   named at once, including Pascal-P's `dp` — and `ENDSEGMENT` to the
+   codefile's procedure dictionary. Prefer these to reading control flow:
+   an output format is a fixed target the binary can be held against.
+
+   And the cautionary half of finding 28: a probe that verifies a property
+   of the *output* does not verify a claim about which code produced it.
+   `probe_attribtable.py` was green throughout the period finding 27b was
+   wrong, because every assertion in it was about the codefile and none
+   was about `PASCALCO.23`. When the claim is "routine X emits Y",
+   reconstruct Y from X's own logic and diff it against the bytes —
+   `probe_segtail.py` is the pattern.
+
+   What is left of this track is the phase segments beyond those three. The
    method that worked twice now: find code that builds a structure out of
    constants and then *names* it, and read outwards. For the emitters the
    naming lever was different and worth remembering — the *encoding* itself

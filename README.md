@@ -70,12 +70,25 @@ including the `LOADSEGMENT`/`UNLOADSEGMENT` pair that drives the compiler's
 phase swapping.
 
 The compiler's global variables are mapped (sizes, shapes, access counts,
-users), and **24 of PASCALCO's 29 procedures are named** — the error
+users), and **all 29 of PASCALCO's procedures are named** — the error
 reporter, the scanner, the symbol-table search and entry, the code-byte
 emitter, `COMPTYPES`, `BLOCK`, `NEXTBLOCK`, `NEWSEGMENT`, `SKIP`,
-`NEXTLINE` and the rest. The lever for most of them is the manual's error
-list: a routine that raises "Too many segments for segment dictionary" is
-doing something about segment numbers whatever else it does.
+`NEXTLINE` and the rest. Two levers did most of it. One is the manual's
+error list: a routine that raises "Too many segments for segment
+dictionary" is doing something about segment numbers whatever else it
+does. The other is that the manual documents the compiler's *output*
+formats, so a routine that writes one can be named column by column —
+Part II's description of the compiled listing names five globals at once,
+and the codefile's procedure dictionary identifies `ENDSEGMENT`
+(finding 28).
+
+Naming the last of them overturned a previous conclusion. `PASCALCO.23`
+writes the **segment** tail, not a procedure attribute table, so global 13
+is the segment number and global 96 the procedure counter; the lexical
+level is global 77, confirmed by its being the LEX operand of every
+emitted `LOD`/`LDA`/`STR`. `tools/probes/probe_segtail.py` rebuilds all
+30 segment tails across the two releases from the procedure lists alone
+and matches them byte for byte.
 
 Both of the scanner's enumerations are recovered **complete and gapless**
 (finding 26): `SYMBOL` at 0..54 and `OPERATOR` at 0..15, from the

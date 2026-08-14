@@ -1,26 +1,33 @@
 """How are procedures laid out, and what are the two bytes at JTAB?
 
 Finding 4 read the attribute table as `JTAB+0` procedure number, `JTAB+1`
-lexical level. `PASCALCO.23` is the routine that writes it, and its last
-two instructions are `EMIT(G13)` then `EMIT(G96 - 1)`. Which byte each of
-those lands on depends on a layout fact that had never been checked: that
-a procedure's attribute table is the *end* of it, with the next procedure's
-body starting immediately after.
+lexical level. `BODY3.1:ENDPROC` is the routine that writes it, and its
+last two instructions are `EMIT(PROCNUM)` then `EMIT(LEVEL - 1)`. Which
+byte each of those lands on depends on a layout fact that had never been
+checked: that a procedure's attribute table is the *end* of it, with the
+next procedure's body starting immediately after.
+
+(Finding 27 attributed those two `EMIT`s to `PASCALCO.23` instead. That
+was wrong -- `PASCALCO.23:ENDSEGMENT` writes the *segment* tail, which
+`probe_segtail.py` checks -- but nothing in this probe depended on it.
+Every assertion below was true then and is true now, which is exactly why
+it could not catch the mistake. See finding 28.)
 
 This probe checks three things over every p-code procedure on both disks.
 
   * **Contiguity.** Sorted by `enter_ic`, each procedure's `jtab + 2` is
     the next one's `enter_ic`. That is what makes the two `EMIT`s land on
-    `JTAB+0` and `JTAB+1` in that order, which is what pins `G13` to the
-    procedure-number byte and `G96 - 1` to the lex-level byte.
+    `JTAB+0` and `JTAB+1` in that order, which is what pins `PROCNUM` to
+    the procedure-number byte and `LEVEL - 1` to the lex-level byte.
   * **`JTAB+0` is the procedure number**, running 1..N within each segment
     -- never the segment number, which would make every procedure in
     `COMPINIT` read 7.
   * **`JTAB+1` is small.** A lexical level is 0, 1 or 2 in this compiler;
     a jump-table entry count would not be.
 
-Together these are the evidence for the open question in finding 27: the
-behaviour finding 23c attributed to global 13 is global 96's.
+Together these are the evidence that the codefile's two `JTAB` bytes are
+what finding 4 said they were. Which *globals* supply them is settled by
+finding 28, not here.
 """
 import sys
 from pathlib import Path

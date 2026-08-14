@@ -1782,6 +1782,16 @@ conservative than the code's 63.
 
 ### 27b. Global 13 is not the lexical level — an open contradiction
 
+> **SUPERSEDED by finding 28.** The premise below — that `PASCALCO.23`
+> writes a procedure attribute table — is wrong. It writes the *segment*
+> tail. Global 13 is the segment number and global 96 the procedure
+> counter; neither is the lexical level, which is global 77. The
+> contiguity and `JTAB` results in this section are still correct and
+> still checked; only the identification of what `PASCALCO.23` emits, and
+> everything drawn from it, is retracted. Kept for the record because the
+> error is instructive: a layout fact was verified, the routine that
+> supposedly produced it was not.
+
 Finding 23c named global 13 `LEVEL`, "Zurich's `level`; 1 for the program
 block, and the emitted LEX LEVEL byte is one less". That description is
 accurate. It is **global 96** that answers to it.
@@ -1823,6 +1833,185 @@ not churn twice; changing it is worth doing once the answer is actually
 known. Note that finding 23c's `{$U-}` argument does not rest on this: it
 rests on `PASCALCO.1`'s recorded `lex=0` and on segment numbering, neither
 of which is affected.
+
+## 28. `PASCALCO.23` writes the segment tail — and what that fixes
+
+The last five PASCALCO procedures are named, which closes task #5's first
+half at **29 of 29**. Doing it overturned finding 27b.
+
+### 28a. What `PASCALCO.23` actually emits
+
+VERIFIED BINARY FACT. The routine is:
+
+```
+  CODEINX := 0;
+  for i := NEXTPROC - 1 downto 1 do
+    if PROCDICT[i] = 0 then EMITWORD(0)
+    else EMITWORD((LCBASE + CODEINX) - PROCDICT[i]);
+  EMIT(SEGNUM);
+  EMIT(NEXTPROC - 1);
+  SEGTABLE[slot of SEGNUM] := LCBASE + CODEINX;
+  FLUSHBUFFER(true);  LCBASE := 0;
+```
+
+That is the UCSD **procedure dictionary**, which `tools/a2pascal/codefile.py`
+has been reading since the first week of the project and describes in its
+own header: *"high byte = number of procedures. Preceding it, growing
+downward, is the procedure dictionary: NPROC self-relative pointers."*
+Finding 27b read the two `EMIT`s as a procedure's `JTAB+0`/`JTAB+1`
+instead. They are the segment's last word.
+
+`tools/probes/probe_segtail.py` settles it in the form that can fail:
+**rebuild each segment's last `2*nproc + 2` bytes from the procedure list
+alone** — pointers in descending procedure order, each holding
+`its_own_address - jtab`, then the segment number, then the count — and
+compare with the disk. All **30 segment tails across both releases match
+byte for byte**. The segment number used in the reconstruction comes from
+the dictionary at block 0, which `PASCALCO.23` never touches, so the low
+byte agreeing is a fact about `G13` and not an artefact. Reversing the
+pointer order, swapping the two trailing bytes, or negating the
+self-relative sense each breaks it.
+
+So `PASCALCO.23` is **`ENDSEGMENT`**, and:
+
+* **global 13 is the segment number**, not the lexical level. This is what
+  `SEGNUM := NEXTSEG` at three sites was doing all along — the site
+  finding 27b flagged as fitting neither reading. It is also what indexes
+  the packed 4-bit table `NEWSEGMENT` writes codefile slots into.
+* **global 96 is the next free procedure number** in the current segment,
+  so `NEXTPROC - 1` is the procedure count. `BODYPART.13` bumps it and
+  raises `ERROR(251)` — "Too many nested procedures or functions" — at
+  149.
+
+### 28b. The lexical level is global 77
+
+VERIFIED BINARY FACT, vendor-confirmed. The real attribute-table writer is
+**`BODY3.1`**, and its tail emits the layout `codefile.py` documents, in
+ascending-address order:
+
+| emitted | lands on | value |
+|---|---|---|
+| `EMITWORD(CODEINX - JTABLE[i])`, `i` down from `JTABINX-1` | `JTAB-10` and below | the long-jump table |
+| `EMITWORD((LCMAX - proc.parambase) * 2)` | `JTAB-8` | data size |
+| `EMITWORD((proc.parambase - 1) * 2)` | `JTAB-6` | param size |
+| `EMITWORD(CODEINX - enterpoint)` | `JTAB-4` | exit IC |
+| `EMITWORD(CODEINX)` | `JTAB-2` | enter IC |
+| `EMIT(PROCNUM)` | `JTAB+0` | procedure number |
+| `EMIT(LEVEL - 1)` | `JTAB+1` | LEX LEVEL |
+
+and then `PROCDICT[PROCNUM] := LCBASE - 2`, which is the entry
+`ENDSEGMENT` later turns into a self-relative pointer. Global 77 is the
+`LEVEL` here: 0 before the program heading, 1 for the program block,
+incremented on entering a nested procedure and capped at 8, saved and
+restored across nesting. Two independent confirmations:
+
+* It is the **LEX operand** `BODYPART.6:EMITOP2` emits into every
+  `LOD`/`LDA`/`STR` — `EMITOP2(54, LEVEL, offset)`. Nothing but a lexical
+  level can go there.
+* `LEVEL - 1` in the `JTAB+1` byte matches the manual's stated convention
+  (IV, "LEX LEVEL"): *"the lexical level of a user program is 0, that of
+  the first nested procedure is 1"*.
+
+Finding 27b's contiguity and distribution results stand unaltered; they
+were measurements of the codefile, and they were right. What was wrong was
+attributing them to `PASCALCO.23`. The lesson is narrow and worth keeping:
+**a probe that verifies a property of the output does not verify your
+claim about which code produced it.** `probe_attribtable.py` could not
+have caught this, because every assertion in it is still true.
+
+### 28c. Five listing columns, named by the manual
+
+VERIFIED SOURCE FACT (Apple's, Part II Ch. 5) against VERIFIED BINARY
+FACT. The manual describes the compiled listing as carrying, next to each
+source line, *"the line number, the segment number, the procedure number,
+and the number of bytes or words (bytes for code, words for data) required
+by that procedure's declarations or code to that point ... whether the
+line lies within the actual code ... by printing a D for declaration, or
+an integer from 0 through 9 to designate the lexical level (the level of
+statement nesting within the code part)."*
+
+`PASCALCO.4:ERRORWITHTEXT` writes exactly those columns, in exactly that
+order, so five globals are named by the vendor's own description of its
+output:
+
+```
+  if DP then L2 := 68 { 'D' } else L2 := (LISTLEVEL mod 10) + 48;
+  FWRITEINT(LISTFILE, LINENUMBER, 6);
+  FWRITEINT(LISTFILE, SEGNUM,     4);
+  FWRITEINT(LISTFILE, PROCNUM,    5);
+  FWRITECHAR(LISTFILE, L1, 0);   { ':' normally, '*' on an error line }
+  FWRITECHAR(LISTFILE, L2, 0);
+  FWRITEINT(LISTFILE, LISTCOUNT,  6);
+```
+
+with `LISTCOUNT := LC` when `DP` and `:= CODEINX` otherwise — the
+manual's "words for data, bytes for code" on the nose. `DP` is
+Pascal-P's `dp`, one more name that transfers rather than being invented.
+`STATLEVEL` is the live counter `LISTLEVEL` is latched from.
+
+Global 25 comes with them: `if LC > LCMAX then LCMAX := LC` at four
+sites, reset from `LC` at the head of every body, and emitted as the
+attribute table's data size. That is Zurich's `lcmax` — another name that
+transfers rather than being invented.
+
+### 28d. `PASCALCO.13` builds the SEGINFO word
+
+STRONG INFERENCE. `PASCALCO.13` writes four packed fields into a word and
+returns it:
+
+| field | width | at bit | value |
+|---|---|---|---|
+| segment number | 8 | 0 | `SEGTABLE[slot].segnum` |
+| machine type | 4 | 8 | 2, or **1 under `{$F+}`** |
+| — | 1 | 12 | 0 |
+| version | 3 | 13 | 2 |
+
+That is the segment-dictionary `SEGINFO` layout `codefile.py` parses at
+block 0, derived there from the codefile format and not from this routine
+— so the two agreeing is a genuine cross-check, and it also fixes the
+operand order of `STP`'s packed-field pointer as (address, width, right
+bit). Machine type 2 is p-code LSB and 1 is p-code MSB, which is the
+codefile-level consequence of `{$F+}` (finding 24a) that was previously
+only inferred from the byte-swapping in `EMITWORD`. Named
+**`MAKESEGINFO`**; the spelling is ours.
+
+### 28e. Two error numbers, and a 1.1 → 1.3 split
+
+VERIFIED BINARY FACT. The 1980 language reference lists `253 Procedure too
+long` and `254 Too many long constants in this procedure`; the 1.3 manual
+lists 253 as *"Procedure too long [when it overflows the internal code
+buffer used by the Compiler]"* and 254 as *"Procedure too complex [when it
+generates too many long jumps]"*. The binaries show Apple changing this
+between releases:
+
+| site | 1.1 | 1.3 |
+|---|---|---|
+| code buffer nearly full: `if CODEINX + 100 > N` | `ERROR(253)`, N = 1299 | `ERROR(253)`, N = **1999** |
+| long-jump table full at 24 entries | `ERROR(253)` | `ERROR(254)` |
+
+So 1.1 reported both conditions as 253, 1.3 separated them — which is
+precisely why the 1.3 manual carries a distinct 254 with a distinct gloss,
+and why the 1980 manual's 254 means something else entirely. The
+1.1 → 1.3 code-buffer headroom also grew from 1300 to 2000 bytes.
+
+### 28f. What is left
+
+`COMPILE`, `COMPILERESIDENT` and `COMPILEHOLDINGROUTINE` (`PASCALCO.25`,
+`.28`, `.29`) are the compilation driver and two nested wrappers whose
+only job is to hold phase segments in memory across it:
+
+```
+  PASCALCO.1:  if SWAPPING then COMPILE else COMPILERESIDENT
+  COMPILERESIDENT:      load 8,9,19,11,12,13,14,15
+                        if SWAPMORE then COMPILE else COMPILEHOLDINGROUTINE
+                        unload them in reverse
+  COMPILEHOLDINGROUTINE:  load 10; COMPILE; unload 10
+```
+
+The load order — `DECLARAT, BODYPART, NUMSTRIN, STATEMEN, CASESTAT,
+FORSTATE, BODY1, BODY3`, with `ROUTINE` held back — is a fact about the
+source text and goes straight into the reconstruction. `{$S+}` swaps
+everything, `{$S++}` swaps `ROUTINE` as well.
 
 ## 16. Open questions
 
