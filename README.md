@@ -125,7 +125,7 @@ It also corrected fifty-six names. `EMIT`/`EMITWORD` are `GENBYTE`/
 `WRITELINKERINFO` — a name no amount of staring at the binary would have
 produced. `probe_identifiers.py` now reads the II.0 source rather than a
 hand-kept list, and requires every name over eight characters to appear
-there; all 53 do.
+there; all 65 do.
 
 It also settled the rule the reconstruction's `VAR` block has to obey
 (finding 33). `VARDECLARATION` collects a declaration's identifiers by
@@ -138,9 +138,30 @@ the eight symbol-set globals were each assigned by the error its guard
 raises (finding 26c) and come out in exactly reverse order, all eight.
 
 `tools/vardecl.py` lays II.0's `VAR` block out under that rule and aligns
-it against Apple's globals: 67 matched names, differing only by a drift
+it against Apple's globals: 71 matched names, differing only by a drift
 that never decreases through the scalar region. The first sixteen words of
 Apple's global area are II.0's, in order.
+
+That alignment now predicts rather than describes. Reading `DECLARAT.10`
+against II.0's `USESDECLARATION` line for line named four more globals —
+`TEST`, `USING`, `USINGLIST` and `MODPTR` — and each landed on exactly the
+offset the drift column had already reserved for it, in both releases
+(finding 34c).
+
+**`DECLARAT` is the first phase segment finished: twenty of twenty
+procedures named** (finding 34), at identical numbers in 1.1 and 1.3.
+Seventeen are II.0's, matched jointly on three things the binary fixes
+and the source fixes independently — parameter size, lexical nesting and
+call set. `PACKABLE` is the only procedure that both recurses and calls
+`GETBOUNDS`; `PROCDECLARATION` the only caller of `NEWSEG` and `BUMPSEG`,
+which is what `segment procedure` needs; and `TYPEDECLARATION` and
+`VARDECLARATION`, which have the *same* call set, are separated by finding
+33's own mechanism — only `VARDECLARATION` stores into `LC`. The other
+three are Apple's own factorings with no counterpart in II.0, the clearest
+being a twenty-one-byte procedure whose whole body is
+`if not (sy in fsys) then begin error(6); skip(fsys) end` — written inline
+at twenty-two sites in II.0, and the only procedure of that shape on
+either disk.
 
 Inside the phase segments, the statement grammar and the expression chain
 are recovered (finding 31). Each of `STATEMEN`'s seven statement parsers

@@ -104,6 +104,23 @@ Done, and reproducible via `python tools/build_all.py`:
    `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
    procedure at the wrong depth changes the code bytes.
 
+   Finding 34 closes `DECLARAT`, the first whole phase segment: **twenty of
+   twenty named**, at identical numbers in both releases. The lever there
+   is the one to reuse on `ROUTINE`, `UNITPART` and the rest of
+   `BODYPART` — II.0 fixes each procedure's parameters, its declaration
+   nesting and the calls it makes, the codefile fixes all three
+   independently, and demanding that they agree *jointly* leaves no room
+   to shuffle names between procedures. Where two candidates share a call
+   set, look for a global one writes and the other does not:
+   `TYPEDECLARATION` and `VARDECLARATION` differ only in that
+   `VARDECLARATION` stores into `LC`.
+
+   Three of `DECLARAT`'s twenty are Apple's own factorings with no
+   counterpart in II.0, so expect the same elsewhere: a procedure that
+   matches nothing in the source is not a failure of the method, it is
+   Apple saving space, and it gets a spelling of ours of eight characters
+   or fewer.
+
    What is left of this track is the phase segments beyond those three. The
    method that worked twice now: find code that builds a structure out of
    constants and then *names* it, and read outwards. For the emitters the
@@ -118,8 +135,11 @@ Done, and reproducible via `python tools/build_all.py`:
    **Well advanced** (finding 33). `tools/vardecl.py` is a `build_all.py`
    step: it lays out II.0's `VAR` block under the compiler's own
    allocation rule and aligns it by name against Apple's globals, into
-   `analysis/global_map/vardecl-ii0.txt`. 67 names matched, drift
-   non-decreasing through the scalar region. **The rule that makes this
+   `analysis/global_map/vardecl-ii0.txt`. 71 names matched, drift
+   non-decreasing through the scalar region — and the alignment now
+   *predicts*: finding 34c read four globals (`TEST`, `USING`,
+   `USINGLIST`, `MODPTR`) off `USESDECLARATION` and all four landed on the
+   offset the drift column had already named, in both releases. **The rule that makes this
    work at all: a `VAR` declaration allocates its identifiers backwards.**
    What is left is the unnamed stretches between the matched runs, and the
    two words Apple appears to have removed around `DISPLAY`/`PFNUMOF`.

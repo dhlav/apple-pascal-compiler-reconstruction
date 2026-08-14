@@ -2587,6 +2587,126 @@ drift steps *down* by 2: Apple removed something there, most likely
 `PFNUMOF`, the non-resident-procedure list, whose six entries are for a
 runtime Apple does not have. Not yet confirmed.
 
+## 34. The declaration part, all twenty procedures
+
+*Confidence: VERIFIED BINARY FACT for the shapes; STRONG INFERENCE for the
+seventeen II.0 spellings; SPECULATION for the four that are ours.
+`tools/probes/probe_declarat.py`.*
+
+### 34a. Seventeen of the twenty are II.0's, and the fit is joint
+
+`decpart.a/b/c.text` declares `DECLARATIONPART` and seventeen procedures
+nested inside it. Apple's `DECLARAT` has twenty, at **identical numbers in
+both releases**. Matching the seventeen is not a matter of picking
+plausible labels: the codefile fixes each procedure's parameter size, its
+lexical level and its call set, and II.0's source fixes all three
+independently. They agree everywhere, at once:
+
+```
+  #   name                param  lex   what pins it
+  1   DECLARATIONPART       8     1    setofsys; calls the six parsers
+  2   CHECKSYM              8     2    OURS -- see 34b
+  3   TYP                  12     2    setofsys + 2 var params; recursive
+  4   SIMPLETYPE           12     3    same signature; called by TYP alone
+  5   PACKABLE              6     3    recursive AND calls GETBOUNDS
+  6   FIELDLIST            10     3    setofsys + var stp
+  7   ALLOCATE              2     4    the only other caller of PACKABLE
+  8   VARIANTLIST           0     4    calls FIELDLIST back
+  9   POINTERTYPE           0     3    SEARCHID + ERROR, never TYP
+ 10   USESDECLARATION       0     2    514 bytes of locals -- see 34c
+ 11   ONEUNIT               2     3    OURS -- see 34b
+ 12   GETTEXT               2     4    the only file I/O in the segment
+ 13   FINDSEG               4     5    OURS
+ 14   SEGSRCH             12/16   6    OURS
+ 15   LABELDECLARATION      0     2    no TYP, no ENTERID
+ 16   CONSTDECLARATION      0     2    the only caller of CONSTANT
+ 17   TYPEDECLARATION       0     2    TYP + ENTERID, never stores LC
+ 18   VARDECLARATION        0     2    TYP + ENTERID, and stores LC
+ 19   PROCDECLARATION       4     2    symbol + boolean; NEWSEG, BUMPSEG
+ 20   PARAMETERLIST        12     3    called by PROCDECLARATION alone
+```
+
+The pairs that a weaker method would confuse are separated by evidence
+that cannot be traded: `ALLOCATE` calls `PACKABLE` and `PACKABLE` does not
+call `ALLOCATE`; `CONSTDECLARATION` calls `CONSTANT` and `TYPEDECLARATION`
+does not; and `TYPEDECLARATION` and `VARDECLARATION`, which have the *same*
+call set, are told apart by finding 33's own mechanism — `VARDECLARATION`
+is the one that stores into `LC`, the data location counter, because it is
+the one that assigns addresses. `PROCDECLARATION` is the only caller of
+`NEWSEG` and `BUMPSEG`, which is exactly what `segment procedure` needs.
+
+Every leg of the probe was mutation-tested and every leg fails when
+mutated.
+
+### 34b. Four procedures are Apple's, not II.0's
+
+`DECLARAT.2` is twenty-one bytes long, takes a `setofsys`, has no locals,
+and its whole body is
+
+```pascal
+if not (sy in fsys) then begin error(6); skip(fsys) end
+```
+
+II.0 writes that inline at twenty-two sites and never factors it. Apple
+did, and the factoring is real: it is the **only procedure of that shape on
+either disk** — the sole one taking eight bytes of parameters, under forty
+bytes long, calling `ERROR` and `SKIP` and nothing else. The spelling
+`CHECKSYM` is ours, chosen to sit beside II.0's own `CHECKEND`.
+
+`ONEUNIT`, `FINDSEG` and `SEGSRCH` are likewise Apple's. `ONEUNIT` is the
+`else` arm of `USESDECLARATION`'s `repeat` loop — one unit of the `uses`
+list — lifted into a procedure that takes `ID` by reference; its first
+instruction is a `MOV 4` of that address into local 2, which is II.0's
+`LNAME := ID`. `FINDSEG` and `SEGSRCH` are the library segment-dictionary
+search that II.0 writes inline inside `GETTEXT`; `SEGSRCH` walks
+`SEGDICT.SEGNAME[0..MAXSEG]` reached three lexical levels up, with the
+`i <= 15` bound compiled in. All four spellings are ours and all four are
+eight characters or fewer, so nothing about them can collide.
+
+### 34c. `USESDECLARATION`, line for line, and four globals it names
+
+`DECLARAT.10` reproduces II.0's `USESDECLARATION` in order:
+
+```
+  LDO 77 > 1                 -> ERROR(189)        level > 1
+  INMODULE and not ININTERFACE -> ERROR(192)      decpart.b.text:95
+  if not USING then USINGLIST := nil               :97
+  sy <> ident -> ERROR(2)                          :100
+  walk USINGLIST for ID, else ERROR(188)           :101-106
+  ...                        -> CLP 11 (ONEUNIT)   the else arm
+  INSYMBOL; TEST := sy <> comma                    :146-147
+  sy <> semicolon -> ERROR(20)                     :149
+  until TEST
+  if sy = semicolon then INSYMBOL else ERROR(14)   :155
+  if not USING then ... CLOSE(LIBRARY); LIBNOTOPEN :157-162
+```
+
+Its 514 bytes of locals are II.0's `SEGDICT`: a 512-byte record of
+`DANDC`, `SEGNAME`, `SEGKIND`, `TEXTADDR` and `FILLER`, which is exactly
+one block, `BLOCKREAD` from `SYSTEM.LIBRARY`. `SEGSRCH` reaches it at
+offsets 34 and 98 — `SEGNAME` at 2+32, `SEGKIND` at 2+32+64 — three levels
+up. II.0's `MAGIC` parameter is gone: Apple has no implicit
+`uses turtlegraphics`.
+
+Reading that against the source names four globals, and each one lands
+**exactly** where finding 33's drift column predicted before the code was
+read:
+
+| global (1.1) | name | II.0 offset | predicted drift | 1.3 |
+|---|---|---|---|---|
+| 11 | `TEST` | 11 | +0 | 11 |
+| 36 | `USING` | 35 | +1 | 37 |
+| 63 | `USINGLIST` | 59 | +4 | 66 |
+| 68 | `MODPTR` | 64 | +4 | 71 |
+
+That is four falsifiable predictions from the alignment, all four
+confirmed by the p-code, and the 1.3 offsets confirmed independently in
+1.3's own `DECLARAT.10` and `DECLARAT.12`. `TEST` is the strongest: the
+first sixteen words carry drift 0, so the alignment said global 11 and
+nothing else, and `SRO 11` immediately after `TEST := sy <> comma` is what
+the binary does — in *both* releases, where it does not move.
+
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

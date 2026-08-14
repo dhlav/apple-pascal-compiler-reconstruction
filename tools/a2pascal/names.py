@@ -191,6 +191,83 @@ CODEGEN: dict[tuple[str, int], str] = {
                                        # in JTABLE and a negative index
 }
 
+# --- finding 34: the declaration part -------------------------------------
+#
+# DECLARAT has twenty procedures in both releases, at the same numbers.
+# Seventeen of them are UCSD II.0's, matched by parameter size, lexical
+# nesting and call set (decpart.a/b/c.text); the other three are Apple's
+# own factorings and carry spellings of ours, marked below.
+#
+# The lexical skeleton is II.0's exactly:
+#
+#     DECLARATIONPART(FSYS)                       lex 1
+#       CHECKSYM(FSYS)                            lex 2   Apple's
+#       TYP(FSYS; var FSP; var FSIZE)             lex 2
+#         SIMPLETYPE(FSYS; var FSP; var FSIZE)    lex 3
+#         PACKABLE(FSP): boolean                  lex 3
+#         FIELDLIST(FSYS; var FRECVAR)            lex 3
+#           ALLOCATE(FCP)                         lex 4
+#           VARIANTLIST                           lex 4
+#         POINTERTYPE                             lex 3
+#       USESDECLARATION                           lex 2
+#         ONEUNIT(var LNAME)                      lex 3   Apple's
+#           GETTEXT(var FOUND)                    lex 4
+#             FINDSEG(...)                        lex 5   Apple's
+#               SEGSRCH(...)                      lex 6   Apple's
+#       LABELDECLARATION                          lex 2
+#       CONSTDECLARATION                          lex 2
+#       TYPEDECLARATION                           lex 2
+#       VARDECLARATION                            lex 2
+#       PROCDECLARATION(FSY; SEGDEC)              lex 2
+#         PARAMETERLIST(FSY; var FPAR; FCP)       lex 3
+DECLARATIONS: dict[int, str] = {
+    2:  "CHECKSYM",     # OURS. `if not (sy in fsys) then begin error(6);
+                        # skip(fsys) end`, which II.0 writes inline at
+                        # twenty-two sites. Twenty-one bytes, no locals,
+                        # calls ERROR and SKIP and nothing else; the only
+                        # procedure of that shape on either disk.
+    3:  "TYP",          # 12 bytes of parameters; recursive; called by
+                        # FIELDLIST, TYPEDECLARATION and VARDECLARATION
+    4:  "SIMPLETYPE",   # 12 bytes; called by TYP alone
+    5:  "PACKABLE",     # boolean function, recursive, and the only caller
+                        # of GETBOUNDS in the segment -- II.0's PACKABLE
+                        # calls GETBOUNDS twice and itself once
+    6:  "FIELDLIST",    # setofsys + var stp = 10 bytes; calls TYP,
+                        # ALLOCATE and VARIANTLIST
+    7:  "ALLOCATE",     # (FCP: CTP); the only caller of PACKABLE besides
+                        # PACKABLE itself
+    8:  "VARIANTLIST",  # no parameters, calls FIELDLIST back
+    9:  "POINTERTYPE",  # no parameters, called by TYP alone
+    10: "USESDECLARATION",  # 514 bytes of locals: SEGDICT, the 512-byte
+                        # library segment dictionary it BLOCKREADs into.
+                        # II.0's MAGIC parameter is gone -- Apple has no
+                        # implicit `uses turtlegraphics`.
+    11: "ONEUNIT",      # OURS. Apple factored the else-arm of the repeat
+                        # loop -- one unit of the uses list -- into a
+                        # procedure taking ID by reference. Its first act
+                        # is `MOV 4` of that address into local 2, II.0's
+                        # `LNAME := ID`, and it then writes
+                        # `<name> [nnnnn words]` exactly as II.0 does.
+    12: "GETTEXT",      # (var FOUND); the only file I/O in the segment --
+                        # RESET, CLOSE and BLOCKREAD of LIBRARY
+    13: "FINDSEG",      # OURS. Calls SEGSRCH twice with different segment
+                        # kinds and then sets up the text address.
+    14: "SEGSRCH",      # OURS. `while (i <= MAXSEG) and not found` over
+                        # SEGDICT.SEGNAME, with SEGDICT reached three lex
+                        # levels up; II.0 writes this loop inline in
+                        # GETTEXT.
+    15: "LABELDECLARATION",  # no TYP, no ENTERID: labels only
+    16: "CONSTDECLARATION",  # the only caller of CONSTANT here
+    17: "TYPEDECLARATION",   # calls TYP and ENTERID
+    18: "VARDECLARATION",    # calls TYP and ENTERID, and is the larger of
+                        # the two -- it also runs the address-assignment
+                        # walk of finding 33
+    19: "PROCDECLARATION",   # (FSY: symbol; SEGDEC: boolean) = 4 bytes;
+                        # the only caller of BUMPSEG and NEWSEG here, which
+                        # is what `segment procedure` needs
+    20: "PARAMETERLIST",     # 12 bytes; called by PROCDECLARATION alone
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
@@ -198,6 +275,7 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | {("BODYPART", n): s for n, s in EXPRESSIONS.items()}
            | STATEMENTS
            | CODEGEN
+           | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
            | {("COMPINIT", 7): "ENTSPCPROCS"},
     # BODYPART keeps these numbers in 1.3 except 27, which becomes 28; the
     # correspondence table matches 3..6 and 25 to themselves.
@@ -211,6 +289,7 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
               for n, s in EXPRESSIONS.items()}
            | STATEMENTS
            | CODEGEN
+           | {("DECLARAT", n): s for n, s in DECLARATIONS.items()}
            | {("COMPINIT", 7): "ENTSPCPROCS"},
 }
 
@@ -351,6 +430,17 @@ GLOBALS_11: dict[int, str] = {
     61: "REALPTR",      # REAL      size 2 words
     66: "OUTPUTPTR",    # the OUTPUT file's identifier record
     67: "INPUTPTR",     # the INPUT file's identifier record
+
+    # --- finding 34c: four globals the II.0 alignment predicted -------------
+    # Each was placed by reading DECLARAT.10:USESDECLARATION against II.0's
+    # source line for line, and each lands exactly where the drift column of
+    # analysis/global_map/vardecl-ii0.txt said it would.
+    11:  "TEST",        # II.0 11, drift +0 -- the parsers' loop flag
+    36:  "USING",       # II.0 35, drift +1 -- inside a `uses` of a unit that
+                        # the enclosing program already listed
+    63:  "USINGLIST",   # II.0 59, drift +4 -- the units named so far
+    68:  "MODPTR",      # II.0 64, drift +4 -- the units already compiled;
+                        # GETTEXT walks it looking for LNAME
 
     # Compiler-option state (finding 23). COMPOPTI.1 switches on the
     # upper-cased option letter, so each of these is tied to its letter by
@@ -510,6 +600,13 @@ GLOBALS_13: dict[int, str] = {
     64: "REALPTR",
     69: "OUTPUTPTR",
     70: "INPUTPTR",
+
+    # Finding 34c. TEST does not move; the other three carry the same +1/+3
+    # shift as their neighbours, and 1.3's DECLARAT.10/.12 confirm all four.
+    11:  "TEST",
+    37:  "USING",
+    66:  "USINGLIST",
+    71:  "MODPTR",
 
     # Finding 23, carried across by the correspondence table -- every one of
     # these pairs is a 1.00-similarity match, and the 1.3 $U- arm sets the
