@@ -1703,7 +1703,7 @@ source characters against `{48..57}` and `COMPINIT.7` indexes its
 standard-identifier table with two more sets, and naming *those* members
 would be actively wrong. The compiler now reads as, for instance,
 
-    until (SY in (STATBEGSYS + {endsy,unitsy,implementationsy}));
+    until (SY in (STATBEGSYS + {endsy,unitsy,implsy}));
 
 Named with them: `PASCALCO.14:SKIP`, whose entire body is
 `while not (SY in fsys) do INSYMBOL` — Pascal-P's `skip`, and the routine
@@ -2012,6 +2012,133 @@ The load order — `DECLARAT, BODYPART, NUMSTRIN, STATEMEN, CASESTAT,
 FORSTATE, BODY1, BODY3`, with `ROUTINE` held back — is a fact about the
 source text and goes straight into the reconstruction. `{$S+}` swaps
 everything, `{$S++}` swaps `ROUTINE` as well.
+
+## 29. Eight significant characters, and four names that were impossible
+
+A constraint that had been overlooked, and it bites the *reconstruction*
+rather than the analysis: Apple Pascal keeps only the first eight
+significant characters of an identifier. Two names agreeing in eight
+characters are one identifier, so a naming registry that ignores this
+produces source the compiler cannot compile — or, worse, compiles wrongly.
+
+### 29a. The rule, from the manual and from the 6502
+
+VERIFIED SOURCE FACT. The 1.3 manual's *Identifiers* section:
+
+> An identifier must begin with a letter. After the initial letter, it may
+> contain any number of letters, digits, or underscore characters ...
+> **Only the first 8 characters (ignoring underscores) are significant.**
+> Capital and lowercase letters are equivalent.
+>
+> Thus the following six identifiers are equivalent and interchangeable:
+> `MYNUMBER  mynumber  MY_NUMBER  My_Number  MY_NUMBER_VALUE ...`
+
+and it states the two consequences separately:
+
+> If a new identifier is the same as an Apple Pascal **reserved word**, the
+> Compiler will refuse to accept it.
+>
+> If a new identifier is the same as a **predeclared** identifier, the
+> Compiler will accept it but the original Pascal identifier will become
+> unavailable within the scope of the new meaning.
+
+VERIFIED BINARY FACT. 1.3's native `IDSEARCH` implements all of it in
+sixteen instructions. It blank-fills an eight-byte buffer at `$88`
+(`LDA #$20 / LDX #$07 / STA $88,X`), then:
+
+```
+  1244 CMP #$5F     ; '_'
+  1246 BNE $1255    ;   anything else non-alphanumeric ends the identifier
+  1248 BEQ $1229    ;   underscore -> next character, X *not* incremented
+  124A SBC #$20     ; lowercase -> uppercase
+  124C INX
+  124D CPX #$08
+  124F BCS $1229    ; already stored 8 -> consume the character, discard it
+  1251 STA $88,X
+```
+
+Underscores are skipped rather than counted, case is folded, and the ninth
+and later characters are read and thrown away. That eight-byte buffer is
+then what the reserved-word lookup compares against (`LDA $88 / ASL / TAY`
+into a per-initial-letter bucket table, then `CMP $88,X`), so **an
+identifier whose first eight significant characters spell a reserved word
+*is* that reserved word.** Finding 22's symbol-table entry agrees from the
+other side: the name occupies words 0–3, and there is nowhere to put a
+ninth character.
+
+### 29b. Four symbol names the original source cannot have used
+
+Finding 26a recovered the `SYMBOL` enumeration and spelled it with
+Pascal-P's convention, one `<word>sy` per reserved word. For four of
+Apple's reserved words that convention is unusable:
+
+| Pascal-P spelling | folds to | which is |
+|---|---|---|
+| `interfacesy` | `INTERFAC` | the reserved word INTERFACE |
+| `implementationsy` | `IMPLEMEN` | the reserved word IMPLEMENTATION |
+| `externalsy` | `EXTERNAL` | the reserved word EXTERNAL |
+| `otherwisesy` | `OTHERWIS` | the reserved word OTHERWISE |
+
+Writing `externalsy` in Apple Pascal source does not declare an
+identifier; it scans as `EXTERNAL`. So **the original source used
+something else for these four**, and that much is forced. What it used is
+not recoverable — enumeration constant names leave no trace in the
+codefile — so the four spellings now in `names.py` are SPECULATION:
+`intersy`, `implsy`, `externsy`, `otherwsy`. Abbreviating is in keeping
+with the convention rather than a departure from it: Pascal-P already
+writes `progsy`, `procsy` and `funcsy` rather than spelling out PROGRAM,
+PROCEDURE and FUNCTION.
+
+The other eleven long names from Pascal-P survive intact, which is worth
+noting because it need not have been so: `constbegsys`, `simptypebegsys`,
+`typebegsys`, `typedels`, `blockbegsys`, `selectsys`, `facbegsys` and
+`statbegsys` fold to `CONSTBEG`, `SIMPTYPE`, `TYPEBEGS`, `TYPEDELS`,
+`BLOCKBEG`, `SELECTSY`, `FACBEGSY` and `STATBEGS` — eight distinct
+identifiers. Apple could keep Zurich's names for the symbol sets, and had
+to invent for the symbols.
+
+### 29c. `STRING` was the wrong name for `PASCALCO.15`
+
+Finding 22 named `PASCALCO.15` after Pascal-P's `string(fsp): boolean`.
+Apple cannot have: `STRING` is predeclared, and by the manual's second
+rule declaring a function of that name takes the *type* away for the rest
+of the program. The compiler needs the type — `LIBNAME` is a 21-word
+aggregate passed straight to `FOPEN`, and `CODECOMMENT` is `NEW`'d at 41
+words and then filled to 80 characters, i.e. `string[40]` and
+`^string[80]`. Renamed **`ISSTRING`**.
+
+The probe caught two more of the same kind the moment it was written.
+1.3 adds `BYTESTREAM` and `WORDSTREAM` as predeclared types (Table F-2B),
+and the globals holding their type descriptors had been named
+`BYTESTREAMPTR` and `WORDSTREAMPTR` — which fold to `BYTESTRE` and
+`WORDSTRE`, i.e. to the type names themselves. Renamed `BYTEPTR` and
+`WORDPTR`, matching `INTPTR` and `REALPTR`.
+
+Nothing else in the registry shadows a predeclared identifier. Note that
+`IDSEARCH` and `TREESEARCH` do *not* appear in Table F-2B — they are CSPs
+the compiler emits, not names a program can see — so 1.3 declaring its two
+native routines under those names shadows nothing.
+
+### 29d. The rule is now enforced, not observed
+
+`tools/probes/probe_identifiers.py` folds every name in the registry —
+globals, procedures, and both enumerations, which in a single Pascal
+program share the outermost scope — and fails if any two are the same
+identifier, if any lands on one of the 42 reserved words read out of the
+native table, or if any lands on one of the 66 predeclared identifiers
+transcribed from Table F-2B. It also lists every name over eight
+characters, separating the 21 whose spelling is forced by evidence from
+the 24 that are ours; those are unambiguous but the listing keeps them
+visible. 176 identifiers in 1.1, 180 in 1.3, all distinct.
+
+Four of our own invented names were renamed because their truncation was
+misleading rather than merely ugly: `COMPILERESIDENT` folded to
+`COMPILER`, which reads as something else entirely, and
+`COMPILEHOLDINGROUTINE` to `COMPILEH`, which reads as nothing. They are
+now `HOLDMOST` and `HOLDROUT`, with `SEGINFO` and `NEWPROC` for
+`MAKESEGINFO` and `ALLOCPROCNUM`. **Working rule from here: a name we
+invent is eight significant characters or fewer, so that what we write is
+what the compiler sees.**
 
 ## 16. Open questions
 

@@ -101,8 +101,22 @@ the error its guard raises against the vendor's error list, so the
 listings now read
 
 ```
-  until (SY in (STATBEGSYS + {endsy,unitsy,implementationsy}));
+  until (SY in (STATBEGSYS + {endsy,unitsy,implsy}));
 ```
+
+Every recovered name has to survive a constraint the reconstruction cannot
+ignore: **Apple Pascal keeps only the first eight significant characters**
+of an identifier, ignoring underscores and folding case — implemented
+literally in 1.3's native `IDSEARCH`, which fills an eight-byte buffer and
+discards the ninth character onward. Two names alike in eight characters
+are one identifier. That killed four of finding 26's spellings: Pascal-P's
+convention would give `interfacesy`, `implementationsy`, `externalsy` and
+`otherwisesy`, each of which folds onto the reserved word it names and so
+scans as that reserved word. It also renamed `PASCALCO.15` off `STRING`,
+which is predeclared and whose type the compiler itself needs.
+`tools/probes/probe_identifiers.py` now enforces the rule against every
+name in the registry, including the 42 reserved words and 66 predeclared
+identifiers (finding 29).
 
 Its two central data structures are recovered field by field from the code
 that initialises them: the type descriptor and the symbol-table entry,

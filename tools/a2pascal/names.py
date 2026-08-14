@@ -25,7 +25,11 @@ PASCALCO_11: dict[int, str] = {
     7:  "SEARCHSECTION", # single-scope identifier search (finding 12)
     8:  "SEARCHID",      # full symbol-table search (finding 12)
     9:  "GETBOUNDS",     # (fsp; var fmin, fmax)              finding 22
-    15: "STRING",        # is fsp a packed array of char?     finding 22
+    15: "ISSTRING",      # is fsp a packed array of char?     finding 22
+                         # Pascal-P calls this `string`, which Apple could
+                         # not: STRING is predeclared, and shadowing it would
+                         # take the *type* away from LIBNAME and CODECOMMENT.
+                         # Finding 29.
     16: "STRINGTYPE",    # is fsp a *declared* STRING?        finding 22
     17: "LONGSIZE",      # words for an n-digit long integer  finding 22
     12: "NEXTLINE",      # advance LINENUMBER and CHINDEX, echo the progress
@@ -52,7 +56,7 @@ PASCALCO_11: dict[int, str] = {
     22: "FLUSHBUFFER",   # code-buffer flush (finding 12)
     27: "ENTERUNDECL",   # undeclared-identifier reporter (finding 12)
     # --- finding 28 ---------------------------------------------------------
-    13: "MAKESEGINFO",   # build a segment dictionary's SEGINFO word: segment
+    13: "SEGINFO",       # build a segment dictionary's SEGINFO word: segment
                          # number in bits 0-7, machine type in 8-11 (2 =
                          # p-code LSB, or 1 = MSB under {$F+}), 0 in bit 12,
                          # version 2 in 13-15. The layout matches the one
@@ -63,11 +67,11 @@ PASCALCO_11: dict[int, str] = {
                          # and reset LCBASE. See tools/probes/probe_segtail.py
     25: "COMPILE",       # stamp the start time, call BLOCK with the outermost
                          # fsys, then FINISHUP.1 -- the whole compilation
-    28: "COMPILERESIDENT",   # hold DECLARAT, BODYPART, NUMSTRIN, STATEMEN,
+    28: "HOLDMOST",      # hold DECLARAT, BODYPART, NUMSTRIN, STATEMEN,
                          # CASESTAT, FORSTATE, BODY1 and BODY3 in memory
                          # across the call to COMPILE. PASCALCO.1 takes this
                          # path unless {$S+}.
-    29: "COMPILEHOLDINGROUTINE",  # ...and ROUTINE as well, when the second
+    29: "HOLDROUT",      # ...and ROUTINE as well, when the second
                          # swapping flag {$S++} is off
 }
 
@@ -106,7 +110,7 @@ BODYPART_EMIT: dict[int, str] = {
 # These three keep their numbers across releases (correspondence table:
 # BODYPART.13 -> .13, BODYPART.16 -> .16, BODY3.1 -> BODY3.1).
 CODEGEN: dict[tuple[str, int], str] = {
-    ("BODYPART", 13): "ALLOCPROCNUM",  # assign the next procedure number to
+    ("BODYPART", 13): "NEWPROC",       # assign the next procedure number to
                                        # an identifier record; ERROR(251) at
                                        # 149. Clears its PROCDICT slot.
     ("BODYPART", 16): "EMITJUMP",      # (op, target) -- short displacement if
@@ -176,9 +180,18 @@ SYMBOLS: dict[int, str] = {
     44: "arraysy",      45: "recordsy",     46: "filesy",
     47: "othersy",      # anything illegal; INSYMBOL then raises error 400
     48: "longconst",    # INTEGER[n] literal -- an Apple/UCSD extension
-    49: "usessy",       50: "unitsy",       51: "interfacesy",
-    52: "implementationsy",
-    53: "externalsy",   54: "otherwisesy",  # OTHERWISE is 1.3-only
+    49: "usessy",       50: "unitsy",
+    # These four cannot follow Pascal-P's `<word>sy` convention, because
+    # Apple Pascal keeps only the first eight significant characters and
+    # `interfacesy` etc. would then *be* the reserved words INTERFACE,
+    # IMPLEMENTATION, EXTERNAL and OTHERWISE -- unwritable as identifiers.
+    # Abbreviating is in keeping with the convention rather than against
+    # it: Pascal-P already writes `progsy`, `procsy` and `funcsy` for
+    # PROGRAM, PROCEDURE and FUNCTION. The four spellings below are
+    # SPECULATION; that the originals were *not* the unabbreviated forms
+    # is a VERIFIED BINARY FACT. See finding 29.
+    51: "intersy",      52: "implsy",
+    53: "externsy",     54: "otherwsy",     # OTHERWISE is 1.3-only
 }
 
 # `OP` qualifies `mulop`/`addop`/`relop`, and is 15 for everything else.
@@ -374,8 +387,12 @@ GLOBALS_13: dict[int, str] = {
 
     55: "STRINGPTR",
     56: "INTERPTR",
-    57: "BYTESTREAMPTR",   # 1.3 only -- a packed char array that is not a
-    58: "WORDSTREAMPTR",   # 1.3 only -- STRING, and an unpacked integer one
+    # 1.3 only: a packed char array that is not a STRING, and an unpacked
+    # integer one. Not BYTESTREAMPTR/WORDSTREAMPTR -- folded to eight
+    # significant characters those are the predeclared type names
+    # themselves (finding 29). Shortened to match INTPTR and REALPTR.
+    57: "BYTEPTR",
+    58: "WORDPTR",
     59: "NILPTR",
     60: "TEXTPTR",
     61: "BOOLPTR",

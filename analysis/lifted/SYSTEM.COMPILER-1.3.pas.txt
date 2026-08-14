@@ -18,7 +18,7 @@ procedure PASCALCO.1(args 2 words);  { locals 1355 words, lex 0 }
   FINIT(@INFOFILE, @G965, -(1));
   COMPINIT.1();
   if not (SWAPPING) then begin
-    PASCALCO.30:COMPILERESIDENT();
+    PASCALCO.30:HOLDMOST();
   end else begin
     PASCALCO.27:COMPILE();
   end;
@@ -613,7 +613,7 @@ procedure PASCALCO.14:NEXTLINE(args 0 words);  { locals 0 words, lex 1 }
     LISTCOUNT := CODEINX;
   end;
 
-function PASCALCO.15:MAKESEGINFO(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
+function PASCALCO.15:SEGINFO(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
   L5 := 0;
   { unmodelled packed store of 2 }
   L4 := (@L5^[0] <> 0);
@@ -640,7 +640,7 @@ procedure PASCALCO.16:SKIP(args 4 words);  { locals 0 words, lex 1 }
     PASCALCO.8:INSYMBOL();
   end;
 
-function PASCALCO.17:STRING(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+function PASCALCO.17:ISSTRING(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
   if (L3 <> nil) then begin
     if (L3^.f1 = 5) then begin
@@ -650,7 +650,7 @@ function PASCALCO.17:STRING(args 1 words) : <1 word result>;  { locals 0 words, 
 
 function PASCALCO.18:STRINGTYPE(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
-  if PASCALCO.17:STRING(L3) then begin
+  if PASCALCO.17:ISSTRING(L3) then begin
     L1 := L3^.f7;
   end;
 
@@ -824,7 +824,7 @@ L0BF1:
           L7 := (((L4^.f6 = L3^.f6) and (L4^.f5 = L3^.f5)) and (L4^.f7 = L3^.f7));
         end;
         if L7 then begin
-          if ((((not (PASCALCO.18:STRINGTYPE(L4)) and (L4 <> BYTESTREAMPTR)) and (L3 <> BYTESTREAMPTR)) and (L4 <> WORDSTREAMPTR)) and (L3 <> WORDSTREAMPTR)) then begin
+          if ((((not (PASCALCO.18:STRINGTYPE(L4)) and (L4 <> BYTEPTR)) and (L3 <> BYTEPTR)) and (L4 <> WORDPTR)) and (L3 <> WORDPTR)) then begin
             L7 := (L4^ = L3^);
           end;
         end;
@@ -1086,13 +1086,13 @@ function PASCALCO.29:ENTERUNDECL(args 1 words) : <1 word result>;  { locals 1 wo
   end;
   { paths disagree on stack depth here }
 
-procedure PASCALCO.30:COMPILERESIDENT(args 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.30:HOLDMOST(args 0 words);  { locals 0 words, lex 1 }
   goto L115C;
 L1138:
   if SWAPMORE then begin
     PASCALCO.27:COMPILE();
   end else begin
-    PASCALCO.31:COMPILEHOLDINGROUTINE();
+    PASCALCO.31:HOLDROUT();
   end;
   CSP22(15);
   CSP22(14);
@@ -1115,7 +1115,7 @@ L115C:
   goto L1138;
 L1176:
 
-procedure PASCALCO.31:COMPILEHOLDINGROUTINE(args 0 words);  { locals 0 words, lex 2 }
+procedure PASCALCO.31:HOLDROUT(args 0 words);  { locals 0 words, lex 2 }
   goto L1123;
 L111C:
   PASCALCO.27:COMPILE();
@@ -1348,8 +1348,8 @@ procedure COMPINIT.2(args 0 words);  { locals 2 words, lex 2 }
   (L2+2)^ := INTPTR;
   (L2+4)^ := 0;
   (L2+3)^ := 32767;
-  CSP1(@BYTESTREAMPTR, 8);
-  L2 := BYTESTREAMPTR;
+  CSP1(@BYTEPTR, 8);
+  L2 := BYTEPTR;
   (L2+1)^ := 5;
   L2^ := 1;
   (L2+4)^ := 1;
@@ -1358,8 +1358,8 @@ procedure COMPINIT.2(args 0 words);  { locals 2 words, lex 2 }
   (L2+5)^ := 8;
   (L2+6)^ := 2;
   (L2+3)^ := CHARPTR;
-  CSP1(@WORDSTREAMPTR, 5);
-  L2 := WORDSTREAMPTR;
+  CSP1(@WORDPTR, 5);
+  L2 := WORDPTR;
   (L2+1)^ := 5;
   L2^ := 1;
   (L2+4)^ := 0;
@@ -1471,14 +1471,14 @@ procedure COMPINIT.3(args 0 words);  { locals 5 words, lex 2 }
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'BYTESTRE', 4 words);
-  (L4+6)^ := BYTESTREAMPTR;
+  (L4+6)^ := BYTEPTR;
   (L4+7)^ := nil;
   (L4+8)^ := 0;
   PASCALCO.7:ENTERID(L2);
   CSP1(@L2, 9);
   L4 := L2;
   move(L4, @'WORDSTRE', 4 words);
-  (L4+6)^ := WORDSTREAMPTR;
+  (L4+6)^ := WORDPTR;
   (L4+7)^ := nil;
   (L4+8)^ := 0;
   PASCALCO.7:ENTERID(L2);
@@ -1867,14 +1867,14 @@ procedure DECLARAT.1(args 4 words);  { locals 11 words, lex 1 }
       until not ((SY in {procsy,funcsy,progsy}));
     end;
     if (SY <> 19) then begin
-      if (not (((G37 or INUNIT) and (SY in {endsy,implementationsy}))) and (SY <> 50)) then begin
+      if (not (((G37 or INUNIT) and (SY in {endsy,implsy}))) and (SY <> 50)) then begin
         if (not ((G38 or L6)) or not ((SY in @BLOCKBEGSYS^<4w>))) then begin
           PASCALCO.4:ERROR(18);
           PASCALCO.16:SKIP(?, ?, ?, adjust((@L1^<4w> - {50,51}),4));
         end;
       end;
     end;
-  until (SY in (@STATBEGSYS^<4w> + {endsy,unitsy,implementationsy}));
+  until (SY in (@STATBEGSYS^<4w> + {endsy,unitsy,implsy}));
   G86 := 0;
 
 procedure DECLARAT.2(args 4 words);  { locals 0 words, lex 2 }
@@ -2225,7 +2225,7 @@ procedure DECLARAT.4(args 6 words);  { locals 13 words, lex 3 }
               end;
               { paths disagree on stack depth here }
             end else begin
-              if ((L8 = BYTESTREAMPTR) or (L8 = WORDSTREAMPTR)) then begin
+              if ((L8 = BYTEPTR) or (L8 = WORDPTR)) then begin
                 PASCALCO.4:ERROR(103);
               end else begin
                 if (L8^.f1 = 7) then begin
@@ -3457,7 +3457,7 @@ procedure DECLARAT.20(args 6 words);  { locals 10 words, lex 3 }
               if (L11^.f1 = 7) then begin
                 PASCALCO.4:ERROR(121);
               end else begin
-                if ((L11 = BYTESTREAMPTR) or (L11 = WORDSTREAMPTR)) then begin
+                if ((L11 = BYTEPTR) or (L11 = WORDPTR)) then begin
                   PASCALCO.4:ERROR(7);
                 end else begin
                   if (L11^.f1 <= 4) then begin
@@ -3943,7 +3943,7 @@ procedure BODYPART.11(args 4 words);  { locals 13 words, lex 2 }
           BODYPART.33(@L5);
         end;
         if L15 then begin
-          if PASCALCO.17:STRING(G3) then begin
+          if PASCALCO.17:ISSTRING(G3) then begin
             if not (G3^.f7) then begin
               BODYPART.21(L13);
               BODYPART.37(@L5, G3);
@@ -3951,7 +3951,7 @@ procedure BODYPART.11(args 4 words);  { locals 13 words, lex 2 }
           end;
         end else begin
           if L14 then begin
-            if PASCALCO.17:STRING(L5) then begin
+            if PASCALCO.17:ISSTRING(L5) then begin
               if not (L5^.f7) then begin
                 BODYPART.21(G91);
                 BODYPART.37(@G3, L5);
@@ -3993,14 +3993,14 @@ L1B65:
           goto L1C20;
 L1B78:
           L11 := 6;
-          if PASCALCO.17:STRING(L5) then begin
+          if PASCALCO.17:ISSTRING(L5) then begin
             if L5^.f7 then begin
 L1B87:
               L11 := 2;
             end else begin
               L11 := 5;
-              if (L5 = BYTESTREAMPTR) then begin
-                if (G3 = BYTESTREAMPTR) then begin
+              if (L5 = BYTEPTR) then begin
+                if (G3 = BYTEPTR) then begin
                   PASCALCO.4:ERROR(129);
                 end else begin
                   L5 := G3;
@@ -4012,8 +4012,8 @@ L1B87:
               end;
             end;
           end else begin
-            if (L5 = WORDSTREAMPTR) then begin
-              if (G3 = WORDSTREAMPTR) then begin
+            if (L5 = WORDPTR) then begin
+              if (G3 = WORDPTR) then begin
                 PASCALCO.4:ERROR(129);
               end else begin
                 L5 := G3;
@@ -4106,7 +4106,7 @@ procedure BODYPART.12(args 4 words);  { locals 1 words, lex 2 }
   { paths disagree on stack depth here }
   BODYPART.22(?, ?, ?, @L1^<4w>, L5);
 
-procedure BODYPART.13:ALLOCPROCNUM(args 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.13:NEWPROC(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1^;
   (L2+11)^ := NEXTPROC;
   if (NEXTPROC > 254) then begin
@@ -4780,7 +4780,7 @@ procedure BODYPART.30(args 0 words);  { locals 8 words, lex 3 }
                 end;
                 BODYPART.6:EMITOP2(77, 0, 19);
               end else begin
-                if (PASCALCO.17:STRING(L1) and (L1 <> BYTESTREAMPTR)) then begin
+                if (PASCALCO.17:ISSTRING(L1) and (L1 <> BYTEPTR)) then begin
                   L5 := 0;
                   if (L1^.f2 <> nil) then begin
                     PASCALCO.11:GETBOUNDS(L1^.f2, @L6, @L5);
@@ -4883,7 +4883,7 @@ procedure BODYPART.31(args 0 words);  { locals 9 words, lex 3 }
             end else begin
               L4 := (PASCALCO.18:STRINGTYPE(G3) and (G4 = 0));
               BODYPART.9();
-              if (L4 and PASCALCO.17:STRING(L3)) then begin
+              if (L4 and PASCALCO.17:ISSTRING(L3)) then begin
                 if not (L3^.f7) then begin
                   BODYPART.21(G91);
                   if (L3^.f2 <> nil) then begin
@@ -4899,7 +4899,7 @@ procedure BODYPART.31(args 0 words);  { locals 9 words, lex 3 }
           end else begin
             if (G4 = 1) then begin
               if (G5 = 4) then begin
-                if (L3 = BYTESTREAMPTR) then begin
+                if (L3 = BYTEPTR) then begin
                   BODYPART.3:EMITOP(2);
                   G5 := 1;
                   G6 := 0;
@@ -4939,11 +4939,11 @@ L111E:
             end;
           end;
           if not (PASCALCO.21:COMPTYPES(L3, G3)) then begin
-            if ((L3 <> BYTESTREAMPTR) and (L3 <> WORDSTREAMPTR)) then begin
+            if ((L3 <> BYTEPTR) and (L3 <> WORDPTR)) then begin
               PASCALCO.4:ERROR(142);
             end else begin
               L9 := G3;
-              if (L3 = BYTESTREAMPTR) then begin
+              if (L3 = BYTEPTR) then begin
                 if ((((L9^.f1 = 5) and L9^.f4) and (L9^.f6 = 2)) and (L9^.f5 = 8)) then begin
                 end else begin
                   if ((G3 = CHARPTR) and (L8 = 4)) then begin
@@ -4987,7 +4987,7 @@ L111E:
       BODYPART.4:EMITCONST(0);
     end;
     if (L9^.f11 = 0) then begin
-      BODYPART.13:ALLOCPROCNUM(@I1,1);
+      BODYPART.13:NEWPROC(@I1,1);
     end;
     if INUNIT then begin
       if not (L9^.f18) then goto L1205;
@@ -5490,7 +5490,7 @@ L1698:
   end;
 
 procedure BODYPART.37(args 2 words);  { locals 5 words, lex 3 }
-  if (L1 <> BYTESTREAMPTR) then begin
+  if (L1 <> BYTEPTR) then begin
     if (L1^.f2 <> nil) then begin
       PASCALCO.11:GETBOUNDS(L1^.f2, @L4, @L3);
       if (((L3-L4)+1) <> L2^^.f8) then begin
@@ -5756,7 +5756,7 @@ procedure ROUTINE.7(args 0 words);  { locals 2 words, lex 3 }
     L2 := L1;
     if (L2^.f9 = 1) then begin
       if (L2^.f11 = 0) then begin
-        BODYPART.13:ALLOCPROCNUM(@L1);
+        BODYPART.13:NEWPROC(@L1);
       end;
       BODYPART.4:EMITCONST(L2^.f12);
       if INUNIT then begin
@@ -6471,7 +6471,7 @@ L0632:
       PASCALCO.4:ERROR(253);
       CODEINX := 0;
     end;
-    if not ((SY in {semicolon,endsy,untilsy,elsesy,otherwisesy})) then begin
+    if not ((SY in {semicolon,endsy,untilsy,elsesy,otherwsy})) then begin
       PASCALCO.4:ERROR(6);
       PASCALCO.16:SKIP(?, ?, ?, @L1^<4w>);
     end;
@@ -6489,7 +6489,7 @@ procedure STATEMEN.2(args 1 words);  { locals 9 words, lex 3 }
         BODYPART.9();
       end;
     end;
-    L7 := PASCALCO.17:STRING(G3);
+    L7 := PASCALCO.17:ISSTRING(G3);
     move(@L2, @G3, 5 words);
     PASCALCO.8:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,1^<4w>);
@@ -6529,9 +6529,9 @@ procedure STATEMEN.2(args 1 words);  { locals 9 words, lex 3 }
           end;
 L00CD:
         end else begin
-          if (L2 = BYTESTREAMPTR) then begin
+          if (L2 = BYTEPTR) then begin
             if PASCALCO.21:COMPTYPES(L2, G3) then begin
-              if (G3 = BYTESTREAMPTR) then begin
+              if (G3 = BYTEPTR) then begin
                 PASCALCO.4:ERROR(129);
               end else begin
                 L2 := G3;
@@ -6590,8 +6590,8 @@ L0194:
             BODYPART.5:EMITOP1(40, ((L9+1) div 2));
           end;
         end else begin
-          if (L2 = WORDSTREAMPTR) then begin
-            if (G3 = WORDSTREAMPTR) then begin
+          if (L2 = WORDPTR) then begin
+            if (G3 = WORDPTR) then begin
               PASCALCO.4:ERROR(129);
             end else begin
               L2 := G3;
@@ -7068,7 +7068,7 @@ procedure BODY1.1(args 0 words);  { locals 2 words, lex 3 }
             I1,2 := (I1,2-1);
             BODYPART.6:EMITOP2(50, LEVEL, L1^.f10);
             BODYPART.6:EMITOP2(54, LEVEL, I1,2);
-            if PASCALCO.17:STRING(L1^.f6) then begin
+            if PASCALCO.17:ISSTRING(L1^.f6) then begin
               L2 := L1^.f6;
               if L2^.f7 then begin
                 BODYPART.5:EMITOP1(42, L2^.f8);
@@ -8327,7 +8327,7 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   SEGNUM := 0;
   L1 := 15;
   while (SEGNUM <= L1) do begin
-    PASCALCO.23:EMITWORD(PASCALCO.15:MAKESEGINFO(SEGNUM));
+    PASCALCO.23:EMITWORD(PASCALCO.15:SEGINFO(SEGNUM));
     SEGNUM := (SEGNUM+1);
   end;
   if G31 then begin

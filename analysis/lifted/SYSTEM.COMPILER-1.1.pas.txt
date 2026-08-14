@@ -18,7 +18,7 @@ procedure PASCALCO.1(args 2 words);  { locals 1222 words, lex 0 }
   FINIT(@INFOFILE, @G835, -(1));
   COMPINIT.1();
   if not (SWAPPING) then begin
-    PASCALCO.28:COMPILERESIDENT();
+    PASCALCO.28:HOLDMOST();
   end else begin
     PASCALCO.25:COMPILE();
   end;
@@ -600,7 +600,7 @@ procedure PASCALCO.12:NEXTLINE(args 0 words);  { locals 0 words, lex 1 }
     LISTCOUNT := CODEINX;
   end;
 
-function PASCALCO.13:MAKESEGINFO(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
+function PASCALCO.13:SEGINFO(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
   L5 := 0;
   { unmodelled packed store of 2 }
   L4 := (@L5^[0] <> 0);
@@ -627,7 +627,7 @@ procedure PASCALCO.14:SKIP(args 4 words);  { locals 0 words, lex 1 }
     PASCALCO.6:INSYMBOL();
   end;
 
-function PASCALCO.15:STRING(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+function PASCALCO.15:ISSTRING(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
   if (L3 <> nil) then begin
     if (L3^.f1 = 5) then begin
@@ -637,7 +637,7 @@ function PASCALCO.15:STRING(args 1 words) : <1 word result>;  { locals 0 words, 
 
 function PASCALCO.16:STRINGTYPE(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
   L1 := 0;
-  if PASCALCO.15:STRING(L3) then begin
+  if PASCALCO.15:ISSTRING(L3) then begin
     L1 := L3^.f7;
   end;
 
@@ -1055,13 +1055,13 @@ procedure PASCALCO.27:ENTERUNDECL(args 1 words);  { locals 1 words, lex 2 }
   end;
   { paths disagree on stack depth here }
 
-procedure PASCALCO.28:COMPILERESIDENT(args 0 words);  { locals 0 words, lex 1 }
+procedure PASCALCO.28:HOLDMOST(args 0 words);  { locals 0 words, lex 1 }
   goto L10B8;
 L1094:
   if SWAPMORE then begin
     PASCALCO.25:COMPILE();
   end else begin
-    PASCALCO.29:COMPILEHOLDINGROUTINE();
+    PASCALCO.29:HOLDROUT();
   end;
   CSP22(15);
   CSP22(14);
@@ -1084,7 +1084,7 @@ L10B8:
   goto L1094;
 L10D2:
 
-procedure PASCALCO.29:COMPILEHOLDINGROUTINE(args 0 words);  { locals 0 words, lex 2 }
+procedure PASCALCO.29:HOLDROUT(args 0 words);  { locals 0 words, lex 2 }
   goto L107F;
 L1078:
   PASCALCO.25:COMPILE();
@@ -1733,14 +1733,14 @@ procedure DECLARAT.1(args 4 words);  { locals 11 words, lex 1 }
       until not ((SY in {procsy,funcsy,progsy}));
     end;
     if (SY <> 19) then begin
-      if (not (((G36 or INUNIT) and (SY in {endsy,implementationsy}))) and (SY <> 50)) then begin
+      if (not (((G36 or INUNIT) and (SY in {endsy,implsy}))) and (SY <> 50)) then begin
         if (not ((G37 or L6)) or not ((SY in @BLOCKBEGSYS^<4w>))) then begin
           PASCALCO.2:ERROR(18);
           PASCALCO.14:SKIP(?, ?, ?, adjust((@L1^<4w> - {50,51}),4));
         end;
       end;
     end;
-  until (SY in (@STATBEGSYS^<4w> + {endsy,unitsy,implementationsy}));
+  until (SY in (@STATBEGSYS^<4w> + {endsy,unitsy,implsy}));
   G83 := 0;
 
 procedure DECLARAT.2(args 4 words);  { locals 0 words, lex 2 }
@@ -3795,7 +3795,7 @@ procedure BODYPART.11(args 4 words);  { locals 13 words, lex 2 }
           BODYPART.32(@L5);
         end;
         if L15 then begin
-          if PASCALCO.15:STRING(G3) then begin
+          if PASCALCO.15:ISSTRING(G3) then begin
             if not (G3^.f7) then begin
               BODYPART.21(L13);
               BODYPART.36(@L5, G3);
@@ -3803,7 +3803,7 @@ procedure BODYPART.11(args 4 words);  { locals 13 words, lex 2 }
           end;
         end else begin
           if L14 then begin
-            if PASCALCO.15:STRING(L5) then begin
+            if PASCALCO.15:ISSTRING(L5) then begin
               if not (L5^.f7) then begin
                 BODYPART.21(G88);
                 BODYPART.36(@G3, L5);
@@ -3845,7 +3845,7 @@ L1AA3:
           goto L1B2C;
 L1AB6:
           L11 := 6;
-          if PASCALCO.15:STRING(L5) then begin
+          if PASCALCO.15:ISSTRING(L5) then begin
             if L5^.f7 then begin
 L1AC5:
               L11 := 2;
@@ -3943,7 +3943,7 @@ procedure BODYPART.12(args 4 words);  { locals 1 words, lex 2 }
   { paths disagree on stack depth here }
   BODYPART.22(?, ?, ?, @L1^<4w>, L5);
 
-procedure BODYPART.13:ALLOCPROCNUM(args 1 words);  { locals 1 words, lex 2 }
+procedure BODYPART.13:NEWPROC(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1^;
   (L2+11)^ := NEXTPROC;
   if (NEXTPROC > 149) then begin
@@ -4615,7 +4615,7 @@ procedure BODYPART.29(args 0 words);  { locals 8 words, lex 3 }
                 end;
                 BODYPART.6:EMITOP2(77, 0, 19);
               end else begin
-                if PASCALCO.15:STRING(L1) then begin
+                if PASCALCO.15:ISSTRING(L1) then begin
                   L5 := 0;
                   if (L1^.f2 <> nil) then begin
                     PASCALCO.9:GETBOUNDS(L1^.f2, @L6, @L5);
@@ -4717,7 +4717,7 @@ procedure BODYPART.30(args 0 words);  { locals 8 words, lex 3 }
             end else begin
               L4 := (PASCALCO.16:STRINGTYPE(G3) and (G4 = 0));
               BODYPART.9();
-              if (L4 and PASCALCO.15:STRING(L3)) then begin
+              if (L4 and PASCALCO.15:ISSTRING(L3)) then begin
                 if not (L3^.f7) then begin
                   BODYPART.21(G88);
                   if (L3^.f2 <> nil) then begin
@@ -4791,7 +4791,7 @@ L10FC:
       BODYPART.4:EMITCONST(0);
     end;
     if (L8^.f11 = 0) then begin
-      BODYPART.13:ALLOCPROCNUM(@I1,1);
+      BODYPART.13:NEWPROC(@I1,1);
     end;
     if INUNIT then begin
       if not (L8^.f18) then goto L1179;
@@ -5548,7 +5548,7 @@ procedure ROUTINE.7(args 0 words);  { locals 2 words, lex 3 }
     L2 := L1;
     if (L2^.f9 = 1) then begin
       if (L2^.f11 = 0) then begin
-        BODYPART.13:ALLOCPROCNUM(@L1);
+        BODYPART.13:NEWPROC(@L1);
       end;
       BODYPART.4:EMITCONST(L2^.f12);
       BODYPART.4:EMITCONST(L2^.f11);
@@ -6278,7 +6278,7 @@ procedure STATEMEN.2(args 1 words);  { locals 9 words, lex 3 }
         BODYPART.9();
       end;
     end;
-    L7 := PASCALCO.15:STRING(G3);
+    L7 := PASCALCO.15:ISSTRING(G3);
     move(@L2, @G3, 5 words);
     PASCALCO.6:INSYMBOL();
     BODYPART.11(?, ?, ?, @I1,1^<4w>);
@@ -6832,7 +6832,7 @@ procedure BODY1.1(args 0 words);  { locals 2 words, lex 3 }
             I1,2 := (I1,2-1);
             BODYPART.6:EMITOP2(50, LEVEL, L1^.f10);
             BODYPART.6:EMITOP2(54, LEVEL, I1,2);
-            if PASCALCO.15:STRING(L1^.f6) then begin
+            if PASCALCO.15:ISSTRING(L1^.f6) then begin
               L2 := L1^.f6;
               if L2^.f7 then begin
                 BODYPART.5:EMITOP1(42, L2^.f8);
@@ -8054,7 +8054,7 @@ procedure FINISHUP.1(args 0 words);  { locals 2 words, lex 1 }
   L1 := 15;
   while (SEGNUM <= L1) do begin
     if (@G335[SEGNUM*9w]^.f6 <> 0) then begin
-      PASCALCO.21:EMITWORD(PASCALCO.13:MAKESEGINFO(SEGNUM));
+      PASCALCO.21:EMITWORD(PASCALCO.13:SEGINFO(SEGNUM));
     end else begin
       PASCALCO.21:EMITWORD(0);
     end;

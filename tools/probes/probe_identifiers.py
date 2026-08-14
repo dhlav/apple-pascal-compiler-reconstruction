@@ -1,0 +1,154 @@
+"""Do the recovered names survive Apple Pascal's 8-character rule?
+
+Apple Pascal keeps only the first eight significant characters of an
+identifier. The 1.3 manual's *Identifiers* section states all four parts
+of the rule:
+
+    An identifier must begin with a letter. After the initial letter, it
+    may contain any number of letters, digits, or underscore characters
+    ... Only the first 8 characters (ignoring underscores) are
+    significant. Capital and lowercase letters are equivalent.
+
+    Thus the following six identifiers are equivalent and
+    interchangeable: MYNUMBER  mynumber  MY_NUMBER  My_Number
+    MY_NUMBER_VALUE ...
+
+and the binary cannot do otherwise: finding 22 recovered the symbol-table
+entry with the name in words 0-3, and the reserved-word table inside 1.3's
+native IDSEARCH stores each word in exactly eight bytes. Eight characters
+is all there is room for.
+
+This matters for the deliverable rather than for the analysis. Every name
+in `tools/a2pascal/names.py` is a name the reconstructed source will
+carry, and two of them agreeing in eight significant characters are *one*
+identifier to the compiler -- a duplicate-declaration error at best, and a
+silent aliasing of two different variables at worst. So:
+
+  * no two names may collide once folded to eight significant characters;
+  * no name may fold onto an Apple Pascal reserved word -- the manual is
+    explicit that *"the Compiler will refuse to accept it"*;
+  * no name may fold onto a predeclared identifier (Table F-2B) either,
+    because *"the Compiler will accept it but the original Pascal
+    identifier will become unavailable within the scope of the new
+    meaning"* -- a silent breakage rather than a diagnostic;
+  * every name longer than eight characters is listed, because what we
+    write is not what the compiler will see. Those are allowed only where
+    the spelling is forced by evidence (Pascal-P's, or Apple's own).
+
+Globals, procedures and the two enumerations are checked together, since
+in a single Pascal program they all live in the same outermost scope.
+
+Finding 29.
+"""
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from a2pascal.names import (GLOBALS_11, GLOBALS_13, OPERATORS, PROC_NAMES,
+                            SYMBOLS)
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+NATIVE = ROOT / "analysis" / "native" / "PASCALCO-1.3-native.asm.txt"
+
+# Long spellings that are forced by evidence rather than chosen by us, so
+# their truncation is a fact about the original source and not a trap we
+# introduced. Pascal-P's own identifiers, and Apple's.
+EVIDENCE_BACKED = {
+    # Zurich P2 / Pascal-P procedures and variables (findings 22, 26, 27)
+    "COMPTYPES", "SEARCHSECTION", "ENTERUNDECL", "GETBOUNDS",
+    "CONSTBEGSYS", "SIMPTYPEBEGSYS", "TYPEBEGSYS", "BLOCKBEGSYS",
+    "SELECTSYS", "FACBEGSYS", "STATBEGSYS",
+    # the SYMBOL enumeration (finding 26a) -- one member per reserved word
+    "SEMICOLON", "FORWARDSY", "REALCONST", "STRINGCONST", "LONGCONST",
+    "INTERFACESY", "IMPLEMENTATIONSY", "EXTERNALSY", "OTHERWISESY",
+    # Apple's own, read off the 1.3 native code (finding 19)
+    "TREESEARCH",
+}
+
+# Apple Pascal's predeclared identifiers, Table F-2B of the 1.3 manual,
+# transcribed in full. Legal to redeclare, but doing so costs the original
+# meaning -- which the compiler cannot afford for STRING (LIBNAME and
+# CODECOMMENT are STRING-typed) or for the types it declares variables of.
+PREDECLARED = """
+ABS BLOCKREAD BLOCKWRITE BOOLEAN BYTESTREAM CHAR CHR CLOSE CONCAT COPY
+DELETE EOF EOLN EXIT FALSE FILLCHAR GET GOTOXY HALT INPUT INSERT INTEGER
+INTERACTIVE IORESULT KEYBOARD LENGTH MARK MAXINT MEMAVAIL MOVELEFT
+MOVERIGHT NEW ODD ORD OUTPUT PAGE POS PRED PUT PWROFTEN READ READLN REAL
+RELEASE RESET REWRITE ROUND SCAN SEEK SIZEOF SQR STR STRING SUCC TEXT
+TRUE TRUNC UNITBUSY UNITCLEAR UNITREAD UNITSTATUS UNITWAIT UNITWRITE
+WORDSTREAM WRITE WRITELN
+""".split()
+
+# Predeclared identifiers we deliberately shadow, with the reason. Empty:
+# nothing in the naming currently needs to.
+SHADOW_OK: dict[str, str] = {}
+
+
+def fold(name: str) -> str:
+    """The identifier as Apple Pascal sees it."""
+    return name.replace("_", "").upper()[:8]
+
+
+def reserved_words() -> set[str]:
+    """The reserved words, from the table inside 1.3's native IDSEARCH."""
+    return set(re.findall(r"\.ascii '([A-Z]+) *'\s+\.byte \$[0-9A-F]{2}",
+                          NATIVE.read_text()))
+
+
+def main() -> int:
+    bad, over = [], {}
+    words = reserved_words()
+    predeclared = {fold(w) for w in PREDECLARED}
+    if len(words) < 40:
+        bad.append(f"only {len(words)} reserved words found -- has the "
+                   f"native listing changed?")
+
+    for rel, glob in (("1.1", GLOBALS_11), ("1.3", GLOBALS_13)):
+        # Everything that would be declared in the program's outermost
+        # scope: globals, procedures, and both enumerations' members.
+        pool: dict[str, set[str]] = {}
+        sources = (
+            [(s, f"global {n}") for n, s in glob.items()]
+            + [(s, f"{seg}.{n}") for (seg, n), s in PROC_NAMES[rel].items()]
+            + [(s.upper(), "SYMBOL") for s in SYMBOLS.values()]
+            + [(s.upper(), "OPERATOR") for s in OPERATORS.values()]
+        )
+        for name, where in sources:
+            pool.setdefault(fold(name), set()).add(name)
+            if len(name.replace("_", "")) > 8:
+                over.setdefault(name, where)
+
+        for folded, spellings in sorted(pool.items()):
+            if len(spellings) > 1:
+                bad.append(f"{rel}: {sorted(spellings)} are the same "
+                           f"identifier -- all fold to {folded}")
+            if folded in words:
+                bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
+                           f"which is a reserved word -- the compiler would "
+                           f"refuse the declaration")
+            if folded in predeclared and folded not in SHADOW_OK:
+                bad.append(f"{rel}: {sorted(spellings)} folds to {folded}, "
+                           f"a predeclared identifier -- declaring it takes "
+                           f"the original meaning away for the whole scope")
+
+        print(f"{rel}: {len(pool)} distinct identifiers from "
+              f"{len(sources)} names, no two alike in 8 characters, none "
+              f"folding onto any of {len(words)} reserved words or "
+              f"{len(predeclared)} predeclared identifiers")
+
+    unvetted = sorted(set(over) - EVIDENCE_BACKED)
+    print(f"{len(over)} names exceed 8 characters; {len(EVIDENCE_BACKED)} of "
+          f"those spellings are forced by evidence, {len(unvetted)} are ours:")
+    for name in unvetted:
+        print(f"    {name:22s} -> {fold(name):8s}  ({over[name]})")
+
+    if bad:
+        print("\n".join(bad))
+        return 1
+    print("identifiers-ok")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

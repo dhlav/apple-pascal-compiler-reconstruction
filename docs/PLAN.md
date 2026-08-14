@@ -65,6 +65,16 @@ Done, and reproducible via `python tools/build_all.py`:
    codefile's procedure dictionary. Prefer these to reading control flow:
    an output format is a fixed target the binary can be held against.
 
+   **Every name must survive Apple Pascal's 8-character rule** (finding
+   29). Only the first eight significant characters count, underscores are
+   ignored and case is folded, so two names alike in eight characters are
+   one identifier, a name folding onto a reserved word is refused outright,
+   and a name folding onto a predeclared identifier silently steals its
+   meaning for the whole scope. `tools/probes/probe_identifiers.py`
+   enforces all three against the registry. A name we invent is eight
+   characters or fewer, so that what we write is what the compiler sees;
+   longer spellings are for names the evidence forces.
+
    And the cautionary half of finding 28: a probe that verifies a property
    of the *output* does not verify a claim about which code produced it.
    `probe_attribtable.py` was green throughout the period finding 27b was
