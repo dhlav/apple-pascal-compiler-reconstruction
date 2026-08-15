@@ -333,6 +333,12 @@ Done, and reproducible via `python tools/build_all.py`:
 
 7. **Validation loop**, now in two tiers (finding 18).
 
+   * *Start here, and it costs nothing:* `HAZELGOTO.TEXT` and
+     `HAZELGOTO.CODE` are on the 1.1 APPLE3 disk — the same 23-line program
+     in source and in p-code, compiled by the compiler being reconstructed
+     (finding 47b). Any pipeline that cannot reproduce the codefile from
+     the text is not ready to be pointed at 40 kilobytes of compiler.
+     `SOROCGOTO` is a second, independent sample of the same size.
    * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
      from Peter Miller's `ucsd-psystem-xc` and run reconstructed source
      through them on the host. This catches source that does not compile or

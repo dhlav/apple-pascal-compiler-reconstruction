@@ -4108,63 +4108,96 @@ Two overlapping explanations, one of them wrong, and the wrong one was
 never separated out because the number was never required to come out
 exactly. It is now: the probe demands zero procedures over the bound.
 
-## 47. The two boot disks: `{$U-}` observed at last, and one corrupt copy of 1.3's compiler
+## 47. The full disk sets: `{$U-}` observed, with its source, and why APPLE0 is excluded
 
-*Confidence: VERIFIED BINARY FACT throughout.
-`tools/probes/probe_disk_copies.py`, 1491 checks over 24 codefiles and
-1486 procedures.*
+*Confidence: VERIFIED BINARY FACT throughout; the `{$U-}` mapping is also a
+VERIFIED SOURCE FACT, from the manual and from `HAZELGOTO.TEXT`.
+`tools/probes/probe_disk_copies.py`, 14748 checks over 6 images, 39
+codefiles and 1490 procedures.*
 
-Two more images joined `evidence/disks/`: `UCSD Pascal 1.1_0.dsk` and
-`Apple II Pascal 1.3 APPLE0_ 680-0282-A.dsk`, the boot volumes for the two
-releases. Between them they add `SYSTEM.PASCAL`, `SYSTEM.LIBRARY`,
-`SYSTEM.EDITOR` and `SYSTEM.FILER` for each release — and a **second copy
-of `SYSTEM.COMPILER`** for each, which is the reason to look first.
+`evidence/disks/` now holds both complete three-disk sets:
 
-### 47a. `{$U-}` produces lex level −1, and this is now observed
+| | 1.1 | 1.3 | contents |
+|---|---|---|---|
+| **APPLE1** | `UCSD Pascal 1.1_1.dsk` | `680-0283-A` | boot: `SYSTEM.APPLE` (the 6502 interpreter), `SYSTEM.PASCAL`, `EDITOR`, `FILER`, `LIBRARY` |
+| **APPLE2** | `680-0005-01` | `680-0284-A` | second drive: `SYSTEM.COMPILER`, `LINKER`, `ASSMBLER` |
+| **APPLE3** | `UCSD Pascal 1.1_3.dsk` | `680-0290-A` | utilities and examples, plus a second `SYSTEM.APPLE` |
 
-Section 16 has carried this as inferred and never seen: "`{$U-}` producing
-`lex=-1` is inferred, not observed: neither disk in `evidence/` carries
-`SYSTEM.PASCAL`, the one artifact on hand known to have been built that
-way." Both boot disks carry it, and the answer is unambiguous.
+APPLE1 boots and APPLE2 goes in the second drive; that is also the
+configuration the compiler needs (finding 15). **The APPLE0 images are not
+used.** They are a merged subset, and 1.3's is a positive reason to leave
+it out — see 47c.
 
-Scanning every procedure of every codefile on all four images — 24 files,
-1486 procedures — the lex-level byte is `$FF` in **exactly two places**:
+### 47a. `{$U-}` produces lex level −1, and the source says so
 
-```
-  UCSD Pascal 1.1_0.dsk                    SYSTEM.PASCAL  PASCALSY.1
-  Apple II Pascal 1.3 APPLE0_ 680-0282-A   SYSTEM.PASCAL  PASCALSY.1
-```
+Section 16 carried this as inferred and never seen. It is now both
+observed and read in Pascal.
 
-The outer block of the operating system, in each release, and nothing
-else. Not `SYSTEM.COMPILER`, `SYSTEM.EDITOR`, `SYSTEM.FILER`,
-`SYSTEM.LINKER`, `SYSTEM.ASSMBLER`, `SYSTEM.LIBRARY`, `LIBRARY.CODE` or
-`LIBMAP.CODE`.
-
-That settles three things at once:
-
-* `lex = -1` is real, it is what `{$U-}` produces, and it marks the
-  *outer block* — not every procedure in the unit.
-* **`SYSTEM.COMPILER` is not `{$U-}`**, in either release. Finding 24e
-  reached that conclusion against Neil Parker; it now has a positive
-  control rather than an argument from absence, which is exactly what it
-  was missing.
-* Finding 23c's directive list stands: the reconstruction does not carry
-  `{$U-}`.
-
-### 47b. 1.1's compiler is byte-identical on both its disks; 1.3's is not
-
-`SYSTEM.COMPILER` from `UCSD Pascal 1.1_0.dsk` is byte-for-byte the file
-already in `evidence/`, all 38400 bytes. Everything in this repo derived
-from 1.1 is therefore derived from the shipped artifact and not from one
-odd image.
-
-1.3's two copies are the same length, 39936 bytes, and differ in **seven
-bytes**, all inside `BODY3`:
+The lex-level byte is `$FF` on **7 of the 39 codefiles**, and on the outer
+block in every case:
 
 ```
-  file offset 33077..33083, BODY3 $0335..$033B, inside BODY3.1
+  SYSTEM.PASCAL     1.1 and 1.3   the operating system
+  128K.PASCAL       1.3           its 128K variant
+  SETUP.CODE        1.1 and 1.3   the reconfiguration utility
+  SOROCGOTO.CODE    1.1           a GOTOXY replacement
+  HAZELGOTO.CODE    1.1           a GOTOXY replacement
+```
 
-  APPLE2 (the analysed copy)          APPLE0 (the boot disk)
+The two `GOTOXY` files are the decisive ones, because the manual says how
+they were built and their **source is on the same disk**. Part I ch. 12,
+"Changing GOTOXY Communication":
+
+> `(*$U-*)` should be the first thing in the GOTOXY file
+
+and `HAZELGOTO.TEXT`, all 23 lines of it, begins:
+
+```pascal
+(*$U-*)
+PROGRAM GOXY;
+
+PROCEDURE FGOTOXY(X,Y:INTEGER);
+...
+BEGIN (* DUMMY MAIN *)
+END.
+```
+
+`HAZELGOTO.CODE` has one segment, `GOXY`, whose procedure 1 carries
+`lex = -1`. Directive in, lex level out, with nothing in between to
+misread.
+
+The other 32 codefiles do not have it — **`SYSTEM.COMPILER` included, in
+both releases**. Finding 24e reached that conclusion against Neil Parker
+by absence; it now has a positive control, which is what it was missing.
+Finding 23c's directive list stands: the reconstruction does not carry
+`{$U-}`.
+
+Worth noting what `lex = -1` is *not*: it is not a property of every
+procedure in a `{$U-}` program. Exactly one procedure per such codefile
+has it, and it is always the outer block.
+
+### 47b. A source-and-binary pair, which the project did not have
+
+`HAZELGOTO.TEXT` and `HAZELGOTO.CODE` are the same program in both forms,
+compiled by the compiler being reconstructed. It is 23 lines and two
+procedures — far too small to prove anything about the compiler at large,
+and exactly the right size for calibrating the validation loop before
+pointing it at 40 kilobytes. Task 7 should start here: it is the one place
+on the disks where a p-code listing can be read against the Pascal that
+produced it, and any pipeline that cannot reproduce `HAZELGOTO.CODE` from
+`HAZELGOTO.TEXT` is not ready for `SYSTEM.COMPILER`.
+
+`SYSTEM.PASCAL` is the larger version of the same opportunity — the II.0
+operating system, whose source is already in `reference_source/ucsd_ii0/`.
+Neither is used yet.
+
+### 47c. Why APPLE0 is excluded: seven corrupt bytes the sweep cannot see
+
+1.3's APPLE0 image also carries a `SYSTEM.COMPILER`, the same length as
+APPLE2's, differing in **seven bytes** inside `BODY3.1`:
+
+```
+  APPLE2 (the artifact of record)     APPLE0
   0335 a9 50   LDO 80                 0335 dd      SLDL 6
   0337 01      SLDC 1                 0336 24      SLDC 36
   0338 95      SBI                    0337 75      SLDC 117
@@ -4173,53 +4206,115 @@ bytes**, all inside `BODY3`:
                                       033B 62      SLDC 98
 ```
 
-### 47c. Which one is right, and the check that says so
+`LDO 80; SLDC 1; SBI; CXP 1,22` is ordinary code — "emit(global 80 − 1)"
+through `PASCALCO.22`, the same call three instructions earlier. The
+APPLE0 bytes mean nothing and merely re-synchronise at `$033C`.
 
-The APPLE2 reading is ordinary compiler code: `LDO 80; SLDC 1; SBI;
-CXP 1,22` is "emit(global 80 − 1)" through `PASCALCO.22`, the same call
-made three instructions earlier. The APPLE0 bytes decode to a sequence
-with no meaning that happens to re-synchronise at `$033C`.
+"Merely re-synchronise" is the point, and it is the reason this finding
+exists. **The linear sweep that validates all 287 procedures cannot see
+this.** Both copies sweep from `enter_ic` and land exactly on `exit_ic`,
+because seven bytes were replaced by seven bytes. The 287/287 result is
+worth nothing here — the same trap finding 7 recorded, in a new place.
 
-"Happens to re-synchronise" is the point. **The linear-sweep check that
-validates all 287 procedures cannot see this.** Both copies sweep from
-`enter_ic` and land exactly on `exit_ic`, because the damage is seven bytes
-replaced by seven bytes and the stream recovers. The 287/287 result is
-worthless here, which is the same trap finding 7 recorded: ask what a
-passing check actually rules out.
+What sees it is a check the damage cannot survive: **every branch target
+must land on the first byte of a decoded instruction inside its own
+procedure.** Jump targets do not re-synchronise. Over the six disks in the
+set, 1490 procedures, it fails nowhere; on the excluded APPLE0 image it
+fails once, on a `UJP` to `$03B0` when `JTAB` is at `$037E` — past the
+procedure's own attribute table, which cannot be code the compiler emitted.
 
-What does see it is a check the corruption cannot survive: **every branch
-target must land on the first byte of a decoded instruction inside its own
-procedure.** Jump targets do not re-synchronise. Over all four disks:
+Nothing established needs revisiting: `BODY3.1` was read from the APPLE2
+copy throughout. 1.1's `SYSTEM.COMPILER` is byte-identical on its APPLE2
+disk and on the 1.1 APPLE0 image, so the same question does not arise
+there.
 
-| | procedures | bad branch targets |
-|---|---|---|
-| every other codefile, all four disks | 1485 | **0** |
-| `APPLE0` `SYSTEM.COMPILER` `BODY3.1` | 1 | **1** — `UJP $03B0`, past `JTAB` at `$037E` |
+## 48. 1.1's reserved-word table is in the interpreter, and it dates the `SYMBOL` enumeration
 
-A `UJP` to an address beyond the procedure's own attribute table cannot be
-code the compiler emitted. And every other file on that same image —
-`SYSTEM.PASCAL`, `SYSTEM.EDITOR`, `SYSTEM.FILER`, `SYSTEM.LIBRARY` — is
-clean, so this is a damaged sector in that one image, not a fault in the
-reader or a second build.
+*Confidence: VERIFIED BINARY FACT.
+`tools/probes/probe_interp_words.py`, 57 checks.*
 
-**Conclusion: the APPLE2 copy is sound and remains the artifact of record.**
-Nothing already established needs revisiting; `BODY3.1` was analysed from
-the good copy throughout.
+Finding 19 said that in 1.1 `IDSEARCH` and `TREESEARCH` are `CSP 7` and
+`CSP 8` — standard procedures implemented *in the interpreter* — and that
+1.3 dropped them and hand-coded the pair into `SYSTEM.COMPILER`. The
+compiler side of that was solid. The interpreter side was untested,
+because no interpreter was in `evidence/`. Now both are.
 
-### 47d. What the boot disks unblock
+`SYSTEM.APPLE` is a raw 16384-byte 6502 image that loads at `$D000`, and
+it is the same file on APPLE1 and APPLE3 within each release.
 
-* `SYSTEM.LIBRARY` is now in `evidence/` for both releases — 7 segments and
-  62 procedures in 1.1, 7 and 69 in 1.3 — which is what finding 6's
-  deferred question was waiting on. Still deferred, but no longer blocked.
-* `SYSTEM.PASCAL` is the II.0 operating system Apple shipped, and
-  `reference_source/ucsd_ii0/` is its *source*. That pairing — source and
-  binary for the same program — is a calibration target for everything
-  here: it is the one place where a p-code listing can be read against the
-  Pascal that produced it. Nothing in this finding uses it yet.
-* `SYSTEM.EDITOR`, `SYSTEM.FILER` and `SYSTEM.ASSMBLER` are three more
-  programs built by the same compiler, so they are independent samples of
-  its code generation — useful whenever a claim of the form "the compiler
-  emits X for Y" needs testing outside the compiler's own body.
+### 48a. The prediction, and it holds
+
+**1.1's `SYSTEM.APPLE` contains the reserved-word table; 1.3's contains no
+part of it.** The table is plain ASCII, so this fails loudly in either
+direction, and it is the first direct evidence for the half of finding 19
+that the compiler alone could not reach.
+
+1.1's table sits at **`$DE2C..$DFFA`**, with its 26-word letter index just
+below at `$DDF5` and the empty-letter sentinel at `$DE29`. The same seven
+letters share the sentinel — H J K Q X Y Z.
+
+### 48b. Apple compacted the format when they moved it
+
+The record layouts differ:
+
+```
+  1.1 (interpreter)   [count-or-0][NAME 8][SY][OP]        11 bytes each,
+                      the count on the first record of a letter, 0 on the rest
+  1.3 (compiler)      [count] then [NAME 8][SY][OP]       1 + 10 bytes each
+```
+
+The eleven-byte stride is not a reading imposed on the bytes: the 26-entry
+index has to tile the table exactly, and it does under eleven and not
+under ten. 1.3 saved one byte per record — 42 bytes — by hoisting the
+count out of the records, which is the kind of economy a routine written
+to fit inside a compiler segment would want and one living in a 16K
+interpreter would not bother with.
+
+### 48c. The symbol codes are unchanged, and 1.1 now says so itself
+
+Both tables hold **42 reserved words**. All 41 in common carry **identical
+`SY` and `OP`** — zero disagreements. `SYMBOL` and `OPERATOR` (finding 26)
+were recovered from 1.3's table and carried back to 1.1 through the
+correspondence table; 1.1's own binary now states them independently,
+which removes the correspondence table from that argument entirely.
+
+The one difference is the one finding 32 predicted from the II.0 source
+before either table had been read this way:
+
+```
+  1.1  SEPARATE   SY = 54, OP = 0
+  1.3  OTHERWIS   SY = 54, OP = 0
+```
+
+**1.3 reused the code rather than extending the enumeration.** So `SYMBOL`
+has 55 members in both releases, and the reconstruction declares 55 either
+way — with `SEPARATE` at 54 for a 1.1 target and `OTHERWISE` at 54 for
+1.3. That is a one-identifier edit in the `TYPE` block and nothing else,
+which is what makes the two releases' scanners the same program.
+
+### 48d. Apple reordered five letters' lists
+
+The words are the same but their order within a letter differs for D, F,
+I, P and U:
+
+```
+  D   1.1  DIV, DO, DOWNTO            1.3  DO, DIV, DOWNTO
+  F   1.1  FOR, FILE, FORWARD, FUNCTION   1.3  FOR, FUNCTION, FILE, FORWARD
+  I   1.1  IF, IMPLEMEN, IN, INTERFAC 1.3  IF, IN, IMPLEMEN, INTERFAC
+  P   1.1  PROCEDUR, PROGRAM, PACKED  1.3  PROCEDUR, PACKED, PROGRAM
+  U   1.1  UNIT, UNTIL, USES          1.3  UNTIL, USES, UNIT
+```
+
+The search is a linear scan from the front of a letter's list, so order is
+performance and nothing else — no `SY` moves. 1.3 puts `DO` ahead of
+`DIV`, `IN` ahead of `IMPLEMENTATION` and `UNTIL` ahead of `UNIT`, which
+is the more common word first in each case; that reads as a deliberate
+reordering, but it is **STRONG INFERENCE at best** and the counter-example
+is in the same table — `F` moves `FUNCTION` up past `FILE`.
+
+What matters for the reconstruction is only that the order is *data*, laid
+out by the assembler in the order the source lists it, so `src/native/`
+must list 1.3's order and not 1.1's. It does.
 
 ## 16. Open questions
 
@@ -4259,9 +4354,13 @@ the good copy throughout.
   second `OPT_F` site in `PASCALCO.13`, which inverts a boolean rather
   than swapping bytes.
 * ~~`{$U-}` producing `lex=-1` is inferred, not observed.~~ **Resolved by
-  finding 47**: both boot disks are now in `evidence/`, and across all four
-  images the lex byte is `$FF` in exactly two places — `PASCALSY.1`, the
-  outer block of `SYSTEM.PASCAL`, in each release. Nothing else on any disk
-  has it, `SYSTEM.COMPILER` included, which gives finding 24e the positive
-  control it lacked. The same addition brings `SYSTEM.LIBRARY` in for
-  finding 6, which stays deferred but is no longer blocked.
+  finding 47**: both three-disk sets are now in `evidence/`, and across the
+  six images the lex byte is `$FF` on 7 of 39 codefiles — always the outer
+  block, and always a program that had to be built that way (the operating
+  system in both releases, its 128K variant, `SETUP`, and the two `GOTOXY`
+  replacements). `HAZELGOTO.TEXT` is on the same disk and its first line is
+  `(*$U-*)`, exactly as the manual prescribes, so the directive and the lex
+  level are seen together. Nothing else has it, `SYSTEM.COMPILER` included,
+  which gives finding 24e the positive control it lacked. The same addition
+  brings `SYSTEM.LIBRARY` in for finding 6, which stays deferred but is no
+  longer blocked, and `SYSTEM.APPLE` for finding 48.
