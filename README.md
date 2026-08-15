@@ -125,20 +125,20 @@ It also corrected fifty-six names. `EMIT`/`EMITWORD` are `GENBYTE`/
 `WRITELINKERINFO` — a name no amount of staring at the binary would have
 produced. `probe_identifiers.py` now reads the II.0 source rather than a
 hand-kept list, and requires every name over eight characters to appear
-there; all 65 do.
+there; all 90 do.
 
 It also settled the rule the reconstruction's `VAR` block has to obey
 (finding 33). `VARDECLARATION` collects a declaration's identifiers by
 *prepending* them to a list, then walks that list assigning addresses — so
 **a `VAR` declaration allocates backwards**: `VAR LC,IC: ADDRRANGE` puts
 `IC` at the lower offset. That is a prediction about Apple's binary, and
-it holds **18 declaration groups, 86 names, across both releases**
+it holds **24 declaration groups, 112 names, across both releases**
 (`probe_vardecl.py`). None of those names came from declaration order;
 the eight symbol-set globals were each assigned by the error its guard
 raises (finding 26c) and come out in exactly reverse order, all eight.
 
 `tools/vardecl.py` lays II.0's `VAR` block out under that rule and aligns
-it against Apple's globals: 71 matched names, differing only by a drift
+it against Apple's globals: 83 matched names, differing only by a drift
 that never decreases through the scalar region. The first sixteen words of
 Apple's global area are II.0's, in order.
 
@@ -147,6 +147,21 @@ against II.0's `USESDECLARATION` line for line named four more globals —
 `TEST`, `USING`, `USINGLIST` and `MODPTR` — and each landed on exactly the
 offset the drift column had already reserved for it, in both releases
 (finding 34c).
+
+The three places where the drift *steps* are now accounted for to the word
+(finding 38). Apple deleted II.0's `PFNUMOF` table and put a two-word
+`set of` segment numbers in its declaration slot — `BODYPART.7`'s entire
+body is `SEGSUSED := SEGSUSED + [seg]` followed by the `GEN2(77 CXP,…)`
+that needs it. Apple's `SEGTABLE` entry is nine words to II.0's eight, and
+the packed nibble array `SEGMAP` that maps a segment number to a
+`SEGTABLE` slot is Apple's own. And the eleven words between `REFFILE` and
+`LIBRARY` are II.0's ten plus one insertion: the six `PREV*`/`OLD*` save
+slots were placed purely by which global each is copied back into and
+which routine saves it — and came out in exactly the backwards order II.0
+declares them. Nothing in that reasoning used declaration order, so it is
+a second, independent confirmation of the rule. The same three objects
+explain +115 of 1.3's ~130 words of global growth: 1.3 raised the segment
+limit from 32 to 64.
 
 **`DECLARAT` and `ROUTINE` are finished** — twenty of twenty and
 seventeen of seventeen procedures named, at identical numbers in 1.1 and

@@ -85,13 +85,13 @@ procedure PASCALCO.3:GETNEXTPAGE(args 0 words);  { locals 1 words, lex 1 }
   LINESTART := 0;
   if INMODULE then begin
     if (ININTERFACE and not (USING)) then begin
-      CSP2(SYMBUFP, G578, CODEP, 0, 1024);
+      CSP2(SYMBUFP, TEXTSTRT, CODEP, 0, 1024);
       PASCALCO.22:WRITECODE(1);
-      G578 := 0;
+      TEXTSTRT := 0;
     end;
   end;
   if USING then begin
-    if (G585 = 0) then begin
+    if (USEFILE = 0) then begin
       if (FBLOCKIO(I2,8, SYMBUFP, 0, 2, SYMBLK, 1) <> 2) then begin
         USING := 0;
       end;
@@ -102,23 +102,23 @@ procedure PASCALCO.3:GETNEXTPAGE(args 0 words);  { locals 1 words, lex 1 }
     end;
     if USING then begin
     end else begin
-      SYMBLK := G579;
-      SYMCURSOR := G582;
-      LINESTART := G581;
+      SYMBLK := PREVSYMBLK;
+      SYMCURSOR := PREVSYMCURSOR;
+      LINESTART := PREVLINESTART;
     end;
   end;
   if not (USING) then begin
-    if G37 then begin
+    if INCLUDING then begin
       if (FBLOCKIO(@INCLFILE, SYMBUFP, 0, 2, SYMBLK, 1) <> 2) then begin
         FCLOSE(@INCLFILE, 0);
-        G37 := 0;
-        SYMBLK := G580;
-        SYMCURSOR := G584;
-        LINESTART := G583;
+        INCLUDING := 0;
+        SYMBLK := OLDSYMBLK;
+        SYMCURSOR := OLDSYMCURSOR;
+        LINESTART := OLDLINESTART;
       end;
     end;
   end;
-  if not ((G37 or USING)) then begin
+  if not ((INCLUDING or USING)) then begin
     if (FBLOCKIO(I2,9, SYMBUFP, 0, 2, SYMBLK, 1) <> 2) then begin
       PASCALCO.2:ERROR(401);
     end;
@@ -1645,14 +1645,14 @@ procedure COMPINIT.9:INITSCALARS(args 0 words);  { locals 2 words, lex 2 }
   TINY := 0;
   CODEINSEG := 0;
   G53 := 1;
-  G37 := 0;
+  INCLUDING := 0;
   USING := 0;
   COMMENT := nil;
   G29 := 1;
   G26 := 1;
   BEGSTMTLEV := 0;
   FLIPBYTES := 0;
-  @G183^ := adjust(0,2)  {2 words};
+  @SEGSUSED^ := adjust(0,2)  {2 words};
 
 procedure COMPINIT.10:INITSETS(args 0 words);  { locals 0 words, lex 2 }
   @CONSTBEGSYS^ := adjust({ident,intconst,realconst,stringconst,addop,longconst},4)  {4 words};
@@ -1734,7 +1734,7 @@ procedure DECLARAT.1:DECLARATIONPART(args 4 words);  { locals 11 words, lex 1 }
     end;
     if (SY <> 19) then begin
       if (not (((USING or INMODULE) and (SY in {endsy,implesy}))) and (SY <> 50)) then begin
-        if (not ((G37 or L6)) or not ((SY in @BLOCKBEGSYS^<4w>))) then begin
+        if (not ((INCLUDING or L6)) or not ((SY in @BLOCKBEGSYS^<4w>))) then begin
           PASCALCO.2:ERROR(18);
           PASCALCO.14:SKIP(?, ?, ?, adjust((@L1^<4w> - {50,51}),4));
         end;
@@ -2592,23 +2592,23 @@ procedure DECLARAT.11:ONEUNIT(args 1 words);  { locals 22 words, lex 3 }
           PASCALCO.2:ERROR(350);
         end;
       end else begin
-        @G183^ := adjust((@G183^<2w> + [G84]),2)  {2 words};
+        @SEGSUSED^ := adjust((@SEGSUSED^<2w> + [G84]),2)  {2 words};
       end;
     end;
     if L11^.f10 then begin
       if G40 then begin
-        @G183^ := adjust((@G183^<2w> + [SEG]),2)  {2 words};
+        @SEGSUSED^ := adjust((@SEGSUSED^<2w> + [SEG]),2)  {2 words};
       end;
       PASCALCO.5:ENTERID(L11);
     end;
     PASCALCO.6:INSYMBOL();
     if (SY = 0) then begin
       if (@G17 = @'P       ') then begin
-        @G183^ := adjust((@G183^<2w> + {31}),2)  {2 words};
+        @SEGSUSED^ := adjust((@SEGSUSED^<2w> + {31}),2)  {2 words};
         PASCALCO.6:INSYMBOL();
       end;
       if (@G17 = @'L       ') then begin
-        @G183^ := adjust((@G183^<2w> + {30}),2)  {2 words};
+        @SEGSUSED^ := adjust((@SEGSUSED^<2w> + {30}),2)  {2 words};
       end;
     end;
     SYMBLK := 9999;
@@ -2651,7 +2651,7 @@ procedure DECLARAT.12:GETTEXT(args 1 words);  { locals 3 words, lex 4 }
         I1,9 := 1;
       end;
     end;
-    G585 := 0;
+    USEFILE := 0;
   end else begin
     L1^ := 1;
     if G29 then begin
@@ -2664,11 +2664,11 @@ procedure DECLARAT.12:GETTEXT(args 1 words);  { locals 3 words, lex 4 }
           if (FBLOCKIO(@LIBRARY, @I2,2, 0, 1, 0, 1) <> 1) then begin
             L1^ := 0;
           end else begin
-            G585 := 1;
+            USEFILE := 1;
           end;
         end;
       end else begin
-        G585 := 2;
+        USEFILE := 2;
       end;
       if L1^ then begin
         G29 := 0;
@@ -2716,9 +2716,9 @@ procedure DECLARAT.12:GETTEXT(args 1 words);  { locals 3 words, lex 4 }
   end;
   if L1^ then begin
     USING := 1;
-    G582 := SYMCURSOR;
-    G581 := LINESTART;
-    G579 := (SYMBLK-2);
+    PREVSYMCURSOR := SYMCURSOR;
+    PREVLINESTART := LINESTART;
+    PREVSYMBLK := (SYMBLK-2);
     SYMBLK := I1,8;
     PASCALCO.3:GETNEXTPAGE();
     PASCALCO.6:INSYMBOL();
@@ -3406,21 +3406,21 @@ procedure BODYPART.1:BODYPART(args 5 words);  { locals 0 words, lex 1 }
   end;
 
 procedure BODYPART.2:LINKERREF(args 3 words);  { locals 1 words, lex 2 }
-  if (G576 > 128) then begin
-    if (FBLOCKIO(@REFFILE, G577, 0, 1, G575, 0) <> 1) then begin
+  if (NREFS > 128) then begin
+    if (FBLOCKIO(@REFFILE, REFLIST, 0, 1, REFBLK, 0) <> 1) then begin
       PASCALCO.2:ERROR(402);
     end;
-    G575 := (G575+1);
-    G576 := 1;
+    REFBLK := (REFBLK+1);
+    NREFS := 1;
   end;
-  L4 := G577[(G576-1)*2w];
+  L4 := REFLIST[(NREFS-1)*2w];
   if (G130 in 1) then begin
     (L4+1)^ := (L2+32);
   end else begin
     (L4+1)^ := L2;
   end;
   L4^ := (SEGINX+L1);
-  G576 := (G576+1);
+  NREFS := (NREFS+1);
   { left on stack: L3 }
 
 procedure BODYPART.3:GEN0(args 1 words);  { locals 4 words, lex 2 }
@@ -3563,7 +3563,7 @@ procedure BODYPART.6:GEN2(args 3 words);  { locals 0 words, lex 2 }
   end;
 
 procedure BODYPART.7:GENNR(args 2 words);  { locals 0 words, lex 2 }
-  @G183^ := adjust((@G183^<2w> + [L2]),2)  {2 words};
+  @SEGSUSED^ := adjust((@SEGSUSED^<2w> + [L2]),2)  {2 words};
   BODYPART.6:GEN2(77, L2, L1);
 
 procedure BODYPART.8:LOAD(args 0 words);  { locals 4 words, lex 2 }
@@ -6896,7 +6896,7 @@ procedure BODY3.1:BODY3(args 0 words);  { locals 2 words, lex 3 }
       I1,6 := L1^.f7;
     end;
   end;
-  if ((I1,3 <> nil) or (I1,8 and ((@G183^<2w> <> 0) or (not (NOLOAD) and (USINGLIST <> nil))))) then begin
+  if ((I1,3 <> nil) or (I1,8 and ((@SEGSUSED^<2w> <> 0) or (not (NOLOAD) and (USINGLIST <> nil))))) then begin
     BODY3.2:UNITSEGS();
   end;
   if (I2,1 = nil) then begin
@@ -6974,7 +6974,7 @@ procedure BODY3.2:UNITSEGS(args 0 words);  { locals 1 words, lex 4 }
     I2,15 := 31;
     L1 := 30;
     while (I2,15 >= L1) do begin
-      if (I2,15 in @G183^<2w>) then begin
+      if (I2,15 in @SEGSUSED^<2w>) then begin
         BODYPART.4:GENLDC(I2,15);
         BODYPART.5:GEN1(30, 22);
       end;
@@ -7010,7 +7010,7 @@ procedure BODY3.2:UNITSEGS(args 0 words);  { locals 1 words, lex 4 }
     I2,15 := 30;
     L1 := 31;
     while (I2,15 <= L1) do begin
-      if (I2,15 in @G183^<2w>) then begin
+      if (I2,15 in @SEGSUSED^<2w>) then begin
         BODYPART.4:GENLDC(I2,15);
         BODYPART.5:GEN1(30, 21);
       end;
@@ -7042,7 +7042,7 @@ procedure WRITELIN.1:WRITELINKERINFO(args 0 words);  { locals 7 words, lex 1 }
     PASCALCO.2:ERROR(399);
   end;
   if INMODULE then begin
-    L1 := G575;
+    L1 := REFBLK;
   end;
   WRITELIN.4:GLOBALSEARCH(@DISPLAY[G82*4w]^);
   LGTH := 1;
@@ -7061,25 +7061,25 @@ procedure WRITELIN.1:WRITELINKERINFO(args 0 words);  { locals 7 words, lex 1 }
 procedure WRITELIN.2:GETREFS(args 1 words);  { locals 8 words, lex 2 }
   L4 := 0;
   L3 := (IC-4);
-  if ((G576 <> 1) or (G575 <> 0)) then begin
+  if ((NREFS <> 1) or (REFBLK <> 0)) then begin
     L5 := 0;
-    L8 := G575;
+    L8 := REFBLK;
     while (L5 <= L8) do begin
-      if (I1,1 < G575) then begin
+      if (I1,1 < REFBLK) then begin
         L6 := 128;
       end else begin
-        L6 := (G576-1);
+        L6 := (NREFS-1);
       end;
       L7 := 1;
       L9 := L6;
       while (L7 <= L9) do begin
-        if (L1 = G577[(L7-1)*2w]^.f1) then begin
-          PASCALCO.21:GENWORD(G577[(L7-1)*2w]^);
+        if (L1 = REFLIST[(L7-1)*2w]^.f1) then begin
+          PASCALCO.21:GENWORD(REFLIST[(L7-1)*2w]^);
           L4 := (L4+1);
         end;
         L7 := (L7+1);
       end;
-      if (L5 < G575) then begin
+      if (L5 < REFBLK) then begin
         WRITELIN.3:GETNEXTBLOCK();
       end;
       L5 := (L5+1);
@@ -7102,10 +7102,10 @@ procedure WRITELIN.2:GETREFS(args 1 words);  { locals 8 words, lex 2 }
 
 procedure WRITELIN.3:GETNEXTBLOCK(args 0 words);  { locals 0 words, lex 3 }
   I2,1 := (I2,1+1);
-  if (I2,1 > G575) then begin
+  if (I2,1 > REFBLK) then begin
     I2,1 := 0;
   end;
-  if (FBLOCKIO(@REFFILE, G577, 0, 1, I2,1, 1) <> 1) then begin
+  if (FBLOCKIO(@REFFILE, REFLIST, 0, 1, I2,1, 1) <> 1) then begin
   end;
 
 procedure WRITELIN.4:GLOBALSEARCH(args 1 words);  { locals 1 words, lex 2 }
@@ -7237,13 +7237,13 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   UNITPART.2:OPENREFFILE();
   repeat
     FRESET(@REFFILE);
-    G576 := 1;
-    G575 := 0;
+    NREFS := 1;
+    REFBLK := 0;
     UNITPART.3:UNITDECLARATION(?, ?, ?, @L1^<4w>, @L5);
-    G578 := SYMCURSOR;
+    TEXTSTRT := SYMCURSOR;
     IC := 1024;
     ININTERFACE := 1;
-    if G37 then begin
+    if INCLUDING then begin
       PASCALCO.2:ERROR(406);
     end;
     if (SY = 51) then begin
@@ -7252,7 +7252,7 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
       PASCALCO.2:ERROR(22);
     end;
     DECLARAT.1:DECLARATIONPART(?, ?, ?, @L1^<4w>);
-    IC := ((SYMCURSOR-G578)+10);
+    IC := ((SYMCURSOR-TEXTSTRT)+10);
     if (IC > 1024) then begin
       IC := 1034;
     end;
@@ -7262,12 +7262,12 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
       L9 := (L9-512);
       L8 := (L8+1);
     end;
-    CSP2(SYMBUFP, G578, CODEP, 0, IC);
+    CSP2(SYMBUFP, TEXTSTRT, CODEP, 0, IC);
     CSP10(CODEP, (IC-10), 10, 32);
     CODEP^[(IC-2)] := 69;
     if (IC > 1024) then begin
-      CODEP^[(SYMCURSOR-G578)] := 13;
-      CODEP^[((SYMCURSOR-G578)+1)] := 0;
+      CODEP^[(SYMCURSOR-TEXTSTRT)] := 13;
+      CODEP^[((SYMCURSOR-TEXTSTRT)+1)] := 0;
     end;
     PASCALCO.22:WRITECODE(1);
     if (G27 or (not (G27) and (SY = 19))) then begin
@@ -7286,18 +7286,18 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
       PASCALCO.24:BLOCK(?, ?, ?, adjust((@L1^<4w> - {50,51,52}),4));
       UNITPART.4:UNITBODY();
       PASCALCO.23:FINISHSEG();
-      if (({30,31} * @G183^<2w>) <> 0) then begin
+      if (({30,31} * @SEGSUSED^<2w>) <> 0) then begin
         if (FBLOCKIO(I2,8, @G969, 0, 1, L8, 1) <> 1) then begin
         end;
-        if (31 in @G183^<2w>) then begin
+        if (31 in @SEGSUSED^<2w>) then begin
           @G969^[(L9+1)] := 80;
         end;
-        if (30 in @G183^<2w>) then begin
+        if (30 in @SEGSUSED^<2w>) then begin
           @G969^[(L9+3)] := 76;
         end;
         if (FBLOCKIO(I2,8, @G969, 0, 1, L8, 0) <> 1) then begin
         end;
-        @G183^ := adjust((@G183^<2w> - {30,31}),2)  {2 words};
+        @SEGSUSED^ := adjust((@SEGSUSED^<2w> - {30,31}),2)  {2 words};
       end;
       if not (G41) then begin
         LINKINFO := 1;
@@ -7306,8 +7306,8 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
         if G41 then begin
           (@SEGTABLE[@SEGMAP~[SEG]{4per word,4 bits}*9w]+8)^ := 5;
         end;
-        if (G575 > 0) then begin
-          if (FBLOCKIO(@REFFILE, G577, 0, 1, G575, 0) <> 1) then begin
+        if (REFBLK > 0) then begin
+          if (FBLOCKIO(@REFFILE, REFLIST, 0, 1, REFBLK, 0) <> 1) then begin
             PASCALCO.2:ERROR(402);
           end;
         end;
@@ -7496,7 +7496,7 @@ procedure UNITPART.3:UNITDECLARATION(args 5 words);  { locals 18 words, lex 2 }
     end;
   end;
   CSP32(L1);
-  CSP1(@G577, 256);
+  CSP1(@REFLIST, 256);
   CSP1(@G81, 11);
   move(G81, @L11, 11 words);
   LEVEL := 1;
@@ -7601,7 +7601,7 @@ L01F6:
           PASCALCO.4:PRINTLINE();
           SYMCURSOR := (SYMCURSOR-1);
         end;
-        if (G37 or (INMODULE and ININTERFACE)) then begin
+        if (INCLUDING or (INMODULE and ININTERFACE)) then begin
           PASCALCO.2:ERROR(406);
         end;
         COMMAND();
@@ -7609,10 +7609,10 @@ L01F6:
         if (CSP34() <> 0) then begin
           PASCALCO.2:ERROR(403);
         end;
-        G37 := 1;
-        G584 := SYMCURSOR;
-        G583 := LINESTART;
-        G580 := (SYMBLK-2);
+        INCLUDING := 1;
+        OLDSYMCURSOR := SYMCURSOR;
+        OLDLINESTART := LINESTART;
+        OLDSYMBLK := (SYMBLK-2);
         SYMBLK := 2;
         PASCALCO.3:GETNEXTPAGE();
         PASCALCO.6:INSYMBOL();
@@ -8060,17 +8060,17 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     end;
     SEG := (SEG+1);
   end;
-  CSP2(@G183, 0, @PROCTABLE, 0, 4);
+  CSP2(@SEGSUSED, 0, @PROCTABLE, 0, 4);
   PASCALCO.21:GENWORD(@PROCTABLE[0]^);
   PASCALCO.21:GENWORD(@PROCTABLE[1]^);
   TEST := 1;
-  if ((@G183^<2w> * {30,31}) <> 0) then begin
+  if ((@SEGSUSED^<2w> * {30,31}) <> 0) then begin
     PASCALCO.20:GENBYTE(42);
     PASCALCO.20:GENBYTE(0);
     LGTH := 30;
     L1 := 31;
     while (LGTH <= L1) do begin
-      if (LGTH in @G183^<2w>) then begin
+      if (LGTH in @SEGSUSED^<2w>) then begin
         PASCALCO.20:GENBYTE(LGTH);
         PASCALCO.20:GENBYTE(6);
         PASCALCO.20:GENBYTE(0);

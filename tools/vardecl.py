@@ -72,7 +72,7 @@ def var_block() -> list[tuple[list[str], str]]:
     # Collapse inline RECORD ... END so its fields do not read as
     # declarations of their own.
     while True:
-        m = re.search(r"RECORD.*?END", body, flags=re.S)
+        m = re.search(r"RECORD.*?END", body, flags=re.S)
         if not m:
             break
         body = body[:m.start()] + " AGGREGATE " + body[m.end():]

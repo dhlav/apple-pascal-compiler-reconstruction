@@ -2557,7 +2557,7 @@ declaration, `VAR CODEP, SYMBUFP: ...`, which allocates `SYMBUFP` first.
 
 `tools/vardecl.py` (now a `build_all.py` step) lays out II.0's `VAR` block
 under the rule and aligns it by name against Apple's recovered globals,
-writing `analysis/global_map/vardecl-ii0.txt`. 125 II.0 variables, **67 of
+writing `analysis/global_map/vardecl-ii0.txt`. 118 II.0 variables, **83 of
 them matched to a name we recovered in Apple**, and — the useful part —
 the offsets differ only by a *drift* that never decreases through the
 scalar region:
@@ -2582,10 +2582,14 @@ types independently: `PROCTABLE` is 335 − 185 = **150** words
 (`ARRAY [0..MAXJTAB]`), and the file variables are 40 words apart —
 II.0's `NILFILESIZE = 40`.
 
-Two words are still unaccounted for around `DISPLAY`/`PFNUMOF`, where the
-drift steps *down* by 2: Apple removed something there, most likely
-`PFNUMOF`, the non-resident-procedure list, whose six entries are for a
-runtime Apple does not have. Not yet confirmed.
+The drift steps *down* after `DISPLAY`, which means Apple removed
+something around `PFNUMOF`. **Finding 38 settles it, and the count it
+first reported here was wrong**: `vardecl.py` was parsing the fields of
+the two inline `RECORD … END` types as if they were variables of their
+own, which shifted every II.0 offset past `DISPLAY` and made the step read
+as −2. With that fixed the step is −4, and finding 38 accounts for it
+exactly — `PFNUMOF` (6 words) deleted, a two-word set put in its place.
+Nothing else in the block is unaccounted for.
 
 ## 34. The declaration part, all twenty procedures
 
@@ -2812,8 +2816,9 @@ which is exactly how `bodypart.b.text` writes it.
 matters. II.0 emits `GEN1(79 CGP, PFNUMOF[extproc])` and keeps a
 `PFNUMOF` table; Apple emits `GEN2(77 CXP, seg, proc)` and instead adds
 the segment to a two-word set at global 183. **Apple has no `PFNUMOF`** —
-which is direct support for finding 33c's open question about the two
-words missing around `DISPLAY`, though it does not settle the count.
+which is finding 33c's open question about the words missing around
+`DISPLAY`. Finding 38 closes it: the set *is* what stands in `PFNUMOF`'s
+declaration slot, and −6 + 2 is the whole of the step.
 
 ## 36. `BODYPART`, all of it, and what Apple did to II.0's `BODY`
 
@@ -3015,6 +3020,189 @@ last one in every segment: the disassembly's `SEGMENT` header sits at the
 end of the previous procedure's block, so each segment's last procedure
 was being filed under the next segment's name. Fixed; that was the
 long-standing "`COMPINIT.10` not found".
+
+## 38. The `VAR` block accounted for: `PFNUMOF`, `SEGMAP`, and the block that switches source files
+
+*Confidence: VERIFIED BINARY FACT for every shape and offset; STRONG
+INFERENCE for the II.0 spellings, which are the source's own; SPECULATION
+only for the two names that are ours, `SEGSUSED` and `TEXTSTRT`.
+`tools/probes/probe_globalmap.py`, 48 checks, twelve mutation-tested legs.*
+
+Finding 33c left the alignment of II.0's `VAR` block against Apple's
+globals with three unexplained drift steps and 48 unnamed offsets. All
+three steps are now closed, and the whole tail of the block is named.
+
+### 38a. A parser bug in `vardecl.py`, and why it mattered
+
+The alignment tool collapses inline `RECORD … END` types so their fields
+do not read as declarations of their own. The regex that does it had three
+literal backspace bytes (`0x08`) embedded in the pattern — invisible to
+`grep` and to a plain read of the file, visible only to `cat -A` — so the
+collapse never fired. Seven record fields (`FLABEL`, `CREC`, `CDSPL`,
+`VREC` out of `DISPLAY`; `SEGNAME`, `SEGKIND`, `TEXTADDR` out of
+`SEGTABLE`) were being laid out as variables, which shifted every II.0
+offset past `DISPLAY` and corrupted the drift column from there on. The
+step at `PROCTABLE` read −2 when it is −4, and the step at `COMMENT` read
++16 when it is +24.
+
+That is the second time an invisible-state bug has produced a plausible
+wrong answer in this project — the first was a stale `__pycache__` masking
+a mutation test. The lesson is the same both times: when something
+*obviously* matches and demonstrably does not, check the bytes before
+re-reading the logic.
+
+`analysis/global_map/vardecl-ii0.txt` now reports **118 II.0 variables, 83
+of them matched to a recovered Apple name, in 11 runs of constant drift**,
+and the whole tail from `REFFILE` to `LP` aligns word for word.
+
+### 38b. Apple deleted `PFNUMOF` and put a set of segment numbers in its slot
+
+`DISPLAY` is II.0's, untouched. `DISPLIMIT = 12` gives thirteen four-word
+entries = 52 words, and the binary indexes it with `IXA 4` at every one of
+its index sites in 1.1 and again in 1.3 — a stride the binary could have
+contradicted and does not.
+
+II.0 declares `PFNUMOF: NONRESPFLIST` immediately after it: six words,
+`ARRAY [NONRESIDENT] OF INTEGER` over six enumerators. Apple has, at
+exactly that declaration position, **a two-word set** — global 183 in 1.1,
+186 in 1.3. Finding 35d already showed why: II.0's `GENNR` emits
+`GEN1(79 CGP, PFNUMOF[extproc])` and needs the table; Apple emits
+`GEN2(77 CXP, seg, proc)` and needs instead to remember which segments the
+code calls into. `BODYPART.7` is that substitution and nothing else — its
+entire body, thirteen instructions:
+
+```
+0488  LAO 183 ; LAO 183 ; LDM 2 ; SLDC 2 ; SLDL 2 ; SGS ; UNI ; ADJ 2 ; STM 2
+0498  SLDC 77 ; SLDL 2 ; SLDL 1 ; CIP 6
+```
+
+which is `SEGSUSED := SEGSUSED + [seg]; GEN2(77 (*CXP*), seg, proc)`. The
+other users are `DECLARAT.11 ONEUNIT` (adds `SEG`, and the slot `NEXTSEG`
+just took), `BODY3.2 UNITSEGS` (walks the set downward emitting
+`GENLDC(i); GEN1(30 CSP, 22 RELSEG)` — the `GETSEG`/`RELSEG` emission
+finding 37 attributed to it), `BODY3.1`, `UNITPART.1` and `FINISHUP.1`
+(`31 in SEGSUSED`). Two words is `SET OF 0..31`, and the probe measures
+the width from every reference rather than assuming it.
+
+So the drift step at `PROCTABLE` is **−6 + 2 = −4**, exactly the observed
+`+6 → +2`. `PROCTABLE` itself is then 150 words, which is `MAXPROCNUM =
+149` unchanged.
+
+`SEGSUSED` is our name; Apple's is unrecoverable, since nothing in the
+codefile or the manuals mentions it.
+
+### 38c. The step at `COMMENT` is `SEGTABLE`'s ninth word plus `SEGMAP`
+
+II.0's `SEGTABLE` entry is eight words. Apple's is nine — `IXA 9`
+everywhere, sixteen entries, so **+16** — and the extra word is the
+codefile's `SEGINFO` (finding 28).
+
+The other eight are `SEGMAP` at 479, which II.0 has no counterpart for,
+because II.0's `SEGRANGE = 0..MAXSEG` lets a segment number index
+`SEGTABLE` directly. Apple lets segment numbers run past 15 (finding 27a)
+and so must map:
+
+```
+LAO 479 ; SLDO 13 (SEG) ; IXP 4,4 ; LDP ; LAO 335 ; … ; IXA 9
+```
+
+`IXP 4,4` is four fields per word, four bits wide: a `PACKED ARRAY OF
+0..15`, and eight words is 32 nibbles. **16 + 8 = 24 = the observed
+`+2 → +26`**, with nothing left over — so Apple inserted exactly one new
+variable in the whole stretch between `SEGTABLE` and `COMMENT`.
+
+### 38d. The source-switching block, 575..585
+
+`REFFILE` ends at 574 and `LIBRARY` begins at 586, so eleven words hold
+II.0's ten (`compglbls.text` 344–351) and exactly one Apple insertion —
+the `+26 → +27` step.
+
+The three reference-file words come out of `BODYPART.2 LINKERREF`:
+
+```
+LDO 576 > 128  →  LAO 535 (REFFILE) ; LDO 577 ; 0 ; 1 ; LDO 575 ; 0;0;0 ; CXP OS.28
+                  575 := 575 + 1 ; 576 := 1
+LDO 577 ; LDO 576 ; SLDC 1 ; SBI ; IXA 2
+```
+
+— a block number, a 1-based count into a two-word-element array, and the
+array pointer, which is the only one of the three whose address is taken
+and only to pass to `NEW`. That is `REFBLK`, `NREFS`, `REFLIST`, at drift
++26.
+
+The six save slots were placed **by behaviour alone**, using nothing about
+declaration order. `PASCALCO.3` is II.0's `GETNEXTPAGE` line for line, and
+it says which global each one shadows:
+
+```
+LDO 579 → SRO 90 (SYMBLK) ; LDO 582 → SRO 14 (SYMCURSOR) ; LDO 581 → SRO 95 (LINESTART)
+LDO 580 → SRO 90          ; LDO 584 → SRO 14            ; LDO 583 → SRO 95
+```
+
+and which set is which, because II.0 restores `PREV*` when `USING` goes
+false and `OLD*` when `INCLUDING` does. The binary carries both flags —
+`LDO 37; LDO 36; LOR; LNOT` is `if not (INCLUDING or USING)`, which names
+global 37 `INCLUDING` alongside the already-recovered 36 `USING`. The
+savers agree: `DECLARAT.12 GETTEXT` writes `{582, 581, 579}` and
+`COMPOPTI`'s `$I` arm writes `{584, 583, 580}`, exactly as
+`decpart.b.text` and `procs.a.text` write them — including
+`PREVSYMBLK := SYMBLK - 2`, which is `LDO 90; SLDC 2; SBI; SRO 579` in the
+binary.
+
+Laid out that way, all six land at a **constant drift of +27, in exactly
+the order II.0's two declarations allocate them backwards**:
+
+| II.0 | | Apple 1.1 | 1.3 |
+|---|---|---|---|
+| 552 | `PREVSYMBLK` | 579 | 709 |
+| 553 | `OLDSYMBLK` | 580 | 710 |
+| 554 | `PREVLINESTART` | 581 | 711 |
+| 555 | `PREVSYMCURSOR` | 582 | 712 |
+| 556 | `OLDLINESTART` | 583 | 713 |
+| 557 | `OLDSYMCURSOR` | 584 | 714 |
+| 558 | `USEFILE` | 585 | 715 |
+
+Nothing in the reasoning that placed them used declaration order, so this
+is the check that could have failed. It is also a second, independent
+confirmation of finding 33's backwards-allocation rule.
+
+`USEFILE` is II.0's `UNITFILE = (WORKCODE,SYSLIBRARY)` **with a third
+enumerator**. `GETTEXT` stores 0 for a unit already in the workfile, 2
+when the `$U` library's segment dictionary reads, and 1 after falling back
+to opening `'*SYSTEM.LIBRARY'` by name. Only `= WORKCODE` is ever tested,
+which is why the third value has no observable effect — but three distinct
+constants are stored, and the probe fails if only two are.
+
+The insertion is therefore **578**, between `REFLIST` and `PREVSYMBLK`,
+and it is a cursor. Apple restructured `GETNEXTPAGE`: II.0 calls
+`WRITETEXT` at the bottom, inside `if SYMCURSOR = 0`; Apple hoists it to
+the top and buffers first —
+
+```
+if INMODULE and ININTERFACE and not USING then
+  begin MOVELEFT(SYMBUFP^[578], CODEP^[0], 1024); WRITETEXT(true); 578 := 0 end
+```
+
+— so 578 is the `SYMBUFP` offset of the first interface-text byte not yet
+captured. `UNITPART` sets it to `SYMCURSOR` to start the capture and ends
+with `IC := SYMCURSOR - 578 + 10`. We call it `TEXTSTRT`; the name is
+ours.
+
+### 38e. What this settles in 1.3
+
+The same three objects carry across, and each widens exactly as raising
+the segment limit from 32 to 64 would make it:
+
+| | 1.1 | 1.3 | |
+|---|---|---|---|
+| `SEGSUSED` | 2 words, `SET OF 0..31` | 4 words, `SET OF 0..63` | +2 |
+| `SEGMAP` | 8 words = 32 nibbles | 16 words = 64 nibbles | +8 |
+| `PROCTABLE` | 150 | 255 | +105 |
+
+1.3's `BODYPART.7` is the same thirteen instructions with `LDM/ADJ/STM 4`
+and `SLDC 4` where 1.1 has 2; 1.3's `SEGMAP` is still `IXP 4,4`. `DISPLAY`
+and `SEGTABLE` are unchanged. That is **+115 of 1.3's roughly 130 words of
+global growth**, previously open under task 10.
 
 ## 16. Open questions
 

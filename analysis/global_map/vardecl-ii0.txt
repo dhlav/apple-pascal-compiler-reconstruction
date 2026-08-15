@@ -42,7 +42,7 @@ that stretch; each step up is a variable Apple inserted.
    33 SEPPROC            1      -       
    34 NOSWAP             1      -       
    35 USING              1     36     +1
-   36 INCLUDING          1      -       
+   36 INCLUDING          1     37     +1
    37 DP                 1     38     +1
    38 LSEPPROC           1      -       
    39 TINY               1     42     +3
@@ -108,36 +108,29 @@ that stretch; each step up is a variable Apple inserted.
   120 CONSTBEGSYS        4    126     +6
   124 VARS               1      -       
   125 DISPLAY           52    131     +6
-  177 FLABEL             1      -       
-  178 CREC               1      -       
-  179 CDSPL              1      -       
-  180 VREC               1      -       
-  181 PFNUMOF            6      -       
-  187 PROCTABLE        150    185     -2
-  337 SEGTABLE         128    335     -2
-  465 SEGNAME            4      -       
-  469 TEXTADDR           1      -       
-  470 SEGKIND            1      -       
-  471 COMMENT            1    487    +16
-  472 SYSTEMLIB         21    488    +16
-  493 NEXTJTAB           1    509    +16
-  494 JTAB              25    510    +16
-  519 REFFILE           40    535    +16
-  559 REFBLK             1      -       
-  560 NREFS              1      -       
-  561 REFLIST            1      -       
-  562 PREVSYMBLK         1      -       
-  563 OLDSYMBLK          1      -       
-  564 PREVLINESTART      1      -       
-  565 PREVSYMCURSOR      1      -       
-  566 OLDLINESTART       1      -       
-  567 OLDSYMCURSOR       1      -       
-  568 USEFILE            1      -       
-  569 LIBRARY           40    586    +17
-  609 INCLFILE          40    626    +17
-  649 LP                40    666    +17
-  689 CURBLK             1      -       
-  690 CURBYTE            1      -       
-  691 DISKBUF          256      -       
+  177 PFNUMOF            6      -       
+  183 PROCTABLE        150    185     +2
+  333 SEGTABLE         128    335     +2
+  461 COMMENT            1    487    +26
+  462 SYSTEMLIB         21    488    +26
+  483 NEXTJTAB           1    509    +26
+  484 JTAB              25    510    +26
+  509 REFFILE           40    535    +26
+  549 REFBLK             1    575    +26
+  550 NREFS              1    576    +26
+  551 REFLIST            1    577    +26
+  552 PREVSYMBLK         1    579    +27
+  553 OLDSYMBLK          1    580    +27
+  554 PREVLINESTART      1    581    +27
+  555 PREVSYMCURSOR      1    582    +27
+  556 OLDLINESTART       1    583    +27
+  557 OLDSYMCURSOR       1    584    +27
+  558 USEFILE            1    585    +27
+  559 LIBRARY           40    586    +27
+  599 INCLFILE          40    626    +27
+  639 LP                40    666    +27
+  679 CURBLK             1      -       
+  680 CURBYTE            1      -       
+  681 DISKBUF          256      -       
 ------------------------------------------------------------
-125 II.0 variables; 72 of them are names we have recovered in Apple, in 11 runs of constant drift.
+118 II.0 variables; 83 of them are names we have recovered in Apple, in 11 runs of constant drift.

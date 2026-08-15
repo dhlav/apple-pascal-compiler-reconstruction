@@ -162,14 +162,28 @@ Done, and reproducible via `python tools/build_all.py`:
    **Well advanced** (finding 33). `tools/vardecl.py` is a `build_all.py`
    step: it lays out II.0's `VAR` block under the compiler's own
    allocation rule and aligns it by name against Apple's globals, into
-   `analysis/global_map/vardecl-ii0.txt`. 71 names matched, drift
+   `analysis/global_map/vardecl-ii0.txt`. 83 names matched, drift
    non-decreasing through the scalar region — and the alignment now
    *predicts*: finding 34c read four globals (`TEST`, `USING`,
    `USINGLIST`, `MODPTR`) off `USESDECLARATION` and all four landed on the
    offset the drift column had already named, in both releases. **The rule that makes this
    work at all: a `VAR` declaration allocates its identifiers backwards.**
-   What is left is the unnamed stretches between the matched runs, and the
-   two words Apple appears to have removed around `DISPLAY`/`PFNUMOF`.
+   The `DISPLAY`/`PFNUMOF` question is **closed** (finding 38), and the
+   count it was asked with was wrong: `vardecl.py` had been parsing the
+   fields of two inline `RECORD` types as variables, which corrupted every
+   offset past `DISPLAY`. With that fixed the three remaining drift steps
+   all balance — `PFNUMOF` (6 words) replaced in place by a two-word
+   `SEGSUSED` set; `SEGTABLE`'s ninth word (+16) plus `SEGMAP` (+8); and
+   one Apple word, `TEXTSTRT`, inserted into the source-switching block.
+   Twelve more globals are named, the whole tail from `REFFILE` to `LP`
+   aligns word for word, and the six `PREV*`/`OLD*` save slots — placed by
+   behaviour alone — came out in II.0's backwards-allocated order, which
+   is an independent confirmation of finding 33's rule.
+
+   What is left is the unnamed stretches *between* the matched runs: 35 of
+   the 133 touched offsets in 1.1 still have no name — 17, 24, 26, 27, 29,
+   40, 41, 53, 62–94 in patches, 130, and the file-window tail 835, 886,
+   926, 966–969.
 
    Original notes follow. The map now knows
    sizes and shapes; the remaining step is to lay the objects out in
@@ -244,9 +258,14 @@ Done, and reproducible via `python tools/build_all.py`:
      carries after its last `RTS` (probably linker relocation lists).
      `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is a good
      structural model but is 1.2 — corroboration, not authority.
-   * Account for the ~130-word growth in globals. The correspondence table
-     localises the insertions to a few points; read off which offsets are
-     new in 1.3 and classify them with the same evidence pipeline.
+   * Account for the ~130-word growth in globals. **+115 of it is now
+     explained** (finding 38): raising the segment limit from 32 to 64
+     widens `SEGSUSED` from `SET OF 0..31` to `SET OF 0..63` (+2) and
+     `SEGMAP` from 32 to 64 nibbles (+8), and `PROCTABLE` grows 150 → 255
+     (+105). `DISPLAY` and `SEGTABLE` are unchanged. What is left is the
+     residual ~15 words: the correspondence table localises the insertions
+     to a few points; read off which offsets are new in 1.3 and classify
+     them with the same evidence pipeline.
 
      First two identified (finding 22b): 1.3 adds the standard types
      `BYTESTREAM` and `WORDSTREAM`, at globals 57 and 58, entered by name

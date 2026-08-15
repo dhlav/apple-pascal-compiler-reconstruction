@@ -828,6 +828,61 @@ GLOBALS_11: dict[int, str] = {
     586: "LIBRARY",    # SYSTEM.LIBRARY, or whatever $U filename named
     626: "INCLFILE",  # the program text, and the $I include file
     666: "LP",   # *SYSTEM.LST.TEXT, or whatever $L filename named
+
+    # --- finding 38: the source-switching block, 575..585 --------------------
+    #
+    # Eleven consecutive words holding II.0's ten (compglbls.text 344-351)
+    # plus exactly one Apple insertion. Every II.0 name lands, and none of
+    # them was placed by declaration order: the six save slots were assigned
+    # by which global each one is copied back into (SYMBLK 90, SYMCURSOR 14,
+    # LINESTART 95) and by which routine saves it. GETNEXTPAGE restores
+    # PREV* when USING goes false and OLD* when INCLUDING does; GETTEXT
+    # (DECLARAT.12) saves the PREV set and COMPOPTI.1's `$I` arm saves the
+    # OLD set, exactly as procs.a.text and decpart.b.text do it. Laid out
+    # that way they come out in II.0's reverse-allocated declaration order
+    # at a constant drift of +27, which is the check that could have failed.
+    575: "REFBLK",    # next *SYSTEM.INFO block to write; LINKERREF flushes
+                      # REFLIST^ to it and bumps it
+    576: "NREFS",     # entries used in REFLIST^, 1-based, reset to 1 on flush
+    577: "REFLIST",   # ^REFARRAY -- the only one of the three whose address
+                      # is taken, and only to pass to NEW
+    578: "TEXTSTRT",  # OURS. Apple-only, and the one insertion in this run.
+                      # SYMBUFP offset of the first interface-text byte not
+                      # yet captured. II.0's GETNEXTPAGE calls WRITETEXT at
+                      # the bottom; Apple's hoists it to the top and copies
+                      # SYMBUFP^[TEXTSTRT] onward into CODEP^ first, then
+                      # clears it. UNITPART sets it to SYMCURSOR to start
+                      # the capture and ends with IC := SYMCURSOR-TEXTSTRT+10.
+    579: "PREVSYMBLK",      # PREVSYMBLK := SYMBLK - 2 in GETTEXT -- the
+                            # `SLDC 2; SBI` is in the binary
+    580: "OLDSYMBLK",       # likewise OLDSYMBLK := SYMBLK - 2, in COMPOPTI
+    581: "PREVLINESTART",
+    582: "PREVSYMCURSOR",
+    583: "OLDLINESTART",
+    584: "OLDSYMCURSOR",
+    585: "USEFILE",   # II.0's UNITFILE = (WORKCODE,SYSLIBRARY); Apple adds a
+                      # third enumerator. GETTEXT stores 0 for a unit already
+                      # in the workfile, 2 when the $U library's segment
+                      # dictionary reads, and 1 after falling back to
+                      # '*SYSTEM.LIBRARY'. Only `= WORKCODE` is ever tested.
+
+    # --- finding 38: the segments-used set, and what it replaced ------------
+    #
+    # II.0 declares PFNUMOF: NONRESPFLIST here, six words, and BODYPART's
+    # GENNR emits `GEN1(79 CGP, PFNUMOF[extproc])`. Apple emits
+    # `GEN2(77 CXP, seg, proc)` instead and has no PFNUMOF at all; in its
+    # place, at the same declaration position, sits a two-word set of the
+    # segments the code emitted so far calls into. That is the whole of the
+    # +6 -> +2 drift step at PROCTABLE: -6 words of PFNUMOF, +2 of set.
+    183: "SEGSUSED",  # OURS. SET OF 0..31. BODYPART.7's entire body is
+                      # `SEGSUSED := SEGSUSED + [seg]` followed by the
+                      # GEN2(77) that needs it; ONEUNIT adds SEG and
+                      # NEXTSEG's slot; UNITSEGS walks it downward emitting
+                      # GETSEG/RELSEG; FINISHUP tests `31 in SEGSUSED`.
+
+    37:  "INCLUDING",  # II.0 36, drift +1 -- inside a $I include file.
+                       # GETNEXTPAGE's `if not (INCLUDING or USING)` is
+                       # `LDO 37; LDO 36; LOR; LNOT` in the binary.
 }
 
 GLOBALS_13: dict[int, str] = {
@@ -934,6 +989,31 @@ GLOBALS_13: dict[int, str] = {
     190: "PROCTABLE",    # 1.1 global 185, +5
     627: "NEXTJTAB",     # 1.1 global 509, +118
     628: "JTAB",      # 1.1 global 510, +118
+
+    # Finding 38, carried across by the correspondence table: 575..585 move
+    # as a block to 705..715 (+130, every pair a 1.00 match), and the three
+    # segment-numbering objects widen exactly as a 32 -> 64 segment limit
+    # would make them. 1.3's own code confirms each shape independently.
+    705: "REFBLK",
+    706: "NREFS",
+    707: "REFLIST",
+    708: "TEXTSTRT",
+    709: "PREVSYMBLK",
+    710: "OLDSYMBLK",
+    711: "PREVLINESTART",
+    712: "PREVSYMCURSOR",
+    713: "OLDLINESTART",
+    714: "OLDSYMCURSOR",
+    715: "USEFILE",
+    38:  "INCLUDING",  # 1.1 global 37, +1
+    134: "DISPLAY",     # 1.1 global 131, +3 -- unchanged at 52 words, and
+                       # 1.3 indexes it with the same IXA 4
+    445: "SEGTABLE",    # 1.1 global 335, +110 -- unchanged at 16 x 9
+    186: "SEGSUSED",   # 1.1 global 183, +3 -- SET OF 0..63 here: BODYPART.7
+                       # is the same nine instructions with LDM/ADJ/STM 4
+                       # and SLDC 4 where 1.1 has 2
+    589: "SEGMAP",     # 1.1 global 479, +110 -- still IXP 4,4, but 16 words
+                       # instead of 8, so 64 nibbles instead of 32
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}
