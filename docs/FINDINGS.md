@@ -3802,6 +3802,166 @@ not evidence that an object lives there.** The map builds its object list
 from touched offsets, and `LAO 835` looked exactly like a variable for as
 long as nobody asked what emitted it.
 
+## 44. The native procedures' trailing data: relocation tables, and every byte of both now accounted for
+
+*Confidence: VERIFIED SOURCE FACT for the format (the 1.3 manual documents
+it); VERIFIED BINARY FACT for everything it decodes to.
+`tools/probes/probe_native_reloc.py`, 131 checks.*
+
+`IDSEARCH` and `TREESEARCH` each carry a block of word data between their
+last `RTS` and their attribute table, and `tools/disasm6502.py` has been
+dumping it as raw bytes with the note "unidentified trailing data ... UCSD
+stores relocation lists for assembled procedures, which is the obvious
+guess, but the values have not been made to fit that". The guess was
+right; what did not fit was the arithmetic.
+
+### 44a. The format, from the vendor's own manual
+
+Part IV chapter 4 of the 1.3 manual, "Assembly-Language Procedure
+Attribute Tables" and "Relocation Tables", gives it in full:
+
+> The highest word in the attribute table of an assembly-language procedure
+> always has a 0 in its PROCEDURE NUMBER field. ... The RELOCSEG NUMBER
+> field contains either a 0 or a positive number. ... The second highest
+> word of the attribute table is, as in P-code procedure attribute tables,
+> the ENTER IC field. ... Following this are four relocation tables ...
+> From high address to low address, they are base-relative,
+> segment-relative, procedure-relative, and Interpreter-relative.
+>
+> The format of all four relocation tables is the same: the highest word of
+> each table specifies the number of entries (possibly 0) that follow (at
+> lower disk addresses) in the table. The remainder of each table comprises
+> that number of one-word **self-relative pointers** to locations in the
+> procedure code that must be "fixed."
+
+So an assembly procedure has **no EXIT IC, no parameter size and no data
+size** — those three words are the top of the relocation area instead.
+That is why `codefile.py`'s `exit_ic` was landing on JTAB-4 for both of
+them: it was decoding the base-relative *count* as a self-relative
+pointer, and the count is 0.
+
+The reading that had failed earlier was of the pointer values themselves.
+They are self-relative *downward*: a pointer stored at address `a` with
+value `v` designates the word at **`a - v`**, the same convention as the
+procedure dictionary (finding 4).
+
+### 44b. What the two procedures actually declare
+
+| | base | segment | procedure | interp |
+|---|---|---|---|---|
+| `IDSEARCH` | 0 | 0 | **28** | 0 |
+| `TREESEARCH` | 0 | 0 | **4** | 0 |
+
+Three of the four tables are empty in both, which is the informative part:
+`.PUBLIC`/`.PRIVATE` (base-relative), `.REF`/`.DEF` (segment-relative) and
+`.INTERP` are all unused, so **neither routine touches a global or calls
+into the Interpreter**. They are self-contained, and everything they
+reference is inside themselves.
+
+`TREESEARCH`'s four entries are its four `JMP` operands:
+
+```
+  159A .word $0022   ;   fix up $1578      1577 4c 6e 00  JMP $006E -> $1580
+  1598 .word $0027   ;   fix up $1571      1570 4c 6e 00  JMP $006E -> $1580
+  1596 .word $002C   ;   fix up $156A      1569 4c 1c 00  JMP $001C -> $152E
+  1594 .word $0041   ;   fix up $1553      1552 4c 1c 00  JMP $001C -> $152E
+```
+
+`JMP $001C` is not a jump to page zero; it is a jump to **procedure + $1C**,
+which the loader completes, and procedure + $1C is `$152E` — the top of
+the eight-byte compare loop. `JMP $006E` reaches `$1580`, the common store-
+and-return tail. Both were unlabelled in the listing until now, because
+the disassembler had no way to know the operand was relative.
+
+`IDSEARCH`'s 28 are its two absolute operands plus **all 26 words of the
+letter index**:
+
+```
+  14D2 .word $0263   ;   fix up $126F      126E b9 6d 00  LDA $006D,Y
+  14D0 .word $0266   ;   fix up $126A      1269 b9 6c 00  LDA $006C,Y
+  1506..14D4  26 entries, all .word $01F4, fixing up $1312 down to $12E0
+```
+
+The 26 identical values are what made the block look like nonsense: the
+letter index is 26 consecutive words and the relocation entries are 26
+consecutive words, so every self-relative distance between them is the
+same constant, 500.
+
+### 44c. Why `$006C` is nowhere near the table it reads
+
+The two code operands look wrong until the relocation is applied. The
+scanner does:
+
+```
+  1265 a5 88     LDA $88        ; first character of the identifier, uppercased
+  1267 0a        ASL A          ; index = 2 * ord(c)
+  1268 a8        TAY
+  1269 b9 6c 00  LDA $006C,Y    ; procedure-relative base
+  126E b9 6d 00  LDA $006D,Y
+```
+
+`$006C` is a base to be indexed, not an address, and the index is never
+small: `'A'` is $41, so the smallest index is $82. Procedure + $6C + $82 =
+procedure + $EE = **`$12E0`**, the first word of the letter index; `'Z'`
+gives procedure + $6C + $B4 = `$1312`, the last. The base is offset
+backwards by exactly `2 * ord('A')` so that the character code can be used
+raw. Both of those are checks the binary could fail and does not.
+
+### 44d. Every byte of both procedures is now accounted for
+
+The relocation area tiles the gap exactly, with nothing left over at
+either end:
+
+```
+  IDSEARCH    $11F2..$12E0 code    $12E0..$1314 letter index
+              $1314..$14CE reserved words       $14CE..$150E relocation
+              $150E..$1512 attribute table
+  TREESEARCH  $1512..$1592 code    $1592..$15A2 relocation
+              $15A2..$15A6 attribute table
+```
+
+The walk from JTAB-4 downward through four tables stops on `$14CE` and
+`$1592` respectively — which are, independently, the byte after the last
+reserved-word entry and the byte after the last `RTS`. That is the check
+that could have failed: get any count wrong, read the pointers upward, or
+put the tables in the wrong order, and the walk lands somewhere else.
+Reversing `RELOC_KINDS`, adding a word to `content_end`, dropping one
+entry per table and starting the walk at JTAB-6 were all tried and all
+fail.
+
+### 44e. Consequences for the reconstruction
+
+The relocation tables are not something the reconstruction writes; they
+are what Apple's assembler *emitted*, and reproducing them is the test
+that the reassembled source is right. Concretely, source that reassembles
+to the same bytes has to produce these tables, which means:
+
+* both procedures are a single `.PROC` with no `.PUBLIC`, `.PRIVATE`,
+  `.REF`, `.DEF` or `.INTERP` — every one of those would add an entry to a
+  table that is empty;
+* the letter index has to be written as 26 `.WORD` directives naming
+  labels *inside the same procedure*, since that is what makes them
+  procedure-relative;
+* the two `LDA` bases and the four `JMP`s have to be written as label
+  references, not as constants — `JMP $001C` assembled literally would
+  produce no relocation entry at all and jump into page zero at run time.
+
+That last point is the useful one: the relocation tables are a
+machine-checkable summary of which operands in the source are symbolic.
+There are exactly 32 of them across both procedures, and the disassembly
+now marks each one `[reloc: procedure]`.
+
+And the tool that has to produce them is on the evidence disk already:
+**`SYSTEM.ASSMBLER`, Apple's own 6502 assembler**, ships on both 1.1 and
+1.3 (with `6500.OPCODES`/`6502.OPCODES` beside it). Do not hand-build a
+relocation table and do not reach for a modern assembler: write `.PROC`
+source with symbolic operands, assemble it with Apple's assembler in the
+emulator, and let it emit the tables. Reproducing this section's bytes —
+counts, order and self-relative values — is then the acceptance test for
+the reassembled source, exactly as recompiled p-code is for the Pascal
+half. It also fixes the assembler's version: 1.3's `SYSTEM.ASSMBLER` is
+dated 03-09-1985, the same day as its `SYSTEM.COMPILER`.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

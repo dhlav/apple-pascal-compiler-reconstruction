@@ -3,13 +3,16 @@ source image : Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk
 
 Disassembled by tools/a2pascal/m6502.py. Addresses are offsets
 within the PASCALCO segment, not absolute memory addresses: the
-segment is relocated at load time, so any absolute operand below
-is a segment-relative reference that the loader fixes up.
-VERIFIED BINARY FACT for the bytes; the naming is finding 19.
+segment is relocated at load time. Every word the loader has to
+fix up is named by the procedure's own relocation tables, and is
+marked [reloc: kind] below.
+VERIFIED BINARY FACT for the bytes; the naming is finding 19,
+the relocation tables are finding 44.
 
 ====================================================================
 PASCALCO.2  IDSEARCH
-  bytes $11F2..$150C  (794 bytes, 138 instructions)
+  code + data $11F2..$14CE  (732 bytes, 138 instructions)
+  relocation area $14CE..$150E, attribute table $150E..$1512
   sweep lands exactly on end: yes   undecodable bytes: 0
 ====================================================================
 
@@ -84,9 +87,9 @@ PASCALCO.2  IDSEARCH
   1265 a5 88             LDA $88
   1267 0a                ASL A
   1268 a8                TAY
-  1269 b9 6c 00          LDA $006C,Y
+  1269 b9 6c 00          LDA $006C,Y   ; [reloc: procedure] base = proc+$006C, then indexed
   126C 85 92             STA $92
-  126E b9 6d 00          LDA $006D,Y
+  126E b9 6d 00          LDA $006D,Y   ; [reloc: procedure] base = proc+$006D, then indexed
   1271 85 93             STA $93
   1273 a0 00             LDY #$00
   1275 b1 92             LDA ($92),Y
@@ -153,32 +156,32 @@ PASCALCO.2  IDSEARCH
   12DF 60                RTS
 
   ---- data $12E0..$1314: letter index: 26 little-endian offsets from $11F2
-  12E0 25 01     .word $0125   ; A -> $1317
-  12E2 3a 01     .word $013A   ; B -> $132C
-  12E4 45 01     .word $0145   ; C -> $1337
-  12E6 5a 01     .word $015A   ; D -> $134C
-  12E8 79 01     .word $0179   ; E -> $136B
-  12EA 98 01     .word $0198   ; F -> $138A
-  12EC c1 01     .word $01C1   ; G -> $13B3
-  12EE 22 01     .word $0122   ; H -> $1314
-  12F0 cc 01     .word $01CC   ; I -> $13BE
-  12F2 22 01     .word $0122   ; J -> $1314
-  12F4 22 01     .word $0122   ; K -> $1314
-  12F6 f5 01     .word $01F5   ; L -> $13E7
-  12F8 00 02     .word $0200   ; M -> $13F2
-  12FA 0b 02     .word $020B   ; N -> $13FD
-  12FC 16 02     .word $0216   ; O -> $1408
-  12FE 35 02     .word $0235   ; P -> $1427
-  1300 22 01     .word $0122   ; Q -> $1314
-  1302 54 02     .word $0254   ; R -> $1446
-  1304 69 02     .word $0269   ; S -> $145B
-  1306 7e 02     .word $027E   ; T -> $1470
-  1308 9d 02     .word $029D   ; U -> $148F
-  130A bc 02     .word $02BC   ; V -> $14AE
-  130C c7 02     .word $02C7   ; W -> $14B9
-  130E 22 01     .word $0122   ; X -> $1314
-  1310 22 01     .word $0122   ; Y -> $1314
-  1312 22 01     .word $0122   ; Z -> $1314
+  12E0 25 01     .word $0125   ; A -> $1317  [reloc: procedure]
+  12E2 3a 01     .word $013A   ; B -> $132C  [reloc: procedure]
+  12E4 45 01     .word $0145   ; C -> $1337  [reloc: procedure]
+  12E6 5a 01     .word $015A   ; D -> $134C  [reloc: procedure]
+  12E8 79 01     .word $0179   ; E -> $136B  [reloc: procedure]
+  12EA 98 01     .word $0198   ; F -> $138A  [reloc: procedure]
+  12EC c1 01     .word $01C1   ; G -> $13B3  [reloc: procedure]
+  12EE 22 01     .word $0122   ; H -> $1314  [reloc: procedure]
+  12F0 cc 01     .word $01CC   ; I -> $13BE  [reloc: procedure]
+  12F2 22 01     .word $0122   ; J -> $1314  [reloc: procedure]
+  12F4 22 01     .word $0122   ; K -> $1314  [reloc: procedure]
+  12F6 f5 01     .word $01F5   ; L -> $13E7  [reloc: procedure]
+  12F8 00 02     .word $0200   ; M -> $13F2  [reloc: procedure]
+  12FA 0b 02     .word $020B   ; N -> $13FD  [reloc: procedure]
+  12FC 16 02     .word $0216   ; O -> $1408  [reloc: procedure]
+  12FE 35 02     .word $0235   ; P -> $1427  [reloc: procedure]
+  1300 22 01     .word $0122   ; Q -> $1314  [reloc: procedure]
+  1302 54 02     .word $0254   ; R -> $1446  [reloc: procedure]
+  1304 69 02     .word $0269   ; S -> $145B  [reloc: procedure]
+  1306 7e 02     .word $027E   ; T -> $1470  [reloc: procedure]
+  1308 9d 02     .word $029D   ; U -> $148F  [reloc: procedure]
+  130A bc 02     .word $02BC   ; V -> $14AE  [reloc: procedure]
+  130C c7 02     .word $02C7   ; W -> $14B9  [reloc: procedure]
+  130E 22 01     .word $0122   ; X -> $1314  [reloc: procedure]
+  1310 22 01     .word $0122   ; Y -> $1314  [reloc: procedure]
+  1312 22 01     .word $0122   ; Z -> $1314  [reloc: procedure]
 
 
   ---- data $1314..$14CE: reserved-word table: per letter, a count then 10-byte entries of name[8], SY, OP
@@ -245,20 +248,46 @@ PASCALCO.2  IDSEARCH
   14C4           .ascii 'WITH    '  .byte $19,$00   ; WITH  SY=$19 OP=$00
 
 
-  ---- data $14CE..$150C: unidentified trailing data, after the last RTS
-  14CE 00 00 66 02 63 02 f4 01
-  14D6 f4 01 f4 01 f4 01 f4 01
-  14DE f4 01 f4 01 f4 01 f4 01
-  14E6 f4 01 f4 01 f4 01 f4 01
-  14EE f4 01 f4 01 f4 01 f4 01
-  14F6 f4 01 f4 01 f4 01 f4 01
-  14FE f4 01 f4 01 f4 01 f4 01
-  1506 f4 01 1c 00 00 00
-
+  ---- attribute table and relocation area $14CE..$1512
+  1510 .word $0000   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 0
+  150E .word $031C   ; ENTER IC, self-relative -> $11F2
+  150C .word $0000   ; base-relative relocation table: 0 entries
+  150A .word $0000   ; segment-relative relocation table: 0 entries
+  1508 .word $001C   ; procedure-relative relocation table: 28 entries
+  1506 .word $01F4   ;   fix up $1312
+  1504 .word $01F4   ;   fix up $1310
+  1502 .word $01F4   ;   fix up $130E
+  1500 .word $01F4   ;   fix up $130C
+  14FE .word $01F4   ;   fix up $130A
+  14FC .word $01F4   ;   fix up $1308
+  14FA .word $01F4   ;   fix up $1306
+  14F8 .word $01F4   ;   fix up $1304
+  14F6 .word $01F4   ;   fix up $1302
+  14F4 .word $01F4   ;   fix up $1300
+  14F2 .word $01F4   ;   fix up $12FE
+  14F0 .word $01F4   ;   fix up $12FC
+  14EE .word $01F4   ;   fix up $12FA
+  14EC .word $01F4   ;   fix up $12F8
+  14EA .word $01F4   ;   fix up $12F6
+  14E8 .word $01F4   ;   fix up $12F4
+  14E6 .word $01F4   ;   fix up $12F2
+  14E4 .word $01F4   ;   fix up $12F0
+  14E2 .word $01F4   ;   fix up $12EE
+  14E0 .word $01F4   ;   fix up $12EC
+  14DE .word $01F4   ;   fix up $12EA
+  14DC .word $01F4   ;   fix up $12E8
+  14DA .word $01F4   ;   fix up $12E6
+  14D8 .word $01F4   ;   fix up $12E4
+  14D6 .word $01F4   ;   fix up $12E2
+  14D4 .word $01F4   ;   fix up $12E0
+  14D2 .word $0263   ;   fix up $126F
+  14D0 .word $0266   ;   fix up $126A
+  14CE .word $0000   ; interp-relative relocation table: 0 entries
 
 ====================================================================
 PASCALCO.3  TREESEARCH
-  bytes $1512..$15A0  (142 bytes, 76 instructions)
+  code + data $1512..$1592  (128 bytes, 76 instructions)
+  relocation area $1592..$15A2, attribute table $15A2..$15A6
   sweep lands exactly on end: yes   undecodable bytes: 0
 ====================================================================
 
@@ -282,7 +311,7 @@ PASCALCO.3  TREESEARCH
   1529 85 80             STA $80
   152B 68                PLA
   152C 85 81             STA $81
-  152E a2 08             LDX #$08
+  152E a2 08     L152E:  LDX #$08
   1530 a0 ff             LDY #$FF
   1532 ca        L1532:  DEX
   1533 30 37             BMI $156C
@@ -302,7 +331,7 @@ PASCALCO.3  TREESEARCH
   154C f0 2c             BEQ $157A
   154E 86 80     L154E:  STX $80
   1550 85 81             STA $81
-  1552 4c 1c 00          JMP $001C
+  1552 4c 1c 00          JMP $001C   ; [reloc: procedure] -> $152E
   1555 a0 0a     L1555:  LDY #$0A
   1557 b1 80             LDA ($80),Y
   1559 aa                TAX
@@ -314,20 +343,20 @@ PASCALCO.3  TREESEARCH
   1563 f0 0e             BEQ $1573
   1565 86 80     L1565:  STX $80
   1567 85 81             STA $81
-  1569 4c 1c 00          JMP $001C
+  1569 4c 1c 00          JMP $001C   ; [reloc: procedure] -> $152E
   156C a9 00     L156C:  LDA #$00
   156E 48                PHA
   156F 48                PHA
-  1570 4c 6e 00          JMP $006E
+  1570 4c 6e 00          JMP $006E   ; [reloc: procedure] -> $1580
   1573 a9 ff     L1573:  LDA #$FF
   1575 48                PHA
   1576 48                PHA
-  1577 4c 6e 00          JMP $006E
+  1577 4c 6e 00          JMP $006E   ; [reloc: procedure] -> $1580
   157A a9 00     L157A:  LDA #$00
   157C 48                PHA
   157D a9 01             LDA #$01
   157F 48                PHA
-  1580 a0 00             LDY #$00
+  1580 a0 00     L1580:  LDY #$00
   1582 a5 80             LDA $80
   1584 91 7e             STA ($7E),Y
   1586 c8                INY
@@ -339,7 +368,14 @@ PASCALCO.3  TREESEARCH
   1590 48                PHA
   1591 60                RTS
 
-  ---- data $1592..$15A0: unidentified trailing data, after the last RTS
-  1592 00 00 41 00 2c 00 27 00
-  159A 22 00 04 00 00 00
-
+  ---- attribute table and relocation area $1592..$15A6
+  15A4 .word $0000   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 0
+  15A2 .word $0090   ; ENTER IC, self-relative -> $1512
+  15A0 .word $0000   ; base-relative relocation table: 0 entries
+  159E .word $0000   ; segment-relative relocation table: 0 entries
+  159C .word $0004   ; procedure-relative relocation table: 4 entries
+  159A .word $0022   ;   fix up $1578
+  1598 .word $0027   ;   fix up $1571
+  1596 .word $002C   ;   fix up $156A
+  1594 .word $0041   ;   fix up $1553
+  1592 .word $0000   ; interp-relative relocation table: 0 entries

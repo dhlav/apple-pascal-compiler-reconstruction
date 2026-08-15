@@ -51,7 +51,10 @@ program and its service routines) plus 14 phase segments — `COMPINIT`,
 `BODY1`, `BODY3`, `WRITELIN`, `UNITPART`, `COMPOPTI`, `NUMSTRIN`,
 `FINISHUP`. Almost all of it is UCSD II.0 P-code in both releases: across
 the two disks there are 287 p-code procedures and exactly **2** native 6502
-ones, both added in 1.3.
+ones, both added in 1.3. Every byte of those two is accounted for: code,
+the reserved-word table, four relocation tables and an attribute table,
+with the relocation walk landing exactly on the end of the code in each
+(finding 44).
 
 The decoder in `tools/a2pascal/pcode.py` disassembles all 287 with the
 instruction stream landing exactly on every procedure boundary and no

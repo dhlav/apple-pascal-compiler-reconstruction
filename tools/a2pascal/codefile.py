@@ -29,9 +29,25 @@ at the end of the procedure's code:
     JTAB-8  data (local variable) size in bytes
     JTAB-10, -12, ... jump table entries, addressed by negative offsets
 
-Native (6502) procedures carry a procedure-number byte of 0 at JTAB+0
-instead of their dictionary index, and a null (zero) exit-IC self-relative
-word, since they have no EXIT target. Their enter IC is still valid. A
+Native (6502) procedures have a different attribute table, documented in
+the Apple Pascal 1.3 manual IV-35..37:
+    JTAB+0  procedure number (byte)      -- always 0, which is the marker
+    JTAB+1  RELOCSEG number   (byte)
+    JTAB-2  enter IC  (self-relative pointer to first instruction)
+    JTAB-4  and downward: four relocation tables, from high address to low
+            base-relative, segment-relative, procedure-relative and
+            Interpreter-relative.
+
+There is no EXIT IC, no parameter size and no data size: those three words
+are the top of the relocation area instead. `exit_ic` is therefore
+meaningless for a native procedure -- it decodes the base-relative
+relocation count as a self-relative pointer, which only lands on JTAB-4
+because that count happens to be 0 in both of Apple's native procedures.
+Use `content_end` for the end of the code and `reloc` for the tables.
+
+Each relocation table is a count word with that many one-word *self-relative*
+pointers below it; a pointer stored at address a with value v designates the
+word at a - v, which the loader fixes up by adding the relevant base. A
 segment's mtype is 6502 if it contains ANY native procedure, so mtype is
 not a reliable per-procedure test -- use Procedure.is_native.
 """
@@ -51,6 +67,11 @@ def _w(b: bytes, o: int) -> int:
     return struct.unpack_from("<H", b, o)[0]
 
 
+# The four relocation tables of a native procedure, in the order they appear
+# from JTAB-4 downward (1.3 manual IV-37).
+RELOC_KINDS = ("base", "segment", "procedure", "interp")
+
+
 @dataclass
 class Procedure:
     number: int          # dictionary index (1-based)
@@ -62,6 +83,14 @@ class Procedure:
     param_size: int
     data_size: int
     consistent: bool = True
+    # Native procedures only. `reloc` maps each of RELOC_KINDS to the list of
+    # segment offsets the loader must fix up; `reloc_at` maps the same targets
+    # to the address of the self-relative pointer that names them.
+    # `content_end` is the offset just past the procedure's last code or data
+    # byte, i.e. the lowest word of the relocation area.
+    reloc: dict[str, list[int]] = field(default_factory=dict)
+    reloc_at: dict[int, int] = field(default_factory=dict)
+    content_end: int = -1
 
     @property
     def is_native(self) -> bool:
@@ -162,8 +191,24 @@ class CodeFile:
                 param_size=_w(raw, jtab - 6), data_size=_w(raw, jtab - 8),
             )
             if p.is_native:
-                # No exit code, so exit_ic is a null self-relative pointer.
-                p.consistent = 0 <= enter < jtab
+                # No exit code and no size words: JTAB-4 downward is the
+                # relocation area, four tables of self-relative pointers.
+                a = jtab - 4
+                for kind in RELOC_KINDS:
+                    cnt = _w(raw, a)
+                    tgts = []
+                    for k in range(cnt):
+                        at = a - 2 - 2 * k
+                        t = at - _w(raw, at)
+                        tgts.append(t)
+                        p.reloc_at[t] = at
+                    p.reloc[kind] = tgts
+                    a -= 2 + 2 * cnt
+                p.content_end = a + 2
+                p.consistent = (0 <= enter < p.content_end
+                                and all(enter <= t < p.content_end
+                                        for ts in p.reloc.values()
+                                        for t in ts))
             else:
                 p.consistent = (p.proc_num == i and 0 <= enter < exitic <= jtab
                                 and p.param_size % 2 == 0 and p.data_size % 2 == 0)

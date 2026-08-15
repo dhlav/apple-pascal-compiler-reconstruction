@@ -265,9 +265,29 @@ Done, and reproducible via `python tools/build_all.py`:
      symbol codes for all 42 reserved words — feed those into step 2, since
      a reconstruction has to declare that enumeration.
 
+     ~~Identify the word-data block each carries after its last `RTS`.~~
+     **Done** (finding 44). They are the four relocation tables the 1.3
+     manual documents at IV-35..37, read from JTAB-4 downward:
+     base-relative, segment-relative, procedure-relative,
+     Interpreter-relative, each a count word over that many *self-relative*
+     pointers, target = `a - v`. Base, segment and interp are empty in
+     both, so neither routine touches a global or calls the Interpreter;
+     the procedure-relative tables hold `IDSEARCH`'s 26 letter-index words
+     plus its two `LDA` bases, and `TREESEARCH`'s four `JMP` operands.
+     **Every byte of both procedures is now accounted for** — the walk
+     lands exactly on the end of the code in each. Along the way it
+     explained why `LDA $006C,Y` is nowhere near the table it reads (the
+     base is offset back by `2*ord('A')`) and gave the four `JMP`s their
+     real targets, `$152E` and `$1580`.
+
      What remains: turn the two listings into assembly source that
-     reassembles to the same bytes, and identify the word-data block each
-     carries after its last `RTS` (probably linker relocation lists).
+     reassembles to the same bytes. **Assemble it with Apple's own
+     `SYSTEM.ASSMBLER`**, which is on both evidence disks alongside
+     `6500.OPCODES`/`6502.OPCODES` — it is what generates the relocation
+     tables, and finding 44 makes those the acceptance test: symbolic
+     operands in, correct tables out. Never hand-build a relocation table
+     and do not substitute a modern assembler. This puts the native half
+     in task 7's acceptance tier, not the fast tier.
      `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is a good
      structural model but is 1.2 — corroboration, not authority.
    * ~~Account for the ~130-word growth in globals.~~ **Done** (finding
@@ -313,6 +333,11 @@ Done, and reproducible via `python tools/build_all.py`:
      using the same decoder on both sides. Start from TommyGoog's
      configuration (finding 15): AppleWin with **four disk drives**, which
      the Apple Pascal compiler requires.
+
+     The same tier covers 1.3's two native procedures, with
+     `SYSTEM.ASSMBLER` in place of `SYSTEM.COMPILER`: it is the assembler
+     that emits the relocation tables of finding 44, so it is the only
+     thing that can produce those bytes. Both disks carry it.
 
    Keep the tiers distinct. `ucsdpsys_compile` is a modern reimplementation
    and will not emit byte-identical p-code for equivalent source, so it can
@@ -375,6 +400,11 @@ Done, and reproducible via `python tools/build_all.py`:
   passing check actually rules out.
 * Hyde's *P-Source* (finding 7a) settles p-machine questions directly. Use
   it before inferring.
+* **Native 6502 code is finalised with Apple's own `SYSTEM.ASSMBLER`**, on
+  both evidence disks. It handles relocation; a hand-written relocation
+  table or a modern assembler will not reproduce the bytes. Write `.PROC`
+  source with symbolic operands and let the assembler emit the tables
+  (finding 44e).
 * The Apple Pascal 1.3 manual (finding 23) is the vendor's own account of
   the p-machine, the codefile format and every compiler option. Use it
   before inferring too — it caught a `CGP` bug the binary had been hiding,
