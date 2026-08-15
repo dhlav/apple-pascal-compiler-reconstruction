@@ -17,6 +17,9 @@ STEPS = [
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
     ("native 6502 listings", "disasm6502.py"),
+    # Not an artifact: it re-assembles src/native/SEARCH.TEXT and requires the
+    # bytes to equal the disk's, relocation tables included (finding 44e).
+    ("native source reassembly", "probes/probe_native_asm.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),

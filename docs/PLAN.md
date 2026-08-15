@@ -280,16 +280,26 @@ Done, and reproducible via `python tools/build_all.py`:
      base is offset back by `2*ord('A')`) and gave the four `JMP`s their
      real targets, `$152E` and `$1580`.
 
-     What remains: turn the two listings into assembly source that
-     reassembles to the same bytes. **Assemble it with Apple's own
-     `SYSTEM.ASSMBLER`**, which is on both evidence disks alongside
-     `6500.OPCODES`/`6502.OPCODES` — it is what generates the relocation
-     tables, and finding 44 makes those the acceptance test: symbolic
-     operands in, correct tables out. Never hand-build a relocation table
-     and do not substitute a modern assembler. This puts the native half
-     in task 7's acceptance tier, not the fast tier.
+     ~~Turn the two listings into assembly source that reassembles to the
+     same bytes.~~ **Done** (finding 45). `src/native/SEARCH.TEXT` is the
+     first reconstructed source in the repo — `.PROC IDSEARCH,2` and
+     `.FUNC TREESEARCH,3` — and it assembles to **800 and 148 bytes
+     identical to Apple's**, over the whole procedure including all four
+     relocation tables and the attribute table. `tools/asm6502.py` is a
+     minimal assembler for the subset used; `probe_native_asm.py` runs the
+     comparison and `build_all.py` runs the probe.
+
+     What remains here is the acceptance run: **assemble it with Apple's
+     own `SYSTEM.ASSMBLER`**, which is on both evidence disks alongside
+     `6500.OPCODES`/`6502.OPCODES` — it is what generated the relocation
+     tables, and finding 44 makes those the test: symbolic operands in,
+     correct tables out. Never hand-build a relocation table and do not
+     substitute a modern assembler. That puts the last step of the native
+     half in task 7's acceptance tier.
      `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is a good
-     structural model but is 1.2 — corroboration, not authority.
+     structural model but is 1.2 — corroboration, not authority; it is
+     where the label names in `SEARCH.TEXT` come from, which is a
+     convenience and not evidence.
    * ~~Account for the ~130-word growth in globals.~~ **Done** (finding
      40). The area went 1222 → 1355, and all 133 words are accounted for:
      `ISPROG` +1, `BYTEPTR`/`WORDPTR` +2, `SEGSUSED` +2, `PROCTABLE` +105,

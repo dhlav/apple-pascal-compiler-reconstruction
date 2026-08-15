@@ -21,10 +21,16 @@ evidence/          original inputs, never modified
     manuals/       the Apple Pascal 1.3 manual set, the 1980 language
                    reference, the 1.1 update notice, Hyde's P-Source --
                    scans plus their OCR. Copyrighted; this repo is private.
+src/               reconstructed source, hand-written. Currently
+                   native/SEARCH.TEXT -- 1.3's IDSEARCH and TREESEARCH in
+                   the Apple Pascal Assembler's language, which reassemble
+                   to Apple's exact bytes (finding 45).
 tools/             all analysis code
   a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
                    nufx.py syscall.py lift.py structure.py globals.py
                    names.py -- recovered procedure and global names
+  asm6502.py       a minimal assembler for the Apple Pascal Assembler's
+                   language, enough to re-assemble src/native/
   probes/          one-off scripts that established a format detail
   build_all.py     regenerates everything below
 build/             ii0src.po, the disk image unpacked from ii0src.sdk
@@ -54,7 +60,9 @@ the two disks there are 287 p-code procedures and exactly **2** native 6502
 ones, both added in 1.3. Every byte of those two is accounted for: code,
 the reserved-word table, four relocation tables and an attribute table,
 with the relocation walk landing exactly on the end of the code in each
-(finding 44).
+(finding 44). They are also the first thing reconstructed — the source in
+`src/native/SEARCH.TEXT` **reassembles to Apple's exact bytes**, relocation
+tables included (finding 45).
 
 The decoder in `tools/a2pascal/pcode.py` disassembles all 287 with the
 instruction stream landing exactly on every procedure boundary and no

@@ -947,12 +947,14 @@ a CSP's net stack effect and never its split. Adopting `(3,1)` keeps the
 best score the binary allows and matches the only source that states the
 signature.
 
-**Still open.** Both procedures carry a block of word data between their
-last `RTS` and their attribute table — `$14CE`-`$150C` in IDSEARCH,
-`$1592`-`$15A0` in TREESEARCH. Linker relocation lists are the obvious
-guess, since the 26 index words are absolute references needing fixup, but
-the values have not been made to fit and are emitted as raw bytes rather
-than described as something they may not be.
+~~**Still open.** Both procedures carry a block of word data between their
+last `RTS` and their attribute table.~~ **Resolved by finding 44**, and the
+guess recorded here was right: they are the four relocation tables the 1.3
+manual documents, and the 26 index words are indeed among the references
+they fix up. What had not fitted was the arithmetic — the pointers are
+self-relative *downward*, `target = a - v`, and the areas run
+`$14CE`-`$150E` and `$1592`-`$15A2`, one word higher at the top than
+guessed here, because a native procedure has no EXIT IC word to skip.
 
 With the data carved out, IDSEARCH disassembles to 138 instructions with no
 undecodable bytes, landing exactly on its end address.
@@ -3961,6 +3963,77 @@ counts, order and self-relative values — is then the acceptance test for
 the reassembled source, exactly as recompiled p-code is for the Pascal
 half. It also fixes the assembler's version: 1.3's `SYSTEM.ASSMBLER` is
 dated 03-09-1985, the same day as its `SYSTEM.COMPILER`.
+
+## 45. The first reconstructed source: both native procedures reassemble to the exact bytes
+
+*Confidence: VERIFIED BINARY FACT — the reconstruction is compared byte for
+byte against the disk. `tools/probes/probe_native_asm.py`, 18 checks, run
+by `tools/build_all.py`.*
+
+`src/native/SEARCH.TEXT` is the first piece of actual reconstructed source
+in the repo: 1.3's `IDSEARCH` and `TREESEARCH` written in the Apple Pascal
+Assembler's language, as `.PROC IDSEARCH,2` and `.FUNC TREESEARCH,3`.
+
+It assembles to **800 and 148 bytes that are identical to Apple's**, over
+the whole procedure — `enter_ic` through `jtab+2`, so instructions, the
+letter index, the reserved-word table, all four relocation tables, `ENTER
+IC` and the procedure-number word.
+
+### 45a. Why the relocation tables make this a real test
+
+Nothing in the source names a relocation entry. The tables are *derived*
+from which operands mention a label, so getting them right means having
+written every reference the way Apple did:
+
+* `JMP CHKNAME`, not `JMP 001C`. The constant form assembles — to a
+  different instruction, since `JMP` has no zero-page mode — and produces
+  no relocation entry at all, so at run time it would jump into page zero.
+* `.WORD NUMB`, not `.WORD 013A`. Same value, one fewer entry, and the
+  procedure comes out two bytes short.
+* `LDA ADRTBL-082,Y`, where `082` is `2*"A"`. The base is biased back by
+  twice the character code of `A` so that the raw character can index the
+  table; write the bias as anything else and the operand byte is wrong.
+
+All three were tried as mutations and all three fail, as do swapping two
+reserved words, changing the empty-letter sentinel's count and dropping one
+`PLA` from the `.FUNC` stack bias.
+
+### 45b. What the bytes do *not* settle
+
+The identifiers are ours — Apple's label names are not in the codefile, and
+nothing recovers them. So are the comments, the layout, and the spelling of
+constants: `#" "` and `#20` assemble identically, as do `#123.` and `#7B`.
+Where a choice was free the source follows **Dave Tribby's 1.2
+disassembly**, since he read the same routines and his names are already
+in `evidence/`. That is a convenience, not evidence, and the two differ
+where it matters: 1.3 adds the reserved word `OTHERWISE` (`SY=$36`), and
+1.3's zero-page scratch is `$7E`-`$97` where Tribby's replacement used a
+low base.
+
+Two things the byte comparison *does* fix that were otherwise free:
+
+* **`TREESEARCH` is a `.FUNC`, not a `.PROC`.** The four bare `PLA`s after
+  the return address are the two words the caller pushes for a function
+  result (1.3 manual, `.FUNC`), and the result is pushed back at `GOBACK`.
+  Written as a `.PROC` the routine would have four bytes fewer and every
+  relocation offset would shift, which is what mutation 5 shows.
+* **The zero-page maps of the two routines overlap on purpose.**
+  `IDSEARCH` puts its return address at `$7E`, which is `TREESEARCH`'s
+  `NODEPTR`; they are never active at once. So they are two independent
+  maps of one region, not one shared layout, and the source declares them
+  separately.
+
+### 45c. This is the fast tier, not acceptance
+
+`tools/asm6502.py` is a minimal assembler for exactly the subset these two
+routines use, written for this check; it raises on anything else. It is
+*not* the authority. **The acceptance test is Apple's own
+`SYSTEM.ASSMBLER`**, which is on both evidence disks — it is the program
+that generated these relocation tables in 1985, and running the
+reconstruction through it under the emulator is what finally settles the
+native half. What this probe rules out is the whole class of errors that
+would fail there too, in a second and with no emulator, and it is wired
+into `build_all.py` so a regression is visible rather than silent.
 
 ## 16. Open questions
 

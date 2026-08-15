@@ -1,0 +1,520 @@
+;---------------------------------------------------
+; IDSEARCH and TREESEARCH, the two routines Apple
+; hand-coded in 6502 for Pascal 1.3 and linked into
+; SYSTEM.COMPILER's PASCALCO segment as procedures 2
+; and 3.
+;
+; Reconstructed from the 1.3 binary. Assemble with
+; Apple's own SYSTEM.ASSMBLER: it generates the
+; relocation tables (finding 44), and those are part
+; of what has to match.
+;
+; The file name is ours; the original is not known.
+; Label names follow Dave Tribby's 1.2 disassembly
+; where they fit, since he read the same code -- but
+; the bytes here are 1.3's, and where the two differ
+; the binary wins. 1.3 differs in two ways: it adds
+; the reserved word OTHERWISE, and its zero-page
+; scratch is at $7E-$97 rather than a low base.
+;
+; Zero page: $7E-$97 is the interpreter's floating
+; point accumulator area, free while a native
+; procedure runs. The two routines overlap there on
+; purpose -- they are never active at the same time --
+; so their equates are two independent maps of one
+; region and not one shared layout.
+;---------------------------------------------------
+
+        .PROC IDSEARCH,2
+        .TITLE "IDSEARCH Procedure"
+;---------------------------------------------------
+; Look an identifier up in the reserved-word table.
+;
+; Declared in the compiler as
+;   PROCEDURE IDSEARCH(VAR IDREC, ID); EXTERNAL;
+; where
+;   ID     is the source line being scanned, and
+;   IDREC  is  PACKED RECORD
+;                OFFSET: INTEGER;   { into ID }
+;                SY:     INTEGER;
+;                OP:     INTEGER;
+;                NAME:   PACKED ARRAY [1..8] OF CHAR;
+;              END
+;
+; Scans one identifier from ID^[OFFSET], upshifting
+; and dropping underscores, keeping the first eight
+; significant characters; advances OFFSET past it;
+; then looks the result up. Found: SY and OP come
+; from the table. Not found: SY := 21 (IDENT) and
+; NAME gets the eight characters.
+;---------------------------------------------------
+
+RTN     .EQU 07E        ; return address
+VAL1    .EQU 086        ; SY  from the table entry
+VAL2    .EQU 087        ; OP  from the table entry
+CHARS   .EQU 088        ; the eight characters
+NUM4CH  .EQU 090        ; entries left for this letter
+ENTAD   .EQU 092        ; current table entry
+PARAM1  .EQU 094        ; IDREC
+PNT     .EQU 096        ; ID^ + OFFSET
+
+;
+; Save the return address and the two parameters.
+; The offset arrives in the parameters' place and is
+; held in Y (low) and X (high) while PARAM1 is set up.
+;
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+        PLA
+        TAY
+        PLA
+        TAX
+        PLA
+        STA PARAM1
+        PLA
+        STA PARAM1+1
+;
+; PNT := ID + OFFSET.  Word 0 of IDREC is OFFSET.
+;
+        TYA
+        LDY #0
+        CLC
+        ADC @PARAM1,Y
+        STA PNT
+        TXA
+        INY
+        ADC @PARAM1,Y
+        STA PNT+1
+;
+; Blank-fill CHARS[1..7]. CHARS[0] is written below
+; unconditionally, which is why the loop stops at 1.
+;
+        LDA #" "
+        LDX #7
+BLANK   STA CHARS,X
+        DEX
+        BNE BLANK
+;
+; First character, upshifted.
+;
+        DEY
+        LDA @PNT,Y
+        CMP #"a"
+        BCC STCH1
+        CMP #123.       ; "z"+1
+        BCS STCH1
+        SEC
+        SBC #32.
+STCH1   STA CHARS
+;
+; Scan the rest. Y is the source index, X the
+; destination index; both are 0 on entry.
+;
+SLOOP   INY
+        LDA @PNT,Y
+        CMP #123.       ; "z"+1
+        BCS CHKNUM
+        CMP #"a"
+        BCS UPSH
+CHKNUM  CMP #"0"
+        BCC CKALPH
+        CMP #":"        ; "9"+1
+        BCC ENDSL
+CKALPH  CMP #"A"
+        BCC BUMPPTR
+        CMP #"["        ; "Z"+1
+        BCC ENDSL
+        CMP #"_"
+        BNE BUMPPTR
+        BEQ SLOOP       ; underscores are not significant
+UPSH    SBC #32.
+ENDSL   INX
+        CPX #8
+        BCS SLOOP       ; past eight: scan on, store nothing
+        STA CHARS,X
+        BCC SLOOP
+;
+; OFFSET := OFFSET + (characters consumed).
+;
+BUMPPTR DEY
+        TYA
+        LDY #0
+        CLC
+        ADC @PARAM1,Y
+        STA @PARAM1,Y
+        INY
+        LDA @PARAM1,Y
+        ADC #0
+        STA @PARAM1,Y
+;
+; ENTAD := ADRTBL[first character]. The table is
+; indexed by the character code itself, doubled, so
+; the base is biased back by 2*"A".
+;
+        LDA CHARS
+        ASL A
+        TAY
+        LDA ADRTBL-082,Y
+        STA ENTAD
+        LDA ADRTBL-081,Y
+        STA ENTAD+1
+;
+; NUM4CH := number of reserved words for this letter.
+;
+        LDY #0
+        LDA @ENTAD,Y
+        STA NUM4CH
+;
+; Compare against each entry in turn.
+;
+LOADREG LDX #0
+        LDY #1
+CMPSYM  INX
+        INY
+        LDA @ENTAD,Y
+        CMP CHARS,X
+        BEQ CHKEND
+        DEC NUM4CH
+        BEQ NOTIN
+        LDA ENTAD
+        CLC
+        ADC #10.        ; entries are ten bytes
+        STA ENTAD
+        BCC ROLL
+        INC ENTAD+1
+ROLL    BNE LOADREG
+CHKEND  CPX #7
+        BNE CMPSYM
+;
+; Found. IDREC.SY := VAL1; IDREC.OP := VAL2.
+;
+        INY
+        LDA @ENTAD,Y
+        STA VAL1
+        INY
+        LDA @ENTAD,Y
+        STA VAL2
+        LDY #2
+        LDA VAL1
+        STA @PARAM1,Y
+        INY
+        LDA #0
+        STA @PARAM1,Y
+        INY
+        LDA VAL2
+        STA @PARAM1,Y
+        INY
+        LDA #0
+        STA @PARAM1,Y
+        BEQ ALLDONE
+;
+; Not a reserved word: SY := 21 (IDENT), OP := 0, and
+; copy the eight characters into IDREC.NAME.
+;
+NOTIN   LDA #0
+        LDY #2
+        STA @PARAM1,Y
+        INY
+        STA @PARAM1,Y
+        INY
+        INY
+        STA @PARAM1,Y
+        DEY
+        LDA #21.
+        STA @PARAM1,Y
+        LDY #14.
+        LDX #7
+COPYCH  DEY
+        LDA CHARS,X
+        STA @PARAM1,Y
+        DEX
+        BPL COPYCH
+ALLDONE LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+;---------------------------------------------------
+; One entry per letter. The seven letters that begin
+; no reserved word share NUM0.
+;---------------------------------------------------
+
+ADRTBL  .WORD NUMA
+        .WORD NUMB
+        .WORD NUMC
+        .WORD NUMD
+        .WORD NUME
+        .WORD NUMF
+        .WORD NUMG
+        .WORD NUM0      ; H
+        .WORD NUMI
+        .WORD NUM0      ; J
+        .WORD NUM0      ; K
+        .WORD NUML
+        .WORD NUMM
+        .WORD NUMN
+        .WORD NUMO
+        .WORD NUMP
+        .WORD NUM0      ; Q
+        .WORD NUMR
+        .WORD NUMS
+        .WORD NUMT
+        .WORD NUMU
+        .WORD NUMV
+        .WORD NUMW
+        .WORD NUM0      ; X
+        .WORD NUM0      ; Y
+        .WORD NUM0      ; Z
+
+;---------------------------------------------------
+; The empty-letter sentinel. A count of 0 would be a
+; bug: the loop does DEC NUM4CH / BEQ, so zero would
+; wrap to 255 and run off the end of the table.
+; Instead the count is 1 and the one entry's second
+; character is "#", which no identifier can hold, so
+; the single comparison always fails and the search
+; falls straight through to NOTIN. Only the second
+; byte is ever read; the first two overlap NUMA's
+; count, which is why this slot is three bytes and
+; not ten.
+;---------------------------------------------------
+
+NUM0    .BYTE 001,040,023
+
+;---------------------------------------------------
+; The reserved words, per letter: a count, then that
+; many entries of NAME[8], SY, OP. The order within
+; each letter is the table's own, not alphabetical.
+;---------------------------------------------------
+
+NUMA    .BYTE 2
+        .ASCII "AND     "
+        .BYTE 027,002
+        .ASCII "ARRAY   "
+        .BYTE 02C,000
+NUMB    .BYTE 1
+        .ASCII "BEGIN   "
+        .BYTE 013,000
+NUMC    .BYTE 2
+        .ASCII "CASE    "
+        .BYTE 015,000
+        .ASCII "CONST   "
+        .BYTE 01C,000
+NUMD    .BYTE 3
+        .ASCII "DO      "
+        .BYTE 006,000
+        .ASCII "DIV     "
+        .BYTE 027,003
+        .ASCII "DOWNTO  "
+        .BYTE 008,000
+NUME    .BYTE 3
+        .ASCII "END     "
+        .BYTE 009,000
+        .ASCII "ELSE    "
+        .BYTE 00D,000
+        .ASCII "EXTERNAL"
+        .BYTE 035,000
+NUMF    .BYTE 4
+        .ASCII "FOR     "
+        .BYTE 018,000
+        .ASCII "FUNCTION"
+        .BYTE 020,000
+        .ASCII "FILE    "
+        .BYTE 02E,000
+        .ASCII "FORWARD "
+        .BYTE 022,000
+NUMG    .BYTE 1
+        .ASCII "GOTO    "
+        .BYTE 01A,000
+NUMI    .BYTE 4
+        .ASCII "IF      "
+        .BYTE 014,000
+        .ASCII "IN      "
+        .BYTE 029,00E
+        .ASCII "IMPLEMEN"
+        .BYTE 034,000
+        .ASCII "INTERFAC"
+        .BYTE 033,000
+NUML    .BYTE 1
+        .ASCII "LABEL   "
+        .BYTE 01B,000
+NUMM    .BYTE 1
+        .ASCII "MOD     "
+        .BYTE 027,004
+NUMN    .BYTE 1
+        .ASCII "NOT     "
+        .BYTE 026,000
+NUMO    .BYTE 3
+        .ASCII "OF      "
+        .BYTE 00B,000
+        .ASCII "OR      "
+        .BYTE 028,007
+        .ASCII "OTHERWIS"
+        .BYTE 036,000
+NUMP    .BYTE 3
+        .ASCII "PROCEDUR"
+        .BYTE 01F,000
+        .ASCII "PACKED  "
+        .BYTE 02B,000
+        .ASCII "PROGRAM "
+        .BYTE 021,000
+NUMR    .BYTE 2
+        .ASCII "REPEAT  "
+        .BYTE 016,000
+        .ASCII "RECORD  "
+        .BYTE 02D,000
+NUMS    .BYTE 2
+        .ASCII "SET     "
+        .BYTE 02A,000
+        .ASCII "SEGMENT "
+        .BYTE 021,000
+NUMT    .BYTE 3
+        .ASCII "THEN    "
+        .BYTE 00C,000
+        .ASCII "TO      "
+        .BYTE 007,000
+        .ASCII "TYPE    "
+        .BYTE 01D,000
+NUMU    .BYTE 3
+        .ASCII "UNTIL   "
+        .BYTE 00A,000
+        .ASCII "USES    "
+        .BYTE 031,000
+        .ASCII "UNIT    "
+        .BYTE 032,000
+NUMV    .BYTE 1
+        .ASCII "VAR     "
+        .BYTE 01E,000
+NUMW    .BYTE 2
+        .ASCII "WHILE   "
+        .BYTE 017,000
+        .ASCII "WITH    "
+        .BYTE 019,000
+
+
+        .FUNC TREESEARCH,3
+        .TITLE "TREESEARCH Procedure"
+;---------------------------------------------------
+; Search a binary tree of eight-character names.
+;
+; Declared in the compiler as
+;   FUNCTION TREESEARCH(ROOT: NODEPTR;
+;                       VAR NODE, NAME): INTEGER;
+;                                        EXTERNAL;
+; Returns
+;    0  found; NODE is the node
+;    1  not found; insert as the right subnode of NODE
+;   -1  not found; insert as the left subnode of NODE
+;
+; A node is NAME[8] then two link words, right at
+; offset 8 and left at offset 10.
+;---------------------------------------------------
+
+NODEPTR .EQU 07E        ; VAR NODE
+ROOTPTR .EQU 080        ; current node
+NAME    .EQU 082        ; VAR NAME
+RTN     .EQU 084        ; return address
+
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+;
+; Drop the two words the caller pushed for the
+; function result; they are pushed again at GOBACK.
+;
+        PLA
+        PLA
+        PLA
+        PLA
+;
+; Parameters, in reverse order of declaration.
+;
+        PLA
+        STA NAME
+        PLA
+        STA NAME+1
+        PLA
+        STA NODEPTR
+        PLA
+        STA NODEPTR+1
+        PLA
+        STA ROOTPTR
+        PLA
+        STA ROOTPTR+1
+;
+; Compare the eight characters.
+;
+CHKNAME LDX #8
+        LDY #255.
+CHKCHAR DEX
+        BMI RETURN0
+        INY
+        LDA @NAME,Y
+        CMP @ROOTPTR,Y
+        BEQ CHKCHAR
+        BMI NAMLESS
+;
+; Wanted name is greater: take the right link.
+;
+        LDY #8
+        LDA @ROOTPTR,Y
+        TAX
+        INY
+        LDA @ROOTPTR,Y
+        CMP #0
+        BNE CHKNXT1
+        CPX #0
+        BEQ RETURN1
+CHKNXT1 STX ROOTPTR
+        STA ROOTPTR+1
+        JMP CHKNAME
+;
+; Wanted name is less: take the left link.
+;
+NAMLESS LDY #10.
+        LDA @ROOTPTR,Y
+        TAX
+        INY
+        LDA @ROOTPTR,Y
+        CMP #0
+        BNE CHKNXT2
+        CPX #0
+        BEQ RETURNN1
+CHKNXT2 STX ROOTPTR
+        STA ROOTPTR+1
+        JMP CHKNAME
+
+RETURN0 LDA #0
+        PHA
+        PHA
+        JMP GOBACK
+
+RETURNN1 LDA #255.
+        PHA
+        PHA
+        JMP GOBACK
+
+RETURN1 LDA #0
+        PHA
+        LDA #1
+        PHA
+;
+; NODE^ := the node we stopped at, then return.
+;
+GOBACK  LDY #0
+        LDA ROOTPTR
+        STA @NODEPTR,Y
+        INY
+        LDA ROOTPTR+1
+        STA @NODEPTR,Y
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+        .END
