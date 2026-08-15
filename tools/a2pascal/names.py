@@ -514,6 +514,33 @@ COMPOPTIS: dict[int, str] = {
                          # and identifiers; the only SEARCHID here
 }
 
+# --- finding 42: the three procedures 1.3 adds --------------------------
+#
+# All three spellings are ours; what each does is the binary's.
+ONLY_13: dict[tuple[str, int], str] = {
+    ("COMPINIT", 11): "CHECKVER",
+    # Reads the byte at $BF21 -- the interpreter's VERSION -- and if it is
+    # not 4 prints "Version 1.3 of SYSTEM.COMPILER cannot run / with a
+    # non-1.3 version of SYSTEM.PASCAL" and exits. Then takes bit 6 of
+    # $BF22, FLAVOR's memory-size field, into HAS128K. Finding 40.
+
+    ("BODYPART", 26): "INITUNIT",
+    # Walks USINGLIST emitting `GEN2(77 (*CXP*), unit's segment, 1)` -- the
+    # call to each used unit's initialisation. 1.1's BODY2 does the same
+    # emission in a plain forward `while p <> nil` loop; 1.3 hands it to
+    # this, which recurses on `next` *before* emitting and so walks the
+    # list backwards. Since the list is built by prepending, that turns
+    # reverse declaration order into declaration order -- the 1.1 Update
+    # pamphlet's "Initialization sections of nested units were
+    # (incorrectly) executed in the reverse order. Now they are executed in
+    # the correct order."
+
+    ("COMPOPTI", 5): "ADDRESID",
+    # `NEW(p, 13)`; p^.value := the scanned item, p^.next := RESIDENT,
+    # p^.flag := (SY = ident) and INMODULE and not INTRINSIC; RESIDENT := p.
+    # 1.1 builds the same node inline in OPTLIST.
+}
+
 PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
     "1.1": {(seg, 1): s for seg, s in SEGMENT_PROCS.items()}
            | {("PASCALCO", n): s for n, s in PASCALCO_11.items()}
@@ -552,6 +579,7 @@ PROC_NAMES: dict[str, dict[tuple[str, int], str]] = {
            | {("COMPOPTI", n): s for n, s in COMPOPTIS.items()}
            | {("BODY3", n): s for n, s in BODY3S.items()}
            | {("BODYPART", n): s for n, s in BODYPART_MORE.items()}
+           | ONLY_13
            ,
 }
 

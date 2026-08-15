@@ -3606,6 +3606,96 @@ case SYMBUFP^[SYMCURSOR] of   { table 9..123 }
 39 is `'`, 48..57 the digits, 61 `=`, 62 `>` — and the nested case inside
 the `>` limb is the two-character `>=` and `<>`.
 
+## 42. The three procedures 1.3 adds — every routine in both binaries now has a name
+
+*Confidence: VERIFIED BINARY FACT for what each one does and for the 1.1
+code it replaces; SPECULATION for the three spellings, which are ours.
+`tools/probes/probe_13_only.py`, 21 checks.*
+
+`bp13()` has known since finding 19 that 1.3 inserts a procedure at
+`BODYPART.26` — "a 26-byte procedure at lex 4 nested inside `BODY2`, with
+no counterpart in 1.1" — without knowing what it was. With `COMPINIT.11`
+and `COMPOPTI.5` it was the last of the unnamed routines. All three are
+now placed, and **1.1's 142 procedures and 1.3's 147 are named without
+exception**.
+
+Comparing the two releases by *name* rather than by number — 1.3 renumbers,
+since the natives take `PASCALCO.2` and `.3` and `BODYPART`'s insertion
+shifts everything above 26 — 1.3 adds exactly five routines: the two
+native ones of finding 19, plus these three.
+
+### 42a. `BODYPART.26` is `INITUNIT`, and it is a bug fix the vendor documents
+
+1.1's `BODY2` ends the declaration part of a level-1 body by walking
+`USINGLIST` and emitting each used unit's initialisation call:
+
+```
+p := USINGLIST;
+while p <> nil do begin
+  if p^[10] then GEN2(77 (*CXP*), p^[9], 1);      { call unit's proc 1 }
+  p := p^[7]                                       { next }
+end
+```
+
+1.3's `BODY2` does none of that. It passes `USINGLIST` by reference to a
+new procedure whose whole body is:
+
+```
+if p <> nil then begin
+  INITUNIT(p^^[7]);                                { recurse on next }
+  if p^^[10] then GEN2(77 (*CXP*), p^^[9], 1)
+end
+```
+
+Same emission, same list, same fields — but the recursive call comes
+*before* the emission, so the list is walked to its end and unwound. That
+matters because `USINGLIST` is built by prepending, so a forward walk
+emits the calls in reverse declaration order. Which is exactly what the
+1.1 *Update* pamphlet lists among the compiler bugs 1.2 fixed:
+
+> Initialization sections of nested units were (incorrectly) executed in
+> the reverse order. Now they are executed in the correct order.
+
+This is the first place the project has recovered *both sides* of a
+documented Apple bug fix from the two binaries, and the shape of the fix
+is worth noting for the reconstruction: 1.2 did not rewrite the loop, it
+lifted it into a recursive procedure. Whatever we write for 1.3's
+`BODY2` has to be a call, not a loop, or the code bytes differ.
+
+The probe asserts both halves. That 1.3 recurses proves nothing on its own
+— what makes the pairing real is that **1.1 does the emission itself and
+1.3's `BODY2` no longer reads `USINGLIST` at all**, with a control check
+that 1.3 reads `USINGLIST` somewhere, so the absence is not vacuous.
+
+### 42b. `COMPINIT.11` is `CHECKVER`
+
+Finding 40 identified it: the version gate that reads `$BF21` and refuses
+to run under a `SYSTEM.PASCAL` older than 1.3, then takes the 128K bit out
+of `$BF22` into `HAS128K`. It is the only writer of that global.
+
+### 42c. `COMPOPTI.5` is `ADDRESID`
+
+One node of finding 39's `$R` resident-segment list:
+
+```
+NEW(p, 13);
+p^[9]  := <the scanned unit name or segment number>;
+p^[7]  := RESIDENT;
+p^[11] := (SY = ident) and INMODULE and not INTRINSIC;
+RESIDENT := p
+```
+
+13 words is `IDCLASS` 4, the same identifier variant `UFLDPTR` uses
+(finding 39b). 1.1's `OPTLIST` builds the identical node inline; 1.3 split
+it out, and 1.3's `OPTLIST` calls it where 1.1's does the work itself.
+
+### 42d. Where the naming track stands
+
+Both binaries are fully named: 142 procedures in 1.1, 147 in 1.3, and 129
+of 1.1's 133 touched globals (finding 39f). The remaining unnamed things
+are the four file-window buffers in each release, which are a layout
+question rather than a naming one.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

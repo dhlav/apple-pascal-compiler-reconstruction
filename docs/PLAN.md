@@ -105,11 +105,10 @@ Done, and reproducible via `python tools/build_all.py`:
    procedure at the wrong depth changes the code bytes.
 
 1. ~~**Finish naming the PASCALCO service layer.**~~ **Done, and then
-   some** — finding 37 closes the last five segments, so **every one of
-   Apple Pascal 1.1's 142 procedures has a name**, and 144 of 1.3's 147.
-   What is left of this track is only the three procedures 1.3 adds
-   (`COMPINIT.11`, `BODYPART.26`, `COMPOPTI.5`), which belong with task
-   10, and tightening the seven spellings that are still ours.
+   some** — finding 37 closed the last five segments and finding 42 the
+   three procedures 1.3 adds, so **every procedure in both binaries has a
+   name**: 142 in 1.1 and 147 in 1.3, without exception. What is left of
+   this track is only tightening the spellings that are still ours.
 
    The notes below are kept for the levers, which transfer to the global
    map and to the 1.3 delta.
@@ -281,11 +280,16 @@ Done, and reproducible via `python tools/build_all.py`:
      (`JTAB` overflow moved from 253 to 254), so an error number is not a
      safe way to carry a name from 1.1 across the correspondence table.
 
-     `COMPINIT.11`, one of the three procedures 1.3 adds, is identified
-     with them: it is the version gate, checking `$BF21` for 4 and halting
-     with *"Version 1.3 of SYSTEM.COMPILER cannot run with a non-1.3
-     version of SYSTEM.PASCAL"*, then reading the 128K bit out of
-     `$BF22`. `BODYPART.26` and `COMPOPTI.5` are still unidentified.
+     ~~The three procedures 1.3 adds.~~ **Done** (finding 42).
+     `COMPINIT.11` is `CHECKVER`, the version gate; `COMPOPTI.5` is
+     `ADDRESID`, one node of the `$R` list that 1.1 builds inline; and
+     `BODYPART.26` is `INITUNIT`, which is a *documented bug fix* — 1.1's
+     `BODY2` walks `USINGLIST` forward emitting each unit's initialisation
+     call, and since the list is built by prepending that is reverse
+     declaration order, exactly the bug the 1.1 Update pamphlet says 1.2
+     fixed. 1.3 lifts the loop into a procedure that recurses on `next`
+     before emitting. Note the *shape* of the fix for the reconstruction:
+     1.3's `BODY2` must be a call, not a loop, or the code bytes differ.
 
      First two identified (finding 22b): 1.3 adds the standard types
      `BYTESTREAM` and `WORDSTREAM`, at globals 57 and 58, entered by name

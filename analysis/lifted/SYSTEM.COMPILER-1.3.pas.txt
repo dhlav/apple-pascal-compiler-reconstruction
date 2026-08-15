@@ -994,7 +994,7 @@ SEGMENT 7 COMPINIT
 ======================================================================
 
 procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 304 words, lex 1 }
-  COMPINIT.11();
+  COMPINIT.11:CHECKVER();
   COMPINIT.9:INITSCALARS();
   COMPINIT.10:INITSETS();
   LEVEL := 0;
@@ -1636,7 +1636,7 @@ procedure COMPINIT.10:INITSETS(args 0 words);  { locals 0 words, lex 2 }
   { left on stack: @SIMPTYPEBEGSYS }
   { left on stack: 12 }
 
-procedure COMPINIT.11(args 0 words);  { locals 1 words, lex 2 }
+procedure COMPINIT.11:CHECKVER(args 0 words);  { locals 1 words, lex 2 }
   L1 := -(16607);
   if (L1^[0] <> 4) then begin
     FWRITELN(I3,3);
@@ -4319,7 +4319,7 @@ procedure BODYPART.25:BODY2(args 0 words);  { locals 2 words, lex 3 }
     end;
   end;
   if I1,8 then begin
-    BODYPART.26(@USINGLIST);
+    BODYPART.26:INITUNIT(@USINGLIST);
   end;
 L0121:
   repeat
@@ -4332,9 +4332,9 @@ L0121:
     end;
   until TEST;
 
-procedure BODYPART.26(args 1 words);  { locals 0 words, lex 4 }
+procedure BODYPART.26:INITUNIT(args 1 words);  { locals 0 words, lex 4 }
   if (L1^ <> nil) then begin
-    BODYPART.26((L1^+7));
+    BODYPART.26:INITUNIT((L1^+7));
     if L1^^.f10 then begin
       BODYPART.6:GEN2(77, L1^^.f9, 1);
     end;
@@ -7523,7 +7523,7 @@ procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
     end else begin
       PASCALCO.8:INSYMBOL();
       if (SY = 35) then begin
-        COMPOPTI.5(VAL);
+        COMPOPTI.5:ADDRESID(VAL);
       end else begin
         if (SY <> 0) then begin
           L3 := 1;
@@ -7535,10 +7535,10 @@ procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
             L4 := L2;
             if (L4^.f8 = 7) then begin
               if L4^.f10 then begin
-                COMPOPTI.5(L4^.f9);
+                COMPOPTI.5:ADDRESID(L4^.f9);
               end;
             end else begin
-              COMPOPTI.5(L4^.f12);
+              COMPOPTI.5:ADDRESID(L4^.f12);
             end;
           end else begin
             PASCALCO.4:ERROR(273);
@@ -7554,7 +7554,7 @@ procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
   SYMCURSOR := ((SYMCURSOR+CSP11(80, 0, I1,3, SYMBUFP, SYMCURSOR, 0))+1);
   COMPOPTI.2:BADOPT();
 
-procedure COMPOPTI.5(args 1 words);  { locals 2 words, lex 3 }
+procedure COMPOPTI.5:ADDRESID(args 1 words);  { locals 2 words, lex 3 }
   CSP1(@L2, 13);
   L3 := L2;
   (L3+9)^ := L1;

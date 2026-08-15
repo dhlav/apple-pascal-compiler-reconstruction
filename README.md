@@ -209,8 +209,19 @@ it. Five more `BODYPART` names fall out of who calls what:
 with `BLOCKIO`, which calls the first two in that order, separating the
 pair that nothing else could.
 
-**Every procedure in Apple Pascal 1.1 now has a name — 142 of 142**
-(finding 37). 1.3 has 147, and the three without one are new in 1.3.
+**Every procedure in both binaries now has a name — 142 in 1.1 and 147 in
+1.3** (findings 37 and 42), with no exceptions left.
+
+Compared by name rather than by number, 1.3 adds five routines: the two
+native ones, plus a version gate, a node constructor for the `$R` list,
+and `INITUNIT`. That last one is the first place both sides of a
+*documented* Apple bug fix have been recovered from the two binaries.
+1.1's `BODY2` walks `USINGLIST` forward emitting each used unit's
+initialisation call — and since the list is built by prepending, that is
+reverse declaration order, exactly the bug the 1.1 *Update* pamphlet says
+1.2 fixed. 1.3 lifts the loop into a procedure that recurses on `next`
+before emitting, so the list unwinds. The shape of the fix constrains the
+reconstruction: 1.3's `BODY2` has to be a call, not a loop.
 
 The last five segments went the same way as the rest. `COMPINIT`'s
 segment procedure calls *exactly seven* of its nine procedures, which is

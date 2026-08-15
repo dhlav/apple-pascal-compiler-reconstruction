@@ -102,12 +102,12 @@ def main() -> int:
         byname = {procname("BODYPART", n, ver): n for n in procs
                   if procname("BODYPART", n, ver)}
 
-        # Every procedure named, except the one 1.3 inserts.
+        # Every procedure named, including the one 1.3 inserts at 26,
+        # which finding 42 identifies as INITUNIT.
         unnamed = sorted(n for n in procs if not procname("BODYPART", n, ver))
-        want = [] if ver == "1.1" else [26]
-        if unnamed != want:
+        if unnamed:
             bad.append(f"{ver}: BODYPART procedures without a name: "
-                       f"{unnamed}, expected {want}")
+                       f"{unnamed}")
 
         calls, emits, holds = {}, defaultdict(list), {}
         for p in seg.pcode_procedures:
@@ -233,8 +233,7 @@ def main() -> int:
             bad.append(f"{ver}: LINKINFO is stored into by {sorted(writers)}, "
                        f"expected {sorted(expect)}")
 
-        print(f"{ver}: BODYPART, {len(procs)} procedures, all named "
-              f"{'' if ver == '1.1' else 'but the one 1.3 inserts at 26'}")
+        print(f"{ver}: BODYPART, {len(procs)} procedures, all named")
 
     if bad:
         print("\n".join(bad))
