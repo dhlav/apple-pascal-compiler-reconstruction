@@ -13,7 +13,7 @@ shape it leaves behind:
     if/else            ... then-part ends UJP past-the-else
     while c do         loop header whose FJP leaves the loop, latch UJPs back
     repeat until c     no header test; latch FJPs back to the head
-    case               XJP, whose jump table the decoder already carries
+    case               UJP into an XJP that sits *after* all of its arms
 
 Nothing is forced. A region that does not match a pattern exactly is
 emitted as the plain blocks and gotos it always was, so the output stays
@@ -103,8 +103,8 @@ class _Structurer:
             if n is not None:
                 return n
 
-        # ---- case
-        if last.mnemonic == "XJP":
+        # ---- case: recognised at the UJP *into* the jump table
+        if last.mnemonic == "UJP" and b.branch is not None:
             n = self._case(b, i, hi, depth, out)
             if n is not None:
                 return n
@@ -135,7 +135,8 @@ class _Structurer:
             self.labels.add(b.branch)
         elif b.insns[-1].mnemonic == "XJP":
             o = b.insns[-1].operands
-            out.append(f"{pad}case <selector> of  {{ {o[0]}..{o[1]} }}")
+            out.append(f"{pad}case {b.cond or '<selector>'} of"
+                       f"  {{ {o[0]}..{o[1]} }}")
             for v, t in zip(range(o[0], o[1] + 1), o[3]):
                 out.append(f"{pad}{INDENT}{v}: goto L{t:04X};")
                 self.labels.add(t)
@@ -214,27 +215,70 @@ class _Structurer:
         return end
 
     def _case(self, b, i, hi, depth, out):
+        """A `case`, whose jump table the compiler puts *after* the arms.
+
+        UCSD lays a case statement out as
+
+            <selector> ; UJP Lxjp
+          arm1: ... UJP Lend
+          arm2: ... UJP Lend
+          Lxjp: XJP lo,hi,Lend,<table>
+          Lend:
+
+        so the construct is recognised at the `UJP` that reaches the table,
+        not at the `XJP` itself, and every arm precedes it. All 54 case
+        statements across both releases have exactly this shape: the XJP
+        block carries no statements, has that one `UJP` as its only
+        predecessor, and its `otherwise` target is the block immediately
+        after it.
+        """
         pad = INDENT * depth
-        o = b.insns[-1].operands
-        lo_v, hi_v, other, table = o[0], o[1], o[2], o[3]
-        arms = list(zip(range(lo_v, hi_v + 1), table))
-        # Every arm must land inside the region and after this block, and
-        # the arms must partition a contiguous stretch of blocks.
-        raw = {self._index_of(t) for _, t in arms}
-        if any(x is None or x <= i or x > hi for x in raw):
+        x = self._index_of(b.branch)
+        if x is None or x <= i or x >= hi:
             return None
-        tgts = sorted(raw)
-        # the case ends where the last arm ends
+        xb = self._at(x)
+        if xb.insns[-1].mnemonic != "XJP" or xb.stmts:
+            return None
+        lo_v, hi_v, other, table = xb.insns[-1].operands
         end = self._index_of(other)
-        if end is None or end < max(tgts):
+        if end != x + 1 or end > hi:
             return None
-        if self._escapes(i + 1, end, {other}):
+
+        # Selector values with no arm of their own jump straight to the end
+        # -- Pascal's "no such label", not a case limb.
+        arms = [(v, t) for v, t in zip(range(lo_v, hi_v + 1), table)
+                if t != other]
+        raw = {self._index_of(t) for _, t in arms}
+        if not raw or None in raw:
             return None
+        if min(raw) != i + 1 or max(raw) >= x:
+            return None
+
+        # No arm may fall out of its own block range into the next arm.
+        # Pascal has no fall-through, so wrapping such a run in limbs would
+        # change what it does -- and unlike an escaping jump, a fall-through
+        # leaves nothing behind to notice. All 54 cases on both disks end
+        # every arm with a jump; this is here so a future one that does not
+        # is refused rather than mis-rendered.
+        tgts = sorted(raw)
+        bounds = tgts + [x]
+        for k in range(len(tgts)):
+            tail = self._at(bounds[k + 1] - 1)
+            if tail.branch is None and tail.fallthrough is not None:
+                return None
+
+        # Escapes are *not* refused here, unlike every other construct. An
+        # arm that jumps out of the case is a `goto` in the source -- II.0's
+        # INSYMBOL has a literal `GOTO 1` in one of its limbs -- and the
+        # jump survives into the output as a goto with a label, so wrapping
+        # the case around it preserves the graph exactly. What the other
+        # constructs guard against is absorbing a jump that mattered; the
+        # only jumps absorbed here are the arms' own `UJP <end>`.
 
         for s in b.stmts:
             out.append(pad + s)
-        out.append(f"{pad}case <selector> of")
-        bounds = tgts + [end]
+        out.append(f"{pad}case {xb.cond or '<selector>'} of"
+                   f"   {{ table {lo_v}..{hi_v} }}")
         for k, start in enumerate(tgts):
             vals = [str(v) for v, t in arms if self._index_of(t) == start]
             # an arm normally ends by jumping past the case; absorb that

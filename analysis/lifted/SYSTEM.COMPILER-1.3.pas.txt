@@ -217,253 +217,128 @@ procedure PASCALCO.8:INSYMBOL(args 0 words);  { locals 5 words, lex 1 }
   OP := 15;
 L0518:
   SY := 47;
-  goto L067D;
-L0520:
-  NUMSTRIN.1:NUMSTRIN(0, @L1);
-  goto L076A;
-L0528:
-  L5 := SYMBUFP^[SYMCURSOR];
-  L4 := 0;
-  L3 := 0;
-  while ((L5 in {48,49,50,51,52,53,54,55,56,57}) and (L4 < 4)) do begin
-    L3 := ((L3*10)+(L5-48));
-    L4 := (L4+1);
-    L5 := SYMBUFP^[(SYMCURSOR+L4)];
-  end;
-  if (L5 in {46,48,49,50,51,52,53,54,55,56,57,69}) then begin
-    NUMSTRIN.1:NUMSTRIN(1, @L1);
-  end else begin
-    SYMCURSOR := ((SYMCURSOR+L4)-1);
-    SY := 35;
-    OP := 15;
-    VAL := L3;
-  end;
-  goto L076A;
-L0588:
-  PASCALCO.2:IDSEARCH(@SYMCURSOR, SYMBUFP);
-  goto L076A;
-L058F:
-  PASCALCO.28:COMMENTER(125);
-  goto L0518;
-  goto L076A;
-L0596:
-  if not ((SYMBUFP^[(SYMCURSOR+1)] = 42)) then goto L05B0;
-  SYMCURSOR := (SYMCURSOR+1);
-  PASCALCO.28:COMMENTER(42);
-  SYMCURSOR := (SYMCURSOR+1);
-  goto L0518;
-  goto L05B3;
+  case SYMBUFP^[SYMCURSOR] of   { table 9..123 }
+    39: begin
+      NUMSTRIN.1:NUMSTRIN(0, @L1);
+    end;
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57: begin
+      L5 := SYMBUFP^[SYMCURSOR];
+      L4 := 0;
+      L3 := 0;
+      while ((L5 in {48,49,50,51,52,53,54,55,56,57}) and (L4 < 4)) do begin
+        L3 := ((L3*10)+(L5-48));
+        L4 := (L4+1);
+        L5 := SYMBUFP^[(SYMCURSOR+L4)];
+      end;
+      if (L5 in {46,48,49,50,51,52,53,54,55,56,57,69}) then begin
+        NUMSTRIN.1:NUMSTRIN(1, @L1);
+      end else begin
+        SYMCURSOR := ((SYMCURSOR+L4)-1);
+        SY := 35;
+        OP := 15;
+        VAL := L3;
+      end;
+    end;
+    65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122: begin
+      PASCALCO.2:IDSEARCH(@SYMCURSOR, SYMBUFP);
+    end;
+    123: begin
+      PASCALCO.28:COMMENTER(125);
+      goto L0518;
+    end;
+    40: begin
+      if not ((SYMBUFP^[(SYMCURSOR+1)] = 42)) then goto L05B0;
+      SYMCURSOR := (SYMCURSOR+1);
+      PASCALCO.28:COMMENTER(42);
+      SYMCURSOR := (SYMCURSOR+1);
+      goto L0518;
+      goto L05B3;
 L05B0:
-  SY := 4;
+      SY := 4;
 L05B3:
-  goto L076A;
-L05B5:
-  SY := 5;
-  goto L076A;
-L05BA:
-  SY := 1;
-  goto L076A;
-L05BF:
-  SYMCURSOR := (SYMCURSOR+1);
-  goto L0518;
-  goto L076A;
-L05C8:
-  if (SYMBUFP^[(SYMCURSOR+1)] = 46) then begin
-    SYMCURSOR := (SYMCURSOR+1);
-    SY := 2;
-  end else begin
-    SY := 18;
+    end;
+    41: begin
+      SY := 5;
+    end;
+    44: begin
+      SY := 1;
+    end;
+    9, 32: begin
+      SYMCURSOR := (SYMCURSOR+1);
+      goto L0518;
+    end;
+    46: begin
+      if (SYMBUFP^[(SYMCURSOR+1)] = 46) then begin
+        SYMCURSOR := (SYMCURSOR+1);
+        SY := 2;
+      end else begin
+        SY := 18;
+      end;
+    end;
+    58: begin
+      if (SYMBUFP^[(SYMCURSOR+1)] = 61) then begin
+        SYMCURSOR := (SYMCURSOR+1);
+        SY := 14;
+      end else begin
+        SY := 2;
+      end;
+    end;
+    59: begin
+      SY := 3;
+    end;
+    94: begin
+      SY := 17;
+    end;
+    91: begin
+      SY := 15;
+    end;
+    93: begin
+      SY := 16;
+    end;
+    42: begin
+      SY := 39;
+      OP := 0;
+    end;
+    43: begin
+      SY := 40;
+      OP := 5;
+    end;
+    45: begin
+      SY := 40;
+      OP := 6;
+    end;
+    47: begin
+      SY := 39;
+      OP := 1;
+    end;
+    60: begin
+      SY := 41;
+      OP := 8;
+      case SYMBUFP^[(SYMCURSOR+1)] of   { table 61..62 }
+        62: begin
+          OP := 12;
+          SYMCURSOR := (SYMCURSOR+1);
+        end;
+        61: begin
+          OP := 9;
+          SYMCURSOR := (SYMCURSOR+1);
+        end;
+      end;
+    end;
+    61: begin
+      SY := 41;
+      OP := 13;
+    end;
+    62: begin
+      SY := 41;
+      if (SYMBUFP^[(SYMCURSOR+1)] = 61) then begin
+        OP := 10;
+        SYMCURSOR := (SYMCURSOR+1);
+      end else begin
+        OP := 11;
+      end;
+    end;
   end;
-  goto L076A;
-L05E0:
-  if (SYMBUFP^[(SYMCURSOR+1)] = 61) then begin
-    SYMCURSOR := (SYMCURSOR+1);
-    SY := 14;
-  end else begin
-    SY := 2;
-  end;
-  goto L076A;
-L05F8:
-  SY := 3;
-  goto L076A;
-L05FD:
-  SY := 17;
-  goto L076A;
-L0602:
-  SY := 15;
-  goto L076A;
-L0607:
-  SY := 16;
-  goto L076A;
-L060C:
-  SY := 39;
-  OP := 0;
-  goto L076A;
-L0614:
-  SY := 40;
-  OP := 5;
-  goto L076A;
-L061C:
-  SY := 40;
-  OP := 6;
-  goto L076A;
-L0624:
-  SY := 39;
-  OP := 1;
-  goto L076A;
-L062C:
-  SY := 41;
-  OP := 8;
-  goto L064D;
-L0639:
-  OP := 12;
-  SYMCURSOR := (SYMCURSOR+1);
-  goto L0658;
-L0643:
-  OP := 9;
-  SYMCURSOR := (SYMCURSOR+1);
-  goto L0658;
-L064D:
-  case <selector> of  { 61..62 }
-    61: goto L0643;
-    62: goto L0639;
-    otherwise goto L0658;
-  end;
-L0658:
-  goto L076A;
-L065A:
-  SY := 41;
-  OP := 13;
-  goto L076A;
-L0662:
-  SY := 41;
-  if (SYMBUFP^[(SYMCURSOR+1)] = 61) then begin
-    OP := 10;
-    SYMCURSOR := (SYMCURSOR+1);
-  end else begin
-    OP := 11;
-  end;
-  goto L076A;
-L067D:
-  case <selector> of  { 9..123 }
-    9: goto L05BF;
-    10: goto L076A;
-    11: goto L076A;
-    12: goto L076A;
-    13: goto L076A;
-    14: goto L076A;
-    15: goto L076A;
-    16: goto L076A;
-    17: goto L076A;
-    18: goto L076A;
-    19: goto L076A;
-    20: goto L076A;
-    21: goto L076A;
-    22: goto L076A;
-    23: goto L076A;
-    24: goto L076A;
-    25: goto L076A;
-    26: goto L076A;
-    27: goto L076A;
-    28: goto L076A;
-    29: goto L076A;
-    30: goto L076A;
-    31: goto L076A;
-    32: goto L05BF;
-    33: goto L076A;
-    34: goto L076A;
-    35: goto L076A;
-    36: goto L076A;
-    37: goto L076A;
-    38: goto L076A;
-    39: goto L0520;
-    40: goto L0596;
-    41: goto L05B5;
-    42: goto L060C;
-    43: goto L0614;
-    44: goto L05BA;
-    45: goto L061C;
-    46: goto L05C8;
-    47: goto L0624;
-    48: goto L0528;
-    49: goto L0528;
-    50: goto L0528;
-    51: goto L0528;
-    52: goto L0528;
-    53: goto L0528;
-    54: goto L0528;
-    55: goto L0528;
-    56: goto L0528;
-    57: goto L0528;
-    58: goto L05E0;
-    59: goto L05F8;
-    60: goto L062C;
-    61: goto L065A;
-    62: goto L0662;
-    63: goto L076A;
-    64: goto L076A;
-    65: goto L0588;
-    66: goto L0588;
-    67: goto L0588;
-    68: goto L0588;
-    69: goto L0588;
-    70: goto L0588;
-    71: goto L0588;
-    72: goto L0588;
-    73: goto L0588;
-    74: goto L0588;
-    75: goto L0588;
-    76: goto L0588;
-    77: goto L0588;
-    78: goto L0588;
-    79: goto L0588;
-    80: goto L0588;
-    81: goto L0588;
-    82: goto L0588;
-    83: goto L0588;
-    84: goto L0588;
-    85: goto L0588;
-    86: goto L0588;
-    87: goto L0588;
-    88: goto L0588;
-    89: goto L0588;
-    90: goto L0588;
-    91: goto L0602;
-    92: goto L076A;
-    93: goto L0607;
-    94: goto L05FD;
-    95: goto L076A;
-    96: goto L076A;
-    97: goto L0588;
-    98: goto L0588;
-    99: goto L0588;
-    100: goto L0588;
-    101: goto L0588;
-    102: goto L0588;
-    103: goto L0588;
-    104: goto L0588;
-    105: goto L0588;
-    106: goto L0588;
-    107: goto L0588;
-    108: goto L0588;
-    109: goto L0588;
-    110: goto L0588;
-    111: goto L0588;
-    112: goto L0588;
-    113: goto L0588;
-    114: goto L0588;
-    115: goto L0588;
-    116: goto L0588;
-    117: goto L0588;
-    118: goto L0588;
-    119: goto L0588;
-    120: goto L0588;
-    121: goto L0588;
-    122: goto L0588;
-    123: goto L058F;
-    otherwise goto L076A;
-  end;
-L076A:
   if not ((SY = 47)) then goto L0784;
   if not ((SYMBUFP^[SYMCURSOR] = 13)) then goto L077F;
   PASCALCO.14:CHECKEND();
@@ -782,81 +657,69 @@ function PASCALCO.21:COMPTYPES(args 2 words) : <1 word result>;  { locals 6 word
       L1 := 1;
     end else begin
       if (L4^.f1 = L3^.f1) then begin
-        goto L0C94;
-L0B75:
-        L1 := 0;
-        goto L0CAC;
-L0B7A:
-        L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
-        goto L0CAC;
-L0B86:
-        L7 := 0;
-        L9 := GLOBTESTP;
-        L8 := GLOBTESTP;
-        while (L9 <> nil) do begin
-          L10 := L9;
-          if ((L10^.f1 = L4^.f2) and (L10^ = L3^.f2)) then begin
+        case L4^.f1 of   { table 0..7 }
+          0: begin
+            L1 := 0;
+          end;
+          1: begin
+            L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
+          end;
+          2: begin
+            L7 := 0;
+            L9 := GLOBTESTP;
+            L8 := GLOBTESTP;
+            while (L9 <> nil) do begin
+              L10 := L9;
+              if ((L10^.f1 = L4^.f2) and (L10^ = L3^.f2)) then begin
+                L7 := 1;
+              end;
+              L9 := L10^.f2;
+            end;
+            if not (L7) then begin
+              CSP1(@L9, 3);
+              L10 := L9;
+              (L10+1)^ := L4^.f2;
+              L10^ := L3^.f2;
+              (L10+2)^ := GLOBTESTP;
+              GLOBTESTP := L9;
+              L7 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
+            end;
+            L1 := L7;
+            GLOBTESTP := L8;
+          end;
+          3: begin
+            L1 := 1;
+          end;
+          4: begin
+            L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
+          end;
+          5: begin
+            L7 := (PASCALCO.21:COMPTYPES(L4^.f3, L3^.f3) and (L4^.f4 = L3^.f4));
+            if (L7 and L4^.f4) then begin
+              L7 := (((L4^.f6 = L3^.f6) and (L4^.f5 = L3^.f5)) and (L4^.f7 = L3^.f7));
+            end;
+            if L7 then begin
+              if ((((not (PASCALCO.18:STRGTYPE(L4)) and (L4 <> BYTEPTR)) and (L3 <> BYTEPTR)) and (L4 <> WORDPTR)) and (L3 <> WORDPTR)) then begin
+                L7 := (L4^ = L3^);
+              end;
+            end;
+            L1 := L7;
+          end;
+          6: begin
+            L6 := L4^.f2;
+            L5 := L3^.f2;
             L7 := 1;
+            while (((L6 <> nil) and (L5 <> nil)) and L7) do begin
+              L7 := PASCALCO.21:COMPTYPES(L6^.f6, L5^.f6);
+              L6 := L6^.f7;
+              L5 := L5^.f7;
+            end;
+            L1 := ((((L7 and (L6 = nil)) and (L5 = nil)) and (L4^.f3 = nil)) and (L3^.f3 = nil));
           end;
-          L9 := L10^.f2;
-        end;
-        if not (L7) then begin
-          CSP1(@L9, 3);
-          L10 := L9;
-          (L10+1)^ := L4^.f2;
-          L10^ := L3^.f2;
-          (L10+2)^ := GLOBTESTP;
-          GLOBTESTP := L9;
-          L7 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
-        end;
-        L1 := L7;
-        GLOBTESTP := L8;
-        goto L0CAC;
-L0BE0:
-        L1 := 1;
-        goto L0CAC;
-L0BE5:
-        L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
-        goto L0CAC;
-L0BF1:
-        L7 := (PASCALCO.21:COMPTYPES(L4^.f3, L3^.f3) and (L4^.f4 = L3^.f4));
-        if (L7 and L4^.f4) then begin
-          L7 := (((L4^.f6 = L3^.f6) and (L4^.f5 = L3^.f5)) and (L4^.f7 = L3^.f7));
-        end;
-        if L7 then begin
-          if ((((not (PASCALCO.18:STRGTYPE(L4)) and (L4 <> BYTEPTR)) and (L3 <> BYTEPTR)) and (L4 <> WORDPTR)) and (L3 <> WORDPTR)) then begin
-            L7 := (L4^ = L3^);
+          7: begin
+            L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
           end;
         end;
-        L1 := L7;
-        goto L0CAC;
-L0C47:
-        L6 := L4^.f2;
-        L5 := L3^.f2;
-        L7 := 1;
-        while (((L6 <> nil) and (L5 <> nil)) and L7) do begin
-          L7 := PASCALCO.21:COMPTYPES(L6^.f6, L5^.f6);
-          L6 := L6^.f7;
-          L5 := L5^.f7;
-        end;
-        L1 := ((((L7 and (L6 = nil)) and (L5 = nil)) and (L4^.f3 = nil)) and (L3^.f3 = nil));
-        goto L0CAC;
-L0C88:
-        L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3^.f2);
-        goto L0CAC;
-L0C94:
-        case <selector> of  { 0..7 }
-          0: goto L0B75;
-          1: goto L0B7A;
-          2: goto L0B86;
-          3: goto L0BE0;
-          4: goto L0BE5;
-          5: goto L0BF1;
-          6: goto L0C47;
-          7: goto L0C88;
-          otherwise goto L0CAC;
-        end;
-L0CAC:
       end else begin
         if (L4^.f1 = 1) then begin
           L1 := PASCALCO.21:COMPTYPES(L4^.f2, L3);
@@ -1603,81 +1466,64 @@ procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
     COMPINIT.6:NEXTNAME(@L7);
     L5 := (L5+1);
     L6 := (7264 in 1);
-    goto L08CE;
-L0830:
-    L3 := BOOLPTR;
-    CSP1(@L1, 11);
-    L11 := L1;
-    (L11+6)^ := INTPTR;
-    (L11+8)^ := 3;
-    goto L08F0;
-L0848:
-    L3 := CHARPTR;
-    goto L08F0;
-L084E:
-    goto L0948;
-    goto L08F0;
-L0852:
-    L3 := INTPTR;
-    CSP1(@L1, 11);
-    L11 := L1;
-    (L11+6)^ := REALPTR;
-    (L11+8)^ := 3;
-    goto L08F0;
-L086A:
-    L3 := nil;
-    CSP1(@L1, 11);
-    CSP1(@L4, 3);
-    L11 := L4;
-    L11^ := 1;
-    (L11+1)^ := 2;
-    (L11+2)^ := nil;
-    L11 := L1;
-    (L11+6)^ := L4;
-    (L11+8)^ := 2;
-    goto L08F0;
-L0896:
-    L3 := INTPTR;
-    L1 := nil;
-    goto L08F0;
-L089E:
-    L3 := BOOLPTR;
-    CSP1(@L1, 11);
-    L11 := L1;
-    (L11+6)^ := INTPTR;
-    (L11+8)^ := 3;
-    goto L08F0;
-L08B6:
-    L3 := REALPTR;
-    goto L08F0;
-L08BC:
-    L3 := nil;
-    goto L08F0;
-L08C1:
-    L3 := nil;
-    L1 := nil;
-    goto L08F0;
-L08C9:
-    L3 := INTPTR;
-    goto L08F0;
-L08CE:
-    case <selector> of  { 1..13 }
-      1: goto L0830;
-      2: goto L0848;
-      3: goto L084E;
-      4: goto L0852;
-      5: goto L086A;
-      6: goto L08F0;
-      7: goto L0896;
-      8: goto L089E;
-      9: goto L08B6;
-      10: goto L08BC;
-      11: goto L08F0;
-      12: goto L08C1;
-      13: goto L08C9;
-      otherwise goto L08F0;
+    case L5 of   { table 1..13 }
+      1: begin
+        L3 := BOOLPTR;
+        CSP1(@L1, 11);
+        L11 := L1;
+        (L11+6)^ := INTPTR;
+        (L11+8)^ := 3;
+      end;
+      2: begin
+        L3 := CHARPTR;
+      end;
+      3: begin
+        goto L0948;
+      end;
+      4: begin
+        L3 := INTPTR;
+        CSP1(@L1, 11);
+        L11 := L1;
+        (L11+6)^ := REALPTR;
+        (L11+8)^ := 3;
+      end;
+      5: begin
+        L3 := nil;
+        CSP1(@L1, 11);
+        CSP1(@L4, 3);
+        L11 := L4;
+        L11^ := 1;
+        (L11+1)^ := 2;
+        (L11+2)^ := nil;
+        L11 := L1;
+        (L11+6)^ := L4;
+        (L11+8)^ := 2;
+      end;
+      7: begin
+        L3 := INTPTR;
+        L1 := nil;
+      end;
+      8: begin
+        L3 := BOOLPTR;
+        CSP1(@L1, 11);
+        L11 := L1;
+        (L11+6)^ := INTPTR;
+        (L11+8)^ := 3;
+      end;
+      9: begin
+        L3 := REALPTR;
+      end;
+      10: begin
+        L3 := nil;
+      end;
+      12: begin
+        L3 := nil;
+        L1 := nil;
+      end;
+      13: begin
+        L3 := INTPTR;
+      end;
     end;
-L08F0:
     { paths disagree on stack depth here }
     if L6 then begin
       CSP1(@L2, 11);
@@ -2293,43 +2139,34 @@ function DECLARAT.5:PACKABLE(args 1 words) : <1 word result>;  { locals 3 words,
   L1 := 0;
   if ((L3 <> nil) and I1,16) then begin
     L6 := L3;
-    goto L03D5;
-L0373:
-    if ((L3 <> INTPTR) and (L3 <> REALPTR)) then begin
-      PASCALCO.11:GETBOUNDS(L3, @L5, @L4);
-      if (L5 >= 0) then begin
-        L1 := 1;
-        I1,17 := 1;
-        L5 := 1;
-        while (L5 < L4) do begin
-          L5 := (L5+1);
-          L5 := ((L5+L5)-1);
-          I1,17 := (I1,17+1);
+    case L6^.f1 of   { table 0..4 }
+      0, 1: begin
+        if ((L3 <> INTPTR) and (L3 <> REALPTR)) then begin
+          PASCALCO.11:GETBOUNDS(L3, @L5, @L4);
+          if (L5 >= 0) then begin
+            L1 := 1;
+            I1,17 := 1;
+            L5 := 1;
+            while (L5 < L4) do begin
+              L5 := (L5+1);
+              L5 := ((L5+L5)-1);
+              I1,17 := (I1,17+1);
+            end;
+          end;
+        end;
+      end;
+      4: begin
+        if DECLARAT.5:PACKABLE(L6^.f2) then begin
+          PASCALCO.11:GETBOUNDS(L6^.f2, @L5, @L4);
+          L4 := (L4+1);
+          if (L4 < 16) then begin
+            L1 := 1;
+            I1,17 := L4;
+          end;
         end;
       end;
     end;
-    goto L03E6;
-L03B1:
-    if DECLARAT.5:PACKABLE(L6^.f2) then begin
-      PASCALCO.11:GETBOUNDS(L6^.f2, @L5, @L4);
-      L4 := (L4+1);
-      if (L4 < 16) then begin
-        L1 := 1;
-        I1,17 := L4;
-      end;
-    end;
-    goto L03E6;
-L03D5:
-    case <selector> of  { 0..4 }
-      0: goto L0373;
-      1: goto L0373;
-      2: goto L03E6;
-      3: goto L03E6;
-      4: goto L03B1;
-      otherwise goto L03E6;
-    end;
   end;
-L03E6:
 
 procedure DECLARAT.6:FIELDLIST(args 5 words);  { locals 21 words, lex 3 }
   L7 := nil;
@@ -3716,86 +3553,70 @@ procedure BODYPART.7:GENNR(args 2 words);  { locals 0 words, lex 2 }
 
 procedure BODYPART.8:LOAD(args 0 words);  { locals 4 words, lex 2 }
   if (GATTYPTR <> nil) then begin
-    goto L06CE;
-L05FE:
-    if (GATTYPTR^.f1 = 3) then begin
-      L3 := GATCVAL;
-      L1 := 10000;
-      BODYPART.4:GENLDC((L3+3)[(1-1)]^);
-      BODYPART.4:GENLDC(18);
-      BODYPART.7:GENNR(30, 4);
-      L2 := 2;
-      L4 := L3^.f2;
-      while (L2 <= L4) do begin
-        if (L2 = L3^.f2) then begin
-          L1 := CSP23(?, CSP36(L3^.f1));
-        end;
-        BODYPART.4:GENLDC(L1);
-        BODYPART.4:GENLDC(18);
-        BODYPART.7:GENNR(30, 4);
-        BODYPART.4:GENLDC(8);
-        BODYPART.7:GENNR(30, 4);
-        BODYPART.4:GENLDC((L3+3)[(L2-1)]^);
-        BODYPART.4:GENLDC(18);
-        BODYPART.7:GENNR(30, 4);
-        BODYPART.4:GENLDC(2);
-        BODYPART.7:GENNR(30, 4);
-        L2 := (L2+1);
-      end;
-    end else begin
-      if ((GATTYPTR^.f1 = 0) and (GATTYPTR <> REALPTR)) then begin
-        BODYPART.4:GENLDC(GATCVAL);
-      end else begin
-        if (GATTYPTR = NILPTR) then begin
-          BODYPART.3:GEN0(31);
+    case GATKIND of   { table 0..2 }
+      0: begin
+        if (GATTYPTR^.f1 = 3) then begin
+          L3 := GATCVAL;
+          L1 := 10000;
+          BODYPART.4:GENLDC((L3+3)[(1-1)]^);
+          BODYPART.4:GENLDC(18);
+          BODYPART.7:GENNR(30, 4);
+          L2 := 2;
+          L4 := L3^.f2;
+          while (L2 <= L4) do begin
+            if (L2 = L3^.f2) then begin
+              L1 := CSP23(?, CSP36(L3^.f1));
+            end;
+            BODYPART.4:GENLDC(L1);
+            BODYPART.4:GENLDC(18);
+            BODYPART.7:GENNR(30, 4);
+            BODYPART.4:GENLDC(8);
+            BODYPART.7:GENNR(30, 4);
+            BODYPART.4:GENLDC((L3+3)[(L2-1)]^);
+            BODYPART.4:GENLDC(18);
+            BODYPART.7:GENNR(30, 4);
+            BODYPART.4:GENLDC(2);
+            BODYPART.7:GENNR(30, 4);
+            L2 := (L2+1);
+          end;
         end else begin
-          if (GATTYPTR = REALPTR) then begin
-            BODYPART.5:GEN1(51, 2);
+          if ((GATTYPTR^.f1 = 0) and (GATTYPTR <> REALPTR)) then begin
+            BODYPART.4:GENLDC(GATCVAL);
           end else begin
-            BODYPART.5:GEN1(51, 5);
+            if (GATTYPTR = NILPTR) then begin
+              BODYPART.3:GEN0(31);
+            end else begin
+              if (GATTYPTR = REALPTR) then begin
+                BODYPART.5:GEN1(51, 2);
+              end else begin
+                BODYPART.5:GEN1(51, 5);
+              end;
+            end;
           end;
         end;
       end;
+      1: begin
+        case GATCVAL of   { table 0..4 }
+          0: begin
+            BODYPART.6:GEN2(54, GATVLEV, GATDPLMT);
+          end;
+          1: begin
+            BODYPART.5:GEN1(35, GATVLEV);
+          end;
+          2: begin
+            BODYPART.3:GEN0(58);
+          end;
+          3: begin
+            BODYPART.5:GEN1(60, GATTYPTR^);
+          end;
+          4: begin
+            BODYPART.3:GEN0(62);
+          end;
+        end;
+      end;
+      2: begin
+      end;
     end;
-    goto L06DC;
-L0698:
-    goto L06B9;
-L069B:
-    BODYPART.6:GEN2(54, GATVLEV, GATDPLMT);
-    goto L06CA;
-L06A2:
-    BODYPART.5:GEN1(35, GATVLEV);
-    goto L06CA;
-L06A8:
-    BODYPART.3:GEN0(58);
-    goto L06CA;
-L06AD:
-    BODYPART.5:GEN1(60, GATTYPTR^);
-    goto L06CA;
-L06B4:
-    BODYPART.3:GEN0(62);
-    goto L06CA;
-L06B9:
-    case <selector> of  { 0..4 }
-      0: goto L069B;
-      1: goto L06A2;
-      2: goto L06A8;
-      3: goto L06AD;
-      4: goto L06B4;
-      otherwise goto L06CA;
-    end;
-L06CA:
-    goto L06DC;
-L06CC:
-    goto L06DC;
-L06CE:
-    case <selector> of  { 0..2 }
-      0: goto L05FE;
-      1: goto L0698;
-      2: goto L06CC;
-      otherwise goto L06DC;
-    end;
-L06DC:
     L3 := GATTYPTR;
     if (((L3^.f1 = 4) or ((L3^.f1 = 3) and (GATKIND <> 0))) and (GATKIND <> 2)) then begin
       BODYPART.4:GENLDC(GATTYPTR^);
@@ -3805,43 +3626,30 @@ L06DC:
 
 procedure BODYPART.9:LOADADDRESS(args 0 words);  { locals 0 words, lex 2 }
   if (GATTYPTR <> nil) then begin
-    goto L07AC;
-L076C:
-    if PASCALCO.18:STRGTYPE(GATTYPTR) then begin
-      BODYPART.3:GEN0(38);
-    end else begin
-      PASCALCO.4:ERROR(409);
+    case GATKIND of   { table 0..1 }
+      0: begin
+        if PASCALCO.18:STRGTYPE(GATTYPTR) then begin
+          BODYPART.3:GEN0(38);
+        end else begin
+          PASCALCO.4:ERROR(409);
+        end;
+      end;
+      1: begin
+        case GATCVAL of   { table 0..2 }
+          0: begin
+            BODYPART.6:GEN2(50, GATVLEV, GATDPLMT);
+          end;
+          1: begin
+            if (GATVLEV <> 0) then begin
+              BODYPART.5:GEN1(34, GATVLEV);
+            end;
+          end;
+          2: begin
+            PASCALCO.4:ERROR(103);
+          end;
+        end;
+      end;
     end;
-    goto L07B8;
-L0781:
-    goto L079C;
-L0784:
-    BODYPART.6:GEN2(50, GATVLEV, GATDPLMT);
-    goto L07AA;
-L078B:
-    if (GATVLEV <> 0) then begin
-      BODYPART.5:GEN1(34, GATVLEV);
-    end;
-    goto L07AA;
-L0796:
-    PASCALCO.4:ERROR(103);
-    goto L07AA;
-L079C:
-    case <selector> of  { 0..2 }
-      0: goto L0784;
-      1: goto L078B;
-      2: goto L0796;
-      otherwise goto L07AA;
-    end;
-L07AA:
-    goto L07B8;
-L07AC:
-    case <selector> of  { 0..1 }
-      0: goto L076C;
-      1: goto L0781;
-      otherwise goto L07B8;
-    end;
-L07B8:
     GATKIND := 1;
     GATCVAL := 1;
     GATVLEV := 0;
@@ -3849,43 +3657,30 @@ L07B8:
 
 procedure BODYPART.10:BYTEADDRESS(args 0 words);  { locals 0 words, lex 2 }
   if (GATTYPTR <> nil) then begin
-    goto L0816;
-L07D6:
-    if PASCALCO.18:STRGTYPE(GATTYPTR) then begin
-      BODYPART.3:GEN0(38);
-    end else begin
-      PASCALCO.4:ERROR(409);
+    case GATKIND of   { table 0..1 }
+      0: begin
+        if PASCALCO.18:STRGTYPE(GATTYPTR) then begin
+          BODYPART.3:GEN0(38);
+        end else begin
+          PASCALCO.4:ERROR(409);
+        end;
+      end;
+      1: begin
+        case GATCVAL of   { table 0..2 }
+          0: begin
+            BODYPART.6:GEN2(50, GATVLEV, GATDPLMT);
+          end;
+          1: begin
+            if (GATVLEV <> 0) then begin
+              BODYPART.5:GEN1(34, GATVLEV);
+            end;
+          end;
+          2: begin
+            PASCALCO.4:ERROR(103);
+          end;
+        end;
+      end;
     end;
-    goto L0822;
-L07EB:
-    goto L0806;
-L07EE:
-    BODYPART.6:GEN2(50, GATVLEV, GATDPLMT);
-    goto L0814;
-L07F5:
-    if (GATVLEV <> 0) then begin
-      BODYPART.5:GEN1(34, GATVLEV);
-    end;
-    goto L0814;
-L0800:
-    PASCALCO.4:ERROR(103);
-    goto L0814;
-L0806:
-    case <selector> of  { 0..2 }
-      0: goto L07EE;
-      1: goto L07F5;
-      2: goto L0800;
-      otherwise goto L0814;
-    end;
-L0814:
-    goto L0822;
-L0816:
-    case <selector> of  { 0..1 }
-      0: goto L07D6;
-      1: goto L07EB;
-      otherwise goto L0822;
-    end;
-L0822:
     if (GATKIND <> 1) then begin
       GATKIND := 1;
       BODYPART.4:GENLDC(0);
@@ -3964,128 +3759,106 @@ procedure BODYPART.11:EXPRESSION(args 4 words);  { locals 13 words, lex 2 }
 L1B21:
         if PASCALCO.21:COMPTYPES(L5, GATTYPTR) then begin
           L12 := L5^;
-          goto L1C08;
-L1B32:
-          if (L5 = REALPTR) then begin
-            L11 := 1;
-          end else begin
-            if (L5 = BOOLPTR) then begin
-              L11 := 3;
-            end else begin
+          case L5^.f1 of   { table 0..7 }
+            0: begin
+              if (L5 = REALPTR) then begin
+                L11 := 1;
+              end else begin
+                if (L5 = BOOLPTR) then begin
+                  L11 := 3;
+                end else begin
+                  L11 := 0;
+                end;
+              end;
+            end;
+            2: begin
+              if (3840 in 1) then begin
+                PASCALCO.4:ERROR(131);
+              end;
+              L11 := 0;
+            end;
+            3: begin
+              L11 := 7;
+            end;
+            4: begin
+              if (2304 in 1) then begin
+                PASCALCO.4:ERROR(132);
+              end;
+              L11 := 4;
+            end;
+            5: begin
+              L11 := 6;
+              if PASCALCO.17:PAOFCHAR(L5) then begin
+                if L5^.f7 then begin
+L1B87:
+                  L11 := 2;
+                end else begin
+                  L11 := 5;
+                  if (L5 = BYTEPTR) then begin
+                    if (GATTYPTR = BYTEPTR) then begin
+                      PASCALCO.4:ERROR(129);
+                    end else begin
+                      L5 := GATTYPTR;
+                    end;
+                  end;
+                  if (L5^.f2 <> nil) then begin
+                    PASCALCO.11:GETBOUNDS(L5^.f2, @L17, @L16);
+                    L12 := ((L16-L17)+1);
+                  end;
+                end;
+              end else begin
+                if (L5 = WORDPTR) then begin
+                  if (GATTYPTR = WORDPTR) then begin
+                    PASCALCO.4:ERROR(129);
+                  end else begin
+                    L5 := GATTYPTR;
+                    L12 := L5^;
+                  end;
+                end;
+                if (3840 in 1) then begin
+                  PASCALCO.4:ERROR(131);
+                end;
+              end;
+              { paths disagree on stack depth here }
+            end;
+            6: begin
+              if (3840 in 1) then begin
+                PASCALCO.4:ERROR(131);
+              end;
+              L11 := 6;
+            end;
+            7: begin
+              PASCALCO.4:ERROR(133);
               L11 := 0;
             end;
           end;
-          goto L1C20;
-L1B4D:
-          if (3840 in 1) then begin
-            PASCALCO.4:ERROR(131);
-          end;
-          L11 := 0;
-          goto L1C20;
-L1B60:
-          L11 := 7;
-          goto L1C20;
-L1B65:
-          if (2304 in 1) then begin
-            PASCALCO.4:ERROR(132);
-          end;
-          L11 := 4;
-          goto L1C20;
-L1B78:
-          L11 := 6;
-          if PASCALCO.17:PAOFCHAR(L5) then begin
-            if L5^.f7 then begin
-L1B87:
-              L11 := 2;
-            end else begin
-              L11 := 5;
-              if (L5 = BYTEPTR) then begin
-                if (GATTYPTR = BYTEPTR) then begin
-                  PASCALCO.4:ERROR(129);
-                end else begin
-                  L5 := GATTYPTR;
-                end;
-              end;
-              if (L5^.f2 <> nil) then begin
-                PASCALCO.11:GETBOUNDS(L5^.f2, @L17, @L16);
-                L12 := ((L16-L17)+1);
-              end;
-            end;
-          end else begin
-            if (L5 = WORDPTR) then begin
-              if (GATTYPTR = WORDPTR) then begin
-                PASCALCO.4:ERROR(129);
-              end else begin
-                L5 := GATTYPTR;
-                L12 := L5^;
-              end;
-            end;
-            if (3840 in 1) then begin
-              PASCALCO.4:ERROR(131);
-            end;
-          end;
-          { paths disagree on stack depth here }
-          goto L1C20;
-L1BEA:
-          if (3840 in 1) then begin
-            PASCALCO.4:ERROR(131);
-          end;
-          L11 := 6;
-          goto L1C20;
-L1BFD:
-          PASCALCO.4:ERROR(133);
-          L11 := 0;
-          goto L1C20;
-L1C08:
-          case <selector> of  { 0..7 }
-            0: goto L1B32;
-            1: goto L1C20;
-            2: goto L1B4D;
-            3: goto L1B60;
-            4: goto L1B65;
-            5: goto L1B78;
-            6: goto L1BEA;
-            7: goto L1BFD;
-            otherwise goto L1C20;
-          end;
-L1C20:
           { paths disagree on stack depth here }
           if (L11 = 7) then begin
             BODYPART.4:GENLDC(L10);
             BODYPART.4:GENLDC(16);
             BODYPART.7:GENNR(30, 4);
           end else begin
-            goto L1C5E;
-L1C34:
-            BODYPART.6:GEN2(53, L11, L12);
-            goto L1C72;
-L1C3B:
-            BODYPART.6:GEN2(52, L11, L12);
-            goto L1C72;
-L1C42:
-            BODYPART.6:GEN2(49, L11, L12);
-            goto L1C72;
-L1C49:
-            BODYPART.6:GEN2(48, L11, L12);
-            goto L1C72;
-L1C50:
-            BODYPART.6:GEN2(55, L11, L12);
-            goto L1C72;
-L1C57:
-            BODYPART.6:GEN2(47, L11, L12);
-            goto L1C72;
-L1C5E:
-            case <selector> of  { 8..13 }
-              8: goto L1C34;
-              9: goto L1C3B;
-              10: goto L1C49;
-              11: goto L1C42;
-              12: goto L1C50;
-              13: goto L1C57;
-              otherwise goto L1C72;
+            case L10 of   { table 8..13 }
+              8: begin
+                BODYPART.6:GEN2(53, L11, L12);
+              end;
+              9: begin
+                BODYPART.6:GEN2(52, L11, L12);
+              end;
+              11: begin
+                BODYPART.6:GEN2(49, L11, L12);
+              end;
+              10: begin
+                BODYPART.6:GEN2(48, L11, L12);
+              end;
+              12: begin
+                BODYPART.6:GEN2(55, L11, L12);
+              end;
+              13: begin
+                BODYPART.6:GEN2(47, L11, L12);
+              end;
             end;
           end;
-L1C72:
         end else begin
           PASCALCO.4:ERROR(129);
         end;
@@ -4198,37 +3971,28 @@ procedure BODYPART.19:PUTLABEL(args 1 words);  { locals 3 words, lex 2 }
 procedure BODYPART.20:STORE(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1;
   if (L2^ <> nil) then begin
-    goto L0747;
-L0719:
-    BODYPART.6:GEN2(56, L2^.f3, L2^.f4);
-    goto L0758;
-L0722:
-    if (L2^.f3 <> 0) then begin
-      PASCALCO.4:ERROR(409);
-    end else begin
-      BODYPART.3:GEN0(26);
-    end;
-    goto L0758;
-L0735:
-    BODYPART.3:GEN0(59);
-    goto L0758;
-L073A:
-    BODYPART.5:GEN1(61, L2^^);
-    goto L0758;
-L0742:
-    BODYPART.3:GEN0(63);
-    goto L0758;
-L0747:
-    case <selector> of  { 0..4 }
-      0: goto L0719;
-      1: goto L0722;
-      2: goto L0735;
-      3: goto L073A;
-      4: goto L0742;
-      otherwise goto L0758;
+    case L2^.f2 of   { table 0..4 }
+      0: begin
+        BODYPART.6:GEN2(56, L2^.f3, L2^.f4);
+      end;
+      1: begin
+        if (L2^.f3 <> 0) then begin
+          PASCALCO.4:ERROR(409);
+        end else begin
+          BODYPART.3:GEN0(26);
+        end;
+      end;
+      2: begin
+        BODYPART.3:GEN0(59);
+      end;
+      3: begin
+        BODYPART.5:GEN1(61, L2^^);
+      end;
+      4: begin
+        BODYPART.3:GEN0(63);
+      end;
     end;
   end;
-L0758:
 
 procedure BODYPART.21:STRGTOPA(args 1 words);  { locals 0 words, lex 2 }
   if L1 then begin
@@ -4245,65 +4009,56 @@ procedure BODYPART.22:SELECTOR(args 5 words);  { locals 10 words, lex 2 }
   L14 := L1;
   GATTYPTR := L14^.f6;
   GATKIND := 1;
-  goto L0951;
-L08AB:
-  GATVLEV := L14^.f9;
-  GATDPLMT := L14^.f10;
-  GATCVAL := 0;
-  if INMODULE then begin
-    if (GATTYPTR <> nil) then begin
-      if ((L14^.f9 = 1) and (GATTYPTR^.f1 = 6)) then begin
+  case L14^.f8 of   { table 2..6 }
+    3: begin
+      GATVLEV := L14^.f9;
+      GATDPLMT := L14^.f10;
+      GATCVAL := 0;
+      if INMODULE then begin
+        if (GATTYPTR <> nil) then begin
+          if ((L14^.f9 = 1) and (GATTYPTR^.f1 = 6)) then begin
+            BODYPART.9:LOADADDRESS();
+          end;
+        end;
+      end;
+    end;
+    2: begin
+      BODYPART.6:GEN2(54, L14^.f9, L14^.f10);
+      GATCVAL := 1;
+      GATVLEV := 0;
+    end;
+    4: begin
+      L15 := @DISPLAY[DISX*4w];
+      if (L15^.f1 = 1) then begin
+        GATCVAL := 0;
+        GATVLEV := L15^.f2;
+        GATDPLMT := (L15^.f3+L14^.f9);
+      end else begin
+        BODYPART.6:GEN2(54, LEVEL, L15^.f2);
+        GATCVAL := 1;
+        GATVLEV := L14^.f9;
+      end;
+      if L14^.f10 then begin
         BODYPART.9:LOADADDRESS();
+        GATCVAL := 2;
+        BODYPART.4:GENLDC(L14^.f11);
+        BODYPART.4:GENLDC(L14^.f12);
+      end;
+    end;
+    6: begin
+      if (L14^.f9 <> 1) then begin
+        PASCALCO.4:ERROR(150);
+      end else begin
+        if not (L14^.f17) then begin
+          PASCALCO.4:ERROR(103);
+        end else begin
+          GATCVAL := 0;
+          GATVLEV := (L14^.f10+1);
+          GATDPLMT := 1;
+        end;
       end;
     end;
   end;
-  goto L0962;
-L08D1:
-  BODYPART.6:GEN2(54, L14^.f9, L14^.f10);
-  GATCVAL := 1;
-  GATVLEV := 0;
-  goto L0962;
-L08E2:
-  L15 := @DISPLAY[DISX*4w];
-  if (L15^.f1 = 1) then begin
-    GATCVAL := 0;
-    GATVLEV := L15^.f2;
-    GATDPLMT := (L15^.f3+L14^.f9);
-  end else begin
-    BODYPART.6:GEN2(54, LEVEL, L15^.f2);
-    GATCVAL := 1;
-    GATVLEV := L14^.f9;
-  end;
-  if L14^.f10 then begin
-    BODYPART.9:LOADADDRESS();
-    GATCVAL := 2;
-    BODYPART.4:GENLDC(L14^.f11);
-    BODYPART.4:GENLDC(L14^.f12);
-  end;
-  goto L0962;
-L0927:
-  if (L14^.f9 <> 1) then begin
-    PASCALCO.4:ERROR(150);
-  end else begin
-    if not (L14^.f17) then begin
-      PASCALCO.4:ERROR(103);
-    end else begin
-      GATCVAL := 0;
-      GATVLEV := (L14^.f10+1);
-      GATDPLMT := 1;
-    end;
-  end;
-  goto L0962;
-L0951:
-  case <selector> of  { 2..6 }
-    2: goto L08D1;
-    3: goto L08AB;
-    4: goto L08E2;
-    5: goto L0962;
-    6: goto L0927;
-    otherwise goto L0962;
-  end;
-L0962:
   if (GATTYPTR <> nil) then begin
     if ((GATTYPTR^.f1 <= 4) and (GATTYPTR^ > 1)) then begin
       BODYPART.9:LOADADDRESS();
@@ -4405,26 +4160,17 @@ L0A70:
             end else begin
               L14 := L11;
               GATTYPTR := L14^.f6;
-              goto L0B07;
-L0AED:
-              GATDPLMT := (GATDPLMT+L14^.f9);
-              goto L0B18;
-L0AF6:
-              GATVLEV := (GATVLEV+L14^.f9);
-              goto L0B18;
-L0AFF:
-              PASCALCO.4:ERROR(409);
-              goto L0B18;
-L0B07:
-              case <selector> of  { 0..4 }
-                0: goto L0AED;
-                1: goto L0AF6;
-                2: goto L0AFF;
-                3: goto L0AFF;
-                4: goto L0AFF;
-                otherwise goto L0B18;
+              case GATCVAL of   { table 0..4 }
+                0: begin
+                  GATDPLMT := (GATDPLMT+L14^.f9);
+                end;
+                1: begin
+                  GATVLEV := (GATVLEV+L14^.f9);
+                end;
+                2, 3, 4: begin
+                  PASCALCO.4:ERROR(409);
+                end;
               end;
-L0B18:
               if L14^.f10 then begin
                 BODYPART.9:LOADADDRESS();
                 GATCVAL := 2;
@@ -4910,30 +4656,23 @@ procedure BODYPART.31:CALLNONSPECIAL(args 0 words);  { locals 9 words, lex 3 }
               BODYPART.9:LOADADDRESS();
               if (L3 <> nil) then begin
                 L9 := L3;
-                goto L1110;
-L10E5:
-                if (GATTYPTR^ <> L3^) then begin
-                  PASCALCO.4:ERROR(142);
-                end;
-                goto L111E;
-L10F4:
-                if L9^.f4 then begin
-                  if L9^.f7 then begin
-                    if ((L9^.f8 > GATTYPTR^.f8) and VARSTRG) then begin
-                      PASCALCO.4:ERROR(175);
+                case L9^.f1 of   { table 3..5 }
+                  3, 4: begin
+                    if (GATTYPTR^ <> L3^) then begin
+                      PASCALCO.4:ERROR(142);
+                    end;
+                  end;
+                  5: begin
+                    if L9^.f4 then begin
+                      if L9^.f7 then begin
+                        if ((L9^.f8 > GATTYPTR^.f8) and VARSTRG) then begin
+                          PASCALCO.4:ERROR(175);
+                        end;
+                      end;
                     end;
                   end;
                 end;
-                goto L111E;
-L1110:
-                case <selector> of  { 3..5 }
-                  3: goto L10E5;
-                  4: goto L10E5;
-                  5: goto L10F4;
-                  otherwise goto L111E;
-                end;
               end;
-L111E:
             end else begin
               PASCALCO.4:ERROR(154);
             end;
@@ -5084,69 +4823,62 @@ procedure BODYPART.34:SIMPLEEXPRESSION(args 4 words);  { locals 7 words, lex 3 }
     BODYPART.35:TERM(?, ?, ?, adjust((@L1^<4w> + {40}),4));
     BODYPART.8:LOAD();
     if ((L5 <> nil) and (GATTYPTR <> nil)) then begin
-      goto L1987;
-L18BA:
-      BODYPART.32:FLOATIT(@L5, 0);
-      BODYPART.33:STRETCHIT(@L5);
-      if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
-        BODYPART.3:GEN0(2);
-      end else begin
-        if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
-          BODYPART.3:GEN0(3);
-        end else begin
-          if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
-            BODYPART.4:GENLDC(2);
-            BODYPART.7:GENNR(30, 4);
+      case L10 of   { table 5..7 }
+        5: begin
+          BODYPART.32:FLOATIT(@L5, 0);
+          BODYPART.33:STRETCHIT(@L5);
+          if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
+            BODYPART.3:GEN0(2);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
-              BODYPART.3:GEN0(28);
+            if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
+              BODYPART.3:GEN0(3);
             end else begin
-              PASCALCO.4:ERROR(134);
-              GATTYPTR := nil;
+              if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
+                BODYPART.4:GENLDC(2);
+                BODYPART.7:GENNR(30, 4);
+              end else begin
+                if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
+                  BODYPART.3:GEN0(28);
+                end else begin
+                  PASCALCO.4:ERROR(134);
+                  GATTYPTR := nil;
+                end;
+              end;
             end;
           end;
         end;
-      end;
-      goto L1994;
-L1913:
-      BODYPART.32:FLOATIT(@L5, 0);
-      BODYPART.33:STRETCHIT(@L5);
-      if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
-        BODYPART.3:GEN0(21);
-      end else begin
-        if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
-          BODYPART.3:GEN0(22);
-        end else begin
-          if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
-            BODYPART.4:GENLDC(4);
-            BODYPART.7:GENNR(30, 4);
+        6: begin
+          BODYPART.32:FLOATIT(@L5, 0);
+          BODYPART.33:STRETCHIT(@L5);
+          if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
+            BODYPART.3:GEN0(21);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
-              BODYPART.3:GEN0(5);
+            if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
+              BODYPART.3:GEN0(22);
             end else begin
-              PASCALCO.4:ERROR(134);
-              GATTYPTR := nil;
+              if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
+                BODYPART.4:GENLDC(4);
+                BODYPART.7:GENNR(30, 4);
+              end else begin
+                if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
+                  BODYPART.3:GEN0(5);
+                end else begin
+                  PASCALCO.4:ERROR(134);
+                  GATTYPTR := nil;
+                end;
+              end;
             end;
           end;
         end;
+        7: begin
+          if ((L5 = BOOLPTR) and (GATTYPTR = BOOLPTR)) then begin
+            BODYPART.3:GEN0(13);
+          end else begin
+            PASCALCO.4:ERROR(134);
+            GATTYPTR := nil;
+          end;
+        end;
       end;
-      goto L1994;
-L196C:
-      if ((L5 = BOOLPTR) and (GATTYPTR = BOOLPTR)) then begin
-        BODYPART.3:GEN0(13);
-      end else begin
-        PASCALCO.4:ERROR(134);
-        GATTYPTR := nil;
-      end;
-      goto L1994;
-L1987:
-      case <selector> of  { 5..7 }
-        5: goto L18BA;
-        6: goto L1913;
-        7: goto L196C;
-        otherwise goto L1994;
-      end;
-L1994:
     end else begin
       GATTYPTR := nil;
     end;
@@ -5162,79 +4894,70 @@ procedure BODYPART.35:TERM(args 4 words);  { locals 7 words, lex 4 }
     BODYPART.36:FACTOR(?, ?, ?, adjust((@L1^<4w> + {39}),4));
     BODYPART.8:LOAD();
     if ((L5 <> nil) and (GATTYPTR <> nil)) then begin
-      goto L17FC;
-L171E:
-      BODYPART.32:FLOATIT(@L5, 0);
-      BODYPART.33:STRETCHIT(@L5);
-      if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
-        BODYPART.3:GEN0(15);
-      end else begin
-        if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
-          BODYPART.3:GEN0(16);
-        end else begin
-          if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
-            BODYPART.4:GENLDC(8);
-            BODYPART.7:GENNR(30, 4);
+      case L11 of   { table 0..4 }
+        0: begin
+          BODYPART.32:FLOATIT(@L5, 0);
+          BODYPART.33:STRETCHIT(@L5);
+          if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
+            BODYPART.3:GEN0(15);
           end else begin
-            if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
-              BODYPART.3:GEN0(12);
+            if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
+              BODYPART.3:GEN0(16);
+            end else begin
+              if ((GATTYPTR^.f1 = 3) and (L5^.f1 = 3)) then begin
+                BODYPART.4:GENLDC(8);
+                BODYPART.7:GENNR(30, 4);
+              end else begin
+                if ((L5^.f1 = 4) and PASCALCO.21:COMPTYPES(L5, GATTYPTR)) then begin
+                  BODYPART.3:GEN0(12);
+                end else begin
+                  PASCALCO.4:ERROR(134);
+                  GATTYPTR := nil;
+                end;
+              end;
+            end;
+          end;
+        end;
+        1: begin
+          BODYPART.32:FLOATIT(@L5, 1);
+          if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
+            BODYPART.3:GEN0(7);
+          end else begin
+            PASCALCO.4:ERROR(134);
+            GATTYPTR := nil;
+          end;
+        end;
+        3: begin
+          BODYPART.33:STRETCHIT(@L5);
+          if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
+            BODYPART.3:GEN0(6);
+          end else begin
+            if ((L5^.f1 = 3) and (GATTYPTR^.f1 = 3)) then begin
+              BODYPART.4:GENLDC(10);
+              BODYPART.7:GENNR(30, 4);
             end else begin
               PASCALCO.4:ERROR(134);
               GATTYPTR := nil;
             end;
           end;
         end;
-      end;
-      goto L180E;
-L1777:
-      BODYPART.32:FLOATIT(@L5, 1);
-      if ((L5 = REALPTR) and (GATTYPTR = REALPTR)) then begin
-        BODYPART.3:GEN0(7);
-      end else begin
-        PASCALCO.4:ERROR(134);
-        GATTYPTR := nil;
-      end;
-      goto L180E;
-L1797:
-      BODYPART.33:STRETCHIT(@L5);
-      if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
-        BODYPART.3:GEN0(6);
-      end else begin
-        if ((L5^.f1 = 3) and (GATTYPTR^.f1 = 3)) then begin
-          BODYPART.4:GENLDC(10);
-          BODYPART.7:GENNR(30, 4);
-        end else begin
-          PASCALCO.4:ERROR(134);
-          GATTYPTR := nil;
+        4: begin
+          if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
+            BODYPART.3:GEN0(14);
+          end else begin
+            PASCALCO.4:ERROR(134);
+            GATTYPTR := nil;
+          end;
+        end;
+        2: begin
+          if ((L5 = BOOLPTR) and (GATTYPTR = BOOLPTR)) then begin
+            BODYPART.3:GEN0(4);
+          end else begin
+            PASCALCO.4:ERROR(134);
+            GATTYPTR := nil;
+          end;
         end;
       end;
-      goto L180E;
-L17C8:
-      if ((L5 = INTPTR) and (GATTYPTR = INTPTR)) then begin
-        BODYPART.3:GEN0(14);
-      end else begin
-        PASCALCO.4:ERROR(134);
-        GATTYPTR := nil;
-      end;
-      goto L180E;
-L17E1:
-      if ((L5 = BOOLPTR) and (GATTYPTR = BOOLPTR)) then begin
-        BODYPART.3:GEN0(4);
-      end else begin
-        PASCALCO.4:ERROR(134);
-        GATTYPTR := nil;
-      end;
-      goto L180E;
-L17FC:
-      case <selector> of  { 0..4 }
-        0: goto L171E;
-        1: goto L1777;
-        2: goto L17E1;
-        3: goto L1797;
-        4: goto L17C8;
-        otherwise goto L180E;
-      end;
-L180E:
     end else begin
       GATTYPTR := nil;
     end;
@@ -5247,242 +4970,189 @@ procedure BODYPART.36:FACTOR(args 4 words);  { locals 18 words, lex 5 }
     GATTYPTR := nil;
   end;
   while (SY in @FACBEGSYS^<4w>) do begin
-    goto L162E;
-L13A3:
-    PASCALCO.10:SEARCHID(adjust(1,1), @L5);
-    PASCALCO.8:INSYMBOL();
-    if (L5^.f8 = 6) then begin
-      BODYPART.23:CALL(?, ?, 94, @L1^<4w>, L5);
-      GATKIND := 2;
-    end else begin
-      if (L5^.f8 = 1) then begin
-        L22 := L5;
-        GATTYPTR := L22^.f6;
-        GATKIND := 0;
-        move(@GATCVAL, (L22+9), 1 words);
-      end else begin
-        BODYPART.22:SELECTOR(?, ?, 94, @L1^<4w>, L5);
-      end;
-    end;
-    { paths disagree on stack depth here }
-    if (GATTYPTR <> nil) then begin
-      L22 := GATTYPTR;
-      if (L22^.f1 = 1) then begin
-        GATTYPTR := L22^.f2;
-      end;
-    end;
-    goto L1698;
-L13FB:
-    GATTYPTR := INTPTR;
-    GATKIND := 0;
-    move(@GATCVAL, @VAL, 1 words);
-    PASCALCO.8:INSYMBOL();
-    goto L1698;
-L140C:
-    GATTYPTR := REALPTR;
-    GATKIND := 0;
-    move(@GATCVAL, @VAL, 1 words);
-    PASCALCO.8:INSYMBOL();
-    goto L1698;
-L141E:
-    if (LGTH = 1) then begin
-      GATTYPTR := CHARPTR;
-    end else begin
-      CSP1(@L9, 9);
-      move(L9, STRGPTR, 9 words);
-      (L9+8)^ := LGTH;
-      GATTYPTR := L9;
-    end;
-    GATKIND := 0;
-    move(@GATCVAL, @VAL, 1 words);
-    PASCALCO.8:INSYMBOL();
-    goto L1698;
-L144B:
-    CSP1(@L9, 2);
-    move(L9, LONGINTPTR, 9 words);
-    L9^ := PASCALCO.19:DECSIZE(LGTH);
-    GATTYPTR := L9;
-    GATKIND := 0;
-    move(@GATCVAL, @VAL, 1 words);
-    PASCALCO.8:INSYMBOL();
-    goto L1698;
-L146F:
-    PASCALCO.8:INSYMBOL();
-    BODYPART.11:EXPRESSION(?, ?, @L1^<4w>, adjust((32 + 1),4));
-    if (SY = 5) then begin
-      PASCALCO.8:INSYMBOL();
-    end else begin
-      PASCALCO.4:ERROR(4);
-    end;
-    goto L1698;
-L148E:
-    PASCALCO.8:INSYMBOL();
-    BODYPART.36:FACTOR(?, ?, ?, @L1^<4w>);
-    if ((GATKIND = 0) and (GATTYPTR = BOOLPTR)) then begin
-      GATCVAL := not (GATCVAL);
-    end else begin
-      BODYPART.8:LOAD();
-      BODYPART.3:GEN0(19);
-      if (GATTYPTR <> nil) then begin
-        if (GATTYPTR <> BOOLPTR) then begin
-          PASCALCO.4:ERROR(135);
-          GATTYPTR := nil;
+    case SY of   { table 0..48 }
+      0: begin
+        PASCALCO.10:SEARCHID(adjust(1,1), @L5);
+        PASCALCO.8:INSYMBOL();
+        if (L5^.f8 = 6) then begin
+          BODYPART.23:CALL(?, ?, 94, @L1^<4w>, L5);
+          GATKIND := 2;
+        end else begin
+          if (L5^.f8 = 1) then begin
+            L22 := L5;
+            GATTYPTR := L22^.f6;
+            GATKIND := 0;
+            move(@GATCVAL, (L22+9), 1 words);
+          end else begin
+            BODYPART.22:SELECTOR(?, ?, 94, @L1^<4w>, L5);
+          end;
+        end;
+        { paths disagree on stack depth here }
+        if (GATTYPTR <> nil) then begin
+          L22 := GATTYPTR;
+          if (L22^.f1 = 1) then begin
+            GATTYPTR := L22^.f2;
+          end;
         end;
       end;
-    end;
-    goto L1698;
-L14C2:
-    PASCALCO.8:INSYMBOL();
-    @L14^ := adjust(0,8)  {8 words};
-    L8 := 0;
-    CSP1(@L9, 3);
-    L22 := L9;
-    (L22+2)^ := nil;
-    L22^ := 0;
-    (L22+1)^ := 4;
-    if (SY = 16) then begin
-      GATTYPTR := L9;
-      GATKIND := 0;
-      PASCALCO.8:INSYMBOL();
-    end else begin
-      repeat
-        BODYPART.11:EXPRESSION(?, ?, ?, adjust((@L1^<4w> + {1,2,16}),4));
-        if (GATTYPTR <> nil) then begin
-          if (GATTYPTR^.f1 <> 0) then begin
-            PASCALCO.4:ERROR(136);
-            GATTYPTR := nil;
-          end else begin
-            if PASCALCO.21:COMPTYPES(L9^.f2, GATTYPTR) then begin
-              L7 := 0;
-              L10 := 23;
-              if ((GATKIND = 0) and (GATCVAL <= 127)) then begin
-                L7 := 1;
-                L12 := GATCVAL;
-                L13 := L12;
-              end;
-              L11 := IC;
-              BODYPART.8:LOAD();
-              BODYPART.15:MASKBOOL();
-              if (SY = 2) then begin
-                PASCALCO.8:INSYMBOL();
-                L10 := 20;
-                BODYPART.11:EXPRESSION(?, ?, ?, adjust((@L1^<4w> + {1,16}),4));
-                if PASCALCO.21:COMPTYPES(L9^.f2, GATTYPTR) then begin
-                end else begin
-                  PASCALCO.4:ERROR(137);
-                  GATTYPTR := nil;
-                end;
-                if L7 then begin
-                  if ((GATKIND = 0) and (GATCVAL <= 127)) then begin
-                    L13 := GATCVAL;
-                  end else begin
-                    BODYPART.8:LOAD();
-                    L7 := 0;
-                  end;
-                end else begin
-                  BODYPART.8:LOAD();
-                end;
-              end;
-              if L7 then begin
-                IC := L11;
-                @L14^ := adjust((@L14^<8w> + [L12..L13]),8)  {8 words};
-              end else begin
-                BODYPART.3:GEN0(L10);
-                if L8 then begin
-                  BODYPART.3:GEN0(28);
-                end else begin
-                  L8 := 1;
-                end;
-              end;
-              (L9+2)^ := GATTYPTR;
-              GATTYPTR := L9;
-            end else begin
-              PASCALCO.4:ERROR(137);
+      35: begin
+        GATTYPTR := INTPTR;
+        GATKIND := 0;
+        move(@GATCVAL, @VAL, 1 words);
+        PASCALCO.8:INSYMBOL();
+      end;
+      36: begin
+        GATTYPTR := REALPTR;
+        GATKIND := 0;
+        move(@GATCVAL, @VAL, 1 words);
+        PASCALCO.8:INSYMBOL();
+      end;
+      37: begin
+        if (LGTH = 1) then begin
+          GATTYPTR := CHARPTR;
+        end else begin
+          CSP1(@L9, 9);
+          move(L9, STRGPTR, 9 words);
+          (L9+8)^ := LGTH;
+          GATTYPTR := L9;
+        end;
+        GATKIND := 0;
+        move(@GATCVAL, @VAL, 1 words);
+        PASCALCO.8:INSYMBOL();
+      end;
+      48: begin
+        CSP1(@L9, 2);
+        move(L9, LONGINTPTR, 9 words);
+        L9^ := PASCALCO.19:DECSIZE(LGTH);
+        GATTYPTR := L9;
+        GATKIND := 0;
+        move(@GATCVAL, @VAL, 1 words);
+        PASCALCO.8:INSYMBOL();
+      end;
+      4: begin
+        PASCALCO.8:INSYMBOL();
+        BODYPART.11:EXPRESSION(?, ?, @L1^<4w>, adjust((32 + 1),4));
+        if (SY = 5) then begin
+          PASCALCO.8:INSYMBOL();
+        end else begin
+          PASCALCO.4:ERROR(4);
+        end;
+      end;
+      38: begin
+        PASCALCO.8:INSYMBOL();
+        BODYPART.36:FACTOR(?, ?, ?, @L1^<4w>);
+        if ((GATKIND = 0) and (GATTYPTR = BOOLPTR)) then begin
+          GATCVAL := not (GATCVAL);
+        end else begin
+          BODYPART.8:LOAD();
+          BODYPART.3:GEN0(19);
+          if (GATTYPTR <> nil) then begin
+            if (GATTYPTR <> BOOLPTR) then begin
+              PASCALCO.4:ERROR(135);
+              GATTYPTR := nil;
             end;
           end;
         end;
-        TEST := (SY <> 1);
-        if not (TEST) then begin
-          PASCALCO.8:INSYMBOL();
-        end;
-      until TEST;
-      if (SY = 16) then begin
+      end;
+      15: begin
         PASCALCO.8:INSYMBOL();
-      end else begin
-        PASCALCO.4:ERROR(12);
+        @L14^ := adjust(0,8)  {8 words};
+        L8 := 0;
+        CSP1(@L9, 3);
+        L22 := L9;
+        (L22+2)^ := nil;
+        L22^ := 0;
+        (L22+1)^ := 4;
+        if (SY = 16) then begin
+          GATTYPTR := L9;
+          GATKIND := 0;
+          PASCALCO.8:INSYMBOL();
+        end else begin
+          repeat
+            BODYPART.11:EXPRESSION(?, ?, ?, adjust((@L1^<4w> + {1,2,16}),4));
+            if (GATTYPTR <> nil) then begin
+              if (GATTYPTR^.f1 <> 0) then begin
+                PASCALCO.4:ERROR(136);
+                GATTYPTR := nil;
+              end else begin
+                if PASCALCO.21:COMPTYPES(L9^.f2, GATTYPTR) then begin
+                  L7 := 0;
+                  L10 := 23;
+                  if ((GATKIND = 0) and (GATCVAL <= 127)) then begin
+                    L7 := 1;
+                    L12 := GATCVAL;
+                    L13 := L12;
+                  end;
+                  L11 := IC;
+                  BODYPART.8:LOAD();
+                  BODYPART.15:MASKBOOL();
+                  if (SY = 2) then begin
+                    PASCALCO.8:INSYMBOL();
+                    L10 := 20;
+                    BODYPART.11:EXPRESSION(?, ?, ?, adjust((@L1^<4w> + {1,16}),4));
+                    if PASCALCO.21:COMPTYPES(L9^.f2, GATTYPTR) then begin
+                    end else begin
+                      PASCALCO.4:ERROR(137);
+                      GATTYPTR := nil;
+                    end;
+                    if L7 then begin
+                      if ((GATKIND = 0) and (GATCVAL <= 127)) then begin
+                        L13 := GATCVAL;
+                      end else begin
+                        BODYPART.8:LOAD();
+                        L7 := 0;
+                      end;
+                    end else begin
+                      BODYPART.8:LOAD();
+                    end;
+                  end;
+                  if L7 then begin
+                    IC := L11;
+                    @L14^ := adjust((@L14^<8w> + [L12..L13]),8)  {8 words};
+                  end else begin
+                    BODYPART.3:GEN0(L10);
+                    if L8 then begin
+                      BODYPART.3:GEN0(28);
+                    end else begin
+                      L8 := 1;
+                    end;
+                  end;
+                  (L9+2)^ := GATTYPTR;
+                  GATTYPTR := L9;
+                end else begin
+                  PASCALCO.4:ERROR(137);
+                end;
+              end;
+            end;
+            TEST := (SY <> 1);
+            if not (TEST) then begin
+              PASCALCO.8:INSYMBOL();
+            end;
+          until TEST;
+          if (SY = 16) then begin
+            PASCALCO.8:INSYMBOL();
+          end else begin
+            PASCALCO.4:ERROR(12);
+          end;
+        end;
+        if L8 then begin
+          if (@L14^<8w> <> 0) then begin
+            (SCONST+1)^ := adjust(@L14^<8w>,8)  {8 words};
+            SCONST^ := 1;
+            GATCVAL := SCONST;
+            GATKIND := 0;
+            BODYPART.8:LOAD();
+            BODYPART.3:GEN0(28);
+          end;
+          GATKIND := 2;
+        end else begin
+          (SCONST+1)^ := adjust(@L14^<8w>,8)  {8 words};
+          SCONST^ := 1;
+          GATCVAL := SCONST;
+          GATKIND := 0;
+        end;
       end;
     end;
-    if L8 then begin
-      if (@L14^<8w> <> 0) then begin
-        (SCONST+1)^ := adjust(@L14^<8w>,8)  {8 words};
-        SCONST^ := 1;
-        GATCVAL := SCONST;
-        GATKIND := 0;
-        BODYPART.8:LOAD();
-        BODYPART.3:GEN0(28);
-      end;
-      GATKIND := 2;
-    end else begin
-      (SCONST+1)^ := adjust(@L14^<8w>,8)  {8 words};
-      SCONST^ := 1;
-      GATCVAL := SCONST;
-      GATKIND := 0;
-    end;
-    goto L1698;
-L162E:
-    case <selector> of  { 0..48 }
-      0: goto L13A3;
-      1: goto L1698;
-      2: goto L1698;
-      3: goto L1698;
-      4: goto L146F;
-      5: goto L1698;
-      6: goto L1698;
-      7: goto L1698;
-      8: goto L1698;
-      9: goto L1698;
-      10: goto L1698;
-      11: goto L1698;
-      12: goto L1698;
-      13: goto L1698;
-      14: goto L1698;
-      15: goto L14C2;
-      16: goto L1698;
-      17: goto L1698;
-      18: goto L1698;
-      19: goto L1698;
-      20: goto L1698;
-      21: goto L1698;
-      22: goto L1698;
-      23: goto L1698;
-      24: goto L1698;
-      25: goto L1698;
-      26: goto L1698;
-      27: goto L1698;
-      28: goto L1698;
-      29: goto L1698;
-      30: goto L1698;
-      31: goto L1698;
-      32: goto L1698;
-      33: goto L1698;
-      34: goto L1698;
-      35: goto L13FB;
-      36: goto L140C;
-      37: goto L141E;
-      38: goto L148E;
-      39: goto L1698;
-      40: goto L1698;
-      41: goto L1698;
-      42: goto L1698;
-      43: goto L1698;
-      44: goto L1698;
-      45: goto L1698;
-      46: goto L1698;
-      47: goto L1698;
-      48: goto L144B;
-      otherwise goto L1698;
-    end;
-L1698:
     if not ((SY in @L1^<4w>)) then begin
       PASCALCO.4:ERROR(6);
       PASCALCO.16:SKIP(?, ?, ?, adjust((@L1^<4w> + @FACBEGSYS^<4w>),4));
@@ -5532,81 +5202,45 @@ procedure ROUTINE.1:ROUTINE(args 6 words);  { locals 12 words, lex 2 }
   if not ((L1 in {12,13,14,15,18,19,21,22,23,27,31,32,34,35,36,37,38,40,41,42,43})) then begin
     ROUTINE.17:SPECIALS();
   end else begin
-    goto L0AD4;
-L0AA4:
-    ROUTINE.5:NEWSTMT();
-    goto L0B1C;
-L0AA8:
-    ROUTINE.8:UNITIO();
-    goto L0B1C;
-L0AAC:
-    ROUTINE.9:CONCAT();
-    goto L0B1C;
-L0AB0:
-    ROUTINE.10:COPYDELETE();
-    goto L0B1C;
-L0AB4:
-    ROUTINE.6:MOVE();
-    goto L0B1C;
-L0AB8:
-    ROUTINE.7:EXIT();
-    goto L0B1C;
-L0ABC:
-    ROUTINE.12:CLOSE();
-    goto L0B1C;
-L0AC0:
-    ROUTINE.13:GETPUTETC();
-    goto L0B1C;
-L0AC4:
-    ROUTINE.14:SCAN();
-    goto L0B1C;
-L0AC8:
-    ROUTINE.15:BLOCKIO();
-    goto L0B1C;
-L0ACC:
-    ROUTINE.16:SIZEOF();
-    goto L0B1C;
-L0AD0:
-    ROUTINE.11:STR();
-    goto L0B1C;
-L0AD4:
-    case <selector> of  { 12..43 }
-      12: goto L0AA4;
-      13: goto L0AA8;
-      14: goto L0AA8;
-      15: goto L0AAC;
-      16: goto L0B1C;
-      17: goto L0B1C;
-      18: goto L0AB0;
-      19: goto L0AB0;
-      20: goto L0B1C;
-      21: goto L0AB4;
-      22: goto L0AB4;
-      23: goto L0AB8;
-      24: goto L0B1C;
-      25: goto L0B1C;
-      26: goto L0B1C;
-      27: goto L0AB4;
-      28: goto L0B1C;
-      29: goto L0B1C;
-      30: goto L0B1C;
-      31: goto L0ABC;
-      32: goto L0AC0;
-      33: goto L0B1C;
-      34: goto L0AC0;
-      35: goto L0AC0;
-      36: goto L0AC4;
-      37: goto L0AC8;
-      38: goto L0AC8;
-      39: goto L0B1C;
-      40: goto L0AC0;
-      41: goto L0ACC;
-      42: goto L0AD0;
-      43: goto L0AB0;
-      otherwise goto L0B1C;
+    case L1 of   { table 12..43 }
+      12: begin
+        ROUTINE.5:NEWSTMT();
+      end;
+      13, 14: begin
+        ROUTINE.8:UNITIO();
+      end;
+      15: begin
+        ROUTINE.9:CONCAT();
+      end;
+      18, 19, 43: begin
+        ROUTINE.10:COPYDELETE();
+      end;
+      21, 22, 27: begin
+        ROUTINE.6:MOVE();
+      end;
+      23: begin
+        ROUTINE.7:EXIT();
+      end;
+      31: begin
+        ROUTINE.12:CLOSE();
+      end;
+      32, 34, 35, 40: begin
+        ROUTINE.13:GETPUTETC();
+      end;
+      36: begin
+        ROUTINE.14:SCAN();
+      end;
+      37, 38: begin
+        ROUTINE.15:BLOCKIO();
+      end;
+      41: begin
+        ROUTINE.16:SIZEOF();
+      end;
+      42: begin
+        ROUTINE.11:STR();
+      end;
     end;
   end;
-L0B1C:
   { left on stack: @L11 }
   { left on stack: @L15 }
 
@@ -5957,48 +5591,35 @@ procedure ROUTINE.13:GETPUTETC(args 0 words);  { locals 0 words, lex 3 }
       end;
     end;
   end;
-  goto L05D9;
-L0585:
-  if (SY = 1) then begin
-    PASCALCO.8:INSYMBOL();
-    BODYPART.11:EXPRESSION(?, ?, ?, @I1,11^<4w>);
-    BODYPART.8:LOAD();
-    ROUTINE.3:CHECKINT();
-  end else begin
-    PASCALCO.4:ERROR(20);
-  end;
-  BODYPART.7:GENNR(31, 2);
-  goto L05F2;
-L05A7:
-  BODYPART.6:GEN2(77, 0, 7);
-  goto L05F2;
-L05AF:
-  BODYPART.6:GEN2(77, 0, 8);
-  goto L05F2;
-L05B7:
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR^.f2 <> CHARPTR) then begin
-      PASCALCO.4:ERROR(399);
+  case I1,1 of   { table 32..40 }
+    32: begin
+      if (SY = 1) then begin
+        PASCALCO.8:INSYMBOL();
+        BODYPART.11:EXPRESSION(?, ?, ?, @I1,11^<4w>);
+        BODYPART.8:LOAD();
+        ROUTINE.3:CHECKINT();
+      end else begin
+        PASCALCO.4:ERROR(20);
+      end;
+      BODYPART.7:GENNR(31, 2);
+    end;
+    34: begin
+      BODYPART.6:GEN2(77, 0, 7);
+    end;
+    35: begin
+      BODYPART.6:GEN2(77, 0, 8);
+    end;
+    40: begin
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR^.f2 <> CHARPTR) then begin
+          PASCALCO.4:ERROR(399);
+        end;
+      end;
+      BODYPART.4:GENLDC(12);
+      BODYPART.4:GENLDC(0);
+      BODYPART.6:GEN2(77, 0, 17);
     end;
   end;
-  BODYPART.4:GENLDC(12);
-  BODYPART.4:GENLDC(0);
-  BODYPART.6:GEN2(77, 0, 17);
-  goto L05F2;
-L05D9:
-  case <selector> of  { 32..40 }
-    32: goto L0585;
-    33: goto L05F2;
-    34: goto L05A7;
-    35: goto L05AF;
-    36: goto L05F2;
-    37: goto L05F2;
-    38: goto L05F2;
-    39: goto L05F2;
-    40: goto L05B7;
-    otherwise goto L05F2;
-  end;
-L05F2:
   if IOCHECK then begin
     BODYPART.5:GEN1(30, 0);
   end;
@@ -6094,249 +5715,205 @@ procedure ROUTINE.16:SIZEOF(args 0 words);  { locals 1 words, lex 3 }
   GATTYPTR := INTPTR;
 
 procedure ROUTINE.17:SPECIALS(args 0 words);  { locals 0 words, lex 3 }
-  goto L09FB;
-L075F:
-  if I1,2 then begin
-    BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
-    BODYPART.9:LOADADDRESS();
-    if (GATTYPTR <> nil) then begin
-      if (GATTYPTR^.f1 <> 7) then begin
-        PASCALCO.4:ERROR(125);
+  case I1,1 of   { table 5..44 }
+    5, 6: begin
+      if I1,2 then begin
+        BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
+        BODYPART.9:LOADADDRESS();
+        if (GATTYPTR <> nil) then begin
+          if (GATTYPTR^.f1 <> 7) then begin
+            PASCALCO.4:ERROR(125);
+          end else begin
+            if ((GATTYPTR^.f2 <> CHARPTR) and (I1,1 = 6)) then begin
+              PASCALCO.4:ERROR(399);
+            end;
+          end;
+        end;
       end else begin
-        if ((GATTYPTR^.f2 <> CHARPTR) and (I1,1 = 6)) then begin
-          PASCALCO.4:ERROR(399);
+        BODYPART.14:LOADIDADDR(INPUTPTR);
+      end;
+      BODYPART.4:GENLDC(0);
+      BODYPART.4:GENLDC(0);
+      if (I1,1 = 5) then begin
+        BODYPART.6:GEN2(77, 0, 10);
+      end else begin
+        BODYPART.6:GEN2(77, 0, 11);
+      end;
+      GATTYPTR := BOOLPTR;
+    end;
+    7, 8: begin
+      BODYPART.4:GENLDC(1);
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR^.f1 = 0) then begin
+          if (I1,1 = 8) then begin
+            BODYPART.3:GEN0(2);
+          end else begin
+            BODYPART.3:GEN0(21);
+          end;
+        end else begin
+          PASCALCO.4:ERROR(115);
         end;
       end;
     end;
-  end else begin
-    BODYPART.14:LOADIDADDR(INPUTPTR);
-  end;
-  BODYPART.4:GENLDC(0);
-  BODYPART.4:GENLDC(0);
-  if (I1,1 = 5) then begin
-    BODYPART.6:GEN2(77, 0, 10);
-  end else begin
-    BODYPART.6:GEN2(77, 0, 11);
-  end;
-  GATTYPTR := BOOLPTR;
-  goto L0A52;
-L07BD:
-  BODYPART.4:GENLDC(1);
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR^.f1 = 0) then begin
-      if (I1,1 = 8) then begin
-        BODYPART.3:GEN0(2);
-      end else begin
-        BODYPART.3:GEN0(21);
+    9: begin
+      if (GATTYPTR <> nil) then begin
+        if ((GATTYPTR^.f1 >= 4) or (GATTYPTR^ <> 1)) then begin
+          PASCALCO.4:ERROR(125);
+        end;
       end;
-    end else begin
-      PASCALCO.4:ERROR(115);
+      GATTYPTR := INTPTR;
     end;
-  end;
-  goto L0A52;
-L07E5:
-  if (GATTYPTR <> nil) then begin
-    if ((GATTYPTR^.f1 >= 4) or (GATTYPTR^ <> 1)) then begin
-      PASCALCO.4:ERROR(125);
-    end;
-  end;
-  GATTYPTR := INTPTR;
-  goto L0A52;
-L07FE:
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR = INTPTR) then begin
-      BODYPART.3:GEN0(24);
-    end else begin
-      if (GATTYPTR = REALPTR) then begin
-        BODYPART.3:GEN0(25);
-      end else begin
-        PASCALCO.4:ERROR(125);
-        GATTYPTR := INTPTR;
+    10: begin
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR = INTPTR) then begin
+          BODYPART.3:GEN0(24);
+        end else begin
+          if (GATTYPTR = REALPTR) then begin
+            BODYPART.3:GEN0(25);
+          end else begin
+            PASCALCO.4:ERROR(125);
+            GATTYPTR := INTPTR;
+          end;
+        end;
       end;
     end;
-  end;
-  goto L0A52;
-L0823:
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR = INTPTR) then begin
-      BODYPART.3:GEN0(0);
-    end else begin
-      if (GATTYPTR = REALPTR) then begin
-        BODYPART.3:GEN0(1);
-      end else begin
-        PASCALCO.4:ERROR(125);
-        GATTYPTR := INTPTR;
+    11: begin
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR = INTPTR) then begin
+          BODYPART.3:GEN0(0);
+        end else begin
+          if (GATTYPTR = REALPTR) then begin
+            BODYPART.3:GEN0(1);
+          end else begin
+            PASCALCO.4:ERROR(125);
+            GATTYPTR := INTPTR;
+          end;
+        end;
       end;
     end;
-  end;
-  goto L0A52;
-L0848:
-  ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
-  BODYPART.4:GENLDC(0);
-  BODYPART.3:GEN0(62);
-  GATTYPTR := INTPTR;
-  goto L0A52;
-L085D:
-  ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 0);
-  ROUTINE.2:GETCOMMA();
-  ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 1);
-  BODYPART.4:GENLDC(GATTYPTR^.f8);
-  ROUTINE.2:GETCOMMA();
-  BODYPART.11:EXPRESSION(?, ?, ?, @I1,11^<4w>);
-  BODYPART.8:LOAD();
-  if (GATTYPTR <> nil) then begin
-    ROUTINE.3:CHECKINT();
-  end;
-  BODYPART.6:GEN2(77, 0, 24);
-  goto L0A52;
-L0891:
-  ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 0);
-  ROUTINE.2:GETCOMMA();
-  ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
-  BODYPART.4:GENLDC(0);
-  BODYPART.4:GENLDC(0);
-  BODYPART.6:GEN2(77, 0, 27);
-  GATTYPTR := INTPTR;
-  goto L0A52;
-L08B6:
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
-  BODYPART.9:LOADADDRESS();
-  ROUTINE.2:GETCOMMA();
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
-  BODYPART.9:LOADADDRESS();
-  PASCALCO.4:ERROR(124);
-  goto L0A52;
-L08D4:
-  ROUTINE.2:GETCOMMA();
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
-  BODYPART.9:LOADADDRESS();
-  ROUTINE.2:GETCOMMA();
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
-  BODYPART.9:LOADADDRESS();
-  GATTYPTR := nil;
-  PASCALCO.4:ERROR(124);
-  goto L0A52;
-L08F7:
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
-  BODYPART.9:LOADADDRESS();
-  if (GATTYPTR <> nil) then begin
-    ROUTINE.3:CHECKINT();
-  end;
-  ROUTINE.2:GETCOMMA();
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
-  BODYPART.9:LOADADDRESS();
-  if (GATTYPTR <> nil) then begin
-    ROUTINE.3:CHECKINT();
-  end;
-  BODYPART.5:GEN1(30, 9);
-  goto L0A52;
-L0924:
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,7^<4w>);
-  BODYPART.9:LOADADDRESS();
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR^.f1 <> 7) then begin
-      PASCALCO.4:ERROR(125);
-    end;
-  end;
-  if (SY <> 1) then begin
-    if (I1,1 = 33) then begin
-      BODYPART.6:GEN2(77, 0, 4);
-    end else begin
-      PASCALCO.4:ERROR(20);
-    end;
-  end else begin
-    PASCALCO.8:INSYMBOL();
-    ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
-    if ((I1,1 = 28) or (I1,1 = 30)) then begin
+    16: begin
+      ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
       BODYPART.4:GENLDC(0);
-    end else begin
-      BODYPART.4:GENLDC(1);
+      BODYPART.3:GEN0(62);
+      GATTYPTR := INTPTR;
     end;
-    BODYPART.4:GENLDC(0);
-    BODYPART.6:GEN2(77, 0, 5);
-  end;
-  if IOCHECK then begin
-    BODYPART.5:GEN1(30, 0);
-  end;
-  goto L0A52;
-L098F:
-  if (GATTYPTR = INTPTR) then begin
-    BODYPART.3:GEN0(10);
-    GATTYPTR := REALPTR;
-  end;
-  if (GATTYPTR <> nil) then begin
-    if (GATTYPTR = REALPTR) then begin
-      BODYPART.5:GEN1(30, 23);
-    end else begin
-      if (GATTYPTR^.f1 = 3) then begin
-        BODYPART.4:GENLDC(20);
-        BODYPART.7:GENNR(30, 4);
+    17: begin
+      ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 0);
+      ROUTINE.2:GETCOMMA();
+      ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 1);
+      BODYPART.4:GENLDC(GATTYPTR^.f8);
+      ROUTINE.2:GETCOMMA();
+      BODYPART.11:EXPRESSION(?, ?, ?, @I1,11^<4w>);
+      BODYPART.8:LOAD();
+      if (GATTYPTR <> nil) then begin
+        ROUTINE.3:CHECKINT();
+      end;
+      BODYPART.6:GEN2(77, 0, 24);
+    end;
+    20: begin
+      ROUTINE.4:STRGVAR(?, ?, ?, @I1,15^<4w>, 0);
+      ROUTINE.2:GETCOMMA();
+      ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
+      BODYPART.4:GENLDC(0);
+      BODYPART.4:GENLDC(0);
+      BODYPART.6:GEN2(77, 0, 27);
+      GATTYPTR := INTPTR;
+    end;
+    24: begin
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
+      BODYPART.9:LOADADDRESS();
+      ROUTINE.2:GETCOMMA();
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
+      BODYPART.9:LOADADDRESS();
+      PASCALCO.4:ERROR(124);
+    end;
+    25: begin
+      ROUTINE.2:GETCOMMA();
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
+      BODYPART.9:LOADADDRESS();
+      ROUTINE.2:GETCOMMA();
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
+      BODYPART.9:LOADADDRESS();
+      GATTYPTR := nil;
+      PASCALCO.4:ERROR(124);
+    end;
+    26: begin
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
+      BODYPART.9:LOADADDRESS();
+      if (GATTYPTR <> nil) then begin
+        ROUTINE.3:CHECKINT();
+      end;
+      ROUTINE.2:GETCOMMA();
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,11^<4w>);
+      BODYPART.9:LOADADDRESS();
+      if (GATTYPTR <> nil) then begin
+        ROUTINE.3:CHECKINT();
+      end;
+      BODYPART.5:GEN1(30, 9);
+    end;
+    28, 29, 30, 33: begin
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,7^<4w>);
+      BODYPART.9:LOADADDRESS();
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR^.f1 <> 7) then begin
+          PASCALCO.4:ERROR(125);
+        end;
+      end;
+      if (SY <> 1) then begin
+        if (I1,1 = 33) then begin
+          BODYPART.6:GEN2(77, 0, 4);
+        end else begin
+          PASCALCO.4:ERROR(20);
+        end;
       end else begin
-        PASCALCO.4:ERROR(125);
+        PASCALCO.8:INSYMBOL();
+        ROUTINE.4:STRGVAR(?, ?, ?, @I1,11^<4w>, 0);
+        if ((I1,1 = 28) or (I1,1 = 30)) then begin
+          BODYPART.4:GENLDC(0);
+        end else begin
+          BODYPART.4:GENLDC(1);
+        end;
+        BODYPART.4:GENLDC(0);
+        BODYPART.6:GEN2(77, 0, 5);
+      end;
+      if IOCHECK then begin
+        BODYPART.5:GEN1(30, 0);
       end;
     end;
+    39: begin
+      if (GATTYPTR = INTPTR) then begin
+        BODYPART.3:GEN0(10);
+        GATTYPTR := REALPTR;
+      end;
+      if (GATTYPTR <> nil) then begin
+        if (GATTYPTR = REALPTR) then begin
+          BODYPART.5:GEN1(30, 23);
+        end else begin
+          if (GATTYPTR^.f1 = 3) then begin
+            BODYPART.4:GENLDC(20);
+            BODYPART.7:GENNR(30, 4);
+          end else begin
+            PASCALCO.4:ERROR(125);
+          end;
+        end;
+      end;
+      GATTYPTR := INTPTR;
+    end;
+    44: begin
+      BODYPART.11:EXPRESSION(?, ?, ?, @I1,15^<4w>);
+      BODYPART.8:LOAD();
+      if (GATTYPTR <> nil) then begin
+        ROUTINE.3:CHECKINT();
+      end;
+      ROUTINE.2:GETCOMMA();
+      BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
+      BODYPART.10:BYTEADDRESS();
+      ROUTINE.2:GETCOMMA();
+      BODYPART.11:EXPRESSION(?, ?, ?, @I1,7^<4w>);
+      BODYPART.8:LOAD();
+      BODYPART.5:GEN1(30, 12);
+    end;
   end;
-  GATTYPTR := INTPTR;
-  goto L0A52;
-L09C8:
-  BODYPART.11:EXPRESSION(?, ?, ?, @I1,15^<4w>);
-  BODYPART.8:LOAD();
-  if (GATTYPTR <> nil) then begin
-    ROUTINE.3:CHECKINT();
-  end;
-  ROUTINE.2:GETCOMMA();
-  BODYPART.12:VARIABLE(?, ?, ?, @I1,15^<4w>);
-  BODYPART.10:BYTEADDRESS();
-  ROUTINE.2:GETCOMMA();
-  BODYPART.11:EXPRESSION(?, ?, ?, @I1,7^<4w>);
-  BODYPART.8:LOAD();
-  BODYPART.5:GEN1(30, 12);
-  goto L0A52;
-L09FB:
-  case <selector> of  { 5..44 }
-    5: goto L075F;
-    6: goto L075F;
-    7: goto L07BD;
-    8: goto L07BD;
-    9: goto L07E5;
-    10: goto L07FE;
-    11: goto L0823;
-    12: goto L0A52;
-    13: goto L0A52;
-    14: goto L0A52;
-    15: goto L0A52;
-    16: goto L0848;
-    17: goto L085D;
-    18: goto L0A52;
-    19: goto L0A52;
-    20: goto L0891;
-    21: goto L0A52;
-    22: goto L0A52;
-    23: goto L0A52;
-    24: goto L08B6;
-    25: goto L08D4;
-    26: goto L08F7;
-    27: goto L0A52;
-    28: goto L0924;
-    29: goto L0924;
-    30: goto L0924;
-    31: goto L0A52;
-    32: goto L0A52;
-    33: goto L0924;
-    34: goto L0A52;
-    35: goto L0A52;
-    36: goto L0A52;
-    37: goto L0A52;
-    38: goto L0A52;
-    39: goto L098F;
-    40: goto L0A52;
-    41: goto L0A52;
-    42: goto L0A52;
-    43: goto L0A52;
-    44: goto L09C8;
-    otherwise goto L0A52;
-  end;
-L0A52:
 
 ======================================================================
 SEGMENT 11 STATEMEN
@@ -6386,81 +5963,50 @@ L0546:
   if (@STATBEGSYS^<4w> in (1 + 1)) then begin
     CSP32(@L8);
     L9 := LC;
-    goto L05F5;
-L0594:
-    PASCALCO.10:SEARCHID(adjust((112 + 1),1), @L5);
-    PASCALCO.8:INSYMBOL();
-    if (L5^.f8 = 5) then begin
-      BODYPART.23:CALL(SY, VARS, 1, @L1^<4w>, L5);
-    end else begin
-      STATEMEN.2:ASSIGNMENT(L5);
+    case SY of   { table 0..26 }
+      0: begin
+        PASCALCO.10:SEARCHID(adjust((112 + 1),1), @L5);
+        PASCALCO.8:INSYMBOL();
+        if (L5^.f8 = 5) then begin
+          BODYPART.23:CALL(SY, VARS, 1, @L1^<4w>, L5);
+        end else begin
+          STATEMEN.2:ASSIGNMENT(L5);
+        end;
+        { paths disagree on stack depth here }
+      end;
+      19: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.4:COMPOUNDSTATEMENT();
+      end;
+      26: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.3:GOTOSTATEMENT();
+      end;
+      20: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.5:IFSTATEMENT();
+      end;
+      21: begin
+        PASCALCO.8:INSYMBOL();
+        CASESTAT.1:CASESTATEMENT();
+      end;
+      23: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.7:WHILESTATEMENT();
+      end;
+      22: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.6:REPEATSTATEMENT();
+      end;
+      24: begin
+        PASCALCO.8:INSYMBOL();
+        FORSTATE.1:FORSTATEMENT();
+      end;
+      25: begin
+        PASCALCO.8:INSYMBOL();
+        STATEMEN.8:WITHSTATEMENT();
+      end;
     end;
-    { paths disagree on stack depth here }
-    goto L0632;
-L05BB:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.4:COMPOUNDSTATEMENT();
-    goto L0632;
-L05C2:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.3:GOTOSTATEMENT();
-    goto L0632;
-L05C9:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.5:IFSTATEMENT();
-    goto L0632;
-L05D0:
-    PASCALCO.8:INSYMBOL();
-    CASESTAT.1:CASESTATEMENT();
-    goto L0632;
-L05D8:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.7:WHILESTATEMENT();
-    goto L0632;
-L05DF:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.6:REPEATSTATEMENT();
-    goto L0632;
-L05E6:
-    PASCALCO.8:INSYMBOL();
-    FORSTATE.1:FORSTATEMENT();
-    goto L0632;
-L05EE:
-    PASCALCO.8:INSYMBOL();
-    STATEMEN.8:WITHSTATEMENT();
-    goto L0632;
-L05F5:
-    case <selector> of  { 0..26 }
-      0: goto L0594;
-      1: goto L0632;
-      2: goto L0632;
-      3: goto L0632;
-      4: goto L0632;
-      5: goto L0632;
-      6: goto L0632;
-      7: goto L0632;
-      8: goto L0632;
-      9: goto L0632;
-      10: goto L0632;
-      11: goto L0632;
-      12: goto L0632;
-      13: goto L0632;
-      14: goto L0632;
-      15: goto L0632;
-      16: goto L0632;
-      17: goto L0632;
-      18: goto L0632;
-      19: goto L05BB;
-      20: goto L05C9;
-      21: goto L05D0;
-      22: goto L05DF;
-      23: goto L05D8;
-      24: goto L05E6;
-      25: goto L05EE;
-      26: goto L05C2;
-      otherwise goto L0632;
-    end;
-L0632:
     { paths disagree on stack depth here }
     if (LC > LCMAX) then begin
       LCMAX := LC;
@@ -6560,65 +6106,53 @@ L00CD:
         end;
       end;
       if PASCALCO.21:COMPTYPES(L2, GATTYPTR) then begin
-        goto L01DE;
-L0152:
-        if RANGECHECK then begin
-          BODYPART.4:GENLDC(L2^.f4);
-          BODYPART.4:GENLDC(L2^.f3);
-          BODYPART.3:GEN0(8);
-        end;
-        BODYPART.20:STORE(@L2);
-        goto L01F6;
-L016B:
-        BODYPART.5:GEN1(32, L2^);
-        BODYPART.20:STORE(@L2);
-        goto L01F6;
-L0178:
-        BODYPART.20:STORE(@L2);
-        goto L01F6;
-L017F:
-        BODYPART.4:GENLDC(L2^);
-        BODYPART.4:GENLDC(0);
-        BODYPART.7:GENNR(30, 4);
-        BODYPART.20:STORE(@L2);
-        goto L01F6;
-L0194:
-        if L7 then begin
-          if L2^.f7 then begin
-            BODYPART.5:GEN1(42, L2^.f8);
-          end else begin
-            BODYPART.5:GEN1(40, ((L9+1) div 2));
+        case L2^.f1 of   { table 0..7 }
+          1: begin
+            if RANGECHECK then begin
+              BODYPART.4:GENLDC(L2^.f4);
+              BODYPART.4:GENLDC(L2^.f3);
+              BODYPART.3:GEN0(8);
+            end;
+            BODYPART.20:STORE(@L2);
           end;
-        end else begin
-          if (L2 = WORDPTR) then begin
-            if (GATTYPTR = WORDPTR) then begin
-              PASCALCO.4:ERROR(129);
+          4: begin
+            BODYPART.5:GEN1(32, L2^);
+            BODYPART.20:STORE(@L2);
+          end;
+          0, 2: begin
+            BODYPART.20:STORE(@L2);
+          end;
+          3: begin
+            BODYPART.4:GENLDC(L2^);
+            BODYPART.4:GENLDC(0);
+            BODYPART.7:GENNR(30, 4);
+            BODYPART.20:STORE(@L2);
+          end;
+          5: begin
+            if L7 then begin
+              if L2^.f7 then begin
+                BODYPART.5:GEN1(42, L2^.f8);
+              end else begin
+                BODYPART.5:GEN1(40, ((L9+1) div 2));
+              end;
             end else begin
-              L2 := GATTYPTR;
+              if (L2 = WORDPTR) then begin
+                if (GATTYPTR = WORDPTR) then begin
+                  PASCALCO.4:ERROR(129);
+                end else begin
+                  L2 := GATTYPTR;
+                end;
+              end;
+              BODYPART.5:GEN1(40, L2^);
             end;
           end;
-          BODYPART.5:GEN1(40, L2^);
+          6: begin
+            BODYPART.5:GEN1(40, L2^);
+          end;
+          7: begin
+            PASCALCO.4:ERROR(146);
+          end;
         end;
-        goto L01F6;
-L01CE:
-        BODYPART.5:GEN1(40, L2^);
-        goto L01F6;
-L01D6:
-        PASCALCO.4:ERROR(146);
-        goto L01F6;
-L01DE:
-        case <selector> of  { 0..7 }
-          0: goto L0178;
-          1: goto L0152;
-          2: goto L0178;
-          3: goto L017F;
-          4: goto L016B;
-          5: goto L0194;
-          6: goto L01CE;
-          7: goto L01D6;
-          otherwise goto L01F6;
-        end;
-L01F6:
       end else begin
         PASCALCO.4:ERROR(129);
       end;
@@ -7360,102 +6894,91 @@ procedure WRITELIN.4:GLOBALSEARCH(args 1 words);  { locals 1 words, lex 2 }
     if (238 in 1) then begin
       CSP2(L2, 0, CODEP, IC, 8);
       IC := (IC+8);
-      goto L0280;
-L012A:
-      if ((L2^.f6^ = 1) and not (INMODULE)) then begin
-        PASCALCO.23:GENWORD(8);
-        PASCALCO.23:GENWORD(L2^.f9);
-        PASCALCO.23:GENWORD(0);
-        PASCALCO.23:GENWORD(0);
-      end else begin
-        IC := I1,4;
-      end;
-      goto L0296;
-L0150:
-      I1,6 := (L2^.f9 < 0);
-      if ((I1,6 or INTRINSIC) or not (INMODULE)) then begin
-        if ((INTRINSIC and (-(L2^.f9) <> DATASEG)) or (I1,6 and not (INTRINSIC))) then begin
-          IC := I1,4;
-        end else begin
-          PASCALCO.23:GENWORD(7);
-          PASCALCO.23:GENWORD(L2^.f10);
-          PASCALCO.23:GENWORD(0);
-          PASCALCO.23:GENWORD(0);
-        end;
-      end else begin
-        if L2^.f11 then begin
-          PASCALCO.23:GENWORD(3);
-          I1,2 := 0;
-        end else begin
-          PASCALCO.23:GENWORD(4);
-          if (L2^.f8 = 2) then begin
-            I1,2 := 1;
+      case L2^.f8 of   { table 1..7 }
+        1: begin
+          if ((L2^.f6^ = 1) and not (INMODULE)) then begin
+            PASCALCO.23:GENWORD(8);
+            PASCALCO.23:GENWORD(L2^.f9);
+            PASCALCO.23:GENWORD(0);
+            PASCALCO.23:GENWORD(0);
           end else begin
-            I1,2 := L2^.f6^;
+            IC := I1,4;
           end;
         end;
-        PASCALCO.23:GENWORD(2);
-        PASCALCO.23:GENWORD(0);
-        PASCALCO.23:GENWORD(I1,2);
-        I1,3 := ((L2^.f10+63)+1);
-      end;
-      goto L0296;
-L01D3:
-      if (L2^.f9 = 1) then begin
-        if (L2^.f13 = 0) then begin
-          if (L2^.f8 = 5) then begin
-            if L2^.f16 then begin
-              I1,5 := 9;
+        2, 3: begin
+          I1,6 := (L2^.f9 < 0);
+          if ((I1,6 or INTRINSIC) or not (INMODULE)) then begin
+            if ((INTRINSIC and (-(L2^.f9) <> DATASEG)) or (I1,6 and not (INTRINSIC))) then begin
+              IC := I1,4;
+            end else begin
+              PASCALCO.23:GENWORD(7);
+              PASCALCO.23:GENWORD(L2^.f10);
+              PASCALCO.23:GENWORD(0);
+              PASCALCO.23:GENWORD(0);
+            end;
+          end else begin
+            if L2^.f11 then begin
+              PASCALCO.23:GENWORD(3);
+              I1,2 := 0;
+            end else begin
+              PASCALCO.23:GENWORD(4);
+              if (L2^.f8 = 2) then begin
+                I1,2 := 1;
+              end else begin
+                I1,2 := L2^.f6^;
+              end;
+            end;
+            PASCALCO.23:GENWORD(2);
+            PASCALCO.23:GENWORD(0);
+            PASCALCO.23:GENWORD(I1,2);
+            I1,3 := ((L2^.f10+63)+1);
+          end;
+        end;
+        5, 6: begin
+          if (L2^.f9 = 1) then begin
+            if (L2^.f13 = 0) then begin
+              if (L2^.f8 = 5) then begin
+                if L2^.f16 then begin
+                  I1,5 := 9;
+                end else begin
+                  IC := I1,4;
+                end;
+              end else begin
+                if L2^.f16 then begin
+                  I1,5 := 10;
+                end else begin
+                  IC := I1,4;
+                end;
+              end;
             end else begin
               IC := I1,4;
             end;
           end else begin
-            if L2^.f16 then begin
-              I1,5 := 10;
-            end else begin
-              IC := I1,4;
+            IC := I1,4;
+          end;
+          if (I1,4 <> IC) then begin
+            PASCALCO.23:GENWORD(I1,5);
+            I1,2 := ((L2^.f14-1)-(2*(L2^.f8 = 6)));
+            if (1536 in 1) then begin
+              PASCALCO.23:GENWORD(L2^.f11);
+              PASCALCO.23:GENWORD(I1,2);
+              PASCALCO.23:GENWORD(nil);
             end;
           end;
-        end else begin
-          IC := I1,4;
+          { paths disagree on stack depth here }
         end;
-      end else begin
-        IC := I1,4;
-      end;
-      if (I1,4 <> IC) then begin
-        PASCALCO.23:GENWORD(I1,5);
-        I1,2 := ((L2^.f14-1)-(2*(L2^.f8 = 6)));
-        if (1536 in 1) then begin
-          PASCALCO.23:GENWORD(L2^.f11);
-          PASCALCO.23:GENWORD(I1,2);
-          PASCALCO.23:GENWORD(nil);
+        7: begin
+          if (((INMODULE and not (INTRINSIC)) and L2^.f10) and L2^.f11) then begin
+            PASCALCO.23:GENWORD(1);
+            PASCALCO.23:GENWORD(1);
+            PASCALCO.23:GENWORD(0);
+            PASCALCO.23:GENWORD(0);
+            I1,3 := L2^.f9;
+          end else begin
+            IC := I1,4;
+          end;
         end;
       end;
-      { paths disagree on stack depth here }
-      goto L0296;
-L0251:
-      if (((INMODULE and not (INTRINSIC)) and L2^.f10) and L2^.f11) then begin
-        PASCALCO.23:GENWORD(1);
-        PASCALCO.23:GENWORD(1);
-        PASCALCO.23:GENWORD(0);
-        PASCALCO.23:GENWORD(0);
-        I1,3 := L2^.f9;
-      end else begin
-        IC := I1,4;
-      end;
-      goto L0296;
-L0280:
-      case <selector> of  { 1..7 }
-        1: goto L012A;
-        2: goto L0150;
-        3: goto L0150;
-        4: goto L0296;
-        5: goto L01D3;
-        6: goto L01D3;
-        7: goto L0251;
-        otherwise goto L0296;
-      end;
-L0296:
       { paths disagree on stack depth here }
       if (I1,3 <> -(9999)) then begin
         WRITELIN.2:GETREFS(I1,3);
@@ -7825,171 +7348,147 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
       if (L6 > 96) then begin
         L6 := (L6-32);
       end;
-      goto L03EF;
-L01C4:
-      if (LEVEL > 1) then begin
-        PASCALCO.4:ERROR(194);
-      end;
-      CSP1(@COMMENT, 41);
-      COMPOPTI.3:OPTWORD(COMMENT, 80);
-      COMPOPTI.2:BADOPT();
-      goto L041E;
-L01E0:
-      DEBUGGING := (L5 = 43);
-      goto L041E;
-L01E7:
-      OPT_E := (L5 = 43);
-      goto L041E;
-L01EE:
-      FLIPBYTES := (L5 = 43);
-      goto L041E;
-L01F5:
-      GOTOOK := (L5 = 43);
-      goto L041E;
-L01FC:
-      if ((L5 = 43) or (L5 = 45)) then begin
-        IOCHECK := (L5 = 43);
-      end else begin
-        COMPOPTI.3:OPTWORD(@L7, 40);
-        if (L3 = 42) then begin
-          SYMCURSOR := (SYMCURSOR+1);
-        end;
-        if LIST then begin
-          SYMCURSOR := (SYMCURSOR+1);
-          PASCALCO.6:PRINTLINE();
-          SYMCURSOR := (SYMCURSOR-1);
-        end;
-        if (INCLUDING or (INMODULE and ININTERFACE)) then begin
-          PASCALCO.4:ERROR(406);
-        end;
-        COMMAND();
-        FOPEN(@L7, 1, 40, @INCLFILE, @L7, 1, 0);
-        if (CSP34() <> 0) then begin
-          PASCALCO.4:ERROR(403);
-        end;
-        INCLUDING := 1;
-        OLDSYMCURSOR := SYMCURSOR;
-        OLDLINESTART := LINESTART;
-        OLDSYMBLK := (SYMBLK-2);
-        SYMBLK := 2;
-        PASCALCO.5:GETNEXTPAGE();
-        PASCALCO.8:INSYMBOL();
-        CSP4(1, 8);
-      end;
-      goto L041E;
-L027B:
-      if ((L5 = 43) or (L5 = 45)) then begin
-        LIST := (L5 = 43);
-        if (LIST and not (LSTOPEN)) then begin
-          FOPEN(?, ?, ?, @LP, '*SYSTEM.LST.TEXT[*]', 0, 0);
-        end;
-      end else begin
-        COMPOPTI.3:OPTWORD(@L7, 40);
-        if not (LSTOPEN) then begin
-          COMMAND();
-          FOPEN(@L7, 1, 40, @LP, @L7, 0, 0);
-          LIST := (CSP34() = 0);
-        end;
-        COMPOPTI.2:BADOPT();
-      end;
-      goto L041E;
-L02D8:
-      if ((L5 = 83) or (L5 = 115)) then begin
-        SYMCURSOR := (SYMCURSOR+1);
-        COMPOPTI.3:OPTWORD(@L7, 40);
-        L28 := 0;
-        L29 := @L7^[0];
-        if (L29 > 2) then begin
-          L29 := 2;
-        end;
-        L30 := 1;
-        L31 := L29;
-        while (L30 <= L31) do begin
-          L28 := ((L28*10)+(@L7^[L30]-48));
-          L30 := (L30+1);
-        end;
-        if ((L28 > NEXTSEG) and (L28 < 63)) then begin
-          NEXTSEG := L28;
-        end;
-        COMPOPTI.2:BADOPT();
-      end else begin
-        NOLOAD := (L5 = 43);
-      end;
-      goto L041E;
-L033C:
-      NOISY := (not (CONLIST) and (L5 = 45));
-      goto L041E;
-L0348:
-      if LIST then begin
-        FWRITECHAR(@LP, 12, 0);
-      end;
-      goto L041E;
-L0356:
-      if ((L5 = 43) or (L5 = 45)) then begin
-        RANGECHECK := (L5 = 43);
-      end else begin
-        COMPOPTI.4:OPTLIST();
-      end;
-      goto L041E;
-L036A:
-      SWAPPING := (L5 = 43);
-      SWAPMORE := (L4 = 43);
-      if (L4 in {43,45}) then begin
-        SYMCURSOR := (SYMCURSOR+1);
-        L4 := SYMBUFP^[(SYMCURSOR+3)];
-      end;
-      goto L041E;
-L0390:
-      TINY := (L5 = 43);
-      goto L041E;
-L0397:
-      if ((L5 = 43) or (L5 = 45)) then begin
-        SYSCOMP := (L5 = 45);
-        RANGECHECK := not (SYSCOMP);
-        IOCHECK := RANGECHECK;
-        VARSTRG := RANGECHECK;
-        GOTOOK := SYSCOMP;
-      end else begin
-        if not (USING) then begin
-          FCLOSE(@LIBRARY, 0);
-          LIBNOTOPEN := 1;
-          COMPOPTI.3:OPTWORD(@SYSTEMLIB, 40);
-          FOPEN(?, ?, ?, @LIBRARY, @SYSTEMLIB, 1, 0);
-          if (CSP34() <> 0) then begin
-            PASCALCO.4:ERROR(187);
+      case L6 of   { table 67..86 }
+        67: begin
+          if (LEVEL > 1) then begin
+            PASCALCO.4:ERROR(194);
           end;
+          CSP1(@COMMENT, 41);
+          COMPOPTI.3:OPTWORD(COMMENT, 80);
           COMPOPTI.2:BADOPT();
         end;
+        68: begin
+          DEBUGGING := (L5 = 43);
+        end;
+        69: begin
+          OPT_E := (L5 = 43);
+        end;
+        70: begin
+          FLIPBYTES := (L5 = 43);
+        end;
+        71: begin
+          GOTOOK := (L5 = 43);
+        end;
+        73: begin
+          if ((L5 = 43) or (L5 = 45)) then begin
+            IOCHECK := (L5 = 43);
+          end else begin
+            COMPOPTI.3:OPTWORD(@L7, 40);
+            if (L3 = 42) then begin
+              SYMCURSOR := (SYMCURSOR+1);
+            end;
+            if LIST then begin
+              SYMCURSOR := (SYMCURSOR+1);
+              PASCALCO.6:PRINTLINE();
+              SYMCURSOR := (SYMCURSOR-1);
+            end;
+            if (INCLUDING or (INMODULE and ININTERFACE)) then begin
+              PASCALCO.4:ERROR(406);
+            end;
+            COMMAND();
+            FOPEN(@L7, 1, 40, @INCLFILE, @L7, 1, 0);
+            if (CSP34() <> 0) then begin
+              PASCALCO.4:ERROR(403);
+            end;
+            INCLUDING := 1;
+            OLDSYMCURSOR := SYMCURSOR;
+            OLDLINESTART := LINESTART;
+            OLDSYMBLK := (SYMBLK-2);
+            SYMBLK := 2;
+            PASCALCO.5:GETNEXTPAGE();
+            PASCALCO.8:INSYMBOL();
+            CSP4(1, 8);
+          end;
+        end;
+        76: begin
+          if ((L5 = 43) or (L5 = 45)) then begin
+            LIST := (L5 = 43);
+            if (LIST and not (LSTOPEN)) then begin
+              FOPEN(?, ?, ?, @LP, '*SYSTEM.LST.TEXT[*]', 0, 0);
+            end;
+          end else begin
+            COMPOPTI.3:OPTWORD(@L7, 40);
+            if not (LSTOPEN) then begin
+              COMMAND();
+              FOPEN(@L7, 1, 40, @LP, @L7, 0, 0);
+              LIST := (CSP34() = 0);
+            end;
+            COMPOPTI.2:BADOPT();
+          end;
+        end;
+        78: begin
+          if ((L5 = 83) or (L5 = 115)) then begin
+            SYMCURSOR := (SYMCURSOR+1);
+            COMPOPTI.3:OPTWORD(@L7, 40);
+            L28 := 0;
+            L29 := @L7^[0];
+            if (L29 > 2) then begin
+              L29 := 2;
+            end;
+            L30 := 1;
+            L31 := L29;
+            while (L30 <= L31) do begin
+              L28 := ((L28*10)+(@L7^[L30]-48));
+              L30 := (L30+1);
+            end;
+            if ((L28 > NEXTSEG) and (L28 < 63)) then begin
+              NEXTSEG := L28;
+            end;
+            COMPOPTI.2:BADOPT();
+          end else begin
+            NOLOAD := (L5 = 43);
+          end;
+        end;
+        81: begin
+          NOISY := (not (CONLIST) and (L5 = 45));
+        end;
+        80: begin
+          if LIST then begin
+            FWRITECHAR(@LP, 12, 0);
+          end;
+        end;
+        82: begin
+          if ((L5 = 43) or (L5 = 45)) then begin
+            RANGECHECK := (L5 = 43);
+          end else begin
+            COMPOPTI.4:OPTLIST();
+          end;
+        end;
+        83: begin
+          SWAPPING := (L5 = 43);
+          SWAPMORE := (L4 = 43);
+          if (L4 in {43,45}) then begin
+            SYMCURSOR := (SYMCURSOR+1);
+            L4 := SYMBUFP^[(SYMCURSOR+3)];
+          end;
+        end;
+        84: begin
+          TINY := (L5 = 43);
+        end;
+        85: begin
+          if ((L5 = 43) or (L5 = 45)) then begin
+            SYSCOMP := (L5 = 45);
+            RANGECHECK := not (SYSCOMP);
+            IOCHECK := RANGECHECK;
+            VARSTRG := RANGECHECK;
+            GOTOOK := SYSCOMP;
+          end else begin
+            if not (USING) then begin
+              FCLOSE(@LIBRARY, 0);
+              LIBNOTOPEN := 1;
+              COMPOPTI.3:OPTWORD(@SYSTEMLIB, 40);
+              FOPEN(?, ?, ?, @LIBRARY, @SYSTEMLIB, 1, 0);
+              if (CSP34() <> 0) then begin
+                PASCALCO.4:ERROR(187);
+              end;
+              COMPOPTI.2:BADOPT();
+            end;
+          end;
+        end;
+        86: begin
+          VARSTRG := (L5 = 43);
+        end;
       end;
-      goto L041E;
-L03E8:
-      VARSTRG := (L5 = 43);
-      goto L041E;
-L03EF:
-      case <selector> of  { 67..86 }
-        67: goto L01C4;
-        68: goto L01E0;
-        69: goto L01E7;
-        70: goto L01EE;
-        71: goto L01F5;
-        72: goto L041E;
-        73: goto L01FC;
-        74: goto L041E;
-        75: goto L041E;
-        76: goto L027B;
-        77: goto L041E;
-        78: goto L02D8;
-        79: goto L041E;
-        80: goto L0348;
-        81: goto L033C;
-        82: goto L0356;
-        83: goto L036A;
-        84: goto L0390;
-        85: goto L0397;
-        86: goto L03E8;
-        otherwise goto L041E;
-      end;
-L041E:
       SYMCURSOR := (SYMCURSOR+3);
     until (L4 <> 44);
   end;

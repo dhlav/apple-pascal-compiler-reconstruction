@@ -712,6 +712,10 @@ the jump and still emit the block.
 **Result: 200 of 287 procedures (69%) come out with no goto at all**, and
 1392 gotos remain across 6252 basic blocks.
 
+*Superseded by finding 41.* The `case` recogniser named above never
+matched anything — it had the jump table on the wrong side of the arms.
+Fixing it takes this to 229 of 287 (79%) and 156 gotos.
+
 ### 21a. XJP has no "otherwise" pointer
 
 Chasing the last dangling gotos found a decoder error that had been live
@@ -3476,6 +3480,131 @@ Still open on that track: the two native procedures as reassemblable
 source, the word-data block each carries after its last `RTS`, and the
 three procedures 1.3 adds — of which `COMPINIT.11` is now identified as
 the version gate, leaving `BODYPART.26` and `COMPOPTI.5`.
+
+## 41. `case` was never recognised — the jump table is *after* the arms
+
+*Confidence: VERIFIED BINARY FACT for the layout, which holds for all 54
+case statements across both releases. `tools/probes/probe_structure.py`.*
+
+Finding 21 listed `case` among the constructs the structurer recovers. It
+did not recover a single one. Instrumenting the refusals turned up
+**0 of 54 accepted**, all for the same reason, and it was not a near miss:
+the recogniser had the layout backwards.
+
+### 41a. What UCSD actually emits
+
+`_case` looked at the `XJP` block and expected the arms to follow it. UCSD
+puts the jump table at the *end*:
+
+```
+        <selector>
+        UJP  Lxjp
+  arm1: ...
+        UJP  Lend
+  arm2: ...
+        UJP  Lend
+  Lxjp: XJP  lo, hi, Lend, <table>
+  Lend:
+```
+
+which makes sense once you look at `XJP`'s encoding — the table is inline,
+immediately after the opcode, so it cannot sit in the middle of executable
+code without being jumped over anyway. Putting it past the last arm costs
+nothing and saves the jump.
+
+So every arm target is at a *lower* address than the `XJP`, and the old
+check "no arm may precede the XJP" rejected all 54. The construct has to be
+recognised at the `UJP` that reaches the table, not at the table.
+
+The shape is completely uniform, which is what makes it safe to key on. Of
+54 `XJP` blocks across both disks:
+
+* **54** carry no statements of their own — the block is the table;
+* **54** have exactly one predecessor, and it ends in `UJP`;
+* **54** have their `otherwise` target at the block immediately after the
+  table;
+* **54** have every arm target strictly between that predecessor and the
+  table, once the arms that point at `otherwise` are set aside — those are
+  selector values with no limb of their own, Pascal's "no such label", not
+  case arms;
+* **54** have the first arm immediately after the predecessor.
+
+### 41b. Arms never fall through, and the check for it is now explicit
+
+Wrapping a run of blocks in `begin … end` limbs is only sound if no arm
+falls out of its own range into the next one — Pascal has no fall-through.
+Unlike an escaping jump, a fall-through leaves nothing behind to notice:
+the statements are all still emitted exactly once, so the coverage
+invariant would pass while the output said something different.
+
+All 54 end every arm with a jump, so it never happens. `_case` now checks
+it anyway and refuses rather than mis-render, because the old code had the
+same hole and only luck kept it from mattering.
+
+### 41c. Escapes are allowed out of a case, and only out of a case
+
+Every other construct refuses a region that jumps outside it. `case` no
+longer does, and the asymmetry is deliberate.
+
+What the escape rule protects against is *absorbing* a jump that mattered
+— `while` swallows its latch's back edge, `if/else` swallows the jump over
+the else. The only jump `case` absorbs is an arm's own `UJP <end>`, which
+is the thing the limb boundary replaces. Any other edge out of an arm
+survives into the output as a `goto` with a label, so the graph is
+unchanged and the rendering is *more* faithful, not less: a `goto` out of a
+case limb is what the source says. II.0's `INSYMBOL` has a literal `GOTO 1`
+in one of its limbs, and that is one of the four.
+
+### 41d. The measurement
+
+| | before | after |
+|---|---|---|
+| fully structured | 201 / 287 (70%) | **229 / 287 (79%)** |
+| gotos remaining | 1390 | **156** |
+| per basic block | 0.22 | 0.02 |
+
+Both correctness invariants stay at zero violations. 50 of the 54 cases
+come out as `case` statements; the other four keep the gotos their arms
+really contain.
+
+The 54 accounted for 840 of the 1390 gotos, which is why this one change
+moves the number so far — and why plan step 8's guess that short-circuit
+booleans were the biggest remaining win was wrong. The compiler does not
+short-circuit at all: `and` and `or` compile to `LAND` and `LOR` on values,
+and the chains of `FJP` to a common target that look like short-circuiting
+are nested `if`s in the source, which the structurer already handled.
+
+What is left is thin and genuine. Of 246 loop headers 224 are recovered;
+the 22 that are not are multi-exit loops — a `while` whose body jumps out,
+which Pascal itself writes with a `goto` or an `EXIT`. The 156 residual
+gotos are spread over 58 procedures with a maximum of 9 in any one, so
+there is no further single win of this size available.
+
+### 41e. What the output reads like
+
+`INSYMBOL`'s scanner dispatch, which was 116 gotos and is now this:
+
+```pascal
+case SYMBUFP^[SYMCURSOR] of   { table 9..123 }
+  39: begin
+    NUMSTRIN(0, @L1);
+  end;
+  48, 49, 50, 51, 52, 53, 54, 55, 56, 57: begin
+    L5 := SYMBUFP^[SYMCURSOR];
+    ...
+  end;
+  61: begin
+    SY := 41;
+    OP := 13;
+  end;
+  62: begin
+    SY := 41;
+    if (SYMBUFP^[(SYMCURSOR+1)] = 61) then begin
+      OP := 10;
+```
+
+39 is `'`, 48..57 the digits, 61 `=`, 62 `>` — and the nested case inside
+the `>` limb is the two-character `>=` and `<>`.
 
 ## 16. Open questions
 

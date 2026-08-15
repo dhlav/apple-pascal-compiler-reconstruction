@@ -321,9 +321,13 @@ the rest — and shows that `SYSTEM.COMPILER` itself was compiled with range
 checking off but *not* at the system lexical level.
 
 **All 287 procedures across the two releases lift to structured
-pseudo-Pascal** with the evaluation stack fully tracked, and **201 of them
+pseudo-Pascal** with the evaluation stack fully tracked, and **229 of them
 come out with no `goto` at all** — real `if`/`while`/`repeat`/`case`
-(`analysis/lifted/`). `tools/show.py SEGMENT.N` prints a procedure's
+(`analysis/lifted/`), with 156 gotos left over 6252 basic blocks. That last
+step came from `case`, which the recogniser had never once matched: UCSD
+puts the jump table *after* the arms, so the construct has to be keyed on
+the `UJP` that reaches the table rather than on the table itself (finding
+41). `tools/show.py SEGMENT.N` prints a procedure's
 p-code listing; `tools/liftproc.py SEGMENT.N` prints its lifted form:
 
 ```

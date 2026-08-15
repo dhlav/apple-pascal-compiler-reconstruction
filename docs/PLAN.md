@@ -319,19 +319,32 @@ Done, and reproducible via `python tools/build_all.py`:
      merge of predecessors', with `phi` for equal-depth disagreement and an
      explicit report for unequal depth. Unattributed stack values across
      both releases: 542 → 22.
-   * *Control-flow structuring — done, 70%* (finding 21).
-     `tools/a2pascal/structure.py`. **201 of 287 procedures come out with
-     no goto at all**; 1390 gotos remain over 6252 blocks. Both correctness
-     invariants — no dropped statements, no dangling gotos — hold at zero,
-     and `tools/probes/probe_structure.py` re-checks them, so a regression
-     here is visible rather than silent.
+   * *Control-flow structuring — done, 79%* (findings 21 and 41).
+     `tools/a2pascal/structure.py`. **229 of 287 procedures come out with
+     no goto at all**; 156 gotos remain over 6252 blocks, 0.02 per block.
+     Both correctness invariants — no dropped statements, no dangling
+     gotos — hold at zero, and `tools/probes/probe_structure.py` re-checks
+     them, so a regression here is visible rather than silent.
 
-     To push past 69%, look at what the structurer refuses: it rejects any
-     construct whose blocks jump outside it. That is the honest answer for
-     short-circuit boolean evaluation and for `exit`, and those are most of
-     what is left. Handling short-circuit `and`/`or` as expression-level
-     constructs rather than control flow is probably the single biggest
-     remaining win.
+     The step from 70% came from `case`, which finding 41 found the
+     recogniser had never matched even once: UCSD puts the jump table
+     *after* the arms, so the construct has to be keyed on the `UJP` that
+     reaches the table. 50 of 54 now come out as `case` statements, worth
+     840 of the 1390 gotos.
+
+     **The earlier guess here was wrong and is worth recording as such:**
+     short-circuit boolean evaluation is not what was left, because the
+     compiler does not short-circuit at all — `and` and `or` compile to
+     `LAND` and `LOR` on values, and the `FJP` chains that look like
+     short-circuiting are nested `if`s in the source. Measure the refusals
+     before guessing at them; the instrumentation is four lines of
+     subclass over `_Structurer`.
+
+     What remains is thin: 224 of 246 loop headers are recovered, and the
+     22 that are not are multi-exit loops, which Pascal itself writes with
+     a `goto` or an `EXIT`. The 156 residual gotos spread over 58
+     procedures with at most 9 in any one, so there is no further single
+     win of this size.
 
    Also open, and harder: 89 joins where the two paths disagree on stack
    depth. Mostly UCSD sets, which are variable-length at runtime, so a
