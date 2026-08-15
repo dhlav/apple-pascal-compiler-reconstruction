@@ -138,9 +138,12 @@ the eight symbol-set globals were each assigned by the error its guard
 raises (finding 26c) and come out in exactly reverse order, all eight.
 
 `tools/vardecl.py` lays II.0's `VAR` block out under that rule and aligns
-it against Apple's globals: 83 matched names, differing only by a drift
+it against Apple's globals: 111 of 118 matched, differing only by a drift
 that never decreases through the scalar region. The first sixteen words of
-Apple's global area are II.0's, in order.
+Apple's global area are II.0's, in order, and **129 of the 133 globals the
+1.1 binary touches now have a name** — the four that do not are the file
+window buffers, which are a layout question rather than a naming one
+(finding 39).
 
 That alignment now predicts rather than describes. Reading `DECLARAT.10`
 against II.0's `USESDECLARATION` line for line named four more globals —
@@ -162,6 +165,20 @@ declares them. Nothing in that reasoning used declaration order, so it is
 a second, independent confirmation of the rule. The same three objects
 explain +115 of 1.3's ~130 words of global growth: 1.3 raised the segment
 limit from 32 to 64.
+
+Once those steps balance, the drift column becomes a sieve: a gap with a
+verified name at each end and the same word count as II.0 has names inside
+it can be filled only one way. Five such gaps placed fourteen names, every
+one then confirmed from behaviour independently — `ENTUNDECL` names the
+six undeclared-identifier pointers by the record size each `NEW` asks for
+(9, 10, 11, 13, 18, 18, in II.0's order), `BLOCK` names the four lex-stack
+globals, and `COMPINIT` names the disk buffer. Three more are Apple's own
+additions: `INTRINSIC` and `DATASEG`, read off the `INTRINSIC CODE n
+DATA m` clause `UNITPART` parses, and `RESIDENT`, which the *Language
+Reference* settles — `$R` has two forms, `$R+`/`$R-` for range checking
+and `$R unitname` to keep a segment in memory, and the manual's "the
+resident option must immediately follow the BEGIN that starts the
+procedure body" is exactly where `BODY1` reads that list.
 
 **`DECLARAT` and `ROUTINE` are finished** — twenty of twenty and
 seventeen of seventeen procedures named, at identical numbers in 1.1 and

@@ -162,7 +162,7 @@ Done, and reproducible via `python tools/build_all.py`:
    **Well advanced** (finding 33). `tools/vardecl.py` is a `build_all.py`
    step: it lays out II.0's `VAR` block under the compiler's own
    allocation rule and aligns it by name against Apple's globals, into
-   `analysis/global_map/vardecl-ii0.txt`. 83 names matched, drift
+   `analysis/global_map/vardecl-ii0.txt`. 111 names matched, drift
    non-decreasing through the scalar region — and the alignment now
    *predicts*: finding 34c read four globals (`TEST`, `USING`,
    `USINGLIST`, `MODPTR`) off `USESDECLARATION` and all four landed on the
@@ -180,10 +180,20 @@ Done, and reproducible via `python tools/build_all.py`:
    behaviour alone — came out in II.0's backwards-allocated order, which
    is an independent confirmation of finding 33's rule.
 
-   What is left is the unnamed stretches *between* the matched runs: 35 of
-   the 133 touched offsets in 1.1 still have no name — 17, 24, 26, 27, 29,
-   40, 41, 53, 62–94 in patches, 130, and the file-window tail 835, 886,
-   926, 966–969.
+   The unnamed stretches *between* the matched runs are done too (finding
+   39). **129 of 1.1's 133 touched globals now have a name**, and the four
+   that do not are the file-window buffers at 835, 886, 926 and 966 —
+   section 16's open question about the file-variable block layout, not a
+   naming problem. On the II.0 side the account is complete: 111 of 118
+   variables land on an Apple name and all seven that do not are explained
+   (`GATTR` split into fields, the two linker flags merged, `PFNUMOF`
+   deleted, and three booleans Apple dropped).
+
+   This task is therefore **done as a naming exercise**. What remains for a
+   reconstructed `VAR` block is the *types* — writing the declarations out
+   in the recovered order with the sizes the map gives, and settling the
+   file-variable layout so the four FIBs and their windows can be
+   declared.
 
    Original notes follow. The map now knows
    sizes and shapes; the remaining step is to lay the objects out in

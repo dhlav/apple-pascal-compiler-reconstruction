@@ -69,6 +69,8 @@ II0_SOURCE = ROOT / "evidence" / "reference" / "ucsd-ii0-compiler"
 
 EXTRA_BACKED = {
     "TREESEARCH",       # Apple's own, off the 1.3 native code (finding 19)
+    "INTRINSIC",        # Apple's own word, off the literal UNITDECLARATION
+                        # compares ID against (finding 39)
     "IMPLEMENTATIONSY", # (kept only so the finding-29 text stays checkable)
 }
 

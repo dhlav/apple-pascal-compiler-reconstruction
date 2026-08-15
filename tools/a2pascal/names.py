@@ -883,6 +883,103 @@ GLOBALS_11: dict[int, str] = {
     37:  "INCLUDING",  # II.0 36, drift +1 -- inside a $I include file.
                        # GETNEXTPAGE's `if not (INCLUDING or USING)` is
                        # `LDO 37; LDO 36; LOR; LNOT` in the binary.
+
+    # --- finding 39: the stretches between the matched drift runs ------------
+    #
+    # Each of these sits in a gap the drift column bounds on both sides, so
+    # the count of Apple words equals the count of II.0 names and the order
+    # is forced. The comment on each is the behaviour that confirms it
+    # independently of that arithmetic.
+    17:  "ID",         # ALPHA, 4 words. compglbls.text says of the four
+                       # before it: "SCANNER GLOBALS...NEXT FOUR VARS MUST
+                       # BE IN THIS ORDER FOR IDSEARCH" -- SYMCURSOR, SY,
+                       # OP, ID, which is Apple's 14, 15, 16, 17 exactly.
+    24:  "DISX",       # SEARCHID is `for DISX := TOP downto 0 do LCP :=
+                       # DISPLAY[DISX].FNAME`: `SLDO 8; SRO 24` then
+                       # `LAO 131; LDO 24; IXA 4; SIND 0`
+    26:  "GETSTMTLEV", # INSYMBOL opens with `if GETSTMTLEV then begin
+                       # BEGSTMTLEV := STMTLEV; GETSTMTLEV := false end`
+                       # -- `LDO 26; FJP; LDO 78; SRO 79; SLDC 0; SRO 26`
+    27:  "PUBLICPROCS",  # set under `ININTERFACE and not USING` in
+                         # DECLARATIONPART, cleared by UNITDECLARATION,
+                         # tested by UNITPART
+    29:  "LIBNOTOPEN",   # GETTEXT's `if LIBNOTOPEN then RESET(LIBRARY...)`,
+                         # cleared on success; COMPINIT sets it true
+    40:  "LSEPPROC",   # GETTEXT sets it from the used unit's SEGKIND and
+                       # then `if not LSEPPROC then begin SEG := NEXTSEG;
+                       # NEXTPROC := 1 end`
+    41:  "INTRINSIC",  # OURS, but Apple's word: UNITDECLARATION sets it
+                       # where the binary compares ID against the literal
+                       # 'INTRINSI'. It stands in II.0's SEPPROC slot and
+                       # inherits its uses -- SEGKIND, the LINKERREF guard,
+                       # cleared beside INMODULE at the end of UNITPART --
+                       # but Apple drives it from `INTRINSIC CODE n DATA m`,
+                       # not from II.0's `SEPARATE`. See [[finding-39]].
+    62:  "RESIDENT",   # OURS, but the manual's word. Apple-only, and the
+                       # one insertion between REALPTR and USINGLIST.
+                       # COMPOPTI.1's XJP runs 'C'..'V' and the 'R' arm is
+                       # `if (SW='+') or (SW='-') then RANGECHECK := (SW='+')
+                       # else OPTLIST` -- the manual's second $R:
+                       # "$R unit name or $R segment number ... Load
+                       # segment", and "can be applied to more than one
+                       # segment, by separating the names ... with commas",
+                       # which is why OPTLIST loops taking identifiers and
+                       # intconsts. "The resident option must immediately
+                       # follow the BEGIN that starts the procedure body",
+                       # and BODY1 reads this list at exactly that point;
+                       # BLOCK and UNITBODY clear it to NIL per body.
+    53:  "PRTERR",     # SEARCHID ends `if PRTERR then ERROR(104)`, which is
+                       # "Undeclared identifier"
+    64:  "FWPTR",      # the forward-declaration list head
+    65:  "OUTERBLOCK", # `NEW(g65, 18)` -- a PROC record, the largest
+                       # variant -- and BLOCK's
+                       # `TOS^.PREVLEXSTACKP^.DFPROCP = OUTERBLOCK`
+
+    # ENTUNDECL NEWs the six undeclared-id pointers in one run, and the
+    # record size it asks for names each one: TYPES 9, KONST 10,
+    # ACTUALVARS 11, FIELD 13, PROC 18, FUNC 18. Apple's run is
+    # `NEW(75,9); NEW(74,10); NEW(73,11); NEW(71,13); NEW(70,18);
+    # NEW(69,18)`, in II.0's declaration order.
+    69:  "UFCTPTR",
+    70:  "UPRCPTR",
+    71:  "UFLDPTR",
+    # 72 is declared but never referenced -- no LDO/SRO/LAO touches it on
+    # either disk. It is the one word of this stretch Apple added, and the
+    # binary cannot say what for.
+    73:  "UVARPTR",
+    74:  "UCSTPTR",
+    75:  "UTYPPTR",
+    76:  "GLOBTESTP",  # II.0's "LAST TESTPOINTER"
+
+    # The lex stack, all four confirmed inside PASCALCO.24 BLOCK, which is
+    # block.text line for line.
+    80:  "MARKP",      # the only `CSP 32 MARK` in the compiler
+    81:  "TOS",        # `RELEASE(TOS^.DMARKP); TOS := TOS^.PREVLEXSTACKP`
+                       # = `LDO 81; INC 8; CSP 33 RELEASE; LDO 81; IND 10;
+                       # SRO 81`
+    82:  "GLEV",
+    83:  "NEWBLOCK",   # BLOCK's `NEWBLOCK := true; if not NEWBLOCK then`
+    84:  "DATASEG",    # OURS. Apple-only, and the one insertion in this
+                       # stretch. UNITDECLARATION's `DATA` clause reads a
+                       # constant into it, errors 203 unless it is in
+                       # 0..31, defaults it to SEG+1, and then does
+                       # SEGMAP[DATASEG] := SEGSLOT. SEG is the unit's code
+                       # segment; this is its data segment.
+
+    87:  "SCONST",     # `NEW(SCONST, 130)` -- INSYMBOL's string result
+    88:  "STRGCSTIC",  # `STRGCSTIC := IC`, the address of the last string
+                       # placed in the code
+    89:  "SMALLESTSPACE",   # `CSP 40 MEMAVAIL; SRO 89`
+    94:  "LOWTIME",    # the only `CSP 9 TIME`, which takes it by reference
+    130: "VARS",       # SETOFIDS, one word: built by COMPINIT with
+                       # `ADJ 1; SRO 130` and tested with `LDO 130; SLDC 1;
+                       # INN`
+
+    967: "CURBLK",     # COMPINIT's `CURBLK := 1; CURBYTE := 0` is
+    968: "CURBYTE",    # `SLDC 1; SRO 967; SLDC 0; SRO 968`, right after
+                       # `NEXTSEG := 10` -- compinit.text line 258 in order
+    969: "DISKBUF",    # PACKED ARRAY [0..511] OF CHAR: CURBYTE is compared
+                       # against 512 and used as its byte index
 }
 
 GLOBALS_13: dict[int, str] = {
@@ -1014,6 +1111,45 @@ GLOBALS_13: dict[int, str] = {
                        # and SLDC 4 where 1.1 has 2
     589: "SEGMAP",     # 1.1 global 479, +110 -- still IXP 4,4, but 16 words
                        # instead of 8, so 64 nibbles instead of 32
+
+    # Finding 39, carried across by the correspondence table -- every pair
+    # below is a 1.00-similarity match. MARKP is the one exception: it is
+    # touched once in each release, too little for the matcher, so it is
+    # placed by the +3 shift its neighbours carry and confirmed directly --
+    # 1.3's `LAO 83; CSP 32 MARK` is followed by `LAO 84` for NEW(TOS),
+    # exactly as 1.1's 80/81 are.
+    17:  "ID",              # +0
+    24:  "DISX",            # +0
+    26:  "GETSTMTLEV",      # +0
+    27:  "PUBLICPROCS",     # +0
+    29:  "LIBNOTOPEN",      # +0
+    41:  "LSEPPROC",        # 1.1 global 40, +1
+    42:  "INTRINSIC",       # 1.1 global 41, +1
+    54:  "PRTERR",          # 1.1 global 53, +1
+    65:  "RESIDENT",        # 1.1 global 62, +3
+    67:  "FWPTR",           # 1.1 global 64, +3
+    68:  "OUTERBLOCK",      # 1.1 global 65, +3
+    72:  "UFCTPTR",         # 1.1 global 69, +3
+    73:  "UPRCPTR",
+    74:  "UFLDPTR",
+    76:  "UVARPTR",         # 1.1 global 73, +3 -- and 75, like 1.1's 72,
+                            # is never touched
+    77:  "UCSTPTR",
+    78:  "UTYPPTR",
+    79:  "GLOBTESTP",
+    83:  "MARKP",           # 1.1 global 80, +3
+    84:  "TOS",
+    85:  "GLEV",
+    86:  "NEWBLOCK",
+    87:  "DATASEG",         # 1.1 global 84, +3
+    90:  "SCONST",          # 1.1 global 87, +3
+    91:  "STRGCSTIC",
+    92:  "SMALLESTSPACE",
+    97:  "LOWTIME",         # 1.1 global 94, +3
+    133: "VARS",            # 1.1 global 130, +3
+    1097: "CURBLK",         # 1.1 global 967, +130
+    1098: "CURBYTE",
+    1099: "DISKBUF",
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}

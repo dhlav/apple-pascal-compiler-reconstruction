@@ -3204,6 +3204,166 @@ and `SLDC 4` where 1.1 has 2; 1.3's `SEGMAP` is still `IXP 4,4`. `DISPLAY`
 and `SEGTABLE` are unchanged. That is **+115 of 1.3's roughly 130 words of
 global growth**, previously open under task 10.
 
+## 39. The rest of the `VAR` block — 1.1's global map is finished but for the file windows
+
+*Confidence: VERIFIED BINARY FACT for every placement; STRONG INFERENCE
+for the II.0 spellings, which are the source's own; SPECULATION only for
+the three names that are ours, and two of those are Apple's own words.
+`tools/probes/probe_globalmap.py`, 88 checks, twenty mutation-tested legs.*
+
+Finding 38 closed the three drift steps. What was left was the 35 touched
+offsets in 1.1 that still had no name — and with the alignment corrected,
+almost all of them are boxed in on both sides.
+
+### 39a. The drift column as a sieve
+
+Once a stretch of the alignment has a *verified* Apple name at each end
+and the same number of words as II.0 has names between them, the
+assignment inside is forced: II.0 allocates in declaration order (finding
+33), so there is only one way to fill the gap. Five gaps are of that
+shape, and between them they place fourteen names without any appeal to
+what the code does.
+
+That is a prediction, not a derivation, so every one was then confirmed
+from behaviour — and the confirmations are what the probe checks. The two
+arguments are independent: nothing that identified `GETSTMTLEV` from
+`INSYMBOL`'s opening three instructions used the fact that II.0 declares
+it between `PUBLICPROCS` and `LCMAX`.
+
+| Apple 1.1 | | what the binary says |
+|---|---|---|
+| 17 | `ID` | `compglbls.text` says of the four before it: *"SCANNER GLOBALS...NEXT FOUR VARS MUST BE IN THIS ORDER FOR IDSEARCH"* — `SYMCURSOR`, `SY`, `OP`, `ID` = Apple's 14, 15, 16, 17, and `ID` is four words wide |
+| 24 | `DISX` | `SEARCHID` is `for DISX := TOP downto 0 do LCP := DISPLAY[DISX].FNAME`: `SLDO 8; SRO 24`, then `LAO 131; LDO 24; IXA 4; SIND 0` |
+| 26 | `GETSTMTLEV` | `INSYMBOL` opens `LDO 26; FJP; LDO 78; SRO 79; SLDC 0; SRO 26` = `if GETSTMTLEV then begin BEGSTMTLEV := STMTLEV; GETSTMTLEV := false end` |
+| 27 | `PUBLICPROCS` | set under `ININTERFACE and not USING`, cleared by `UNITDECLARATION`, tested by `UNITPART` — `decpart.c` 370, `unitpart` 279 and 333 |
+| 29 | `LIBNOTOPEN` | `GETTEXT`'s `if LIBNOTOPEN then RESET(LIBRARY, SYSTEMLIB)`, cleared on success; `COMPINIT` sets it true |
+| 40 | `LSEPPROC` | `GETTEXT` sets it from the used unit's `SEGKIND` and then `if not LSEPPROC then begin SEG := NEXTSEG; NEXTPROC := 1 end` |
+| 53 | `PRTERR` | `SEARCHID` ends `if PRTERR then ERROR(104)` — *"Undeclared identifier"* |
+| 64 | `FWPTR` | the forward-declaration list head |
+| 65 | `OUTERBLOCK` | `NEW(g65, 18)`, a `PROC` record, and `BLOCK`'s `TOS^.PREVLEXSTACKP^.DFPROCP = OUTERBLOCK` |
+| 76 | `GLOBTESTP` | II.0's *"LAST TESTPOINTER"* |
+| 87 | `SCONST` | `NEW(SCONST, 130)` — `INSYMBOL`'s string result |
+| 88 | `STRGCSTIC` | `STRGCSTIC := IC`, the address of the last string placed in the code |
+| 89 | `SMALLESTSPACE` | the compiler's only `CSP 40 MEMAVAIL` |
+| 94 | `LOWTIME` | the compiler's only `CSP 9 TIME`, which takes it by reference |
+| 130 | `VARS` | `SETOFIDS`, one word: built with `ADJ 1; SRO 130`, tested with `LDO 130; SLDC 1; INN` |
+
+### 39b. `ENTUNDECL` names six pointers by the record size it asks for
+
+II.0's `ENTUNDECL` creates the six undeclared-identifier pointers in one
+run, each with the variant tag its `klass` needs, and Apple's `COMPINIT.4`
+is that run verbatim:
+
+```
+NEW(75, 9) ; NEW(74, 10) ; NEW(73, 11) ; NEW(71, 13) ; NEW(70, 18) ; NEW(69, 18)
+```
+
+Six `NEW`s, one procedure, in II.0's order — `UTYPPTR` (`TYPES`),
+`UCSTPTR` (`KONST`), `UVARPTR` (`ACTUALVARS`), `UFLDPTR` (`FIELD`),
+`UPRCPTR` (`PROC`), `UFCTPTR` (`FUNC`) — and the sizes rise exactly as the
+variants do, with `PROC` and `FUNC` equal because their field lists are.
+The same six sizes appear in the same order in 1.3.
+
+Note the hole: the run is 69, 70, 71, **73**, 74, 75. Global 72 is
+declared and *never referenced on either disk* — no `LDO`, `SRO` or `LAO`
+touches it. It is the one word Apple inserted into this stretch, and the
+binary cannot say what for. (1.3's is at 75, by the same +3 shift.)
+
+### 39c. The lex stack, out of `BLOCK`
+
+`PASCALCO.24` is `block.text` line for line, which places four more:
+
+```
+80  MARKP     the compiler's only CSP 32 MARK
+81  TOS       RELEASE(TOS^.DMARKP); TOS := TOS^.PREVLEXSTACKP
+              = LDO 81; INC 8; CSP 33 RELEASE; LDO 81; IND 10; SRO 81
+82  GLEV      one of only three globals that index DISPLAY -- TOP, DISX, GLEV,
+              which is what "GLOBAL LEVEL OF DISPLAY" means
+83  NEWBLOCK  BLOCK's opening `NEWBLOCK := true; if not NEWBLOCK then`
+```
+
+### 39d. The disk buffer
+
+`compinit.text` 258 reads `SEG := 1; NEXTSEG := 10; CURBLK := 1; CURBYTE
+:= 0; LSEPPROC := FALSE;`. Apple's `COMPINIT.9` has `SRO 85` (`NEXTSEG`)
+immediately followed by `SLDC 1; SRO 967; SLDC 0; SRO 968` — so **967 =
+`CURBLK`, 968 = `CURBYTE`**, and 969 is `DISKBUF`, whose byte index is
+compared against 512 and whose address goes to `FBLOCKIO` and `MOVELEFT`.
+They sit at drift +288, past the file-window block.
+
+### 39e. Three names that are ours
+
+**41 = `INTRINSIC`.** It stands in II.0's `SEPPROC` slot and inherits its
+uses — the `SEGKIND` choice in `UNITPART`, the `LINKERREF` guard in
+`ROUTINE` and `WRITELINKERINFO`, cleared beside `INMODULE` at the end of
+the unit — but Apple drives it from a different keyword. `UNITPART.3`
+compares the scanned identifier against the literal `'INTRINSI'`, which
+is Apple's `UNIT name; INTRINSIC CODE n DATA m`, not II.0's `SEPARATE`.
+The spelling is Apple's word, read off the literal; that it names a
+*variable* is ours.
+
+**84 = `DATASEG`.** Apple-only, and the one insertion between `NEWBLOCK`
+and `NEXTSEG`. The `DATA` clause of that same declaration reads a constant
+into it, raises error 203 unless it is in `0..31` (the test is against a
+two-word set of all ones), defaults it to `SEG + 1`, and then does
+`SEGMAP[DATASEG] := SEGSLOT`. `SEG` is the intrinsic unit's code segment;
+this is its data segment. `SEGMAP` — finding 38's nibble array — is
+indexed by it, which is what makes it a segment number rather than a slot.
+
+**62 = `RESIDENT`, and the vendor's manual settles it.** `COMPOPTI.1`
+switches on the option letter with one `XJP` over `'C'..'V'`, and the `R`
+arm is
+
+```
+if (SW = '+') or (SW = '-') then RANGECHECK := (SW = '+') else OPTLIST
+```
+
+— an option letter with *two* forms. The *Language Reference* lists both:
+
+> `$R+ $R-` … Range checking on/off
+> `$R unit name or $R segment number` … Load segment
+
+and describes the second:
+
+> This option forces the code of a specified UNIT or SEGMENT procedure to
+> be kept in memory, for as long as the procedure that contains the option
+> is active … **The resident option must immediately follow the BEGIN that
+> starts the procedure body** … the "Resident" option can be applied to
+> more than one segment, by separating the names of segments with commas,
+> as in `(*$R ALPHA,BETA,GAMMA*)`
+
+Every clause of that is in the binary. `OPTLIST` loops taking identifiers
+*and* integer constants, because the manual allows a unit name or a
+segment number. `PASCALCO.24 BLOCK` and `UNITPART.4 UNITBODY` set global
+62 to `NIL`, once per body. And `BODY1` reads it at the very top of the
+body — where the manual says the option must appear — emitting two `NOP`s
+and a label to reserve the patch site when the list is non-empty.
+
+The 1.1 *Update* pamphlet then confirms the reading from the other side,
+listing among the bugs 1.2 fixed: *"A regular unit using `(*$R segname*)`
+or `(*$R unitname*)` was not linked properly"*, and *"If the Compiler
+Resident option (`$R`) was done on an intrinsic unit which has a data
+segment, the code segment was loaded before the data segment"* — which is
+this global and `DATASEG` in one sentence.
+
+### 39f. Where the map stands
+
+**1.1: 129 of the 133 touched globals are named.** The four that are not
+are the file-window buffers at 835, 886, 926 and 966, which are section
+16's open question about the file-variable block layout, not a naming
+problem.
+
+On the II.0 side the account is complete: of 118 variables, 111 land on an
+Apple name, and every one of the seven that does not is explained —
+`GATTR` became five separately addressed fields (finding 31),
+`DLINKERINFO` and `CLINKERINFO` were merged into `LINKINFO` (finding 36c),
+`PFNUMOF` was deleted (finding 38), and `STARTINGUP`, `SEPPROC` and
+`NOSWAP` are the three booleans Apple dropped, with `SWAPMORE`,
+`SWAPPING` and `NOLOAD` occupying that space.
+
+1.3 has eight unnamed: the four window buffers, one new scalar at 31, and
+three new words at 1355–1357 past `DISKBUF`. Those belong to task 10.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

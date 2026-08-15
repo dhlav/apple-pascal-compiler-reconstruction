@@ -43,7 +43,18 @@ Four claims, in the order the VAR block reaches them.
     the order II.0's two declarations allocate them backwards. That is the
     check that could have failed and did not.
 
-Finding 38.
+The rest of the probe is finding 39, which fills the stretches *between*
+the matched runs. Each name there was placed by the drift column -- a gap
+with a verified name at each end and the same word count as II.0 has names
+inside it can be filled only one way -- and what is checked here is the
+behaviour instead, so the two arguments stay independent. `ENTUNDECL`'s
+six `NEW`s and the record size each asks for; `BLOCK`'s lex stack;
+`COMPINIT`'s `CURBLK := 1; CURBYTE := 0`; `INSYMBOL`'s opening three
+instructions; the `INTRINSIC`/`DATA` literals `UNITDECLARATION` compares
+against; and the `$R` arm of the option switch, which the manual says
+carries both range checking and the resident-segment list.
+
+Findings 38 and 39.
 """
 import sys
 from pathlib import Path
@@ -325,6 +336,245 @@ def main() -> int:
             bad.append(f"{ver}: USEFILE is assigned {sorted(stored)}; II.0's "
                        f"UNITFILE has two enumerators and Apple's needs "
                        f"exactly three")
+
+        # --- finding 39: the stretches between the matched runs -----------
+        #
+        # Each name below was placed in a gap the drift column bounds on
+        # both sides. What is checked here is the behaviour instead, so the
+        # two arguments stay independent.
+        for n in ("ID", "DISX", "GETSTMTLEV", "PRTERR", "MARKP", "TOS",
+                  "NEWBLOCK", "SCONST", "STRGCSTIC", "SMALLESTSPACE",
+                  "LOWTIME", "CURBLK", "CURBYTE", "DISKBUF", "OUTERBLOCK",
+                  "UTYPPTR", "UCSTPTR", "UVARPTR", "UFLDPTR", "UPRCPTR",
+                  "UFCTPTR", "INTRINSIC", "DATASEG"):
+            if n not in where:
+                bad.append(f"{ver}: names.py has no global called {n}")
+        if any(n not in where for n in ("ID", "MARKP", "UTYPPTR")):
+            continue
+
+        # ENTUNDECL NEWs the six undeclared-id pointers in one run, and the
+        # size it asks for is the record variant, which names each one.
+        news, csps, memavail = [], {}, set()
+        for sname, num, st in streams(cf):
+            for k in range(len(st) - 2):
+                a, c, z = st[k:k + 3]
+                if (a.mnemonic == "LAO" and c.mnemonic in ("SLDC", "LDCI")
+                        and z.mnemonic == "CSP" and z.operands[0] == 1):
+                    news.append((f"{sname}.{num}", a.operands[0],
+                                 c.operands[0]))
+            for k in range(len(st) - 1):
+                a, z = st[k:k + 2]
+                if a.mnemonic == "LAO" and z.mnemonic == "CSP":
+                    csps.setdefault(z.operands[0], set()).add(a.operands[0])
+                if (a.mnemonic == "CSP" and a.operands[0] == 40
+                        and z.mnemonic == "SRO"):
+                    memavail.add(z.operands[0])
+
+        want_new = [("UTYPPTR", 9), ("UCSTPTR", 10), ("UVARPTR", 11),
+                    ("UFLDPTR", 13), ("UPRCPTR", 18), ("UFCTPTR", 18)]
+        undecl = {where[n] for n, _ in want_new}
+        undecl_new = [(p, g, s) for p, g, s in news if g in undecl]
+        checked += 1
+        if len(undecl_new) != 6 or len({p for p, _g, _s in undecl_new}) != 1:
+            bad.append(f"{ver}: the six undeclared-id pointers are NEWed "
+                       f"{len(undecl_new)} times, from "
+                       f"{sorted({p for p, _g, _s in undecl_new})} -- ENTUNDECL "
+                       f"does each exactly once")
+        else:
+            got = [(g, s) for _p, g, s in undecl_new]
+            if got != [(where[n], s) for n, s in want_new]:
+                bad.append(
+                    f"{ver}: ENTUNDECL NEWs "
+                    + ", ".join(f"{GLOBALS[ver].get(g, g)}={s}"
+                                for g, s in got)
+                    + " -- II.0's order and record sizes are "
+                    + ", ".join(f"{n}={s}" for n, s in want_new))
+
+        # OUTERBLOCK is a PROC record, the largest variant, like UPRCPTR.
+        checked += 1
+        ob = [s for _p, g, s in news if g == where["OUTERBLOCK"]]
+        if ob != [18]:
+            bad.append(f"{ver}: OUTERBLOCK is NEWed as {ob} words, not the "
+                       f"18 a PROC record takes")
+        checked += 1
+        sc = [s for _p, g, s in news if g == where["SCONST"]]
+        if sc != [130]:
+            bad.append(f"{ver}: SCONST is NEWed as {sc}, not 130 words")
+
+        # MARKP is the compiler's only MARK; LOWTIME its only TIME;
+        # SMALLESTSPACE its only MEMAVAIL.
+        checked += 1
+        if csps.get(32) != {where["MARKP"]}:
+            bad.append(f"{ver}: CSP 32 MARK is given "
+                       f"{sorted(csps.get(32, []))}, not MARKP "
+                       f"({where['MARKP']}) alone")
+        checked += 1
+        if where["LOWTIME"] not in csps.get(9, set()):
+            bad.append(f"{ver}: LOWTIME is not passed to CSP 9 TIME")
+        checked += 1
+        if memavail != {where["SMALLESTSPACE"]}:
+            bad.append(f"{ver}: CSP 40 MEMAVAIL is stored into "
+                       f"{sorted(memavail)}, not SMALLESTSPACE alone")
+
+        # Fixed instruction shapes, each one a line of II.0 source.
+        shapes = {
+            # INSYMBOL: if GETSTMTLEV then
+            #             begin BEGSTMTLEV := STMTLEV; GETSTMTLEV := false end
+            "GETSTMTLEV": [("LDO", where["GETSTMTLEV"]), ("FJP", None),
+                           ("LDO", where["STMTLEV"]),
+                           ("SRO", where["BEGSTMTLEV"]), ("SLDC", 0),
+                           ("SRO", where["GETSTMTLEV"])],
+            # SEARCHID: for DISX := TOP downto 0 do LCP := DISPLAY[DISX].FNAME
+            "DISX": [("SLDO", where["TOP"]), ("SRO", where["DISX"])],
+            # BLOCK: RELEASE(TOS^.DMARKP); TOS := TOS^.PREVLEXSTACKP
+            "TOS": [("LDO", where["TOS"]), ("IND", 10),
+                    ("SRO", where["TOS"])],
+            # COMPINIT: CURBLK := 1; CURBYTE := 0
+            "CURBLK": [("SLDC", 1), ("SRO", where["CURBLK"]), ("SLDC", 0),
+                       ("SRO", where["CURBYTE"])],
+        }
+        found = {k: False for k in shapes}
+        for _s, _n, st in streams(cf):
+            for k, _ins in enumerate(st):
+                for key, want in shapes.items():
+                    seq = st[k:k + len(want)]
+                    if len(seq) != len(want):
+                        continue
+                    if all(i.mnemonic == m
+                           and (o is None or i.operands[:1] == [o])
+                           for i, (m, o) in zip(seq, want)):
+                        found[key] = True
+        for key, ok in found.items():
+            checked += 1
+            if not ok:
+                bad.append(f"{ver}: the instruction sequence that names "
+                           f"{key} is not in the binary")
+
+        # DISPLAY[DISX] is indexed somewhere, and DISX is the only global
+        # that indexes DISPLAY.
+        indexers = set()
+        for _s, _n, st in streams(cf):
+            for k, ins in enumerate(st):
+                if ins.mnemonic == "LAO" and ins.operands[0] == where["DISPLAY"]:
+                    nxt = st[k + 1]
+                    if nxt.mnemonic in ("LDO", "SLDO"):
+                        indexers.add(nxt.operands[0])
+        checked += 1
+        want_idx = {where["DISX"], where["TOP"], where["GLEV"]}
+        if indexers != want_idx:
+            bad.append(f"{ver}: DISPLAY is indexed by globals "
+                       f"{sorted(indexers)}, not by exactly TOP, DISX and "
+                       f"GLEV {sorted(want_idx)}")
+
+        # The four scanner globals are consecutive and in the order
+        # compglbls.text says IDSEARCH requires, with ID four words wide.
+        checked += 1
+        scan = [where[n] for n in ("SYMCURSOR", "SY", "OP", "ID")]
+        if scan != list(range(scan[0], scan[0] + 4)):
+            bad.append(f"{ver}: SYMCURSOR, SY, OP, ID are at {scan}, not the "
+                       f"four consecutive words IDSEARCH needs")
+        checked += 1
+        after = [o for o in touched if o > where["ID"]]
+        if after and after[0] - where["ID"] != 4:
+            bad.append(f"{ver}: ID runs {after[0] - where['ID']} words before "
+                       f"the next global, not the 4 of an ALPHA")
+
+        # UNITDECLARATION reads `INTRINSIC ... DATA n`, and those two words
+        # are what it sets.
+        up3 = None
+        for sname, num, st in streams(cf):
+            if sname == "UNITPART" and num == 3:
+                up3 = st
+        checked += 1
+        if up3 is None:
+            bad.append(f"{ver}: no UNITPART.3 to check")
+        else:
+            lits = {o for i in up3 if i.mnemonic in ("LPA", "LSA")
+                    for o in i.operands if isinstance(o, bytes)}
+            wrote = {i.operands[0] for i in up3 if i.mnemonic == "SRO"}
+            for lit in (b"INTRINSI", b"DATA    "):
+                if lit not in lits:
+                    bad.append(f"{ver}: UNITPART.3 does not compare an "
+                               f"identifier against {lit!r}")
+            for n in ("INTRINSIC", "DATASEG"):
+                if where[n] not in wrote:
+                    bad.append(f"{ver}: UNITPART.3 does not write {n}")
+        # DATASEG indexes SEGMAP, which is what makes it a segment number.
+        checked += 1
+        segidx = set()
+        for _s, _n, st in streams(cf):
+            for k, ins in enumerate(st):
+                if ins.mnemonic == "LAO" and ins.operands[0] == where["SEGMAP"]:
+                    nxt = st[k + 1]
+                    if nxt.mnemonic in ("LDO", "SLDO"):
+                        segidx.add(nxt.operands[0])
+        if where["DATASEG"] not in segidx:
+            bad.append(f"{ver}: DATASEG never indexes SEGMAP; the globals "
+                       f"that do are {sorted(segidx)}")
+
+        # RESIDENT is the manual's second `$R`. COMPOPTI's option switch
+        # runs 'C'..'V', and the 'R' arm both stores RANGECHECK and, in its
+        # other branch, calls the procedure that builds the list.
+        checked += 1
+        opt1 = None
+        for sname, num, st in streams(cf):
+            if sname == "COMPOPTI" and num == 1:
+                opt1 = st
+        optlist = next((n for s, n, _st in streams(cf) if s == "COMPOPTI"
+                        and procname("COMPOPTI", n, ver) == "OPTLIST"), None)
+        if opt1 is None:
+            bad.append(f"{ver}: no COMPOPTI.1 to check")
+        else:
+            xjp = [i for i in opt1 if i.mnemonic == "XJP"]
+            if len(xjp) != 1 or xjp[0].operands[:2] != [ord("C"), ord("V")]:
+                bad.append(f"{ver}: COMPOPTI.1's option switch is "
+                           f"{[i.operands[:2] for i in xjp]}, not one XJP over "
+                           f"'C'..'V' ({ord('C')}..{ord('V')})")
+            checked += 1
+            arm = [k for k, i in enumerate(opt1)
+                   if i.mnemonic == "SRO" and i.operands[0] == where["RANGECHECK"]]
+            near = {i.operands[0] for k in arm for i in opt1[k:k + 6]
+                    if i.mnemonic in ("CLP", "CGP")}
+            if optlist is None or optlist not in near:
+                bad.append(f"{ver}: the $R arm stores RANGECHECK but its other "
+                           f"branch calls {sorted(near)}, not OPTLIST "
+                           f"({optlist})")
+
+        # Nothing outside COMPOPTI adds to the list; only the two routines
+        # that start a body clear it.
+        checked += 1
+        writers = {f"{s}.{procname(s, n, ver) or n}"
+                   for s, n, st in streams(cf)
+                   if any(i.mnemonic == "SRO"
+                          and i.operands[0] == where["RESIDENT"] for i in st)}
+        stray = {w for w in writers if not w.startswith("COMPOPTI.")
+                 and w not in ("PASCALCO.BLOCK", "UNITPART.UNITBODY")}
+        if stray:
+            bad.append(f"{ver}: RESIDENT is written by {sorted(stray)} as well "
+                       f"as by COMPOPTI and the two routines that begin a body")
+
+        # RESIDENT is a list head: built in COMPOPTI, cleared per body, and
+        # read only where the manual says the option must appear.
+        readers = {f"{s}.{procname(s, n, ver) or n}"
+                   for s, n, st in streams(cf)
+                   if any(i.mnemonic in ("LDO", "SLDO")
+                          and i.operands[0] == where["RESIDENT"] for i in st)}
+        checked += 1
+        if "BODY1.BODY1" not in readers:
+            bad.append(f"{ver}: RESIDENT is read by {sorted(readers)}, and "
+                       f"BODY1 -- the top of a procedure body -- is not "
+                       f"among them")
+
+        # The one word Apple inserted into the undeclared-id run is never
+        # referenced -- which is why it has no name.
+        checked += 1
+        gap = where["UVARPTR"] - where["UFLDPTR"]
+        if gap != 2:
+            bad.append(f"{ver}: UFLDPTR and UVARPTR are {gap} words apart, "
+                       f"not the 2 that leaves exactly one unused word")
+        elif (where["UFLDPTR"] + 1) in table:
+            bad.append(f"{ver}: global {where['UFLDPTR'] + 1} is touched "
+                       f"after all, so it is not the unused word")
 
         print(f"{ver}: DISPLAY 13 x 4 at {where['DISPLAY']}; SEGSUSED "
               f"SET OF 0..{w * 16 - 1} at {setg}; SEGTABLE 16 x 9 at "
