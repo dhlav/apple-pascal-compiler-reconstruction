@@ -4461,6 +4461,36 @@ all of them.
 
 ## 16. Open questions
 
+* **`SYSTEM.PASCAL`'s segment 0 does not parse, and this blocks the
+  calibration target of finding 49e.** Measured across all three operating
+  system builds now in `evidence/`:
+
+  | | slot 0 `PASCALSY` | claimed procs | resolvable | unnamed slot 15 |
+  |---|---|---|---|---|
+  | 1.1 `SYSTEM.PASCAL` | 3150 bytes | 57 | 28 | 4226 bytes |
+  | 1.3 `SYSTEM.PASCAL` | 3158 | 58 | 32 | 3360 |
+  | 1.3 `128K.PASCAL` | 1438 | 58 | 16 | 5080 |
+
+  The dictionary pointers past the resolvable ones are not garbage — they
+  descend monotonically like real self-relative pointers — but no base
+  makes them land inside any region of the file. Every build also carries
+  an **unnamed slot 15** with `SEGINFO` 0, and no self-consistent procedure
+  dictionary exists anywhere inside it.
+
+  The suggestive measurement: 1.3's `SYSTEM.PASCAL` and `128K.PASCAL` have
+  **the same slot 0 + slot 15 total, 6518 bytes**, split at different block
+  boundaries. That reads as one object divided by file layout rather than
+  two segments — but neither concatenation order produces a dictionary that
+  resolves, so it is not yet an answer.
+
+  `SETUP.CODE` is the control and it is clean: it has a `PASCALSY` segment,
+  it is also `{$U-}`, and it shows neither symptom. So this is specific to
+  the operating system proper, not to `{$U-}` or to the segment name.
+
+  Until it is solved, `SYSTEM.PASCAL` cannot be lifted, and finding 49's
+  calibration cannot be extended to the constructs the GOTOXY samples do
+  not use.
+
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
   named and aritied from interpreter source, and CSP 21/22 are the compiler
   phase dispatch. TommyGoog's `LIBMAP.CODE` cross-reference is no longer

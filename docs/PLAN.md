@@ -352,6 +352,14 @@ Done, and reproducible via `python tools/build_all.py`:
      whole project, because it turns every "the compiler emits X for Y"
      claim into something checkable.
 
+     **It is blocked on a reader problem first**, recorded in section 16 of
+     FINDINGS: `PASCALSY` claims 57 or 58 procedures and only 28, 32 or 16
+     of the dictionary pointers resolve, and every OS build carries an
+     unnamed slot 15 whose size complements slot 0's. Solve that before
+     anything else here. Note the source is the *generic* UCSD II.0 OS and
+     Apple's is not (finding 8), so this will be a close comparison rather
+     than the exact one the GOTOXY samples allowed.
+
      The other direction — source *in*, codefile out — is still the
      emulator's job.
    * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
