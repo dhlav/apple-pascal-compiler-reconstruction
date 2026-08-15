@@ -141,9 +141,15 @@ raises (finding 26c) and come out in exactly reverse order, all eight.
 it against Apple's globals: 111 of 118 matched, differing only by a drift
 that never decreases through the scalar region. The first sixteen words of
 Apple's global area are II.0's, in order, and **129 of the 133 globals the
-1.1 binary touches now have a name** — the four that do not are the file
-window buffers, which are a layout question rather than a naming one
-(finding 39).
+1.1 binary touches now have a name** (finding 39). The other four are not
+variables at all: `FILESIZE = 300`, and `BODY` emits
+`LDA 0,VADDR+FILESIZE` as a file's window argument whether the file has a
+window or not, so three of those addresses land in the middle of `LP` —
+which is a `TEXT`, 301 words, not the 40 of an untyped `FILE`. Correcting
+that makes the drift run flat at +27 from `PREVSYMBLK` to the end of the
+`VAR` block, and puts `CURBLK` exactly where the binary has it (finding
+43). An address the binary computes is not evidence that an object lives
+there.
 
 That alignment now predicts rather than describes. Reading `DECLARAT.10`
 against II.0's `USESDECLARATION` line for line named four more globals —

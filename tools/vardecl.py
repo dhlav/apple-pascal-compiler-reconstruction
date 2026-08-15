@@ -54,11 +54,17 @@ BY_NAME = {
     "SYSTEMLIB": (21,  "STRING[40] = 41 bytes [Apple: 509 - 488 = 21]"),
     "JTAB":      (25,  "ARRAY [0..MAXJTAB] OF INTEGER "
                        "[Apple: 535 - 510 = 25]"),
-    "REFFILE":   (40,  "a FILE variable = NILFILESIZE "
+    # compglbls.text:72 `FILESIZE = 300; NILFILESIZE = 40`, and
+    # decpart.a.text:508 sizes a file type as FILESIZE + the component's
+    # size, or NILFILESIZE when there is no `of`. So an untyped FILE is 40
+    # words and a TEXT -- FILESIZE + CHARSIZE, compinit.text:26 -- is 301.
+    # Finding 43.
+    "REFFILE":   (40,  "FILE, untyped = NILFILESIZE "
                        "[Apple: 626 - 586 = 40]"),
     "INCLFILE":  (40,  "likewise"),
     "LIBRARY":   (40,  "likewise"),
-    "LP":        (40,  "a TEXT file"),
+    "LP":        (301, "TEXT = FILESIZE + CHARSIZE "
+                       "[Apple: LP at 666, CURBLK at 967]"),
     "DISKBUF":   (256, "PACKED ARRAY [0..511] OF CHAR"),
     "REFLIST":   (1,   "a pointer to REFARRAY, not the array"),
 }

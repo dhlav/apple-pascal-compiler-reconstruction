@@ -128,9 +128,9 @@ that stretch; each step up is a variable Apple inserted.
   558 USEFILE            1    585    +27
   559 LIBRARY           40    586    +27
   599 INCLFILE          40    626    +27
-  639 LP                40    666    +27
-  679 CURBLK             1    967   +288
-  680 CURBYTE            1    968   +288
-  681 DISKBUF          256    969   +288
+  639 LP               301    666    +27
+  940 CURBLK             1    967    +27
+  941 CURBYTE            1    968    +27
+  942 DISKBUF          256    969    +27
 ------------------------------------------------------------
-118 II.0 variables; 111 of them are names we have recovered in Apple, in 13 runs of constant drift.
+118 II.0 variables; 111 of them are names we have recovered in Apple, in 12 runs of constant drift.

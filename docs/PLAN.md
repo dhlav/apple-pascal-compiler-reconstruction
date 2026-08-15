@@ -180,19 +180,22 @@ Done, and reproducible via `python tools/build_all.py`:
    is an independent confirmation of finding 33's rule.
 
    The unnamed stretches *between* the matched runs are done too (finding
-   39). **129 of 1.1's 133 touched globals now have a name**, and the four
-   that do not are the file-window buffers at 835, 886, 926 and 966 —
-   section 16's open question about the file-variable block layout, not a
-   naming problem. On the II.0 side the account is complete: 111 of 118
+   39). **129 of 1.1's 133 touched globals now have a name**, and finding
+   43 disposes of the other four: they are not objects. `FILESIZE = 300`,
+   `BODY` emits `LDA 0,VADDR+FILESIZE` as the window argument for every
+   file variable whether it has a window or not, and three of the four
+   land inside `LP` — a `TEXT`, and therefore 301 words, not the 40 of an
+   untyped `FILE`. With that corrected the drift runs flat at +27 from
+   `PREVSYMBLK` to the end of the block. On the II.0 side the account is complete: 111 of 118
    variables land on an Apple name and all seven that do not are explained
    (`GATTR` split into fields, the two linker flags merged, `PFNUMOF`
    deleted, and three booleans Apple dropped).
 
-   This task is therefore **done as a naming exercise**. What remains for a
-   reconstructed `VAR` block is the *types* — writing the declarations out
-   in the recovered order with the sizes the map gives, and settling the
-   file-variable layout so the four FIBs and their windows can be
-   declared.
+   This task is therefore **done**. Every touched global is accounted for,
+   and the sizes needed to declare them are known: II.0's own type sizes,
+   plus `NILFILESIZE = 40` and `FILESIZE = 300` for the file variables.
+   What remains is mechanical — writing the declarations out in the
+   recovered order with those types.
 
    Original notes follow. The map now knows
    sizes and shapes; the remaining step is to lay the objects out in

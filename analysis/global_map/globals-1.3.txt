@@ -157,6 +157,14 @@ VERIFIED BINARY FACT for the access counts; the object sizes marked
 
 File variables, from FINIT(f, window, recwords) call sites:
 
+  The window is always +300: BODY emits `LDA 0,VADDR` then
+  `LDA 0,VADDR+FILESIZE`, and compglbls.text has FILESIZE = 300
+  (NILFILESIZE = 40). It emits that for every file variable,
+  typed or not -- so only a TEXT or FILE OF T is really 300+
+  words and actually has a window there. The other three
+  addresses below are not objects at all; they land inside LP.
+  Finding 43.
+
   FIB at word  796, window buffer at word 1096 (+300), recwords=-2  [text file]   (PASCALCO.1)
   FIB at word  716, window buffer at word 1016 (+300), recwords=-1  [text file]   (PASCALCO.1)
   FIB at word  756, window buffer at word 1056 (+300), recwords=-1  [text file]   (PASCALCO.1)

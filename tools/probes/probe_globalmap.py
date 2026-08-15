@@ -586,6 +586,63 @@ def main() -> int:
             bad.append(f"{ver}: global {where['UFLDPTR'] + 1} is touched "
                        f"after all, so it is not the unused word")
 
+        # --- finding 43: the file variables, and their phantom windows ---
+        #
+        # compglbls.text:72 is `FILESIZE = 300; NILFILESIZE = 40`, and
+        # decpart.a.text:508 sizes a file type as FILESIZE + the
+        # component's size, or NILFILESIZE when there is no `of`. BODY
+        # emits `LDA 0,VADDR; LDA 0,VADDR+FILESIZE` for every file
+        # variable, so the window argument is a fixed +300 -- whether or
+        # not the variable is that big.
+        fin = []
+        for _s, _n, st in streams(cf):
+            for k in range(len(st) - 4):
+                a, b2, c, d, e2 = st[k:k + 5]
+                if (a.mnemonic == "LAO" and b2.mnemonic == "LAO"
+                        and c.mnemonic in ("SLDC", "LDCI")
+                        and d.mnemonic == "NGI" and e2.mnemonic == "CXP"
+                        and e2.operands == [0, 3]):
+                    fin.append((a.operands[0], b2.operands[0],
+                                -c.operands[0]))
+        checked += 1
+        if len(fin) != 4:
+            bad.append(f"{ver}: {len(fin)} FINIT sites, not the four file "
+                       f"variables II.0 declares")
+        checked += 1
+        offs = {win - fib for fib, win, _r in fin}
+        if offs != {300}:
+            bad.append(f"{ver}: FINIT's window argument sits {sorted(offs)} "
+                       f"words past the file variable, not the FILESIZE = "
+                       f"300 that bodypart.e.text's `VADDR+FILESIZE` gives")
+
+        # TEXT is FILESIZE + CHARSIZE = 301 words, and LP is the compiler's
+        # only one: CURBLK, the next variable declared, is exactly that far
+        # past it. The other three are untyped FILEs at NILFILESIZE = 40.
+        checked += 1
+        if where["CURBLK"] - where["LP"] != 301:
+            bad.append(f"{ver}: CURBLK is {where['CURBLK'] - where['LP']} "
+                       f"words past LP, not the 301 of a TEXT "
+                       f"(FILESIZE + CHARSIZE)")
+        checked += 1
+        for a, b2 in (("LIBRARY", "INCLFILE"), ("INCLFILE", "LP")):
+            if where[b2] - where[a] != 40:
+                bad.append(f"{ver}: {b2} is {where[b2] - where[a]} words "
+                           f"past {a}, not the NILFILESIZE = 40 of an "
+                           f"untyped FILE")
+
+        # So three of the four "window buffers" are phantoms: an untyped
+        # file has no window, and +300 from a 40-word variable lands
+        # wherever the layout happens to put it -- which here is inside LP.
+        checked += 1
+        inside = [w for fib, w, _r in fin
+                  if fib != where["LP"] and where["LP"] < w < where["LP"] + 301]
+        atlp = [w for fib, w, _r in fin if fib == where["LP"]]
+        if len(inside) != 3 or atlp != [where["LP"] + 300]:
+            bad.append(f"{ver}: of the four FINIT windows {sorted(w for _f, w, _r in fin)}, "
+                       f"{len(inside)} land inside LP and LP's own is "
+                       f"{atlp}; the ledger wants three and "
+                       f"{[where['LP'] + 300]}")
+
         # --- finding 40: what each object measures, for the 1.3 ledger ---
         def extent(name):
             """Words from `name` to the next global anybody touches."""
@@ -628,6 +685,9 @@ def main() -> int:
          "SEGTABLE's ninth word x 16 entries, plus SEGMAP"),
         ("REFLIST", "PREVSYMBLK", 1, "TEXTSTRT inserted"),
         ("PREVSYMBLK", "LIBRARY", 0, "nothing else inserted before LIBRARY"),
+        ("LIBRARY", "CURBLK", 0,
+         "nothing inserted between LIBRARY and the disk buffer -- which "
+         "only holds if LP is TEXT's 301 words and not a FILE's 40"),
     ]
     for a, b, step, why in ledger:
         checked += 1

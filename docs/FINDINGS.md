@@ -3696,20 +3696,124 @@ of 1.1's 133 touched globals (finding 39f). The remaining unnamed things
 are the four file-window buffers in each release, which are a layout
 question rather than a naming one.
 
+## 43. The file variables: three of the four "window buffers" are not objects at all
+
+*Confidence: VERIFIED SOURCE FACT for the two constants and the emission;
+VERIFIED BINARY FACT for the offsets it predicts.
+`tools/probes/probe_globalmap.py`, 106 checks.*
+
+Section 16 has carried this since finding 10: four FIBs at 535, 586, 626,
+666 with spacings 51, 40, 40, and four "window buffers" at 835, 886, 926,
+966 with *identical* internal spacing and a constant +300 between the two
+groups — "the parallel structure of the two groups is unexplained. Do not
+assume these are two arrays."
+
+They are not two arrays, and the second group is not a group. Two lines of
+II.0 source settle it.
+
+### 43a. `FILESIZE = 300`, and the window is emitted unconditionally
+
+`compglbls.text:72`:
+
+```pascal
+FILESIZE = 300; NILFILESIZE = 40;
+```
+
+`decpart.a.text:508`, sizing a file type:
+
+```pascal
+IF LSP1 <> NIL THEN LSP^.SIZE := FILESIZE + LSP1^.SIZE
+ELSE LSP^.SIZE := NILFILESIZE
+```
+
+So a `FILE OF T` is `300 + sizeof(T)` words and a bare `FILE` is **40**.
+`TEXT` is `FILESIZE + CHARSIZE` = **301** (`compinit.text:26`).
+
+And `bodypart.e.text:496`, the loop that initialises a block's file
+variables:
+
+```pascal
+LCP := DISPLAY[TOP].FFILE;
+WHILE LCP <> NIL DO
+  BEGIN
+    GEN2(50(*LDA*),0,VADDR);
+    GEN2(50(*LDA*),0,VADDR+FILESIZE);
+    ...
+    GEN2(77(*CXP*),0(*SYS*),3(*FINIT*));
+```
+
+The window argument is **`VADDR + FILESIZE`, a fixed +300 — emitted for
+every file variable, typed or not.** For an untyped `FILE` the variable is
+40 words, so `VADDR + 300` points 260 words past the end of it, into
+whatever the layout happens to have there. That is harmless: an untyped
+file is only ever used with `BLOCKREAD`/`BLOCKWRITE`, never `f^`, so the
+pointer is never dereferenced.
+
+### 43b. What that predicts, and what the binary has
+
+II.0 declares `REFFILE: FILE`, `INCLFILE, LIBRARY: FILE` — all untyped, 40
+words each — and `LP: TEXT`, 301. So:
+
+| | words | Apple 1.1 | window emitted | real? |
+|---|---|---|---|---|
+| `REFFILE` | 40 | 535..574 | 835 | no |
+| `LIBRARY` | 40 | 586..625 | 886 | no |
+| `INCLFILE` | 40 | 626..665 | 926 | no |
+| `LP` | **301** | **666..966** | **966** | **yes** — `LP`'s own last word |
+
+`LP` runs 666..966, and **835, 886 and 926 all fall inside it**. The
+"second group" is three addresses pointing into the middle of `LP`'s
+buffer plus one real window, and it mirrors the first group's spacing for
+the trivial reason that each entry is its FIB plus a constant.
+
+The check that could have failed: `CURBLK`, the next variable II.0
+declares after `LP`, must then sit at `666 + 301 = 967`. It does — in 1.1
+at 967 and in 1.3 at 1097, which is `796 + 301`.
+
+### 43c. The alignment now runs flat to the end of the block
+
+`tools/vardecl.py` had `LP` down as 40 words, "a TEXT file", which put
+II.0's `CURBLK` at 679 against Apple's 967 and reported a drift of **+288**
+for the last three variables — a step of +261 out of nowhere, which should
+have been the clue. With `LP` at 301 the tail reads:
+
+```
+  559 LIBRARY           40    586    +27
+  599 INCLFILE          40    626    +27
+  639 LP               301    666    +27
+  940 CURBLK             1    967    +27
+  941 CURBYTE            1    968    +27
+  942 DISKBUF          256    969    +27
+```
+
+**+27 from `PREVSYMBLK` all the way to the end of the `VAR` block**, 12
+drift runs instead of 13. Everything after finding 38's insertion is
+Apple keeping II.0's declaration order exactly.
+
+### 43d. The last of section 16's global-map questions
+
+That was the last unexplained thing in the global map. 133 offsets are
+touched in 1.1; 129 have names, and the four that do not are these
+addresses, three of which are not variables and the fourth of which is a
+word of `LP`. The same holds in 1.3.
+
+Worth keeping as a general caution: **an address the binary computes is
+not evidence that an object lives there.** The map builds its object list
+from touched offsets, and `LAO 835` looked exactly like a variable for as
+long as nobody asked what emitted it.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
   named and aritied from interpreter source, and CSP 21/22 are the compiler
   phase dispatch. TommyGoog's `LIBMAP.CODE` cross-reference is no longer
   needed for this.
-* **The file-variable block layout.** The four FIBs sit at words 535, 586,
-  626, 666 — spacings of 51, 40, 40 — and their window buffers at 835, 886,
-  926, 966, with *identical* internal spacing and a constant +300 offset
-  between the two groups. A UCSD `FIB` is a large variant record whose
-  size depends on the `FSOFTBUF` variant, so the non-uniform spacing is
-  plausible, but the exact layout has not been resolved and the parallel
-  structure of the two groups is unexplained. Do not assume these are two
-  arrays. (Which file is which *is* now known — finding 23d.)
+* ~~**The file-variable block layout.**~~ Resolved by finding 43, and the
+  premise was wrong: there is no second group. `FILESIZE = 300`, `BODY`
+  emits `LDA 0,VADDR+FILESIZE` as the window argument for *every* file
+  variable whether or not it has a window, and three of the four addresses
+  land inside `LP` — which is a `TEXT`, 301 words, running 666..966.
+  `CURBLK` at 967 confirms it.
 * One word of the 1222-word global area in 1.1 is unaccounted for.
 * ~~`$D1`-`$D6` are unidentified.~~ Resolved by finding 17: `STE`, `NOP`,
   `EFJ`, `NFJ`, `BPT`, `XIT`. Still none of them occur in SYSTEM.COMPILER.

@@ -94,7 +94,15 @@ for ver, fname in DISKS.items():
                  + (f" | {top}" if top else ""))
 
     if files:
-        L += ["", "File variables, from FINIT(f, window, recwords) call sites:", ""]
+        L += ["", "File variables, from FINIT(f, window, recwords) call sites:",
+              "",
+              "  The window is always +300: BODY emits `LDA 0,VADDR` then",
+              "  `LDA 0,VADDR+FILESIZE`, and compglbls.text has FILESIZE = 300",
+              "  (NILFILESIZE = 40). It emits that for every file variable,",
+              "  typed or not -- so only a TEXT or FILE OF T is really 300+",
+              "  words and actually has a window there. The other three",
+              "  addresses below are not objects at all; they land inside LP.",
+              "  Finding 43.", ""]
         for fib, win, rec, site in files:
             L.append(f"  FIB at word {fib:>4}, window buffer at word {win:>4} "
                      f"(+{win - fib}), recwords={rec}"
