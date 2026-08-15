@@ -39,14 +39,14 @@ procedure PASCALCO.2:ERROR(args 1 words);  { locals 92 words, lex 1 }
         FWRITELN(I2,3);
       end else begin
         if (LIST and (L1 <= 400)) then begin
-          CSP4(1, 2);
+          EXIT(1, 2);
         end;
       end;
       if (LINESTART = 0) then begin
         FWRITEBYTES(I2,3, SYMBUFP, SYMCURSOR, 1024);
       end else begin
-        L3 := ((CSP11(-((LINESTART-1)), 0, 13, SYMBUFP, (LINESTART-2), 0)+LINESTART)-1);
-        CSP2(SYMBUFP, L3, @L4, 0, (SYMCURSOR-L3));
+        L3 := ((SCAN(-((LINESTART-1)), 0, 13, SYMBUFP, (LINESTART-2), 0)+LINESTART)-1);
+        MOVELEFT(SYMBUFP, L3, @L4, 0, (SYMCURSOR-L3));
         FWRITEBYTES(I2,3, @L4, (SYMCURSOR-L3), 180);
       end;
       FWRITESTRING(I2,3, ' <<<<', 0);
@@ -66,11 +66,11 @@ L010D:
     end;
     if ((L2 = 69) or (L2 = 101)) then begin
       I2,11 := (SYMBLK-2);
-      CSP4(1, 1);
+      EXIT(1, 1);
     end;
     if ((L1 > 400) or (L2 = 27)) then begin
       I2,11 := 0;
-      CSP4(1, 1);
+      EXIT(1, 1);
     end;
     FWRITELN(I2,3);
     if NOISY then begin
@@ -85,7 +85,7 @@ procedure PASCALCO.3:GETNEXTPAGE(args 0 words);  { locals 1 words, lex 1 }
   LINESTART := 0;
   if INMODULE then begin
     if (ININTERFACE and not (USING)) then begin
-      CSP2(SYMBUFP, TEXTSTRT, CODEP, 0, 1024);
+      MOVELEFT(SYMBUFP, TEXTSTRT, CODEP, 0, 1024);
       PASCALCO.22:WRITECODE(1);
       TEXTSTRT := 0;
     end;
@@ -141,42 +141,42 @@ procedure PASCALCO.4:PRINTLINE(args 0 words);  { locals 53 words, lex 1 }
     L1 := 42;
   end;
   FWRITEINT(@LP, SCREENDOTS, 6);
-  CSP0();
+  IOCHECK();
   FWRITEINT(@LP, SEG, 4);
-  CSP0();
+  IOCHECK();
   FWRITEINT(@LP, CURPROC, 5);
-  CSP0();
+  IOCHECK();
   FWRITECHAR(@LP, L1, 0);
-  CSP0();
+  IOCHECK();
   FWRITECHAR(@LP, L2, 0);
-  CSP0();
+  IOCHECK();
   FWRITEINT(@LP, LINEINFO, 6);
-  CSP0();
+  IOCHECK();
   FWRITECHAR(@LP, 32, 0);
-  CSP0();
+  IOCHECK();
   L3 := (SYMCURSOR-LINESTART);
   if (L3 > 100) then begin
     L3 := 100;
   end;
-  CSP2(SYMBUFP, LINESTART, @L4, 0, L3);
+  MOVELEFT(SYMBUFP, LINESTART, @L4, 0, L3);
   if (@L4^[0] = 16) then begin
     if (@L4^[1] > 32) then begin
       FWRITECHAR(@LP, 32, (@L4^[1]-32));
-      CSP0();
+      IOCHECK();
     end;
     L3 := (L3-2);
-    CSP2(@L4, 2, @L4, 0, L3);
+    MOVELEFT(@L4, 2, @L4, 0, L3);
   end;
   @L4^[(L3-1)] := 13;
   FWRITEBYTES(@LP, @L4, L3, 100);
-  CSP0();
+  IOCHECK();
   if ((I2,11 = SYMBLK) and (I2,12 > LINESTART)) then begin
     FWRITESTRING(@LP, '>>>>>> Error # ', 0);
-    CSP0();
+    IOCHECK();
     FWRITEINT(@LP, I2,10, 0);
-    CSP0();
+    IOCHECK();
     FWRITELN(@LP);
-    CSP0();
+    IOCHECK();
   end;
 
 procedure PASCALCO.5:ENTERID(args 1 words);  { locals 3 words, lex 1 }
@@ -184,13 +184,13 @@ procedure PASCALCO.5:ENTERID(args 1 words);  { locals 3 words, lex 1 }
   if (L3 = nil) then begin
     @DISPLAY[TOP*4w]^ := L1;
   end else begin
-    L4 := CSP8(L3, @L2, L1);
+    L4 := TREESEARCH(L3, @L2, L1);
     while (L4 = 0) do begin
       PASCALCO.2:ERROR(101);
       if (L2^.f4 = nil) then begin
         L4 := 1;
       end else begin
-        L4 := CSP8(L2^.f4, @L2, L1);
+        L4 := TREESEARCH(L2^.f4, @L2, L1);
       end;
     end;
     if (L4 = 1) then begin
@@ -233,7 +233,7 @@ L04E0:
       end;
     end;
     65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122: begin
-      CSP7(@SYMCURSOR, SYMBUFP);
+      IDSEARCH(@SYMCURSOR, SYMBUFP);
     end;
     123: begin
       PASCALCO.26:COMMENTER(125);
@@ -345,7 +345,7 @@ L074C:
 
 procedure PASCALCO.7:SEARCHSECTION(args 2 words);  { locals 0 words, lex 1 }
   if (L2 <> nil) then begin
-    if (CSP8(L2, L1, @ID) = 0) then begin
+    if (TREESEARCH(L2, L1, @ID) = 0) then begin
     end else begin
       L1^ := nil;
     end;
@@ -360,7 +360,7 @@ L0792:
   if not ((DISX >= L4)) then goto L07D7;
   L3 := @DISPLAY[DISX*4w]^;
   if not ((L3 <> nil)) then goto L07CF;
-  if not ((CSP8(L3, @L3, @ID) = 0)) then goto L07CC;
+  if not ((TREESEARCH(L3, @L3, @ID) = 0)) then goto L07CC;
   if not ((L2 in 1)) then goto L07BE;
   goto L081E;
   goto L07CA;
@@ -466,8 +466,8 @@ procedure PASCALCO.12:CHECKEND(args 0 words);  { locals 0 words, lex 1 }
   if (SYMBUFP^[SYMCURSOR] = 16) then begin
     SYMCURSOR := (SYMCURSOR+2);
   end else begin
-    SYMCURSOR := (SYMCURSOR+CSP11(80, 1, 9, SYMBUFP, SYMCURSOR, 0));
-    SYMCURSOR := (SYMCURSOR+CSP11(80, 1, 32, SYMBUFP, SYMCURSOR, 0));
+    SYMCURSOR := (SYMCURSOR+SCAN(80, 1, 9, SYMBUFP, SYMCURSOR, 0));
+    SYMCURSOR := (SYMCURSOR+SCAN(80, 1, 32, SYMBUFP, SYMCURSOR, 0));
   end;
   if DP then begin
     LINEINFO := LC;
@@ -531,11 +531,11 @@ procedure PASCALCO.18:CONSTANT(args 6 words);  { locals 5 words, lex 1 }
       if (LGTH = 1) then begin
         L7 := CHARPTR;
       end else begin
-        CSP1(@L7, 9);
+        NEW(@L7, 9);
         move(L7, STRGPTR, 9 words);
         (L7+8)^ := LGTH;
         (L7+2)^ := nil;
-        CSP1(@L10, 130);
+        NEW(@L10, 130);
         move(L10, VAL, 130 words);
         VAL := L10;
       end;
@@ -564,7 +564,7 @@ procedure PASCALCO.18:CONSTANT(args 6 words);  { locals 5 words, lex 1 }
           end else begin
             if (L7 = REALPTR) then begin
               if (L9 = 2) then begin
-                CSP1(@L10, 3);
+                NEW(@L10, 3);
                 L10^ := 0;
                 (L10+1)^ := -((L1^+1)^<2w>)  {2 words};
                 L1^ := L10;
@@ -572,7 +572,7 @@ procedure PASCALCO.18:CONSTANT(args 6 words);  { locals 5 words, lex 1 }
             end else begin
               if PASCALCO.19:COMPTYPES(L7, LONGINTPTR) then begin
                 if (L9 = 2) then begin
-                  CSP1(@L10, 12);
+                  NEW(@L10, 12);
                   L10^ := 4;
                   (L10+3)[(1-1)]^ := -((L1^+3)[(1-1)]^);
                   L1^ := L10;
@@ -605,7 +605,7 @@ procedure PASCALCO.18:CONSTANT(args 6 words);  { locals 5 words, lex 1 }
               if (L9 = 2) then begin
                 (VAL+3)[(1-1)]^ := -((VAL+3)[(1-1)]^);
               end;
-              CSP1(@L7, 2);
+              NEW(@L7, 2);
               L7^ := PASCALCO.17:DECSIZE(LGTH);
               (L7+1)^ := 3;
               move(L1, @VAL, 1 words);
@@ -653,7 +653,7 @@ function PASCALCO.19:COMPTYPES(args 2 words) : <1 word result>;  { locals 6 word
               L9 := L10^.f2;
             end;
             if not (L7) then begin
-              CSP1(@L9, 3);
+              NEW(@L9, 3);
               L10 := L9;
               (L10+1)^ := L4^.f2;
               L10^ := L3^.f2;
@@ -717,7 +717,7 @@ procedure PASCALCO.21:GENWORD(args 1 words);  { locals 1 words, lex 1 }
   if IC then begin
     PASCALCO.20:GENBYTE(0);
   end;
-  CSP2(@L1, 0, CODEP, IC, 2);
+  MOVELEFT(@L1, 0, CODEP, IC, 2);
   if FLIPBYTES then begin
     L2 := CODEP^[IC];
     CODEP^[IC] := CODEP^[(IC+1)];
@@ -733,7 +733,7 @@ procedure PASCALCO.22:WRITECODE(args 1 words);  { locals 3 words, lex 1 }
     if (L2 > L3) then begin
       L2 := L3;
     end;
-    CSP2(CODEP, L4, @DISKBUF, CURBYTE, L2);
+    MOVELEFT(CODEP, L4, @DISKBUF, CURBYTE, L2);
     L4 := (L4+L2);
     CURBYTE := (CURBYTE+L2);
     if ((CURBYTE = 512) or L1) then begin
@@ -772,7 +772,7 @@ procedure PASCALCO.24:BLOCK(args 4 words);  { locals 2 words, lex 1 }
     if SWAPPING then begin
       UNITPART.1:UNITPART(?, ?, ?, adjust((@L1^<4w> + {9,50,51,52}),4));
       if (SY = 18) then begin
-        CSP4(1, 24);
+        EXIT(1, 24);
       end;
     end else begin
       PASCALCO.2:ERROR(408);
@@ -791,7 +791,7 @@ procedure PASCALCO.24:BLOCK(args 4 words);  { locals 2 words, lex 1 }
       if INMODULE then begin
         if (TOS^.f10^.f7 = OUTERBLOCK) then begin
           if (SY in {endsy,beginsy}) then begin
-            CSP4(1, 24);
+            EXIT(1, 24);
           end;
         end;
       end;
@@ -855,7 +855,7 @@ L0F82:
           TOP := L6^;
           LC := L6^.f5;
           CURPROC := L6^.f3;
-          CSP33((TOS+8));
+          RELEASE((TOS+8));
           TOS := TOS^.f10;
           NEWBLOCK := (SY in {procsy,funcsy,progsy});
         end;
@@ -875,7 +875,7 @@ L0F82:
   PASCALCO.23:FINISHSEG();
 
 procedure PASCALCO.25:COMPILE(args 0 words);  { locals 0 words, lex 1 }
-  CSP9(@LGTH, @LOWTIME);
+  TIME(@LGTH, @LOWTIME);
   PASCALCO.24:BLOCK(?, ?, ?, adjust(((@BLOCKBEGSYS^<4w> + @STATBEGSYS^<4w>) - {21}),4));
   FINISHUP.1:FINISHUP();
 
@@ -883,7 +883,7 @@ procedure PASCALCO.26:COMMENTER(args 1 words);  { locals 1 words, lex 2 }
   SYMCURSOR := (SYMCURSOR+1);
   if (SYMBUFP^[SYMCURSOR] = 36) then begin
     if not (COMPOPTI.1:COMPOPTI(L1)) then begin
-      CSP4(1, 26);
+      EXIT(1, 26);
     end;
   end;
   SYMCURSOR := (SYMCURSOR-1);
@@ -926,24 +926,24 @@ L1094:
   end else begin
     PASCALCO.29:HOLDROUT();
   end;
-  CSP22(15);
-  CSP22(14);
-  CSP22(13);
-  CSP22(12);
-  CSP22(11);
-  CSP22(19);
-  CSP22(9);
-  CSP22(8);
+  UNLOADSEGMENT(15);
+  UNLOADSEGMENT(14);
+  UNLOADSEGMENT(13);
+  UNLOADSEGMENT(12);
+  UNLOADSEGMENT(11);
+  UNLOADSEGMENT(19);
+  UNLOADSEGMENT(9);
+  UNLOADSEGMENT(8);
   goto L10D2;
 L10B8:
-  CSP21(8);
-  CSP21(9);
-  CSP21(19);
-  CSP21(11);
-  CSP21(12);
-  CSP21(13);
-  CSP21(14);
-  CSP21(15);
+  LOADSEGMENT(8);
+  LOADSEGMENT(9);
+  LOADSEGMENT(19);
+  LOADSEGMENT(11);
+  LOADSEGMENT(12);
+  LOADSEGMENT(13);
+  LOADSEGMENT(14);
+  LOADSEGMENT(15);
   goto L1094;
 L10D2:
 
@@ -951,10 +951,10 @@ procedure PASCALCO.29:HOLDROUT(args 0 words);  { locals 0 words, lex 2 }
   goto L107F;
 L1078:
   PASCALCO.25:COMPILE();
-  CSP22(10);
+  UNLOADSEGMENT(10);
   goto L1084;
 L107F:
-  CSP21(10);
+  LOADSEGMENT(10);
   goto L1078;
 L1084:
 
@@ -983,7 +983,7 @@ procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 259 words, lex 1 }
   (L259+2)^ := nil;
   (L259+3)^ := nil;
   (L259+1)^ := 0;
-  SMALLESTSPACE := CSP40();
+  SMALLESTSPACE := MEMAVAIL();
   PASCALCO.3:GETNEXTPAGE();
   PASCALCO.6:INSYMBOL();
   COMPINIT.2:ENTSTDTYPES();
@@ -1008,7 +1008,7 @@ procedure COMPINIT.1:COMPINIT(args 0 words);  { locals 259 words, lex 1 }
     LC := (LC+2);
     GLEV := 3;
     (@SEGTABLE[SEGSLOT*9w]+6)^ := SEG;
-    CSP1(@OUTERBLOCK, 18);
+    NEW(@OUTERBLOCK, 18);
     L259 := OUTERBLOCK;
     (L259+7)^ := nil;
     (L259+14)^ := LC;
@@ -1055,8 +1055,8 @@ L0BF7:
       PASCALCO.2:ERROR(14);
     end;
   end;
-  CSP32(@MARKP);
-  CSP1(@TOS, 11);
+  MARK(@MARKP);
+  NEW(@TOS, 11);
   L259 := TOS;
   (L259+10)^ := nil;
   (L259+6)^ := 18;
@@ -1069,46 +1069,46 @@ L0BF7:
   (L259+8)^ := MARKP;
 
 procedure COMPINIT.2:ENTSTDTYPES(args 0 words);  { locals 1 words, lex 2 }
-  CSP1(@INTPTR, 3);
+  NEW(@INTPTR, 3);
   L1 := INTPTR;
   L1^ := 1;
   (L1+1)^ := 0;
   (L1+2)^ := 0;
-  CSP1(@REALPTR, 3);
+  NEW(@REALPTR, 3);
   L1 := REALPTR;
   L1^ := 2;
   (L1+1)^ := 0;
   (L1+2)^ := 0;
-  CSP1(@LONGINTPTR, 2);
+  NEW(@LONGINTPTR, 2);
   L1 := LONGINTPTR;
   L1^ := PASCALCO.17:DECSIZE(((((16-1)*100) div 332)+1));
   (L1+1)^ := 3;
-  CSP1(@CHARPTR, 3);
+  NEW(@CHARPTR, 3);
   L1 := CHARPTR;
   L1^ := 1;
   (L1+1)^ := 0;
   (L1+2)^ := 0;
-  CSP1(@BOOLPTR, 4);
+  NEW(@BOOLPTR, 4);
   L1 := BOOLPTR;
   L1^ := 1;
   (L1+1)^ := 0;
   (L1+2)^ := 1;
-  CSP1(@NILPTR, 3);
+  NEW(@NILPTR, 3);
   L1 := NILPTR;
   L1^ := 1;
   (L1+1)^ := 2;
   (L1+2)^ := nil;
-  CSP1(@TEXTPTR, 3);
+  NEW(@TEXTPTR, 3);
   L1 := TEXTPTR;
   L1^ := (300+1);
   (L1+1)^ := 7;
   (L1+2)^ := CHARPTR;
-  CSP1(@INTRACTVPTR, 3);
+  NEW(@INTRACTVPTR, 3);
   L1 := INTRACTVPTR;
   L1^ := (300+1);
   (L1+1)^ := 7;
   (L1+2)^ := CHARPTR;
-  CSP1(@STRGPTR, 9);
+  NEW(@STRGPTR, 9);
   L1 := STRGPTR;
   (L1+1)^ := 5;
   L1^ := ((80+2) div 2);
@@ -1121,49 +1121,49 @@ procedure COMPINIT.2:ENTSTDTYPES(args 0 words);  { locals 1 words, lex 2 }
   (L1+8)^ := 80;
 
 procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'INTEGER ', 4 words);
   (L4+6)^ := INTPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'REAL    ', 4 words);
   (L4+6)^ := REALPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'CHAR    ', 4 words);
   (L4+6)^ := CHARPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'BOOLEAN ', 4 words);
   (L4+6)^ := BOOLPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'STRING  ', 4 words);
   (L4+6)^ := STRGPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'TEXT    ', 4 words);
   (L4+6)^ := TEXTPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 9);
+  NEW(@L2, 9);
   L4 := L2;
   move(L4, @'INTERACT', 4 words);
   (L4+6)^ := INTRACTVPTR;
   (L4+8)^ := 0;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@INPUTPTR, 11);
+  NEW(@INPUTPTR, 11);
   L4 := INPUTPTR;
   move(L4, @'INPUT   ', 4 words);
   (L4+6)^ := TEXTPTR;
@@ -1171,7 +1171,7 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
   (L4+9)^ := 0;
   (L4+10)^ := 2;
   PASCALCO.5:ENTERID(INPUTPTR);
-  CSP1(@OUTPUTPTR, 11);
+  NEW(@OUTPUTPTR, 11);
   L4 := OUTPUTPTR;
   move(L4, @'OUTPUT  ', 4 words);
   (L4+6)^ := TEXTPTR;
@@ -1179,7 +1179,7 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
   (L4+9)^ := 0;
   (L4+10)^ := 3;
   PASCALCO.5:ENTERID(OUTPUTPTR);
-  CSP1(@L2, 11);
+  NEW(@L2, 11);
   L4 := L2;
   move(L4, @'KEYBOARD', 4 words);
   (L4+6)^ := TEXTPTR;
@@ -1191,7 +1191,7 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
   L3 := 0;
   L4 := 1;
   while (L3 <= L4) do begin
-    CSP1(@L2, 10);
+    NEW(@L2, 10);
     L5 := L2;
     (L5+6)^ := BOOLPTR;
     if (L3 = 0) then begin
@@ -1207,7 +1207,7 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
     L3 := (L3+1);
   end;
   (BOOLPTR+3)^ := L2;
-  CSP1(@L2, 10);
+  NEW(@L2, 10);
   L4 := L2;
   move(L4, @'NIL     ', 4 words);
   (L4+6)^ := NILPTR;
@@ -1215,7 +1215,7 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
   (L4+9)^ := 0;
   (L4+8)^ := 1;
   PASCALCO.5:ENTERID(L2);
-  CSP1(@L2, 10);
+  NEW(@L2, 10);
   L4 := L2;
   move(L4, @'MAXINT  ', 4 words);
   (L4+6)^ := INTPTR;
@@ -1225,19 +1225,19 @@ procedure COMPINIT.3:ENTSTDNAMES(args 0 words);  { locals 5 words, lex 2 }
 
 procedure COMPINIT.4:ENTUNDECL(args 0 words);  { locals 5 words, lex 2 }
   move(@L1, @'        ', 4 words);
-  CSP1(@UTYPPTR, 9);
+  NEW(@UTYPPTR, 9);
   L5 := UTYPPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
   (L5+8)^ := 0;
-  CSP1(@UCSTPTR, 10);
+  NEW(@UCSTPTR, 10);
   L5 := UCSTPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
   (L5+7)^ := nil;
   (L5+9)^ := 0;
   (L5+8)^ := 1;
-  CSP1(@UVARPTR, 11);
+  NEW(@UVARPTR, 11);
   L5 := UVARPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
@@ -1245,14 +1245,14 @@ procedure COMPINIT.4:ENTUNDECL(args 0 words);  { locals 5 words, lex 2 }
   (L5+9)^ := 0;
   (L5+10)^ := 0;
   (L5+8)^ := 3;
-  CSP1(@UFLDPTR, 13);
+  NEW(@UFLDPTR, 13);
   L5 := UFLDPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
   (L5+7)^ := nil;
   (L5+9)^ := 0;
   (L5+8)^ := 4;
-  CSP1(@UPRCPTR, 18);
+  NEW(@UPRCPTR, 18);
   L5 := UPRCPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
@@ -1267,7 +1267,7 @@ procedure COMPINIT.4:ENTUNDECL(args 0 words);  { locals 5 words, lex 2 }
   (L5+8)^ := 5;
   (L5+9)^ := 1;
   (L5+13)^ := 0;
-  CSP1(@UFCTPTR, 18);
+  NEW(@UFCTPTR, 18);
   L5 := UFCTPTR;
   move(L5, @L1, 4 words);
   (L5+6)^ := nil;
@@ -1286,14 +1286,14 @@ procedure COMPINIT.4:ENTUNDECL(args 0 words);  { locals 5 words, lex 2 }
 procedure COMPINIT.5:PUTNAMES(args 1 words);  { locals 41 words, lex 2 }
   @L2^ := L1  {string};
   if ((I1,258+@L2^[0]) < 511) then begin
-    CSP2(@L2, 1, @I1,1, I1,258, @L2^[0]);
+    MOVELEFT(@L2, 1, @I1,1, I1,258, @L2^[0]);
   end;
   I1,258 := (I1,258+@L2^[0]);
 
 procedure COMPINIT.6:NEXTNAME(args 1 words);  { locals 1 words, lex 2 }
   move(L1, @'        ', 4 words);
-  L2 := CSP11(8, 0, 46, @I1,1, I1,257, 0);
-  CSP2(@I1,1, I1,257, L1, 0, L2);
+  L2 := SCAN(8, 0, 46, @I1,1, I1,257, 0);
+  MOVELEFT(@I1,1, I1,257, L1, 0, L2);
   I1,257 := ((I1,257+L2)+1);
 
 procedure COMPINIT.7:ENTSPCPROCS(args 0 words);  { locals 8 words, lex 2 }
@@ -1314,9 +1314,9 @@ procedure COMPINIT.7:ENTSPCPROCS(args 0 words);  { locals 8 words, lex 2 }
 L067E:
       L3 := (L2 in {5,6,7,8,9,10,11,15,16,19,20,25,36,37,38,39,41});
       if L3 then begin
-        CSP1(@L1, 11);
+        NEW(@L1, 11);
       end else begin
-        CSP1(@L1, 11);
+        NEW(@L1, 11);
       end;
       L8 := L1;
       move(L8, @L4, 4 words);
@@ -1346,7 +1346,7 @@ procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
     case L5 of   { table 1..13 }
       1: begin
         L3 := BOOLPTR;
-        CSP1(@L1, 11);
+        NEW(@L1, 11);
         L11 := L1;
         (L11+6)^ := INTPTR;
         (L11+8)^ := 3;
@@ -1359,15 +1359,15 @@ procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
       end;
       4: begin
         L3 := INTPTR;
-        CSP1(@L1, 11);
+        NEW(@L1, 11);
         L11 := L1;
         (L11+6)^ := REALPTR;
         (L11+8)^ := 3;
       end;
       5: begin
         L3 := nil;
-        CSP1(@L1, 11);
-        CSP1(@L4, 3);
+        NEW(@L1, 11);
+        NEW(@L4, 3);
         L11 := L4;
         L11^ := 1;
         (L11+1)^ := 2;
@@ -1382,7 +1382,7 @@ procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
       end;
       8: begin
         L3 := BOOLPTR;
-        CSP1(@L1, 11);
+        NEW(@L1, 11);
         L11 := L1;
         (L11+6)^ := INTPTR;
         (L11+8)^ := 3;
@@ -1403,9 +1403,9 @@ procedure COMPINIT.8:ENTSTDPROCS(args 0 words);  { locals 11 words, lex 2 }
     end;
     { paths disagree on stack depth here }
     if L6 then begin
-      CSP1(@L2, 11);
+      NEW(@L2, 11);
     end else begin
-      CSP1(@L2, 11);
+      NEW(@L2, 11);
     end;
     L11 := L2;
     move(L11, @L7, 4 words);
@@ -1431,7 +1431,7 @@ L0882:
   end;
 
 procedure COMPINIT.9:INITSCALARS(args 0 words);  { locals 2 words, lex 2 }
-  if ((CSP40() < 0) or (CSP40() > 9950)) then begin
+  if ((MEMAVAIL() < 0) or (MEMAVAIL() > 9950)) then begin
     SWAPPING := 0;
   end else begin
     SWAPPING := 1;
@@ -1468,8 +1468,8 @@ procedure COMPINIT.9:INITSCALARS(args 0 words);  { locals 2 words, lex 2 }
   NEXTJTAB := 1;
   NEXTPROC := 2;
   CURPROC := 1;
-  CSP1(@SCONST, 130);
-  CSP1(@SYMBUFP, 512);
+  NEW(@SCONST, 130);
+  NEW(@SYMBUFP, 512);
   CODEP := nil;
   LINKINFO := 0;
   INTRINSIC := 0;
@@ -1519,7 +1519,7 @@ SEGMENT 8 DECLARAT
 
 procedure DECLARAT.1:DECLARATIONPART(args 4 words);  { locals 11 words, lex 1 }
   if NOISY then begin
-    CSP6(3, @L7[-(1600)], 0, 35, 0, 0);
+    UNITWRITE(3, @L7[-(1600)], 0, 35, 0, 0);
   end;
   @L1^<4w>^ := adjust((10 + 1),4)  {4 words};
   @L1^<4w>^ := adjust((1 + 1),4)  {4 words};
@@ -1531,7 +1531,7 @@ procedure DECLARAT.1:DECLARATIONPART(args 4 words);  { locals 11 words, lex 1 }
       DECLARAT.10:USESDECLARATION();
     end;
     if (CODEP = nil) then begin
-      CSP1(@CODEP, 650);
+      NEW(@CODEP, 650);
     end;
     if (SY = 27) then begin
       if (INMODULE and ININTERFACE) then begin
@@ -1626,9 +1626,9 @@ procedure DECLARAT.3:TYP(args 6 words);  { locals 13 words, lex 2 }
           L8 := nil;
           repeat
             if L16 then begin
-              CSP1(@L9, 8);
+              NEW(@L9, 8);
             end else begin
-              CSP1(@L9, 5);
+              NEW(@L9, 5);
             end;
             L19 := L9;
             (L19+3)^ := L8;
@@ -1723,7 +1723,7 @@ procedure DECLARAT.3:TYP(args 6 words);  { locals 13 words, lex 2 }
             L18 := 0;
             DECLARAT.6:FIELDLIST(?, @L3^<4w>, (8 - 1), adjust((512 + 1),4), @L8);
             L12 := (L12+(L18 > 0));
-            CSP1(@L9, 4);
+            NEW(@L9, 4);
             L19 := L9;
             (L19+2)^ := @DISPLAY[TOP*4w]^;
             (L19+3)^ := L8;
@@ -1755,7 +1755,7 @@ procedure DECLARAT.3:TYP(args 6 words);  { locals 13 words, lex 2 }
                   end;
                 end;
               end;
-              CSP1(@L9, 3);
+              NEW(@L9, 3);
               L19 := L9;
               (L19+2)^ := L8;
               (L19+1)^ := 4;
@@ -1777,7 +1777,7 @@ procedure DECLARAT.3:TYP(args 6 words);  { locals 13 words, lex 2 }
                   end;
                 end;
                 PASCALCO.6:INSYMBOL();
-                CSP1(@L9, 3);
+                NEW(@L9, 3);
                 L19 := L9;
                 (L19+1)^ := 7;
                 (L19+2)^ := nil;
@@ -1824,7 +1824,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
       while (@DISPLAY[TOP*4w]^.f1 <> 0) do begin
         TOP := (TOP-1);
       end;
-      CSP1(@L8, 4);
+      NEW(@L8, 4);
       L18 := L8;
       L18^ := 1;
       (L18+1)^ := 0;
@@ -1834,7 +1834,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
       repeat
         PASCALCO.6:INSYMBOL();
         if (SY = 0) then begin
-          CSP1(@L10, 10);
+          NEW(@L10, 10);
           L18 := L10;
           move(L18, @ID, 4 words);
           (L18+6)^ := L8;
@@ -1862,7 +1862,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
         PASCALCO.8:SEARCHID(adjust(1,1), @L10);
         PASCALCO.6:INSYMBOL();
         if (L10^.f8 = 1) then begin
-          CSP1(@L8, 5);
+          NEW(@L8, 5);
           L18 := L8;
           L19 := L10;
           (L18+2)^ := L19^.f6;
@@ -1894,7 +1894,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
                 L13 := 80;
               end;
               if (L13 <> 80) then begin
-                CSP1(@L8, 9);
+                NEW(@L8, 9);
                 move(L8, STRGPTR, 9 words);
                 L18 := L8;
                 (L18+8)^ := L13;
@@ -1912,7 +1912,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
             if (L8 = INTPTR) then begin
               if (SY = 15) then begin
                 PASCALCO.6:INSYMBOL();
-                CSP1(@L8, 2);
+                NEW(@L8, 2);
                 move(L8, LONGINTPTR, 9 words);
                 PASCALCO.18:CONSTANT(?, ?, 3, adjust((@L3^<4w> + {16}),4), @L7, @L13);
                 if (L7 = INTPTR) then begin
@@ -1947,7 +1947,7 @@ procedure DECLARAT.4:SIMPLETYPE(args 6 words);  { locals 13 words, lex 3 }
           end;
         end;
       end else begin
-        CSP1(@L8, 5);
+        NEW(@L8, 5);
         (L8+1)^ := 1;
         PASCALCO.18:CONSTANT(?, ?, @L3^<4w>, adjust((4 + 1),4), @L7, @L13);
         if PASCALCO.16:STRGTYPE(L7) then begin
@@ -2040,9 +2040,9 @@ L077F:
   repeat
     if (SY = 0) then begin
       if I1,16 then begin
-        CSP1(@L10, 13);
+        NEW(@L10, 13);
       end else begin
-        CSP1(@L10, 11);
+        NEW(@L10, 11);
       end;
       L26 := L10;
       move(L26, @ID, 4 words);
@@ -2147,7 +2147,7 @@ procedure DECLARAT.7:ALLOCATE(args 1 words);  { locals 2 words, lex 4 }
   end;
 
 procedure DECLARAT.8:VARIANTLIST(args 0 words);  { locals 2 words, lex 4 }
-  CSP1(@I1,15, 4);
+  NEW(@I1,15, 4);
   L2 := I1,15;
   (L2+2)^ := nil;
   (L2+3)^ := nil;
@@ -2156,9 +2156,9 @@ procedure DECLARAT.8:VARIANTLIST(args 0 words);  { locals 2 words, lex 4 }
   PASCALCO.6:INSYMBOL();
   if (SY = 0) then begin
     if I2,16 then begin
-      CSP1(@I1,10, 13);
+      NEW(@I1,10, 13);
     end else begin
-      CSP1(@I1,10, 11);
+      NEW(@I1,10, 11);
     end;
     L2 := I1,10;
     (L2+6)^ := nil;
@@ -2227,7 +2227,7 @@ procedure DECLARAT.8:VARIANTLIST(args 0 words);  { locals 2 words, lex 4 }
           PASCALCO.2:ERROR(111);
         end;
       end;
-      CSP1(@I1,12, 5);
+      NEW(@I1,12, 5);
       L2 := I1,12;
       (L2+3)^ := I1,14;
       (L2+2)^ := I1,13;
@@ -2287,7 +2287,7 @@ procedure DECLARAT.8:VARIANTLIST(args 0 words);  { locals 2 words, lex 4 }
   (I1,15+3)^ := I1,14;
 
 procedure DECLARAT.9:POINTERTYPE(args 0 words);  { locals 1 words, lex 3 }
-  CSP1(@I1,9, 3);
+  NEW(@I1,9, 3);
   I1,2^ := I1,9;
   L1 := I1,9;
   (L1+2)^ := nil;
@@ -2299,7 +2299,7 @@ procedure DECLARAT.9:POINTERTYPE(args 0 words);  { locals 1 words, lex 3 }
     PASCALCO.8:SEARCHID(adjust(1,1), @I1,11);
     PRTERR := 1;
     if (I1,11 = nil) then begin
-      CSP1(@I1,11, 9);
+      NEW(@I1,11, 9);
       L1 := I1,11;
       move(L1, @ID, 4 words);
       (L1+6)^ := I1,9;
@@ -2384,7 +2384,7 @@ procedure DECLARAT.11:ONEUNIT(args 1 words);  { locals 22 words, lex 3 }
     FWRITELN(I4,3);
     FWRITEBYTES(I4,3, @ID, 8, 8);
     FWRITESTRING(I4,3, ' [', 0);
-    FWRITEINT(I4,3, CSP40(), 5);
+    FWRITEINT(I4,3, MEMAVAIL(), 5);
     FWRITESTRING(I4,3, ' words]', 0);
     FWRITELN(I4,3);
     FWRITECHAR(I4,3, 60, 0);
@@ -2397,9 +2397,9 @@ procedure DECLARAT.11:ONEUNIT(args 1 words);  { locals 22 words, lex 3 }
   DECLARAT.12:GETTEXT(@L10);
   if L10 then begin
     if LSEPPROC then begin
-      CSP1(@L11, 14);
+      NEW(@L11, 14);
     end else begin
-      CSP1(@L11, 13);
+      NEW(@L11, 13);
     end;
     L23 := L11;
     move(L23, @L2, 4 words);
@@ -2495,7 +2495,7 @@ procedure DECLARAT.12:GETTEXT(args 1 words);  { locals 3 words, lex 4 }
       if (FBLOCKIO(@LIBRARY, @I2,2, 0, 1, 0, 1) <> 1) then begin
         FCLOSE(@LIBRARY, 0);
         FOPEN(?, ?, ?, @LIBRARY, '*SYSTEM.LIBRARY', 1, 0);
-        if (CSP34() <> 0) then begin
+        if (IORESULT() <> 0) then begin
           L1^ := 0;
         end else begin
           if (FBLOCKIO(@LIBRARY, @I2,2, 0, 1, 0, 1) <> 1) then begin
@@ -2616,7 +2616,7 @@ procedure DECLARAT.15:LABELDECLARATION(args 0 words);  { locals 4 words, lex 2 }
         end;
       end;
       if not (L2) then begin
-        CSP1(@L1, 3);
+        NEW(@L1, 3);
         L4 := L1;
         L4^ := VAL;
         (L4+2)^ := nil;
@@ -2645,7 +2645,7 @@ procedure DECLARAT.16:CONSTDECLARATION(args 0 words);  { locals 4 words, lex 2 }
     PASCALCO.14:SKIP(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
   end;
   while (SY = 0) do begin
-    CSP1(@L1, 10);
+    NEW(@L1, 10);
     L4 := L1;
     move(L4, @ID, 4 words);
     (L4+6)^ := nil;
@@ -2677,7 +2677,7 @@ procedure DECLARAT.17:TYPEDECLARATION(args 0 words);  { locals 6 words, lex 2 }
     PASCALCO.14:SKIP(?, ?, @I1,1^<4w>, adjust((1 + 1),4));
   end;
   while (SY = 0) do begin
-    CSP1(@L3, 9);
+    NEW(@L3, 9);
     L6 := L3;
     move(L6, @ID, 4 words);
     (L6+6)^ := nil;
@@ -2725,9 +2725,9 @@ L13C7:
 L13C7:
     if (SY = 0) then begin
       if INMODULE then begin
-        CSP1(@L3, 12);
+        NEW(@L3, 12);
       end else begin
-        CSP1(@L3, 11);
+        NEW(@L3, 11);
       end;
       L6 := L3;
       move(L6, @ID, 4 words);
@@ -2855,15 +2855,15 @@ procedure DECLARAT.19:PROCDECLARATION(args 2 words);  { locals 20 words, lex 2 }
     if not (L7) then begin
       if (L2 = 31) then begin
         if INMODULE then begin
-          CSP1(@L5, 19);
+          NEW(@L5, 19);
         end else begin
-          CSP1(@L5, 18);
+          NEW(@L5, 18);
         end;
       end else begin
         if INMODULE then begin
-          CSP1(@L5, 19);
+          NEW(@L5, 19);
         end else begin
-          CSP1(@L5, 18);
+          NEW(@L5, 18);
         end;
       end;
       L21 := L5;
@@ -3013,7 +3013,7 @@ procedure DECLARAT.19:PROCDECLARATION(args 2 words);  { locals 20 words, lex 2 }
     FWRITELN(I3,3);
     FWRITEBYTES(I3,3, L21, 8, 8);
     FWRITESTRING(I3,3, ' [', 0);
-    FWRITEINT(I3,3, CSP40(), 5);
+    FWRITEINT(I3,3, MEMAVAIL(), 5);
     FWRITESTRING(I3,3, ' words]', 0);
     FWRITELN(I3,3);
     FWRITECHAR(I3,3, 60, 0);
@@ -3058,7 +3058,7 @@ procedure DECLARAT.19:PROCDECLARATION(args 2 words);  { locals 20 words, lex 2 }
         end;
         NEWBLOCK := 1;
         I1,6 := 1;
-        CSP32(@L18);
+        MARK(@L18);
         L21 := L5;
         (L21+15)^ := 0;
         (L21+17)^ := 1;
@@ -3066,9 +3066,9 @@ procedure DECLARAT.19:PROCDECLARATION(args 2 words);  { locals 20 words, lex 2 }
         L16 := 3;
         L19 := L1;
         L20 := TOS;
-        CSP1(@TOS, 11);
+        NEW(@TOS, 11);
         move(TOS, @L10, 11 words);
-        CSP4(8, 19);
+        EXIT(8, 19);
       end;
     end;
   end;
@@ -3111,7 +3111,7 @@ procedure DECLARAT.20:PARAMETERLIST(args 6 words);  { locals 10 words, lex 3 }
         if (SY <> 0) then begin
           PASCALCO.2:ERROR(2);
         end else begin
-          CSP1(@L10, 11);
+          NEW(@L10, 11);
           L16 := L10;
           move(L16, @ID, 4 words);
           (L16+6)^ := nil;
@@ -3417,7 +3417,7 @@ procedure BODYPART.8:LOAD(args 0 words);  { locals 4 words, lex 2 }
           L4 := L3^.f2;
           while (L2 <= L4) do begin
             if (L2 = L3^.f2) then begin
-              L1 := CSP23(?, CSP36(L3^.f1));
+              L1 := TRUNC(?, PWROFTEN(L3^.f1));
             end;
             BODYPART.4:GENLDC(L1);
             BODYPART.4:GENLDC(18);
@@ -3763,7 +3763,7 @@ procedure BODYPART.16:GENJMP(args 2 words);  { locals 2 words, lex 2 }
       PASCALCO.20:GENBYTE(((248-L4^.f2)-L4^.f2));
     end;
   end else begin
-    CSP2((L4+1), 0, CODEP, IC, 2);
+    MOVELEFT((L4+1), 0, CODEP, IC, 2);
     if (L2 = 57) then begin
       L3 := (IC+4096);
     end else begin
@@ -3781,7 +3781,7 @@ procedure BODYPART.17:GENFJP(args 1 words);  { locals 0 words, lex 2 }
   BODYPART.16:GENJMP(33, L1);
 
 procedure BODYPART.18:GENLABEL(args 1 words);  { locals 1 words, lex 2 }
-  CSP1(L1, 3);
+  NEW(L1, 3);
   L2 := L1^;
   L2^ := 0;
   (L2+1)^ := 28000;
@@ -3800,7 +3800,7 @@ procedure BODYPART.19:PUTLABEL(args 1 words);  { locals 3 words, lex 2 }
       L3 := 33;
     end;
     IC := L2;
-    CSP2(CODEP, IC, @L2, 0, 2);
+    MOVELEFT(CODEP, IC, @L2, 0, 2);
     BODYPART.16:GENJMP(L3, L1);
   end;
   IC := L4^.f1;
@@ -3833,11 +3833,11 @@ procedure BODYPART.20:STORE(args 1 words);  { locals 1 words, lex 2 }
 
 procedure BODYPART.21:STRGTOPA(args 1 words);  { locals 0 words, lex 2 }
   if L1 then begin
-    CSP3(CODEP, (L1+1), CODEP, (L1+2), (CODEP^[(L1+1)]+1));
+    MOVERIGHT(CODEP, (L1+1), CODEP, (L1+2), (CODEP^[(L1+1)]+1));
     CODEP^[L1] := 215;
     CODEP^[(L1+1)] := 208;
   end else begin
-    CSP2(CODEP, (L1+2), CODEP, (L1+1), (CODEP^[(L1+2)]+1));
+    MOVELEFT(CODEP, (L1+2), CODEP, (L1+1), (CODEP^[(L1+2)]+1));
     CODEP^[L1] := 208;
     CODEP^[((L1+CODEP^[(L1+1)])+2)] := 215;
   end;
@@ -4116,7 +4116,7 @@ procedure BODYPART.24:BODY(args 0 words);  { locals 19 words, lex 2 }
 procedure BODYPART.25:BODY2(args 0 words);  { locals 2 words, lex 3 }
   if NOISY then begin
     FWRITELN(I4,3);
-    @I1,19[0]^ := CSP40();
+    @I1,19[0]^ := MEMAVAIL();
     if (@I1,19[0]^ < SMALLESTSPACE) then begin
       SMALLESTSPACE := @I1,19[0]^;
     end;
@@ -4179,10 +4179,10 @@ procedure BODYPART.26:HOLDSTMT(args 0 words);  { locals 0 words, lex 3 }
   goto L0165;
 L015E:
   BODYPART.25:BODY2();
-  CSP22(11);
+  UNLOADSEGMENT(11);
   goto L016A;
 L0165:
-  CSP21(11);
+  LOADSEGMENT(11);
   goto L015E;
 L016A:
 
@@ -4815,7 +4815,7 @@ procedure BODYPART.35:FACTOR(args 4 words);  { locals 18 words, lex 5 }
         if (LGTH = 1) then begin
           GATTYPTR := CHARPTR;
         end else begin
-          CSP1(@L9, 9);
+          NEW(@L9, 9);
           move(L9, STRGPTR, 9 words);
           (L9+8)^ := LGTH;
           GATTYPTR := L9;
@@ -4825,7 +4825,7 @@ procedure BODYPART.35:FACTOR(args 4 words);  { locals 18 words, lex 5 }
         PASCALCO.6:INSYMBOL();
       end;
       48: begin
-        CSP1(@L9, 2);
+        NEW(@L9, 2);
         move(L9, LONGINTPTR, 9 words);
         L9^ := PASCALCO.17:DECSIZE(LGTH);
         GATTYPTR := L9;
@@ -4862,7 +4862,7 @@ procedure BODYPART.35:FACTOR(args 4 words);  { locals 18 words, lex 5 }
         PASCALCO.6:INSYMBOL();
         @L14^ := adjust(0,8)  {8 words};
         L8 := 0;
-        CSP1(@L9, 3);
+        NEW(@L9, 3);
         L22 := L9;
         (L22+2)^ := nil;
         L22^ := 0;
@@ -4976,10 +4976,10 @@ procedure BODYPART.37:HOLDRTN(args 0 words);  { locals 0 words, lex 2 }
   goto L1BAF;
 L1BA8:
   BODYPART.24:BODY();
-  CSP22(10);
+  UNLOADSEGMENT(10);
   goto L1BB4;
 L1BAF:
-  CSP21(10);
+  LOADSEGMENT(10);
   goto L1BA8;
 L1BB4:
 
@@ -5064,7 +5064,7 @@ procedure ROUTINE.4:STRGVAR(args 5 words);  { locals 1 words, lex 3 }
           (L6+1)^ := 1;
           (L6+2)^[(1-1)] := GATCVAL;
           GATCVAL := SCONST;
-          CSP1(@GATTYPTR, 9);
+          NEW(@GATTYPTR, 9);
           move(GATTYPTR, STRGPTR, 9 words);
           (GATTYPTR+8)^ := 1;
         end;
@@ -5265,7 +5265,7 @@ procedure ROUTINE.9:CONCAT(args 0 words);  { locals 2 words, lex 3 }
     LCMAX := LC;
   end;
   LC := L1;
-  CSP1(@GATTYPTR, 9);
+  NEW(@GATTYPTR, 9);
   move(GATTYPTR, STRGPTR, 9 words);
   (GATTYPTR+8)^ := L2;
 
@@ -5755,7 +5755,7 @@ L0500:
   end;
   { paths disagree on stack depth here }
   if (@STATBEGSYS^<4w> in (1 + 1)) then begin
-    CSP32(@L8);
+    MARK(@L8);
     case SY of   { table 0..26 }
       0: begin
         PASCALCO.8:SEARCHID(adjust((112 + 1),1), @L5);
@@ -5801,7 +5801,7 @@ L0500:
       end;
     end;
     { paths disagree on stack depth here }
-    CSP33(@L8);
+    RELEASE(@L8);
     if ((IC+100) > 1299) then begin
       PASCALCO.2:ERROR(253);
       IC := 0;
@@ -6152,7 +6152,7 @@ L0097:
             L5 := L13^;
           end;
 L00A0:
-          CSP1(@L3, 3);
+          NEW(@L3, 3);
           L13 := L3;
           L13^ := L5;
           (L13+2)^ := L7;
@@ -6648,7 +6648,7 @@ procedure WRITELIN.4:GLOBALSEARCH(args 1 words);  { locals 1 words, lex 2 }
   if (L1 <> nil) then begin
     L2 := L1;
     if (238 in 1) then begin
-      CSP2(L2, 0, CODEP, IC, 8);
+      MOVELEFT(L2, 0, CODEP, IC, 8);
       IC := (IC+8);
       case L2^.f8 of   { table 1..7 }
         1: begin
@@ -6755,7 +6755,7 @@ SEGMENT 17 UNITPART
 
 procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   if (CODEP = nil) then begin
-    CSP1(@CODEP, 650);
+    NEW(@CODEP, 650);
   end;
   UNITPART.2:OPENREFFILE();
   repeat
@@ -6785,8 +6785,8 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
       L9 := (L9-512);
       L8 := (L8+1);
     end;
-    CSP2(SYMBUFP, TEXTSTRT, CODEP, 0, IC);
-    CSP10(CODEP, (IC-10), 10, 32);
+    MOVELEFT(SYMBUFP, TEXTSTRT, CODEP, 0, IC);
+    FILLCHAR(CODEP, (IC-10), 10, 32);
     CODEP^[(IC-2)] := 69;
     if (IC > 1024) then begin
       CODEP^[(SYMCURSOR-TEXTSTRT)] := 13;
@@ -6878,13 +6878,13 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
     SEG := L10^.f4;
     LC := L10^.f5;
     TOS := TOS^.f10;
-    CSP33(@L5);
+    RELEASE(@L5);
   until (SY <> 50);
   FCLOSE(@REFFILE, 0);
 
 procedure UNITPART.2:OPENREFFILE(args 0 words);  { locals 0 words, lex 2 }
   FOPEN(?, ?, ?, @REFFILE, '*SYSTEM.INFO[*]', 0, 0);
-  if (CSP34() <> 0) then begin
+  if (IORESULT() <> 0) then begin
     PASCALCO.2:ERROR(402);
   end;
 
@@ -6926,7 +6926,7 @@ procedure UNITPART.3:UNITDECLARATION(args 5 words);  { locals 18 words, lex 2 }
       end;
     end;
     if not (L8) then begin
-      CSP1(@L6, 14);
+      NEW(@L6, 14);
       L22 := L6;
       move(L22, @ID, 4 words);
       (L22+6)^ := nil;
@@ -7018,9 +7018,9 @@ procedure UNITPART.3:UNITDECLARATION(args 5 words);  { locals 18 words, lex 2 }
       (L22+9)^ := SEG;
     end;
   end;
-  CSP32(L1);
-  CSP1(@REFLIST, 256);
-  CSP1(@TOS, 11);
+  MARK(L1);
+  NEW(@REFLIST, 256);
+  NEW(@TOS, 11);
   move(TOS, @L11, 11 words);
   LEVEL := 1;
   if (TOP < 12) then begin
@@ -7039,9 +7039,9 @@ procedure UNITPART.3:UNITDECLARATION(args 5 words);  { locals 18 words, lex 2 }
 
 procedure UNITPART.4:UNITBODY(args 0 words);  { locals 3 words, lex 2 }
   L1 := TOS;
-  CSP1(@TOS, 11);
+  NEW(@TOS, 11);
   L2 := TOS;
-  CSP1((L2+7), 19);
+  NEW((L2+7), 19);
   L3 := L2^.f7;
   move(L3, MODPTR, 4 words);
   (L3+6)^ := nil;
@@ -7095,7 +7095,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
           if (LEVEL > 1) then begin
             PASCALCO.2:ERROR(194);
           end;
-          CSP1(@COMMENT, 41);
+          NEW(@COMMENT, 41);
           COMPOPTI.3:OPTWORD(COMMENT, 80);
           COMPOPTI.2:BADOPT();
         end;
@@ -7129,7 +7129,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
             end;
             COMMAND();
             FOPEN(@L7, 1, 40, @INCLFILE, @L7, 1, 0);
-            if (CSP34() <> 0) then begin
+            if (IORESULT() <> 0) then begin
               PASCALCO.2:ERROR(403);
             end;
             INCLUDING := 1;
@@ -7139,7 +7139,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
             SYMBLK := 2;
             PASCALCO.3:GETNEXTPAGE();
             PASCALCO.6:INSYMBOL();
-            CSP4(1, 6);
+            EXIT(1, 6);
           end;
         end;
         76: begin
@@ -7152,7 +7152,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
             COMPOPTI.3:OPTWORD(@L7, 40);
             COMMAND();
             FOPEN(@L7, 1, 40, @LP, @L7, 0, 0);
-            LIST := (CSP34() = 0);
+            LIST := (IORESULT() = 0);
             COMPOPTI.2:BADOPT();
           end;
         end;
@@ -7215,7 +7215,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
               LIBNOTOPEN := 1;
               COMPOPTI.3:OPTWORD(@SYSTEMLIB, 40);
               FOPEN(?, ?, ?, @LIBRARY, @SYSTEMLIB, 1, 0);
-              if (CSP34() <> 0) then begin
+              if (IORESULT() <> 0) then begin
                 PASCALCO.2:ERROR(187);
               end;
               COMPOPTI.2:BADOPT();
@@ -7232,35 +7232,35 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
 
 procedure COMPOPTI.2:BADOPT(args 0 words);  { locals 0 words, lex 2 }
   I1,1 := 0;
-  CSP4(18, 1);
+  EXIT(18, 1);
 
 procedure COMPOPTI.3:OPTWORD(args 2 words);  { locals 3 words, lex 2 }
   SYMCURSOR := (SYMCURSOR+2);
-  L4 := CSP11(L1, 1, 32, SYMBUFP, SYMCURSOR, 0);
-  L5 := (L4+CSP11((L1-L4), 0, I1,3, SYMBUFP, (SYMCURSOR+L4), 0));
+  L4 := SCAN(L1, 1, 32, SYMBUFP, SYMCURSOR, 0);
+  L5 := (L4+SCAN((L1-L4), 0, I1,3, SYMBUFP, (SYMCURSOR+L4), 0));
   if (I1,3 = 42) then begin
     while ((SYMBUFP^[((SYMCURSOR+L5)+1)] <> 41) and ((L1-L5) > 0)) do begin
       L5 := (L5+1);
-      L5 := (L5+CSP11((L1-L5), 0, I1,3, SYMBUFP, (SYMCURSOR+L5), 0));
+      L5 := (L5+SCAN((L1-L5), 0, I1,3, SYMBUFP, (SYMCURSOR+L5), 0));
     end;
   end;
-  L3 := -(CSP11(-(L5), 1, 32, SYMBUFP, (SYMCURSOR+L5), 0));
+  L3 := -(SCAN(-(L5), 1, 32, SYMBUFP, (SYMCURSOR+L5), 0));
   L5 := ((L5-L4)-L3);
   L2^[0] := L5;
-  CSP2(SYMBUFP, (SYMCURSOR+L4), L2, 1, L5);
+  MOVELEFT(SYMBUFP, (SYMCURSOR+L4), L2, 1, L5);
   SYMCURSOR := ((((SYMCURSOR+L5)+L4)+L3)+1);
 
 procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
   SYMCURSOR := (SYMCURSOR+2);
   L3 := 0;
   repeat
-    SYMCURSOR := (SYMCURSOR+CSP11(80, 1, 32, SYMBUFP, SYMCURSOR, 0));
+    SYMCURSOR := (SYMCURSOR+SCAN(80, 1, 32, SYMBUFP, SYMCURSOR, 0));
     if (SYMBUFP^[SYMCURSOR] = I1,3) then begin
       L3 := 1;
     end else begin
       PASCALCO.6:INSYMBOL();
       if (SY = 35) then begin
-        CSP1(@L2, 13);
+        NEW(@L2, 13);
         (L2+9)^ := VAL;
         (L2+7)^ := RESIDENT;
         RESIDENT := L2;
@@ -7275,13 +7275,13 @@ procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
             L4 := L2;
             if (L4^.f8 = 7) then begin
               if L4^.f10 then begin
-                CSP1(@L1, 13);
+                NEW(@L1, 13);
                 (L1+9)^ := L4^.f9;
                 (L1+7)^ := RESIDENT;
                 RESIDENT := L1;
               end;
             end else begin
-              CSP1(@L1, 13);
+              NEW(@L1, 13);
               (L1+9)^ := L4^.f12;
               (L1+7)^ := RESIDENT;
               RESIDENT := L1;
@@ -7295,7 +7295,7 @@ procedure COMPOPTI.4:OPTLIST(args 0 words);  { locals 4 words, lex 2 }
       end;
     end;
   until L3;
-  SYMCURSOR := ((SYMCURSOR+CSP11(80, 0, I1,3, SYMBUFP, SYMCURSOR, 0))+1);
+  SYMCURSOR := ((SYMCURSOR+SCAN(80, 0, I1,3, SYMBUFP, SYMCURSOR, 0))+1);
   COMPOPTI.2:BADOPT();
 
 ======================================================================
@@ -7339,7 +7339,7 @@ L0049:
     L45 := SCONST;
     L45^ := 2;
     (L45+1)^ := L43;
-    CSP2(@L1, (1-1), (L45+2), (1-1), L43);
+    MOVELEFT(@L1, (1-1), (L45+2), (1-1), L43);
     VAL := SCONST;
   end;
 
@@ -7414,7 +7414,7 @@ L00B8:
         L4 := L8;
         L15 := L8;
       end;
-      CSP1(I1,1, 12);
+      NEW(I1,1, 12);
       L16 := I1,1^;
       L16^ := 4;
       L14 := 4;
@@ -7466,13 +7466,13 @@ L00B8:
       L9 := (((L9+L3)-L7)-1);
     end;
     if (L9 < 0) then begin
-      @L11^ := (@L11^<2w>/CSP36(-(L9)))  {2 words};
+      @L11^ := (@L11^<2w>/PWROFTEN(-(L9)))  {2 words};
     end else begin
-      @L11^ := (@L11^<2w>*CSP36(L9))  {2 words};
+      @L11^ := (@L11^<2w>*PWROFTEN(L9))  {2 words};
     end;
     SY := 36;
     OP := 15;
-    CSP1(I1,1, 3);
+    NEW(I1,1, 3);
     I1,1^^ := 0;
     (I1,1^+1)^ := @L11^<2w>  {2 words};
     VAL := I1,1^;
@@ -7494,7 +7494,7 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     PASCALCO.4:PRINTLINE();
   end;
   I2,11 := 0;
-  CSP9(@LGTH, @STARTDOTS);
+  TIME(@LGTH, @STARTDOTS);
   LOWTIME := (STARTDOTS-LOWTIME);
   if LINKINFO then begin
     (@SEGTABLE[@SEGMAP~[SEG]{4per word,4 bits}*9w]+8)^ := 1;
@@ -7511,7 +7511,7 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     FWRITESTRING(I2,3, ', ', 0);
     FWRITEINT(I2,3, ((LOWTIME+30) div 60), 0);
     FWRITESTRING(I2,3, ' secs, ', 0);
-    FWRITEINT(?, CSP24(I2,3, ((3600/flo(flt(LOWTIME)))*flt(SCREENDOTS))), 0);
+    FWRITEINT(?, ROUND(I2,3, ((3600/flo(flt(LOWTIME)))*flt(SCREENDOTS))), 0);
     FWRITESTRING(I2,3, ' lines/min', 0);
   end;
   if NOISY then begin
@@ -7521,7 +7521,7 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     FWRITESTRING(I2,3, ' words', 0);
   end;
   IC := 0;
-  CSP1(@CODEP, 650);
+  NEW(@CODEP, 650);
   SEG := 0;
   L1 := 15;
   while (SEG <= L1) do begin
@@ -7533,7 +7533,7 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
   SEG := 0;
   L1 := 15;
   while (SEG <= L1) do begin
-    CSP2((@SEGTABLE[SEG*9w]+2), 0, CODEP, IC, 8);
+    MOVELEFT((@SEGTABLE[SEG*9w]+2), 0, CODEP, IC, 8);
     IC := (IC+8);
     SEG := (SEG+1);
   end;
@@ -7559,7 +7559,7 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     end;
     SEG := (SEG+1);
   end;
-  CSP2(@SEGSUSED, 0, @PROCTABLE, 0, 4);
+  MOVELEFT(@SEGSUSED, 0, @PROCTABLE, 0, 4);
   PASCALCO.21:GENWORD(@PROCTABLE[0]^);
   PASCALCO.21:GENWORD(@PROCTABLE[1]^);
   TEST := 1;
@@ -7585,9 +7585,9 @@ procedure FINISHUP.1:FINISHUP(args 0 words);  { locals 2 words, lex 1 }
     PASCALCO.20:GENBYTE(0);
   end;
   if (COMMENT <> nil) then begin
-    CSP2(COMMENT, 0, CODEP, IC, 80);
+    MOVELEFT(COMMENT, 0, CODEP, IC, 80);
   end else begin
-    CSP10(CODEP, IC, 80, 0);
+    FILLCHAR(CODEP, IC, 80, 0);
   end;
   IC := (IC+80);
   CURBLK := 0;

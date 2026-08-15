@@ -333,12 +333,27 @@ Done, and reproducible via `python tools/build_all.py`:
 
 7. **Validation loop**, now in two tiers (finding 18).
 
-   * *Start here, and it costs nothing:* `HAZELGOTO.TEXT` and
-     `HAZELGOTO.CODE` are on the 1.1 APPLE3 disk — the same 23-line program
-     in source and in p-code, compiled by the compiler being reconstructed
-     (finding 47b). Any pipeline that cannot reproduce the codefile from
-     the text is not ready to be pointed at 40 kilobytes of compiler.
-     `SOROCGOTO` is a second, independent sample of the same size.
+   * ~~*Start here:* `HAZELGOTO.TEXT` and `HAZELGOTO.CODE`.~~ **Done for
+     the lifting direction** (finding 49). Both GOTOXY samples lift and
+     structure to their own source, statement for statement, with zero
+     gotos; `probe_calibrate.py` extracts conditions, assignment targets,
+     right-hand sides and literals from each side by the same rules and
+     requires all four to match, and `build_all.py` runs it. It confirmed
+     finding 33's backwards allocation on *parameters* and finding 46's
+     frame model against a declaration, and checked `UNITWRITE`'s six-word
+     stack effect against a call written in Pascal. It found two tooling
+     defects, both fixed.
+
+     What it does not cover: loops, `case`, sets, inter-procedure calls,
+     records, `with` — the samples use none of them. **The next calibration
+     target is `SYSTEM.PASCAL`**, whose source is already in
+     `reference_source/ucsd_ii0/` and which exercises all of them at a
+     hundred times the size. That is the largest single lever left for the
+     whole project, because it turns every "the compiler emits X for Y"
+     claim into something checkable.
+
+     The other direction — source *in*, codefile out — is still the
+     emulator's job.
    * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
      from Peter Miller's `ucsd-psystem-xc` and run reconstructed source
      through them on the host. This catches source that does not compile or

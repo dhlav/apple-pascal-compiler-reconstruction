@@ -210,7 +210,12 @@ class CodeFile:
                                         for ts in p.reloc.values()
                                         for t in ts))
             else:
-                p.consistent = (p.proc_num == i and 0 <= enter < exitic <= jtab
+                # enter == exit is legitimate: it is a procedure whose body
+                # is `BEGIN END`, which compiles to nothing but its exit
+                # sequence. 33 across the six evidence disks, including the
+                # dummy main of both GOTOXY samples whose source says so
+                # (finding 49). None is in SYSTEM.COMPILER.
+                p.consistent = (p.proc_num == i and 0 <= enter <= exitic <= jtab
                                 and p.param_size % 2 == 0 and p.data_size % 2 == 0)
             seg.procedures.append(p)
 

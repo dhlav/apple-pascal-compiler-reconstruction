@@ -26,6 +26,9 @@ STEPS = [
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),
     ("lift to pseudo-Pascal", "liftall.py"),
+    # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
+    # on the same disk and diffs the result against it (finding 49).
+    ("lifter calibration", "probes/probe_calibrate.py"),
 ]
 
 for label, script in STEPS:

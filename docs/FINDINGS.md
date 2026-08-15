@@ -4316,6 +4316,149 @@ What matters for the reconstruction is only that the order is *data*, laid
 out by the assembler in the order the source lists it, so `src/native/`
 must list 1.3's order and not 1.1's. It does.
 
+## 49. The lifter, checked against Pascal Apple compiled
+
+*Confidence: VERIFIED BINARY FACT compared against VERIFIED SOURCE FACT —
+the source is on the same disk as the binary.
+`tools/probes/probe_calibrate.py`, 42 checks, run by `tools/build_all.py`.*
+
+Everything in this repo reads binaries and argues backwards. Nothing had
+ever been held against source that Apple's compiler actually compiled,
+because no source-and-binary pair was in `evidence/`. `HAZELGOTO` and
+`SOROCGOTO` on the APPLE3 disks are two (finding 47b): 23 lines of Pascal
+and a 1024-byte codefile each, the `GOTOXY` replacements the manual tells
+users to write.
+
+They are far too small to prove anything about the compiler at large. What
+they do is **calibrate** — the decoder, the stack model, the expression
+reconstruction and the structuriser all run end to end against an answer
+key, and any disagreement is a defect here rather than a question about
+Apple.
+
+### 49a. The result
+
+`HAZELGOTO.TEXT`:
+
+```pascal
+PROCEDURE FGOTOXY(X,Y:INTEGER);
+VAR SEND: PACKED ARRAY[0..3] OF 0..255;
+BEGIN
+  IF X>79 THEN X:=79
+  ELSE IF X<0 THEN X:=0;
+  IF Y>23 THEN Y:=23
+  ELSE IF Y<0 THEN Y:=0;
+  SEND[0]:=126; (* LEAD-IN *)
+  SEND[1]:=17;  (* DC1 *)
+  IF X<30 THEN SEND[2]:=X+96
+           ELSE SEND[2]:=X;
+  SEND[3]:=Y+96;
+  UNITWRITE(2,SEND,4);
+END;
+```
+
+`HAZELGOTO.CODE`, lifted and structured by this repo, with the offsets
+named as 49b predicts:
+
+```pascal
+  if (X > 79) then begin X := 79;
+  end else begin if (X < 0) then begin X := 0; end; end;
+  if (Y > 23) then begin Y := 23;
+  end else begin if (Y < 0) then begin Y := 0; end; end;
+  SEND[0] := 126;
+  SEND[1] := 17;
+  if (X < 30) then begin SEND[2] := (X+96);
+  end else begin SEND[2] := X; end;
+  SEND[3] := (Y+96);
+  UNITWRITE(2, @SEND, 0, 4, 0, 0);
+```
+
+Statement for statement, condition for condition, in order, with **zero
+gotos**. `SOROCGOTO` likewise, including `SEND[1] := ORD('=')` arriving as
+`61` and `SEND[2] := 32+Y` keeping its operand order rather than being
+normalised to `Y+32`.
+
+The probe does not compare prose. It extracts from *both* texts, by the
+same rules, the ordered sequence of conditions, of assignment targets, of
+right-hand sides and of integer literals, and requires all four to be
+equal. The source side is read off the disk, not written into the probe.
+
+### 49b. The layout is *predicted*, not fitted
+
+The name map used for that comparison is not read out of the binary. It is
+derived beforehand from two rules established elsewhere:
+
+* parameters occupy the low offsets and locals follow, in one space
+  starting at 1 (finding 46);
+* a declaration allocates its identifiers **backwards** (finding 33).
+
+`PROCEDURE FGOTOXY(X,Y:INTEGER)` with a local `SEND` therefore gives
+`Y` = 1, `X` = 2, `SEND` = 3. That is what the binary has — the offset
+compared against 79 is 2, the one compared against 23 is 1, and the only
+offset whose address is taken is 3 — and if either rule were wrong the
+whole statement comparison would fail rather than quietly re-fit. Swapping
+the predicted `X` and `Y` is one of the mutations, and it fails on the
+first condition.
+
+Finding 33 was recovered from `VARDECLARATION`'s own code and had only ever
+been tested on `VAR` blocks. This is the first time it has been checked on
+**parameters**, and against a declaration rather than against another
+inference. Finding 46's frame model gets the same treatment: `PARAM SIZE`
+is 4 and `DATA SIZE` is 4, so the frame is 4 words, and 4 is exactly the
+highest offset the code touches.
+
+### 49c. `UNITWRITE`'s arity, checked against a declaration for once
+
+The 41 standard-procedure stack effects in `CSP_EFFECT` were fixed by
+finding 17 from interpreter source and by balance-fitting across the
+compiler's call sites. Here one of them is checked against a *call written
+in Pascal*.
+
+The source says `UNITWRITE(2,SEND,4)` — three arguments. `CSP_EFFECT[6]`
+says six words. The emitted call is
+
+```
+  UNITWRITE(2, @SEND, 0, 4, 0, 0)
+```
+
+— the unit number, then `SEND` as an **address/offset pair**, then the
+length, then the two arguments the declaration defaults. Six words, and
+each one accounted for. Dropping the table entry to five is the second
+mutation, and it fails four ways.
+
+### 49d. Two defects it found
+
+Neither is in a conclusion; both are in the tooling, which is what a
+calibration run is for.
+
+* **The lifter applied `SYSTEM.COMPILER`'s recovered global names to a
+  foreign codefile.** `X`, `Y` and `SEND` came out as `CODEP`, `SYMBUFP`
+  and `GATTYPTR`. Harmless while the only input was the compiler, and
+  actively misleading the moment it was not. `lift()` now documents that
+  `release` selects the name tables and that `""` means none, and the probe
+  passes `""`.
+* **A procedure whose body is `BEGIN END` was flagged inconsistent.** The
+  attribute-table check required `enter_ic < exit_ic`, but an empty body
+  compiles to nothing at all and the two are equal. Both samples' dummy
+  main is exactly that, and their source says so. Relaxed to `<=`. It
+  affects **33 procedures across the six disks** — none in
+  `SYSTEM.COMPILER`, so nothing established changes, but the reader was
+  wrong about a third of `SETUP.CODE`'s segment procedures and most of
+  `SYSTEM.LIBRARY`'s.
+
+The listings also gained something in passing: `CSP n` calls now render by
+name, so `CSP2(...)` reads `MOVELEFT(...)` and `CSP6(...)` `UNITWRITE(...)`
+throughout both compiler listings.
+
+### 49e. What this does and does not license
+
+It licenses the pipeline: two whole procedures in, two whole procedures
+out, exact. It does not license any *naming* in `SYSTEM.COMPILER`, and it
+says nothing about the constructs these samples do not use — no loops, no
+`case`, no sets, no calls between procedures, no `with`, no records. The
+next calibration target is `SYSTEM.PASCAL`, whose source is already in
+`reference_source/ucsd_ii0/`; it is a hundred times the size and exercises
+all of them.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

@@ -24,6 +24,7 @@ from pathlib import Path
 from .pcode import Insn, disassemble, sweep_exit
 from .syscall import segment0_signatures
 from .names import SYMBOLS, SYMBOL_SET_NAMES, globalname, procname
+from .syscall import CSP
 
 # Instructions that decide what a two-word LDC constant was: real
 # arithmetic means it is a REAL, a set operator means it is a set.
@@ -391,7 +392,9 @@ class _Lifter:
                         raise KeyError(f"CSP {n}")
                     pops, pushes = CSP_EFFECT[n]
                     args = [pop() for _ in range(pops)][::-1]
-                    call = f"CSP{n}({', '.join(args)})"
+                    # Render by name where the table has one (finding 17);
+                    # the number stays for the handful it does not.
+                    call = f"{CSP.get(n, 'CSP' + str(n))}({', '.join(args)})"
                     (st.append(call) if pushes else out.append(call + ";"))
                 elif m in ("CXP", "CLP", "CGP", "CIP", "CBP"):
                     words, label, isfn = self.callee_words(m, o)
@@ -427,6 +430,13 @@ class _Lifter:
 
 
 def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
+    """Lift one procedure to blocks of pseudo-Pascal.
+
+    `release` selects the recovered name tables in `names.py`, which are
+    SYSTEM.COMPILER's and nothing else. Pass "" when lifting any other
+    codefile, or its globals will be labelled with the compiler's names --
+    `probe_calibrate.py` lifts the GOTOXY samples that way.
+    """
     """Lift one procedure. `cf` supplies callee parameter sizes."""
     body, _ = disassemble(seg.data, proc.enter_ic, proc.exit_ic, proc.jtab)
     ex, _ = sweep_exit(seg.data, proc.exit_ic, proc.jtab - 8, proc.jtab)

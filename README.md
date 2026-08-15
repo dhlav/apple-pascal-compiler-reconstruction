@@ -68,6 +68,15 @@ with the relocation walk landing exactly on the end of the code in each
 `src/native/SEARCH.TEXT` **reassembles to Apple's exact bytes**, relocation
 tables included (finding 45).
 
+**The pipeline has been checked against source Apple compiled.** The APPLE3
+disks carry `HAZELGOTO` and `SOROCGOTO` — two 23-line Pascal programs *and*
+their codefiles. Both lift and structure to their own source, statement for
+statement, with zero gotos (finding 49), and the comparison is mechanical:
+`probe_calibrate.py` pulls conditions, assignment targets, right-hand sides
+and literals off each side by the same rules and requires all four to
+match. It also confirmed the backwards-allocation rule on *parameters* and
+`UNITWRITE`'s six-word stack effect against a call written in Pascal.
+
 The decoder in `tools/a2pascal/pcode.py` disassembles all 287 with the
 instruction stream landing exactly on every procedure boundary and no
 unknown opcodes. Its opcode table is cross-checked against three
