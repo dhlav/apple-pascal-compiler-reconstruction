@@ -25,6 +25,7 @@ STEPS = [
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),
+    ("reconstructed VAR block", "varblock.py"),
     ("lift to pseudo-Pascal", "liftall.py"),
     # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
     # on the same disk and diffs the result against it (finding 49).
