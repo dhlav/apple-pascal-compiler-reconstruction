@@ -407,7 +407,16 @@ Done, and reproducible via `python tools/build_all.py`:
   short-form opcode ranges, because every candidate split is one byte wide
   either way; it took a separate semantic test to catch an off-by-eight
   that had been corrupting every low global offset (finding 7). Ask what a
-  passing check actually rules out.
+  passing check actually rules out. Finding 47 is the sharpest case: a
+  linear sweep re-synchronises a few bytes after corruption and still lands
+  on the procedure's end address, so 287/287 said nothing at all about
+  seven bad bytes in `BODY3`; a branch-target check found them at once.
+* **A total that does not balance is evidence.** The global map printed
+  "1225 of 1222" at the top of every run for thirty findings, and it was
+  read as slack in the object inference each time — because the inference
+  really does over-count elsewhere, so there were two explanations and the
+  wrong one was never separated out. It was a two-word error in the area
+  (finding 46). Require the sum to come out exactly, or say why it cannot.
 * Hyde's *P-Source* (finding 7a) settles p-machine questions directly. Use
   it before inferring.
 * **Native 6502 code is finalised with Apple's own `SYSTEM.ASSMBLER`**, on

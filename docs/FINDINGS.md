@@ -3377,7 +3377,7 @@ it; STRONG INFERENCE for what the three new tail words are for;
 SPECULATION for their four spellings, which are ours.
 `tools/probes/probe_globalmap.py`, 95 checks.*
 
-1.3's global area is 1355 words against 1.1's 1222. The correspondence
+1.3's global area is 1357 words against 1.1's 1224 (finding 46 corrected both endpoints; the difference is unchanged). The correspondence
 table localises the insertions — its shift column steps six times, and
 each step says how many words went in and where. Findings 38 and 39 named
 enough of both maps to say *what*, and the total comes out exact.
@@ -3392,7 +3392,7 @@ enough of both maps to say *what*, and the total comes out exact.
 | +118 → +130 | `REFFILE` | 12 | `JTAB`, 25 → 37 |
 | past the table | after `DISKBUF` | 3 | `HAS128K`, `CONLIST`, `LSTOPEN` |
 
-**1 + 2 + 2 + 105 + 8 + 12 + 3 = 133 = 1355 − 1222.** Nothing is left
+**1 + 2 + 2 + 105 + 8 + 12 + 3 = 133 = 1357 − 1224.** Nothing is left
 over, and nothing is double-counted. Four of the seven were already
 explained (findings 22b and 38); this finding is the other three.
 
@@ -4035,6 +4035,192 @@ native half. What this probe rules out is the whole class of errors that
 would fail there too, in a second and with no emulator, and it is wired
 into `build_all.py` so a regression is visible rather than silent.
 
+## 46. The global area was two words short, and `DISKBUF` says so
+
+*Confidence: VERIFIED BINARY FACT, measured over all 287 procedures.
+`tools/probes/probe_frame_size.py`, 22 checks.*
+
+The global map has been reporting "Words accounted for by inferred objects:
+1225 of 1222" since finding 10, and that overshoot was treated as rounding
+in the object inference. It was not. The area was wrong.
+
+### 46a. A frame is PARAM SIZE plus DATA SIZE
+
+A UCSD activation record holds the block's parameters and its locals in
+**one offset space beginning at 1**, and the attribute table's `DATA SIZE`
+word counts only the locals. So the highest valid offset is
+
+```
+    (PARAM SIZE + DATA SIZE) / 2
+```
+
+This is a claim about every procedure, so it is measured rather than
+argued. Over the 114 procedures in 1.1 that touch a local at all:
+
+| | `DATA SIZE`/2 | `(PARAM+DATA)`/2 |
+|---|---|---|
+| exceeded by some offset | **68** | **0** |
+| reached exactly | — | **105** |
+
+Never exceeded *and* reached exactly by 105 of 114 is what makes it the
+frame rather than merely an upper bound: a bound nothing reaches could be
+any large number. The nine that fall short each end in an aggregate whose
+interior words are never addressed individually; the largest gap, 256
+words, is a disk buffer. 1.3 gives the same picture: 0 over, 108 of 117
+exact.
+
+### 46b. What it fixes in the global map
+
+The outer block declares 4 bytes of parameters, so the global area is two
+words larger than reported: **1224 words in 1.1 and 1357 in 1.3**, offsets
+1..N. Two things fall into place that had not:
+
+* **`DISKBUF` is 256 words — a 512-byte disk block — in both releases.**
+  In 1.1 it starts at 969 and runs to 1224, the last word of the frame. In
+  1.3 it starts at 1099 and the next touched offset is 1355, again exactly
+  256 words later. Under the old area it came out at 253 in 1.1, which is
+  not a sensible size for a buffer that is `BLOCKREAD` into.
+* **1.3's three added globals are inside the frame, not past it.**
+  `HAS128K`, `CONLIST` and `LSTOPEN` at 1355, 1356 and 1357 were three
+  words *beyond* a 1355-word area, which would have meant the compiler
+  writing over its own caller's stack. 1357 is now the last word.
+
+The growth ledger of finding 40 is unaffected: 1357 − 1224 = 133, the same
+number, and its seven entries still sum to it. Only the two endpoints move.
+
+### 46c. Globals 1 and 2 are the outer block's parameters
+
+The 4 bytes of parameters are not a formality — offsets 1 and 2 are both
+touched, and the map has always had them as `scalar-byref`, addresses taken
+only to be passed to `NEW`. So the compiler's two lowest globals occupy the
+words a caller would have pushed. What pushed them, and whether Apple's
+source declares them as parameters of the program block or the p-machine
+simply reserves them, is not settled here.
+
+### 46d. The lesson, which is the same one as finding 43
+
+A total that does not balance is evidence, not noise. "1225 of 1222" was
+printed at the top of the global map for thirty-odd findings and read as an
+artifact of the object inference every time, because the inference really
+does over-count elsewhere — the record at offset 3 has its five words
+counted again as four separately addressed fields, which is a genuine +4.
+Two overlapping explanations, one of them wrong, and the wrong one was
+never separated out because the number was never required to come out
+exactly. It is now: the probe demands zero procedures over the bound.
+
+## 47. The two boot disks: `{$U-}` observed at last, and one corrupt copy of 1.3's compiler
+
+*Confidence: VERIFIED BINARY FACT throughout.
+`tools/probes/probe_disk_copies.py`, 1491 checks over 24 codefiles and
+1486 procedures.*
+
+Two more images joined `evidence/disks/`: `UCSD Pascal 1.1_0.dsk` and
+`Apple II Pascal 1.3 APPLE0_ 680-0282-A.dsk`, the boot volumes for the two
+releases. Between them they add `SYSTEM.PASCAL`, `SYSTEM.LIBRARY`,
+`SYSTEM.EDITOR` and `SYSTEM.FILER` for each release — and a **second copy
+of `SYSTEM.COMPILER`** for each, which is the reason to look first.
+
+### 47a. `{$U-}` produces lex level −1, and this is now observed
+
+Section 16 has carried this as inferred and never seen: "`{$U-}` producing
+`lex=-1` is inferred, not observed: neither disk in `evidence/` carries
+`SYSTEM.PASCAL`, the one artifact on hand known to have been built that
+way." Both boot disks carry it, and the answer is unambiguous.
+
+Scanning every procedure of every codefile on all four images — 24 files,
+1486 procedures — the lex-level byte is `$FF` in **exactly two places**:
+
+```
+  UCSD Pascal 1.1_0.dsk                    SYSTEM.PASCAL  PASCALSY.1
+  Apple II Pascal 1.3 APPLE0_ 680-0282-A   SYSTEM.PASCAL  PASCALSY.1
+```
+
+The outer block of the operating system, in each release, and nothing
+else. Not `SYSTEM.COMPILER`, `SYSTEM.EDITOR`, `SYSTEM.FILER`,
+`SYSTEM.LINKER`, `SYSTEM.ASSMBLER`, `SYSTEM.LIBRARY`, `LIBRARY.CODE` or
+`LIBMAP.CODE`.
+
+That settles three things at once:
+
+* `lex = -1` is real, it is what `{$U-}` produces, and it marks the
+  *outer block* — not every procedure in the unit.
+* **`SYSTEM.COMPILER` is not `{$U-}`**, in either release. Finding 24e
+  reached that conclusion against Neil Parker; it now has a positive
+  control rather than an argument from absence, which is exactly what it
+  was missing.
+* Finding 23c's directive list stands: the reconstruction does not carry
+  `{$U-}`.
+
+### 47b. 1.1's compiler is byte-identical on both its disks; 1.3's is not
+
+`SYSTEM.COMPILER` from `UCSD Pascal 1.1_0.dsk` is byte-for-byte the file
+already in `evidence/`, all 38400 bytes. Everything in this repo derived
+from 1.1 is therefore derived from the shipped artifact and not from one
+odd image.
+
+1.3's two copies are the same length, 39936 bytes, and differ in **seven
+bytes**, all inside `BODY3`:
+
+```
+  file offset 33077..33083, BODY3 $0335..$033B, inside BODY3.1
+
+  APPLE2 (the analysed copy)          APPLE0 (the boot disk)
+  0335 a9 50   LDO 80                 0335 dd      SLDL 6
+  0337 01      SLDC 1                 0336 24      SLDC 36
+  0338 95      SBI                    0337 75      SLDC 117
+  0339 cd 01 16 CXP 1,22              0338 e1      SLDL 10
+                                      0339 b9 75   UJP $03B0
+                                      033B 62      SLDC 98
+```
+
+### 47c. Which one is right, and the check that says so
+
+The APPLE2 reading is ordinary compiler code: `LDO 80; SLDC 1; SBI;
+CXP 1,22` is "emit(global 80 − 1)" through `PASCALCO.22`, the same call
+made three instructions earlier. The APPLE0 bytes decode to a sequence
+with no meaning that happens to re-synchronise at `$033C`.
+
+"Happens to re-synchronise" is the point. **The linear-sweep check that
+validates all 287 procedures cannot see this.** Both copies sweep from
+`enter_ic` and land exactly on `exit_ic`, because the damage is seven bytes
+replaced by seven bytes and the stream recovers. The 287/287 result is
+worthless here, which is the same trap finding 7 recorded: ask what a
+passing check actually rules out.
+
+What does see it is a check the corruption cannot survive: **every branch
+target must land on the first byte of a decoded instruction inside its own
+procedure.** Jump targets do not re-synchronise. Over all four disks:
+
+| | procedures | bad branch targets |
+|---|---|---|
+| every other codefile, all four disks | 1485 | **0** |
+| `APPLE0` `SYSTEM.COMPILER` `BODY3.1` | 1 | **1** — `UJP $03B0`, past `JTAB` at `$037E` |
+
+A `UJP` to an address beyond the procedure's own attribute table cannot be
+code the compiler emitted. And every other file on that same image —
+`SYSTEM.PASCAL`, `SYSTEM.EDITOR`, `SYSTEM.FILER`, `SYSTEM.LIBRARY` — is
+clean, so this is a damaged sector in that one image, not a fault in the
+reader or a second build.
+
+**Conclusion: the APPLE2 copy is sound and remains the artifact of record.**
+Nothing already established needs revisiting; `BODY3.1` was analysed from
+the good copy throughout.
+
+### 47d. What the boot disks unblock
+
+* `SYSTEM.LIBRARY` is now in `evidence/` for both releases — 7 segments and
+  62 procedures in 1.1, 7 and 69 in 1.3 — which is what finding 6's
+  deferred question was waiting on. Still deferred, but no longer blocked.
+* `SYSTEM.PASCAL` is the II.0 operating system Apple shipped, and
+  `reference_source/ucsd_ii0/` is its *source*. That pairing — source and
+  binary for the same program — is a calibration target for everything
+  here: it is the one place where a p-code listing can be read against the
+  Pascal that produced it. Nothing in this finding uses it yet.
+* `SYSTEM.EDITOR`, `SYSTEM.FILER` and `SYSTEM.ASSMBLER` are three more
+  programs built by the same compiler, so they are independent samples of
+  its code generation — useful whenever a claim of the form "the compiler
+  emits X for Y" needs testing outside the compiler's own body.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
@@ -4047,7 +4233,11 @@ into `build_all.py` so a regression is visible rather than silent.
   variable whether or not it has a window, and three of the four addresses
   land inside `LP` — which is a `TEXT`, 301 words, running 666..966.
   `CURBLK` at 967 confirms it.
-* One word of the 1222-word global area in 1.1 is unaccounted for.
+* ~~One word of the 1222-word global area in 1.1 is unaccounted for.~~ The
+  area is 1224 words, not 1222 (finding 46): a frame is PARAM SIZE plus
+  DATA SIZE, and the outer block declares two words of parameters. With
+  that, `DISKBUF` is exactly 256 words and runs to the last word of the
+  frame, and nothing is left over.
 * ~~`$D1`-`$D6` are unidentified.~~ Resolved by finding 17: `STE`, `NOP`,
   `EFJ`, `NFJ`, `BPT`, `XIT`. Still none of them occur in SYSTEM.COMPILER.
 * ~~`PASCALCO.9`, `.15`, `.16`, `.17` (finding 12) are unnamed.~~ Resolved
@@ -4068,7 +4258,10 @@ into `build_all.py` so a regression is visible rather than silent.
   variables" gate. Still open, narrowly: what `$E` was *called*, and the
   second `OPT_F` site in `PASCALCO.13`, which inverts a boolean rather
   than swapping bytes.
-* `{$U-}` producing `lex=-1` is inferred, not observed: neither disk in
-  `evidence/` carries `SYSTEM.PASCAL`, the one artifact on hand known to
-  have been built that way. Adding a boot disk would settle it — the same
-  addition finding 6's `SYSTEM.LIBRARY` question is waiting on.
+* ~~`{$U-}` producing `lex=-1` is inferred, not observed.~~ **Resolved by
+  finding 47**: both boot disks are now in `evidence/`, and across all four
+  images the lex byte is `$FF` in exactly two places — `PASCALSY.1`, the
+  outer block of `SYSTEM.PASCAL`, in each release. Nothing else on any disk
+  has it, `SYSTEM.COMPILER` included, which gives finding 24e the positive
+  control it lacked. The same addition brings `SYSTEM.LIBRARY` in for
+  finding 6, which stays deferred but is no longer blocked.

@@ -1,9 +1,14 @@
 Apple Pascal 1.1 SYSTEM.COMPILER -- global data map
 
-Global area: 1222 words (2444 bytes), from the data size of the
-outermost block (PASCALCO procedure with lex level 0).
+Global area: offsets 1..1224 (2448 bytes), from PARAM SIZE
+plus DATA SIZE of the outermost block (PASCALCO, lex level 0).
+Both words count: a UCSD activation record holds the block's
+parameters and its locals in one offset space starting at 1, and
+DATA SIZE alone is short by the two parameter words (finding 46).
 Distinct global offsets touched: 133
-Words accounted for by inferred objects: 1225 of 1222
+Words accounted for by inferred objects: 1228 of 1224
+  (the excess is the record at offset 3, whose five words are
+   counted again as the four fields addressed individually)
 
 Offsets are WORD offsets into the shared global activation record.
 'scalar' = address never taken, only whole-word load/store.
@@ -147,7 +152,7 @@ VERIFIED BINARY FACT for the access counts; the object sizes marked
   966 scalar-byref      1     0     0    1     1  address taken only to pass it | passed to OS.3 FINIT x1
   967 scalar          1     6     3    0     6  word access only
   968 scalar          1     4     6    0     5  word access only
-  969 aggregate     253     0     0    6     2  bounded by next touched offset | passed to OS.28 FBLOCKIO x3; STB (byte) x2; passed to CSP 2 MOVELEFT x1
+  969 aggregate     256     0     0    6     2  bounded by next touched offset | passed to OS.28 FBLOCKIO x3; STB (byte) x2; passed to CSP 2 MOVELEFT x1
 
 File variables, from FINIT(f, window, recwords) call sites:
 

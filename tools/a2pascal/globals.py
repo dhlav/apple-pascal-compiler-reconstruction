@@ -117,7 +117,16 @@ def _classify_use(stream: list[Insn], k: int, site: str) -> list[Evidence]:
 def collect(cf, version: str) -> tuple[dict[int, GlobalVar], list[Access], int | None]:
     """Walk every p-code procedure and tabulate global accesses.
 
-    Returns (offset -> GlobalVar, all accesses, global area size in words).
+    Returns (offset -> GlobalVar, all accesses, the highest valid global
+    offset in words).
+
+    That bound is `(param_size + data_size) / 2`, not `data_size / 2`. A
+    UCSD activation record holds the block's parameters and its locals in one
+    offset space starting at 1, and only the locals are counted by the
+    `data_size` word; the outer block declares 4 bytes of parameters, so
+    using `data_size` alone loses two words at the top. Finding 46 measures
+    this over all 287 procedures: the bound is never exceeded, and it is
+    reached exactly by 105 of the 114 procedures in 1.1 that touch a local.
     """
     table: dict[int, GlobalVar] = {}
     accesses: list[Access] = []
@@ -129,7 +138,7 @@ def collect(cf, version: str) -> tuple[dict[int, GlobalVar], list[Access], int |
     for seg in cf.segments:
         for p in seg.procedures:
             if p.lex_level == 0 and not p.is_native:
-                outer_words = p.data_size // 2
+                outer_words = (p.param_size + p.data_size) // 2
 
     for seg in cf.segments:
         for p in seg.pcode_procedures:
@@ -174,7 +183,10 @@ def infer_objects(table: dict[int, GlobalVar], area_words: int | None) -> list[d
     out = []
     for i, off in enumerate(offsets):
         v = table[off]
-        nxt = offsets[i + 1] if i + 1 < len(offsets) else area_words
+        # area_words is the HIGHEST valid offset, so the exclusive bound past
+        # the last object is one more than that.
+        nxt = (offsets[i + 1] if i + 1 < len(offsets)
+               else (area_words + 1 if area_words is not None else None))
         gap = (nxt - off) if nxt is not None else None
         evidenced = v.best_size()
         by_ref_only = (v.addr_taken > 0

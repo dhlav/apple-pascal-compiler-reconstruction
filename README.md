@@ -15,7 +15,8 @@ evidence/          original inputs, never modified
                    (two external sources are read in place and NOT copied
                    here: John Brooks' Apple Pascal 1.4 interpreter source
                    and Peter Miller's ucsd-psystem-xc. See findings 17, 18.)
-  disks/           the two Apple Pascal .dsk images and ii0src.sdk
+  disks/           four Apple Pascal .dsk images -- the 1.1 and 1.3
+                   program disks and both boot volumes -- plus ii0src.sdk
   reference/       Neil Parker; Dave Tribby's 1.2 IDSEARCH/TREESEARCH
     ucsd-ii0-compiler/  the UCSD Pascal II.0 compiler source, 15 files
     manuals/       the Apple Pascal 1.3 manual set, the 1980 language
