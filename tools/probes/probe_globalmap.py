@@ -54,7 +54,16 @@ instructions; the `INTRINSIC`/`DATA` literals `UNITDECLARATION` compares
 against; and the `$R` arm of the option switch, which the manual says
 carries both range checking and the resident-segment list.
 
-Findings 38 and 39.
+Finding 40 then closes the loop from the other side: with both maps named,
+1.3's global growth can be totalled. The correspondence table's six shift
+steps say where the words went in; the objects here say what each one is;
+and the sum has to equal the difference between the two global areas.
+`JTAB` is the leg that leans hardest on measurement, so it is checked
+twice -- the extent between `JTAB` and `REFFILE`, against the `MAXJTAB`
+constant the binary compares `NEXTJTAB` with before raising the overflow
+error.
+
+Findings 38, 39 and 40.
 """
 import sys
 from pathlib import Path
@@ -111,6 +120,7 @@ def ii0_layout():
 def main() -> int:
     bad, checked = [], 0
     ii0 = ii0_layout()
+    facts = {}
 
     # PFNUMOF has to be in II.0's VAR block at all, and six words of it.
     checked += 1
@@ -576,6 +586,30 @@ def main() -> int:
             bad.append(f"{ver}: global {where['UFLDPTR'] + 1} is touched "
                        f"after all, so it is not the unused word")
 
+        # --- finding 40: what each object measures, for the 1.3 ledger ---
+        def extent(name):
+            """Words from `name` to the next global anybody touches."""
+            base = where[name]
+            nxt = [o for o in touched if o > base]
+            return (nxt[0] if nxt else area) - base
+
+        maxjtab = {i.operands[0] for _s, _n, st in streams(cf)
+                   for k, i in enumerate(st)
+                   if i.mnemonic in ("SLDC", "LDCI") and 0 < k < len(st) - 1
+                   and st[k - 1].mnemonic in ("LDO", "SLDO")
+                   and st[k - 1].operands[0] == where["NEXTJTAB"]
+                   and st[k + 1].mnemonic == "EQUI"}
+        facts[ver] = {
+            "area": area,
+            "SEGSUSED": w,
+            "SEGMAP": SEGMAPW[ver],
+            "PROCTABLE": extent("PROCTABLE"),
+            "JTAB": extent("JTAB"),
+            "MAXJTAB": maxjtab,
+            "tail": [o for o in touched if o > where["DISKBUF"]],
+            "low": [o for o in touched if o < where["ININTERFACE"]],
+        }
+
         print(f"{ver}: DISPLAY 13 x 4 at {where['DISPLAY']}; SEGSUSED "
               f"SET OF 0..{w * 16 - 1} at {setg}; SEGTABLE 16 x 9 at "
               f"{where['SEGTABLE']}; SEGMAP {SEGMAPW[ver]} words of nibbles "
@@ -620,6 +654,56 @@ def main() -> int:
     else:
         print(f"II.0's PREV*/OLD*/USEFILE all land at drift "
               f"{next(iter(drifts.values())):+d}, in reverse declaration order")
+
+    # --- finding 40: 1.3's global growth, word for word ---------------------
+    #
+    # The correspondence table's shift steps say where 1.3 inserted words;
+    # this says what each insertion is, and the total has to come out at the
+    # difference between the two global areas.
+    if "1.1" in facts and "1.3" in facts:
+        f1, f3 = facts["1.1"], facts["1.3"]
+        ledger = [
+            ("ISPROG", 1),
+            ("BYTEPTR+WORDPTR", 2),
+            ("SEGSUSED", f3["SEGSUSED"] - f1["SEGSUSED"]),
+            ("PROCTABLE", f3["PROCTABLE"] - f1["PROCTABLE"]),
+            ("SEGMAP", f3["SEGMAP"] - f1["SEGMAP"]),
+            ("JTAB", f3["JTAB"] - f1["JTAB"]),
+            ("HAS128K+CONLIST+LSTOPEN", 3),
+        ]
+        checked += 1
+        total, grew = sum(n for _w, n in ledger), f3["area"] - f1["area"]
+        entries = ", ".join(f"{w} {n:+d}" for w, n in ledger)
+        if total != grew:
+            bad.append(f"1.3's global area grew by {grew} words, but the "
+                       f"ledger accounts for {total}: {entries}")
+        else:
+            print(f"1.3 grows +{grew} words, all of it: {entries}")
+
+        # The measured one the ledger leans on hardest, against a constant
+        # the binary carries at the ERROR(253/254) guard.
+        for ver, want in (("1.1", 24), ("1.3", 36)):
+            checked += 1
+            if facts[ver]["MAXJTAB"] != {want}:
+                bad.append(f"{ver}: NEXTJTAB is compared against "
+                           f"{sorted(facts[ver]['MAXJTAB'])}, not the "
+                           f"MAXJTAB = {want} a {want + 1}-word JTAB needs")
+            checked += 1
+            if facts[ver]["JTAB"] != want + 1:
+                bad.append(f"{ver}: JTAB spans {facts[ver]['JTAB']} words, "
+                           f"not the {want + 1} MAXJTAB = {want} gives")
+
+        # The three new tail words are 1.3's alone, and the first shift step
+        # is the one word below ININTERFACE.
+        checked += 1
+        if f1["tail"] or len(f3["tail"]) != 3:
+            bad.append(f"1.1 touches {f1['tail']} past DISKBUF and 1.3 "
+                       f"touches {f3['tail']}; the ledger wants none and three")
+        checked += 1
+        if len(f3["low"]) - len(f1["low"]) != 1:
+            bad.append(f"1.3 touches {len(f3['low'])} globals below "
+                       f"ININTERFACE against 1.1's {len(f1['low'])}; the first "
+                       f"shift step is one word")
 
     if bad:
         print("\n".join(bad))

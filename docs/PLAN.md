@@ -268,14 +268,24 @@ Done, and reproducible via `python tools/build_all.py`:
      carries after its last `RTS` (probably linker relocation lists).
      `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is a good
      structural model but is 1.2 — corroboration, not authority.
-   * Account for the ~130-word growth in globals. **+115 of it is now
-     explained** (finding 38): raising the segment limit from 32 to 64
-     widens `SEGSUSED` from `SET OF 0..31` to `SET OF 0..63` (+2) and
-     `SEGMAP` from 32 to 64 nibbles (+8), and `PROCTABLE` grows 150 → 255
-     (+105). `DISPLAY` and `SEGTABLE` are unchanged. What is left is the
-     residual ~15 words: the correspondence table localises the insertions
-     to a few points; read off which offsets are new in 1.3 and classify
-     them with the same evidence pipeline.
+   * ~~Account for the ~130-word growth in globals.~~ **Done** (finding
+     40). The area went 1222 → 1355, and all 133 words are accounted for:
+     `ISPROG` +1, `BYTEPTR`/`WORDPTR` +2, `SEGSUSED` +2, `PROCTABLE` +105,
+     `SEGMAP` +8, `JTAB` +12 (`MAXJTAB` 24 → 36, and the binary carries
+     both bounds at the `ERROR(253)`/`ERROR(254)` guard), and three new
+     words at startup +3. `DISPLAY` and `SEGTABLE` are unchanged. The
+     probe re-derives the ledger from both binaries and fails if the total
+     misses.
+
+     One thing to carry: **1.3 renumbered at least one compiler error**
+     (`JTAB` overflow moved from 253 to 254), so an error number is not a
+     safe way to carry a name from 1.1 across the correspondence table.
+
+     `COMPINIT.11`, one of the three procedures 1.3 adds, is identified
+     with them: it is the version gate, checking `$BF21` for 4 and halting
+     with *"Version 1.3 of SYSTEM.COMPILER cannot run with a non-1.3
+     version of SYSTEM.PASCAL"*, then reading the 128K bit out of
+     `$BF22`. `BODYPART.26` and `COMPOPTI.5` are still unidentified.
 
      First two identified (finding 22b): 1.3 adds the standard types
      `BYTESTREAM` and `WORDSTREAM`, at globals 57 and 58, entered by name

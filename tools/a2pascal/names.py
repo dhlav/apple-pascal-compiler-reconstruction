@@ -1150,6 +1150,30 @@ GLOBALS_13: dict[int, str] = {
     1097: "CURBLK",         # 1.1 global 967, +130
     1098: "CURBYTE",
     1099: "DISKBUF",
+
+    # --- finding 40: the four globals 1.3 adds that 1.1 has no word for ----
+    31:  "ISPROG",     # OURS. 1.3's BLOCK latches `not INMODULE` here
+                       # before the body can clear it, and FINISHUP writes
+                       # the used-segment and procedure-table info only
+                       # when it is set. 1.1 writes that block
+                       # unconditionally.
+    1355: "HAS128K",   # OURS. COMPINIT.11 -- one of the three procedures
+                       # 1.3 adds -- checks byte 0 of $BF21 (VERSION) and
+                       # halts with "Version 1.3 of SYSTEM.COMPILER cannot
+                       # run with a non-1.3 version of SYSTEM.PASCAL"
+                       # unless it is 4, then reads bit 6 of the word at
+                       # $BF22 (FLAVOR) into this. Bits 6,5 of FLAVOR are
+                       # the memory size, 10 = 128K. BLOCK then compiles a
+                       # unit `if SWAPPING or HAS128K`, where 1.1 needs
+                       # SWAPPING alone -- error 408 is the manual's
+                       # "(*$S+*) needed to compile units".
+    1356: "CONLIST",   # OURS. 1.3 asks for a listing file by name at
+                       # startup; if the answer is 'CONSOLE:' or '#1:' it
+                       # clears NOISY and sets this. ERROR then skips the
+                       # listing copy (`if LIST and not CONLIST`), because
+                       # the listing is already on the screen.
+    1357: "LSTOPEN",   # OURS. set when that OPEN succeeds, so the $L
+                       # option does not reopen the file over it.
 }
 
 GLOBAL_NAMES = {"1.1": GLOBALS_11, "1.3": GLOBALS_13}

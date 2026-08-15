@@ -3364,6 +3364,119 @@ Apple name, and every one of the seven that does not is explained —
 1.3 has eight unnamed: the four window buffers, one new scalar at 31, and
 three new words at 1355–1357 past `DISKBUF`. Those belong to task 10.
 
+## 40. 1.3's global growth, word for word
+
+*Confidence: VERIFIED BINARY FACT for the ledger and for every constant in
+it; STRONG INFERENCE for what the three new tail words are for;
+SPECULATION for their four spellings, which are ours.
+`tools/probes/probe_globalmap.py`, 95 checks.*
+
+1.3's global area is 1355 words against 1.1's 1222. The correspondence
+table localises the insertions — its shift column steps six times, and
+each step says how many words went in and where. Findings 38 and 39 named
+enough of both maps to say *what*, and the total comes out exact.
+
+| step | at | words | what |
+|---|---|---|---|
+| +0 → +1 | `ININTERFACE` | 1 | `ISPROG` |
+| +1 → +3 | `NILPTR` | 2 | `BYTEPTR` and `WORDPTR` (finding 22b) |
+| +3 → +5 | `PROCTABLE` | 2 | `SEGSUSED`, `SET OF 0..31` → `SET OF 0..63` |
+| +5 → +110 | `SEGTABLE` | 105 | `PROCTABLE`, 150 → 255 |
+| +110 → +118 | `COMMENT` | 8 | `SEGMAP`, 32 nibbles → 64 |
+| +118 → +130 | `REFFILE` | 12 | `JTAB`, 25 → 37 |
+| past the table | after `DISKBUF` | 3 | `HAS128K`, `CONLIST`, `LSTOPEN` |
+
+**1 + 2 + 2 + 105 + 8 + 12 + 3 = 133 = 1355 − 1222.** Nothing is left
+over, and nothing is double-counted. Four of the seven were already
+explained (findings 22b and 38); this finding is the other three.
+
+### 40a. `JTAB` grew, and the binary carries the bound
+
+The step at `REFFILE` is II.0's long-jump table. `GENJMP` allocates a slot
+and refuses when it runs out — in 1.1:
+
+```
+LDO 509 (NEXTJTAB) ; SLDC 24 ; EQUI ; FJP ; LDCI 253 ; CXP 1,2 (ERROR)
+```
+
+and in 1.3 the same three instructions with **36**, and `ERROR(254)`
+rather than 253. `MAXJTAB` went 24 → 36, so `ARRAY [0..MAXJTAB] OF
+INTEGER` went 25 → 37 words, which is the +12 exactly. The probe checks
+the constant and the measured extent against each other in both releases,
+so either one being wrong shows up.
+
+The error number moving with it is worth noting for the reconstruction:
+1.3 renumbered at least one compiler error, so error numbers are not
+invariant across releases and cannot be used to carry a name from 1.1 to
+1.3 without checking.
+
+### 40b. `ISPROG` — 1.3 latches `not INMODULE`
+
+1.3's `BLOCK` opens with one instruction pair 1.1 does not have:
+
+```
+LDO 33 (INMODULE) ; LNOT ; SRO 31
+```
+
+immediately before the `NEWBLOCK := true` that 1.1's `BLOCK` starts with.
+`FINISHUP` then guards on it: where 1.1 unconditionally clears `SEGSUSED`,
+writes `PROCTABLE[0]` and `PROCTABLE[1]` to the codefile and walks the
+segments-used set, 1.3 wraps all of that in `if ISPROG then`. So the word
+is a latch — `INMODULE` is cleared before `FINISHUP` runs, and 1.3 needs
+to know whether what was compiled was a program or a unit.
+
+(1.3's `MOVELEFT` in that block moves **8** bytes where 1.1 moves 4, which
+is finding 38's set widening seen from a third direction.)
+
+### 40c. The three new words are 1.3's startup
+
+`COMPINIT.11` is one of the three procedures 1.3 adds, and it is a version
+gate. It reads the byte at **$BF21**, and if it is not 4 it prints
+
+> `Version 1.3 of SYSTEM.COMPILER cannot run`
+> `with a non-1.3 version of SYSTEM.PASCAL`
+
+and exits. $BF21 is `VERSION` in the interpreter's low-memory vector
+table, *"Apple Pascal version number. 0=1.0, 2=1.1, 3=1.2, 4=1.3"*. Having
+passed, it reads **bit 6 of the word at $BF22**, `FLAVOR`, into a global.
+Bits 6 and 5 of `FLAVOR` are the memory size — `00`=64K, `01`=48K,
+`10`=128K — so bit 6 set is a 128K machine. We call the global
+**`HAS128K`**.
+
+What it is for is in `BLOCK`. 1.1 compiles a unit only under `$S+`:
+
+```
+if SY = UNITSY and not INMODULE then
+  if SWAPPING then UNITPART(...) else ERROR(408)
+```
+
+and error 408 is, in the manual's own words, *"(\*$S+\*) needed to compile
+units"*. 1.3's test is `if SWAPPING or HAS128K` — on a 128K machine the
+symbol table has room, so the option is no longer required.
+
+The other two are 1.3's listing-file prompt, which 1.1 does not have.
+`COMPINIT` asks for a file name; if the answer is `'CONSOLE:'` or `'#1:'`
+it clears `NOISY` and sets **`CONLIST`**, and if the `OPEN` of `LP`
+succeeds it sets `LIST` and **`LSTOPEN`**. Both are then read where they
+matter: `ERROR` copies the message to the listing only `if LIST and not
+CONLIST` — the listing is already on the screen — and `COMPOPTI`'s `$L`
+arm opens `*SYSTEM.LST.TEXT[*]` only `if LIST and not LSTOPEN`, so the
+option cannot reopen the file over the one startup already opened.
+
+All four spellings are ours; `HAS128K` follows the name the `FLAVOR` table
+gives that field.
+
+### 40d. What is left of the 1.3 delta
+
+The globals half of task 10 is closed. 1.3 has eight touched offsets
+without a name, and four of them are the file-window buffers that 1.1
+lacks names for too (section 16). The other four are named here.
+
+Still open on that track: the two native procedures as reassemblable
+source, the word-data block each carries after its last `RTS`, and the
+three procedures 1.3 adds — of which `COMPINIT.11` is now identified as
+the version gate, leaving `BODYPART.26` and `COMPOPTI.5`.
+
 ## 16. Open questions
 
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now

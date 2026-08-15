@@ -180,6 +180,18 @@ and `$R unitname` to keep a segment in memory, and the manual's "the
 resident option must immediately follow the BEGIN that starts the
 procedure body" is exactly where `BODY1` reads that list.
 
+That leaves 1.3's global growth fully accounted (finding 40). The area
+went 1222 words to 1355, and every one of the 133 has a cause: `ISPROG`
++1, the two new standard types +2, the segments-used set +2, `PROCTABLE`
++105, `SEGMAP` +8, `JTAB` +12, and three new words at startup +3. The
+`JTAB` one is checkable twice over — `MAXJTAB` went 24 to 36, and the
+binary carries both bounds at the guard that raises the overflow error,
+which 1.3 also renumbered from 253 to 254. `COMPINIT.11`, one of the three
+procedures 1.3 adds, turns out to be a version gate: it refuses to run
+under a `SYSTEM.PASCAL` older than 1.3, then reads the 128K bit out of the
+interpreter's `FLAVOR` word — because on a 128K machine 1.3 no longer
+requires `{$S+}` to compile a unit.
+
 **`DECLARAT` and `ROUTINE` are finished** — twenty of twenty and
 seventeen of seventeen procedures named, at identical numbers in 1.1 and
 1.3 (findings 34 and 35).
