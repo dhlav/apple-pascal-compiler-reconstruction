@@ -119,6 +119,20 @@ class Segment:
     version: int
     data: bytes = field(repr=False, default=b"")
     procedures: list[Procedure] = field(default_factory=list)
+    # A split segment (finding 50) is assembled into one sparse image, so
+    # `data` and `length` describe that image rather than the slot alone.
+    # `chunks` lists the (offset in `data`, length, dictionary slot) of each
+    # real region; everything outside them is padding this reader invented
+    # and holds no bytes from the file.
+    chunks: list[tuple[int, int, int]] = field(default_factory=list)
+
+    @property
+    def is_split(self) -> bool:
+        return len(self.chunks) > 1
+
+    def in_chunk(self, off: int) -> bool:
+        """True if `off` is a real byte of the file rather than padding."""
+        return any(a <= off < a + n for a, n, _ in self.chunks)
 
     @property
     def is_pcode(self) -> bool:
@@ -168,8 +182,80 @@ class CodeFile:
                 seg_num=info & 0xFF, seg_num_tail=tail & 0xFF,
                 mtype=MTYPES.get((info >> 8) & 0xF, f"?{(info >> 8) & 0xF}"),
                 version=info >> 13, data=raw,
+                chunks=[(0, leng, i)],
             ))
-        return out
+        absorbed = self._join_splits(out)
+        return [s for s in out if s.index not in absorbed]
+
+    @staticmethod
+    def _join_splits(segs: list[Segment]) -> set[int]:
+        """Fold each continuation slot into the segment that owns it.
+
+        Finding 50: `PASCALSY` is stored in two pieces -- the named slot,
+        which ends with the segment's one and only procedure dictionary, and
+        an unnamed slot holding the procedures that dictionary cannot reach
+        from where it sits. The two are far apart when loaded, so a pointer
+        that crosses between them resolves short by a constant.
+
+        Rebuilds the owner's `data` as one sparse image in which both pieces
+        sit at the separation the pointers imply, which is the only geometry
+        in which the ordinary `target = at - v` rule holds throughout. The
+        padding between them is this reader's invention -- `in_chunk` says
+        which bytes are real. Returns the slots that were absorbed.
+
+        Every step here can fail, and does nothing unless all of them hold:
+        the shift is *derived* from requiring the highest crossing pointer to
+        land on the continuation's last word, and is then accepted only if
+        every remaining entry lands on a byte holding its own procedure
+        number. A segment that simply has a corrupt dictionary gets no
+        continuation and stays as it was.
+        """
+        spare = [s for s in segs if s.name == ""]
+        absorbed = set()
+        for seg in segs:
+            if not seg.name or seg.length < 4:
+                continue
+            n = seg.length
+            nproc = _w(seg.data, n - 2) >> 8
+            ents = {}
+            for i in range(1, nproc + 1):
+                at = n - 2 - 2 * i
+                if at < 0:
+                    break
+                ents[i] = (at, _w(seg.data, at))
+            miss = [i for i, (at, v) in ents.items()
+                    if not (0 <= at - v < n and seg.data[at - v] == i)]
+            if not miss or len(miss) == nproc:
+                continue
+            for cont in spare:
+                if cont.index in absorbed:
+                    continue
+                # The continuation's last word is the last procedure's JTAB:
+                # it carries no dictionary of its own, which is what makes it
+                # a piece of a segment rather than a segment.
+                top = max(ents[i][0] - ents[i][1] for i in miss)
+                shift = (cont.length - 2) - top
+                if not all(0 <= ents[i][0] - ents[i][1] + shift < cont.length
+                           and cont.data[ents[i][0] - ents[i][1] + shift] == i
+                           for i in miss):
+                    continue
+                # Place the continuation at 0 and the owner above it, at the
+                # separation `shift` encodes: a pointer at owner-local `at`
+                # sits at `shift + at` and must reach cont-local `at - v +
+                # shift`, so the owner's base *is* the shift.
+                base = shift
+                if base < cont.length:
+                    continue          # they would overlap; not this pairing
+                img = bytearray(base + n)
+                img[:cont.length] = cont.data
+                img[base:base + n] = seg.data
+                seg.data = bytes(img)
+                seg.chunks = [(0, cont.length, cont.index),
+                              (base, n, seg.index)]
+                seg.length = base + n
+                absorbed.add(cont.index)
+                break
+        return absorbed
 
     @staticmethod
     def _parse_procedures(seg: Segment) -> None:

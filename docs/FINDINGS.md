@@ -4467,40 +4467,129 @@ says nothing about the constructs these samples do not use — no loops, no
 `case`, no sets, no calls between procedures, no `with`, no records. The
 next calibration target is `SYSTEM.PASCAL`, whose source is already in
 `reference_source/ucsd_ii0/`; it is a hundred times the size and exercises
-all of them.
+all of them. It would not parse when this was written; **finding 50 fixes
+that**, and it now lifts.
+
+## 50. `SYSTEM.PASCAL`'s segment 0 is stored in two pieces, and one dictionary spans both
+
+The operating system's `PASCALSY` would not parse: it claims 57 or 58
+procedures and only 28, 32 or 16 of the dictionary pointers landed anywhere
+inside it, and every build carried an unnamed slot 15 with `SEGINFO` 0 whose
+size looked like the complement of slot 0's. That was recorded in section 16
+as a blocker, and it was the wrong shape of question. Slot 15 is not a
+segment that failed to parse. It is the rest of segment 0.
+
+### 50a. The measurement that settles it
+
+VERIFIED BINARY FACT. Slot 0 and slot 15 are physically adjacent in every
+build, and together they tile the file exactly up to the first ordinary
+segment:
+
+| | slot 0 `PASCALSY` | slot 15 | procedures |
+|---|---|---|---|
+| 1.1 `SYSTEM.PASCAL` | blocks 1..7, 3150 bytes | blocks 8..14, 4226 | 57 |
+| 1.3 `SYSTEM.PASCAL` | blocks 1..7, 3158 | blocks 8..14, 3360 | 58 |
+| 1.3 `128K.PASCAL` | blocks 1..3, 1438 | blocks 4..13, 5080 | 58 |
+
+There is exactly one procedure dictionary and it sits at the end of slot 0,
+where the layout in section 1 says it should: `2 + 2n` bytes, 116 in 1.1 and
+118 in both 1.3 builds, immediately above the last JTAB in that piece. Slot
+15 has **no** dictionary — its last word *is* a JTAB. That is what makes it a
+piece rather than a segment, and it is the check that distinguishes the two.
+
+The dictionary entries fall into two groups. Those whose target lies in slot
+0 are ordinary self-relative pointers and always were. Those whose target
+lies in slot 15 are ordinary self-relative pointers too, but they resolve
+short by a constant, because the loader places the two pieces far apart:
+
+    target = (at - v) + S       S = 21396 (1.1), 20522 (1.3), 21046 (128K)
+
+`S` is not fitted. It is forced, by one line: the highest crossing pointer
+must land on slot 15's last word, because slot 15 ends on a JTAB. One number
+per file comes out of that requirement, and then everything else follows
+without a further choice:
+
+* all 57, 58 and 58 entries land on a byte holding **their own procedure
+  number** — 29 + 26 + 42 = 97 crossing entries, no exceptions;
+* the procedures tile **both** pieces with no gap and no overlap;
+* every one passes the ordinary attribute check — `enter <= exit <= JTAB`,
+  parameter and data sizes even, lex level in range;
+* slot 0's leftover is exactly the dictionary and slot 15's is exactly zero.
+
+`probe_split_segment.py` makes all of that gating: 871 checks. It also
+sweeps the other 36 codefiles across the six evidence disks and requires
+that **none** of them is joined and that all still parse, and it corrupts one
+crossing pointer per build and requires the join to refuse. It does refuse —
+flipping a single bit makes the reader decline the whole segment rather than
+settle on some other constant that happens to fit, which is the failure mode
+worth guarding against.
+
+### 50b. The split is packing, not truncation
+
+VERIFIED BINARY FACT, and it rules out the obvious alternative reading. If
+the file had simply been cut in half, the pieces would hold contiguous runs
+of procedure numbers. 1.1's does — 1..28 in slot 0, 29..57 in slot 15 — but
+1.3's does not:
+
+    1.3 SYSTEM.PASCAL   slot 0: 1-30, 32, 34      slot 15: 31, 33, 35-58
+    1.3 128K.PASCAL     slot 0: 1-12, 14-16, 19   slot 15: 13, 17-18, 20-58
+
+Procedures 32 and 34 stayed behind while 31 and 33 moved, and 128K's split is
+interleaved throughout. Something filled slot 0 up to a block boundary and
+sent the remainder across — a build step choosing what fits, not a cut.
+
+That also explains the measurement recorded in section 16 as suggestive: 1.3's
+`SYSTEM.PASCAL` and `128K.PASCAL` really do hold the same 6518 bytes of
+segment 0, split at different points. They are two memory maps of one system,
+and the different split is the point of the two files rather than a puzzle
+about them. Their `S` values differ accordingly.
+
+### 50c. What is *not* claimed
+
+`S` is a difference of load addresses, and this does not identify them.
+Written as one, the last byte of slot 0's piece sits 16736 ($4160) bytes
+above the last byte of slot 15's in both `SYSTEM.PASCAL` builds and 15868
+($3DFC) in `128K.PASCAL` — the same for the two files that share a memory map
+and different for the one that does not, which is consistent, but no absolute
+address is recovered here and none is needed. SPECULATION, flagged as such
+and not relied on anywhere: the separation is about the right size for one
+piece to live in the language card and the other in main RAM, which would
+also explain why the 128K build moves the boundary. The reader does not
+depend on it.
+
+The reader represents the join as a sparse image with the two pieces at the
+separation the pointers imply, because that is the only geometry in which the
+plain `target = at - v` rule holds throughout; `Segment.in_chunk` says which
+bytes are real, and nothing walks the padding. The padding is this reader's
+invention and is not evidence of anything having been there.
+
+### 50d. What it unblocks
+
+`SYSTEM.PASCAL` now parses completely — 105 procedures in 1.1's, 111 in
+1.3's, zero inconsistent — and lifts. Segment 0 procedure 33 of 1.3 comes out
+as the filename parser: upcase, strip blanks, then the `*`, `%`, `:` and `[`
+cases, with `SPOS`, `SCOPY` and `SDELETE` named and the call into `FILEPROC`
+resolved across segments. That is the calibration target finding 49e asked
+for and could not have — loops, nested conditionals, string intrinsics,
+inter-segment calls — against source that is already in
+`reference_source/ucsd_ii0/`. Finding 8 still applies: that source is the
+*generic* UCSD II.0 operating system and Apple's is not, so this will be a
+close comparison rather than the exact one the GOTOXY samples allowed.
 
 ## 16. Open questions
 
-* **`SYSTEM.PASCAL`'s segment 0 does not parse, and this blocks the
-  calibration target of finding 49e.** Measured across all three operating
-  system builds now in `evidence/`:
-
-  | | slot 0 `PASCALSY` | claimed procs | resolvable | unnamed slot 15 |
-  |---|---|---|---|---|
-  | 1.1 `SYSTEM.PASCAL` | 3150 bytes | 57 | 28 | 4226 bytes |
-  | 1.3 `SYSTEM.PASCAL` | 3158 | 58 | 32 | 3360 |
-  | 1.3 `128K.PASCAL` | 1438 | 58 | 16 | 5080 |
-
-  The dictionary pointers past the resolvable ones are not garbage — they
-  descend monotonically like real self-relative pointers — but no base
-  makes them land inside any region of the file. Every build also carries
-  an **unnamed slot 15** with `SEGINFO` 0, and no self-consistent procedure
-  dictionary exists anywhere inside it.
-
-  The suggestive measurement: 1.3's `SYSTEM.PASCAL` and `128K.PASCAL` have
-  **the same slot 0 + slot 15 total, 6518 bytes**, split at different block
-  boundaries. That reads as one object divided by file layout rather than
-  two segments — but neither concatenation order produces a dictionary that
-  resolves, so it is not yet an answer.
-
-  `SETUP.CODE` is the control and it is clean: it has a `PASCALSY` segment,
-  it is also `{$U-}`, and it shows neither symptom. So this is specific to
-  the operating system proper, not to `{$U-}` or to the segment name.
-
-  Until it is solved, `SYSTEM.PASCAL` cannot be lifted, and finding 49's
-  calibration cannot be extended to the constructs the GOTOXY samples do
-  not use.
-
+* ~~**`SYSTEM.PASCAL`'s segment 0 does not parse.**~~ **Resolved by finding
+  50**, and the premise was wrong: slot 15 is not a segment that failed to
+  parse, it is the second piece of segment 0, and the one dictionary at the
+  end of slot 0 covers both. All three operating system builds now parse
+  with zero inconsistent procedures, and `SYSTEM.PASCAL` lifts. The
+  suggestive 6518-byte coincidence between 1.3's `SYSTEM.PASCAL` and
+  `128K.PASCAL` was exactly what it looked like: the same segment 0, split
+  at a different point for a different memory map.
+* What the separation between the two pieces of segment 0 *is*, in absolute
+  addresses. Finding 50c measures it -- 16736 bytes in both `SYSTEM.PASCAL`
+  builds, 15868 in `128K.PASCAL` -- but recovers no load address, and
+  nothing depends on one.
 * ~~**Non-standard CSPs.**~~ Resolved by finding 17: the full table is now
   named and aritied from interpreter source, and CSP 21/22 are the compiler
   phase dispatch. TommyGoog's `LIBMAP.CODE` cross-reference is no longer

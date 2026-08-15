@@ -345,22 +345,23 @@ Done, and reproducible via `python tools/build_all.py`:
      defects, both fixed.
 
      What it does not cover: loops, `case`, sets, inter-procedure calls,
-     records, `with` — the samples use none of them. **The next calibration
+     records, `with` ï¿½ the samples use none of them. **The next calibration
      target is `SYSTEM.PASCAL`**, whose source is already in
      `reference_source/ucsd_ii0/` and which exercises all of them at a
      hundred times the size. That is the largest single lever left for the
      whole project, because it turns every "the compiler emits X for Y"
      claim into something checkable.
 
-     **It is blocked on a reader problem first**, recorded in section 16 of
-     FINDINGS: `PASCALSY` claims 57 or 58 procedures and only 28, 32 or 16
-     of the dictionary pointers resolve, and every OS build carries an
-     unnamed slot 15 whose size complements slot 0's. Solve that before
-     anything else here. Note the source is the *generic* UCSD II.0 OS and
-     Apple's is not (finding 8), so this will be a close comparison rather
-     than the exact one the GOTOXY samples allowed.
+     **The reader problem that blocked this is solved** â€” finding 50. Slot
+     15 was never a broken segment; it is the second piece of segment 0, and
+     the single dictionary at the end of slot 0 spans both. All three OS
+     builds now parse with zero inconsistent procedures and lift, gated by
+     `probe_split_segment.py`. Note the source is the *generic* UCSD II.0 OS
+     and Apple's is not (finding 8), so this will be a close comparison
+     rather than the exact one the GOTOXY samples allowed â€” align procedure
+     by procedure and expect Apple-only routines with no counterpart.
 
-     The other direction — source *in*, codefile out — is still the
+     The other direction ï¿½ source *in*, codefile out ï¿½ is still the
      emulator's job.
    * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
      from Peter Miller's `ucsd-psystem-xc` and run reconstructed source

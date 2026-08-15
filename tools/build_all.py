@@ -13,6 +13,10 @@ STEPS = [
     ("volume directories", "dump_dir.py"),
     ("unpack ii0src.sdk", "unpack_ii0src.py"),
     ("extract UCSD II.0 source", "extract_ii0src.py"),
+    # Not an artifact: the operating system stores segment 0 in two pieces,
+    # and this requires the reader's join to reproduce both exactly and to
+    # refuse a damaged one (finding 50).
+    ("split segment 0", "probes/probe_split_segment.py"),
     ("segment/procedure maps", "map_compiler.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
