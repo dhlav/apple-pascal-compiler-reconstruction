@@ -4425,6 +4425,16 @@ length, then the two arguments the declaration defaults. Six words, and
 each one accounted for. Dropping the table entry to five is the second
 mutation, and it fails four ways.
 
+That it had to come from outside the compiler is the point.
+`probe_csp_check.py` scores every CSP arity against the compiler's own call
+sites, and its verdict on this one is `margin +0 -- tie with (0, 0), binary
+gives no signal`: `SYSTEM.COMPILER` calls `UNITWRITE` exactly once, and one
+call site cannot separate a six-word effect from a zero-word one. The
+GOTOXY samples settle in one line what 40 kilobytes of compiler could not
+say at all. Seven more entries carry the same verdict, and four are
+recorded as CONTRADICTED — those are the ones a second source would be
+worth most on.
+
 ### 49d. Two defects it found
 
 Neither is in a conclusion; both are in the tooling, which is what a
