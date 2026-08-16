@@ -362,13 +362,18 @@ Done, and reproducible via `python tools/build_all.py`:
 
      **What is still unchecked against source, in priority order:**
 
-     1. **`with` and records.** The II.0 source uses `WITH` constantly and
-        segment 0's procedures are full of record field access, but neither
-        of the two measures can see a `with` -- it generates no control flow
-        and no call. A third measure is needed. The obvious one is field
-        offsets: a `WITH SYSCOM^ DO` followed by a named field has to become
-        a specific offset, and the II.0 type declarations give the offset
-        independently.
+     1. **`with`, and record field *offsets*.** Record *sizes* are now
+        checked -- finding 54 lays UCSD's declarations out and reproduces
+        `ATTR` at 5 words, `STRUCTURE` at 9, and all seven `identifier`
+        `klass` sizes, plus the seventeen VAR-block sizes `vardecl.py` used
+        to tabulate. What is still unchecked is offsets: a `WITH SYSCOM^ DO`
+        followed by a named field has to become one particular displacement,
+        and `reclayout.py` can now compute that displacement from the
+        declaration. Doing so would also settle finding 54b, where sizes
+        alone cannot say *which* two fields Apple's `identifier` lacks --
+        offsets can, because dropping a different word would shift
+        everything after it.
+
      2. ~~**`case`.**~~ **Done** (finding 53). `PRINTERROR`'s nested case
         against UCSD's source for it: 31 error messages in 1.1 and 21 in 1.3
         come out identical to II.0 character for character, with the arm
