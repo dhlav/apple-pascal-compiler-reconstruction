@@ -11,6 +11,8 @@ What it requires, for each program:
   * the compiled segment is the same length as Apple's, to the byte;
   * the p-code disassembles identically, instruction for instruction and
     operand for operand, read by this repo's own decoder on both sides;
+  * the reconstructed declaration skeletons compile to Apple's own global
+    frame, to the byte, in both releases;
   * the segment bytes differ *only* at the known padding positions -- one
     byte per procedure, past the `RBP` or `XIT` that ends it, where Apple
     writes 0 and `ucsdpsys_compile` writes `NOP`. Nothing reaches them.
@@ -123,8 +125,36 @@ for name in SAMPLES:
                       f"{name}: offset {i} is Apple 0x{a.data[i]:02X} / "
                       f"ours 0x{b.data[i]:02X}, not the known 0x00 / 0xD7")
 
+# The reconstructed declarations, compiled, must give Apple's own global
+# frame. This is the check that caught SYMBUFP and CODEP being written as
+# VAR declarations when they are the outer block's parameter words: it was
+# two words wide in both releases (finding 55c).
+REC = ROOT / "analysis" / "reconstruction"
+COMPILER = {"1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
+            "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"}
+for ver, dname in COMPILER.items():
+    skel = REC / f"skeleton-{ver}.text"
+    if not skel.exists():
+        fails.append(f"{skel.name} has not been generated (tools/srcskel.py)")
+        continue
+    try:
+        mine = CodeFile(xcompile.compile_text(
+            skel.read_text(encoding="ascii", errors="replace")))
+    except xcompile.CompileError as exc:
+        fails.append(f"skeleton-{ver}: did not compile -- {exc}")
+        continue
+    mp = next(x for x in mine.segments[0].procedures if x.number == 1)
+    ad = PascalDisk.from_file(ROOT / "evidence" / "disks" / dname)
+    ae = ad.find("SYSTEM.COMPILER")
+    ap = CodeFile(ad.read_blocks(ae.first_block, ae.blocks)).segments[0].procedures[0]
+    check((mp.param_size, mp.data_size) == (ap.param_size, ap.data_size),
+          f"skeleton-{ver}: the declarations compile to param {mp.param_size} / "
+          f"data {mp.data_size}, but Apple's outer block is param "
+          f"{ap.param_size} / data {ap.data_size}")
+
 print(f"{checks} checks, {len(fails)} failures "
-      f"({len(SAMPLES)} programs compiled and diffed against Apple's own output)")
+      f"({len(SAMPLES)} programs diffed against Apple's own output, "
+      f"{len(COMPILER)} reconstructed VAR blocks checked against its frame)")
 for f in fails[:20]:
     print("  FAIL", f)
 sys.exit(1 if fails else 0)

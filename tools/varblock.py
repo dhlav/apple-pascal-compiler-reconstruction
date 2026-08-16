@@ -65,6 +65,19 @@ PHANTOM = {"1.1": {835, 886, 926, 966}, "1.3": {965, 1016, 1056, 1096}}
 # and not of which bytes come out -- but II.0's form is the one on record.
 # offset -> (name, type, words, the field names the map has)
 RECORDS = {"1.1": {3: ("GATTR", "ATTR", 5)}, "1.3": {3: ("GATTR", "ATTR", 5)}}
+# The outer block's two PARAMETER words, which are not `VAR` declarations and
+# must not be written as any (finding 55c). A UCSD program main is given a
+# two-word parameter area whatever its header says, and declared variables
+# start at offset 3: of the 21 other Apple-compiled programs across the six
+# disks, every single one puts its first global at 3, and `LINEFEED.CODE` --
+# one variable, `VAR CHEAT: TWOFACE` -- compiles it to `SRO 3`.
+#
+# `SYSTEM.COMPILER` is the only one that *uses* those two words, and what it
+# keeps there is not in doubt: `NEW(G1, 512)` and `NEW(G2, 650)` match
+# `SYMBUFARRAY` and `CODEARRAY` to the word. Declaring them in the `VAR`
+# block made the compiled frame two words too wide; leaving them out makes it
+# exactly Apple's.
+OUTER_PARAMS = {"1.1": (1, 2), "1.3": (1, 2)}
 
 
 def ii0_types() -> dict[str, str]:
@@ -166,8 +179,10 @@ def build(ver: str) -> list[str]:
     # touches is inside one of them.
     recs = RECORDS[ver]
     covered = {o + k for o, (_n, _t, w) in recs.items() for k in range(1, w)}
+    params = OUTER_PARAMS[ver]
     offsets = sorted(o for o in names
-                     if o not in PHANTOM[ver] and o not in covered)
+                     if o not in PHANTOM[ver] and o not in covered
+                     and o not in params)
     rows = []
     for i, off in enumerate(offsets):
         nxt = offsets[i + 1] if i + 1 < len(offsets) else frame + 1
@@ -187,7 +202,7 @@ def build(ver: str) -> list[str]:
     # name to land on the offset it came from, with the last object ending
     # exactly on the frame. Contiguity is by construction, so what this can
     # fail on is a missing or misnamed offset.
-    lc = 1
+    lc = max(OUTER_PARAMS[ver]) + 1     # declared variables start past them
     for off, name, words, *_ in rows:
         if lc != off:
             raise SystemExit(f"[{ver}] {name} allocates at {lc}, "
@@ -219,6 +234,13 @@ def build(ver: str) -> list[str]:
          "Grouping several into one `VAR a,b,c: T` would reverse them",
          "(finding 33) and is only safe where II.0's own grouping is known",
          "to have survived -- see the drift runs in vardecl-ii0.txt.",
+         "",
+         f"{{ Offsets {params[0]} and {params[1]} are the outer block's two",
+         "  PARAMETER words, not declarations -- see finding 55c. Apple keeps",
+         f"  {names[params[0]]} and {names[params[1]]} there; every other Apple-compiled",
+         "  program on the six disks leaves them unused and starts its",
+         "  variables at offset 3. Writing them below would make the",
+         "  compiled frame two words too wide. }",
          "",
          "VAR",
          ]

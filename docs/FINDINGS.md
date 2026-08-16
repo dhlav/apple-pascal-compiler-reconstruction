@@ -5013,54 +5013,70 @@ Three measurements made with the new tool, all VERIFIED:
   block's variables become *locals*, and `PARAM SIZE` is 0. That is why
   `HAZELGOTO`'s main has a zero frame.
 
-### 55c. What it did not settle, and what is now in doubt
+### 55c. The two words: `SYMBUFP` and `CODEP` are parameters, not variables
 
-Apple's compiler declares 1222 words in 1.1 and 1355 in 1.3, by the
-`DATA SIZE` rule above. Its globals demonstrably start at offset **1**, not
-3, and this is not an inference:
+The skeleton came out two words wide, and the fast tier settled it in three
+runs. VERIFIED BINARY FACT throughout.
 
-    COMPINIT.9   LAO 1 ; LDCI 512  ; CSP 1     NEW(SYMBUFP, 512)
-    DECLARAT.1   LAO 2 ; LDCI 650  ; CSP 1     NEW(CODEP, 650)
+**Every Apple-compiled program starts its declared globals at offset 3.**
+Twenty-one programs across the six disks, swept for the lowest global operand
+any of them uses, and the answer is 3 every time. `LINEFEED.CODE` is the
+clean case, because its source is on the same disk: `PROGRAM LINEFEED; VAR
+CHEAT: TWOFACE;` — one variable, one word, `DATA SIZE` 2 — and it compiles to
+`SRO 3`. Offsets 1 and 2 are the outer block's parameter area, which a UCSD
+program main is given whatever its header says. `ucsdpsys_compile` does the
+same thing, which is how this was noticed at all.
 
-`SYMBUFARRAY` is `PACKED ARRAY [0..MAXCURSOR] OF CHAR` with `MAXCURSOR` 1023,
-which is 512 words; `CODEARRAY` is `PACKED ARRAY [0..MAXCODE] OF CHAR` with
-`MAXCODE` 1299, which is 650. Both match to the word, and 1.3's second call
-allocates 1000 words, giving `MAXCODE` = 1999. Global 3 is `GATTR`, `MOV`ed
-five words at a time. The name map is right.
+`SYSTEM.COMPILER` is the **only** program of the twenty-two that uses those
+two words, and what it keeps there is not in doubt:
 
-So globals run from offset 1 and there are 1355 of them in 1.3 — ending at
-1355. But the map has a *named* global at **1357**, and offsets 1355, 1356
-and 1357 are all read and written. Two words are unaccounted for at the top,
-and the same two words are unaccounted for in 1.1.
+    COMPINIT.9   LAO 1 ; LDCI 512 ; CSP 1      NEW(SYMBUFP, 512)
+    DECLARAT.1   LAO 2 ; LDCI 650 ; CSP 1      NEW(CODEP, 650)
 
-**This puts finding 46 in doubt.** Finding 46 read the frame as
-`(PARAM SIZE + DATA SIZE) / 2` = 1224 in 1.1 and concluded that `DISKBUF` is
-exactly 256 words ending on the last word of the frame. If the declared
-globals are the 1222 words `DATA SIZE` states and they start at offset 1,
-`DISKBUF` starts at 969 and ends at 1222, which makes it 254 words, not 256.
-One of those two readings is wrong. The candidates:
+512 is `SYMBUFARRAY`, `PACKED ARRAY [0..MAXCURSOR] OF CHAR` with `MAXCURSOR`
+1023; 650 is `CODEARRAY` with `MAXCODE` 1299. Both to the word, and 1.3's
+second call allocates 1000, giving `MAXCODE` = 1999.
 
-* Apple's outer block has two words of genuine parameters, at the top of the
-  offset space rather than the bottom — which would make finding 46's frame
-  right and the last two named offsets misnamed;
-* or `DATA SIZE` does not count everything the outer block allocates, and
-  finding 46's arithmetic stands.
+So `SYMBUFP` and `CODEP` occupy the parameter words, and they are **not `VAR`
+declarations**. `varblock.py` was writing them as declarations, which is
+exactly the two words. Leaving them out and compiling gives:
 
-Nothing here decides between them, and neither is adopted. What is certain is
-that the reconstruction currently emits two words too many, that no amount of
-reading the binary had caught it in thirty findings, and that a compiler
-caught it in one run.
+    1.1   param 4  data 2444  frame 1224      Apple: param 4  data 2444  frame 1224
+    1.3   param 4  data 2710  frame 1357      Apple: param 4  data 2710  frame 1357
 
+Both releases, exactly. `probe_xcompile.py` requires it.
+
+**Finding 46 is confirmed, not overturned.** Its reading — that the frame is
+`(PARAM SIZE + DATA SIZE) / 2` and that "the outer block declares two words of
+parameters" — is precisely right, and `DISKBUF` really does end on the last
+word of the frame. What was wrong was only the reconstruction, which turned
+those two parameter words into declarations.
+
+Still open, and narrower than before: **how Apple's source names them.**
+UCSD's program-parameter syntax is the obvious candidate and cannot be tested
+here — `ucsdpsys_compile` rejects `PROGRAM T(A,B)` outright. The allocation is
+settled; the spelling is not.
+
+### 55d. What the fast tier is worth
+
+It compiled the declarations, and in doing so validated them against the
+binary more sharply than any amount of reading had: **the reconstructed `VAR`
+block of both releases compiles to Apple's global frame to the byte.** That is
+124 and 130 declarations, their types, their sizes and their order, checked
+end to end through a real compiler against a real binary.
+
+It also found the defect that made that possible. Thirty findings of reading
+p-code had not caught two words in the wrong place; one compile did.
 
 ## 16. Open questions
 
-* **The outer block is two words wide of Apple's, and finding 46 may be
-  wrong.** Finding 55c has the measurements. Apple's `SYSTEM.COMPILER`
-  declares 1222 words (1.1) and 1355 (1.3) by the `DATA SIZE` rule, its
-  globals demonstrably start at offset 1, and yet named globals run to 1224
-  and 1357. Settle it before writing any more of the `VAR` block: every
-  offset in the reconstruction depends on it.
-
+* ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
+  finding 55c**: `SYMBUFP` and `CODEP` are the outer block's two *parameter*
+  words, not `VAR` declarations, and the reconstruction was writing them as
+  declarations. Both releases now compile to Apple's exact frame. Finding 46
+  is confirmed. What remains open is only how Apple's source *names* those
+  two words -- UCSD's program-parameter syntax is the candidate and
+  `ucsdpsys_compile` will not parse it.
 * ~~**`SYSTEM.PASCAL`'s segment 0 does not parse.**~~ **Resolved by finding
   50**, and the premise was wrong: slot 15 is not a segment that failed to
   parse, it is the second piece of segment 0, and the one dictionary at the

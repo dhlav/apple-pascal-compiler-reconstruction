@@ -195,8 +195,6 @@ TYPE
 (*--------------------------------------------------------------------*)
 
 VAR
-  SYMBUFP         : ^ SYMBUFARRAY;                     {    1,    1 word   II.0 }
-  CODEP           : ^ CODEARRAY;                       {    2,    1 word   II.0 }
   GATTR           : ATTR;                              {    3,    5 words  II.0 record; the map splits it into GATTYPTR, GATKIND, GATCVAL, GATVLEV, GATDPLMT }
   TOP             : DISPRANGE;                         {    8,    1 word   II.0 }
   IC              : ADDRRANGE;                         {    9,    1 word   II.0 }
