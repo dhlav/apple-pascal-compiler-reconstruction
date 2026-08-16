@@ -5255,6 +5255,23 @@ before a cold boot finishes. `tools/runemu.py` launches with the four-drive
 layout; `tools/emukeys.ps1` sends keys and captures the window, which closes
 the loop -- type, screenshot, read, decide.
 
+Two settings make that loop workable, and **neither has a command-line
+switch**, so `runemu.py` writes them to the registry before each launch:
+maximum emulation speed, and a **monochrome** video mode. The second is not
+cosmetic -- colour-TV artefacts blur 40-column text into something barely
+readable in a screenshot, and monochrome renders it cleanly. Passing `-conf`
+would defeat both, because it makes AppleWin read an INI instead of the
+registry, and `-clock-multiplier` would defeat the first by pinning the
+speed.
+
+**The values and their types are version-specific, and guessing them fails
+quietly.** Under 1.32: `Video Mode` is a `REG_DWORD` of **9** for monochrome
+-- 5 is monochrome under 1.30 but *Color (RGB Card/Monitor)* under 1.32 --
+and `Emulation Speed` is a **`REG_SZ`** of `"40"`, so writing it as a
+`REG_DWORD` leaves a value AppleWin does not read and no error anywhere.
+Verify against the running build rather than assuming: launched with
+`-power-on`, AppleWin names the video mode in its own title bar.
+
 The hazard is that **SendKeys types into whatever holds focus**, not into a
 window of our choosing. A window activation lost the race once and half a
 filename went into the operator's terminal instead of the emulator.

@@ -34,6 +34,34 @@ EXE = Path(r"C:\AppleWin\AppleWin.exe")
 DISKS = ROOT / "evidence" / "disks"
 WORK = ROOT / "build" / "disks" / "WORK.dsk"
 
+# Applied before every launch. AppleWin reads these from the registry at
+# startup and there is no command-line switch for any of them.
+#
+#   Emulation Speed  maximum. A compile that took 45 wall-clock seconds at
+#                    3.9MHz takes a few. `-clock-multiplier` must NOT be
+#                    passed as well -- it pins the speed and overrides this.
+#   Video Mode       monochrome. Not cosmetic: the screen is read back from a
+#                    screenshot, and colour-TV artefacts blur 40-column text
+#                    into something barely legible.
+#
+# These go in the real registry, so `-conf` must not be passed either -- it
+# tells AppleWin to use an INI file instead and all of this is ignored.
+#
+# **The values and the types are version-specific.** These are AppleWin
+# 1.32's, read back from a UI that had been set by hand. Two traps, both hit:
+# `Video Mode` 5 is monochrome in 1.30 but *Color (RGB Card/Monitor)* in
+# 1.32, where monochrome is 9; and `Emulation Speed` is a **REG_SZ** here,
+# not a REG_DWORD, so writing it as a DWORD replaces the value with one
+# AppleWin does not read. Check both against the running build before
+# trusting them -- `AppleWin.exe -model apple2e -power-on` names the video
+# mode in its title bar.
+REGKEY = r"HKEY_CURRENT_USER\Software\AppleWin\CurrentVersion\Configuration"
+SETTINGS = {
+    "Emulation Speed":  ("REG_SZ", "40"),          # maximum
+    "Video Mode":       ("REG_DWORD", "9"),        # monochrome
+    "Monochrome Color": ("REG_SZ", "12632256"),    # 0xC0C0C0
+}
+
 RELEASES = {
     "1.3": {"d1": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
             "d2": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
@@ -44,6 +72,20 @@ RELEASES = {
             "d2": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
             "s5d2": "UCSD Pascal 1.1_3.dsk"},
 }
+
+
+def apply_settings(dry_run: bool = False) -> None:
+    """Write the two configuration values AppleWin has no switch for."""
+    for name, (regtype, value) in SETTINGS.items():
+        cmd = ["reg", "add", REGKEY, "/v", name, "/t", regtype,
+               "/d", value, "/f"]
+        print("  " + " ".join(f'"{c}"' if " " in c else c for c in cmd))
+        if dry_run:
+            continue
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if r.returncode:
+            raise SystemExit(f"could not set {name!r}: "
+                             f"{(r.stdout + r.stderr).strip()}")
 
 
 def main() -> int:
@@ -75,18 +117,21 @@ def main() -> int:
             raise SystemExit("BOOT128.dsk has not been built "
                              "(python tools/mkbootdisk.py)")
 
-    conf = ROOT / "build" / f"applewin-{args.release}.ini"
-    conf.parent.mkdir(parents=True, exist_ok=True)
+    # No `-conf`: it would make AppleWin read an INI instead of the registry,
+    # and SETTINGS would have no effect. No `-clock-multiplier` either -- it
+    # pins the speed and overrides "Emulation Speed 3".
     cmd = [str(EXE),
            "-model", "apple2e",
-           "-conf", str(conf),          # keep out of the user's registry
            "-d1", str(d1),
            "-d2", str(DISKS / r["d2"]),
            "-s5", "diskii",
            "-s5d1", str(WORK),
            "-s5d2", str(DISKS / r["s5d2"]),
-           "-clock-multiplier", "3.9",
            "-power-on"]
+
+    print("AppleWin settings (registry; no switch exists for these):")
+    apply_settings(args.dry_run)
+    print()
 
     print("S6D1", d1.name)
     print("S6D2", r["d2"])

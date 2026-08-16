@@ -427,8 +427,12 @@ Done, and reproducible via `python tools/build_all.py`:
      builds `BOOT128.dsk` (APPLE1 with `128K.APPLE`/`128K.PASCAL`
      substituted); `runemu.py --boot128` boots it.
 
-     The tooling: `tools/runemu.py` mounts the four drives and boots,
-     `tools/emukeys.ps1` sends keystrokes and captures the screen. Neither is
+     The tooling: `tools/runemu.py` mounts the four drives, asserts the two
+     registry settings that have no command-line switch (maximum speed, and
+     a monochrome video mode so screenshots are legible), and boots;
+     `tools/emukeys.ps1` sends keystrokes and captures the screen. Those
+     registry values and their *types* are AppleWin-version-specific — see
+     finding 57d before changing builds. Neither is
      part of `build_all.py` — the acceptance tier is interactive by nature
      and cannot be a probe. Two operational traps, both learned the hard way:
      **SendKeys goes to whatever holds focus** (emukeys.ps1 now refuses to
