@@ -143,10 +143,16 @@ for ver, dname in COMPILER.items():
     except xcompile.CompileError as exc:
         fails.append(f"skeleton-{ver}: did not compile -- {exc}")
         continue
-    mp = next(x for x in mine.segments[0].procedures if x.number == 1)
+    # The compiler is a SEGMENT PROCEDURE inside a (*$U-*) host program
+    # (finding 60), so segment 0 is the host and segment 1 is PASCALCO.
+    mseg = next(x for x in mine.segments if x.name == "PASCALCO")
+    mp = next(x for x in mseg.procedures if x.number == 1)
     ad = PascalDisk.from_file(ROOT / "evidence" / "disks" / dname)
     ae = ad.find("SYSTEM.COMPILER")
-    ap = CodeFile(ad.read_blocks(ae.first_block, ae.blocks)).segments[0].procedures[0]
+    ap = CodeFile(ad.read_blocks(ae.first_block, ae.blocks))         .segment("PASCALCO").procedures[0]
+    check((mseg.seg_num, mp.lex_level) == (1, 0),
+          f"skeleton-{ver}: PASCALCO comes out as segment {mseg.seg_num} at "
+          f"lex {mp.lex_level}, Apple's is segment 1 at lex 0")
     check((mp.param_size, mp.data_size) == (ap.param_size, ap.data_size),
           f"skeleton-{ver}: the declarations compile to param {mp.param_size} / "
           f"data {mp.data_size}, but Apple's outer block is param "

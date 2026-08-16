@@ -57,10 +57,32 @@ def main() -> int:
               "  so that they can be compiled and checked on their own.",
               "*)",
               "",
-              # No `(*$U-*)`: finding 23c shows PASCALCO.1 has lex 0, an
-              # ordinary user program main, so the compiler was not built
-              # with it -- unlike the operating system (finding 47).
-              "PROGRAM PASCALCOMPILER;",
+              # Finding 60: the compiler is not a PROGRAM. It is a SEGMENT
+              # PROCEDURE inside a `(*$U-*)` host program, exactly as UCSD
+              # II.0 has it -- which is what gives PASCALCO.1 its lex 0, its
+              # segment number 1, its `SLDO`-addressed variables, and the
+              # two parameter words at offsets 1 and 2 that no `VAR`
+              # declaration could ever reach.
+              "(*$U-*)",
+              "PROGRAM PASCALSYSTEM;",
+              "",
+              "{ The host program declares nothing. Under (*$U-*) a segment",
+              "  procedure's own variables ARE the global data segment, laid",
+              "  out after its parameter words, so anything declared here",
+              "  would collide with the compiler's own globals. The two types",
+              "  below exist only to give the parameters a name. }",
+              "",
+              "TYPE SYMBUFPTR = ^ INTEGER;",
+              "     CODEPTR = ^ INTEGER;",
+              "",
+              "{ The operating system enters segment 1 as USERPROGRAM(NIL,NIL)",
+              "  -- two words of parameters, which is Apple's PARAM SIZE 4.",
+              "  The compiler NEWs its own buffers into them: the binary takes",
+              "  the address of both (LAO 1, LAO 2), stores to one exactly",
+              "  once, and reads them 70 and 33 times. See finding 59. }",
+              "",
+              "SEGMENT PROCEDURE PASCALCOMPILER(SYMBUFP: SYMBUFPTR;",
+              "                                 CODEP: CODEPTR);",
               "",
               "CONST" + consts.rstrip(),
               "",
@@ -69,7 +91,8 @@ def main() -> int:
               "VAR",
               ]
         L += varlines
-        L += ["", "BEGIN", "END.", ""]
+        # The segment procedure's body, then the host program's.
+        L += ["", "BEGIN", "END;", "", "BEGIN", "END.", ""]
 
         # Apple's tools work in 80 columns and its `.TEXT` files have no
         # tabs; the II.0 declarations carry both problems in. Wrapping only

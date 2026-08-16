@@ -109,7 +109,12 @@ def spliced(ver: str, procs) -> str:
     """The skeleton with these procedure bodies declared at lex 1."""
     text = (SKEL / f"skeleton-{ver}.text").read_text(encoding="ascii",
                                                      errors="replace")
-    at = text.rindex("\nBEGIN")
+    # The skeleton ends with the segment procedure's body and then the host
+    # program's: "BEGIN END;" followed by "BEGIN END." (finding 60). Bodies
+    # belong inside PASCALCOMPILER, so splice before the *first* of those two
+    # -- past it they are declared in the host program, where none of the
+    # compiler's own types are in scope.
+    at = text.rindex("\nBEGIN\nEND;")
     return text[:at] + "\n" + "\n".join(b for _s, _n, b in procs) + text[at:]
 
 
@@ -213,7 +218,8 @@ def main() -> int:
             # fast tier and this disagree, this is right.
             dsk = PascalDisk.from_file(ROOT / "build" / "disks" / "WORK.dsk")
             e = dsk.find(f"BODY{ver.replace('.', '')}.CODE")
-            mine = CodeFile(dsk.read_blocks(e.first_block, e.blocks)).segments[0]
+            mine = CodeFile(dsk.read_blocks(e.first_block,
+                                            e.blocks)).segment("PASCALCO")
             bad += report(ver, procs, mine, "Apple's compiler")
             continue
 
@@ -227,7 +233,7 @@ def main() -> int:
         except xcompile.CompileError as exc:
             print(f"[{ver}] did not compile:" + chr(10) + str(exc))
             return 1
-        bad += report(ver, procs, cf.segments[0], "fast tier")
+        bad += report(ver, procs, cf.segment("PASCALCO"), "fast tier")
 
     print(chr(10) + f"{total} procedures, {total - bad} matching Apple's p-code")
     return 1 if bad else 0

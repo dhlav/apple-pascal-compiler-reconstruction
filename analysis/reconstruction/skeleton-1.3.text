@@ -16,7 +16,26 @@
   so that they can be compiled and checked on their own.
 *)
 
-PROGRAM PASCALCOMPILER;
+(*$U-*)
+PROGRAM PASCALSYSTEM;
+
+{ The host program declares nothing. Under (*$U-*) a segment
+  procedure's own variables ARE the global data segment, laid
+  out after its parameter words, so anything declared here
+  would collide with the compiler's own globals. The two types
+  below exist only to give the parameters a name. }
+
+TYPE SYMBUFPTR = ^ INTEGER;
+     CODEPTR = ^ INTEGER;
+
+{ The operating system enters segment 1 as USERPROGRAM(NIL,NIL)
+  -- two words of parameters, which is Apple's PARAM SIZE 4.
+  The compiler NEWs its own buffers into them: the binary takes
+  the address of both (LAO 1, LAO 2), stores to one exactly
+  once, and reads them 70 and 33 times. See finding 59. }
+
+SEGMENT PROCEDURE PASCALCOMPILER(SYMBUFP: SYMBUFPTR;
+                                 CODEP: CODEPTR);
 
 CONST DISPLIMIT = 12; MAXLEVEL = 8; MAXADDR = 28000;
       INTSIZE = 1; REALSIZE = 2; BITSPERWD = 16;
@@ -461,6 +480,9 @@ VAR
   CONLIST         : INTEGER;
   { 1357,    1 word   ours: one word, type not recovered }
   LSTOPEN         : INTEGER;
+
+BEGIN
+END;
 
 BEGIN
 END.

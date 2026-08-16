@@ -5469,6 +5469,79 @@ Until it is resolved, every procedure touching globals 1 or 2 is blocked.
 `GENBYTE` (`PASCALCO.22`) is the smallest of them, at nine instructions:
 `CODEP^[IC] := B; IC := IC + 1`.
 
+## 60. The compiler is a SEGMENT PROCEDURE, not a PROGRAM
+
+**VERIFIED SOURCE FACT**, and it resolves finding 59's open question.
+
+`evidence/reference/ucsd-ii0-compiler/compglbls.text` line 66:
+
+```pascal
+SEGMENT PROCEDURE PASCALCOMPILER(VAR USERINFO: INFOREC);
+```
+
+preceded at line 39 by a dummy `SEGMENT PROCEDURE USERPROGRAM` containing
+eight further dummy segment procedures, all inside `(*$U-*) PROGRAM
+PASCALSYSTEM`. The compiler is not a program at all.
+
+### 60a. What that explains
+
+Tested against Apple's own 1.3 compiler with a small model program:
+
+* **A segment procedure's own variables are the global data segment.** With
+  `param=2`, its locals came out at offsets 2 and 3 addressed `SRO 2`,
+  `SLDO 3` -- *global* addressing, not `STL`/`SLDL`. That is why every one of
+  the compiler's variables is reached with `LDO`/`SRO`.
+* **They are laid out after the parameter words.** One parameter word put the
+  first local at 2. Apple's `PARAM SIZE 4` is two words at offsets **1 and
+  2**, so its locals start at **3** -- exactly where `GATTR` is.
+* **So `SYMBUFP` and `CODEP` are the two parameters.** The OS enters segment 1
+  as `USERPROGRAM(NIL,NIL)` (`SYSTEM.C.TEXT:568`) -- two words -- and the
+  compiler `NEW`s its own buffers into them. That matches the access profile
+  of finding 59a exactly: address taken on both, stored to once, read
+  constantly.
+* **Segment 1 and lex 0.** A segment procedure declared first in a `$U-`
+  host program is segment 1, and its body is lex 0. Both match `PASCALCO.1`.
+* **The segment-number gap.** Apple's phases are 7-20 with nothing at 2-6,
+  which is what a block of dummy segment procedures is for.
+
+### 60b. The frame comes out exactly right
+
+`srcskel.py` now emits the structure, and the reconstruction compiles to:
+
+|  | segment | name | PARAM | DATA | lex |
+|---|---|---|---|---|---|
+| Apple's binary | 1 | `PASCALCO` | 4 | 2710 | 0 |
+| ours | 1 | `PASCALCO` | 4 | 2710 | 0 |
+
+`DECSIZE` and `PAOFCHAR` still compile to the same p-code under the new
+structure, `LDO 62` for `CHARPTR` included -- so global addressing survives
+the move, as 60a predicts.
+
+Finding 55c's description of offsets 1-2 as "the outer block's parameter
+words" was therefore right about *what they are* and wrong about *whose*:
+they are `PASCALCOMPILER`'s parameters, not a program main's.
+
+### 60c. Open: Apple's compiler rejects the restructured skeleton
+
+The fast tier compiles it and gives Apple's exact frame. **Apple's own
+compiler does not**: it stops at the same place with or without procedure
+bodies --
+
+```
+  FACBEGSYS       : SETOFSYS;
+  <<<<
+Line 406, error 400
+```
+
+Error 400 is *"Illegal character in text"*, and there is none: the file is
+printable ASCII, no tabs, every line within 80 columns, and the same `VAR`
+block compiled cleanly under the old `PROGRAM PASCALCOMPILER` structure
+(finding 57b). So either the message is misleading -- some limit reported
+against the wrong cause -- or something about the `$U-` segment-procedure
+form changes what the scanner accepts. Bisecting the `VAR` block against
+Apple's compiler is the next step; the fast tier cannot help, since it
+accepts the file.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

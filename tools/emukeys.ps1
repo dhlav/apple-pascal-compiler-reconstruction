@@ -69,6 +69,14 @@ if ($Keys -ne "") {
 Start-Sleep -Milliseconds $Wait
 
 if ($Shot -ne "") {
+  # CopyFromScreen grabs screen pixels at the window's coordinates, not the
+  # window's own content. If anything is on top of AppleWin -- an editor, a
+  # dialog -- the "screenshot of the emulator" is a photograph of that
+  # instead, and it looks plausible enough to act on. Refuse.
+  if ([EmuWin]::GetForegroundWindow() -ne $h) {
+    throw "AppleWin is not the foreground window at capture time; the " +
+          "screenshot would show whatever is on top of it. Not captured."
+  }
   $dir = Split-Path -Parent $Shot
   if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
   $r = New-Object EmuWin+RECT
