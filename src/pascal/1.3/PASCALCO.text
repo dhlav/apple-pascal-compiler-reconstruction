@@ -1,0 +1,42 @@
+{ Apple Pascal 1.3 SYSTEM.COMPILER -- reconstructed procedure bodies of
+  segment PASCALCO.
+
+  Each of these compiles, inside the verified declaration skeleton, to
+  p-code identical to Apple's instruction for instruction. Run
+  tools/procbuild.py to check.
+
+  What is NOT recovered and is ours: identifiers of parameters and locals,
+  comments, and layout. None of them reach the codefile. Everything that
+  does -- the operations, their order, the field and global offsets, the
+  enumeration members -- is forced by the comparison.
+
+  Procedures appear in Apple's declaration order, which finding 30 fixes
+  from the lexical levels. Gaps are procedures not yet written. }
+
+
+{ .19  The size in words of a declaration of N somethings, four to a word,
+  plus one. The arithmetic is the whole procedure. }
+FUNCTION DECSIZE(N: INTEGER): INTEGER;
+BEGIN
+  DECSIZE := (N + 3) DIV 4 + 1
+END;
+
+
+{ .17  Is this structure a packed array of char?
+
+  Two nested IFs and not `AND`, because the compiler does not short-circuit
+  (finding 41): `AND` compiles to LAND on two evaluated values, so the two
+  guards Apple emits as separate FJPs have to be written as separate IFs,
+  while the final conjunction -- which Apple does emit as LAND -- is written
+  as `AND`. Getting that backwards changes the bytes.
+
+  AELTYPE is the field at offset 3, not 2, even though it is declared first
+  of `AELTYPE,INXTYPE`: an identifier list allocates backwards (finding 33),
+  in a record exactly as in a VAR block. }
+FUNCTION PAOFCHAR(FSP: STP): BOOLEAN;
+BEGIN
+  PAOFCHAR := FALSE;
+  IF FSP <> NIL THEN
+    IF FSP^.FORM = ARRAYS THEN
+      PAOFCHAR := FSP^.AISPACKD AND (FSP^.AELTYPE = CHARPTR)
+END;

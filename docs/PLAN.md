@@ -243,10 +243,22 @@ Done, and reproducible via `python tools/build_all.py`:
    listings for structure. Note that `ii0src.sdk` cannot help here — it is
    the OS, not the compiler (finding 8).
 
-4. **Lift p-code to structured Pascal, one procedure at a time.** Start
-   with the leaves: `PASCALCO.7`, `.9`, `.13`, `.15`, `.16`, `.17` call
-   nothing and are 9-63 bytes each. Build a small structuriser over the
-   existing `Insn` stream (FJP/UJP/XJP into if/while/case).
+4. **Write the procedure bodies.** **Started** (finding 58).
+   `tools/procbuild.py` is the harness: it splices bodies into the verified
+   skeleton, compiles, and diffs instruction for instruction against the
+   binary. `DECSIZE` and `PAOFCHAR` are done and identical.
+
+   Work the leaves first — the ones that call nothing, 9-63 bytes each.
+   `src/pascal/1.3/PASCALCO.text` holds them in Apple's declaration order.
+
+   **Use `--emu-check` for anything with `AND` or `OR` in it.** The fast tier
+   short-circuits where Apple emits `LAND`, so it can falsify such a body but
+   never accept one (finding 58c). Everything else it settles in a second.
+
+   Two procedures are blocked on the same thing: `GENBYTE` and anything else
+   touching globals 1 or 2 (`SYMBUFP`, `CODEP`). Those are the outer block's
+   *parameter* words (finding 55c) and there is still no known way to spell
+   them in source — the open question that now actually bites.
 
 5. ~~**Resolve the non-standard CSPs.**~~ **Done** (finding 17). The whole
    table is named and aritied from interpreter source and confirmed against

@@ -5292,6 +5292,97 @@ none has been written. What it changes is the cost of writing them: there is
 now a working path from reconstructed source to Apple's own p-code, and the
 answer comes back in minutes.
 
+## 58. The first procedure bodies, and the limit of the fast tier
+
+**VERIFIED BINARY FACT.** Two of PASCALCO's leaves are reconstructed and
+compile, under Apple's own 1.3 compiler, to p-code identical to the binary's
+instruction for instruction. `tools/procbuild.py` is the harness.
+
+### 58a. `DECSIZE` and `PAOFCHAR`
+
+```pascal
+FUNCTION DECSIZE(N: INTEGER): INTEGER;
+BEGIN
+  DECSIZE := (N + 3) DIV 4 + 1
+END;
+
+FUNCTION PAOFCHAR(FSP: STP): BOOLEAN;
+BEGIN
+  PAOFCHAR := FALSE;
+  IF FSP <> NIL THEN
+    IF FSP^.FORM = ARRAYS THEN
+      PAOFCHAR := FSP^.AISPACKD AND (FSP^.AELTYPE = CHARPTR)
+END;
+```
+
+9 and 20 instructions, both **IDENTICAL**. Nothing about the identifiers is
+recovered -- parameter names, comments and layout never reach the codefile --
+but everything that does reach it is forced.
+
+`PAOFCHAR` is worth more than its twenty instructions, because three
+independent claims had to be right simultaneously for it to match:
+
+* **`ARRAYS` is 5, not 4.** Apple inserted `LONGINT` into `STRUCTFORM` at
+  index 3. Writing the member name rather than the number is what makes the
+  enumeration's order testable, and `SLDC 5` is the test passing.
+* **Two nested `IF`s, not one `AND`.** Apple's compiler does not
+  short-circuit (finding 41), so an `AND` compiles to `LAND` over two
+  evaluated values. The two guards Apple emits as separate `FJP`s therefore
+  have to be two `IF`s in the source, while the final conjunction -- which
+  Apple *does* emit as `LAND` -- is an `AND`. Getting that backwards changes
+  the bytes.
+* **Record field lists allocate backwards.** See below.
+
+### 58b. Finding 33's rule extends to record fields
+
+This is the plan's number-one unchecked item, and `PAOFCHAR` settles it.
+
+UCSD declares `AELTYPE,INXTYPE: STP` in the `ARRAYS` variant. Read in
+declaration order that puts `AELTYPE` at offset 2 and `INXTYPE` at 3. The
+binary compares the field at **offset 3** against `CHARPTR`, and for a
+routine named *packed array of char* that field can only be the element
+type. So the identifier list is allocated in reverse, exactly as finding 33
+established for `VAR` -- **in a record exactly as in a variable block.**
+
+And it is a check that can fail: written the other way the source still
+compiles, still reads correctly, and emits `SIND 2` where Apple has
+`SIND 3`.
+
+### 58c. The fast tier cannot settle a boolean expression
+
+`ucsdpsys_compile` got `PAOFCHAR`'s first thirteen instructions exactly right
+and then diverged, for a reason no wording of the source can fix:
+
+| Apple | `ucsdpsys_compile` |
+|---|---|
+| `SIND 4`, `SIND 3`, `LDO 62`, `EQUI`, `LAND`, `STL 1` | `SIND 4`, `FJP`, ..., `EQUI`, `FJP`, `SLDC 1`, `UJP`, `SLDC 0`, `STL 1` |
+
+It short-circuits boolean operators, **including in an assignment**, where
+Apple evaluates both sides and emits `LAND`. There is a feature switch for
+many things but not for this; `-f no-efj-nfj` is a separate matter (below)
+and does not help here.
+
+So: **the fast tier can falsify a body but cannot accept one that contains
+`AND` or `OR`.** Apple's compiler in the emulator is the authority, and
+`procbuild.py --emu` / `--emu-check` is that loop -- it puts the spliced
+source on the work disk and diffs the codefile that comes back. Both
+procedures above are green under `--emu-check` and only one of them is green
+under the fast tier.
+
+This qualifies finding 55d. The fast tier reproduced the GOTOXY pair byte for
+byte, and that remains true; what it means is narrower than it looked,
+because neither program contains a boolean operator.
+
+### 58d. `EFJ` and `NFJ`: turn them off
+
+Peter Miller's manual states that these fused compare-and-branch opcodes
+"were present in the p-machine used by Apple Pascal, but were never generated
+by the Apple Pascal native compiler." The binary agrees -- neither opcode
+occurs anywhere in either release. `xcompile.py` now passes
+**`-f no-efj-nfj`** on every compile. It costs nothing (the GOTOXY
+byte-for-byte result is unchanged) and it removed six spurious differences
+from `PAOFCHAR` alone.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
