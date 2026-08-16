@@ -4764,12 +4764,85 @@ else. Together with finding 49 the pipeline is now checked against source on
 assignments, conditions, nested `if`, `while`, `repeat`, `for`, sibling calls,
 nested calls and cross-segment calls.
 
-It still does not check `case`, and cannot from here: segment 0 contains not a
-single `CASE` statement, and finding 41 established that the structuriser does
-not recognise the construct anyway because the jump table follows the arms.
-`with` and records are exercised heavily in the source but this probe does not
-test them — a `with` generates no control flow and no call, so both measures
-are blind to it. Those are the next gaps, in that order.
+It does not check `case`. Segment 0's 41 aligned procedures contain not a
+single `CASE` statement, so this probe cannot reach one — but the construct
+itself is recognised, and the reachable target is one segment over. Finding 41
+did not leave `case` unrecognised; it *fixed* the recogniser, by keying on the
+`UJP` that reaches the table rather than expecting the table first. 50 of 54
+in the compiler come out as `case` statements, and the operating system lifts
+six more, one of which is `PRINTERROR`'s 16-arm table of error messages —
+with UCSD's source for it sitting in `SYSSEGS.A.TEXT`. That is the next check
+to write, and it is cheap.
+
+`with` and records are the real gap. The II.0 source uses `WITH` constantly
+and segment 0 is full of record field access, but both measures here are blind
+to it: a `with` generates no control flow and no call. Checking it needs a
+third measure — field offsets, which the II.0 type declarations fix
+independently of anything in the binary.
+
+## 53. `case` against source: 31 error messages recovered from p-code, unchanged
+
+Finding 52 could not reach a `case` — segment 0 does not contain one — and
+finding 52e named `PRINTERROR` as the cheap next target. This is it.
+
+`PRINTERROR` is slot 3 of the same `SYSTEM.PASCAL`, and UCSD's source for it
+is 45 lines of `SYSSEGS.A.TEXT`. It is a 15-arm `CASE` on the execution error
+code, with a second 19-arm `CASE` on `IORESULT` nested inside arm 10, and
+every arm does one thing: assign a string literal. That makes the strings an
+answer key, which is what a `case` check normally lacks. A jump table read one
+off, an arm attributed to the neighbouring label, or an `LSA` mis-sized would
+all show up as a message landing on the wrong error *number*, and error
+numbers are not interchangeable.
+
+### 53a. The result
+
+VERIFIED BINARY FACT against VERIFIED SOURCE FACT.
+
+    1.1   15 + 17 arms, 31 of them carrying UCSD's message character for character
+    1.3   16 + 19 arms, 21 of them carrying UCSD's message character for character
+
+The structure matches exactly in both: the default `S := 'Unknown run-time
+error'` before the case, all fifteen of II.0's outer labels present, the
+second table nested inside arm 10 and nowhere else, zero gotos.
+
+Most of the non-identical arms are Apple spelling the same message out —
+
+| II.0 | Apple |
+|---|---|
+| `'No proc in seg-table'` | `'No procedure in segment-table'` |
+| `'Exit from uncalled proc'` | `'Exit from uncalled procedure'` |
+| `'dup dir entry'` | `'duplicate directory entry'` |
+| `'file lost in dir'` | `'file lost in directory'` |
+| `'illegal unit #'` | `'illegal volume #'` |
+
+— which is Apple's house style showing through, not a decoding question. The
+probe requires a reworded arm to share at least one word with UCSD's, so a
+message that had genuinely moved to another error number would still fail.
+
+### 53b. Apple's real departures
+
+Held as a named list per release, and each must *stay* a departure:
+
+* **1.3 only:** outer label 16 and inner label 20 are Apple's own; inner 19
+  is redefined from `'bad init record'` to `'must read a multiple of 512
+  bytes'`, which is a Disk II constraint that generic UCSD had no reason to
+  have.
+* **Both:** inner 15, II.0's `'ring buffer overflow'`, is absent. Inner 18 is
+  redefined from `'bad byte count'` to `'illegal buffer address'`.
+* 1.1 lacks inner 19 as well, and adds nothing at all.
+
+1.1 is again nearer to II.0 than 1.3 — 31 identical arms against 21, no
+additions against two — the same direction finding 52d measured by two other
+means entirely.
+
+### 53c. What it licenses
+
+`XJP` and the whole `case` path, end to end, on a nested table: the jump table
+that follows its arms (finding 41), the arm-to-label attribution, `LSA` string
+literals of 12 different lengths, and the structuriser's rendering, all
+against source someone else wrote. Sets, `with` and records remain unchecked
+against any source.
+
 
 ## 16. Open questions
 

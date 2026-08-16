@@ -369,11 +369,12 @@ Done, and reproducible via `python tools/build_all.py`:
         offsets: a `WITH SYSCOM^ DO` followed by a named field has to become
         a specific offset, and the II.0 type declarations give the offset
         independently.
-     2. **`case`.** Not reachable from here at all. Segment 0 contains no
-        `CASE` statement, and finding 41 established the structuriser does
-        not recognise the construct anyway, because the jump table follows
-        the arms. Fixing the structuriser comes first; then the compiler's
-        own `case` statements are the test, with no source to check against.
+     2. ~~**`case`.**~~ **Done** (finding 53). `PRINTERROR`'s nested case
+        against UCSD's source for it: 31 error messages in 1.1 and 21 in 1.3
+        come out identical to II.0 character for character, with the arm
+        labels, the nesting inside arm 10 and the default assignment all
+        matching. `probe_case_calibrate.py` gates it.
+
      3. **Sets.** Present in the lifted output (`G3 in @I1,122^<4w>`) and
         never checked against a declaration.
      4. **The other OS segments.** `USERPROGRAM`, `DEBUGGER`, `PRINTERROR`,

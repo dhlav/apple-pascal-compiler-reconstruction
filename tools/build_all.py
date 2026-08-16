@@ -43,6 +43,9 @@ STEPS = [
     # procedures against the UCSD II.0 source, checking loops and calls
     # rather than exact text, because Apple's is a fork (finding 52).
     ("lifter calibration, the OS", "probes/probe_os_calibrate.py"),
+    # Not an artifact: PRINTERROR's nested case against UCSD's source for it,
+    # where the arm strings are the answer key (finding 53).
+    ("lifter calibration, case", "probes/probe_case_calibrate.py"),
 ]
 
 for label, script in STEPS:
