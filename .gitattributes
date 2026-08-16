@@ -1,25 +1,5 @@
-# Evidence must round-trip byte for byte: the SHA-256s in docs/FINDINGS.md
-# are the anchor for every derived artifact.
-*.dsk  binary
-*.sdk  binary
-*.po   binary
-*.bin  binary
-*.zip  binary
-
-# Analysis output is plain ASCII; keep it stable across platforms.
-*.txt  text eol=lf
-*.asm  text eol=lf
-*.md   text eol=lf
-*.py   text eol=lf
-*.json text eol=lf
-
-# Scanned reference material. Never normalise these.
-*.pdf  binary
-*.jpg  binary
-*.png  binary
-*.html -text
-
-# Nothing under evidence/ is ever normalised, whatever its extension: it
-# must round-trip byte for byte on any platform. This comes last so it
-# overrides the eol=lf rules above for evidence text.
-evidence/**  -text
+# The third-party build recipe runs under WSL/Linux; CRLF breaks both a
+# shell script's shebang handling and `patch`'s context matching.
+thirdparty/**/*.sh   text eol=lf
+thirdparty/**/*.patch text eol=lf
+*.tar.gz             binary
