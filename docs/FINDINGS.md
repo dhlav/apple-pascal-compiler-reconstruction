@@ -4904,7 +4904,35 @@ the fields before it keep their offsets, and if it lacked some other word they
 would all shift. The binary's own field accesses can decide that, and this
 does not.
 
-### 54c. `klass` 2, 3 and 4 now have names
+### 54c. Seventeen hand-derived sizes, now derived
+
+`vardecl.py` carried a table of seventeen sizes the type name alone does not
+give — `DISPLAY` 52, `SEGTABLE` 128, `SYSTEMLIB` 21, `DISKBUF` 256, the three
+untyped `FILE`s at 40, `LP` at 301 — each worked out by hand and several
+corroborated against Apple's own spacing between neighbouring offsets. **The
+engine reproduces all seventeen**, with nothing tabulated, once three more
+UCSD rules are in it:
+
+* `STRING[n]` is `(n + 2) div 2` words — a length byte and the characters,
+  packed two to the word. Finding 22c watched `DECLARAT`'s `STRING[n]`
+  handler write exactly that into word 0 of the descriptor.
+* an untyped `FILE` is `NILFILESIZE` = 40 words; `FILE OF T` is `FILESIZE` +
+  the component, and `TEXT` is `FILESIZE + CHARSIZE` = 301. Finding 43.
+* an inline `RECORD ... END` in the `VAR` block has to be *kept* rather than
+  collapsed. `vardecl.py` had been replacing it with the token `AGGREGATE`,
+  which is why `DISPLAY` and `SEGTABLE` could only ever be hand-sized: the
+  only description of their elements was being thrown away before anything
+  could read it.
+
+`SIZES` and `BY_NAME` stay in the file, because the derivations written
+against them are worth keeping, but they are now **assertions rather than
+inputs** — `probe_record_layout.py` requires the engine to reproduce every
+one, and `vardecl-ii0.txt` comes out byte-identical to before. The one place
+they disagree is already documented and now visible rather than hidden:
+`SEGTABLE` lays out at 128 words from II.0's eight-word entry, and Apple's is
+144, because Apple's entry is nine words and is indexed `SEGTABLE[slot*9]`.
+
+### 54d. `klass` 2, 3 and 4 now have names
 
 Finding 22c named `klass` 0, 1, 5 and 6 and left the middle open; section 16
 recorded "`klass` 3 and 4 both need one". The declaration order of `IDCLASS`
@@ -4957,7 +4985,7 @@ predates or drops UCSD's unit extensions.
 * Two members of the `structform` enumeration, `power` at 4 and `records`
   at 6, are inferred from the gap rather than observed (finding 22b).
 * ~~Word 4 of the `identifier` variant part — the 13-word `klass` — has no
-  name yet. `klass` 3 and 4 both need one.~~ **Resolved by finding 54c**:
+  name yet. `klass` 3 and 4 both need one.~~ **Resolved by finding 54d**:
   3 is `ACTUALVARS` and 4 is `FIELD`, the 13-word class. `klass` 2 is
   `FORMALVARS`, which is why 22c saw two 11-word classes and could not tell
   them apart.

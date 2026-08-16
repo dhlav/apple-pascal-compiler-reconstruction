@@ -16,8 +16,10 @@ Two rules govern the layout, both read out of the source in evidence/.
     walks that list assigning `VADDR := LC; LC := LC + LSIZE`. So
     `VAR LC,IC: ADDRRANGE` puts IC first. Finding 33.
 
-Type sizes come from the TYPE block of compglbls.text; the ones that are
-not one word are listed in SIZES below with their derivation.
+Type sizes are laid out from the TYPE block of compglbls.text by
+`a2pascal.reclayout`, not tabulated. `SIZES` and `BY_NAME` below keep the
+derivations that were once the source of the numbers; the engine now has to
+reproduce all seventeen, which `probe_record_layout.py` requires.
 
 Writes analysis/global_map/vardecl-ii0.txt.
 """
@@ -27,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from a2pascal.names import GLOBALS_11
+from a2pascal.reclayout import Layout
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "evidence" / "reference" / "ucsd-ii0-compiler" / "compglbls.text"
@@ -70,18 +73,29 @@ BY_NAME = {
 }
 
 
+# Generated name -> the inline `RECORD ... END` text it stands for, filled
+# in by var_block(). A layout wanting to size one of these must register
+# them as types first.
+INLINE: dict[str, str] = {}
+
+
 def var_block() -> list[tuple[list[str], str]]:
     """(identifiers, type) per declaration, in source order."""
     text = SRC.read_text(errors="replace")
     body = text[text.index("\nVAR\n") + 5:text.index("(* FORWARD DECLARED")]
     body = re.sub(r"\(\*.*?\*\)", " ", body, flags=re.S)      # comments
-    # Collapse inline RECORD ... END so its fields do not read as
-    # declarations of their own.
+    # Lift inline RECORD ... END out of the way, so its fields do not read
+    # as declarations of their own -- but keep the text, under a generated
+    # type name, so it can still be laid out. Collapsing it to a token threw
+    # away the only description of DISPLAY's and SEGTABLE's elements.
+    INLINE.clear()
     while True:
         m = re.search(r"RECORD.*?END", body, flags=re.S)
         if not m:
             break
-        body = body[:m.start()] + " AGGREGATE " + body[m.end():]
+        name = f"INLINEREC{len(INLINE)}"
+        INLINE[name] = m.group(0)
+        body = body[:m.start()] + f" {name} " + body[m.end():]
     out = []
     for decl in body.split(";"):
         decl = " ".join(decl.split())
@@ -94,16 +108,53 @@ def var_block() -> list[tuple[list[str], str]]:
     return out
 
 
+def expand_inline(typ: str) -> str:
+    """Put a lifted `RECORD ... END` back, for output that has to be Pascal.
+
+    `INLINEREC<n>` is this module's bookkeeping and is not an identifier any
+    Apple Pascal source ever contained, so anything writing a declaration out
+    has to expand it.
+    """
+    for name, text in INLINE.items():
+        typ = typ.replace(name, " ".join(text.split()))
+    return typ
+
+
+_LAYOUT: "Layout | None" = None
+
+
+def layout() -> Layout:
+    """The compiler's declarations, with this VAR block's inline records.
+
+    Built lazily: `var_block()` has to have run before the generated
+    `INLINEREC` names exist.
+    """
+    global _LAYOUT
+    if _LAYOUT is None:
+        _LAYOUT = Layout(SRC.read_text(encoding="ascii", errors="replace"))
+        var_block()
+        _LAYOUT.types.update(INLINE)
+    return _LAYOUT
+
+
 def size_of(typ: str, name: str = "") -> tuple[int, str]:
+    """Words, and where the number came from.
+
+    Sizes are computed from the declaration by `a2pascal.reclayout`, not
+    looked up. `SIZES` and `BY_NAME` above are kept for the derivations
+    written against them, and `probe_record_layout.py` requires the engine
+    to still reproduce every one -- so they are now assertions rather than
+    inputs. If one ever stops matching, that is a finding, not a typo.
+    """
+    words = layout().size(typ)
     if name in BY_NAME:
-        return BY_NAME[name]
+        return words, BY_NAME[name][1]
     base = typ.split("[")[0].strip().rstrip(";")
-    if base.startswith("^") or base in ("CTP", "STP", "CSP", "TESTP", "LBP",
-                                        "LABELP"):
-        return 1, "pointer"
     if base in SIZES:
-        return SIZES[base]
-    return 1, "scalar"
+        return words, SIZES[base][1]
+    if typ.strip().startswith("^") or words == 1:
+        return words, "pointer" if typ.strip().startswith("^") else "scalar"
+    return words, f"laid out from {typ}"
 
 
 def main() -> int:

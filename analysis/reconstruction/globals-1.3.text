@@ -119,10 +119,10 @@ VAR
   SIMPTYPEBEGSYS  : SETOFSYS;                          {  125,    4 words  II.0 }
   CONSTBEGSYS     : SETOFSYS;                          {  129,    4 words  II.0 }
   VARS            : SETOFIDS;                          {  133,    1 word   II.0 }
-  DISPLAY         : ARRAY [DISPRANGE] OF AGGREGATE;    {  134,   52 words  II.0 }
+  DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL: ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END; {  134,   52 words  II.0 }
   SEGSUSED        : ARRAY [0..3] OF INTEGER;           {  186,    4 words  ours: 4 words, shape not recovered }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;      {  190,  255 words  II.0 declares 150 words, Apple has 255 }
-  SEGTABLE        : ARRAY [SEGRANGE] OF AGGREGATE;     {  445,  144 words  II.0 declares 128 words, Apple has 144 }
+  SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER END; {  445,  144 words  II.0 declares 128 words, Apple has 144 }
   SEGMAP          : ARRAY [0..15] OF INTEGER;          {  589,   16 words  ours: 16 words, shape not recovered }
   COMMENT         : ^STRING;                           {  605,    1 word   II.0 }
   SYSTEMLIB       : STRING[40];                        {  606,   21 words  II.0 }

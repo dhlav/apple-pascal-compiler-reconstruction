@@ -101,6 +101,30 @@ for name in EXTENSIONS:
           f"removing {name} alone already matches the binary, so "
           f"{EXTENSIONS} is over-specified")
 
+# Every size `vardecl.py` once carried as a written-down number must come
+# out of the engine. Those numbers were each derived by hand, several of
+# them corroborated against Apple's own spacing between neighbouring
+# offsets, so this is seventeen independent checks and not a tautology --
+# the engine never saw any of them.
+import vardecl                                    # noqa: E402
+
+vb = vardecl.var_block()
+lay2 = Layout(raw)
+lay2.types.update(vardecl.INLINE)
+for tname, (want, why) in vardecl.SIZES.items():
+    got_t = lay2.size(tname)
+    check(got_t == want, f"{tname} lays out as {got_t}, hand-derived {want} ({why})")
+for vname, (want, why) in vardecl.BY_NAME.items():
+    typ = next((t for ids, t in vb if vname in ids), None)
+    check(typ is not None, f"{vname} is not declared in the VAR block")
+    if typ is None:
+        continue
+    got_t = lay2.size(typ)
+    check(got_t == want,
+          f"{vname}: {typ} lays out as {got_t}, hand-derived {want} ({why})")
+
+print(f"{len(vardecl.SIZES)} type sizes and {len(vardecl.BY_NAME)} variable "
+      f"sizes reproduced from the declarations")
 print(f"identifier: as written {got}, "
       f"without {'/'.join(EXTENSIONS)} {cut[:len(BINARY)]}, "
       f"binary {BINARY}")

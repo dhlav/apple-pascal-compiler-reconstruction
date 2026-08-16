@@ -92,6 +92,26 @@ class Layout:
                 return (n + 1) // 2          # two characters to the word
             return n * self.size(elt)
 
+        # A declared string is a length byte and the characters, packed two
+        # to the word: `STRING[n]` is `(n + 2) div 2`. Finding 22c watched
+        # DECLARAT's STRING[n] handler write exactly that into word 0 of the
+        # descriptor. A bare `STRING` takes DEFSTRGLGTH.
+        m = re.match(r"^STRING\s*(?:\[(.+?)\])?$", e, re.I)
+        if m:
+            n = self.value(m.group(1)) if m.group(1) else self.value("DEFSTRGLGTH")
+            return (n + 2) // 2
+
+        # A file variable is FILESIZE words plus its component, or
+        # NILFILESIZE when it has no `of`. compglbls.text:72 gives both, and
+        # decpart.a.text sizes file types this way. Finding 43.
+        m = re.match(r"^(PACKED\s+)?FILE(\s+OF\s+(.+))?$", e, re.I)
+        if m:
+            if not m.group(3):
+                return self.value("NILFILESIZE")
+            return self.value("FILESIZE") + self.size(m.group(3))
+        if up == "TEXT":
+            return self.value("FILESIZE") + self.value("CHARSIZE")
+
         m = re.match(r"^(PACKED\s+)?SET\s+OF\s+(.+)$", e, re.I)
         if m:
             _lo, hi = self._bounds(m.group(2))

@@ -34,7 +34,7 @@ from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.globals import collect
 from a2pascal.names import GLOBAL_NAMES
-from vardecl import var_block, size_of
+from vardecl import var_block, size_of, expand_inline
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "reconstruction"
@@ -68,6 +68,9 @@ def render_type(name: str, words: int, typ: str | None) -> str:
     """The declaration's type, and a comment saying where it came from."""
     if typ:
         got, _why = size_of(typ, name)
+        # `INLINEREC<n>` is vardecl's bookkeeping for a record declared
+        # inline in the VAR block; the declaration has to carry the record.
+        typ = expand_inline(typ)
         if got == words:
             return typ, "II.0"
         return typ, f"II.0 declares {got} words, Apple has {words}"
