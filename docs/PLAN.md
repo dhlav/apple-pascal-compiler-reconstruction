@@ -410,48 +410,35 @@ Done, and reproducible via `python tools/build_all.py`:
      run and found a two-word error in the global frame that thirty findings
      of reading the binary had not (finding 55c) -- which is now the top
      open question, because every offset depends on it.
-   * *Acceptance tier — **the disk is ready**, the emulator run is not.*
-     Recompile under the target Apple Pascal release in an emulator and diff
-     generated p-code against the original, using the same decoder on both
-     sides. Start from TommyGoog's configuration (finding 15): AppleWin with
-     **four disk drives**, which the Apple Pascal compiler requires.
+   * *Acceptance tier — **run, and both tests passed*** (finding 57).
+     Apple II Pascal 1.3 under AppleWin, on the reconstruction:
 
-     **What is now in place** (finding 56). `a2pascal/diskwrite.py` writes
-     Pascal volumes, and `mkworkdisk.py` builds `build/disks/WORK.dsk` with
-     `SEARCH.TEXT`, `SKEL13.TEXT` and `SKEL11.TEXT` on it. The encoding is
-     held against Apple's own directories byte for byte, and an independent
-     implementation (`ucsd-psystem-fs`) fscks the result and extracts every
-     file back to its source unchanged. AppleWin is at `C:\AppleWin`:
+     1. **`SYSTEM.ASSMBLER` on `SEARCH.TEXT`** — 519 lines, 0 errors, and
+        `IDSEARCH` (800 bytes) and `TREESEARCH` (148 bytes) come back
+        **identical to Apple's, every byte**, relocation tables included.
+        Finding 44e is closed.
+     2. **`SYSTEM.COMPILER` on `SKEL13.TEXT`** — 465 lines, no errors,
+        segment `PASCALCO`, outer block `param 4 / data 2710 / lex 0`,
+        **exactly Apple's**. All 130 declarations are confirmed by the only
+        authority that counts.
 
-     ```
-     AppleWin.exe -model apple2e -noreg
-       -d1  "…Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk"
-       -d2  "…Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"
-       -s5 diskii -s5d1 build\disks\WORK.dsk
-       -s5d2 "…Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"
-       -clock-multiplier 3.9 -power-on
-     ```
+     **Run it on 128K.** The 64K system cannot compile even Apple's own
+     `HILBERT.TEXT` — it dies with a runtime stack overflow. `mkbootdisk.py`
+     builds `BOOT128.dsk` (APPLE1 with `128K.APPLE`/`128K.PASCAL`
+     substituted); `runemu.py --boot128` boots it.
 
-     **What is missing is keystrokes.** The documented switch list has no
-     scripting or key-injection option, and `-screenshot-and-exit` is for use
-     with `-load-state`, so it fires before a cold boot finishes and cannot
-     confirm one. Mounting and booting is automatable; driving the Filer, the
-     Editor and `X(ecute` is not, short of SendKeys against the window with
-     no way to read the screen back. Assume the two tests below need someone
-     at the keyboard until proven otherwise.
+     The tooling: `tools/runemu.py` mounts the four drives and boots,
+     `tools/emukeys.ps1` sends keystrokes and captures the screen. Neither is
+     part of `build_all.py` — the acceptance tier is interactive by nature
+     and cannot be a probe. Two operational traps, both learned the hard way:
+     **SendKeys goes to whatever holds focus** (emukeys.ps1 now refuses to
+     type unless AppleWin is foreground), and **AppleWin does not flush a
+     written image until eject or exit** (close it before reading the disk).
 
-     The two tests, both on 1.3:
-     1. `X(ecute SYSTEM.ASSMBLER` on `WORK:SEARCH.TEXT`, and diff the
-        resulting `SEARCH.CODE` against `IDSEARCH`/`TREESEARCH` in the
-        binary — relocation tables included, which is the point (finding 44e).
-     2. `X(ecute SYSTEM.COMPILER` on `WORK:SKEL13.TEXT`, and check the outer
-        block comes out `PARAM SIZE 4 / DATA SIZE 2710`. Both skeletons
-        already compile to exactly that under the fast tier.
-
-     The same tier covers 1.3's two native procedures, with
-     `SYSTEM.ASSMBLER` in place of `SYSTEM.COMPILER`: it is the assembler
-     that emits the relocation tables of finding 44, so it is the only
-     thing that can produce those bytes. Both disks carry it.
+     Carry forward: **the fast tier is more permissive than Apple's
+     compiler.** It accepted a trailing `;` before `)` in a field list that
+     Apple's rejects with error 19. "It compiles" from `ucsdpsys_compile` is
+     the weaker claim.
 
    Keep the tiers distinct. `ucsdpsys_compile` is a modern reimplementation
    and will not emit byte-identical p-code for equivalent source, so it can

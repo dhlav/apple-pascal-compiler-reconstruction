@@ -8,6 +8,7 @@
     MAXPROCNUM 149 -> 254   { finding 40; 1.1 keeps 149 }
     dropped PUBLIC   { finding 54b }
     dropped IMPORTED   { finding 54b }
+    removed 2 semicolon(s) left before `)` by the above
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -113,7 +114,7 @@ TYPE
                      KONST: (VALUES: VALU);
                 FORMALVARS,
                 ACTUALVARS: (VLEV: LEVRANGE;
-                             VADDR: ADDRRANGE;);
+                             VADDR: ADDRRANGE);
                      FIELD: (FLDADDR: ADDRRANGE;
                              CASE FISPACKD: BOOLEAN OF
                                TRUE: (FLDRBIT,FLDWIDTH: BITRANGE));
@@ -128,7 +129,7 @@ TYPE
                                           ACTUAL: (LOCALLC: ADDRRANGE;
                                                    FORWDECL: BOOLEAN;
                                                    EXTURNAL: BOOLEAN;
-                                                   INSCOPE: BOOLEAN;)));
+                                                   INSCOPE: BOOLEAN)));
                    MODULE: (SEGID: INTEGER)
                    END;
 

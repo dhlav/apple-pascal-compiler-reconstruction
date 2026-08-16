@@ -5173,6 +5173,108 @@ agreement between them fixes that. That is the acceptance tier's question,
 and it is now the only thing standing between the reconstruction and Apple's
 own compiler.
 
+## 57. The acceptance tier ran, and both tests passed
+
+**VERIFIED BINARY FACT.** Apple II Pascal 1.3, under AppleWin, on the
+reconstruction. This is the tier the whole project was built toward and it
+had never been run.
+
+### 57a. `SYSTEM.ASSMBLER` reproduces both native procedures, byte for byte
+
+`src/native/SEARCH.TEXT` was assembled by **Apple's own 6502 Assembler
+[1.3]**, from the work disk, with the output written back to that disk:
+
+    Assembly complete:  519 lines
+    0  Errors flagged on this Assembly
+
+Read back and compared against `SYSTEM.COMPILER`:
+
+| procedure | Apple | ours | result |
+|---|---|---|---|
+| `IDSEARCH` (PASCALCO.2) | 800 bytes | 800 bytes | **identical, every byte** |
+| `TREESEARCH` (PASCALCO.3) | 148 bytes | 148 bytes | **identical, every byte** |
+
+The comparison runs `enter_ic` through `jtab+2`, so it covers the code, the
+four relocation tables, the ENTER IC and the procedure-number word, and the
+procedure-relative relocation entries were checked to be the same set. This
+closes finding 44e: the tables were *generated* by the assembler from
+symbolic operands, which is the only way those bytes can be produced, and
+they came out right.
+
+`probe_native_asm.py` had already got this result with `tools/asm6502.py`.
+What is new is that it no longer depends on our assembler being right about
+anything.
+
+### 57b. `SYSTEM.COMPILER` compiles the declaration skeleton to Apple's frame
+
+Apple Pascal Compiler [1.3] on `SKEL13.TEXT`: **465 lines, no errors**,
+reporting `PASCALCO [12649 words]`. The segment names itself `PASCALCO`
+because the program header is `PROGRAM PASCALCOMPILER;` and only the first
+eight characters survive -- the same mechanism that gave finding 30 its
+names, seen from the other side.
+
+|  | segment | seg num | PARAM SIZE | DATA SIZE | lex |
+|---|---|---|---|---|---|
+| Apple's `SYSTEM.COMPILER` | `PASCALCO` | 1 | 4 | 2710 | 0 |
+| ours, compiled by Apple   | `PASCALCO` | 1 | 4 | 2710 | 0 |
+
+So **130 declarations, their types, their sizes and their order are correct
+by the only authority that counts.** Finding 46's frame model, finding 33's
+backwards allocation, finding 54's record sizes and finding 55c's two
+parameter words are all now confirmed against Apple's own compiler rather
+than against a reimplementation of it.
+
+### 57c. Two things the fast tier had been silent about
+
+Neither would ever have surfaced without running the real thing.
+
+**The 64K system cannot do this work at all.** Booting `APPLE1` announces
+*"Pascal system size is 64K"*, and on it the compiler dies with a runtime
+**stack overflow** -- and not only on the reconstruction. It dies the same
+way on `HILBERT.TEXT`, one of Apple's own shipped samples, at `S# 0, P# 17`.
+A configuration that cannot compile the sample programs on the disk beside
+it is not the configuration Apple used. `128K.APPLE` and `128K.PASCAL` on
+`APPLE3` are the answer; `tools/mkbootdisk.py` builds `BOOT128.dsk`, which is
+`APPLE1` with those two substituted in, and it boots reporting *"Pascal
+system size is 128K"* and compiles without complaint. **Run the acceptance
+tier on 128K.** Anything else is measuring the wrong machine.
+
+**A trailing `;` before `)` in a field list is not legal Pascal here.** The
+compiler stops at *error 19, "Error in `<field-list>`"*. `ucsdpsys_compile`
+accepts it without comment. It was our own debris rather than UCSD's -- the
+`PUBLIC`/`IMPORTED` removal of finding 54b left the semicolon that had
+separated the dropped variant -- but the lesson generalises: **the fast tier
+is more permissive than Apple's compiler, so "it compiles" from the fast tier
+is not the same claim.**
+
+### 57d. How it was driven, and the one hazard in it
+
+AppleWin's command line mounts disks and boots but has no keystroke switch,
+and `-screenshot-and-exit` is documented for `-load-state`, so it fires
+before a cold boot finishes. `tools/runemu.py` launches with the four-drive
+layout; `tools/emukeys.ps1` sends keys and captures the window, which closes
+the loop -- type, screenshot, read, decide.
+
+The hazard is that **SendKeys types into whatever holds focus**, not into a
+window of our choosing. A window activation lost the race once and half a
+filename went into the operator's terminal instead of the emulator.
+`emukeys.ps1` now refuses to send unless AppleWin is foreground and fails
+loudly if focus moves during a send. Never assume the emulator received what
+was sent; read the screen back.
+
+Note also that **AppleWin does not flush a written disk image until the disk
+is ejected or the emulator exits.** Immediately after the assembly the
+directory still showed `SEARCH.CODE` occupying all 188 remaining blocks;
+after closing AppleWin it read correctly as 4. Close before reading.
+
+### 57e. What this does and does not settle
+
+It settles the declarations, completely, and both native procedures,
+completely. It says nothing yet about a single procedure *body*, because
+none has been written. What it changes is the cost of writing them: there is
+now a working path from reconstructed source to Apple's own p-code, and the
+answer comes back in minutes.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

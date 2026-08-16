@@ -270,7 +270,8 @@ class PascalWriter:
     # -- files ----------------------------------------------------------
 
     def add_file(self, name: str, payload: bytes, kind: str = "textfile",
-                 when: datetime.date | None = None) -> DirEntry:
+                 when: datetime.date | None = None,
+                 mtime_raw: int | None = None) -> DirEntry:
         """Place a file in the first gap long enough to hold it.
 
         First fit, not best fit: the Filer's own `K(runch` exists because
@@ -297,8 +298,11 @@ class PascalWriter:
         padded = payload + bytes(nblocks * BLOCK_SIZE - len(payload))
         self.write_blocks(start, padded)
 
+        # `mtime_raw` carries a date word straight through, for copying a
+        # file from one volume to another with the stamp it already had.
         en = DirEntry(0, start, start + nblocks, kind, KIND_CODES[kind],
-                      name, last_byte, encode_date(when))
+                      name, last_byte,
+                      encode_date(when) if mtime_raw is None else mtime_raw)
         entries = sorted(self.entries() + [en], key=lambda e: e.first_block)
         vol = self.volume()
         self._commit(vol.name, entries, self._last_boot(), vol.total_blocks,

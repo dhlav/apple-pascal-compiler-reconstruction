@@ -73,6 +73,16 @@ def blocks(ver: str) -> tuple[str, str, list[str]]:
         if n != 1:
             raise SystemExit(f"{name}: {n} matches in the TYPE block, want 1")
         notes.append(f"dropped {name}   {{ finding 54b }}")
+
+    # Removing a trailing variant leaves the semicolon that separated it from
+    # the field before, and `...: ADDRRANGE;)` is not a legal field list.
+    # Apple's compiler says so -- error 19, "Error in <field-list>", at the
+    # first of them -- while `ucsdpsys_compile` accepts it without comment
+    # (finding 57b). This is our own edit's debris, not anything of UCSD's,
+    # so cleaning it up is not a departure from the source.
+    types, n = re.subn(r";(\s*\))", r"\1", types)
+    if n:
+        notes.append(f"removed {n} semicolon(s) left before `)` by the above")
     return consts, types, notes
 
 
