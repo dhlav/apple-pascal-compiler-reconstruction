@@ -39,6 +39,10 @@ STEPS = [
     # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
     # on the same disk and diffs the result against it (finding 49).
     ("lifter calibration", "probes/probe_calibrate.py"),
+    # Not an artifact: the same idea at scale -- 41 operating system
+    # procedures against the UCSD II.0 source, checking loops and calls
+    # rather than exact text, because Apple's is a fork (finding 52).
+    ("lifter calibration, the OS", "probes/probe_os_calibrate.py"),
 ]
 
 for label, script in STEPS:

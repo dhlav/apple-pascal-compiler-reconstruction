@@ -4674,6 +4674,103 @@ the listings. The compiler's own lift is unchanged by all of this -- 142/142,
 145/145, 78 gotos, the same output as before -- which is the regression check
 that matters, since `OS_SIG` feeds both.
 
+## 52. The lifter checked against the operating system: loops and calls, 41 procedures
+
+Finding 49 calibrated the whole pipeline against two 23-line GOTOXY programs
+and was exact. It also said plainly what it did not cover: no loops, no calls
+between procedures, no `with`, no records — the samples use none of them.
+Finding 50 made `SYSTEM.PASCAL` parse and finding 51 aligned its segment 0
+with UCSD II.0's declarations for procedures 1..42, so 41 procedures now have
+source. This is that comparison.
+
+It cannot be exact, and the reason is finding 8: the II.0 source is the
+*generic* UCSD operating system and Apple's is a fork. An exact diff would
+measure Apple's edits, not this repo's defects. So the probe checks two
+properties that survive a fork, and — the part that makes it a check rather
+than a statistic — requires the disagreements to be a **named list**, not a
+count.
+
+### 52a. Loops
+
+VERIFIED SOURCE FACT against VERIFIED BINARY FACT. Every `WHILE`, `REPEAT`
+and `FOR` in a body must become a back edge in the control-flow graph, and
+nothing else may. Back edges are counted off `lift()`'s blocks *before* the
+structuriser runs, so a loop the structuriser failed to render as `while`
+would still be counted and could not hide.
+
+    1.1   37 of 41 procedures agree exactly
+    1.3   34 of 41
+
+### 52b. Calls, and the built-in mapping that fell out of it
+
+Every segment-0 routine a procedure calls must be admissible from its source
+body — named there outright, or reachable through a standard identifier the
+compiler lowers to one. Recovering that mapping was not the aim and is the
+more useful half of the result:
+
+| the source says | the binary calls |
+|---|---|
+| `COPY`, `DELETE`, `POS`, `CONCAT`, `INSERT` | `SCOPY`, `SDELETE`, `SPOS`, `SCONCAT`, `SINSERT` |
+| `WRITE` | `FWRITESTRING` / `FWRITECHAR` / `FWRITEINT` / `FWRITEBYTES`, by argument type |
+| `WRITELN` | the above, then `FWRITELN` |
+| `READ`, `READLN` | `FREADCHAR` / `FREADINT` / `FREADSTRING`, then `FREADLN` |
+| `EOF`, `EOLN` | `FEOF`, `FEOLN` |
+| `RESET`, `REWRITE`, `CLOSE`, `GET`, `PUT`, `SEEK` | `FRESET`, `FOPEN`, `FCLOSE`, `FGET`, `FPUT`, `XSEEK` |
+| `BLOCKREAD`, `BLOCKWRITE` | `FBLOCKIO` |
+
+`SCANTITLE` is the clearest case: it calls `SCOPY`, `SDELETE` and `SPOS`, and
+its source says `COPY`, `DELETE` and `POS`. With the mapping applied,
+
+    1.1   39 of 41 procedures call only what their source admits
+    1.3   38 of 41
+
+Calls are read as `CBP` — the sibling call, 72 of them in segment 0 — and
+`CXP 0,n`. `CLP` is the call *into a nested* procedure, and there are eight:
+`EXECERROR` issues `CLP 52`, which is the lex-1 procedure 52, exactly as II.0
+nests `PRINTLOCS` inside `EXECERROR`.
+
+### 52c. Why the subset test is not vacuous
+
+A "calls only what the source admits" check gets weaker the looser the alias
+table is, and at the limit it passes on anything. So the probe measures its
+own discriminating power: every procedure's binary call set is tried against
+every *other* procedure's source body, and it fails if too many of those wrong
+pairings are admitted. Measured, **7.3% in 1.1 and 7.5% in 1.3**, against a
+15% ceiling. Loosening `ALIAS` into a rubber stamp would raise that number
+and stop the probe passing, which is the property worth having.
+
+### 52d. The two measures agree about Apple
+
+They are independent — one is control flow, one is naming — and they point
+at the same procedures.
+
+* **`EXECERROR`** and **`CLEARLINE`** are flagged by both, in both releases.
+  `CLEARLINE` is the legible one: II.0's is a single call to `PUTPREFIXED`,
+  which is not one of the 43, and Apple's writes directly and carries
+  `PUTPREFIXED`'s loop — Apple inlined it.
+* **`FWRITESTRING`** is flagged by both in 1.3 and by neither in 1.1: Apple
+  moved its loop into `FWRITEBYTES` between releases, which shows up as
+  `FWRITESTRING` losing a back edge, `FWRITEBYTES` gaining one, and
+  `FWRITESTRING` calling `FWRITEBYTES`.
+* 1.1 differs from II.0 in fewer places than 1.3 does, by both measures.
+  That is the direction a fork accumulating changes predicts, and nothing in
+  the probe arranges it.
+
+### 52e. What this licenses, and what it still does not
+
+It licenses loop recovery, the call graph within a segment, and the
+built-in-to-segment-0 mapping above, across 41 procedures written by someone
+else. Together with finding 49 the pipeline is now checked against source on
+assignments, conditions, nested `if`, `while`, `repeat`, `for`, sibling calls,
+nested calls and cross-segment calls.
+
+It still does not check `case`, and cannot from here: segment 0 contains not a
+single `CASE` statement, and finding 41 established that the structuriser does
+not recognise the construct anyway because the jump table follows the arms.
+`with` and records are exercised heavily in the source but this probe does not
+test them — a `with` generates no control flow and no call, so both measures
+are blind to it. Those are the next gaps, in that order.
+
 ## 16. Open questions
 
 * ~~**`SYSTEM.PASCAL`'s segment 0 does not parse.**~~ **Resolved by finding
