@@ -29,6 +29,9 @@ STEPS = [
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),
+    # Not an artifact: lays out UCSD's compiler records and requires them to
+    # come to the sizes the binary forces (finding 54).
+    ("record layout vs the binary", "probes/probe_record_layout.py"),
     ("reconstructed VAR block", "varblock.py"),
     # Not an artifact: the II.0 segment-0 declarations against Apple's own
     # attribute tables, which only became possible once SYSTEM.PASCAL parsed

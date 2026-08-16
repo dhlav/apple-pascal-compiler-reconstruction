@@ -4844,6 +4844,83 @@ against source someone else wrote. Sets, `with` and records remain unchecked
 against any source.
 
 
+## 54. UCSD's record declarations, laid out and checked against the binary
+
+A type declaration is a claim about code bytes. Every field access carries an
+offset, so a record declared one word wrong moves every field after it and
+changes what the compiler emits. Finding 22c read seven record sizes straight
+out of `SYSTEM.COMPILER` without knowing what the fields were; the UCSD II.0
+compiler source declares them. `tools/a2pascal/reclayout.py` lays UCSD Pascal
+declarations out in words — packed char arrays two to the word, one word for
+a named variant tag and none for an anonymous `CASE BOOLEAN OF`, a variant
+record having one size per variant rather than one size — and
+`probe_record_layout.py` holds the results against the binary.
+
+### 54a. Three records that match with nothing adjusted
+
+VERIFIED SOURCE FACT sized, against VERIFIED BINARY FACT.
+
+| | laid out | the binary |
+|---|---|---|
+| `ATTR` | 5 words | `GATTR` is 5 (finding 43, `varblock.py`) |
+| `STRUCTURE` | 9 words | "all nine words of the standard descriptor" (22c) |
+| `ALPHA` | 4 words | the eight-character name at words 0..3 of an `identifier` (22c) |
+
+None of the three was fitted. `STRUCTURE` is the satisfying one: finding 22c
+got nine words by watching `DECLARAT`'s `STRING[n]` handler `MOV` a
+descriptor, and the declaration comes to nine by arithmetic over fields that
+finding knew nothing about.
+
+### 54b. `identifier`, and the two fields Apple does not have
+
+Finding 22c observed `klass` 0..6 with sizes **9, 10, 11, 11, 13, 18, 18**.
+UCSD's declaration, laid out as written, gives
+
+    TYPES KONST FORMALVARS ACTUALVARS FIELD PROC FUNC MODULE
+      9    10       12         12      13    19   19    10
+
+Three of the seven match immediately — `TYPES` 9, `KONST` 10, `FIELD` 13 —
+and four are over by exactly one word. Removing two fields makes all seven
+exact:
+
+* **`PUBLIC`**, the whole of `CASE BOOLEAN OF TRUE: (PUBLIC: BOOLEAN)` at the
+  end of the `FORMALVARS`/`ACTUALVARS` variant;
+* **`IMPORTED`**, the whole of `CASE BOOLEAN OF TRUE: (IMPORTED: BOOLEAN)` at
+  the end of the `DECLARED`/`ACTUAL` path of the `PROC`/`FUNC` variant.
+
+With those two gone the layout is **9, 10, 11, 11, 13, 18, 18** — every
+observed `klass`, exactly. The probe also requires that *neither removal alone*
+suffices, so the pair is doing real work rather than one absorbing the other's
+word.
+
+The arithmetic is VERIFIED. The identification is **STRONG INFERENCE**, and
+the reason it is strong rather than a fit: three of the seven sizes needed no
+adjustment at all, and the two fields removed are the same construct twice —
+a trailing anonymous-boolean extension bolted onto the end of a variant — and
+both are UCSD *unit* features. Nothing else in the record has that shape.
+
+What would settle it is offsets rather than sizes: if Apple lacks `IMPORTED`
+the fields before it keep their offsets, and if it lacked some other word they
+would all shift. The binary's own field accesses can decide that, and this
+does not.
+
+### 54c. `klass` 2, 3 and 4 now have names
+
+Finding 22c named `klass` 0, 1, 5 and 6 and left the middle open; section 16
+recorded "`klass` 3 and 4 both need one". The declaration order of `IDCLASS`
+supplies them, and the sizes confirm the alignment rather than assuming it —
+`FORMALVARS` and `ACTUALVARS` are 11 words *both*, which is why 22c saw
+"11, 11" and could not separate them, and `FIELD` is the 13-word class 22c
+singled out.
+
+    0 TYPES   1 KONST   2 FORMALVARS   3 ACTUALVARS
+    4 FIELD   5 PROC    6 FUNC         7 MODULE (never observed)
+
+`MODULE` lays out at 10 words and does not occur in either binary, which is
+consistent: it is the unit class, and the same two removals say Apple's fork
+predates or drops UCSD's unit extensions.
+
+
 ## 16. Open questions
 
 * ~~**`SYSTEM.PASCAL`'s segment 0 does not parse.**~~ **Resolved by finding
@@ -4879,8 +4956,11 @@ against any source.
   by finding 22.
 * Two members of the `structform` enumeration, `power` at 4 and `records`
   at 6, are inferred from the gap rather than observed (finding 22b).
-* Word 4 of the `identifier` variant part — the 13-word `klass` — has no
-  name yet. `klass` 3 and 4 both need one.
+* ~~Word 4 of the `identifier` variant part — the 13-word `klass` — has no
+  name yet. `klass` 3 and 4 both need one.~~ **Resolved by finding 54c**:
+  3 is `ACTUALVARS` and 4 is `FIELD`, the 13-word class. `klass` 2 is
+  `FORMALVARS`, which is why 22c saw two 11-word classes and could not tell
+  them apart.
 * ~~Segment 1.1 PASCALCO proc 1 has `lex=0`; the lex-level convention has
   not been pinned down.~~ Resolved by finding 23a: OS is -1, user program
   is 0, first nested procedure is 1. `PASCALCO.1` is an ordinary user
