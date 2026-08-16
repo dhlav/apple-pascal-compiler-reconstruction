@@ -452,13 +452,22 @@ def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
     def callee_words(mnem, ops):
         if mnem == "CXP":
             s, n = ops
-            if s == 0:
+            if s == 0 and 0 not in segbynum:
+                # Calling out of a user program into the operating system,
+                # which is not in this codefile: the signature has to come
+                # from OS_SIG, which was read off call sites.
                 if n in OS_SIG:
                     name, words, is_fn = OS_SIG[n]
                     return words, name, is_fn
                 return None, f"OS.{n} arity unknown", False
             tgt = segbynum.get(s)
+            # Lifting the operating system itself. Segment 0 is present, so
+            # its own attribute tables give the signature -- better evidence
+            # than OS_SIG, and the standing rule is that the binary wins.
+            # `probe_os_signatures.py` checks the two against each other.
             label = named(tgt.name, n) if tgt else f"seg{s}.{n}"
+            if s == 0 and n in OS_SIG:
+                label = f"{label}:{OS_SIG[n][0]}"
         else:
             # CLP/CIP/CGP/CBP all name a procedure in the *current* segment.
             # CGP is the lex-level-1 case (Language Reference IV-73: "Call

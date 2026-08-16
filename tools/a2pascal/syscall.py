@@ -93,22 +93,36 @@ def csp_name(n: int) -> str:
 _REAL = {"REAL"}
 VAR_TWO_WORD: set[str] = set()
 
-# name -> parameter words, where Apple's segment 0 demonstrably differs
-# from the UCSD II.0 declaration. Solved by tools/probes/probe_os_arity.py,
-# which picks the arity minimising unattributed stack values and stack-depth
-# disagreements across all 287 procedures, and reports the margin.
-OS_WORD_OVERRIDE: dict[str, int] = {
-    # 24 call sites; the declared 6 leaves two words stranded at every one
-    # of them, and 8 balances by a margin of 20 over any other count.
-    "FBLOCKIO": 8,     # UCSD II.0 declares 6
-    # 13 call sites, margin 4. Weaker than FBLOCKIO but consistent, and
-    # Apple extending FOPEN is unsurprising given its file system.
-    "FOPEN": 7,        # UCSD II.0 declares 4
-    # Deliberately absent: CXP 0,43. The compiler calls it five times, and
-    # GLOBALS.TEXT's 43rd forward declaration is COMMAND, but the segment-0
-    # numbering is only *verified* to 29 (finding 18, against Miller's
-    # table), so proc 43's identity is an extrapolation. Its best arity
-    # wins by a margin of 1, which is not evidence. Left as declared.
+# name -> parameter words, where Apple's segment 0 demonstrably differs from
+# the UCSD II.0 declaration. Both entries this once held are gone, because
+# `SYSTEM.PASCAL` now parses (finding 50) and states its own parameter sizes:
+#
+#   FBLOCKIO was overridden from the declared 6 to 8. The binary says 8, so
+#   the number was right, but the reason was not -- Apple did not extend it.
+#   A function's frame carries the two-word result slot as well as the
+#   arguments, so a declared 6 *is* a frame of 8. That is now a rule below
+#   rather than a special case here, and it covers all nine of segment 0's
+#   functions instead of the one whose call sites happened to be countable.
+#
+#   FOPEN was overridden from the declared 4 to 7, on 13 call sites with a
+#   margin of 4. It is 4. Apple's own attribute table says 4 in both
+#   releases, the call sites push exactly four words when read by hand
+#   (UNITPART.2 pushes @G665, the string, SLDC 0, SLDC 0), and lifting the
+#   whole compiler with 4 is byte-identical to lifting it with 7 -- so the
+#   margin was never evidence of anything. Removed.
+OS_WORD_OVERRIDE: dict[str, int] = {}
+
+# proc number -> frame words, read directly from Apple's `SYSTEM.PASCAL`
+# where the II.0 declaration is refuted rather than merely absent.
+OS_FRAME_FROM_BINARY: dict[int, tuple[str, int, bool]] = {
+    # GLOBALS.TEXT's 43rd forward declaration is COMMAND, which takes no
+    # parameters. Apple's proc 43 takes three words, in both releases, and
+    # the compiler's five call sites push exactly three -- an address, then
+    # SLDC 1, then SLDC 40 or SLDC 80. So it is not COMMAND, and the caution
+    # that used to sit here was right: the numbering agrees with II.0 through
+    # 42 and parts company at 43 (finding 51). The name is withheld because
+    # nothing here recovers it.
+    43: ("OS.43", 3, False),
 }
 
 
@@ -152,6 +166,11 @@ def segment0_signatures(globals_text: Path) -> dict[int, tuple[str, int, bool]]:
                     continue
                 stripped = re.sub(r"^VAR\s+", "", grp, flags=re.I)
                 words += _param_words(stripped, is_var=stripped != grp)
-        out[n] = (name, OS_WORD_OVERRIDE.get(name, words), is_fn)
+        # A UCSD activation record holds the two-word function result slot
+        # inside the parameter area, so the frame a caller must account for
+        # is the declared arguments plus two. Checked against Apple's own
+        # attribute tables for all nine of segment 0's functions (finding 51).
+        frame = OS_WORD_OVERRIDE.get(name, words) + (2 if is_fn else 0)
+        out[n] = OS_FRAME_FROM_BINARY.get(n, (name, frame, is_fn))
         n += 1
     return out

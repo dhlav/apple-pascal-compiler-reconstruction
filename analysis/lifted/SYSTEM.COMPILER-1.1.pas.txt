@@ -2494,7 +2494,7 @@ procedure DECLARAT.12:GETTEXT(args 1 words);  { locals 3 words, lex 4 }
     if LIBNOTOPEN then begin
       if (FBLOCKIO(@LIBRARY, @I2,2, 0, 1, 0, 1) <> 1) then begin
         FCLOSE(@LIBRARY, 0);
-        FOPEN(?, ?, ?, @LIBRARY, '*SYSTEM.LIBRARY', 1, 0);
+        FOPEN(@LIBRARY, '*SYSTEM.LIBRARY', 1, 0);
         if (IORESULT() <> 0) then begin
           L1^ := 0;
         end else begin
@@ -6883,7 +6883,7 @@ procedure UNITPART.1:UNITPART(args 4 words);  { locals 6 words, lex 1 }
   FCLOSE(@REFFILE, 0);
 
 procedure UNITPART.2:OPENREFFILE(args 0 words);  { locals 0 words, lex 2 }
-  FOPEN(?, ?, ?, @REFFILE, '*SYSTEM.INFO[*]', 0, 0);
+  FOPEN(@REFFILE, '*SYSTEM.INFO[*]', 0, 0);
   if (IORESULT() <> 0) then begin
     PASCALCO.2:ERROR(402);
   end;
@@ -7127,8 +7127,8 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
             if (INCLUDING or (INMODULE and ININTERFACE)) then begin
               PASCALCO.2:ERROR(406);
             end;
-            COMMAND();
-            FOPEN(@L7, 1, 40, @INCLFILE, @L7, 1, 0);
+            OS.43(@L7, 1, 40);
+            FOPEN(@INCLFILE, @L7, 1, 0);
             if (IORESULT() <> 0) then begin
               PASCALCO.2:ERROR(403);
             end;
@@ -7146,12 +7146,12 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
           if ((L5 = 43) or (L5 = 45)) then begin
             LIST := (L5 = 43);
             if LIST then begin
-              FOPEN(?, ?, ?, @LP, '*SYSTEM.LST.TEXT', 0, 0);
+              FOPEN(@LP, '*SYSTEM.LST.TEXT', 0, 0);
             end;
           end else begin
             COMPOPTI.3:OPTWORD(@L7, 40);
-            COMMAND();
-            FOPEN(@L7, 1, 40, @LP, @L7, 0, 0);
+            OS.43(@L7, 1, 40);
+            FOPEN(@LP, @L7, 0, 0);
             LIST := (IORESULT() = 0);
             COMPOPTI.2:BADOPT();
           end;
@@ -7214,7 +7214,7 @@ function COMPOPTI.1:COMPOPTI(args 1 words) : <1 word result>;  { locals 28 words
               FCLOSE(@LIBRARY, 0);
               LIBNOTOPEN := 1;
               COMPOPTI.3:OPTWORD(@SYSTEMLIB, 40);
-              FOPEN(?, ?, ?, @LIBRARY, @SYSTEMLIB, 1, 0);
+              FOPEN(@LIBRARY, @SYSTEMLIB, 1, 0);
               if (IORESULT() <> 0) then begin
                 PASCALCO.2:ERROR(187);
               end;

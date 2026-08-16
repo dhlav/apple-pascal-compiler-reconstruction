@@ -826,6 +826,15 @@ declaration is `COMMAND`, but the segment-0 numbering is only *verified* to
 extrapolation, and its best arity wins by a margin of 1. Left as declared
 and recorded here as open.
 
+> **Superseded by finding 51.** `SYSTEM.PASCAL` now parses (finding 50) and
+> states these sizes itself. `FBLOCKIO` is 8, but not because Apple changed
+> it — it is a function, and 6 arguments plus the two-word result slot is a
+> frame of 8. **`FOPEN` is 4, as declared**; the override to 7 was wrong, and
+> the margin of 4 turned out to discriminate nothing, since lifting the whole
+> compiler either way gives identical output. Both overrides are gone.
+> `CXP 0,43` was right to be left alone: it takes three words, so it is *not*
+> `COMMAND`. The numbering is now verified through 42.
+
 ### 20b. A set's length word belongs to the set
 
 A UCSD set sits on the stack as its data words with a **length word pushed
@@ -4575,6 +4584,95 @@ inter-segment calls — against source that is already in
 `reference_source/ucsd_ii0/`. Finding 8 still applies: that source is the
 *generic* UCSD II.0 operating system and Apple's is not, so this will be a
 close comparison rather than the exact one the GOTOXY samples allowed.
+
+## 51. Apple's segment 0 against UCSD's declarations: the numbering holds to 42, and two overrides dissolve
+
+Finding 50 made `SYSTEM.PASCAL` parse. The first thing worth doing with it
+is the comparison that was impossible before: UCSD II.0's `GLOBALS.TEXT`
+forward-declares segment 0's procedures in order, and Apple's binary states
+every one of their parameter sizes in its own attribute tables. Two
+independent lists of the same thing.
+
+### 51a. They agree through 42
+
+VERIFIED BINARY FACT against VERIFIED SOURCE FACT. For procedures 1..42 the
+declared name order, the parameter word count and the procedure-versus-
+function kind all match, in 1.1's `SYSTEM.PASCAL`, in 1.3's, and in
+`128K.PASCAL` -- 3 builds x 42 procedures, no exceptions. `probe_os_signatures.py`
+gates it: 392 checks.
+
+That extends the *verified* segment-0 numbering from 29 to 42. Finding 18
+had it to 29, against Peter Miller's table; this reaches further and comes
+from a different direction, so the two do not share a failure mode.
+
+One adjustment is needed before the lists are comparable, and it is the same
+one finding 46 established for the compiler's own frames: **a UCSD activation
+record carries the two-word function result slot inside the parameter area**,
+so a declared argument count of *n* is a frame of *n* + 2. Ten of the 43 are
+functions, and all ten come out exactly right under that rule and exactly two
+words short without it. That is ten independent confirmations of the result
+slot from a source that knew nothing about it.
+
+### 51b. `FBLOCKIO` was right for the wrong reason, and `FOPEN` was wrong
+
+`OS_WORD_OVERRIDE` held two entries, both inferred from counting words at the
+compiler's call sites because there was nothing better. The binary settles
+both, and the table is now empty.
+
+* **`FBLOCKIO`**, overridden from the declared 6 to 8 "by a margin of 20".
+  The binary says 8, so the number was right -- but the reason recorded with
+  it was not. Apple did not extend `FBLOCKIO`. It is a function, and 6
+  declared arguments plus the result slot *is* a frame of 8. What was a
+  special case for the one routine whose call sites happened to be countable
+  is now a rule covering all ten.
+* **`FOPEN`**, overridden from the declared 4 to 7 "with a margin of 4".
+  It is 4. Three readings agree and the override has none of them: Apple's
+  attribute table says 4 in both releases; the call sites push four words when
+  read by hand -- `UNITPART.2` pushes `LAO 665`, the address of the string
+  literal, `SLDC 0`, `SLDC 0`, which is exactly `VAR F`, `VAR FTITLE`,
+  `FOPENOLD`, `JUNK`; and lifting the entire compiler with 4 gives output
+  identical to lifting it with 7, byte for byte, 142/142 and 145/145 with the
+  stack fully tracked either way. So the margin never discriminated anything.
+  It is removed.
+
+The lesson is worth keeping separately from the fix: a scoring probe that
+reports a margin is reporting how its own objective ranks the candidates, not
+how much evidence there is. Both overrides scored well. One was right by
+coincidence and one was wrong.
+
+### 51c. Where it parts company: procedure 43 is not `COMMAND`
+
+VERIFIED BINARY FACT. `GLOBALS.TEXT`'s 43rd forward declaration is
+`PROCEDURE COMMAND;`, which takes no parameters. Apple's procedure 43 takes
+three words, in all three builds, and the compiler's five call sites each
+push exactly three -- an address, then `SLDC 1`, then `SLDC 40` or `SLDC 80`:
+
+    COMPINIT.1   LLA 259  SLDC 1  SLDC 80   CXP 0,43
+    COMPOPTI.1   LLA 7    SLDC 1  SLDC 40   CXP 0,43
+
+So the identification is refuted, not merely unproven, and the caution that
+used to sit in `OS_WORD_OVERRIDE` -- "proc 43's identity is an
+extrapolation" -- was right to be there. The name is withheld: nothing here
+recovers it, and the 40/80 argument suggests a console width rather than
+anything `COMMAND` does. The probe requires 43 to keep disagreeing, because a
+check that only confirms agreement would pass just as well on a table
+someone had quietly aligned.
+
+STRONG INFERENCE on the shape of the divergence: Apple's segment 0 has 57
+procedures in 1.1 and 58 in 1.3 against II.0's 43, so 14 or 15 are Apple's
+own. They begin at 43, not at 44, which means Apple inserted rather than
+appended -- consistent with finding 8's picture of a fork that grew inside
+the original rather than beside it.
+
+### 51d. What it unblocks
+
+The operating system now lifts almost completely: 96 of 97 procedures in
+1.1, 104 of 105 in 1.3 and 110 of 111 in the 128K build come out with the
+stack fully tracked, the single holdout in each being the one procedure
+containing `XIT`, which legitimately ends tracking. `tools/liftos.py` writes
+the listings. The compiler's own lift is unchanged by all of this -- 142/142,
+145/145, 78 gotos, the same output as before -- which is the regression check
+that matters, since `OS_SIG` feeds both.
 
 ## 16. Open questions
 
