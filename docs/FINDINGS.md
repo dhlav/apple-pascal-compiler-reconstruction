@@ -5383,6 +5383,92 @@ occurs anywhere in either release. `xcompile.py` now passes
 byte-for-byte result is unchanged) and it removed six spurious differences
 from `PAOFCHAR` alone.
 
+## 59. `CODEP` and `SYMBUFP` are NEW'd global pointers, and they sit below `DATA SIZE`
+
+**VERIFIED SOURCE FACT** for what they are, **VERIFIED BINARY FACT** for where
+they are, **UNRESOLVED** for how source puts them there. This supersedes
+finding 55c's description of them as "the outer block's parameter words",
+which was right about the location and wrong about the nature.
+
+### 59a. What they are
+
+`evidence/reference/ucsd-ii0-compiler/compinit.text:256`:
+
+```pascal
+NEW(SCONST); NEW(SYMBUFP); NEW(CODEP);
+```
+
+Ordinary global pointers, heap-allocated at start-up -- not parameters, and
+not anything the operating system passes in. `compglbls.text:252-253`
+declares them `CODEP: ^CODEARRAY` and `SYMBUFP: ^SYMBUFARRAY`, the first two
+variables of the compiler's `VAR` block.
+
+The `NEW` *order* confirms the offsets independently: the binary's two heap
+allocations are 512 and 650 words on globals 1 and 2 respectively, and II.0
+allocates `SYMBUFP` before `CODEP`. So **global 1 is `SYMBUFP` and global 2
+is `CODEP`**, which is what the map already said from a completely different
+direction (the II.0 declaration alignment).
+
+Their access profile fits nothing else: across 1.3, offset 1 is read 70 times
+and offset 2 read 33 times, `SRO 1` never occurs and `SRO 2` occurs exactly
+once, and both have their address taken (`LAO`). Set once, read everywhere.
+`COMPINIT.9` touches both, which is where the `NEW`s are.
+
+### 59b. Where they are: below `DATA SIZE`, in both releases
+
+| release | PARAM | DATA | words in DATA | touched offsets | DATA covers |
+|---|---|---|---|---|---|
+| 1.3 | 4 | 2710 | 1355 | 1..1357 | 3..1357 |
+| 1.1 | 4 | 2444 | 1222 | 1..969  | 3..1224 |
+
+The reconstructed `VAR` block is 130 declarations totalling exactly 1355
+words, and Apple's own compiler compiles it to `DATA SIZE` 2710 (finding
+57b). So the declared variables occupy 3..1357 and **offsets 1 and 2 are not
+declared variables**. That is not an inference from the arithmetic alone:
+`PAOFCHAR` emits `LDO 62` for `CHARPTR` in both Apple's binary and our
+compile (finding 58), which pins the whole block from offset 3 upward. Two
+more declarations at the front would move `CHARPTR` to 64.
+
+### 59c. Three constructs tested, none of them it
+
+All tested against **Apple's own 1.3 compiler**, not the fast tier.
+
+* **A plain program.** `PROGRAM T;` with four globals puts them at
+  **3,4,5,6**. Declared globals never start below 3.
+* **A program parameter list.** `PROGRAM T(CODEP,SYMBUFP);` with both also
+  declared in `VAR` allocates them at **3 and 4** exactly as before. The
+  parameter list is decorative -- its only effect is two extra `NOP`s at the
+  start of the outer block. It does not allocate.
+* **`(*$U-*)`.** Produces **segment 0, `PARAM SIZE` 0, lex -1**, and turns the
+  outer block's variables into *locals* addressed `STL`/`SLDL`, the first at
+  offset **1**. `SYSTEM.COMPILER` is segment 1, lex 0, `PARAM SIZE` 4, and
+  addresses these two with `SLDO`/`SRO`. So it is **not** `$U-` -- finding
+  23c's conclusion stands, and is now tested rather than inferred.
+
+That last one is tantalising and is not the answer: `$U-` is the one
+construct that starts allocation at offset 1, and II.0's compiler *is*
+`(*$U-*)`, which is exactly why its `CODEP` is the first variable. But Apple's
+build is not `$U-` by four independent measurements.
+
+### 59d. What is left
+
+Something puts two words at global offsets 1 and 2, below `DATA SIZE`, in a
+segment-1 lex-0 program. Candidates not yet tested:
+
+* an intrinsic-unit or `USES` arrangement, where a unit's globals are
+  allocated ahead of the host program's;
+* a compiler option other than `$U`;
+* the possibility that `SYSTEM.COMPILER` was not produced by a stock
+  compiler at all. Note that `SYSTEM.EDITOR`, `SYSTEM.FILER`,
+  `SYSTEM.LINKER` and `SYSTEM.ASSMBLER` never touch globals 1-2, while
+  `SYSTEM.COMPILER`, `SYSTEM.PASCAL`, `128K.PASCAL` and `LIBMAP.CODE` all
+  do -- so whatever it is, it is not universal to Apple's system programs.
+  `LIBMAP.CODE` is small (1510 words) and is the cheapest place to look next.
+
+Until it is resolved, every procedure touching globals 1 or 2 is blocked.
+`GENBYTE` (`PASCALCO.22`) is the smallest of them, at nine instructions:
+`CODEP^[IC] := B; IC := IC + 1`.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

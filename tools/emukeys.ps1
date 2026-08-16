@@ -34,7 +34,14 @@ $p = Get-Process AppleWin -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $p) { throw "AppleWin is not running (python tools/runemu.py)" }
 $h = $p.MainWindowHandle
 if ([EmuWin]::IsIconic($h)) { [EmuWin]::ShowWindow($h, 9) | Out-Null }
-[EmuWin]::SetForegroundWindow($h) | Out-Null
+# Windows refuses foreground activation to a process that does not own the
+# current foreground window, and it fails silently. Retry rather than give
+# up: the usual cause is the operator having just clicked elsewhere.
+for ($i = 0; $i -lt 12; $i++) {
+  [EmuWin]::SetForegroundWindow($h) | Out-Null
+  Start-Sleep -Milliseconds ([Math]::Max(150, $Settle / 4))
+  if ([EmuWin]::GetForegroundWindow() -eq $h) { break }
+}
 Start-Sleep -Milliseconds $Settle
 
 # SendKeys types into whatever holds focus, not into a window of our
