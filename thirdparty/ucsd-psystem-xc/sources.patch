@@ -1,0 +1,44 @@
+--- pristine/ucsd-psystem-xc-0.13/lib/bitmap/png.cc	2012-11-11 20:11:42.000000000 -0600
++++ ucsd-psystem-xc-0.13/lib/bitmap/png.cc	2026-08-15 19:35:16.683840573 -0500
+@@ -17,6 +17,8 @@
+ //
+ 
+ #include <lib/config.h>
++#include <cstring>
++#include <zlib.h>
+ #include <png.h>
+ #include <libexplain/fclose.h>
+ #include <libexplain/fopen.h>
+--- pristine/ucsd-psystem-xc-0.13/lib/type/char.cc	2012-11-11 20:11:42.000000000 -0600
++++ ucsd-psystem-xc-0.13/lib/type/char.cc	2026-08-15 19:38:08.809231088 -0500
+@@ -104,7 +104,7 @@
+         r1 = rr->get_subtype();
+     }
+ 
+-    return boost::dynamic_pointer_cast<type_char>(r1);
++    return !!boost::dynamic_pointer_cast<type_char>(r1);
+ }
+ 
+ 
+--- pristine/ucsd-psystem-xc-0.13/lib/type/integer.cc	2012-11-11 20:11:42.000000000 -0600
++++ ucsd-psystem-xc-0.13/lib/type/integer.cc	2026-08-15 19:38:08.809421588 -0500
+@@ -95,7 +95,7 @@
+         r1 = rr->get_subtype();
+     }
+ 
+-    return boost::dynamic_pointer_cast<type_integer>(r1);
++    return !!boost::dynamic_pointer_cast<type_integer>(r1);
+ }
+ 
+ 
+--- pristine/ucsd-psystem-xc-0.13/lib/type/enumerated.cc	2012-11-11 20:11:42.000000000 -0600
++++ ucsd-psystem-xc-0.13/lib/type/enumerated.cc	2026-08-15 19:38:08.807770788 -0500
+@@ -133,7 +133,7 @@
+         r1 = rr->get_subtype();
+     }
+ 
+-    return boost::dynamic_pointer_cast<type_enumerated>(r1);
++    return !!boost::dynamic_pointer_cast<type_enumerated>(r1);
+ }
+ 
+ 

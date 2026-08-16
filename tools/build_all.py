@@ -43,6 +43,10 @@ STEPS = [
     # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
     # on the same disk and diffs the result against it (finding 49).
     ("lifter calibration", "probes/probe_calibrate.py"),
+    # Not an artifact: compiles the two GOTOXY programs on the host and
+    # diffs the result against Apple's own compiled output (finding 55).
+    # Skips, loudly, if the toolchain is not built.
+    ("host compile vs Apple's output", "probes/probe_xcompile.py"),
     # Not an artifact: the same idea at scale -- 41 operating system
     # procedures against the UCSD II.0 source, checking loops and calls
     # rather than exact text, because Apple's is a fork (finding 52).

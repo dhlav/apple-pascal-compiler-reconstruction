@@ -1,0 +1,100 @@
+"""Compile Pascal on the host, via Peter Miller's `ucsdpsys_compile`.
+
+The acceptance test for this project is Apple's own compiler in an emulator.
+This is the tier below it: a compiler that runs in a second, so reconstructed
+source can be checked as it is written rather than in batches.
+
+It is **not evidence about Apple**. It is a different compiler by a different
+author, and where it disagrees with the binary the binary wins, as always.
+What finding 55 establishes is how far it can be trusted: on the two GOTOXY
+programs -- the only source-and-binary pairs in `evidence/` -- it reproduces
+Apple's p-code byte for byte, apart from one alignment byte per procedure
+that Apple writes as 0 and it writes as `NOP`. That is worth a great deal and
+is still two programs.
+
+`build()` in `thirdparty/ucsd-psystem-xc/build.sh` produces the binary. If it
+has not been built, `available()` is false and callers should say so rather
+than quietly pass.
+"""
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+# Where build.sh puts it by default. Override with A2_UCSDPSYS.
+DEFAULT = "$HOME/xcbuild/ucsd-psystem-xc-0.13/bin/ucsdpsys_compile"
+
+
+class ToolchainMissing(Exception):
+    pass
+
+
+class CompileError(Exception):
+    pass
+
+
+def _wsl(script: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["wsl", "-e", "bash", "-lc", script],
+                          capture_output=True, text=True)
+
+
+def _exe() -> str:
+    return os.environ.get("A2_UCSDPSYS", DEFAULT)
+
+
+def available() -> bool:
+    if not shutil.which("wsl"):
+        return False
+    return _wsl(f'test -x {_exe()}').returncode == 0
+
+
+def compile_text(source: str, host: str = "apple") -> bytes:
+    """Compile Pascal source and return the codefile.
+
+    The source is written with Unix line endings: Apple's `.TEXT` files use
+    CR, and `ucsdpsys_compile` reports a syntax error on line 1 for anything
+    it cannot split into lines.
+    """
+    if not available():
+        raise ToolchainMissing(
+            f"{_exe()} is not built -- see thirdparty/ucsd-psystem-xc/build.sh")
+    tmp = Path(tempfile.mkdtemp(prefix="a2xc"))
+    try:
+        src = tmp / "in.text"
+        src.write_text(source.replace("\r\n", "\n").replace("\r", "\n"),
+                       encoding="ascii", errors="replace", newline="\n")
+        wp = _wsl(f'wslpath "{src}"').stdout.strip()
+        out = wp.rsplit("/", 1)[0] + "/out.code"
+        r = _wsl(f'{_exe()} -H {host} -o "{out}" "{wp}" 2>&1')
+        if r.returncode:
+            raise CompileError(r.stdout.strip() or r.stderr.strip())
+        cf = tmp / "out.code"
+        if not cf.exists():
+            raise CompileError(f"no codefile produced: {r.stdout.strip()}")
+        return cf.read_bytes()
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def main() -> int:
+    if not available():
+        print(f"ucsdpsys_compile is not built ({_exe()}).")
+        print("Build it with thirdparty/ucsd-psystem-xc/build.sh, or set")
+        print("A2_UCSDPSYS to its path. Nothing here depends on it existing.")
+        return 0
+    if len(sys.argv) != 2:
+        print("usage: xcompile.py <source.text>")
+        return 2
+    src = Path(sys.argv[1]).read_text(encoding="ascii", errors="replace")
+    data = compile_text(src)
+    out = Path(sys.argv[1]).with_suffix(".code")
+    out.write_bytes(data)
+    print(f"wrote {out} ({len(data)} bytes)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -392,11 +392,24 @@ Done, and reproducible via `python tools/build_all.py`:
 
      The other direction � source *in*, codefile out � is still the
      emulator's job.
-   * *Fast tier, new:* build `ucsdpsys_compile` / `ucsdpsys_disassemble`
-     from Peter Miller's `ucsd-psystem-xc` and run reconstructed source
-     through them on the host. This catches source that does not compile or
-     that compiles to visibly wrong structure, in seconds and with no
-     emulator. Neither tool has been built yet.
+   * ~~*Fast tier, new:*~~ **Built and calibrated** (finding 55).
+     `thirdparty/ucsd-psystem-xc/build.sh` builds Peter Miller's
+     `ucsdpsys_compile` and `ucsdpsys_disassemble` reproducibly under WSL;
+     `tools/xcompile.py` drives it from Windows and `probe_xcompile.py`
+     gates it.
+
+     It is better than this entry expected. On both GOTOXY programs -- the
+     only source-and-binary pairs in `evidence/` -- it reproduces Apple's
+     p-code **byte for byte**, apart from one alignment byte per procedure
+     that Apple writes as 0 and it writes as `NOP`. So it is not merely a
+     syntax check; for the constructs those programs use it is a reference.
+     It is still a different compiler by a different author, and where it
+     disagrees with the binary the binary wins.
+
+     Use it on everything. It compiled the declaration skeleton on its first
+     run and found a two-word error in the global frame that thirty findings
+     of reading the binary had not (finding 55c) -- which is now the top
+     open question, because every offset depends on it.
    * *Acceptance tier, unchanged:* recompile under the target Apple Pascal
      release in an emulator and diff generated p-code against the original,
      using the same decoder on both sides. Start from TommyGoog's

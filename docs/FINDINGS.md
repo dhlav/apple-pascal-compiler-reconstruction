@@ -4949,7 +4949,117 @@ consistent: it is the unit class, and the same two removals say Apple's fork
 predates or drops UCSD's unit extensions.
 
 
+## 55. The fast tier exists, and it reproduces Apple's p-code
+
+Task 7's plan has always had two tiers: an acceptance test — Apple's own
+compiler, in an emulator — and a fast tier that runs on the host in seconds.
+The fast tier had never been built. It is Peter Miller's `ucsd-psystem-xc`,
+and `thirdparty/ucsd-psystem-xc/build.sh` now builds it reproducibly.
+
+The expectation recorded in `PLAN.md` was modest: *"This catches source that
+does not compile or that compiles to visibly wrong structure."* It does much
+better than that.
+
+### 55a. Calibrated against Apple's own output
+
+`evidence/` holds exactly two programs where the compiler's *input* and
+*output* are both on the disk — `HAZELGOTO` and `SOROCGOTO`, the GOTOXY
+replacements. Compiled with `ucsdpsys_compile -H apple` and read back with
+this repo's own decoder:
+
+| | segment length | p-code | segment bytes differing |
+|---|---|---|---|
+| `HAZELGOTO` | 112 = Apple's 112 | identical | 2 of 112 |
+| `SOROCGOTO` | 100 = Apple's 100 | identical | 2 of 100 |
+
+Identical means instruction for instruction, operand for operand, jump target
+for jump target, and the same `PARAM SIZE`, `DATA SIZE` and lexical level on
+every procedure. The four differing bytes are **one alignment byte per
+procedure**, sitting past the `RBP` or `XIT` that ends it, where Apple writes
+`0` and `ucsdpsys_compile` writes `$D7`, which is `NOP`. Nothing executes
+them.
+
+`probe_xcompile.py` gates all of that, and pins the padding by position *and*
+value so that a new difference anywhere else fails and a padding byte that
+stops differing fails too. It skips, loudly, when the toolchain is absent.
+
+This is two programs of about sixty instructions each. It is not proof that
+`ucsdpsys_compile` matches Apple everywhere, and where they disagree the
+binary still wins. What it establishes is that the fast tier is worth
+believing on the constructs those programs use — and that every future
+comparison is itself another test of it.
+
+### 55b. It compiles the reconstruction, and immediately found a defect
+
+`analysis/reconstruction/skeleton-1.3.text` — `PROGRAM`, `CONST`, `TYPE` and
+132 global declarations — **compiles**. That is the first time any
+reconstructed Pascal in this repo has been through a compiler.
+
+It came out two words too large, and finding the two words is the point:
+
+    reconstruction   param 4   data 2714   frame 1359
+    Apple 1.3        param 4   data 2710   frame 1357
+
+Three measurements made with the new tool, all VERIFIED:
+
+* `DATA SIZE` is exactly twice the declared global words, and `PARAM SIZE` is
+  4 for any program main, declared parameters or not.
+* Under `ucsdpsys_compile`, a program's declared globals start at offset
+  **3**: `PROGRAM T; VAR A,B,C: INTEGER` compiles `A:=1; B:=2; C:=3` to
+  `SRO 5; SRO 4; SRO 3`. (Which re-confirms finding 33 in passing — `A`,
+  declared first, allocates highest.)
+* `{$U-}` changes the kind of storage, not just the lexical level. The same
+  program with `(*$U-*)` compiles to `STL 3; STL 2; STL 1` — the outer
+  block's variables become *locals*, and `PARAM SIZE` is 0. That is why
+  `HAZELGOTO`'s main has a zero frame.
+
+### 55c. What it did not settle, and what is now in doubt
+
+Apple's compiler declares 1222 words in 1.1 and 1355 in 1.3, by the
+`DATA SIZE` rule above. Its globals demonstrably start at offset **1**, not
+3, and this is not an inference:
+
+    COMPINIT.9   LAO 1 ; LDCI 512  ; CSP 1     NEW(SYMBUFP, 512)
+    DECLARAT.1   LAO 2 ; LDCI 650  ; CSP 1     NEW(CODEP, 650)
+
+`SYMBUFARRAY` is `PACKED ARRAY [0..MAXCURSOR] OF CHAR` with `MAXCURSOR` 1023,
+which is 512 words; `CODEARRAY` is `PACKED ARRAY [0..MAXCODE] OF CHAR` with
+`MAXCODE` 1299, which is 650. Both match to the word, and 1.3's second call
+allocates 1000 words, giving `MAXCODE` = 1999. Global 3 is `GATTR`, `MOV`ed
+five words at a time. The name map is right.
+
+So globals run from offset 1 and there are 1355 of them in 1.3 — ending at
+1355. But the map has a *named* global at **1357**, and offsets 1355, 1356
+and 1357 are all read and written. Two words are unaccounted for at the top,
+and the same two words are unaccounted for in 1.1.
+
+**This puts finding 46 in doubt.** Finding 46 read the frame as
+`(PARAM SIZE + DATA SIZE) / 2` = 1224 in 1.1 and concluded that `DISKBUF` is
+exactly 256 words ending on the last word of the frame. If the declared
+globals are the 1222 words `DATA SIZE` states and they start at offset 1,
+`DISKBUF` starts at 969 and ends at 1222, which makes it 254 words, not 256.
+One of those two readings is wrong. The candidates:
+
+* Apple's outer block has two words of genuine parameters, at the top of the
+  offset space rather than the bottom — which would make finding 46's frame
+  right and the last two named offsets misnamed;
+* or `DATA SIZE` does not count everything the outer block allocates, and
+  finding 46's arithmetic stands.
+
+Nothing here decides between them, and neither is adopted. What is certain is
+that the reconstruction currently emits two words too many, that no amount of
+reading the binary had caught it in thirty findings, and that a compiler
+caught it in one run.
+
+
 ## 16. Open questions
+
+* **The outer block is two words wide of Apple's, and finding 46 may be
+  wrong.** Finding 55c has the measurements. Apple's `SYSTEM.COMPILER`
+  declares 1222 words (1.1) and 1355 (1.3) by the `DATA SIZE` rule, its
+  globals demonstrably start at offset 1, and yet named globals run to 1224
+  and 1357. Settle it before writing any more of the `VAR` block: every
+  offset in the reconstruction depends on it.
 
 * ~~**`SYSTEM.PASCAL`'s segment 0 does not parse.**~~ **Resolved by finding
   50**, and the premise was wrong: slot 15 is not a segment that failed to
