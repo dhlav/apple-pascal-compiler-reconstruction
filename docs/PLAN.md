@@ -410,11 +410,43 @@ Done, and reproducible via `python tools/build_all.py`:
      run and found a two-word error in the global frame that thirty findings
      of reading the binary had not (finding 55c) -- which is now the top
      open question, because every offset depends on it.
-   * *Acceptance tier, unchanged:* recompile under the target Apple Pascal
-     release in an emulator and diff generated p-code against the original,
-     using the same decoder on both sides. Start from TommyGoog's
-     configuration (finding 15): AppleWin with **four disk drives**, which
-     the Apple Pascal compiler requires.
+   * *Acceptance tier — **the disk is ready**, the emulator run is not.*
+     Recompile under the target Apple Pascal release in an emulator and diff
+     generated p-code against the original, using the same decoder on both
+     sides. Start from TommyGoog's configuration (finding 15): AppleWin with
+     **four disk drives**, which the Apple Pascal compiler requires.
+
+     **What is now in place** (finding 56). `a2pascal/diskwrite.py` writes
+     Pascal volumes, and `mkworkdisk.py` builds `build/disks/WORK.dsk` with
+     `SEARCH.TEXT`, `SKEL13.TEXT` and `SKEL11.TEXT` on it. The encoding is
+     held against Apple's own directories byte for byte, and an independent
+     implementation (`ucsd-psystem-fs`) fscks the result and extracts every
+     file back to its source unchanged. AppleWin is at `C:\AppleWin`:
+
+     ```
+     AppleWin.exe -model apple2e -noreg
+       -d1  "…Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk"
+       -d2  "…Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"
+       -s5 diskii -s5d1 build\disks\WORK.dsk
+       -s5d2 "…Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"
+       -clock-multiplier 3.9 -power-on
+     ```
+
+     **What is missing is keystrokes.** The documented switch list has no
+     scripting or key-injection option, and `-screenshot-and-exit` is for use
+     with `-load-state`, so it fires before a cold boot finishes and cannot
+     confirm one. Mounting and booting is automatable; driving the Filer, the
+     Editor and `X(ecute` is not, short of SendKeys against the window with
+     no way to read the screen back. Assume the two tests below need someone
+     at the keyboard until proven otherwise.
+
+     The two tests, both on 1.3:
+     1. `X(ecute SYSTEM.ASSMBLER` on `WORK:SEARCH.TEXT`, and diff the
+        resulting `SEARCH.CODE` against `IDSEARCH`/`TREESEARCH` in the
+        binary — relocation tables included, which is the point (finding 44e).
+     2. `X(ecute SYSTEM.COMPILER` on `WORK:SKEL13.TEXT`, and check the outer
+        block comes out `PARAM SIZE 4 / DATA SIZE 2710`. Both skeletons
+        already compile to exactly that under the fast tier.
 
      The same tier covers 1.3's two native procedures, with
      `SYSTEM.ASSMBLER` in place of `SYSTEM.COMPILER`: it is the assembler

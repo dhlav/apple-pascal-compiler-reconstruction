@@ -27,46 +27,46 @@ CONST DISPLIMIT = 12; MAXLEVEL = 8; MAXADDR = 28000;
       MAXJTAB = 36; MAXSEG = 15; MAXPROCNUM = 254;
 
 TYPE
-		 (*BASIC SYMBOLS, MUST MATCH ORDER IN IDSEARCH*)
+                 (*BASIC SYMBOLS, MUST MATCH ORDER IN IDSEARCH*)
 
      SYMBOL =  (IDENT,COMMA,COLON,SEMICOLON,LPARENT,RPARENT,DOSY,TOSY,
-		DOWNTOSY,ENDSY,UNTILSY,OFSY,THENSY,ELSESY,BECOMES,LBRACK,
-		RBRACK,ARROW,PERIOD,BEGINSY,IFSY,CASESY,REPEATSY,WHILESY,
-		FORSY,WITHSY,GOTOSY,LABELSY,CONSTSY,TYPESY,VARSY,PROCSY,
-		FUNCSY,PROGSY,FORWARDSY,INTCONST,REALCONST,STRINGCONST,
-		NOTSY,MULOP,ADDOP,RELOP,SETSY,PACKEDSY,ARRAYSY,RECORDSY,
-		FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
-		EXTERNLSY,SEPARATSY);
+                DOWNTOSY,ENDSY,UNTILSY,OFSY,THENSY,ELSESY,BECOMES,LBRACK,
+                RBRACK,ARROW,PERIOD,BEGINSY,IFSY,CASESY,REPEATSY,WHILESY,
+                FORSY,WITHSY,GOTOSY,LABELSY,CONSTSY,TYPESY,VARSY,PROCSY,
+                FUNCSY,PROGSY,FORWARDSY,INTCONST,REALCONST,STRINGCONST,
+                NOTSY,MULOP,ADDOP,RELOP,SETSY,PACKEDSY,ARRAYSY,RECORDSY,
+                FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
+                EXTERNLSY,SEPARATSY);
 
 
      OPERATOR = (MUL,RDIV,ANDOP,IDIV,IMOD,PLUS,MINUS,OROP,LTOP,LEOP,
-		 GEOP,GTOP,NEOP,EQOP,INOP,NOOP);
+                 GEOP,GTOP,NEOP,EQOP,INOP,NOOP);
 
      SETOFSYS = SET OF SYMBOL;
 
      NONRESIDENT = (SEEK,FREADREAL,FWRITEREAL,FREADDEC,FWRITEDEC,DECOPS);
      NONRESPFLIST = ARRAY[NONRESIDENT] OF INTEGER;
 
-					      (*CONSTANTS*)
+                                              (*CONSTANTS*)
      CSTCLASS = (REEL,PSET,STRG,TRIX,LONG);
      CSP = ^ CONSTREC;
      CONSTREC = RECORD CASE CCLASS: CSTCLASS OF
-			 LONG: (LLENG,LLAST: INTEGER;
-				LONGVAL: ARRAY[1..9] OF INTEGER);
-			 TRIX: (CSTVAL: ARRAY [1..8] OF INTEGER);
-			       (*MUST COMPLETELY OVERLAP FOLLOWING FIELDS*)
-			 REEL: (RVAL: REAL);
-			 PSET: (PVAL: SET OF 0..127);
-			 STRG: (SLGTH: 0..STRGLGTH;
-				SVAL: PACKED ARRAY [1..STRGLGTH] OF CHAR)
-		       END;
+                         LONG: (LLENG,LLAST: INTEGER;
+                                LONGVAL: ARRAY[1..9] OF INTEGER);
+                         TRIX: (CSTVAL: ARRAY [1..8] OF INTEGER);
+                               (*MUST COMPLETELY OVERLAP FOLLOWING FIELDS*)
+                         REEL: (RVAL: REAL);
+                         PSET: (PVAL: SET OF 0..127);
+                         STRG: (SLGTH: 0..STRGLGTH;
+                                SVAL: PACKED ARRAY [1..STRGLGTH] OF CHAR)
+                       END;
 
      VALU = RECORD CASE BOOLEAN OF
-		     TRUE:  (IVAL: INTEGER);
-		     FALSE: (VALP: CSP)
-		   END;
+                     TRUE:  (IVAL: INTEGER);
+                     FALSE: (VALP: CSP)
+                   END;
 
-						  (*DATA STRUCTURES*)
+                                                  (*DATA STRUCTURES*)
      BITRANGE = 0..BITSPERWD; OPRANGE = 0..80;
      CURSRANGE = 0..MAXCURSOR; PROCRANGE = 0..MAXPROCNUM;
      LEVRANGE = 0..MAXLEVEL; ADDRRANGE = 0..MAXADDR;
@@ -74,104 +74,104 @@ TYPE
      DISPRANGE = 0..DISPLIMIT;
 
      STRUCTFORM = (SCALAR,SUBRANGE,POINTER,LONGINT,POWER,ARRAYS,
-		   RECORDS,FILES,TAGFLD,VARIANT);
+                   RECORDS,FILES,TAGFLD,VARIANT);
 
      DECLKIND = (STANDARD,DECLARED,SPECIAL);
 
      STP = ^ STRUCTURE; CTP = ^ IDENTIFIER;
 
      STRUCTURE = RECORD
-		   SIZE: ADDRRANGE;
-		   CASE FORM: STRUCTFORM OF
-		     SCALAR:   (CASE SCALKIND: DECLKIND OF
-				  DECLARED: (FCONST: CTP));
-		     SUBRANGE: (RANGETYPE: STP; MIN,MAX: VALU);
-		     POINTER:  (ELTYPE: STP);
-		     POWER:    (ELSET: STP);
-		     ARRAYS:   (AELTYPE,INXTYPE: STP;
-				CASE AISPACKD:BOOLEAN OF
-				  TRUE: (ELSPERWD,ELWIDTH: BITRANGE;
-					 CASE AISSTRNG: BOOLEAN OF
-					  TRUE:(MAXLENG: 1..STRGLGTH)));
-		     RECORDS:  (FSTFLD: CTP; RECVAR: STP);
-		     FILES:    (FILTYPE: STP);
-		     TAGFLD:   (TAGFIELDP: CTP; FSTVAR: STP);
-		     VARIANT:  (NXTVAR,SUBVAR: STP; VARVAL: VALU)
-		   END;
+                   SIZE: ADDRRANGE;
+                   CASE FORM: STRUCTFORM OF
+                     SCALAR:   (CASE SCALKIND: DECLKIND OF
+                                  DECLARED: (FCONST: CTP));
+                     SUBRANGE: (RANGETYPE: STP; MIN,MAX: VALU);
+                     POINTER:  (ELTYPE: STP);
+                     POWER:    (ELSET: STP);
+                     ARRAYS:   (AELTYPE,INXTYPE: STP;
+                                CASE AISPACKD:BOOLEAN OF
+                                  TRUE: (ELSPERWD,ELWIDTH: BITRANGE;
+                                         CASE AISSTRNG: BOOLEAN OF
+                                          TRUE:(MAXLENG: 1..STRGLGTH)));
+                     RECORDS:  (FSTFLD: CTP; RECVAR: STP);
+                     FILES:    (FILTYPE: STP);
+                     TAGFLD:   (TAGFIELDP: CTP; FSTVAR: STP);
+                     VARIANT:  (NXTVAR,SUBVAR: STP; VARVAL: VALU)
+                   END;
 
-							    (*NAMES*)
+                                                            (*NAMES*)
      IDCLASS = (TYPES,KONST,FORMALVARS,ACTUALVARS,FIELD,
-		PROC,FUNC,MODULE);
+                PROC,FUNC,MODULE);
      SETOFIDS = SET OF IDCLASS;
      IDKIND = (ACTUAL,FORMAL);
      ALPHA = PACKED ARRAY [1..8] OF CHAR;
      
      IDENTIFIER = RECORD
-		   NAME: ALPHA; LLINK, RLINK: CTP;
-		   IDTYPE: STP; NEXT: CTP;
-		   CASE KLASS: IDCLASS OF
-		     KONST: (VALUES: VALU);
-		FORMALVARS,
-		ACTUALVARS: (VLEV: LEVRANGE;
-			     VADDR: ADDRRANGE;);
-		     FIELD: (FLDADDR: ADDRRANGE;
-			     CASE FISPACKD: BOOLEAN OF
-			       TRUE: (FLDRBIT,FLDWIDTH: BITRANGE));
-		     PROC,
-		     FUNC:  (CASE PFDECKIND: DECLKIND OF
-			      SPECIAL:  (KEY: INTEGER);
-			      STANDARD: (CSPNUM: INTEGER);
-			      DECLARED: (PFLEV: LEVRANGE;
-					 PFNAME: PROCRANGE;
-					 PFSEG: SEGRANGE;
-					 CASE PFKIND: IDKIND OF
-					  ACTUAL: (LOCALLC: ADDRRANGE;
-						   FORWDECL: BOOLEAN;
-						   EXTURNAL: BOOLEAN;
-						   INSCOPE: BOOLEAN;)));
-		   MODULE: (SEGID: INTEGER)
-		   END;
+                   NAME: ALPHA; LLINK, RLINK: CTP;
+                   IDTYPE: STP; NEXT: CTP;
+                   CASE KLASS: IDCLASS OF
+                     KONST: (VALUES: VALU);
+                FORMALVARS,
+                ACTUALVARS: (VLEV: LEVRANGE;
+                             VADDR: ADDRRANGE;);
+                     FIELD: (FLDADDR: ADDRRANGE;
+                             CASE FISPACKD: BOOLEAN OF
+                               TRUE: (FLDRBIT,FLDWIDTH: BITRANGE));
+                     PROC,
+                     FUNC:  (CASE PFDECKIND: DECLKIND OF
+                              SPECIAL:  (KEY: INTEGER);
+                              STANDARD: (CSPNUM: INTEGER);
+                              DECLARED: (PFLEV: LEVRANGE;
+                                         PFNAME: PROCRANGE;
+                                         PFSEG: SEGRANGE;
+                                         CASE PFKIND: IDKIND OF
+                                          ACTUAL: (LOCALLC: ADDRRANGE;
+                                                   FORWDECL: BOOLEAN;
+                                                   EXTURNAL: BOOLEAN;
+                                                   INSCOPE: BOOLEAN;)));
+                   MODULE: (SEGID: INTEGER)
+                   END;
 
 
      WHERE = (BLCK,CREC,VREC,REC);
 
-					      (*EXPRESSIONS*)
+                                              (*EXPRESSIONS*)
      ATTRKIND = (CST,VARBL,EXPR);
      VACCESS = (DRCT,INDRCT,PACKD,MULTI,BYTE);
 
      ATTR = RECORD TYPTR: STP;
-	      CASE KIND: ATTRKIND OF
-		CST:   (CVAL: VALU);
-		VARBL: (CASE ACCESS: VACCESS OF
-			  DRCT:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
-			  INDRCT: (IDPLMT: ADDRRANGE))
-	    END;
+              CASE KIND: ATTRKIND OF
+                CST:   (CVAL: VALU);
+                VARBL: (CASE ACCESS: VACCESS OF
+                          DRCT:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
+                          INDRCT: (IDPLMT: ADDRRANGE))
+            END;
 
      TESTP = ^ TESTPOINTER;
      TESTPOINTER = RECORD
-		     ELT1,ELT2 : STP;
-		     LASTTESTP : TESTP
-		   END;
+                     ELT1,ELT2 : STP;
+                     LASTTESTP : TESTP
+                   END;
 
-						   (*LABELS*)
+                                                   (*LABELS*)
      LBP = ^ CODELABEL;
      CODELABEL = RECORD
-		   CASE DEFINED: BOOLEAN OF
-		     FALSE: (REFLIST: ADDRRANGE);
-		     TRUE:  (OCCURIC: ADDRRANGE; JTABINX: JTABRANGE)
-		 END;
+                   CASE DEFINED: BOOLEAN OF
+                     FALSE: (REFLIST: ADDRRANGE);
+                     TRUE:  (OCCURIC: ADDRRANGE; JTABINX: JTABRANGE)
+                 END;
 
      LABELP = ^ USERLABEL;
      USERLABEL = RECORD
-		   LABVAL: INTEGER;
-		   NEXTLAB: LABELP;
-		   CODELBP: LBP
-		 END;
+                   LABVAL: INTEGER;
+                   NEXTLAB: LABELP;
+                   CODELBP: LBP
+                 END;
 
      REFARRAY = ARRAY[1..REFSPERBLK] OF
-		  RECORD
-		    KEY,OFFSET: INTEGER
-		  END;
+                  RECORD
+                    KEY,OFFSET: INTEGER
+                  END;
 
      CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
      SYMBUFARRAY = PACKED ARRAY [CURSRANGE] OF CHAR;
@@ -179,152 +179,287 @@ TYPE
      UNITFILE = (WORKCODE,SYSLIBRARY);
 
      LEXSTKREC = RECORD
-		   DOLDTOP: DISPRANGE;
-		   DOLDLEV: 0..MAXLEVEL;
-		   POLDPROC,SOLDPROC: PROCRANGE;
-		   DOLDSEG: SEGRANGE;
-		   DLLC: ADDRRANGE;
-		   BFSY: SYMBOL;
-		   DFPROCP: CTP;
-		   DMARKP: ^INTEGER;
-		   ISSEGMENT: BOOLEAN;
-		   PREVLEXSTACKP: ^LEXSTKREC
-		 END;
+                   DOLDTOP: DISPRANGE;
+                   DOLDLEV: 0..MAXLEVEL;
+                   POLDPROC,SOLDPROC: PROCRANGE;
+                   DOLDSEG: SEGRANGE;
+                   DLLC: ADDRRANGE;
+                   BFSY: SYMBOL;
+                   DFPROCP: CTP;
+                   DMARKP: ^INTEGER;
+                   ISSEGMENT: BOOLEAN;
+                   PREVLEXSTACKP: ^LEXSTKREC
+                 END;
 
 
 (*--------------------------------------------------------------------*)
 
 VAR
-  GATTR           : ATTR;                              {    3,    5 words  II.0 record; the map splits it into GATTYPTR, GATKIND, GATCVAL, GATVLEV, GATDPLMT }
-  TOP             : DISPRANGE;                         {    8,    1 word   II.0 }
-  IC              : ADDRRANGE;                         {    9,    1 word   II.0 }
-  LC              : ADDRRANGE;                         {   10,    1 word   II.0 }
-  TEST            : BOOLEAN;                           {   11,    1 word   II.0 }
-  INTPTR          : STP;                               {   12,    1 word   II.0 }
-  SEG             : SEGRANGE;                          {   13,    1 word   II.0 }
-  SYMCURSOR       : CURSRANGE;                         {   14,    1 word   II.0 }
-  SY              : SYMBOL;                            {   15,    1 word   II.0 }
-  OP              : OPERATOR;                          {   16,    1 word   II.0 }
-  ID              : ALPHA;                             {   17,    4 words  II.0 }
-  SEGSLOT         : INTEGER;                           {   21,    1 word   ours: one word, type not recovered }
-  LGTH            : INTEGER;                           {   22,    1 word   II.0 }
-  VAL             : VALU;                              {   23,    1 word   II.0 }
-  DISX            : DISPRANGE;                         {   24,    1 word   II.0 }
-  LCMAX           : ADDRRANGE;                         {   25,    1 word   II.0 }
-  GETSTMTLEV      : BOOLEAN;                           {   26,    1 word   II.0 }
-  PUBLICPROCS     : BOOLEAN;                           {   27,    1 word   II.0 }
-  SYSCOMP         : BOOLEAN;                           {   28,    1 word   II.0 }
-  LIBNOTOPEN      : BOOLEAN;                           {   29,    1 word   II.0 }
-  FLIPBYTES       : BOOLEAN;                           {   30,    1 word   II.0 }
-  ISPROG          : INTEGER;                           {   31,    1 word   ours: one word, type not recovered }
-  ININTERFACE     : BOOLEAN;                           {   32,    1 word   II.0 }
-  INMODULE        : BOOLEAN;                           {   33,    1 word   II.0 }
-  SWAPMORE        : INTEGER;                           {   34,    1 word   ours: one word, type not recovered }
-  SWAPPING        : INTEGER;                           {   35,    1 word   ours: one word, type not recovered }
-  NOLOAD          : INTEGER;                           {   36,    1 word   ours: one word, type not recovered }
-  USING           : BOOLEAN;                           {   37,    1 word   II.0 }
-  INCLUDING       : BOOLEAN;                           {   38,    1 word   II.0 }
-  DP              : BOOLEAN;                           {   39,    1 word   II.0 }
-  VARSTRG         : INTEGER;                           {   40,    1 word   ours: one word, type not recovered }
-  LSEPPROC        : BOOLEAN;                           {   41,    1 word   II.0 }
-  INTRINSIC       : INTEGER;                           {   42,    1 word   ours: one word, type not recovered }
-  TINY            : BOOLEAN;                           {   43,    1 word   II.0 }
-  LIST            : BOOLEAN;                           {   44,    1 word   II.0 }
-  LINKINFO        : INTEGER;                           {   45,    1 word   ours: one word, type not recovered }
-  OPT_E           : INTEGER;                           {   46,    1 word   ours: one word, type not recovered }
-  BPTONLINE       : BOOLEAN;                           {   47,    1 word   II.0 }
-  IOCHECK         : BOOLEAN;                           {   48,    1 word   II.0 }
-  CODEINSEG       : BOOLEAN;                           {   49,    1 word   II.0 }
-  NOISY           : BOOLEAN;                           {   50,    1 word   II.0 }
-  DEBUGGING       : BOOLEAN;                           {   51,    1 word   II.0 }
-  RANGECHECK      : BOOLEAN;                           {   52,    1 word   II.0 }
-  GOTOOK          : BOOLEAN;                           {   53,    1 word   II.0 }
-  PRTERR          : BOOLEAN;                           {   54,    1 word   II.0 }
-  STRGPTR         : STP;                               {   55,    1 word   II.0 }
-  INTRACTVPTR     : STP;                               {   56,    1 word   II.0 }
-  BYTEPTR         : INTEGER;                           {   57,    1 word   ours: one word, type not recovered }
-  WORDPTR         : INTEGER;                           {   58,    1 word   ours: one word, type not recovered }
-  NILPTR          : STP;                               {   59,    1 word   II.0 }
-  TEXTPTR         : STP;                               {   60,    1 word   II.0 }
-  BOOLPTR         : STP;                               {   61,    1 word   II.0 }
-  CHARPTR         : STP;                               {   62,    1 word   II.0 }
-  LONGINTPTR      : STP;                               {   63,    1 word   II.0 }
-  REALPTR         : STP;                               {   64,    1 word   II.0 }
-  RESIDENT        : INTEGER;                           {   65,    1 word   ours: one word, type not recovered }
-  USINGLIST       : CTP;                               {   66,    1 word   II.0 }
-  FWPTR           : CTP;                               {   67,    1 word   II.0 }
-  OUTERBLOCK      : CTP;                               {   68,    1 word   II.0 }
-  OUTPUTPTR       : CTP;                               {   69,    1 word   II.0 }
-  INPUTPTR        : CTP;                               {   70,    1 word   II.0 }
-  MODPTR          : CTP;                               {   71,    1 word   II.0 }
-  UFCTPTR         : CTP;                               {   72,    1 word   II.0 }
-  UPRCPTR         : CTP;                               {   73,    1 word   II.0 }
-  UFLDPTR         : CTP;                               {   74,    1 word   II.0 }
-  UNUSED75        : INTEGER;                           {   75,    1 word   finding 39b: declared, never referenced }
-  UVARPTR         : CTP;                               {   76,    1 word   II.0 }
-  UCSTPTR         : CTP;                               {   77,    1 word   II.0 }
-  UTYPPTR         : CTP;                               {   78,    1 word   II.0 }
-  GLOBTESTP       : TESTP;                             {   79,    1 word   II.0 }
-  LEVEL           : LEVRANGE;                          {   80,    1 word   II.0 }
-  STMTLEV         : INTEGER;                           {   81,    1 word   II.0 }
-  BEGSTMTLEV      : INTEGER;                           {   82,    1 word   II.0 }
-  MARKP           : ^INTEGER;                          {   83,    1 word   II.0 }
-  TOS             : ^LEXSTKREC;                        {   84,    1 word   II.0 }
-  GLEV            : DISPRANGE;                         {   85,    1 word   II.0 }
-  NEWBLOCK        : BOOLEAN;                           {   86,    1 word   II.0 }
-  DATASEG         : INTEGER;                           {   87,    1 word   ours: one word, type not recovered }
-  NEXTSEG         : SEGRANGE;                          {   88,    1 word   II.0 }
-  SEGINX          : INTEGER;                           {   89,    1 word   II.0 }
-  SCONST          : CSP;                               {   90,    1 word   II.0 }
-  STRGCSTIC       : ADDRRANGE;                         {   91,    1 word   II.0 }
-  SMALLESTSPACE   : INTEGER;                           {   92,    1 word   II.0 }
-  SYMBLK          : INTEGER;                           {   93,    1 word   II.0 }
-  STARTDOTS       : INTEGER;                           {   94,    1 word   II.0 }
-  SCREENDOTS      : INTEGER;                           {   95,    1 word   II.0 }
-  LINEINFO        : INTEGER;                           {   96,    1 word   II.0 }
-  LOWTIME         : INTEGER;                           {   97,    1 word   II.0 }
-  LINESTART       : CURSRANGE;                         {   98,    1 word   II.0 }
-  NEXTPROC        : PROCRANGE;                         {   99,    1 word   II.0 }
-  CURPROC         : PROCRANGE;                         {  100,    1 word   II.0 }
-  TYPEDELS        : SETOFSYS;                          {  101,    4 words  II.0 }
-  STATBEGSYS      : SETOFSYS;                          {  105,    4 words  II.0 }
-  FACBEGSYS       : SETOFSYS;                          {  109,    4 words  II.0 }
-  SELECTSYS       : SETOFSYS;                          {  113,    4 words  II.0 }
-  BLOCKBEGSYS     : SETOFSYS;                          {  117,    4 words  II.0 }
-  TYPEBEGSYS      : SETOFSYS;                          {  121,    4 words  II.0 }
-  SIMPTYPEBEGSYS  : SETOFSYS;                          {  125,    4 words  II.0 }
-  CONSTBEGSYS     : SETOFSYS;                          {  129,    4 words  II.0 }
-  VARS            : SETOFIDS;                          {  133,    1 word   II.0 }
-  DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL: ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END; {  134,   52 words  II.0 }
-  SEGSUSED        : ARRAY [0..3] OF INTEGER;           {  186,    4 words  ours: 4 words, shape not recovered }
-  PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;      {  190,  255 words  II.0 declares 150 words, Apple has 255 }
-  SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; SEGSPARE: INTEGER END; {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9]; SEGSPARE is ours, and its purpose is not recovered }
-  SEGMAP          : ARRAY [0..15] OF INTEGER;          {  589,   16 words  ours: 16 words, shape not recovered }
-  COMMENT         : ^STRING;                           {  605,    1 word   II.0 }
-  SYSTEMLIB       : STRING[40];                        {  606,   21 words  II.0 }
-  NEXTJTAB        : JTABRANGE;                         {  627,    1 word   II.0 }
-  JTAB            : ARRAY [JTABRANGE] OF INTEGER;      {  628,   37 words  II.0 declares 25 words, Apple has 37 }
-  REFFILE         : FILE;                              {  665,   40 words  II.0 }
-  REFBLK          : INTEGER;                           {  705,    1 word   II.0 }
-  NREFS           : INTEGER;                           {  706,    1 word   II.0 }
-  REFLIST         : ^REFARRAY;                         {  707,    1 word   II.0 }
-  TEXTSTRT        : INTEGER;                           {  708,    1 word   ours: one word, type not recovered }
-  PREVSYMBLK      : INTEGER;                           {  709,    1 word   II.0 }
-  OLDSYMBLK       : INTEGER;                           {  710,    1 word   II.0 }
-  PREVLINESTART   : CURSRANGE;                         {  711,    1 word   II.0 }
-  PREVSYMCURSOR   : CURSRANGE;                         {  712,    1 word   II.0 }
-  OLDLINESTART    : CURSRANGE;                         {  713,    1 word   II.0 }
-  OLDSYMCURSOR    : CURSRANGE;                         {  714,    1 word   II.0 }
-  USEFILE         : UNITFILE;                          {  715,    1 word   II.0 }
-  LIBRARY         : FILE;                              {  716,   40 words  II.0 }
-  INCLFILE        : FILE;                              {  756,   40 words  II.0 }
-  LP              : TEXT;                              {  796,  301 words  II.0 }
-  CURBLK          : INTEGER;                           { 1097,    1 word   II.0 }
-  CURBYTE         : INTEGER;                           { 1098,    1 word   II.0 }
-  DISKBUF         : PACKED ARRAY [0..511] OF CHAR;     { 1099,  256 words  II.0 }
-  HAS128K         : INTEGER;                           { 1355,    1 word   ours: one word, type not recovered }
-  CONLIST         : INTEGER;                           { 1356,    1 word   ours: one word, type not recovered }
-  LSTOPEN         : INTEGER;                           { 1357,    1 word   ours: one word, type not recovered }
+  {    3,    5 words  II.0 record; the map splits it into GATTYPTR, GATKIND,
+  GATCVAL, GATVLEV, GATDPLMT }
+  GATTR           : ATTR;
+  {    8,    1 word   II.0 }
+  TOP             : DISPRANGE;
+  {    9,    1 word   II.0 }
+  IC              : ADDRRANGE;
+  {   10,    1 word   II.0 }
+  LC              : ADDRRANGE;
+  {   11,    1 word   II.0 }
+  TEST            : BOOLEAN;
+  {   12,    1 word   II.0 }
+  INTPTR          : STP;
+  {   13,    1 word   II.0 }
+  SEG             : SEGRANGE;
+  {   14,    1 word   II.0 }
+  SYMCURSOR       : CURSRANGE;
+  {   15,    1 word   II.0 }
+  SY              : SYMBOL;
+  {   16,    1 word   II.0 }
+  OP              : OPERATOR;
+  {   17,    4 words  II.0 }
+  ID              : ALPHA;
+  {   21,    1 word   ours: one word, type not recovered }
+  SEGSLOT         : INTEGER;
+  {   22,    1 word   II.0 }
+  LGTH            : INTEGER;
+  {   23,    1 word   II.0 }
+  VAL             : VALU;
+  {   24,    1 word   II.0 }
+  DISX            : DISPRANGE;
+  {   25,    1 word   II.0 }
+  LCMAX           : ADDRRANGE;
+  {   26,    1 word   II.0 }
+  GETSTMTLEV      : BOOLEAN;
+  {   27,    1 word   II.0 }
+  PUBLICPROCS     : BOOLEAN;
+  {   28,    1 word   II.0 }
+  SYSCOMP         : BOOLEAN;
+  {   29,    1 word   II.0 }
+  LIBNOTOPEN      : BOOLEAN;
+  {   30,    1 word   II.0 }
+  FLIPBYTES       : BOOLEAN;
+  {   31,    1 word   ours: one word, type not recovered }
+  ISPROG          : INTEGER;
+  {   32,    1 word   II.0 }
+  ININTERFACE     : BOOLEAN;
+  {   33,    1 word   II.0 }
+  INMODULE        : BOOLEAN;
+  {   34,    1 word   ours: one word, type not recovered }
+  SWAPMORE        : INTEGER;
+  {   35,    1 word   ours: one word, type not recovered }
+  SWAPPING        : INTEGER;
+  {   36,    1 word   ours: one word, type not recovered }
+  NOLOAD          : INTEGER;
+  {   37,    1 word   II.0 }
+  USING           : BOOLEAN;
+  {   38,    1 word   II.0 }
+  INCLUDING       : BOOLEAN;
+  {   39,    1 word   II.0 }
+  DP              : BOOLEAN;
+  {   40,    1 word   ours: one word, type not recovered }
+  VARSTRG         : INTEGER;
+  {   41,    1 word   II.0 }
+  LSEPPROC        : BOOLEAN;
+  {   42,    1 word   ours: one word, type not recovered }
+  INTRINSIC       : INTEGER;
+  {   43,    1 word   II.0 }
+  TINY            : BOOLEAN;
+  {   44,    1 word   II.0 }
+  LIST            : BOOLEAN;
+  {   45,    1 word   ours: one word, type not recovered }
+  LINKINFO        : INTEGER;
+  {   46,    1 word   ours: one word, type not recovered }
+  OPT_E           : INTEGER;
+  {   47,    1 word   II.0 }
+  BPTONLINE       : BOOLEAN;
+  {   48,    1 word   II.0 }
+  IOCHECK         : BOOLEAN;
+  {   49,    1 word   II.0 }
+  CODEINSEG       : BOOLEAN;
+  {   50,    1 word   II.0 }
+  NOISY           : BOOLEAN;
+  {   51,    1 word   II.0 }
+  DEBUGGING       : BOOLEAN;
+  {   52,    1 word   II.0 }
+  RANGECHECK      : BOOLEAN;
+  {   53,    1 word   II.0 }
+  GOTOOK          : BOOLEAN;
+  {   54,    1 word   II.0 }
+  PRTERR          : BOOLEAN;
+  {   55,    1 word   II.0 }
+  STRGPTR         : STP;
+  {   56,    1 word   II.0 }
+  INTRACTVPTR     : STP;
+  {   57,    1 word   ours: one word, type not recovered }
+  BYTEPTR         : INTEGER;
+  {   58,    1 word   ours: one word, type not recovered }
+  WORDPTR         : INTEGER;
+  {   59,    1 word   II.0 }
+  NILPTR          : STP;
+  {   60,    1 word   II.0 }
+  TEXTPTR         : STP;
+  {   61,    1 word   II.0 }
+  BOOLPTR         : STP;
+  {   62,    1 word   II.0 }
+  CHARPTR         : STP;
+  {   63,    1 word   II.0 }
+  LONGINTPTR      : STP;
+  {   64,    1 word   II.0 }
+  REALPTR         : STP;
+  {   65,    1 word   ours: one word, type not recovered }
+  RESIDENT        : INTEGER;
+  {   66,    1 word   II.0 }
+  USINGLIST       : CTP;
+  {   67,    1 word   II.0 }
+  FWPTR           : CTP;
+  {   68,    1 word   II.0 }
+  OUTERBLOCK      : CTP;
+  {   69,    1 word   II.0 }
+  OUTPUTPTR       : CTP;
+  {   70,    1 word   II.0 }
+  INPUTPTR        : CTP;
+  {   71,    1 word   II.0 }
+  MODPTR          : CTP;
+  {   72,    1 word   II.0 }
+  UFCTPTR         : CTP;
+  {   73,    1 word   II.0 }
+  UPRCPTR         : CTP;
+  {   74,    1 word   II.0 }
+  UFLDPTR         : CTP;
+  {   75,    1 word   finding 39b: declared, never referenced }
+  UNUSED75        : INTEGER;
+  {   76,    1 word   II.0 }
+  UVARPTR         : CTP;
+  {   77,    1 word   II.0 }
+  UCSTPTR         : CTP;
+  {   78,    1 word   II.0 }
+  UTYPPTR         : CTP;
+  {   79,    1 word   II.0 }
+  GLOBTESTP       : TESTP;
+  {   80,    1 word   II.0 }
+  LEVEL           : LEVRANGE;
+  {   81,    1 word   II.0 }
+  STMTLEV         : INTEGER;
+  {   82,    1 word   II.0 }
+  BEGSTMTLEV      : INTEGER;
+  {   83,    1 word   II.0 }
+  MARKP           : ^INTEGER;
+  {   84,    1 word   II.0 }
+  TOS             : ^LEXSTKREC;
+  {   85,    1 word   II.0 }
+  GLEV            : DISPRANGE;
+  {   86,    1 word   II.0 }
+  NEWBLOCK        : BOOLEAN;
+  {   87,    1 word   ours: one word, type not recovered }
+  DATASEG         : INTEGER;
+  {   88,    1 word   II.0 }
+  NEXTSEG         : SEGRANGE;
+  {   89,    1 word   II.0 }
+  SEGINX          : INTEGER;
+  {   90,    1 word   II.0 }
+  SCONST          : CSP;
+  {   91,    1 word   II.0 }
+  STRGCSTIC       : ADDRRANGE;
+  {   92,    1 word   II.0 }
+  SMALLESTSPACE   : INTEGER;
+  {   93,    1 word   II.0 }
+  SYMBLK          : INTEGER;
+  {   94,    1 word   II.0 }
+  STARTDOTS       : INTEGER;
+  {   95,    1 word   II.0 }
+  SCREENDOTS      : INTEGER;
+  {   96,    1 word   II.0 }
+  LINEINFO        : INTEGER;
+  {   97,    1 word   II.0 }
+  LOWTIME         : INTEGER;
+  {   98,    1 word   II.0 }
+  LINESTART       : CURSRANGE;
+  {   99,    1 word   II.0 }
+  NEXTPROC        : PROCRANGE;
+  {  100,    1 word   II.0 }
+  CURPROC         : PROCRANGE;
+  {  101,    4 words  II.0 }
+  TYPEDELS        : SETOFSYS;
+  {  105,    4 words  II.0 }
+  STATBEGSYS      : SETOFSYS;
+  {  109,    4 words  II.0 }
+  FACBEGSYS       : SETOFSYS;
+  {  113,    4 words  II.0 }
+  SELECTSYS       : SETOFSYS;
+  {  117,    4 words  II.0 }
+  BLOCKBEGSYS     : SETOFSYS;
+  {  121,    4 words  II.0 }
+  TYPEBEGSYS      : SETOFSYS;
+  {  125,    4 words  II.0 }
+  SIMPTYPEBEGSYS  : SETOFSYS;
+  {  129,    4 words  II.0 }
+  CONSTBEGSYS     : SETOFSYS;
+  {  133,    1 word   II.0 }
+  VARS            : SETOFIDS;
+  {  134,   52 words  II.0 }
+  DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF
+      BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL:
+      ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END;
+  {  186,    4 words  ours: 4 words, shape not recovered }
+  SEGSUSED        : ARRAY [0..3] OF INTEGER;
+  {  190,  255 words  II.0 declares 150 words, Apple has 255 }
+  PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;
+  {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9];
+  SEGSPARE is ours, and its purpose is not recovered }
+  SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER;
+      SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; SEGSPARE: INTEGER END;
+  {  589,   16 words  ours: 16 words, shape not recovered }
+  SEGMAP          : ARRAY [0..15] OF INTEGER;
+  {  605,    1 word   II.0 }
+  COMMENT         : ^STRING;
+  {  606,   21 words  II.0 }
+  SYSTEMLIB       : STRING[40];
+  {  627,    1 word   II.0 }
+  NEXTJTAB        : JTABRANGE;
+  {  628,   37 words  II.0 declares 25 words, Apple has 37 }
+  JTAB            : ARRAY [JTABRANGE] OF INTEGER;
+  {  665,   40 words  II.0 }
+  REFFILE         : FILE;
+  {  705,    1 word   II.0 }
+  REFBLK          : INTEGER;
+  {  706,    1 word   II.0 }
+  NREFS           : INTEGER;
+  {  707,    1 word   II.0 }
+  REFLIST         : ^REFARRAY;
+  {  708,    1 word   ours: one word, type not recovered }
+  TEXTSTRT        : INTEGER;
+  {  709,    1 word   II.0 }
+  PREVSYMBLK      : INTEGER;
+  {  710,    1 word   II.0 }
+  OLDSYMBLK       : INTEGER;
+  {  711,    1 word   II.0 }
+  PREVLINESTART   : CURSRANGE;
+  {  712,    1 word   II.0 }
+  PREVSYMCURSOR   : CURSRANGE;
+  {  713,    1 word   II.0 }
+  OLDLINESTART    : CURSRANGE;
+  {  714,    1 word   II.0 }
+  OLDSYMCURSOR    : CURSRANGE;
+  {  715,    1 word   II.0 }
+  USEFILE         : UNITFILE;
+  {  716,   40 words  II.0 }
+  LIBRARY         : FILE;
+  {  756,   40 words  II.0 }
+  INCLFILE        : FILE;
+  {  796,  301 words  II.0 }
+  LP              : TEXT;
+  { 1097,    1 word   II.0 }
+  CURBLK          : INTEGER;
+  { 1098,    1 word   II.0 }
+  CURBYTE         : INTEGER;
+  { 1099,  256 words  II.0 }
+  DISKBUF         : PACKED ARRAY [0..511] OF CHAR;
+  { 1355,    1 word   ours: one word, type not recovered }
+  HAS128K         : INTEGER;
+  { 1356,    1 word   ours: one word, type not recovered }
+  CONLIST         : INTEGER;
+  { 1357,    1 word   ours: one word, type not recovered }
+  LSTOPEN         : INTEGER;
 
 BEGIN
 END.

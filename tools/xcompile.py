@@ -51,6 +51,28 @@ def available() -> bool:
     return _wsl(f'test -x {_exe()}').returncode == 0
 
 
+# The same author's filesystem tools, from the companion ucsd-psystem-fs
+# package. They matter for a different reason than the compiler does: they
+# are an independent implementation of the volume format, so they can be
+# asked whether a disk this repo *wrote* is well formed -- a question our own
+# reader cannot answer about our own writer.
+def fs_available() -> bool:
+    if not shutil.which("wsl"):
+        return False
+    return _wsl("command -v ucsdpsys_disk ucsdpsys_fsck").returncode == 0
+
+
+def fs(script: str) -> subprocess.CompletedProcess:
+    """Run a shell fragment with the ucsd-psystem-fs tools on PATH."""
+    if not fs_available():
+        raise ToolchainMissing("ucsdpsys_disk / ucsdpsys_fsck are not installed")
+    return _wsl(script)
+
+
+def wslpath(path) -> str:
+    return _wsl(f'wslpath "{path}"').stdout.strip()
+
+
 def compile_text(source: str, host: str = "apple") -> bytes:
     """Compile Pascal source and return the codefile.
 

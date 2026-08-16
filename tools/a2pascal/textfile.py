@@ -39,3 +39,68 @@ def decode_text(data: bytes, has_header: bool = True) -> str:
         if line:
             out.append("".join(line))
     return "\n".join(out)
+
+
+def encode_text(text: str, header: bytes | None = None,
+                compress: bool = True) -> bytes:
+    """Build a .TEXT file: a header page, then packed 1024-byte text pages.
+
+    The one rule that is not optional is that **a line may not straddle a
+    page boundary** -- the editor seeks by page and the compiler reads a page
+    at a time, so a line split across two of them is lost, not merely
+    reflowed. Each page is filled with whole lines and padded with NULs.
+
+    DLE indentation compression is what Apple's own editor emits, so it is
+    the default here; it is a pure size optimisation and `compress=False`
+    writes the same lines as literal spaces. Neither form is "the" encoding
+    of a given text -- `decode_text` accepts both and maps them onto the same
+    string, which is why the round-trip that can be checked is
+    `decode_text(encode_text(s)) == s` and not equality of bytes.
+
+    `header` is the 1024-byte editor environment block. Zeros are fine for a
+    file the compiler will read; the editor rewrites it on first save.
+    """
+    if header is None:
+        header = bytes(HEADER_BYTES)
+    if len(header) != HEADER_BYTES:
+        raise ValueError(f"header is {len(header)} bytes, need {HEADER_BYTES}")
+
+    def render(line: str) -> bytes:
+        body = line.rstrip("\n")
+        if any(ord(c) > 0x7E or ord(c) < 0x20 for c in body):
+            bad = next(c for c in body if ord(c) > 0x7E or ord(c) < 0x20)
+            raise ValueError(f"line contains non-printable {ord(bad):#04x}: "
+                             f"{body!r}")
+        if compress:
+            ind = len(body) - len(body.lstrip(" "))
+            # The indent byte is `ind + 32` and is one byte, so runs past 223
+            # cannot be expressed; and two bytes only pay for themselves past
+            # two spaces.
+            if 2 < ind <= 0xDF:
+                return bytes((DLE, ind + 32)) + body[ind:].encode("ascii") \
+                    + bytes((CR,))
+        return body.encode("ascii") + bytes((CR,))
+
+    # No trailing-newline normalisation here, deliberately. It is tempting:
+    # in UCSD every line ends with CR including the last, so a host file's
+    # final newline is a terminator and swallowing it stops a converted file
+    # gaining a blank line. But ten of the 21 `.TEXT` files on the evidence
+    # disks really do end with a blank line, and `decode_text` reports it, so
+    # swallowing it here would stop this being the reader's inverse. The
+    # caller knows which convention its input follows; this does not.
+    body = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    out = bytearray(header)
+    page = bytearray()
+    for line in body.split("\n"):
+        enc = render(line)
+        if len(enc) > PAGE:
+            raise ValueError(f"line of {len(enc)} bytes will not fit in a "
+                             f"{PAGE}-byte page: {line[:60]!r}...")
+        if len(page) + len(enc) > PAGE:
+            out += page + bytes(PAGE - len(page))
+            page = bytearray()
+        page += enc
+    if page:
+        out += page + bytes(PAGE - len(page))
+    return bytes(out)

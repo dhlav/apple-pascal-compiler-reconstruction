@@ -52,6 +52,15 @@ class DirEntry:
     name: str
     last_byte: int       # bytes used in the final block
     mtime_raw: int
+    # The unused tail of the 16-byte name field, from the end of the name to
+    # byte 22. It is not a field and it is not zero: the FILER assigns a
+    # Pascal `STRING[15]`, which copies the length byte and the characters
+    # and leaves the rest of the buffer holding whatever the last assignment
+    # put there. On the six evidence disks every entry ends `24 67`,
+    # right-aligned at bytes 20-21, whatever the name's length. Carried here
+    # so a rewritten directory can put it back verbatim -- scrubbing bytes we
+    # cannot explain is not the same as reproducing the volume.
+    pad: bytes = b""
 
     @property
     def blocks(self) -> int:
@@ -140,7 +149,8 @@ class PascalDisk:
             last_byte, mtime = struct.unpack_from("<HH", raw, off + 22)
             kind_code = kindw & 0xF
             entries.append(DirEntry(i, first, nxt, FILE_KINDS.get(kind_code, f"kind{kind_code}"),
-                                    kind_code, name, last_byte, mtime))
+                                    kind_code, name, last_byte, mtime,
+                                    bytes(raw[off + 7 + namelen:off + 22])))
         return entries
 
     def read_file(self, name: str) -> bytes:

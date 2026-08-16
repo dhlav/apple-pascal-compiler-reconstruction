@@ -5068,6 +5068,111 @@ end to end through a real compiler against a real binary.
 It also found the defect that made that possible. Thirty findings of reading
 p-code had not caught two words in the wrong place; one compile did.
 
+## 56. Writing Pascal volumes, and the 80-column limit that came with it
+
+**VERIFIED BINARY FACT** for the format claims, **VERIFIED SOURCE FACT** for
+the assembler's line limit, **STRONG INFERENCE** for the compiler's.
+
+The acceptance tier needs the reconstruction on a disk Apple's own tools will
+mount, and nothing here could write a Pascal volume -- only read one.
+`tools/a2pascal/diskwrite.py` now writes them, and `mkworkdisk.py` produces
+`build/disks/WORK.dsk` carrying `SEARCH.TEXT` and both declaration skeletons.
+`probes/probe_diskwrite.py` gates it at 331 checks.
+
+The format needed no reverse engineering; what needed care was proving the
+encoder is Apple's and not merely self-consistent.
+
+### 56a. The check that matters: Apple's own directories, re-encoded
+
+The directory encoder is written as the exact inverse of the reader, and the
+requirement is that **every evidence disk's four directory blocks come back
+byte for byte from nothing but its parsed entries** -- 81 entries over six
+volumes. That pins the name length byte and its padding, the file kind word,
+`DLASTBYTE`, the date word, the volume entry's block and file counts, and the
+26-byte stride, all against directories Apple built. A separate check
+re-encodes with an empty template, so the original bytes cannot be leaking
+through and doing the work.
+
+Seven deliberate defects were each confirmed to break it: a transposed
+interleave entry, a scrubbed name pad, an off-by-one `DLASTBYTE`, a
+transposed day/month, an unsorted directory, a line split across a page, and
+a dropped kind word.
+
+### 56b. The residue in a directory entry is not a field
+
+The first run failed on bytes 20-21 of every file entry. They are not a
+field: bytes 6..21 are a Pascal `STRING[15]`, and the FILER's assignment
+copies the length byte and the characters and leaves the rest of the buffer
+alone. On all six disks the residue is the same two bytes, `24 67`,
+right-aligned at 20-21 whatever the name's length -- one buffer, reused.
+
+`DirEntry` now carries it so a rewritten directory reproduces it verbatim.
+Scrubbing bytes we cannot explain is not the same as reproducing the volume,
+and re-committing any evidence disk's directory now leaves all 143,360 bytes
+unchanged.
+
+### 56c. 80 columns, and where that is actually stated
+
+Setting the disk up is what surfaced this. The generated skeleton had lines
+of **266 characters and literal tabs**, inherited from the II.0 declarations,
+and `ucsdpsys_compile` had accepted all of it without complaint.
+
+* **The assembler states its limit.** Error 54 in the 1.3 manual's assembler
+  error list is *"Input line over 80 characters"*. `SEARCH.TEXT` would have
+  been rejected outright had it been over; it peaks at 60.
+* **The Editor cannot show more than 79.** Past that it prints `!` in the
+  last visible position and the rest of the line cannot be reached without
+  reformatting the paragraph.
+* **Nothing Apple shipped is over 80.** The longest line in any `.TEXT` on
+  the six disks is 77 (`GRAFDEMO.TEXT`); the longest in the UCSD II.0 source
+  is exactly 80.
+
+Whether `SYSTEM.COMPILER` itself enforces 80 is **not established** -- the
+compiler's error list has no counterpart to assembler error 54, and no line
+on any disk is long enough to have tested it. What is established is that 80
+is the width every surviving source was written to, so generated source is
+held to it. `a2pascal/srcfmt.py` expands tabs and wraps at whitespace outside
+strings and comments; both skeletons now fit, and `probe_xcompile.py`
+confirms the reformatted source still compiles to Apple's exact frame, so the
+wrapping provably did not change the program.
+
+Also worth carrying: **a tab in a `.TEXT` is an anachronism.** UCSD stores
+indentation as a DLE pair and there is no tab in any file on the six disks.
+The two in the skeleton came from a modern editor by way of the II.0 source.
+
+### 56d. A second opinion, and the defect it found
+
+Everything above is this repo checking itself. `ucsd-psystem-fs` -- Peter
+Miller's companion to the fast tier's compiler, and an independent
+implementation of the same format -- was pointed at the disk this repo built.
+`ucsdpsys_fsck` passes it exactly as it passes Apple's own volumes,
+`ucsdpsys_disk --list` reports the volume, all three files, their sizes,
+kinds and dates, and the free-space accounting, and its own idea of the
+directory capacity agrees at 77 files.
+
+It also found the one real defect the self-checks could not: **every file had
+gained a blank line.** A host file's trailing newline terminates its last
+line, but UCSD writes a CR after every line including the last, so passing it
+through adds an empty one. The self-checks were blind to it because a string
+that came out of `decode_text` never ends in a newline, so the round-trip
+never exercised the case. The fix is at the caller and deliberately not in
+`encode_text`: **ten of the 21 `.TEXT` files on the evidence disks genuinely
+do end with a blank line**, and normalising it away would stop the encoder
+being the reader's inverse.
+
+With that fixed, all three files extract from the disk byte-identical to the
+source they came from.
+
+### 56e. What this does and does not establish
+
+It establishes that the volume is well formed by two independent readers and
+that its encoding matches Apple's own directories field for field. It does
+not establish that Apple's FILER will mount it -- both implementations could
+be wrong about the same thing in the same direction, and no amount of
+agreement between them fixes that. That is the acceptance tier's question,
+and it is now the only thing standing between the reconstruction and Apple's
+own compiler.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

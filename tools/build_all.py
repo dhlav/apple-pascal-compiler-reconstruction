@@ -34,6 +34,15 @@ STEPS = [
     ("record layout vs the binary", "probes/probe_record_layout.py"),
     ("reconstructed VAR block", "varblock.py"),
     ("reconstructed declaration skeleton", "srcskel.py"),
+    # The disk the acceptance tier mounts: the reconstructed sources on a
+    # Pascal volume Apple's own FILER can list.
+    ("acceptance work disk", "mkworkdisk.py"),
+    # Not an artifact: the volume writer against the volumes Apple wrote --
+    # every evidence directory re-encoded byte for byte from its own parsed
+    # entries, every block written back where it was read from, and the disk
+    # just built handed to an independent implementation to check. Runs after
+    # mkworkdisk.py because that last part needs the disk.
+    ("volume writer vs Apple's volumes", "probes/probe_diskwrite.py"),
     # Not an artifact: the II.0 segment-0 declarations against Apple's own
     # attribute tables, which only became possible once SYSTEM.PASCAL parsed
     # (findings 50, 51).
