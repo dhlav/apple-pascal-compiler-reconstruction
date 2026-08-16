@@ -33,6 +33,7 @@ STEPS = [
     # come to the sizes the binary forces (finding 54).
     ("record layout vs the binary", "probes/probe_record_layout.py"),
     ("reconstructed VAR block", "varblock.py"),
+    ("reconstructed declaration skeleton", "srcskel.py"),
     # Not an artifact: the II.0 segment-0 declarations against Apple's own
     # attribute tables, which only became possible once SYSTEM.PASCAL parsed
     # (findings 50, 51).

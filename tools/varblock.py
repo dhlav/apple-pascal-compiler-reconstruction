@@ -20,9 +20,20 @@ Three inputs, all of them already checked elsewhere:
 Sizes are not taken from II.0. Each object's size is the distance to the
 next named offset, and the last object's is the distance to the end of the
 frame -- so the block is contiguous by construction and the *only* way it
-can be wrong is if an offset is missing or misnamed. `probe_varblock.py`
-then re-runs the compiler's allocation rule over what this writes and
-requires every name to land back on the offset it came from.
+can be wrong is if an offset is missing or misnamed. The block is then
+re-allocated under the compiler's own rule and every name has to land back
+on the offset it came from.
+
+That check is about *room*, and it was silent about a second thing that
+matters just as much: whether the type each declaration is written with
+actually allocates the room it is given. It did not, twice. `SEGTABLE` was
+emitted with UCSD's eight-word entry where Apple's is nine, and `UFLDPTR`
+was emitted as a two-word `CTP`, which is not a thing -- the second word is
+the global Apple declared and never references (finding 39b). Either would
+have shifted every declaration after it. `reconcile` now lays out every
+declared type under Apple's own constants (`applesrc.py`) and requires it to
+come to exactly the words the offsets allow, refusing anything it cannot
+account for.
 
 Writes analysis/reconstruction/globals-1.1.text and -1.3.text.
 """
@@ -34,7 +45,8 @@ from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.globals import collect
 from a2pascal.names import GLOBAL_NAMES
-from vardecl import var_block, size_of, expand_inline
+from vardecl import var_block, size_of, expand_inline, INLINE
+import applesrc
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "reconstruction"
@@ -80,6 +92,68 @@ def render_type(name: str, words: int, typ: str | None) -> str:
            f"ours: {words} words, shape not recovered"
 
 
+# Where II.0's declared type does not allocate the words Apple's offsets
+# require. Two, and the same two in both releases. Each says what the binary
+# says and nothing more.
+RETYPE = {
+    # Apple's segment table entry is nine words where UCSD's is eight, and
+    # the binary indexes it as SEGTABLE[slot*9]. The ninth word's purpose is
+    # not recovered, so it is declared and not named.
+    "SEGTABLE": ("ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; "
+                 "SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; "
+                 "SEGSPARE: INTEGER END",
+                 "Apple's entry is 9 words, indexed SEGTABLE[slot*9]; "
+                 "SEGSPARE is ours, and its purpose is not recovered"),
+}
+# Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's
+# 72 sits between UFLDPTR at 71 and UPRCPTR at 73, and no LDO, SRO or LAO on
+# either disk touches it. Without an explicit declaration the block would
+# allocate UFLDPTR's neighbour one word low.
+UNUSED = {"1.1": {72: "finding 39b: declared, never referenced"},
+          "1.3": {75: "finding 39b: declared, never referenced"}}
+
+
+def reconcile(rows, ver: str):
+    """Make every row's declared type allocate the words it occupies.
+
+    `build` sizes an object by the distance to the next *named* offset, which
+    is right about how much room it takes and silent about why. Where the
+    type says something smaller, the difference is a word Apple declared
+    without naming -- and emitting the short type would shift every
+    declaration after it. So this splits the row, and refuses anything it has
+    no evidence for.
+    """
+    lay = applesrc.layout(ver, INLINE)
+    types = ii0_types()
+    out = []
+    for off, name, words, forced, note in rows:
+        typ = RETYPE[name][0] if name in RETYPE else types.get(name)
+        if forced or not typ:
+            out.append((off, name, words, forced, note))
+            continue
+        got = lay.size(typ)
+        if got == words:
+            if name in RETYPE:
+                out.append((off, name, words, typ, RETYPE[name][1]))
+            else:
+                out.append((off, name, words, forced, note))
+            continue
+        if got > words:
+            raise SystemExit(
+                f"[{ver}] {name}: {typ} lays out as {got} words but only "
+                f"{words} are available before the next named offset")
+        # Shorter than the room it has. The remainder must be accounted for.
+        gap = off + got
+        why = UNUSED[ver].get(gap)
+        if why is None or words - got != 1:
+            raise SystemExit(
+                f"[{ver}] {name}: {typ} lays out as {got} words but occupies "
+                f"{words}; offset {gap} is not a known unused word")
+        out.append((off, name, got, None, None))
+        out.append((gap, f"UNUSED{gap}", 1, "INTEGER", why))
+    return out
+
+
 def build(ver: str) -> list[str]:
     disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / DISKS[ver])
     e = disk.find("SYSTEM.COMPILER")
@@ -105,6 +179,8 @@ def build(ver: str) -> list[str]:
                          f"{', '.join(fields)}"))
             continue
         rows.append((off, names[off], nxt - off, None, None))
+
+    rows = reconcile(rows, ver)
 
     # Round-trip: allocate the block back under the compiler's own rule --
     # start at word 1, each object at the running total -- and require every
