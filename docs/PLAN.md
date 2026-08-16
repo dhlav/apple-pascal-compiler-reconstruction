@@ -344,22 +344,45 @@ Done, and reproducible via `python tools/build_all.py`:
      stack effect against a call written in Pascal. It found two tooling
      defects, both fixed.
 
-     What it does not cover: loops, `case`, sets, inter-procedure calls,
-     records, `with` � the samples use none of them. **The next calibration
-     target is `SYSTEM.PASCAL`**, whose source is already in
-     `reference_source/ucsd_ii0/` and which exercises all of them at a
-     hundred times the size. That is the largest single lever left for the
-     whole project, because it turns every "the compiler emits X for Y"
-     claim into something checkable.
+     What it did not cover: loops, `case`, sets, inter-procedure calls,
+     records, `with` -- the samples use none of them.
 
-     **The reader problem that blocked this is solved** — finding 50. Slot
-     15 was never a broken segment; it is the second piece of segment 0, and
-     the single dictionary at the end of slot 0 spans both. All three OS
-     builds now parse with zero inconsistent procedures and lift, gated by
-     `probe_split_segment.py`. Note the source is the *generic* UCSD II.0 OS
-     and Apple's is not (finding 8), so this will be a close comparison
-     rather than the exact one the GOTOXY samples allowed — align procedure
-     by procedure and expect Apple-only routines with no counterpart.
+   * ~~*Then:* `SYSTEM.PASCAL`.~~ **Done** (findings 50, 51, 52). The reader
+     problem that blocked it is solved -- slot 15 was never a broken
+     segment, it is the second piece of segment 0 -- and all three OS builds
+     now parse and lift. Segment 0's numbering aligns with UCSD II.0's
+     declarations through procedure 42, so 41 procedures have source.
+     `probe_os_calibrate.py` checks loops (back edges in the CFG, counted
+     before the structuriser runs) and calls (every segment-0 routine called
+     must be admissible from the source body), and it measures its own
+     discriminating power so the second check cannot go vacuous. It also
+     recovered the compiler's built-in mapping -- `COPY`/`DELETE`/`POS` to
+     `SCOPY`/`SDELETE`/`SPOS`, `WRITE` to one of four `FWRITE*` by argument
+     type -- which finding 52b tabulates.
+
+     **What is still unchecked against source, in priority order:**
+
+     1. **`with` and records.** The II.0 source uses `WITH` constantly and
+        segment 0's procedures are full of record field access, but neither
+        of the two measures can see a `with` -- it generates no control flow
+        and no call. A third measure is needed. The obvious one is field
+        offsets: a `WITH SYSCOM^ DO` followed by a named field has to become
+        a specific offset, and the II.0 type declarations give the offset
+        independently.
+     2. **`case`.** Not reachable from here at all. Segment 0 contains no
+        `CASE` statement, and finding 41 established the structuriser does
+        not recognise the construct anyway, because the jump table follows
+        the arms. Fixing the structuriser comes first; then the compiler's
+        own `case` statements are the test, with no source to check against.
+     3. **Sets.** Present in the lifted output (`G3 in @I1,122^<4w>`) and
+        never checked against a declaration.
+     4. **The other OS segments.** `USERPROGRAM`, `DEBUGGER`, `PRINTERROR`,
+        `INITIALIZE`, `GETCMD` and `FILEPROC` all have source in
+        `SYSSEGS.A/B.TEXT` and match Apple's slot names exactly. Aligning
+        their procedure numbering would roughly triple the calibration set.
+        Harder than segment 0 was, because there is no forward-declaration
+        block to fix the numbering -- it would have to be established from
+        signatures and call structure first.
 
      The other direction � source *in*, codefile out � is still the
      emulator's job.
