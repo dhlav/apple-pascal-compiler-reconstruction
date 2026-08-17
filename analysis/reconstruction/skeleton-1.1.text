@@ -17,23 +17,37 @@
 (*$U-*)
 PROGRAM PASCALSYSTEM;
 
-{ The host program declares nothing. Under (*$U-*) a segment
-  procedure's own variables ARE the global data segment, laid
-  out after its parameter words, so anything declared here
-  would collide with the compiler's own globals. The two types
-  below exist only to give the parameters a name. }
+{ The host program declares no VARIABLES. Under (*$U-*) a
+  segment procedure's own variables ARE the global data
+  segment, laid out after its parameter words, so a variable
+  here would collide with the compiler's own globals. CONST
+  and TYPE take no storage and are safe -- and the parameter
+  types have to be here, because a parameter list cannot see
+  the TYPE block of the procedure it belongs to. These four
+  restate the compiler's own CODEARRAY and SYMBUFARRAY, whose
+  bounds are the MAXCODE and MAXCURSOR below. }
 
-TYPE SYMBUFPTR = ^ INTEGER;
-     CODEPTR = ^ INTEGER;
+CONST MAXCURSOR = 1023; MAXCODE = 1299;
+
+TYPE SYMBUFARRAY = PACKED ARRAY [0..MAXCURSOR] OF CHAR;
+     CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
+     SYMBUFPTR = ^ SYMBUFARRAY;
+     CODEPTR = ^ CODEARRAY;
 
 { The operating system enters segment 1 as USERPROGRAM(NIL,NIL)
   -- two words of parameters, which is Apple's PARAM SIZE 4.
   The compiler NEWs its own buffers into them: the binary takes
   the address of both (LAO 1, LAO 2), stores to one exactly
-  once, and reads them 70 and 33 times. See finding 59. }
+  once, and reads them 70 and 33 times. See finding 59.
 
-SEGMENT PROCEDURE PASCALCOMPILER(SYMBUFP: SYMBUFPTR;
-                                 CODEP: CODEPTR);
+  CODEP is declared FIRST and lands at global 2, SYMBUFP second
+  and lands at global 1, because parameters are allocated in
+  reverse (finding 61b). GENBYTE's `SLDO 2` for CODEP^ is what
+  measures this, and the order it forces is UCSD II.0's own
+  (compglbls.text:252-253). }
+
+SEGMENT PROCEDURE PASCALCOMPILER(CODEP: CODEPTR;
+                                 SYMBUFP: SYMBUFPTR);
 
 CONST DISPLIMIT = 12; MAXLEVEL = 8; MAXADDR = 28000;
       INTSIZE = 1; REALSIZE = 2; BITSPERWD = 16;

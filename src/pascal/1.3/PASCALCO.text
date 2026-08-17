@@ -1,42 +1,195 @@
-{ Apple Pascal 1.3 SYSTEM.COMPILER -- reconstructed procedure bodies of
-  segment PASCALCO.
+{ Apple Pascal 1.3 SYSTEM.COMPILER, segment 1 (PASCALCO).
 
-  Each of these compiles, inside the verified declaration skeleton, to
-  p-code identical to Apple's instruction for instruction. Run
-  tools/procbuild.py to check.
+  This is the whole segment's procedure list, in Apple's own order. The
+  order is not cosmetic: UCSD numbers a procedure when it parses the
+  header, so declaration order IS the numbering, and the numbering is what
+  a `CGP n` in someone else's body has to agree with. Get the order wrong
+  and every call site is wrong even if every body is right.
 
-  What is NOT recovered and is ours: identifiers of parameters and locals,
-  comments, and layout. None of them reach the codefile. Everything that
-  does -- the operations, their order, the field and global offsets, the
-  enumeration members -- is forced by the comparison.
+  The order comes from UCSD II.0's forward-declaration block
+  (compglbls.text:362-402), which lines up with Apple's numbers 4..26 with
+  four insertions and one deletion -- and every II.0 signature in it
+  reproduces Apple's PARAM SIZE exactly. See finding 61.
 
-  Procedures appear in Apple's declaration order, which finding 30 fixes
-  from the lexical levels. Gaps are procedures not yet written. }
+  Procedures still to be reconstructed carry (*STUB*) on their header and
+  have an empty body. They are here to hold their number, nothing more.
+  The marker disappears from a procedure when its body is written and
+  verified. }
 
+PROCEDURE IDSEARCH(VAR IDREC, ID);
+  EXTERNAL;
+FUNCTION TREESEARCH(ROOTP: INTEGER; VAR NODEP, NAME): INTEGER;
+  EXTERNAL;
 
-{ .19  The size in words of a declaration of N somethings, four to a word,
-  plus one. The arithmetic is the whole procedure. }
-FUNCTION DECSIZE(N: INTEGER): INTEGER;
+{ Forward declarations, II.0's block with Apple's edits. }
+
+PROCEDURE ERROR(ERRORNUM: INTEGER);
+  FORWARD;
+PROCEDURE GETNEXTPAGE;
+  FORWARD;
+PROCEDURE PRINTLINE;
+  FORWARD;
+PROCEDURE ENTERID(FCP: CTP);
+  FORWARD;
+PROCEDURE INSYMBOL;
+  FORWARD;
+PROCEDURE SEARCHSECTION(FCP: CTP; VAR FCP1: CTP);
+  FORWARD;
+PROCEDURE SEARCHID(FIDCLS: SETOFIDS; VAR FCP: CTP);
+  FORWARD;
+PROCEDURE GETBOUNDS(FSP: STP; VAR FMIN,FMAX: INTEGER);
+  FORWARD;
+PROCEDURE BUMPSEG(VAR FVALUE: INTEGER; FMAX,FERRNUM: INTEGER);
+  FORWARD;
+PROCEDURE NEWSEG(FSEG: INTEGER);
+  FORWARD;
+PROCEDURE CHECKEND;
+  FORWARD;
+PROCEDURE SEGINFO(FSEG: INTEGER; VAR FADDR,FLENG: INTEGER);
+  FORWARD;
+PROCEDURE SKIP(FSYS: SETOFSYS);
+  FORWARD;
+FUNCTION PAOFCHAR(FSP: STP): BOOLEAN;
+  FORWARD;
+FUNCTION STRGTYPE(FSP: STP): BOOLEAN;
+  FORWARD;
+FUNCTION DECSIZE(I: INTEGER): INTEGER;
+  FORWARD;
+PROCEDURE CONSTANT(FSYS: SETOFSYS; VAR FSP: STP; VAR FVALU: VALU);
+  FORWARD;
+FUNCTION COMPTYPES(FSP1,FSP2: STP): BOOLEAN;
+  FORWARD;
+PROCEDURE GENBYTE(FBYTE: INTEGER);
+  FORWARD;
+PROCEDURE GENWORD(FWORD: INTEGER);
+  FORWARD;
+PROCEDURE WRITECODE(FORCEBUF: BOOLEAN);
+  FORWARD;
+PROCEDURE FINISHSEG;
+  FORWARD;
+PROCEDURE BLOCK(FSYS: SETOFSYS);
+  FORWARD;
+
+{ Bodies. }
+
+PROCEDURE ERROR(*ERRORNUM: INTEGER*); (*STUB*)
 BEGIN
-  DECSIZE := (N + 3) DIV 4 + 1
 END;
 
-
-{ .17  Is this structure a packed array of char?
-
-  Two nested IFs and not `AND`, because the compiler does not short-circuit
-  (finding 41): `AND` compiles to LAND on two evaluated values, so the two
-  guards Apple emits as separate FJPs have to be written as separate IFs,
-  while the final conjunction -- which Apple does emit as LAND -- is written
-  as `AND`. Getting that backwards changes the bytes.
-
-  AELTYPE is the field at offset 3, not 2, even though it is declared first
-  of `AELTYPE,INXTYPE`: an identifier list allocates backwards (finding 33),
-  in a record exactly as in a VAR block. }
-FUNCTION PAOFCHAR(FSP: STP): BOOLEAN;
+PROCEDURE GETNEXTPAGE; (*STUB*)
 BEGIN
-  PAOFCHAR := FALSE;
+END;
+
+PROCEDURE PRINTLINE; (*STUB*)
+BEGIN
+END;
+
+PROCEDURE ENTERID(*FCP: CTP*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE INSYMBOL; (*STUB*)
+BEGIN
+END;
+
+PROCEDURE SEARCHSECTION(*FCP: CTP; VAR FCP1: CTP*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE SEARCHID(*FIDCLS: SETOFIDS; VAR FCP: CTP*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE GETBOUNDS(*FSP: STP; VAR FMIN,FMAX: INTEGER*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE BUMPSEG(*VAR FVALUE: INTEGER; FMAX,FERRNUM: INTEGER*);
+BEGIN
+  IF FVALUE < FMAX THEN FVALUE := FVALUE+1
+  ELSE ERROR(FERRNUM)
+END;
+
+PROCEDURE NEWSEG(*FSEG: INTEGER*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE CHECKEND; (*STUB*)
+BEGIN
+END;
+
+PROCEDURE SEGINFO(*FSEG: INTEGER; VAR FADDR,FLENG: INTEGER*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE SKIP(*FSYS: SETOFSYS*);
+BEGIN WHILE NOT(SY IN FSYS) DO INSYMBOL
+END;
+
+FUNCTION PAOFCHAR(*FSP: STP): BOOLEAN*);
+BEGIN PAOFCHAR := FALSE;
   IF FSP <> NIL THEN
     IF FSP^.FORM = ARRAYS THEN
       PAOFCHAR := FSP^.AISPACKD AND (FSP^.AELTYPE = CHARPTR)
+END;
+
+FUNCTION STRGTYPE(*FSP: STP): BOOLEAN*);
+BEGIN STRGTYPE := FALSE;
+  IF PAOFCHAR(FSP) THEN STRGTYPE := FSP^.AISSTRNG
+END;
+
+FUNCTION DECSIZE(*I: INTEGER): INTEGER*);
+BEGIN DECSIZE := (I + 3) DIV 4 + 1
+END;
+
+PROCEDURE CONSTANT(*FSYS: SETOFSYS; VAR FSP: STP; VAR FVALU: VALU*);
+                                                              (*STUB*)
+BEGIN
+END;
+
+FUNCTION COMPTYPES(*FSP1,FSP2: STP): BOOLEAN*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE GENBYTE(*FBYTE: INTEGER*);
+BEGIN
+  CODEP^[IC] := CHR(FBYTE); IC := IC+1
+END;
+
+PROCEDURE GENWORD(*FWORD: INTEGER*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE WRITECODE(*FORCEBUF: BOOLEAN*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE FINISHSEG; (*STUB*)
+BEGIN
+END;
+
+PROCEDURE BLOCK(*FSYS: SETOFSYS*); (*STUB*)
+BEGIN
+END;
+
+PROCEDURE COMPILE; (*STUB*)
+BEGIN
+END;
+
+PROCEDURE COMMENTER(STOPPER: CHAR); (*STUB*)
+
+  PROCEDURE FINDFORW(FCP: CTP; VAR FCP1: CTP); (*STUB*)
+  BEGIN
+  END;
+
+BEGIN
+END;
+
+PROCEDURE HOLDMOST; (*STUB*)
+
+  PROCEDURE HOLDROUT; (*STUB*)
+  BEGIN
+  END;
+
+BEGIN
 END;

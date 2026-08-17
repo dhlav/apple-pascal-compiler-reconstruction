@@ -19,6 +19,7 @@ well formed at all.
 
 Writes analysis/reconstruction/skeleton-{1.1,1.3}.text.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -39,6 +40,21 @@ def main() -> int:
         # declarations out of it and leave its commentary behind.
         varlines = [ln for ln in build_vars(ver)
                     if ln.startswith("  ") and " : " in ln]
+
+        # The two parameter words are typed pointers, and their element
+        # types have to be declared in the host program: a parameter list is
+        # outside the block it heads, so it cannot see that block's own TYPE
+        # section. Take the bounds from the CONST block rather than repeating
+        # them, so an edit to Apple's numbers cannot leave the two out of
+        # step.
+        def const(name: str) -> str:
+            m = re.search(rf"\b{name}\s*=\s*(-?\d+)", consts)
+            if not m:
+                raise SystemExit(f"[{ver}] no CONST {name} to bound the "
+                                 f"parameter types with")
+            return m.group(1)
+
+        maxcursor, maxcode = const("MAXCURSOR"), const("MAXCODE")
 
         # The outer block is (* *) so that the { } citations inside it are
         # plain text: Pascal comments do not nest, and a { } inside a { }
@@ -66,23 +82,37 @@ def main() -> int:
               "(*$U-*)",
               "PROGRAM PASCALSYSTEM;",
               "",
-              "{ The host program declares nothing. Under (*$U-*) a segment",
-              "  procedure's own variables ARE the global data segment, laid",
-              "  out after its parameter words, so anything declared here",
-              "  would collide with the compiler's own globals. The two types",
-              "  below exist only to give the parameters a name. }",
+              "{ The host program declares no VARIABLES. Under (*$U-*) a",
+              "  segment procedure's own variables ARE the global data",
+              "  segment, laid out after its parameter words, so a variable",
+              "  here would collide with the compiler's own globals. CONST",
+              "  and TYPE take no storage and are safe -- and the parameter",
+              "  types have to be here, because a parameter list cannot see",
+              "  the TYPE block of the procedure it belongs to. These four",
+              "  restate the compiler's own CODEARRAY and SYMBUFARRAY, whose",
+              "  bounds are the MAXCODE and MAXCURSOR below. }",
               "",
-              "TYPE SYMBUFPTR = ^ INTEGER;",
-              "     CODEPTR = ^ INTEGER;",
+              f"CONST MAXCURSOR = {maxcursor}; MAXCODE = {maxcode};",
+              "",
+              "TYPE SYMBUFARRAY = PACKED ARRAY [0..MAXCURSOR] OF CHAR;",
+              "     CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;",
+              "     SYMBUFPTR = ^ SYMBUFARRAY;",
+              "     CODEPTR = ^ CODEARRAY;",
               "",
               "{ The operating system enters segment 1 as USERPROGRAM(NIL,NIL)",
               "  -- two words of parameters, which is Apple's PARAM SIZE 4.",
               "  The compiler NEWs its own buffers into them: the binary takes",
               "  the address of both (LAO 1, LAO 2), stores to one exactly",
-              "  once, and reads them 70 and 33 times. See finding 59. }",
+              "  once, and reads them 70 and 33 times. See finding 59.",
               "",
-              "SEGMENT PROCEDURE PASCALCOMPILER(SYMBUFP: SYMBUFPTR;",
-              "                                 CODEP: CODEPTR);",
+              "  CODEP is declared FIRST and lands at global 2, SYMBUFP second",
+              "  and lands at global 1, because parameters are allocated in",
+              "  reverse (finding 61b). GENBYTE's `SLDO 2` for CODEP^ is what",
+              "  measures this, and the order it forces is UCSD II.0's own",
+              "  (compglbls.text:252-253). }",
+              "",
+              "SEGMENT PROCEDURE PASCALCOMPILER(CODEP: CODEPTR;",
+              "                                 SYMBUFP: SYMBUFPTR);",
               "",
               "CONST" + consts.rstrip(),
               "",

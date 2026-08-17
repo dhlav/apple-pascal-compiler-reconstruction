@@ -265,8 +265,16 @@ class CodeFile:
             ptr_at = n - 2 - 2 * i
             if ptr_at < 0:
                 break
-            jtab = ptr_at - _w(raw, ptr_at)
-            if not (8 <= jtab < n - 1):
+            # A self-relative pointer of zero is not a pointer to itself: it
+            # is an empty slot. That is what an `EXTERNAL` procedure looks
+            # like before the linker fills it in -- the compiler reserves the
+            # number and leaves the entry at zero. Apple's shipped codefiles
+            # are all linked and have none, but a reconstruction that
+            # declares IDSEARCH and TREESEARCH `EXTERNAL` to hold procedure
+            # numbers 2 and 3 is full of them.
+            rel = _w(raw, ptr_at)
+            jtab = ptr_at - rel
+            if rel == 0 or not (8 <= jtab < n - 1):
                 seg.procedures.append(Procedure(i, jtab, -1, -1, -1, -1, -1, -1, False))
                 continue
             enter = (jtab - 2) - _w(raw, jtab - 2)

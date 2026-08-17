@@ -5601,6 +5601,138 @@ Apple's own compiler the divergence is gone. That closes the loop --
 builds it, `--emu-check` diffs the result -- and it is now the authority for
 every remaining body.
 
+## 61. Declaration order is the numbering, and II.0 preserves it
+
+A procedure's number is not free. UCSD assigns it when it parses the
+header, so **declaration order is the numbering**, and the numbering is what
+every `CGP n` in every other body has to agree with. A segment can have
+every body right and still be wrong if the order is wrong.
+
+Apple's order for segment 1 is recoverable, and the source of it is UCSD
+II.0's forward-declaration block, `compglbls.text:362-402`. Lining that
+block up against Apple's 1.3 numbers:
+
+| # | Apple 1.3 | II.0 forward block |
+|---|-----------|--------------------|
+| 2 | IDSEARCH | (native, EXTERNAL) |
+| 3 | TREESEARCH | (native, EXTERNAL) |
+| 4-11 | ERROR, GETNEXTPAGE, PRINTLINE, ENTERID, INSYMBOL, SEARCHSECTION, SEARCHID, GETBOUNDS | identical, same order |
+| 12-15 | BUMPSEG, NEWSEG, CHECKEND, SEGINFO | **inserted by Apple** |
+| 16-23 | SKIP, PAOFCHAR, STRGTYPE, DECSIZE, CONSTANT, COMPTYPES, GENBYTE, GENWORD | identical, same order |
+| — | — | WRITETEXT **dropped by Apple** |
+| 24 | WRITECODE | same |
+| 25 | FINISHSEG | **inserted by Apple** |
+| 26 | BLOCK | same |
+| 27-31 | COMPILE, COMMENTER, FINDFORW, HOLDMOST, HOLDROUT | declared after the forward block |
+
+Nineteen names in the same relative order, with five insertions and one
+deletion. The insertions are not arbitrary either: `BUMPSEG`, `NEWSEG`,
+`SEGINFO` and `FINISHSEG` are all segment bookkeeping, which is exactly what
+Apple extended. `WRITETEXT` is UNIT interface text, which Apple's segment 1
+does not do.
+
+**The independent confirmation is PARAM SIZE.** Every II.0 signature in that
+block reproduces Apple's parameter size exactly, with nothing adjusted:
+
+```
+ERROR(ERRORNUM: INTEGER)                            2   SKIP(FSYS: SETOFSYS)          8
+ENTERID(FCP: CTP)                                   2   PAOFCHAR(FSP: STP): BOOLEAN   6
+SEARCHSECTION(FCP: CTP; VAR FCP1: CTP)              4   DECSIZE(I: INTEGER): INTEGER  6
+SEARCHID(FIDCLS: SETOFIDS; VAR FCP: CTP)            4   COMPTYPES(FSP1,FSP2: STP)     8
+GETBOUNDS(FSP: STP; VAR FMIN,FMAX: INTEGER)         6   CONSTANT(...)                12
+GENBYTE(FBYTE: INTEGER)                             2   BLOCK(FSYS: SETOFSYS)         8
+```
+
+Twelve signatures, twelve exact hits, including the four-word set parameters
+and the two-word function return area. A function's frame is 2 words of
+return space plus its parameters, which is why `DECSIZE(I: INTEGER):
+INTEGER` is 6 and `GENBYTE(FBYTE: INTEGER)` is 2.
+
+`FINDFORW` at 29 sits between `COMMENTER` at 28 and `HOLDMOST` at 30 and has
+lex level 2, so it is **nested inside COMMENTER** -- a nested procedure takes
+the next number after its parent's header. `HOLDROUT` at 31, lex 2, is
+nested inside `HOLDMOST` the same way.
+
+`src/pascal/1.3/PASCALCO.text` now declares all thirty in that order, with
+empty `(*STUB*)` bodies for the twenty-two not yet written; they exist to
+hold their numbers. `procbuild.py` checks the order as a thing in its own
+right -- our number must equal Apple's for every procedure, stub or not --
+and all thirty pass.
+
+### 61b. Parameters are allocated in reverse, like every other list
+
+Finding 33 found that Apple's compiler allocates an identifier list back to
+front. It does the same to a **parameter list**, and to the parameter list
+as a whole rather than within each group.
+
+Measured, not assumed. `BUMPSEG` written as
+
+```pascal
+PROCEDURE BUMPSEG(FERRNUM,FMAX: INTEGER; VAR FVALUE: INTEGER);
+```
+
+put `FVALUE` at local 1 and `FERRNUM` at local 3 under Apple's own compiler.
+The binary has them the other way round -- `SLDL 3 / SIND 0` for the VAR
+parameter and `SLDL 1` for the argument to `ERROR`. Reversing the source
+order fixes it and the procedure comes out identical:
+
+```pascal
+PROCEDURE BUMPSEG(VAR FVALUE: INTEGER; FMAX,FERRNUM: INTEGER);
+BEGIN
+  IF FVALUE < FMAX THEN FVALUE := FVALUE+1
+  ELSE ERROR(FERRNUM)
+END;
+```
+
+Read as one flat sequence, source `[FERRNUM, FMAX, FVALUE]` gave offsets
+`[3, 2, 1]`: a straight reversal, with the group boundary making no
+difference.
+
+**This settles the order of the two parameter words**, which finding 60 left
+as a guess. `GENBYTE` is the measurement -- `CODEP^[IC] := CHR(FBYTE)`
+compiles to `SLDO 2`, so `CODEP` is global **2** and `SYMBUFP` is global 1.
+Under reverse allocation that forces `CODEP` to be declared **first**:
+
+```pascal
+SEGMENT PROCEDURE PASCALCOMPILER(CODEP: CODEPTR;
+                                 SYMBUFP: SYMBUFPTR);
+```
+
+which is UCSD II.0's own order at `compglbls.text:252-253`, where the two
+are the first two variables. The skeleton had them the other way round and
+`GENBYTE` was the first body written that could tell.
+
+Their types have to be declared in the host program, not in
+`PASCALCOMPILER`: a parameter list is outside the block it heads and cannot
+see that block's `TYPE` section. `srcskel.py` restates `CODEARRAY` and
+`SYMBUFARRAY` there, bounded by the same `MAXCODE` and `MAXCURSOR` it reads
+back out of the `CONST` block so the two cannot drift apart.
+
+### 61c. Eight bodies verified
+
+Under Apple's own 1.3 compiler, against Apple's own p-code:
+
+```
+[1.3] PASCALCO.12 BUMPSEG:  15 instructions, IDENTICAL
+[1.3] PASCALCO.16 SKIP:     10 instructions, IDENTICAL
+[1.3] PASCALCO.17 PAOFCHAR: 20 instructions, IDENTICAL
+[1.3] PASCALCO.18 STRGTYPE: 11 instructions, IDENTICAL
+[1.3] PASCALCO.19 DECSIZE:   9 instructions, IDENTICAL
+[1.3] PASCALCO.22 GENBYTE:   9 instructions, IDENTICAL
+```
+
+`SKIP`, `PAOFCHAR`, `STRGTYPE` and `DECSIZE` are UCSD II.0's bodies
+unchanged. `GENBYTE` is too. `BUMPSEG` is Apple's own and was recovered from
+the p-code. `IDSEARCH` and `TREESEARCH` are declared `EXTERNAL` to hold
+numbers 2 and 3; they are 6502 and the assembler acceptance tier holds them
+to Apple's bytes instead.
+
+One tooling consequence: an unlinked `EXTERNAL` leaves a **zero** in the
+procedure dictionary, and a self-relative pointer of zero is an empty slot,
+not a pointer to itself. `codefile.py` now reads it that way. Apple's
+shipped codefiles are all linked and contain none, so nothing had forced the
+question before.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

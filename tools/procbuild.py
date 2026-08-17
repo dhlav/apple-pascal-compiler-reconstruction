@@ -24,15 +24,20 @@ reported as an opcode and not as a byte offset. The exit sweep is included:
 UCSD puts the case jump tables past the return and they are part of the
 procedure.
 
-Two things this deliberately does *not* require to match, because neither is
-recoverable from the binary and neither changes a byte: identifiers, and the
-procedure's *number*. A leaf's number never appears in its own code. A
-procedure that calls another does emit `CGP n`, and for those the harness
-maps our numbering onto Apple's before comparing.
+Identifiers are deliberately not required to match: they are not
+recoverable from the binary and they do not change a byte. The procedure
+*number* is a different matter and IS required to match. UCSD assigns it
+when it parses the header, so declaration order is the numbering, and a
+`CGP n` in one body is only right if every procedure ahead of the callee is
+declared too. Each segment file therefore holds the whole segment, with
+`(*STUB*)` bodies standing in for what is not written yet, and the order is
+checked as a result in its own right (finding 61).
 
 Usage:
-    python tools/procbuild.py                 # every reconstructed procedure
-    python tools/procbuild.py PAOFCHAR        # just one
+    python tools/procbuild.py                 # the fast tier, all segments
+    python tools/procbuild.py PAOFCHAR        # diff just one body
+    python tools/procbuild.py --emu           # put the source on WORK.dsk
+    python tools/procbuild.py --emu-check     # diff what Apple's compiler made
 """
 import re
 import sys
@@ -84,29 +89,50 @@ def strip_targets(text: str) -> str:
     return re.sub(r"\$[0-9A-F]{4}( \(jtab-\d+\))?", "$----", text)
 
 
-def sources(ver: str) -> list[tuple[str, str, str]]:
-    """(segment, name, source text) for every reconstructed procedure.
+HEADER = re.compile(r"(?m)^[ \t]*(?:PROCEDURE|FUNCTION)\s+(\w+)")
 
-    One file per segment, named for it, holding the procedures in the order
-    they are declared. A procedure begins at a line starting `PROCEDURE` or
-    `FUNCTION` in column 1 and runs to the line before the next one.
+
+def sources(ver: str) -> list[tuple[str, str, list]]:
+    """(segment, source text, declared procedures) for each segment file.
+
+    One file per segment, named for it, holding **the whole segment** -- not
+    just the procedures that have been reconstructed. That is not
+    bookkeeping: UCSD assigns a procedure its number when it parses the
+    header, so declaration order *is* the numbering, and a `CGP n` in one
+    body is only right if every procedure declared before the callee is
+    also present. Procedures still to be written are declared with an empty
+    body and marked `(*STUB*)`; they hold their number and nothing else.
+
+    A name is counted at its **first** header. A `FORWARD` or `EXTERNAL`
+    declaration is where the number is assigned, and the body that follows
+    later re-states the header without allocating anything new.
+
+    Numbers run from 2 in that order, the segment procedure itself being 1.
     """
     out = []
     for path in sorted(SRC.glob(f"{ver}/*.text")):
-        segname = path.stem.upper()
         text = path.read_text(encoding="ascii", errors="replace")
-        starts = [m.start() for m in
-                  re.finditer(r"(?m)^(?:PROCEDURE|FUNCTION)\s+(\w+)", text)]
-        for i, at in enumerate(starts):
-            end = starts[i + 1] if i + 1 < len(starts) else len(text)
-            body = text[at:end].rstrip() + "\n"
-            name = re.match(r"^\w+\s+(\w+)", body).group(1).upper()
-            out.append((segname, name, body))
+        lines = text.split("\n")
+        order, stub = [], {}
+        for m in HEADER.finditer(text):
+            name = m.group(1).upper()
+            if name not in stub:
+                order.append(name)
+            # The marker sits on the header line, or on the next one when
+            # the header is long enough to have been wrapped. It goes on the
+            # header of the *body*, which for a forward-declared procedure
+            # is not the header that fixed its number -- so take the marker
+            # from whichever of a name's headers carries it.
+            i = text.count("\n", 0, m.start())
+            here = "\n".join(lines[i:i + 2])
+            stub[name] = stub.get(name, False) or "(*STUB*)" in here
+        procs = [(n, stub[n]) for n in order]
+        out.append((path.stem.upper(), text, procs))
     return out
 
 
-def spliced(ver: str, procs) -> str:
-    """The skeleton with these procedure bodies declared at lex 1."""
+def spliced(ver: str, segs) -> str:
+    """The skeleton with these segment sources declared at lex 1."""
     text = (SKEL / f"skeleton-{ver}.text").read_text(encoding="ascii",
                                                      errors="replace")
     # The skeleton ends with the segment procedure's body and then the host
@@ -115,10 +141,10 @@ def spliced(ver: str, procs) -> str:
     # -- past it they are declared in the host program, where none of the
     # compiler's own types are in scope.
     at = text.rindex("\nBEGIN\nEND;")
-    return text[:at] + "\n" + "\n".join(b for _s, _n, b in procs) + text[at:]
+    return text[:at] + "\n" + "\n".join(s for _n, s, _p in segs) + text[at:]
 
 
-def write_for_emulator(ver: str, procs) -> Path:
+def write_for_emulator(ver: str, segs) -> Path:
     """Put the spliced source on the work disk for Apple's own compiler.
 
     The fast tier cannot settle every procedure. It short-circuits boolean
@@ -131,8 +157,9 @@ def write_for_emulator(ver: str, procs) -> Path:
     from a2pascal.srcfmt import expand_tabs
     from a2pascal.textfile import encode_text
 
-    src = expand_tabs(spliced(ver, procs))
+    src = expand_tabs(spliced(ver, segs))
     src = src[:-1] if src.endswith("\n") else src
+    nproc = sum(len(p) for _n, _t, p in segs)
     name = f"BODY{ver.replace('.', '')}.TEXT"
     dsk = ROOT / "build" / "disks" / "WORK.dsk"
     w = PascalWriter.from_file(dsk)
@@ -144,27 +171,41 @@ def write_for_emulator(ver: str, procs) -> Path:
     w.add_file(name, encode_text(src), "textfile")
     w.save(dsk)
     print(f"wrote WORK:{name} ({len(src.splitlines())} lines, "
-          f"{len(procs)} procedures) to {dsk.relative_to(ROOT)}")
+          f"{nproc} procedures) to {dsk.relative_to(ROOT)}")
     return dsk
 
 
-def report(ver: str, procs, mine, who: str) -> int:
+def report(ver: str, segname: str, procs, mine, who: str) -> int:
     """Diff each compiled procedure against Apple's. Returns the failures."""
     bad = 0
-    order = [n for _s, n, _b in procs]
-    for segname, name, _body in procs:
+    apple = apple_segment(ver, segname)
+    for i, (name, stub) in enumerate(procs):
         num = next((k[1] for k, v in PROC_NAMES[ver].items()
                     if k[0] == segname and v == name), None)
         if num is None:
             print(f"[{ver}] {name}: no such procedure in {segname}")
             bad += 1
             continue
-        apple = apple_segment(ver, segname)
+        # Declaration order is the numbering, so ours must land on Apple's
+        # number. This is the check on the *order*, and it is separate from
+        # whether any body is right: a segment full of stubs still has to
+        # number them the way Apple did, or every CGP will be wrong later.
+        if 2 + i != num:
+            print(f"[{ver}] {segname}.{num} {name}: declared at number "
+                  f"{2 + i}, Apple has it at {num}")
+            bad += 1
+            continue
+        if stub:
+            continue
         a = next((x for x in apple.procedures if x.number == num), None)
-        # Ours are numbered from 2 in declaration order, the program itself
-        # being procedure 1.
-        b = next((x for x in mine.procedures
-                  if x.number == 2 + order.index(name)), None)
+        if a is not None and a.is_native:
+            # 6502, not p-code. IDSEARCH and TREESEARCH are `EXTERNAL` and
+            # are held to Apple's bytes by the assembler acceptance tier
+            # instead; all this source can do is reserve their numbers.
+            print(f"[{ver}] {segname}.{num} {name}: native, checked by the "
+                  f"assembler tier")
+            continue
+        b = next((x for x in mine.procedures if x.number == num), None)
         if a is None or b is None:
             print(f"[{ver}] {name}: not found "
                   f"(apple={a is not None}, ours={b is not None})")
@@ -185,14 +226,18 @@ def report(ver: str, procs, mine, who: str) -> int:
             print(f"    frame: Apple param {a.param_size} / data "
                   f"{a.data_size} / lex {a.lex_level}, ours param "
                   f"{b.param_size} / data {b.data_size} / lex {b.lex_level}")
-        for i in range(max(len(la), len(lb))):
-            x = la[i] if i < len(la) else "-"
-            y = lb[i] if i < len(lb) else "-"
+        for k in range(max(len(la), len(lb))):
+            x = la[k] if k < len(la) else "-"
+            y = lb[k] if k < len(lb) else "-"
             print(f"    {'  ' if x == y else '->'} {x:<24} {y}")
     return bad
 
 
 def main() -> int:
+    # Disassembly text is ASCII, but a mismatch can print a byte the decoder
+    # renders outside cp1252 and Windows' default console encoding then
+    # raises instead of showing the diff that was the point of the run.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     emu = "--emu" in sys.argv
     check = "--emu-check" in sys.argv
@@ -202,40 +247,52 @@ def main() -> int:
               "(thirdparty/ucsd-psystem-xc/build.sh)")
         return 0
 
-    total = bad = 0
+    done = stubs = bad = 0
     for ver in ("1.3", "1.1"):
-        procs = [p for p in sources(ver) if not want or p[1] in want]
-        if not procs:
+        segs = sources(ver)
+        if not segs:
             continue
-        total += len(procs)
         if emu:
-            write_for_emulator(ver, procs)
-            total -= len(procs)
+            write_for_emulator(ver, segs)
             continue
+
         if check:
             # Apple's own compiler produced this, in the emulator, from the
             # source `--emu` put on the disk. It is the authority: where the
             # fast tier and this disagree, this is right.
             dsk = PascalDisk.from_file(ROOT / "build" / "disks" / "WORK.dsk")
             e = dsk.find(f"BODY{ver.replace('.', '')}.CODE")
-            mine = CodeFile(dsk.read_blocks(e.first_block,
-                                            e.blocks)).segment("PASCALCO")
-            bad += report(ver, procs, mine, "Apple's compiler")
-            continue
+            cf = CodeFile(dsk.read_blocks(e.first_block, e.blocks))
+            who = "Apple's compiler"
+        else:
+            source = spliced(ver, segs)
+            long = over_width(source.split("\n"))
+            if long:
+                print(f"[{ver}] {len(long)} lines over {WIDTH} columns: "
+                      f"{long[:3]}")
+                bad += 1
+            try:
+                cf = CodeFile(xcompile.compile_text(source))
+            except xcompile.CompileError as exc:
+                print(f"[{ver}] did not compile:" + chr(10) + str(exc))
+                return 1
+            who = "fast tier"
 
-        source = spliced(ver, procs)
-        long = over_width(source.split("\n"))
-        if long:
-            print(f"[{ver}] {len(long)} lines over {WIDTH} columns: {long[:3]}")
-            bad += 1
-        try:
-            cf = CodeFile(xcompile.compile_text(source))
-        except xcompile.CompileError as exc:
-            print(f"[{ver}] did not compile:" + chr(10) + str(exc))
-            return 1
-        bad += report(ver, procs, cf.segment("PASCALCO"), "fast tier")
+        for segname, _text, procs in segs:
+            # Filtering by name is for reading the output, not for the
+            # compile: every procedure stays declared either way, because
+            # dropping one would renumber all the rest.
+            shown = [(n, s or (bool(want) and n not in want))
+                     for n, s in procs]
+            done += sum(1 for _n, s in shown if not s)
+            stubs += sum(1 for _n, s in shown if s)
+            bad += report(ver, segname, shown, cf.segment(segname), who)
 
-    print(chr(10) + f"{total} procedures, {total - bad} matching Apple's p-code")
+    if emu:
+        return 0
+    print(chr(10) + f"{done + stubs} procedures declared, {done - bad} of "
+          f"{done} reconstructed bodies matching Apple's p-code, "
+          f"{stubs} still stubs")
     return 1 if bad else 0
 
 
