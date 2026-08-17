@@ -6648,6 +6648,74 @@ whole-entry store in `COMPINIT` or `DECLARATIONPART`. And `SEGINFO`'s test
 still reads bits 0..7 of its result word before anything has been stored
 there, which no reading of the source explains yet.
 
+## 72. INSYMBOL, and a literal tab in the source
+
+```
+[1.3] PASCALCO.8 INSYMBOL: 261 instructions, IDENTICAL
+```
+
+The scanner. Structurally II.0's, with the three nested procedures gone --
+`CHECKEND` promoted to a procedure of its own (number 14), `NUMBER` and
+`STRING` moved out to segment 19 -- and one addition.
+
+**Apple inlined a fast path for small integers.** Where II.0's digit arm
+just calls `NUMBER`, Apple's accumulates up to four digits itself and only
+falls back to the segment when the token cannot be a plain `INTCONST`:
+
+```pascal
+'0','1','2','3','4','5','6','7','8','9':
+     BEGIN
+       LCH := SYMBUFP^[SYMCURSOR];
+       LI := 0; LVAL := 0;
+       WHILE (LCH IN ['0'..'9']) AND (LI < 4) DO
+         BEGIN
+           LVAL := LVAL*10 + (ORD(LCH) - ORD('0'));
+           LI := LI+1;
+           LCH := SYMBUFP^[SYMCURSOR+LI]
+         END;
+       IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(1,LVP)
+       ELSE
+         BEGIN
+           SYMCURSOR := SYMCURSOR+LI-1;
+           SY := INTCONST; OP := NOOP;
+           VAL.IVAL := LVAL
+         END
+     END;
+```
+
+The `['.','0'..'9','E']` set is read straight out of the binary's five-word
+set constant -- bits 46, 48..57 and 69 -- and is exactly the characters that
+can continue a number into a real or a long. Four digits is what fits without
+risking overflow. `NUMSTRING(0,LVP)` handles the string arm and
+`NUMSTRING(1,LVP)` the number arm, which is what fixes the sense of that
+phase's first parameter.
+
+**A case label cannot be `CHR(9)`.** II.0's whitespace arm is `' ',' '` --
+space and a literal *tab*, which the II.0 source file carries as the
+character itself. Writing it as `CHR(9)` is a function call, and Apple's
+compiler rejects it as a case label with `error 103`. So the reconstruction
+has to carry a real 0x09 through the whole pipeline, and two tools had to
+learn that:
+
+* `expand_tabs` now leaves a tab alone **inside quotes**. Its job is
+  indentation, where UCSD uses a DLE pair and a 0x09 is a modern editor's
+  doing; a quoted one is data.
+* `encode_text` now accepts TAB, and only TAB, among the control characters.
+  It is a legal `.TEXT` byte and `decode_text` already passed it through.
+
+`probe_diskwrite` keeps the refusal check with `BEL` instead and adds a
+round-trip for TAB, so the narrower rule is still held to something.
+
+One fast-tier difference worth naming, because it made the diff useless
+rather than merely noisy: **the fast tier emits `CASE` arms sorted by label
+value, Apple emits them in source order.** With a `'<tab>'` label at 9 the
+whole body shifted and 230 of 261 instructions "differed". Apple's jump
+table is `XJP 9..123`, and its arm addresses ascend in exactly II.0's source
+order.
+
+Twenty-six of segment 1's thirty now match. Four stubs remain: `SEGINFO`,
+`CONSTANT`, `HOLDMOST`, `HOLDROUT`.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

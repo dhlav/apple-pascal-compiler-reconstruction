@@ -35,17 +35,25 @@ TAB = 8
 
 
 def expand_tabs(text: str, stop: int = TAB) -> str:
-    """Tabs to spaces, column by column.
+    """Tabs to spaces, column by column -- except inside a string literal.
 
-    UCSD `.TEXT` has no tab: the editor stores indentation as a DLE pair and
-    a literal 0x09 in a source file is something a modern editor put there.
-    Two of them reached the skeleton by way of the II.0 declarations.
+    UCSD `.TEXT` has no tab for *indentation*: the editor stores that as a
+    DLE pair, and a literal 0x09 in a source file's whitespace is something
+    a modern editor put there. Two of them reached the skeleton by way of
+    the II.0 declarations.
+
+    A tab **inside quotes** is a different thing and has to survive.
+    INSYMBOL's whitespace case label is `'<tab>',' '` -- II.0's source has
+    the character itself, and it must, because a case label has to be a
+    constant and Apple's compiler rejects `CHR(9)` there with error 103.
     """
     out = []
     for line in text.split("\n"):
-        col, buf = 0, []
+        col, buf, quoted = 0, [], False
         for ch in line:
-            if ch == "\t":
+            if ch == "'":
+                quoted = not quoted
+            if ch == "\t" and not quoted:
                 n = stop - (col % stop)
                 buf.append(" " * n)
                 col += n

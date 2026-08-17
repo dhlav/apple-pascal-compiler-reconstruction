@@ -82,8 +82,14 @@ def encode_text(text: str, header: bytes | None = None,
 
     def render(line: str) -> bytes:
         body = line.rstrip("\n")
-        if any(ord(c) > 0x7E or ord(c) < 0x20 for c in body):
-            bad = next(c for c in body if ord(c) > 0x7E or ord(c) < 0x20)
+        # TAB is the one control character a source line may carry: it is a
+        # legal `.TEXT` byte, `decode_text` passes it through, and INSYMBOL's
+        # whitespace case label is a literal one (see `expand_tabs`).
+        def bad_char(c: str) -> bool:
+            return ord(c) > 0x7E or (ord(c) < 0x20 and c != "	")
+
+        if any(bad_char(c) for c in body):
+            bad = next(c for c in body if bad_char(c))
             raise ValueError(f"line contains non-printable {ord(bad):#04x}: "
                              f"{body!r}")
         if compress:

@@ -305,7 +305,13 @@ refuses(lambda: w.write_block(0, b"short"), "a block that is not 512 bytes")
 refuses(lambda: w.remove_file("NOTHERE.DATA"), "removing a file that is absent",
         KeyError)
 refuses(lambda: encode_text("x" * 2000), "a line too long for a page")
-refuses(lambda: encode_text("tab\there"), "a control character in a line")
+refuses(lambda: encode_text("bell\ahere"), "a control character in a line")
+# ...but not TAB, which is a legal `.TEXT` byte and the one control character
+# a source line may carry. INSYMBOL's whitespace case label is a literal tab,
+# because a case label must be a constant and Apple's compiler rejects
+# `CHR(9)` there with error 103.
+check(decode_text(encode_text("a\tb")) == "a\tb",
+      "a TAB does not survive encode/decode")
 refuses(lambda: encode_date.__call__(__import__("datetime").date(2100, 1, 1)),
         "a year outside the two-digit window")
 

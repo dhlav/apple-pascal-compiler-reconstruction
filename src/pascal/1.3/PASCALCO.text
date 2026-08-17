@@ -483,7 +483,12 @@ BEGIN
   BLOCK(BLOCKBEGSYS+STATBEGSYS-[CASESY])
 END;
 
-PROCEDURE INSYMBOL; (*STUB*)
+PROCEDURE INSYMBOL; (* COMPILER VERSION 3.4 06-NOV-76 *)
+  LABEL 1;
+  VAR LVP: CSP; X: INTEGER;
+      LVAL: INTEGER;
+      LI: INTEGER;
+      LCH: CHAR;
 
   PROCEDURE COMMENTER(STOPPER: CHAR);
     VAR CH: CHAR; { declared and never referenced: Apple's DATA SIZE is 2
@@ -504,7 +509,108 @@ PROCEDURE INSYMBOL; (*STUB*)
     SYMCURSOR := SYMCURSOR+1
   END;
 
-BEGIN
+BEGIN (* INSYMBOL *)
+  IF GETSTMTLEV THEN BEGIN BEGSTMTLEV := STMTLEV; GETSTMTLEV := FALSE END;
+  OP := NOOP;
+1:  SY := OTHERSY; (* IF NO CASES EXERCISED BLOW UP *)
+  CASE SYMBUFP^[SYMCURSOR] OF
+  '''':NUMSTRING(0,LVP);
+  '0','1','2','3','4','5','6','7','8','9':
+       BEGIN
+         LCH := SYMBUFP^[SYMCURSOR];
+         LI := 0; LVAL := 0;
+         WHILE (LCH IN ['0'..'9']) AND (LI < 4) DO
+           BEGIN
+             LVAL := LVAL*10 + (ORD(LCH) - ORD('0'));
+             LI := LI+1;
+             LCH := SYMBUFP^[SYMCURSOR+LI]
+           END;
+         IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(1,LVP)
+         ELSE
+           BEGIN
+             SYMCURSOR := SYMCURSOR+LI-1;
+             SY := INTCONST; OP := NOOP;
+             VAL.IVAL := LVAL
+           END
+       END;
+  'A','B','C','D','E','F','G','H','I','J','K','L','M',
+  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+  'n','o','p','q','r','s','t','u','v','w','x','y','z':
+       IDSEARCH(SYMCURSOR,SYMBUFP^); (* MAGIC PROC *)
+  '{': BEGIN COMMENTER('}'); GOTO 1 END;
+  '(': BEGIN
+         IF SYMBUFP^[SYMCURSOR+1]='*' THEN
+             BEGIN
+                SYMCURSOR := SYMCURSOR+1;
+                COMMENTER('*');
+                SYMCURSOR := SYMCURSOR+1;
+                GOTO 1; (* GET ANOTHER TOKEN *)
+             END
+           ELSE
+             SY := LPARENT;
+       END;
+  ')': SY := RPARENT;
+  ',': SY := COMMA;
+  '	',' ': BEGIN SYMCURSOR := SYMCURSOR+1; GOTO 1; END;
+  '.': BEGIN
+         IF SYMBUFP^[SYMCURSOR+1]='.'
+           THEN
+             BEGIN
+               SYMCURSOR := SYMCURSOR+1;
+               SY := COLON
+             END
+           ELSE
+             SY := PERIOD;
+       END;
+  ':': IF SYMBUFP^[SYMCURSOR+1]='='
+         THEN
+           BEGIN
+             SYMCURSOR := SYMCURSOR+1;
+             SY := BECOMES;
+          END
+        ELSE
+           SY := COLON;
+  ';': SY := SEMICOLON;
+  '^': SY := ARROW;
+  '[': SY := LBRACK;
+  ']': SY := RBRACK;
+  '*': BEGIN SY := MULOP; OP := MUL END;
+  '+': BEGIN SY := ADDOP; OP := PLUS END;
+  '-': BEGIN SY := ADDOP; OP := MINUS END;
+  '/': BEGIN SY := MULOP; OP := RDIV END;
+  '<': BEGIN
+         SY := RELOP;
+         OP := LTOP;
+         CASE SYMBUFP^[SYMCURSOR+1] OF
+           '>': BEGIN
+                  OP := NEOP;
+                  SYMCURSOR := SYMCURSOR+1
+                END;
+           '=': BEGIN
+                  OP := LEOP;
+                  SYMCURSOR := SYMCURSOR+1
+                END
+         END;
+       END;
+  '=': BEGIN SY := RELOP; OP := EQOP END;
+  '>': BEGIN
+         SY := RELOP;
+         IF SYMBUFP^[SYMCURSOR+1]='='
+           THEN
+             BEGIN
+               OP := GEOP;
+               SYMCURSOR := SYMCURSOR+1;
+             END
+           ELSE
+             OP := GTOP;
+       END
+END (* CASE SYMBUFP^[SYMCURSOR] OF *);
+  IF SY=OTHERSY THEN
+    IF SYMBUFP^[SYMCURSOR] = CHR(EOL) THEN
+      BEGIN CHECKEND; GETSTMTLEV := TRUE; GOTO 1 END
+    ELSE ERROR(400);
+  SYMCURSOR := SYMCURSOR+1 (* NEXT CALL TALKS ABOUT NEXT TOKEN *)
 END;
 
 PROCEDURE BLOCK(*FSYS: SETOFSYS*);
