@@ -5521,11 +5521,11 @@ Finding 55c's description of offsets 1-2 as "the outer block's parameter
 words" was therefore right about *what they are* and wrong about *whose*:
 they are `PASCALCOMPILER`'s parameters, not a program main's.
 
-### 60c. Open: Apple's compiler rejects the restructured skeleton
+### 60c. Resolved: error 400 was our `.TEXT` writer, not the restructure
 
-The fast tier compiles it and gives Apple's exact frame. **Apple's own
-compiler does not**: it stops at the same place with or without procedure
-bodies --
+The fast tier compiled the restructured skeleton and gave Apple's exact
+frame. Apple's own compiler stopped at the same place with or without
+procedure bodies --
 
 ```
   FACBEGSYS       : SETOFSYS;
@@ -5533,14 +5533,73 @@ bodies --
 Line 406, error 400
 ```
 
-Error 400 is *"Illegal character in text"*, and there is none: the file is
-printable ASCII, no tabs, every line within 80 columns, and the same `VAR`
-block compiled cleanly under the old `PROGRAM PASCALCOMPILER` structure
-(finding 57b). So either the message is misleading -- some limit reported
-against the wrong cause -- or something about the `$U-` segment-procedure
-form changes what the scanner accepts. Bisecting the `VAR` block against
-Apple's compiler is the next step; the fast tier cannot help, since it
-accepts the file.
+-- and error 400 is *"Illegal character in text"*, of which the file had
+none: printable ASCII, no tabs, every line inside 80 columns, and the same
+`VAR` block had compiled cleanly under the old `PROGRAM PASCALCOMPILER`
+structure (finding 57b). The restructure was not the cause. **The cause was
+`encode_text`**, and the compiler's own source says so.
+
+The compiler reads source a page at a time (`GETNEXTPAGE`, `BLOCKREAD(...,
+SYMBUFP^, 2, SYMBLK)`) and finds the end of a page in exactly one way, at
+every end of line -- `CHECKEND`, `procs.a.text`:
+
+```pascal
+IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN GETNEXTPAGE
+ELSE LINESTART := SYMCURSOR;
+```
+
+**The terminating NUL is load-bearing.** A page packed to exactly 1024
+content bytes has none, so `SYMCURSOR` reaches 1024, the test reads past the
+end of the buffer, the fetch never happens, and the byte found there is not
+a symbol -- `SY := OTHERSY`, and then `procs.a.text`:
+
+```pascal
+IF SY=OTHERSY THEN
+  IF SYMBUFP^[SYMCURSOR] = CHR(EOL) THEN ...
+  ELSE ERROR(400);
+```
+
+Our writer packed with `len(page) + len(enc) > PAGE`, which permits the
+exactly-full page. The 1.3 skeleton's page 11 was one, and its last line was
+the reported one:
+
+```
+page 10  pad 30
+page 11  pad  0   ...  '  FACBEGSYS       : SETOFSYS;\r'
+page 12  pad 27
+```
+
+So the diagnostic was honest and the "illegal character" was real -- it was
+just past the end of the file, in whatever `SYMBUFP^[1024]` overlays.
+
+**VERIFIED BINARY FACT.** Apple's own editor keeps the same invariant: of the
+159 text pages in the 21 `.TEXT` files across the six evidence disks, the
+least-padded page has **one** NUL, and none has zero. A page holds at most
+1023 bytes of line data.
+
+Fixed by changing both tests in `encode_text` to `>= PAGE`.
+`probe_diskwrite.py` now checks it two ways -- no re-encoded Apple page may
+be full, and four constructed cases pack lines to exactly 1024 on purpose
+and require the writer to split them. Reverting the fix fails 12 of those
+checks, three of them on Apple's own files.
+
+### 60d. Verified: Apple's compiler accepts the restructured skeleton
+
+With the writer fixed, Apple's 1.3 compiler compiles `BODY13.TEXT` clean --
+513 lines, no errors, `DECSIZE`, `PAOFCHAR` and `PASCALCO` all reported --
+and both reconstructed bodies come back **byte-identical to the binary**:
+
+```
+[1.3] PASCALCO.19 DECSIZE:   9 instructions, IDENTICAL  (Apple's compiler)
+[1.3] PASCALCO.17 PAOFCHAR: 20 instructions, IDENTICAL  (Apple's compiler)
+```
+
+`PAOFCHAR` is the one the fast tier can never settle: it short-circuits the
+`AND` where Apple evaluates both sides and emits `LAND` (finding 58). Under
+Apple's own compiler the divergence is gone. That closes the loop --
+`procbuild.py --emu` writes the source to the work disk, Apple's compiler
+builds it, `--emu-check` diffs the result -- and it is now the authority for
+every remaining body.
 
 ## 16. Open questions
 

@@ -50,6 +50,21 @@ def encode_text(text: str, header: bytes | None = None,
     at a time, so a line split across two of them is lost, not merely
     reflowed. Each page is filled with whole lines and padded with NULs.
 
+    The padding is not slack: **at least one NUL is required**, so a page
+    holds at most PAGE-1 bytes of line data. The compiler finds the end of a
+    page only by looking for a NUL where the next line should start --
+
+        IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN GETNEXTPAGE
+        ELSE LINESTART := SYMCURSOR;                  { procs.a.text CHECKEND }
+
+    -- so a page filled to exactly PAGE bytes never triggers the fetch. The
+    scanner reads past the end of the buffer, the byte there is not a symbol,
+    and the compiler reports `error 400` against the last line that fitted.
+    That is a real failure we hit: the 1.3 skeleton's page 11 came out exactly
+    full and Apple's compiler died on it. Apple's own editor keeps the same
+    invariant -- of the 159 text pages in the 21 `.TEXT` files on the evidence
+    disks, the least padded has one NUL.
+
     DLE indentation compression is what Apple's own editor emits, so it is
     the default here; it is a pure size optimisation and `compress=False`
     writes the same lines as literal spaces. Neither form is "the" encoding
@@ -94,10 +109,10 @@ def encode_text(text: str, header: bytes | None = None,
     page = bytearray()
     for line in body.split("\n"):
         enc = render(line)
-        if len(enc) > PAGE:
+        if len(enc) >= PAGE:
             raise ValueError(f"line of {len(enc)} bytes will not fit in a "
                              f"{PAGE}-byte page: {line[:60]!r}...")
-        if len(page) + len(enc) > PAGE:
+        if len(page) + len(enc) >= PAGE:
             out += page + bytes(PAGE - len(page))
             page = bytearray()
         page += enc

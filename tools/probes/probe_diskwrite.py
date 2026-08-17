@@ -178,6 +178,17 @@ for path in DISKS:
             page = body[base:base + 1024].rstrip(b"\x00")
             check(not page or page[-1] == 0x0D,
                   f"{path.name}:{e.name}: page at {base} ends mid-line")
+            # ...and no page may be full to the brim. The compiler moves to
+            # the next page only on seeing a NUL where the next line would
+            # start (CHECKEND in procs.a.text), so a page of exactly 1024
+            # content bytes makes it scan off the end of its buffer and
+            # report error 400 against the last line that fitted. That is not
+            # theoretical: it is what killed the 1.3 skeleton under Apple's
+            # own compiler. Apple's editor keeps the same invariant -- the
+            # least-padded page in this whole corpus has one NUL.
+            check(len(page) < 1024,
+                  f"{path.name}:{e.name}: page at {base} is full to 1024 "
+                  f"bytes with no NUL; the compiler cannot find its end")
 
 # `encode_text` must not normalise a trailing newline away. Ten of the 21
 # `.TEXT` files above genuinely end with a blank line and `decode_text`
@@ -189,6 +200,24 @@ for src in ("A\nB\n", "A\nB", "A\nB\n\n", "", "\n", "  indented\n"):
     check(decode_text(encode_text(src)) == src.replace("\r\n", "\n"),
           f"encode/decode of {src!r} gives "
           f"{decode_text(encode_text(src))!r}, which is not the identity")
+
+# The page-full case, constructed rather than hoped for. None of Apple's own
+# files happens to pack to exactly 1024, so the sweep above would stay green
+# on a writer that allowed it; this builds the case on purpose. `n` lines of
+# `w` characters plus a CR each, chosen to total exactly 1024 -- with
+# compression off, so the encoded length is the obvious one.
+for w in (7, 15, 31, 127):
+    n = 1024 // (w + 1)
+    src = "\n".join("X" * w for _ in range(n))
+    enc = encode_text(src, compress=False)
+    body = enc[1024:]
+    check(len(body) == 2048,
+          f"{n} lines of {w} chars packed into {len(body) // 1024} page(s); "
+          f"they total exactly 1024 bytes and must not share one")
+    check(body[1023] == 0,
+          f"{n} lines of {w} chars leave page 0 with no terminating NUL")
+    check(decode_text(enc) == src,
+          f"{n} lines of {w} chars do not survive the page split")
 
 # -- 5. a volume built from nothing -------------------------------------
 
