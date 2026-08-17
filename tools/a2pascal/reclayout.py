@@ -71,6 +71,26 @@ class Layout:
             return 0, n - 1
         return self._bounds(body)
 
+    # Ordinal ranges the language fixes, which no source declares.
+    BUILTIN_RANGE = {"CHAR": (0, 255), "BOOLEAN": (0, 1)}
+
+    def _per_word(self, elt: str) -> int:
+        """How many of this element UCSD packs into one 16-bit word.
+
+        Zero-extended: the bit count is what it takes to hold the largest
+        value, and only a count that divides into 16 more than once buys
+        anything. Returns 1 -- unpacked -- when the range is not known,
+        because guessing here would silently mis-size a whole array.
+        """
+        try:
+            lo, hi = self.BUILTIN_RANGE.get(elt.upper()) or self._bounds(elt)
+        except KeyError:
+            return 1
+        if lo < 0:
+            return 1
+        bits = max(1, int(hi).bit_length())
+        return 16 // bits if bits <= 16 else 1
+
     # -- sizes --------------------------------------------------------
     def size(self, expr: str) -> int:
         """Size of a type expression, in words."""
@@ -90,6 +110,15 @@ class Layout:
             n = hi - lo + 1
             if packed and elt.upper() == "CHAR":
                 return (n + 1) // 2          # two characters to the word
+            if packed and self.size(elt) == 1:
+                # UCSD packs a scalar into the fewest bits that hold its
+                # range and then puts `16 div bits` of them in a word --
+                # which is what the two operands of `IXP` say. SEGMAP is
+                # `IXP 4,4`: a SEGRANGE is 0..15, four bits, four to the
+                # word, so 64 entries are 16 words and not 64.
+                per = self._per_word(elt)
+                if per > 1:
+                    return (n + per - 1) // per
             return n * self.size(elt)
 
         # A declared string is a length byte and the characters, packed two

@@ -126,7 +126,7 @@ VAR
   SEGSUSED        : ARRAY [0..1] OF INTEGER;           {  183,    2 words  ours: 2 words, shape not recovered }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;      {  185,  150 words  II.0 }
   SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; SEGSPARE: INTEGER END; {  335,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9]; SEGSPARE is ours, and its purpose is not recovered }
-  SEGMAP          : ARRAY [0..7] OF INTEGER;           {  479,    8 words  ours: 8 words, shape not recovered }
+  SEGMAP          : PACKED ARRAY [0..31] OF SEGRANGE;  {  479,    8 words  reached only by IXP 4,4: 32 four-bit entries in 8 words }
   COMMENT         : ^STRING;                           {  487,    1 word   II.0 }
   SYSTEMLIB       : STRING[40];                        {  488,   21 words  II.0 }
   NEXTJTAB        : JTABRANGE;                         {  509,    1 word   II.0 }

@@ -434,8 +434,8 @@ VAR
   SEGSPARE is ours, and its purpose is not recovered }
   SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER;
       SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; SEGSPARE: INTEGER END;
-  {  479,    8 words  ours: 8 words, shape not recovered }
-  SEGMAP          : ARRAY [0..7] OF INTEGER;
+  {  479,    8 words  reached only by IXP 4,4: 32 four-bit entries in 8 words }
+  SEGMAP          : PACKED ARRAY [0..31] OF SEGRANGE;
   {  487,    1 word   II.0 }
   COMMENT         : ^STRING;
   {  488,   21 words  II.0 }

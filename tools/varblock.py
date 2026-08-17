@@ -117,6 +117,14 @@ RETYPE = {
                  "SEGSPARE: INTEGER END",
                  "Apple's entry is 9 words, indexed SEGTABLE[slot*9]; "
                  "SEGSPARE is ours, and its purpose is not recovered"),
+    # Nibbles, not words. Every reference to SEGMAP is an `IXP 4,4` -- four
+    # entries to the word, four bits each -- so its 16 words (8 in 1.1) hold
+    # 64 entries (32), and what fits in four bits is a SEGRANGE. Declaring
+    # it as an array of INTEGER allocates the right number of words and
+    # compiles every access wrong. NEWSEG is the body that measures it.
+    "SEGMAP": ("PACKED ARRAY [0..{last}] OF SEGRANGE",
+               "reached only by IXP 4,4: {entries} four-bit entries "
+               "in {words} words"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's
 # 72 sits between UFLDPTR at 71 and UPRCPTR at 73, and no LDO, SRO or LAO on
@@ -140,14 +148,20 @@ def reconcile(rows, ver: str):
     types = ii0_types()
     out = []
     for off, name, words, forced, note in rows:
-        typ = RETYPE[name][0] if name in RETYPE else types.get(name)
+        # A retyped object's bounds can depend on how many words Apple gave
+        # it -- SEGMAP is 16 words in 1.3 and 8 in 1.1, and its element count
+        # is four times either.
+        fmt = dict(words=words, entries=4 * words, last=4 * words - 1)
+        typ = RETYPE[name][0].format(**fmt) if name in RETYPE \
+            else types.get(name)
         if forced or not typ:
             out.append((off, name, words, forced, note))
             continue
         got = lay.size(typ)
         if got == words:
             if name in RETYPE:
-                out.append((off, name, words, typ, RETYPE[name][1]))
+                out.append((off, name, words, typ,
+                            RETYPE[name][1].format(**fmt)))
             else:
                 out.append((off, name, words, forced, note))
             continue

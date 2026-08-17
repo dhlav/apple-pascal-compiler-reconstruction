@@ -5733,6 +5733,103 @@ not a pointer to itself. `codefile.py` now reads it that way. Apple's
 shipped codefiles are all linked and contain none, so nothing had forced the
 question before.
 
+## 62. SEGMAP is nibbles, and NEWSEG is what says so
+
+`SEGMAP` was one of the objects the global map sized but could not shape:
+16 words in 1.3, 8 in 1.1, emitted as `ARRAY [0..15] OF INTEGER` with the
+note *"shape not recovered"*. It allocates the right number of words and
+compiles every access to it wrong.
+
+Every reference to it in either binary is an **`IXP 4,4`** -- index packed
+array, four entries to the word, four bits each. So the 16 words are 64
+entries, not 16, and what fits in four bits is a `SEGRANGE` (0..15). It is a
+map from segment number to segment-table slot:
+
+```pascal
+SEGMAP : PACKED ARRAY [0..63] OF SEGRANGE;     { 1.3, 16 words }
+SEGMAP : PACKED ARRAY [0..31] OF SEGRANGE;     { 1.1,  8 words }
+```
+
+**`NEWSEG` is the measurement.** Its last statement is one store into
+`SEGMAP`, and the store only compiles to Apple's bytes if the declaration is
+the packed one:
+
+```pascal
+PROCEDURE NEWSEG(*FNEWSEG: BOOLEAN*);
+BEGIN
+  IF FNEWSEG THEN
+    BEGIN BUMPSEG(NEXTSEG,63,354); BUMPSEG(SEGSLOT,15,354) END;
+  SEGMAP[SEG] := SEGSLOT
+END;
+```
+
+```
+LAO 589 / SLDO 13 / IXP 4,4 / LDO 21 / STP
+```
+
+The two `BUMPSEG` calls corroborate the ranges independently: `NEXTSEG` is
+bounded at **63** and `SEGSLOT` at **15**, which are exactly the index range
+and the element range of the array. Sixty-four segment numbers mapping into
+sixteen physical slots is the whole point of the structure, and it is Apple's
+extension -- 1.1 maps thirty-two.
+
+Sizing this needed one addition to `reclayout.py`, which only knew how to
+pack `CHAR`. UCSD packs any scalar into the fewest bits that hold its range
+and puts `16 div bits` of them in a word -- which is what the two operands of
+`IXP` are. `CHAR` is the same rule (0..255, eight bits, two to the word), so
+the special case is now an instance of the general one.
+
+### 62b. Twelve bodies verified
+
+Under Apple's own 1.3 compiler, against Apple's own p-code:
+
+```
+[1.3] PASCALCO.9  SEARCHSECTION: 22 instructions, IDENTICAL
+[1.3] PASCALCO.11 GETBOUNDS:     42 instructions, IDENTICAL
+[1.3] PASCALCO.12 BUMPSEG:       15 instructions, IDENTICAL
+[1.3] PASCALCO.13 NEWSEG:        16 instructions, IDENTICAL
+[1.3] PASCALCO.16 SKIP:          10 instructions, IDENTICAL
+[1.3] PASCALCO.17 PAOFCHAR:      20 instructions, IDENTICAL
+[1.3] PASCALCO.18 STRGTYPE:      11 instructions, IDENTICAL
+[1.3] PASCALCO.19 DECSIZE:        9 instructions, IDENTICAL
+[1.3] PASCALCO.22 GENBYTE:        9 instructions, IDENTICAL
+[1.3] PASCALCO.23 GENWORD:       35 instructions, IDENTICAL
+```
+
+Eight are UCSD II.0's bodies unchanged. `BUMPSEG` and `NEWSEG` are Apple's
+own and were recovered from the p-code. `GENWORD` is II.0's with one Apple
+edit the binary states: where II.0 writes `IF ODD(IC) THEN IC := IC + 1`,
+Apple writes `IF ODD(IC) THEN GENBYTE(0)` -- `SLDC 0 / CGP 22` -- so the pad
+byte is actually written into the code buffer instead of skipped over.
+
+Two of them, `SEARCHSECTION` and `GETBOUNDS`, are cases the fast tier cannot
+settle, for reasons that are new and worth naming alongside finding 58's
+`LAND`:
+
+* `SEARCHSECTION` has II.0's empty `THEN` -- `IF TREESEARCH(...) = 0 THEN
+  (*NADA*) ELSE FCP1 := NIL`. Apple's compiler emits it literally, `EQUI`
+  and a `UJP` over nothing. The fast tier inverts the test to `NEQI` and
+  drops the jump.
+* `GETBOUNDS` has `WITH FSP^ DO`. Apple's compiler materialises the `WITH`
+  pointer into a local -- `SLDL 3 / STL 4`, which is where its `DATA SIZE`
+  of 2 comes from -- and addresses the fields through it. The fast tier
+  eliminates the temporary and re-loads `FSP` at each field, giving `DATA
+  SIZE` 0.
+
+Both are cosmetic to a reader and are the difference between matching Apple's
+bytes and not.
+
+### 62c. Parameter order, and how to get it wrong
+
+Finding 61b's reverse rule has a trap in it, and I walked into it twice.
+UCSD II.0's signatures are already in the order that reverses onto Apple's
+offsets, because Apple compiled II.0's source. `SEARCHSECTION(FCP: CTP; VAR
+FCP1: CTP)` reverse-allocates to `FCP1` at 1 and `FCP` at 2, which is what
+the binary has; "correcting" it to `(VAR FCP1; FCP)` produces the mirror
+image and fails. The rule applies when a signature is being *recovered from
+the p-code* -- `BUMPSEG`, which II.0 does not have -- and not to signatures
+taken from II.0, which need no adjustment at all.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
