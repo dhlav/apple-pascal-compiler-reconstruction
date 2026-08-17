@@ -6074,6 +6074,127 @@ constant. The frame says the same thing independently: Apple's `DATA SIZE`
 is 12, six words, and its `WITH` temporary lands at local **12**, so five
 locals are declared where II.0 declares four.
 
+## 65. The lexical level says where a procedure is declared
+
+`COMMENTER` and `FINDFORW` are **lex 2**, not lex 1. Neither is a procedure
+of `PASCALCOMPILER` at all -- each is nested inside one of its procedures --
+and that, with their numbers, pins a piece of Apple's file layout that
+nothing else would have shown.
+
+The numbers are 28 and 29, after `COMPILE` at 27. A nested procedure takes
+its number when its header is parsed, so whatever they are nested in must be
+*declared* before 28 and have its **body** after 27. Only a forward-declared
+procedure can do both. So:
+
+* `COMMENTER` belongs to **`INSYMBOL`** -- forward-declared at 8, body after
+  `COMPILE`. `INSYMBOL` is the only thing that scans comments, and Apple's
+  `COMMENTER` confirms it: it steps `SYMCURSOR`, calls `CHECKEND` at each
+  end of line, stops on `STOPPER`, and treats `*)` and `}` alike.
+* `FINDFORW` belongs to **`BLOCK`** -- forward-declared at 26, body after
+  that. Its p-code says what it is: it walks the symbol tree recursively
+  (`CIP 29`, a call to itself), tests four fields of each entry, and on a
+  hit writes the eight-character name followed by the literal
+  `' undefined'`. It is the undefined-`FORWARD` diagnostic, which is
+  exactly `BLOCK`'s business and has nothing to do with comments.
+
+Finding 61's guess that `FINDFORW` was nested in `COMMENTER` -- made from
+the numbering alone, and flagged at the time as the weak part -- was wrong.
+The lexical level is what settles it, and `procbuild.py` now checks the lex
+level of every procedure including the stubs, so a nesting error is caught
+without needing a body. Un-nesting `COMMENTER` to test the check gives
+`PASCALCO.28 COMMENTER: lex 1, Apple has lex 2`.
+
+### 65b. PRINTLINE is the one procedure with I/O checking on
+
+Apple emits `CSP 0` -- `IOCHECK` -- after every `WRITE` in `PRINTLINE` and
+after no other I/O in the segment. `CHECKEND` writes to `OUTPUT` with no
+check at all, and matches.
+
+II.0 has it bracketed exactly so, `procs.a.text:94` and `:120`:
+
+```
+(*$I+*)
+PROCEDURE PRINTLINE;
+  ...
+(*$I-*)
+```
+
+The reconstruction needed the same two lines and nothing else -- our default
+already produces unchecked I/O, which is what `compiler.text:3`'s global
+`(*$T+*)` does in Apple's build.
+
+### 65c. GETNEXTPAGE: four Apple edits and a variable that is never used
+
+Every instruction matched before the frame did. Apple's `DATA SIZE` is 2 --
+one word of locals -- and **no instruction in the procedure references it**.
+II.0's `GETNEXTPAGE` declares no locals at all. So Apple's source declares a
+variable and never uses it, and the only evidence it exists is the frame.
+It is declared and named `I` here; the name is not recoverable.
+
+The four real edits, all of which the binary states:
+
+* **`WRITETEXT` is inlined and moved to the top.** Apple dropped `WRITETEXT`
+  from the procedure list (finding 61) and put its work at the head of
+  `GETNEXTPAGE`, before the file is read rather than after
+  `SYMCURSOR = 0`: `MOVELEFT(SYMBUFP^[TEXTSTRT],CODEP^[0],1024);
+  WRITECODE(TRUE); TEXTSTRT := 0`. II.0 wrote the block itself with
+  `BLOCKWRITE` and kept its own `CURBLK`; Apple routes it through
+  `WRITECODE` and keeps a separate `TEXTSTRT` cursor.
+* **An `IORESULT` check on the include file.** Where the `BLOCKREAD` of
+  `INCLFILE` comes up short, Apple first does `IF IORESULT <> 0 THEN
+  ERROR(403)` and then closes; II.0 just closes.
+* **The `USEFILE = SYSLIBRARY` test is gone.** `UNITFILE` has two values, so
+  Apple wrote the second arm as a plain `ELSE`.
+* **An empty `THEN`.** `IF NOT USING THEN <restore>` is written `IF USING
+  THEN (*NADA*) ELSE <restore>`. The binary has `LDO 37 / FJP else / UJP
+  end` with no `LNOT`, where the two other `IF NOT USING` tests in the same
+  procedure both have one. Same idiom as `SEARCHSECTION`.
+
+### 65d. Twenty-one bodies verified, nine to go
+
+Under Apple's own 1.3 compiler, all twenty-one reconstructed procedures of
+segment 1 match Apple's p-code exactly. Added here:
+
+```
+[1.3] PASCALCO.5 GETNEXTPAGE: 135 instructions, IDENTICAL
+[1.3] PASCALCO.6 PRINTLINE:   134 instructions, IDENTICAL
+```
+
+Nine stubs remain: `ERROR`, `INSYMBOL`, `SEGINFO`, `CONSTANT`, `BLOCK`,
+`COMMENTER`, `FINDFORW`, `HOLDMOST`, `HOLDROUT`.
+
+### 65e. Two open shapes
+
+**`SEGINFO`** builds one packed word and returns it. The four `STP` stores
+partition a 16-bit word exactly -- width 8 at bit 0, width 4 at bit 8,
+width 1 at bit 12, width 3 at bit 13 -- which is the p-System codefile's
+segment-info word: a segment number, a machine type, a spare bit and a
+version. It stores machine type 2, then 1 instead if a test involving
+`FLIPBYTES` passes, then the segment number from `SEGTABLE[FSEG]`, then
+version 6. What is not yet explained is the test: it reads byte 0 of the
+result word *before* anything has been stored there.
+
+**`HOLDMOST` and `HOLDROUT`** have a shape no ordinary statement produces:
+
+```
+        UJP Lload
+Lbody:  <the body>
+        UNLOADSEGMENT 15,14,13,12,11,19,9,8
+        UJP Lend
+Lload:  LOADSEGMENT 8,9,19,11,12,13,14,15
+        UJP Lbody
+Lend:   RNP 0
+```
+
+The loads and unloads nest perfectly, and the load block sits *after* the
+body in the code stream with an entry jump over it -- which is what a
+one-pass compiler does when it only learns the segment set after compiling
+the body. `HOLDROUT` is the same with segment 10 alone, and `HOLDMOST`'s
+body is `IF <g34> THEN COMPILE ELSE HOLDROUT`. `(*$S+*)`, swapping mode, is
+on in `compiler.text:3`. What is not yet identified is the source
+construct that names those eight segments, since neither body calls a
+segment procedure.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

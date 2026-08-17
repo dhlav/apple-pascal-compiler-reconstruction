@@ -195,9 +195,19 @@ def report(ver: str, segname: str, procs, mine, who: str) -> int:
                   f"{2 + i}, Apple has it at {num}")
             bad += 1
             continue
-        if stub:
-            continue
         a = next((x for x in apple.procedures if x.number == num), None)
+        if stub:
+            # A stub has no body to compare, but it does have a *place*, and
+            # the lexical level says whether it is nested where Apple nests
+            # it. That is worth checking on its own: COMMENTER and FINDFORW
+            # are lex 2 in the binary, which is what says they belong to
+            # INSYMBOL and BLOCK rather than to PASCALCOMPILER.
+            b = next((x for x in mine.procedures if x.number == num), None)
+            if a and b and not a.is_native and a.lex_level != b.lex_level:
+                print(f"[{ver}] {segname}.{num} {name}: lex {b.lex_level}, "
+                      f"Apple has lex {a.lex_level}")
+                bad += 1
+            continue
         if a is not None and a.is_native:
             # 6502, not p-code. IDSEARCH and TREESEARCH are `EXTERNAL` and
             # are held to Apple's bytes by the assembler acceptance tier
