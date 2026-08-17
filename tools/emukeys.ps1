@@ -14,7 +14,8 @@ param(
   [string]$Keys = "",
   [int]$Wait = 1500,
   [string]$Shot = "",
-  [int]$Settle = 400
+  [int]$Settle = 400,
+  [int]$PerKey = 60
 )
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing, System.Windows.Forms
@@ -59,7 +60,18 @@ function Assert-Focus($when) {
 
 if ($Keys -ne "") {
   Assert-Focus "before sending"
-  [System.Windows.Forms.SendKeys]::SendWait($Keys)
+  # One character at a time, with a gap. Apple Pascal's type-ahead buffer is
+  # filled by *polling* the Apple's keyboard latch, which holds one byte --
+  # so a whole command sent in one SendWait outruns the poll and characters
+  # are silently dropped. That is not a hypothetical: it turned
+  # "CWORK:BODY13.TEXT" into some other command (both E and X are commands
+  # at that prompt) and cost a work disk. The gap only has to beat the poll,
+  # not the prompts: type-ahead means there is no need to wait for each
+  # prompt to appear before answering it.
+  foreach ($tok in [regex]::Matches($Keys, '\{[^}]+\}|.')) {
+    [System.Windows.Forms.SendKeys]::SendWait($tok.Value)
+    Start-Sleep -Milliseconds $PerKey
+  }
   Start-Sleep -Milliseconds 150
   if ([EmuWin]::GetForegroundWindow() -ne $h) {
     throw "focus left AppleWin during the send of '$Keys' -- some or all of " +
