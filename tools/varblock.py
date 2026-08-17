@@ -125,6 +125,13 @@ RETYPE = {
     "SEGMAP": ("PACKED ARRAY [0..{last}] OF SEGRANGE",
                "reached only by IXP 4,4: {entries} four-bit entries "
                "in {words} words"),
+    # 1.3-only, and II.0 has no name for them, so `render_type` would call
+    # them INTEGER -- which allocates the one word they occupy and will not
+    # compile. COMPTYPES compares both against an `STP` (`FSP1 <> BYTEPTR`),
+    # so they are structure pointers, like the CHARPTR and INTPTR beside
+    # them. Finding 64.
+    "BYTEPTR": ("STP", "compared against an STP in COMPTYPES"),
+    "WORDPTR": ("STP", "compared against an STP in COMPTYPES"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's
 # 72 sits between UFLDPTR at 71 and UPRCPTR at 73, and no LDO, SRO or LAO on

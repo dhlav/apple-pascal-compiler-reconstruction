@@ -72,8 +72,8 @@ VAR
   PRTERR          : BOOLEAN;                           {   54,    1 word   II.0 }
   STRGPTR         : STP;                               {   55,    1 word   II.0 }
   INTRACTVPTR     : STP;                               {   56,    1 word   II.0 }
-  BYTEPTR         : INTEGER;                           {   57,    1 word   ours: one word, type not recovered }
-  WORDPTR         : INTEGER;                           {   58,    1 word   ours: one word, type not recovered }
+  BYTEPTR         : STP;                               {   57,    1 word   compared against an STP in COMPTYPES }
+  WORDPTR         : STP;                               {   58,    1 word   compared against an STP in COMPTYPES }
   NILPTR          : STP;                               {   59,    1 word   II.0 }
   TEXTPTR         : STP;                               {   60,    1 word   II.0 }
   BOOLPTR         : STP;                               {   61,    1 word   II.0 }

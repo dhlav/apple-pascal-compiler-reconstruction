@@ -170,8 +170,39 @@ BEGIN
   SEGMAP[SEG] := SEGSLOT
 END;
 
-PROCEDURE CHECKEND; (*STUB*)
-BEGIN
+PROCEDURE CHECKEND;
+BEGIN (* CHECKS FOR THE END OF THE PAGE *)
+  SCREENDOTS := SCREENDOTS+1;
+  SYMCURSOR := SYMCURSOR + 1;
+  IF NOISY THEN
+    BEGIN WRITE(OUTPUT,'.');
+      IF (SCREENDOTS-STARTDOTS) MOD 50 = 0 THEN
+        BEGIN WRITELN(OUTPUT);
+          WRITE(OUTPUT,'<',SCREENDOTS:4,'>')
+        END
+    END;
+  IF LIST THEN PRINTLINE;
+  BPTONLINE := FALSE;
+  IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN
+    BEGIN
+      IF NOT USING THEN
+        BEGIN
+          SYMCURSOR := SCAN(1024-SYMCURSOR,<>CHR(0),
+                            SYMBUFP^[SYMCURSOR]) + SYMCURSOR;
+          IF SYMCURSOR <> 1024 THEN ERROR(400)
+        END;
+      GETNEXTPAGE
+    END
+  ELSE LINESTART := SYMCURSOR;
+  IF SYMBUFP^[SYMCURSOR] = CHR(12(*FF*)) THEN SYMCURSOR:=SYMCURSOR+1;
+  IF SYMBUFP^[SYMCURSOR] = CHR(16(*DLE*)) THEN
+    SYMCURSOR := SYMCURSOR+2
+  ELSE
+    BEGIN
+      SYMCURSOR := SYMCURSOR+SCAN(80,<>CHR(9),SYMBUFP^[SYMCURSOR]);
+      SYMCURSOR := SYMCURSOR+SCAN(80,<>' ',SYMBUFP^[SYMCURSOR])
+    END;
+  IF DP THEN LINEINFO := LC ELSE LINEINFO := IC
 END;
 
 PROCEDURE SEGINFO(*FSEG: INTEGER; VAR FADDR,FLENG: INTEGER*); (*STUB*)
@@ -200,11 +231,91 @@ END;
 
 PROCEDURE CONSTANT(*FSYS: SETOFSYS; VAR FSP: STP; VAR FVALU: VALU*);
                                                               (*STUB*)
+{ II.0's body is right for all of this except the LONGCONST arm, which
+  Apple rewrote: the binary negates a long constant with a FOR loop over
+  its words and a 130-word MOV, where II.0 negates LONGVAL[1] alone. Apple
+  also has one more local than II.0 declares -- its WITH temporary lands at
+  12, not 11. See finding 64c. }
 BEGIN
 END;
 
-FUNCTION COMPTYPES(*FSP1,FSP2: STP): BOOLEAN*); (*STUB*)
+FUNCTION COMPTYPES(*FSP1,FSP2: STP) : BOOLEAN*);
+  VAR NXT1,NXT2: CTP; COMP: BOOLEAN;
+    LTESTP1,LTESTP2 : TESTP;
 BEGIN
+  IF FSP1 = FSP2 THEN COMPTYPES := TRUE
+  ELSE
+    IF (FSP1 = NIL) OR (FSP2 = NIL) THEN COMPTYPES := TRUE
+    ELSE
+      IF FSP1^.FORM = FSP2^.FORM THEN
+        CASE FSP1^.FORM OF
+          SCALAR:
+            COMPTYPES := FALSE;
+          SUBRANGE:
+            COMPTYPES := COMPTYPES(FSP1^.RANGETYPE,
+                                     FSP2^.RANGETYPE);
+          POINTER:
+              BEGIN
+                COMP := FALSE; LTESTP1 := GLOBTESTP;
+                LTESTP2 := GLOBTESTP;
+                WHILE LTESTP1 <> NIL DO
+                  WITH LTESTP1^ DO
+                    BEGIN
+                      IF (ELT1 = FSP1^.ELTYPE) AND
+                        (ELT2 = FSP2^.ELTYPE) THEN COMP := TRUE;
+                      LTESTP1 := LASTTESTP
+                    END;
+                IF NOT COMP THEN
+                  BEGIN NEW(LTESTP1);
+                    WITH LTESTP1^ DO
+                      BEGIN ELT1 := FSP1^.ELTYPE;
+                        ELT2 := FSP2^.ELTYPE;
+                        LASTTESTP := GLOBTESTP
+                      END;
+                    GLOBTESTP := LTESTP1;
+                    COMP := COMPTYPES(FSP1^.ELTYPE,FSP2^.ELTYPE)
+                  END;
+                COMPTYPES := COMP; GLOBTESTP := LTESTP2
+              END;
+          LONGINT: COMPTYPES := TRUE;
+          POWER:
+            COMPTYPES := COMPTYPES(FSP1^.ELSET,FSP2^.ELSET);
+          ARRAYS:
+            BEGIN
+              COMP := COMPTYPES(FSP1^.AELTYPE,FSP2^.AELTYPE)
+                      AND (FSP1^.AISPACKD = FSP2^.AISPACKD);
+              IF COMP AND FSP1^.AISPACKD THEN
+                  COMP := (FSP1^.ELSPERWD = FSP2^.ELSPERWD)
+                          AND (FSP1^.ELWIDTH = FSP2^.ELWIDTH)
+                          AND (FSP1^.AISSTRNG = FSP2^.AISSTRNG);
+              IF COMP THEN
+                IF NOT STRGTYPE(FSP1)
+                   AND (FSP1 <> BYTEPTR) AND (FSP2 <> BYTEPTR)
+                   AND (FSP1 <> WORDPTR) AND (FSP2 <> WORDPTR) THEN
+                  COMP := (FSP1^.SIZE = FSP2^.SIZE);
+              COMPTYPES := COMP;
+            END;
+          RECORDS:
+            BEGIN NXT1 := FSP1^.FSTFLD; NXT2 := FSP2^.FSTFLD;
+              COMP := TRUE;
+              WHILE (NXT1 <> NIL) AND (NXT2 <> NIL) AND COMP DO
+                BEGIN COMP:=COMPTYPES(NXT1^.IDTYPE,NXT2^.IDTYPE);
+                  NXT1 := NXT1^.NEXT; NXT2 := NXT2^.NEXT
+                END;
+              COMPTYPES := COMP AND (NXT1 = NIL) AND (NXT2 = NIL)
+                          AND (FSP1^.RECVAR = NIL)
+                          AND (FSP2^.RECVAR = NIL)
+            END;
+          FILES:
+            COMPTYPES := COMPTYPES(FSP1^.FILTYPE,FSP2^.FILTYPE)
+        END (*CASE*)
+      ELSE (*FSP1^.FORM <> FSP2^.FORM*)
+        IF FSP1^.FORM = SUBRANGE THEN
+          COMPTYPES := COMPTYPES(FSP1^.RANGETYPE,FSP2)
+        ELSE
+          IF FSP2^.FORM = SUBRANGE THEN
+            COMPTYPES := COMPTYPES(FSP1,FSP2^.RANGETYPE)
+          ELSE COMPTYPES := FALSE
 END;
 
 PROCEDURE GENBYTE(*FBYTE: INTEGER*);
@@ -246,16 +357,27 @@ BEGIN CODEINX := 0; LIC := IC;
   UNTIL LIC = 0;
 END;
 
-PROCEDURE FINISHSEG; (*STUB*)
-BEGIN
+PROCEDURE FINISHSEG;
+  VAR I: INTEGER;
+BEGIN IC := 0;
+  FOR I := NEXTPROC-1 DOWNTO 1 DO
+    IF PROCTABLE[I] = 0 THEN
+      GENWORD(0)
+    ELSE
+      GENWORD(SEGINX+IC-PROCTABLE[I]);
+  GENBYTE(SEG); GENBYTE(NEXTPROC-1);
+  SEGTABLE[SEGMAP[SEG]].CODELENG := SEGINX+IC;
+  WRITECODE(TRUE); SEGINX := 0; CODEINSEG := FALSE
 END;
 
 PROCEDURE BLOCK(*FSYS: SETOFSYS*); (*STUB*)
 BEGIN
 END;
 
-PROCEDURE COMPILE; (*STUB*)
+PROCEDURE COMPILE;
 BEGIN
+  TIME(LGTH,LOWTIME);
+  BLOCK(BLOCKBEGSYS+STATBEGSYS-[CASESY])
 END;
 
 PROCEDURE COMMENTER(STOPPER: CHAR); (*STUB*)

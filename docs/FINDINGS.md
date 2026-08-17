@@ -5967,6 +5967,113 @@ site if it happens to be non-zero further on, from `INSYMBOL`'s `OTHERSY` if
 the scan runs into the next page's text. The diagnosis stands and the
 mechanism is now exact.
 
+## 64. BYTEPTR and WORDPTR are structure pointers, and COMPTYPES says so
+
+Two of 1.3's new globals, 57 and 58, were named by the global map and left
+untyped -- `render_type` called them `INTEGER` because II.0 has no
+declaration to borrow. That allocates the one word each occupies and
+compiles nothing correctly.
+
+`COMPTYPES` settles it. Apple's `ARRAYS` arm ends with a comparison II.0
+does not have:
+
+```
+SLDL 4 / LDO 57 / NEQI / LAND      { FSP1 <> BYTEPTR }
+SLDL 3 / LDO 57 / NEQI / LAND      { FSP2 <> BYTEPTR }
+SLDL 4 / LDO 58 / NEQI / LAND      { FSP1 <> WORDPTR }
+SLDL 3 / LDO 58 / NEQI / LAND      { FSP2 <> WORDPTR }
+```
+
+`FSP1` and `FSP2` are `STP`, so 57 and 58 are `STP` -- the standard-type
+pointers that sit beside `CHARPTR`, `INTPTR` and `REALPTR` in the same
+block. Declared `INTEGER` the source will not compile at all.
+
+The whole edit, against II.0's
+
+```pascal
+IF COMP AND NOT STRGTYPE(FSP1) THEN
+  COMP := (FSP1^.SIZE = FSP2^.SIZE);
+```
+
+is
+
+```pascal
+IF COMP THEN
+  IF NOT STRGTYPE(FSP1)
+     AND (FSP1 <> BYTEPTR) AND (FSP2 <> BYTEPTR)
+     AND (FSP1 <> WORDPTR) AND (FSP2 <> WORDPTR) THEN
+    COMP := (FSP1^.SIZE = FSP2^.SIZE);
+```
+
+and the **nesting is not cosmetic**. Apple's compiler emits `LAND` for
+`AND` (finding 58), so `IF COMP AND ...` would have produced a `LAND` on
+`COMP`; the binary has `SLDL 7 / FJP`, a branch. Only a nested `IF` gives
+that. Writing it flat left exactly five instructions different out of 281 --
+which is the whole method working: the difference between two readings that
+no reader would distinguish, decided by the bytes.
+
+The reason for the edit is legible from the change itself. Two array types
+of the same element type and packing but different `SIZE` are normally
+incompatible; Apple exempts arrays of `BYTE` and `WORD` from the size check,
+which is what you need if those types are to interoperate with arrays
+declared at other lengths.
+
+### 64b. Nineteen bodies verified, and CHECKEND's error-400 validation
+
+Under Apple's own 1.3 compiler, all nineteen reconstructed procedures of
+segment 1 now match Apple's p-code exactly. The four added here:
+
+```
+[1.3] PASCALCO.14 CHECKEND:  121 instructions, IDENTICAL
+[1.3] PASCALCO.21 COMPTYPES: 281 instructions, IDENTICAL
+[1.3] PASCALCO.25 FINISHSEG:  59 instructions, IDENTICAL
+[1.3] PASCALCO.27 COMPILE:    16 instructions, IDENTICAL
+```
+
+`CHECKEND` confirms finding 63c's reading of the page-end validation, which
+was reconstructed from the p-code and is Apple's, not II.0's. `FINISHSEG` is
+II.0's with one edit -- `SEGTABLE[SEG].CODELENG` becomes
+`SEGTABLE[SEGMAP[SEG]].CODELENG`, the segment-to-slot indirection of finding
+62 -- and its field displacement re-proves finding 33 once more:
+`DISKADDR,CODELENG: INTEGER` reversed puts `CODELENG` at offset 0, which is
+the `IXA 9 / STO` with no field offset that the binary has.
+
+`COMPILE` turns out to be two statements lifted out of II.0's
+`BEGIN (*PASCALCOMPILER*)` prologue:
+
+```pascal
+PROCEDURE COMPILE;
+BEGIN
+  TIME(LGTH,LOWTIME);
+  BLOCK(BLOCKBEGSYS+STATBEGSYS-[CASESY])
+END;
+```
+
+Two more constant-folding facts the emulator settled, both of which cost a
+round trip each: Apple's compiler does **not** fold `MAXCURSOR+1` into 1024
+(the binary has a plain `LDCI 1024`, so Apple's source has the literal), and
+it writes a one-character literal in a `WRITE` as a `CHAR` (`CXP 0,17`)
+where the fast tier makes it a one-character `STRING` (`CXP 0,19`).
+
+### 64c. CONSTANT: II.0's body is close but not Apple's
+
+`CONSTANT` is back to a stub, with what is known recorded on it. II.0's body
+reproduces Apple's p-code for all of it *except* the `LONGCONST` arm, where
+the binary does something II.0 does not:
+
+```
+SLDL 1 / SIND 0 / MOV 130          { a 130-word structured copy }
+SLDC 1 / STL 11                    { a FOR loop counter }
+SLDL 10 / SIND 2 / STL 12          { its limit, from the value's own field }
+SLDL 11 / SLDL 12 / LEQI / FJP     { FOR ... TO limit DO }
+  ... IXA 1 ... NGI ...            { negate word by word }
+```
+
+II.0 negates `LONGVAL[1]` alone. Apple loops over every word of the long
+constant. The frame says the same thing independently: Apple's `DATA SIZE`
+is 12, six words, and its `WITH` temporary lands at local **12**, so five
+locals are declared where II.0 declares four.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

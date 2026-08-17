@@ -345,10 +345,10 @@ VAR
   STRGPTR         : STP;
   {   56,    1 word   II.0 }
   INTRACTVPTR     : STP;
-  {   57,    1 word   ours: one word, type not recovered }
-  BYTEPTR         : INTEGER;
-  {   58,    1 word   ours: one word, type not recovered }
-  WORDPTR         : INTEGER;
+  {   57,    1 word   compared against an STP in COMPTYPES }
+  BYTEPTR         : STP;
+  {   58,    1 word   compared against an STP in COMPTYPES }
+  WORDPTR         : STP;
   {   59,    1 word   II.0 }
   NILPTR          : STP;
   {   60,    1 word   II.0 }
