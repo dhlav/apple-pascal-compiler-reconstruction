@@ -6690,7 +6690,27 @@ risking overflow. `NUMSTRING(0,LVP)` handles the string arm and
 `NUMSTRING(1,LVP)` the number arm, which is what fixes the sense of that
 phase's first parameter.
 
-**A case label cannot be `CHR(9)`.** II.0's whitespace arm is `' ',' '` --
+**A case label cannot be `CHR(9)`, and neither can a constant.** Both were
+put to Apple's compiler:
+
+```pascal
+CONST TABCH = CHR(9);        { Line 1, error 103 -- at CHR }
+  ...  CASE C OF TABCH,' ':  { same, if the CONST were allowed }
+```
+
+`error 103` is *"identifier is not of the appropriate class"*. Apple Pascal
+wants a **literal** in both places; `CHR(n)` is a function call and is
+rejected in a constant definition exactly as it is in a case label, so there
+is no way to give the character a name.
+
+One alternative does compile -- `CASE ORD(SYMBUFP^[SYMCURSOR]) OF 9,32,...`
+with integer labels throughout, which Apple's compiler accepts. It is not
+used here: it would rewrite all sixty-odd labels away from the character
+form II.0 uses, and Apple's source descends from II.0's. The literal tab
+matches what II.0 has and reproduces Apple's bytes, so it is both the
+simpler and the better-evidenced reading.
+
+**Carrying the literal tab.** II.0's whitespace arm is `' ',' '` --
 space and a literal *tab*, which the II.0 source file carries as the
 character itself. Writing it as `CHR(9)` is a function call, and Apple's
 compiler rejects it as a case label with `error 103`. So the reconstruction
