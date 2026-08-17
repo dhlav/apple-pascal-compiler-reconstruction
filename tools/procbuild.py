@@ -103,16 +103,22 @@ HEADER = re.compile(r"(?m)^[ \t]*(?:PROCEDURE|FUNCTION)\s+(\w+)")
 # that. ROUTINE and STATEMENT are lex 2, so they are declared inside
 # BODYPART; CASESTAT, FORSTATE, BODY1 and BODY3 are lex 3, inside STATEMENT.
 #
-# The numbers below are APPLE's. Ours come out five lower, and the reason
-# is finding 67: Apple's compiler is an ordinary PROGRAM, whose segment
-# procedures are numbered from 7 because 0..6 belong to the operating
-# system, while this reconstruction is a `$U-` host with the compiler as a
-# segment procedure, where they are numbered from 2. Everything else about
-# the two is identical -- same segment 1, same lex 0, same PARAM SIZE 4 --
-# and the `$U-` host is what makes USERINFO reachable at lex -1, which a
-# plain program cannot name. So the scaffold stays and SEGOFFSET records
-# the one consequence.
-SEGOFFSET = 5
+# Under `$U-` segment procedures number from 1, so PASCALCOMPILER is 1 and
+# the phases would follow at 2. They have to start at 7, because SYSTEM.PASCAL
+# ignores segments 0 and 2..6 when it loads a codefile -- those belong to the
+# operating system. `(*$NS 7*)` moves the counter, and is what Apple Pascal
+# 1.1 added in place of declaring five dummy segment procedures to fill the
+# gap. See finding 68.
+# `$NS` is Apple Pascal 1.1 and later; `ucsdpsys_compile` targets II.0/II.1
+# and rejects it. So the fast tier compiles without it and its phases come
+# out five low, which SEGOFFSET accounts for. Apple's own compiler is the
+# one that has to get this right, and it is the authority anyway.
+NS_FIRST = 7
+USE_NS = False
+
+
+def segoffset() -> int:
+    return 0 if USE_NS else NS_FIRST - 2
 #
 # Signatures are held to Apple's PARAM SIZE and to the call sites in
 # segment 1. Where a phase is called from nowhere in segment 1 its
@@ -170,8 +176,8 @@ def check_segments(ver: str, cf) -> int:
             continue
         p = next((x for x in got.procedures if x.number == 1), None)
         mine = (got.data[got.length - 2], p.lex_level if p else None)
-        if (mine[0] + SEGOFFSET, mine[1]) != want:
-            print(f"[{ver}] segment {name}: ours {mine[0]}+{SEGOFFSET}/"
+        if (mine[0] + segoffset(), mine[1]) != want:
+            print(f"[{ver}] segment {name}: ours {mine[0]}+{segoffset()}/"
                   f"lex {mine[1]}, Apple {want[0]}/lex {want[1]}")
             bad += 1
         if want[0] != num:
@@ -195,6 +201,8 @@ def render_segdecls(ver: str, decls=None, depth: int = 0) -> str:
     pad = "  " * depth
     out = []
     for num, name, hdr, kids in (SEGDECLS if decls is None else decls):
+        if USE_NS and num == NS_FIRST and depth == 0:
+            out += [pad + "(*$NS " + str(NS_FIRST) + "*)", ""]
         out.append(pad + hdr + "  { segment " + str(num) + " }")
         out.append("")
         if kids:
@@ -278,6 +286,8 @@ def write_for_emulator(ver: str, segs) -> Path:
     from a2pascal.srcfmt import expand_tabs
     from a2pascal.textfile import encode_text
 
+    global USE_NS
+    USE_NS = True
     src = expand_tabs(spliced(ver, segs))
     src = src[:-1] if src.endswith("\n") else src
     nproc = sum(len(p) for _n, _t, p in segs)
@@ -388,6 +398,10 @@ def main() -> int:
             continue
 
         if check:
+            # What is on the disk was built with `$NS`, because `--emu`
+            # turns it on. The check has to assume the same.
+            global USE_NS
+            USE_NS = True
             # Apple's own compiler produced this, in the emulator, from the
             # source `--emu` put on the disk. It is the authority: where the
             # fast tier and this disagree, this is right.

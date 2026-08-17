@@ -5471,11 +5471,9 @@ Until it is resolved, every procedure touching globals 1 or 2 is blocked.
 
 ## 60. The compiler is a SEGMENT PROCEDURE, not a PROGRAM
 
-> **Superseded by finding 67.** It is an ordinary `PROGRAM`. Every frame
-> measured below is reproduced by one, and a plain program's segment
-> procedures number from 7, which is what Apple's file has. The `$U-` host
-> stays in the reconstruction only as scaffolding for finding 63's
-> `USERINFO`, which a plain program cannot name.
+> Finding 67 briefly retracted this. **Finding 68 reinstates it in full**:
+> the structure below is right, and the segment numbering that finding 67
+> tripped over is `{$NS 7}`.
 
 
 **VERIFIED SOURCE FACT**, and it resolves finding 59's open question.
@@ -6291,7 +6289,18 @@ Twenty-two of segment 1's thirty now match. Eight stubs remain: `INSYMBOL`,
 `SEGINFO`, `CONSTANT`, `BLOCK`, `COMMENTER`, `FINDFORW`, `HOLDMOST`,
 `HOLDROUT`.
 
-## 67. The compiler is an ordinary PROGRAM after all -- finding 60 was wrong
+## 67. WITHDRAWN: "the compiler is an ordinary PROGRAM"
+
+> **Wrong, and superseded by finding 68.** The observation below is real --
+> a plain `PROGRAM` does reproduce segment 1 / lex 0 / phases from 7 -- but
+> it is not the only thing that does, and it is not what Apple used. Under
+> `$U-` the phases number from 2 *unless* `{$NS 7}` moves the counter, which
+> is exactly what Apple Pascal 1.1 added for the purpose. With it, the `$U-`
+> structure of finding 60 reproduces every segment number and every lex
+> level exactly. The reasoning below failed because it treated "dummies or
+> nothing" as the only way to close the gap.
+
+### 67a. The original (withdrawn) argument
 
 Two compilations of the same four-line program settle it:
 
@@ -6361,6 +6370,69 @@ out of those: `COMPOPTIONS` is a **`SEGMENT FUNCTION`** returning `BOOLEAN`
 (`COMMENTER` pushes one argument and two result words, then `LNOT`s the
 result), and `WRITELINKERINFO` has **no parameters** where II.0's takes
 `DECSTUFF: BOOLEAN`.
+
+## 68. {$NS 7}, and finding 60 reinstated
+
+Neil Parker's *Undocumented Secrets of Apple Pascal* documents `{$U-}`
+directly, and it settles every question findings 60 and 67 were circling.
+Under `{$U-}` the compiler switches to **system mode**:
+
+* the outermost lex level is **-1** and the main program goes in segment
+  **0**;
+* `SEGMENT PROCEDURE`s go into segments **1, 2, 3, ...**;
+* no space is reserved in the global data area for the main program's
+  arguments;
+* the error-checking defaults become **`{$G+,I-,R-,V-}`** instead of
+  `{$G-,I+,R+,V+}`.
+
+`SYSTEM.PASCAL` ignores segments 0 and 2..6 when it loads a codefile, so a
+`$U-` program's real main must be its **first `SEGMENT PROCEDURE`**, which
+becomes segment 1 -- and `SYSTEM.PASCAL` calls it with **two word-sized
+arguments**. That is `PASCALCO`, its lex 0, its `PARAM SIZE 4`, and the two
+words at globals 1 and 2 that findings 59 and 60 chased. Its locals are the
+global data segment and everything nests inside it. All of finding 60 stands.
+
+**The gap from 1 to 7 is `{$NS 7}`.** Anything beyond the first segment
+procedure has to skip to at least 7 or `SYSTEM.PASCAL` will ignore it; before
+Apple Pascal 1.1 you declared dummy segment procedures to fill the gap, and
+from 1.1 you write `(*$NS n*)`. Finding 67 concluded the `$U-` structure was
+impossible because dummies overflow the 16-slot dictionary -- true, and
+irrelevant, because `$NS` costs no slots at all.
+
+With one `(*$NS 7*)` before `COMPINIT`, Apple's own compiler puts every
+phase exactly where Apple's binary has it:
+
+```
+PASCALCO 1/lex 0   BODYPART 9/lex 1    BODY3    15/lex 3   COMPOPTI 18/lex 1
+COMPINIT 7/lex 1   ROUTINE 10/lex 2    WRITELIN 16/lex 1   NUMSTRIN 19/lex 1
+DECLARAT 8/lex 1   STATEMEN 11/lex 2   UNITPART 17/lex 1   FINISHUP 20/lex 1
+                   CASESTAT 12/lex 3
+                   FORSTATE 13/lex 3
+                   BODY1    14/lex 3
+```
+
+Fourteen segments, fourteen exact hits on both number and nesting depth, and
+all 22 reconstructed bodies still identical. `ucsdpsys_compile` rejects
+`$NS` -- it targets II.0/II.1 -- so the fast tier compiles without it and
+its phases come out five low; `procbuild.py` accounts for that and Apple's
+compiler is the authority regardless.
+
+### 68b. Two corrections that follow
+
+* **`{$I-}` is `$U-`'s default, not `$T+`'s doing.** Finding 65b got the
+  effect right -- `PRINTLINE` needs `(*$I+*)` and nothing else does -- but
+  attributed the unchecked default to `compiler.text`'s `(*$T+*)`. It is
+  `$U-`: system mode defaults to `{$G+,I-,R-,V-}`.
+* **Finding 63's `USERINFO` is exactly what `$U-` is *for*.** Parker: a
+  `$U-` program declares `SYSTEM.PASCAL`'s globals at the top level and the
+  compiler compiles correct lex -1 references to them, which a normal
+  program cannot reach at all. His byte offsets confirm the reconstruction
+  independently -- `SYSCOM` at 0, `GFILES` at 2, `USERINFO` at **14 bytes =
+  word 8** -- and his `INFOREC` listing gives `CODEFIBP` 0, `SYMFIBP` 2,
+  `ERRNUM` 4, `ERRBLK` 6, `ERRSYM` 8, `STUPID` 10, `SLOWTERM` 12, `ALTMODE`
+  14, which is finding 63's table word for word, backward field allocation
+  and all. So the host block is not scaffolding after all: it is what
+  Apple's source has.
 
 ## 16. Open questions
 
