@@ -73,8 +73,45 @@ PROCEDURE BLOCK(FSYS: SETOFSYS);
 
 { Bodies. }
 
-PROCEDURE ERROR(*ERRORNUM: INTEGER*); (*STUB*)
+PROCEDURE ERROR(*ERRORNUM: INTEGER*);
+  VAR CH: CHAR; ERRSTART: INTEGER;
+      A: PACKED ARRAY [0..179] OF CHAR;
 BEGIN
+  WITH USERINFO DO
+    IF (ERRSYM <> SYMCURSOR) OR (ERRBLK <> SYMBLK) THEN
+      BEGIN ERRBLK := SYMBLK;
+        ERRSYM := SYMCURSOR; ERRNUM := ERRORNUM;
+        IF STUPID THEN CH := 'E'
+        ELSE
+          BEGIN
+            IF NOISY THEN WRITELN(OUTPUT)
+            ELSE
+              IF LIST AND NOT CONLIST AND (ERRORNUM <= 400) THEN
+                EXIT(ERROR);
+            IF LINESTART = 0 THEN
+              WRITE(OUTPUT,SYMBUFP^:SYMCURSOR)
+            ELSE
+              BEGIN
+                ERRSTART := SCAN(-(LINESTART-1),=CHR(EOL),
+                                    SYMBUFP^[LINESTART-2])+LINESTART-1;
+                MOVELEFT(SYMBUFP^[ERRSTART],A[0],SYMCURSOR-ERRSTART);
+                WRITE(OUTPUT,A:SYMCURSOR-ERRSTART)
+              END;
+            WRITELN(OUTPUT,' <<<<');
+            WRITE(OUTPUT,'Line ',SCREENDOTS,', error ',ERRORNUM:0,':');
+            WRITE(OUTPUT,' <sp>(continue), <esc>(terminate), E(dit');
+            WRITE(OUTPUT,CHR(7));
+            REPEAT READ(KEYBOARD,CH)
+            UNTIL (CH = ' ') OR (CH = 'E') OR (CH = 'e') OR (CH = CHR(27))
+          END;
+        IF (CH = 'E') OR (CH = 'e') THEN
+          BEGIN ERRBLK := SYMBLK-2; EXIT(PASCALCOMPILER) END;
+        IF (ERRORNUM > 400) OR (CH = CHR(27)) THEN
+          BEGIN ERRBLK := 0; CLOSE(LP,LOCK); EXIT(PASCALCOMPILER) END;
+        WRITELN(OUTPUT);
+        IF NOISY THEN
+          WRITE(OUTPUT,'<',SCREENDOTS:4,'>')
+      END
 END;
 
 PROCEDURE GETNEXTPAGE;

@@ -131,6 +131,11 @@ RETYPE = {
     # so they are structure pointers, like the CHARPTR and INTPTR beside
     # them. Finding 64.
     "BYTEPTR": ("STP", "compared against an STP in COMPTYPES"),
+    # 1.3-only, and used as conditions: SWAPMORE is the test in HOLDMOST and
+    # CONLIST is negated in ERROR. `FJP` and `LNOT` on an INTEGER will not
+    # compile, so the binary is saying these are BOOLEAN.
+    "SWAPMORE": ("BOOLEAN", "the condition in HOLDMOST"),
+    "CONLIST": ("BOOLEAN", "negated in ERROR"),
     "WORDPTR": ("STP", "compared against an STP in COMPTYPES"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's

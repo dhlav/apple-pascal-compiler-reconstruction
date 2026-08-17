@@ -295,8 +295,8 @@ VAR
   ININTERFACE     : BOOLEAN;
   {   32,    1 word   II.0 }
   INMODULE        : BOOLEAN;
-  {   33,    1 word   ours: one word, type not recovered }
-  SWAPMORE        : INTEGER;
+  {   33,    1 word   the condition in HOLDMOST }
+  SWAPMORE        : BOOLEAN;
   {   34,    1 word   ours: one word, type not recovered }
   SWAPPING        : INTEGER;
   {   35,    1 word   ours: one word, type not recovered }

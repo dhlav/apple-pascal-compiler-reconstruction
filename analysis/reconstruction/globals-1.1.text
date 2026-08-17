@@ -48,7 +48,7 @@ VAR
   FLIPBYTES       : BOOLEAN;                           {   30,    1 word   II.0 }
   ININTERFACE     : BOOLEAN;                           {   31,    1 word   II.0 }
   INMODULE        : BOOLEAN;                           {   32,    1 word   II.0 }
-  SWAPMORE        : INTEGER;                           {   33,    1 word   ours: one word, type not recovered }
+  SWAPMORE        : BOOLEAN;                           {   33,    1 word   the condition in HOLDMOST }
   SWAPPING        : INTEGER;                           {   34,    1 word   ours: one word, type not recovered }
   NOLOAD          : INTEGER;                           {   35,    1 word   ours: one word, type not recovered }
   USING           : BOOLEAN;                           {   36,    1 word   II.0 }

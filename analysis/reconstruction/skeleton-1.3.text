@@ -299,8 +299,8 @@ VAR
   ININTERFACE     : BOOLEAN;
   {   33,    1 word   II.0 }
   INMODULE        : BOOLEAN;
-  {   34,    1 word   ours: one word, type not recovered }
-  SWAPMORE        : INTEGER;
+  {   34,    1 word   the condition in HOLDMOST }
+  SWAPMORE        : BOOLEAN;
   {   35,    1 word   ours: one word, type not recovered }
   SWAPPING        : INTEGER;
   {   36,    1 word   ours: one word, type not recovered }
@@ -511,8 +511,8 @@ VAR
   DISKBUF         : PACKED ARRAY [0..511] OF CHAR;
   { 1355,    1 word   ours: one word, type not recovered }
   HAS128K         : INTEGER;
-  { 1356,    1 word   ours: one word, type not recovered }
-  CONLIST         : INTEGER;
+  { 1356,    1 word   negated in ERROR }
+  CONLIST         : BOOLEAN;
   { 1357,    1 word   ours: one word, type not recovered }
   LSTOPEN         : INTEGER;
 
