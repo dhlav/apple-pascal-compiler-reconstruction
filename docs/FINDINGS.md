@@ -6521,6 +6521,69 @@ pair `LLINK, RLINK: CTP` that `ENTERID` first measured.
 Twenty-four of segment 1's thirty now match. Six stubs remain: `INSYMBOL`,
 `SEGINFO`, `CONSTANT`, `BLOCK`, `HOLDMOST`, `HOLDROUT`.
 
+## 70. BLOCK, and where SEGTABLE's ninth word went
+
+```
+[1.3] PASCALCO.26 BLOCK: 303 instructions, IDENTICAL
+```
+
+Structurally II.0's, with six edits the binary states:
+
+* **`SY IN [UNITSY,SEPARATSY]` becomes `SY = UNITSY`**, in both places.
+* **The `USES` path is gated on memory.** Where II.0 goes straight into
+  `UNITPART`, Apple writes `IF SWAPPING OR HAS128K THEN ... ELSE
+  ERROR(408)` -- units need one or the other.
+* **`ISPROG := NOT INMODULE`** is new, and so is `RESIDENT := NIL` at the
+  head of each block.
+* **`FINDFORW` returns a result.** II.0's sets `USERINFO.ERRNUM := 117`
+  itself; Apple's returns `BOOLEAN` and the caller writes `IF
+  FINDFORW(DISPLAY[TOP].FNAME) THEN ERROR(117)` (finding 69b).
+* **The linker-info branch is collapsed.** II.0 tests `DLINKERINFO AND
+  (LEVEL = 1)` then `CLINKERINFO`, writing `SEGKIND := 2` and calling
+  `WRITELINKERINFO(TRUE)` or `(FALSE)`. Apple has one test, `LINKINFO AND
+  (LEVEL = 1)`, sets `SEGKIND := 1`, and calls `WRITELINKERINFO` with no
+  argument at all -- which is why its `PARAM SIZE` is 0 (finding 67b).
+* **`RELEASE` is guarded**: `IF TOS^.DFPROCP <> OUTERBLOCK THEN
+  RELEASE(TOS^.DMARKP)`. II.0 releases unconditionally.
+
+Also gone: II.0's `IF (NOSWAP) AND (STARTINGUP)` shortcut into `BODYPART`,
+its `- [ENDSY]` on the `BODYPART` argument, and the `FINISHSEG`/`ERROR(13)`
+arms of the `INMODULE` early exit, which Apple reduces to `IF SY IN
+[ENDSY,BEGINSY] THEN EXIT(BLOCK)`.
+
+Five globals were retyped from what `BLOCK` does with them: `ISPROG`,
+`SWAPPING`, `HAS128K` and `LINKINFO` are `BOOLEAN`, and `RESIDENT` is a
+pointer -- it is assigned `NIL`, and nothing recovered yet dereferences it.
+
+### 70b. The ninth word of SEGTABLE is inside the last field list
+
+Finding 54 established that Apple's segment-table entry is nine words where
+UCSD's is eight, and `varblock.py` declared the extra word as a tenth field
+appended at the end. **It is not appended -- it is inside the last identifier
+list.** `BLOCK`'s
+
+```pascal
+SEGTABLE[SEGMAP[SEG]].SEGKIND := 1
+```
+
+compiles to `INC 8`, and under finding 33's reverse allocation only a
+three-name list puts `SEGKIND` at 8:
+
+```pascal
+RECORD DISKADDR,CODELENG: INTEGER;      { CODELENG 0, DISKADDR 1 }
+       SEGNAME: ALPHA;                  { 2..5 }
+       SEGKIND, TEXTADDR, SEGSPARE: INTEGER   { SEGSPARE 6, TEXTADDR 7, SEGKIND 8 }
+END
+```
+
+`FINISHSEG` pins the other end independently -- `SEGTABLE[...].CODELENG`
+compiles to `IXA 9` with no field offset, so `CODELENG` is 0, the reversed
+first pair. One instruction out of `BLOCK`'s 303 was the whole difference,
+and it moved a field that six earlier bodies had never touched.
+
+Twenty-five of segment 1's thirty now match. Five stubs remain: `INSYMBOL`,
+`SEGINFO`, `CONSTANT`, `HOLDMOST`, `HOLDROUT`.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

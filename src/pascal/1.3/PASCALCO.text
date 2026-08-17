@@ -507,7 +507,9 @@ PROCEDURE INSYMBOL; (*STUB*)
 BEGIN
 END;
 
-PROCEDURE BLOCK(*FSYS: SETOFSYS*); (*STUB*)
+PROCEDURE BLOCK(*FSYS: SETOFSYS*);
+  LABEL 1;
+  VAR BFSYFOUND: BOOLEAN;
 
   FUNCTION FINDFORW(FCP: CTP): BOOLEAN;
   BEGIN FINDFORW := FALSE;
@@ -526,7 +528,95 @@ PROCEDURE BLOCK(*FSYS: SETOFSYS*); (*STUB*)
         END
   END;
 
-BEGIN
+BEGIN (*BLOCK*)
+  IF (SY = UNITSY) AND NOT INMODULE THEN
+    IF SWAPPING OR HAS128K THEN
+      BEGIN
+        UNITPART(FSYS + [UNITSY,INTERSY,IMPLESY,ENDSY]);
+        IF SY = PERIOD THEN EXIT(BLOCK)
+      END
+    ELSE ERROR(408);
+  ISPROG := NOT INMODULE;
+  NEWBLOCK := TRUE;
+  REPEAT
+    IF NOT NEWBLOCK THEN
+      BEGIN
+        DP := FALSE; STMTLEV := 0; IC := 0; LINEINFO := 0;
+        IF (NOT SYSCOMP) OR (LEVEL > 1) THEN
+          IF FINDFORW(DISPLAY[TOP].FNAME) THEN ERROR(117);
+        IF INMODULE THEN
+          IF TOS^.PREVLEXSTACKP^.DFPROCP = OUTERBLOCK THEN
+            IF SY IN [ENDSY,BEGINSY] THEN EXIT(BLOCK);
+        RESIDENT := NIL;
+        IF SY = BEGINSY THEN INSYMBOL ELSE ERROR(17);
+        REPEAT
+          BODYPART(FSYS + [CASESY], TOS^.DFPROCP);
+          BFSYFOUND := (SY = TOS^.BFSY) OR (INMODULE AND (SY = ENDSY));
+          IF NOT BFSYFOUND THEN
+            BEGIN
+              IF TOS^.BFSY = SEMICOLON THEN
+                ERROR(14)  (*SEMICOLON EXPECTED*)
+              ELSE  ERROR(6);  (* PERIOD EXPECTED *)
+              SKIP(FSYS + [TOS^.BFSY]);
+              BFSYFOUND := (SY = TOS^.BFSY) OR (INMODULE AND (SY = ENDSY))
+            END
+        UNTIL (BFSYFOUND) OR (SY IN BLOCKBEGSYS);
+        IF NOT BFSYFOUND THEN
+          BEGIN
+            IF TOS^.BFSY = SEMICOLON THEN ERROR(14)
+            ELSE ERROR(6); (*PERIOD EXPECTED*)
+            DECLARATIONPART(FSYS);
+          END
+        ELSE
+          BEGIN
+            IF SY = SEMICOLON THEN INSYMBOL;
+            IF (NOT(SY IN [BEGINSY,PROCSY,FUNCSY,PROGSY])) AND
+               (TOS^.BFSY = SEMICOLON) THEN
+              IF NOT (INMODULE AND (SY = ENDSY)) THEN
+                BEGIN
+                  ERROR(6); SKIP(FSYS);
+                  DECLARATIONPART(FSYS);
+                END
+              ELSE GOTO 1
+            ELSE
+      1:      BEGIN
+                WITH TOS^ DO
+                  BEGIN
+                    IF DFPROCP <> NIL THEN
+                      DFPROCP^.INSCOPE:=FALSE;
+                    IF ISSEGMENT THEN
+                      BEGIN
+                        IF CODEINSEG THEN FINISHSEG;
+                        IF LINKINFO AND (LEVEL = 1) THEN
+                          BEGIN
+                            SEGTABLE[SEGMAP[SEG]].SEGKIND := 1;
+                            WRITELINKERINFO
+                          END;
+                        NEXTPROC:=SOLDPROC;
+                        SEG:=DOLDSEG;
+                      END;
+                    LEVEL:=DOLDLEV;
+                    TOP:=DOLDTOP;
+                    LC:=DLLC;
+                    CURPROC:=POLDPROC;
+                  END;
+                IF TOS^.DFPROCP <> OUTERBLOCK THEN RELEASE(TOS^.DMARKP);
+                TOS:=TOS^.PREVLEXSTACKP;
+                NEWBLOCK:=(SY IN [PROCSY,FUNCSY,PROGSY]);
+              END
+          END
+      END
+    ELSE
+      BEGIN DECLARATIONPART(FSYS);
+        IF LEVEL = 0 THEN
+          IF SY = UNITSY THEN
+            BEGIN
+              UNITPART(FSYS + [UNITSY,INTERSY,IMPLESY,ENDSY]);
+              IF SY IN [PROCSY,FUNCSY,PROGSY] THEN DECLARATIONPART(FSYS)
+            END
+      END;
+  UNTIL TOS = NIL;
+  FINISHSEG
 END;
 
 PROCEDURE HOLDMOST; (*STUB*)

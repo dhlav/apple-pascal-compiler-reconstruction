@@ -112,11 +112,17 @@ RETYPE = {
     # Apple's segment table entry is nine words where UCSD's is eight, and
     # the binary indexes it as SEGTABLE[slot*9]. The ninth word's purpose is
     # not recovered, so it is declared and not named.
+    # Apple's entry is nine words where UCSD's is eight, and the binary
+    # indexes it as SEGTABLE[slot*9]. The extra word is inside the LAST
+    # identifier list, not appended after it: BLOCK's
+    # `SEGTABLE[SEGMAP[SEG]].SEGKIND := 1` compiles to `INC 8`, and only a
+    # three-name list reversed puts SEGKIND at 8. FINISHSEG pins the other
+    # end -- `CODELENG` at 0, the reversed first pair. SEGSPARE is ours and
+    # its purpose is not recovered.
     "SEGTABLE": ("ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; "
-                 "SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; "
-                 "SEGSPARE: INTEGER END",
+                 "SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGSPARE: INTEGER END",
                  "Apple's entry is 9 words, indexed SEGTABLE[slot*9]; "
-                 "SEGSPARE is ours, and its purpose is not recovered"),
+                 "SEGKIND lands at 8, which BLOCK's INC 8 measures"),
     # Nibbles, not words. Every reference to SEGMAP is an `IXP 4,4` -- four
     # entries to the word, four bits each -- so its 16 words (8 in 1.1) hold
     # 64 entries (32), and what fits in four bits is a SEGRANGE. Declaring
@@ -136,6 +142,17 @@ RETYPE = {
     # compile, so the binary is saying these are BOOLEAN.
     "SWAPMORE": ("BOOLEAN", "the condition in HOLDMOST"),
     "CONLIST": ("BOOLEAN", "negated in ERROR"),
+    # More conditions, all from BLOCK: ISPROG is assigned NOT INMODULE,
+    # SWAPPING and HAS128K are ORed together, LINKINFO is ANDed with a
+    # comparison. RESIDENT is assigned NIL, so it is a pointer; nothing
+    # yet dereferences it, so what it points at is not recovered.
+    "ISPROG": ("BOOLEAN", "assigned NOT INMODULE in BLOCK"),
+    "SWAPPING": ("BOOLEAN", "ORed with HAS128K in BLOCK"),
+    "HAS128K": ("BOOLEAN", "ORed with SWAPPING in BLOCK"),
+    "LINKINFO": ("BOOLEAN", "ANDed with LEVEL = 1 in BLOCK"),
+    "RESIDENT": ("^ INTEGER",
+                 "assigned NIL in BLOCK; what it points at is not "
+                 "recovered"),
     "WORDPTR": ("STP", "compared against an STP in COMPTYPES"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's

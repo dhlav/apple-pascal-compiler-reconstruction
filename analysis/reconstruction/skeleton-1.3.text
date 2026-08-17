@@ -293,16 +293,16 @@ VAR
   LIBNOTOPEN      : BOOLEAN;
   {   30,    1 word   II.0 }
   FLIPBYTES       : BOOLEAN;
-  {   31,    1 word   ours: one word, type not recovered }
-  ISPROG          : INTEGER;
+  {   31,    1 word   assigned NOT INMODULE in BLOCK }
+  ISPROG          : BOOLEAN;
   {   32,    1 word   II.0 }
   ININTERFACE     : BOOLEAN;
   {   33,    1 word   II.0 }
   INMODULE        : BOOLEAN;
   {   34,    1 word   the condition in HOLDMOST }
   SWAPMORE        : BOOLEAN;
-  {   35,    1 word   ours: one word, type not recovered }
-  SWAPPING        : INTEGER;
+  {   35,    1 word   ORed with HAS128K in BLOCK }
+  SWAPPING        : BOOLEAN;
   {   36,    1 word   ours: one word, type not recovered }
   NOLOAD          : INTEGER;
   {   37,    1 word   II.0 }
@@ -321,8 +321,8 @@ VAR
   TINY            : BOOLEAN;
   {   44,    1 word   II.0 }
   LIST            : BOOLEAN;
-  {   45,    1 word   ours: one word, type not recovered }
-  LINKINFO        : INTEGER;
+  {   45,    1 word   ANDed with LEVEL = 1 in BLOCK }
+  LINKINFO        : BOOLEAN;
   {   46,    1 word   ours: one word, type not recovered }
   OPT_E           : INTEGER;
   {   47,    1 word   II.0 }
@@ -361,8 +361,9 @@ VAR
   LONGINTPTR      : STP;
   {   64,    1 word   II.0 }
   REALPTR         : STP;
-  {   65,    1 word   ours: one word, type not recovered }
-  RESIDENT        : INTEGER;
+  {   65,    1 word   assigned NIL in BLOCK; what it points at is not recovered
+  }
+  RESIDENT        : ^ INTEGER;
   {   66,    1 word   II.0 }
   USINGLIST       : CTP;
   {   67,    1 word   II.0 }
@@ -460,9 +461,9 @@ VAR
   {  190,  255 words  II.0 declares 150 words, Apple has 255 }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;
   {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9];
-  SEGSPARE is ours, and its purpose is not recovered }
+  SEGKIND lands at 8, which BLOCK's INC 8 measures }
   SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER;
-      SEGNAME: ALPHA; SEGKIND, TEXTADDR: INTEGER; SEGSPARE: INTEGER END;
+      SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGSPARE: INTEGER END;
   {  589,   16 words  reached only by IXP 4,4: 64 four-bit entries in 16 words }
   SEGMAP          : PACKED ARRAY [0..63] OF SEGRANGE;
   {  605,    1 word   II.0 }
@@ -509,8 +510,8 @@ VAR
   CURBYTE         : INTEGER;
   { 1099,  256 words  II.0 }
   DISKBUF         : PACKED ARRAY [0..511] OF CHAR;
-  { 1355,    1 word   ours: one word, type not recovered }
-  HAS128K         : INTEGER;
+  { 1355,    1 word   ORed with SWAPPING in BLOCK }
+  HAS128K         : BOOLEAN;
   { 1356,    1 word   negated in ERROR }
   CONLIST         : BOOLEAN;
   { 1357,    1 word   ours: one word, type not recovered }
