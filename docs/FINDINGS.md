@@ -5521,6 +5521,13 @@ Finding 55c's description of offsets 1-2 as "the outer block's parameter
 words" was therefore right about *what they are* and wrong about *whose*:
 they are `PASCALCOMPILER`'s parameters, not a program main's.
 
+**One thing here is wrong and finding 63 corrects it.** The skeleton's
+comment said the host program could declare no variables, because a segment
+procedure's variables are the global data segment and anything declared in
+the host would collide with them. It does not collide: the host block
+compiles at lex **-1**, which is a different data segment -- the operating
+system's -- and the compiler reads ten offsets in it.
+
 ### 60c. Resolved: error 400 was our `.TEXT` writer, not the restructure
 
 The fast tier compiled the restructured skeleton and gave Apple's exact
@@ -5829,6 +5836,136 @@ the binary has; "correcting" it to `(VAR FCP1; FCP)` produces the mirror
 image and fails. The rule applies when a signature is being *recovered from
 the p-code* -- `BUMPSEG`, which II.0 does not have -- and not to signatures
 taken from II.0, which need no adjustment at all.
+
+## 63. The host program's variables are the operating system's globals
+
+`PASCALCOMPILER` reaches **below lex 0**, and until now nothing in the
+reconstruction could produce those references. Sweeping every `LOD`, `STR`
+and `LDA` in both binaries for a target below the segment procedure's own
+level gives 103 references in 1.3 and 89 in 1.1, at ten distinct offsets --
+and the same ten in both releases:
+
+```
+lex -1 offset   2   LOD x2     COMPINIT
+lex -1 offset   3   LOD x81    9 procedures, all of them WRITE/WRITELN
+lex -1 offset   4   LOD x1     ERROR
+lex -1 offset   8   LOD x4     GETNEXTPAGE, WRITECODE, UNITPART
+lex -1 offset   9   LOD x1     GETNEXTPAGE
+lex -1 offset  10   LOD x2 STR x1   ERROR, PRINTLINE, WRITECODE
+lex -1 offset  11   LOD x2 STR x4   ERROR, PRINTLINE, FINISHUP
+lex -1 offset  12   LOD x2 STR x1   ERROR, PRINTLINE
+lex -1 offset  13   LOD x1     ERROR
+lex -1 offset  14   LOD x1     COMPINIT
+lex -1 offset  15   LOD x1     ERROR          (1.1 only)
+```
+
+Under `(*$U-*)` the outer block compiles at **lex -1**, which is the
+operating system's own data segment. So the host program's `VAR` block *is*
+the system's globals -- and it does not collide with the compiler's globals
+at lex 0, because they are different segments. Finding 60's skeleton comment
+said the host "declares nothing" for fear of a collision; that was wrong,
+and the frame is unchanged either way (`probe_xcompile` still gives Apple's
+`PARAM 4 / DATA 2710 / lex 0` with the declarations added).
+
+**UCSD II.0's `GLOBALS.TEXT:228-231` accounts for every offset**, laid out
+from 1:
+
+```pascal
+SYSCOM:   ^SYSCOMREC;               { 1     }
+GFILES:   ARRAY [0..5] OF FIBP;     { 2..7  -- 0=INPUT, 1=OUTPUT }
+USERINFO: INFOREC;                  { 8..   }
+```
+
+* **2** is `GFILES[0]`, INPUT. **3** is `GFILES[1]`, OUTPUT -- and all 81
+  references to it are `CXP 0,17`, `CXP 0,22` or `CXP 0,13`, which are
+  write-char, write-line and write-integer. **4** is `GFILES[2]`, KEYBOARD,
+  read exactly once, by `ERROR`, which is the one place II.0 does
+  `READ(KEYBOARD,CH)`.
+* **8 onwards is `USERINFO`**, and the record that fits is the compiler's
+  own nine-word `INFOREC` from `compglbls.text:30-35`, not the system's
+  longer one.
+
+The field mapping is an independent re-proof of finding 33, because it only
+works if identifier lists allocate **back to front** within each group while
+the groups themselves go forward:
+
+| offset | field | II.0 declaration order | what uses it |
+|---|---|---|---|
+| 8 | `WORKCODE` | 2nd of `WORKSYM,WORKCODE` | `BLOCKWRITE` in WRITECODE, UNITPART |
+| 9 | `WORKSYM` | 1st of the same list | `BLOCKREAD` in GETNEXTPAGE |
+| 10 | `ERRNUM` | 3rd of `ERRSYM,ERRBLK,ERRNUM` | `ERRNUM := ERRORNUM`; `IF ERRNUM = 0` |
+| 11 | `ERRBLK` | 2nd | four stores, which is exactly II.0's count |
+| 12 | `ERRSYM` | 1st | two loads and one store, likewise |
+| 13 | `STUPID` | 2nd of `SLOWTERM,STUPID` | `IF STUPID THEN CH := 'E'` |
+| 14 | `SLOWTERM` | 1st | COMPINIT |
+| 15 | `ALTMODE` | on its own | `UNTIL ... OR (CH = ALTMODE)` -- **1.1 only** |
+
+Eight fields, eight matches, including the store/load counts. And 15 being
+1.1-only is consistent on its own terms: 1.3's `ERROR` dropped the
+`<sp>/<esc>/E` prompt, which is the only thing that ever read `ALTMODE`.
+
+`srcskel.py` now emits the host declarations. `WRITECODE` is the body that
+measures them -- `LOD 2,10` for `USERINFO.ERRNUM` and `LOD 2,8` for
+`USERINFO.WORKCODE^` both come out right.
+
+### 63b. Fifteen bodies verified -- half of segment 1
+
+Under Apple's own 1.3 compiler, against Apple's own p-code:
+
+```
+[1.3] PASCALCO.7  ENTERID:       67 instructions, IDENTICAL
+[1.3] PASCALCO.9  SEARCHSECTION: 22 instructions, IDENTICAL
+[1.3] PASCALCO.10 SEARCHID:      99 instructions, IDENTICAL
+[1.3] PASCALCO.11 GETBOUNDS:     42 instructions, IDENTICAL
+[1.3] PASCALCO.12 BUMPSEG:       15 instructions, IDENTICAL
+[1.3] PASCALCO.13 NEWSEG:        16 instructions, IDENTICAL
+[1.3] PASCALCO.16 SKIP:          10 instructions, IDENTICAL
+[1.3] PASCALCO.17 PAOFCHAR:      20 instructions, IDENTICAL
+[1.3] PASCALCO.18 STRGTYPE:      11 instructions, IDENTICAL
+[1.3] PASCALCO.19 DECSIZE:        9 instructions, IDENTICAL
+[1.3] PASCALCO.22 GENBYTE:        9 instructions, IDENTICAL
+[1.3] PASCALCO.23 GENWORD:       35 instructions, IDENTICAL
+[1.3] PASCALCO.24 WRITECODE:     67 instructions, IDENTICAL
+```
+
+Thirteen bodies plus the two native procedures: fifteen of segment 1's
+thirty. `ENTERID`, `SEARCHID` and `WRITECODE` are UCSD II.0's, unchanged.
+
+A third fast-tier limit turned up in `ENTERID` and `SEARCHID`, alongside
+finding 58's `LAND` and finding 62b's two: indexing `DISPLAY`, whose element
+is a four-word record, Apple emits `IXA 4` and the fast tier emits `SLDC 4 /
+MPI / IXA 1`. `SEARCHID` adds a fourth -- Apple materialises a `FOR` loop's
+limit into a local (`SLDC 0 / STL 4`, which is where its `DATA SIZE` of 4
+comes from) and the fast tier keeps it on the stack.
+
+### 63c. And a sharper account of error 400
+
+Finding 60c blamed the exactly-full `.TEXT` page, correctly. Apple's
+`CHECKEND` shows there are **two** ways it could have surfaced, because
+Apple rewrote II.0's page-end test into a validation:
+
+```pascal
+IF SYMBUFP^[SYMCURSOR] = CHR(0) THEN
+  BEGIN
+    IF NOT <g37> THEN
+      BEGIN
+        SYMCURSOR := SYMCURSOR + SCAN(1024-SYMCURSOR,<>CHR(0),
+                                      SYMBUFP^[SYMCURSOR]);
+        IF SYMCURSOR <> 1024 THEN ERROR(400)
+      END;
+    GETNEXTPAGE
+  END
+ELSE LINESTART := SYMCURSOR
+```
+
+II.0 has only `IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN GETNEXTPAGE ELSE LINESTART
+:= SYMCURSOR`. Apple additionally scans the tail and **requires the rest of
+the page to be NUL**, reporting error 400 if it is not. With `SYMCURSOR` at
+1024 the test reads `SYMBUFP^[1024]`, one past the end of a `[0..1023]`
+array: whichever way that byte falls, the result is error 400 -- from this
+site if it happens to be non-zero further on, from `INSYMBOL`'s `OTHERSY` if
+the scan runs into the next page's text. The diagnosis stands and the
+mechanism is now exact.
 
 ## 16. Open questions
 

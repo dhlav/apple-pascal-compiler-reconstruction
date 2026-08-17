@@ -17,15 +17,24 @@
 (*$U-*)
 PROGRAM PASCALSYSTEM;
 
-{ The host program declares no VARIABLES. Under (*$U-*) a
-  segment procedure's own variables ARE the global data
-  segment, laid out after its parameter words, so a variable
-  here would collide with the compiler's own globals. CONST
-  and TYPE take no storage and are safe -- and the parameter
-  types have to be here, because a parameter list cannot see
-  the TYPE block of the procedure it belongs to. These four
-  restate the compiler's own CODEARRAY and SYMBUFARRAY, whose
-  bounds are the MAXCODE and MAXCURSOR below. }
+{ The host program's variables are the OPERATING SYSTEM's
+  globals. Under (*$U-*) the outer block compiles at lex -1,
+  which is the system's own data segment, so declaring here
+  does not collide with the compiler's globals at lex 0 -- the
+  two are different segments. It is also not optional: the
+  compiler reaches lex -1 at ten distinct offsets, and every
+  one of them is accounted for by UCSD II.0's GLOBALS.TEXT
+  laid out from offset 1. See finding 63.
+
+  Only what the compiler actually touches is declared, in the
+  order and at the sizes that put those ten offsets where the
+  binary has them. Everything II.0 declares after USERINFO is
+  past the last offset the compiler reads.
+
+  The parameter types have to be here too, because a parameter
+  list cannot see the TYPE block of the procedure it heads.
+  CODEARRAY and SYMBUFARRAY restate the compiler's own, bounded
+  by the MAXCODE and MAXCURSOR below. }
 
 CONST MAXCURSOR = 1023; MAXCODE = 1299;
 
@@ -33,6 +42,18 @@ TYPE SYMBUFARRAY = PACKED ARRAY [0..MAXCURSOR] OF CHAR;
      CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
      SYMBUFPTR = ^ SYMBUFARRAY;
      CODEPTR = ^ CODEARRAY;
+     PHYLE = FILE;
+     FIBP = ^ PHYLE;
+     INFOREC = RECORD
+                 WORKSYM,WORKCODE: ^ PHYLE;
+                 ERRSYM,ERRBLK,ERRNUM: INTEGER;
+                 SLOWTERM,STUPID: BOOLEAN;
+                 ALTMODE: CHAR
+               END;
+
+VAR SYSCOM: ^ INTEGER;
+    GFILES: ARRAY [0..5] OF FIBP;
+    USERINFO: INFOREC;
 
 { The operating system enters segment 1 as USERPROGRAM(NIL,NIL)
   -- two words of parameters, which is Apple's PARAM SIZE 4.
