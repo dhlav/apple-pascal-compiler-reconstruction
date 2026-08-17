@@ -71,6 +71,12 @@ PROCEDURE FINISHSEG;
 PROCEDURE BLOCK(FSYS: SETOFSYS);
   FORWARD;
 
+{ The compiler's phases. They are nested SEGMENT PROCEDUREs, declared here
+  so that every CXP in the bodies below resolves, and generated from
+  procbuild.py's SEGDECLS -- see finding 67. }
+
+{SEGMENTS}
+
 { Bodies. }
 
 PROCEDURE ERROR(*ERRORNUM: INTEGER*);

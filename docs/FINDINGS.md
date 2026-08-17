@@ -5471,6 +5471,13 @@ Until it is resolved, every procedure touching globals 1 or 2 is blocked.
 
 ## 60. The compiler is a SEGMENT PROCEDURE, not a PROGRAM
 
+> **Superseded by finding 67.** It is an ordinary `PROGRAM`. Every frame
+> measured below is reproduced by one, and a plain program's segment
+> procedures number from 7, which is what Apple's file has. The `$U-` host
+> stays in the reconstruction only as scaffolding for finding 63's
+> `USERINFO`, which a plain program cannot name.
+
+
 **VERIFIED SOURCE FACT**, and it resolves finding 59's open question.
 
 `evidence/reference/ucsd-ii0-compiler/compglbls.text` line 66:
@@ -6283,6 +6290,77 @@ Against II.0's body:
 Twenty-two of segment 1's thirty now match. Eight stubs remain: `INSYMBOL`,
 `SEGINFO`, `CONSTANT`, `BLOCK`, `COMMENTER`, `FINDFORW`, `HOLDMOST`,
 `HOLDROUT`.
+
+## 67. The compiler is an ordinary PROGRAM after all -- finding 60 was wrong
+
+Two compilations of the same four-line program settle it:
+
+```
+(*$U-*) PROGRAM P; ... SEGMENT PROCEDURE S1 ... S2 ...
+   ->  P = segment 0, lex -1;  S1 = 1, lex 0;  S2 = 2, lex 0
+PROGRAM P; ... SEGMENT PROCEDURE S1 ... S2 ...
+   ->  P = segment 1, lex  0;  S1 = 7, lex 1;  S2 = 8, lex 1
+```
+
+Apple's `SYSTEM.COMPILER` is the second: `PASCALCO` is **segment 1 at lex
+0**, its phases are **7..20 at lex 1**, and there is no segment 0 in the
+file. A plain program's segment procedures start at 7 because 0..6 belong
+to the operating system, and its main gets `PARAM SIZE 4` -- two words --
+whatever its header says. Every measurement finding 60 rested on is
+reproduced by a plain `PROGRAM`, and finding 55c, which finding 60
+overturned, was right.
+
+Finding 60's structure is not harmless, either: under `$U-` the phases
+number from 2, and the five-segment gap cannot be closed by declaring
+dummies. Empty segment procedures each take a dictionary slot, and
+`1 + 1 + 5 + 14 = 21` slots exceeds the format's 16 -- the compiler says so
+outright. `FORWARD` does not help: an undefined forward is a fatal error.
+
+**What keeps the `$U-` scaffold in place is finding 63.** The compiler reads
+`USERINFO` at lex -1, offsets 8..15, and a plain program cannot name the
+system's globals -- only a `$U-` host block can declare them. So the
+reconstruction keeps the host as **scaffolding**, and `procbuild.py` records
+the one consequence as `SEGOFFSET = 5` and checks every phase against
+Apple's number offset by it. How Apple's own source names `USERINFO` from a
+plain program is now the open question; the candidates are UCSD's
+program-parameter syntax (which `ucsdpsys_compile` will not parse at all)
+and a predeclared identifier set up by `COMPINIT`.
+
+### 67b. The phase nesting, from the lex levels
+
+The lex level of each phase's procedure 1 says how deep it is declared, and
+nothing else recovers that. Reconstructed and checked:
+
+```
+PASCALCOMPILER                 segment 1, lex 0
+  COMPINIT                       7, lex 1
+  DECLARATIONPART(FSYS)          8, lex 1
+  BODYPART(FSYS, FPROCP)         9, lex 1
+    ROUTINE(FSYS, FCP, FPROCP)  10, lex 2
+    STATEMENT(FSYS)             11, lex 2
+      CASESTATEMENT             12, lex 3
+      FORSTATEMENT              13, lex 3
+      BODY1                     14, lex 3
+      BODY3                     15, lex 3
+  WRITELINKERINFO               16, lex 1
+  UNITPART(FSYS)                17, lex 1
+  COMPOPTIONS(STOPPER): BOOLEAN 18, lex 1
+  NUMSTRING(FKIND, VAR FVP)     19, lex 1
+  FINISHUP                      20, lex 1
+```
+
+All fourteen come out at Apple's number and Apple's lex level. Moving
+`ROUTINE` out of `BODYPART` to test the check breaks six segments at once,
+because everything declared after it shifts.
+
+The signatures are held to Apple's `PARAM SIZE` and to the eight
+cross-segment call sites in segment 1 -- `CXP 7,1` and `CXP 20,1` from the
+main body, `CXP 8,1`, `CXP 9,1`, `CXP 16,1` and `CXP 17,1` from `BLOCK`,
+`CXP 18,1` from `COMMENTER` and `CXP 19,1` from `INSYMBOL`. Two things fall
+out of those: `COMPOPTIONS` is a **`SEGMENT FUNCTION`** returning `BOOLEAN`
+(`COMMENTER` pushes one argument and two result words, then `LNOT`s the
+result), and `WRITELINKERINFO` has **no parameters** where II.0's takes
+`DECSTUFF: BOOLEAN`.
 
 ## 16. Open questions
 

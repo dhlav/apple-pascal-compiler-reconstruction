@@ -92,6 +92,122 @@ def strip_targets(text: str) -> str:
 HEADER = re.compile(r"(?m)^[ \t]*(?:PROCEDURE|FUNCTION)\s+(\w+)")
 
 
+# The compiler's phases, as nested SEGMENT PROCEDUREs of PASCALCOMPILER, in
+# Apple's declaration order -- which is what fixes their segment numbers,
+# exactly as declaration order fixes procedure numbers (finding 61).
+#
+# Two things are read straight off the binary and neither is a choice. The
+# segment NUMBER is the last byte of each segment's code, and the LEX LEVEL
+# of its procedure 1 says how deep it is declared: 1 for a phase declared
+# directly in PASCALCOMPILER, 2 for one inside a phase, 3 for one inside
+# that. ROUTINE and STATEMENT are lex 2, so they are declared inside
+# BODYPART; CASESTAT, FORSTATE, BODY1 and BODY3 are lex 3, inside STATEMENT.
+#
+# The numbers below are APPLE's. Ours come out five lower, and the reason
+# is finding 67: Apple's compiler is an ordinary PROGRAM, whose segment
+# procedures are numbered from 7 because 0..6 belong to the operating
+# system, while this reconstruction is a `$U-` host with the compiler as a
+# segment procedure, where they are numbered from 2. Everything else about
+# the two is identical -- same segment 1, same lex 0, same PARAM SIZE 4 --
+# and the `$U-` host is what makes USERINFO reachable at lex -1, which a
+# plain program cannot name. So the scaffold stays and SEGOFFSET records
+# the one consequence.
+SEGOFFSET = 5
+#
+# Signatures are held to Apple's PARAM SIZE and to the call sites in
+# segment 1. Where a phase is called from nowhere in segment 1 its
+# parameters are placeholders of the right width.
+# (segment, name, header, children)
+SEGDECLS = [
+    (7, "COMPINIT", "SEGMENT PROCEDURE COMPINIT;", []),
+    (8, "DECLARAT",
+     "SEGMENT PROCEDURE DECLARATIONPART(FSYS: SETOFSYS);", []),
+    (9, "BODYPART",
+     "SEGMENT PROCEDURE BODYPART(FSYS: SETOFSYS; FPROCP: CTP);", [
+         (10, "ROUTINE",
+          "SEGMENT PROCEDURE ROUTINE(FSYS: SETOFSYS; FCP,FPROCP: CTP);", []),
+         (11, "STATEMEN", "SEGMENT PROCEDURE STATEMENT(FSYS: SETOFSYS);", [
+             (12, "CASESTAT", "SEGMENT PROCEDURE CASESTATEMENT;", []),
+             (13, "FORSTATE", "SEGMENT PROCEDURE FORSTATEMENT;", []),
+             (14, "BODY1", "SEGMENT PROCEDURE BODY1;", []),
+             (15, "BODY3", "SEGMENT PROCEDURE BODY3;", []),
+         ]),
+     ]),
+    (16, "WRITELIN", "SEGMENT PROCEDURE WRITELINKERINFO;", []),
+    (17, "UNITPART", "SEGMENT PROCEDURE UNITPART(FSYS: SETOFSYS);", []),
+    (18, "COMPOPTI",
+     "SEGMENT FUNCTION COMPOPTIONS(STOPPER: CHAR): BOOLEAN;", []),
+    (19, "NUMSTRIN",
+     "SEGMENT PROCEDURE NUMSTRING(FKIND: INTEGER; VAR FVP: CSP);", []),
+    (20, "FINISHUP", "SEGMENT PROCEDURE FINISHUP;", []),
+]
+
+
+def check_segments(ver: str, cf) -> int:
+    """Every phase at Apple's segment number, offset, and its lex level.
+
+    The lex level is the sharp part: it says how deep a phase is declared,
+    and nothing else recovers that. ROUTINE and STATEMENT come out lex 2
+    only if they are declared inside BODYPART, and CASESTAT, FORSTATE,
+    BODY1 and BODY3 lex 3 only if they are inside STATEMENT.
+    """
+    apple = {}
+    d = PascalDisk.from_file(ROOT / "evidence" / "disks" / DISKS[ver])
+    e = d.find("SYSTEM.COMPILER")
+    for s in CodeFile(d.read_blocks(e.first_block, e.blocks)).segments:
+        p = next((x for x in s.procedures if x.number == 1), None)
+        apple[s.name.upper()] = (s.data[s.length - 2],
+                                 p.lex_level if p else None)
+    bad = 0
+    for num, name in flat_segdecls():
+        want = apple.get(name.upper())
+        got = next((s for s in cf.segments if s.name.upper() == name.upper()),
+                   None)
+        if want is None or got is None:
+            print(f"[{ver}] segment {name}: "
+                  f"apple={want is not None} ours={got is not None}")
+            bad += 1
+            continue
+        p = next((x for x in got.procedures if x.number == 1), None)
+        mine = (got.data[got.length - 2], p.lex_level if p else None)
+        if (mine[0] + SEGOFFSET, mine[1]) != want:
+            print(f"[{ver}] segment {name}: ours {mine[0]}+{SEGOFFSET}/"
+                  f"lex {mine[1]}, Apple {want[0]}/lex {want[1]}")
+            bad += 1
+        if want[0] != num:
+            print(f"[{ver}] segment {name}: table says {num}, "
+                  f"Apple has {want[0]}")
+            bad += 1
+    return bad
+
+
+def flat_segdecls(decls=None):
+    """(segment number, name) for every phase, in declaration order."""
+    out = []
+    for num, name, _hdr, kids in (SEGDECLS if decls is None else decls):
+        out.append((num, name))
+        out += flat_segdecls(kids)
+    return out
+
+
+def render_segdecls(ver: str, decls=None, depth: int = 0) -> str:
+    """The phase declarations as Pascal, bodies from src/pascal/<ver>/."""
+    pad = "  " * depth
+    out = []
+    for num, name, hdr, kids in (SEGDECLS if decls is None else decls):
+        out.append(pad + hdr + "  { segment " + str(num) + " }")
+        out.append("")
+        if kids:
+            out.append(render_segdecls(ver, kids, depth + 1))
+        if hdr.endswith("FORWARD;"):
+            continue
+        body = SRC / ver / (name + ".text")
+        if body.exists():
+            out.append(body.read_text(encoding="ascii", errors="replace"))
+        out += [pad + "BEGIN", pad + "END;", ""]
+    return "\n".join(out)
+
+
 def sources(ver: str) -> list[tuple[str, str, list]]:
     """(segment, source text, declared procedures) for each segment file.
 
@@ -141,7 +257,12 @@ def spliced(ver: str, segs) -> str:
     # -- past it they are declared in the host program, where none of the
     # compiler's own types are in scope.
     at = text.rindex("\nBEGIN\nEND;")
-    return text[:at] + "\n" + "\n".join(s for _n, s, _p in segs) + text[at:]
+    body = "\n".join(s for _n, s, _p in segs)
+    # The phases are nested SEGMENT PROCEDUREs and have to be declared before
+    # anything calls them: COMMENTER's `CXP 18,1` and INSYMBOL's `CXP 19,1`
+    # will not compile otherwise. PASCALCO.text marks the spot.
+    body = body.replace("{SEGMENTS}", render_segdecls(ver))
+    return text[:at] + "\n" + body + text[at:]
 
 
 def write_for_emulator(ver: str, segs) -> Path:
@@ -288,6 +409,7 @@ def main() -> int:
                 return 1
             who = "fast tier"
 
+        bad += check_segments(ver, cf)
         for segname, _text, procs in segs:
             # Filtering by name is for reading the output, not for the
             # compile: every procedure stays declared either way, because
