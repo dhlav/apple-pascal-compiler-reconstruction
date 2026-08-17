@@ -6584,6 +6584,70 @@ and it moved a field that six earlier bodies had never touched.
 Twenty-five of segment 1's thirty now match. Five stubs remain: `INSYMBOL`,
 `SEGINFO`, `CONSTANT`, `HOLDMOST`, `HOLDROUT`.
 
+## 71. The word Apple added to SEGTABLE is SEGNUM
+
+Finding 70b found *where* the ninth word sits -- offset 6, a third name on
+the last identifier list -- and left it unnamed. It is the **segment
+number**, and three independent things say so.
+
+**The compiler reads it in exactly one place.** Sweeping both binaries for
+`LAO <SEGTABLE> / <slot> / IXA 9` and the field access that follows gives:
+
+```
+        field 0 CODELENG   COMPINIT, GETTEXT, PROCDECLARATION, FINISHSEG, UNITPART x2
+        field 1 DISKADDR   BODY3, INITSCALARS, FINISHUP
+        field 2 SEGNAME    FINISHUP, UNITDECLARATION
+1.1/1.3 field 6 SEGNUM     SEGINFO          (and FINISHUP, in 1.1 only)
+        field 7 TEXTADDR   FINISHUP
+        field 8 SEGKIND    FINISHUP, BLOCK, UNITPART
+```
+
+**`SEGINFO` puts it in bits 0..7 of the codefile's segment-info word.** Its
+four `STP` stores partition one 16-bit word exactly, and the codefile
+Apple shipped has the matching layout -- reading `SYSTEM.COMPILER`'s own
+segment dictionary at byte 256:
+
+```
+slot  1 $C701  segnum= 1  mtype=7  ver=6      <- PASCALCO
+slot  2 $C207  segnum= 7  mtype=2  ver=6      <- COMPINIT
+...
+slot 15 $C214  segnum=20  mtype=2  ver=6      <- FINISHUP
+```
+
+segment number in bits 0..7, machine type in 8..11, a spare bit at 12,
+version 6 in 13..15 -- which is `SEGINFO` store for store, including the
+literal 6 and the 0 in the spare bit. `PASCALCO`'s `mtype` is 7 where every
+other segment's is 2, because it is the one segment carrying 6502 code
+(`IDSEARCH` and `TREESEARCH`), and `SEGINFO` chooses between two machine
+types on a test involving `FLIPBYTES`.
+
+**And UCSD had no need of the field.** In II.0 a segment's dictionary slot
+*is* its number, so the table never has to record one. Apple's `SEGMAP`
+decouples them -- 64 segment numbers into 16 slots (finding 62) -- so each
+slot must say which segment occupies it. The added word and `SEGMAP` are
+two halves of the same change, and both are already present in 1.1.
+
+```pascal
+SEGTABLE: ARRAY [SEGRANGE] OF
+            RECORD
+              DISKADDR,CODELENG: INTEGER;      { CODELENG 0, DISKADDR 1 }
+              SEGNAME: ALPHA;                  { 2..5 }
+              SEGKIND, TEXTADDR, SEGNUM: INTEGER  { SEGNUM 6, TEXTADDR 7, SEGKIND 8 }
+            END;
+```
+
+II.0's list is `SEGKIND, TEXTADDR`; Apple's is the same list with one name
+appended, which under reverse allocation moves both of UCSD's fields up by
+one and puts the new one at the bottom. All 25 verified bodies still
+compile identically with the field renamed, as they must -- a name changes
+no bytes.
+
+**Still open:** nothing in the compiler is seen *writing* `SEGNUM` through
+that path, so it is set some other way -- most likely as part of a
+whole-entry store in `COMPINIT` or `DECLARATIONPART`. And `SEGINFO`'s test
+still reads bits 0..7 of its result word before anything has been stored
+there, which no reading of the source explains yet.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

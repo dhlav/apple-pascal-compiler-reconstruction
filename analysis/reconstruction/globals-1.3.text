@@ -128,7 +128,7 @@ VAR
   DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL: ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END; {  134,   52 words  II.0 }
   SEGSUSED        : ARRAY [0..3] OF INTEGER;           {  186,    4 words  ours: 4 words, shape not recovered }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;      {  190,  255 words  II.0 declares 150 words, Apple has 255 }
-  SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGSPARE: INTEGER END; {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9]; SEGKIND lands at 8, which BLOCK's INC 8 measures }
+  SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGNUM: INTEGER END; {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9]; SEGKIND at 8 (BLOCK's INC 8), SEGNUM at 6 (SEGINFO) }
   SEGMAP          : PACKED ARRAY [0..63] OF SEGRANGE;  {  589,   16 words  reached only by IXP 4,4: 64 four-bit entries in 16 words }
   COMMENT         : ^STRING;                           {  605,    1 word   II.0 }
   SYSTEMLIB       : STRING[40];                        {  606,   21 words  II.0 }

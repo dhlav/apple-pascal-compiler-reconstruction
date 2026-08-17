@@ -113,16 +113,22 @@ RETYPE = {
     # the binary indexes it as SEGTABLE[slot*9]. The ninth word's purpose is
     # not recovered, so it is declared and not named.
     # Apple's entry is nine words where UCSD's is eight, and the binary
-    # indexes it as SEGTABLE[slot*9]. The extra word is inside the LAST
-    # identifier list, not appended after it: BLOCK's
+    # indexes it as SEGTABLE[slot*9]. The extra word is a third name on the
+    # LAST identifier list, not a field appended after it: BLOCK's
     # `SEGTABLE[SEGMAP[SEG]].SEGKIND := 1` compiles to `INC 8`, and only a
     # three-name list reversed puts SEGKIND at 8. FINISHSEG pins the other
-    # end -- `CODELENG` at 0, the reversed first pair. SEGSPARE is ours and
-    # its purpose is not recovered.
+    # end -- `CODELENG` at 0, the reversed first pair.
+    #
+    # The added word is SEGNUM, at offset 6, and finding 71 identifies it:
+    # SEGINFO reads it into bits 0..7 of the codefile's segment-info word,
+    # which is where the segment dictionary keeps a segment's number. UCSD
+    # had no need of it because the slot index WAS the number; Apple's
+    # SEGMAP decouples the two, so each slot has to record which segment
+    # it holds.
     "SEGTABLE": ("ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; "
-                 "SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGSPARE: INTEGER END",
+                 "SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGNUM: INTEGER END",
                  "Apple's entry is 9 words, indexed SEGTABLE[slot*9]; "
-                 "SEGKIND lands at 8, which BLOCK's INC 8 measures"),
+                 "SEGKIND at 8 (BLOCK's INC 8), SEGNUM at 6 (SEGINFO)"),
     # Nibbles, not words. Every reference to SEGMAP is an `IXP 4,4` -- four
     # entries to the word, four bits each -- so its 16 words (8 in 1.1) hold
     # 64 entries (32), and what fits in four bits is a SEGRANGE. Declaring

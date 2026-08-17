@@ -453,9 +453,9 @@ VAR
   {  185,  150 words  II.0 }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;
   {  335,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9];
-  SEGKIND lands at 8, which BLOCK's INC 8 measures }
+  SEGKIND at 8 (BLOCK's INC 8), SEGNUM at 6 (SEGINFO) }
   SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER;
-      SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGSPARE: INTEGER END;
+      SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGNUM: INTEGER END;
   {  479,    8 words  reached only by IXP 4,4: 32 four-bit entries in 8 words }
   SEGMAP          : PACKED ARRAY [0..31] OF SEGRANGE;
   {  487,    1 word   II.0 }
