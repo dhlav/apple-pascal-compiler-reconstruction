@@ -485,8 +485,23 @@ END;
 
 PROCEDURE INSYMBOL; (*STUB*)
 
-  PROCEDURE COMMENTER(STOPPER: CHAR); (*STUB*)
+  PROCEDURE COMMENTER(STOPPER: CHAR);
+    VAR CH: CHAR; { declared and never referenced: Apple's DATA SIZE is 2
+                    and no instruction in the procedure touches it, the
+                    same as GETNEXTPAGE. II.0's COMMENTER declares CH
+                    first, so it is the likeliest survivor of the rewrite }
   BEGIN
+    SYMCURSOR := SYMCURSOR+1;
+    IF SYMBUFP^[SYMCURSOR] = '$' THEN
+      IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
+    SYMCURSOR := SYMCURSOR-1;
+    REPEAT
+      REPEAT
+        SYMCURSOR := SYMCURSOR+1;
+        WHILE SYMBUFP^[SYMCURSOR] = CHR(EOL) DO CHECKEND
+      UNTIL SYMBUFP^[SYMCURSOR] = STOPPER
+    UNTIL (SYMBUFP^[SYMCURSOR+1] = ')') OR (STOPPER = '}');
+    SYMCURSOR := SYMCURSOR+1
   END;
 
 BEGIN
@@ -494,8 +509,21 @@ END;
 
 PROCEDURE BLOCK(*FSYS: SETOFSYS*); (*STUB*)
 
-  FUNCTION FINDFORW(FCP: CTP): BOOLEAN; (*STUB*)
-  BEGIN
+  FUNCTION FINDFORW(FCP: CTP): BOOLEAN;
+  BEGIN FINDFORW := FALSE;
+    IF FCP <> NIL THEN
+      WITH FCP^ DO
+        BEGIN
+          IF KLASS IN [PROC,FUNC] THEN
+            IF PFDECKIND = DECLARED THEN
+              IF PFKIND = ACTUAL THEN
+                IF FORWDECL THEN
+                  BEGIN FINDFORW := TRUE;
+                    WRITELN(OUTPUT);
+                    WRITE(OUTPUT,NAME:8,' undefined')
+                  END;
+          IF FINDFORW(RLINK) OR FINDFORW(LLINK) THEN FINDFORW := TRUE
+        END
   END;
 
 BEGIN

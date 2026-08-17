@@ -6434,6 +6434,93 @@ compiler is the authority regardless.
   and all. So the host block is not scaffolding after all: it is what
   Apple's source has.
 
+## 69. COMMENTER and FINDFORW
+
+Both are Apple's own -- II.0 has nothing like either -- and both were
+recovered from the p-code alone.
+
+### 69a. COMMENTER
+
+```
+[1.3] PASCALCO.28 COMMENTER: 58 instructions, IDENTICAL
+```
+
+```pascal
+PROCEDURE COMMENTER(STOPPER: CHAR);
+  VAR CH: CHAR;
+BEGIN
+  SYMCURSOR := SYMCURSOR+1;
+  IF SYMBUFP^[SYMCURSOR] = '$' THEN
+    IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
+  SYMCURSOR := SYMCURSOR-1;
+  REPEAT
+    REPEAT
+      SYMCURSOR := SYMCURSOR+1;
+      WHILE SYMBUFP^[SYMCURSOR] = CHR(EOL) DO CHECKEND
+    UNTIL SYMBUFP^[SYMCURSOR] = STOPPER
+  UNTIL (SYMBUFP^[SYMCURSOR+1] = ')') OR (STOPPER = '}');
+  SYMCURSOR := SYMCURSOR+1
+END;
+```
+
+II.0 scans compiler options inline, with its own `SCANSTRING` and a long
+`CASE`. Apple's hands the whole job to segment 18 -- `CXP 18,1` -- and
+`EXIT(COMMENTER)`s if it returns false. That call is what identifies
+`COMPOPTIONS` as a **`SEGMENT FUNCTION`** returning `BOOLEAN`: one argument
+pushed, two result words reserved, and `LNOT` applied to what comes back.
+
+Two shapes had to be got exactly right, and neither is visible to a reader:
+
+* **The two `REPEAT`s are nested, not one `UNTIL A AND B`.** Written flat,
+  Apple's compiler emits `LAND` on the two halves; the binary tests the
+  first and branches, then tests the second and branches, both to the same
+  loop top. That only happens with an inner `REPEAT ... UNTIL A` inside an
+  outer `REPEAT ... UNTIL B`. Same lesson as finding 64's nested `IF`.
+* **`CH` is declared and never referenced.** Every instruction matched with
+  `DATA SIZE` 0 against Apple's 2. II.0's `COMMENTER` declares `CH` first of
+  four locals, so it is the likeliest survivor of the rewrite -- but only
+  the frame says it is there at all. That is the second such variable in the
+  segment, after `GETNEXTPAGE`'s.
+
+### 69b. FINDFORW
+
+```
+[1.3] PASCALCO.29 FINDFORW: 56 instructions, IDENTICAL
+```
+
+```pascal
+FUNCTION FINDFORW(FCP: CTP): BOOLEAN;
+BEGIN FINDFORW := FALSE;
+  IF FCP <> NIL THEN
+    WITH FCP^ DO
+      BEGIN
+        IF KLASS IN [PROC,FUNC] THEN
+          IF PFDECKIND = DECLARED THEN
+            IF PFKIND = ACTUAL THEN
+              IF FORWDECL THEN
+                BEGIN FINDFORW := TRUE;
+                  WRITELN(OUTPUT);
+                  WRITE(OUTPUT,NAME:8,' undefined')
+                END;
+        IF FINDFORW(RLINK) OR FINDFORW(LLINK) THEN FINDFORW := TRUE
+      END
+END;
+```
+
+It walks the symbol tree and reports every procedure declared `FORWARD` and
+never defined. `CIP 29` -- a call to itself at its own lexical level --
+recurses down `RLINK` then `LLINK`, in that order.
+
+The four tests are **four nested `IF`s**, not an `AND` chain: the binary has
+four separate `FJP`s to the same label. And they land on the identifier
+record exactly where finding 33's reverse allocation puts them --
+`IND 8` = `KLASS`, `IND 9` = `PFDECKIND`, `IND 13` = `PFKIND`, `IND 15` =
+`FORWDECL` -- with `SIND 4` = `RLINK` and `SIND 5` = `LLINK`, the reversed
+pair `LLINK, RLINK: CTP` that `ENTERID` first measured.
+
+Twenty-four of segment 1's thirty now match. Six stubs remain: `INSYMBOL`,
+`SEGINFO`, `CONSTANT`, `BLOCK`, `HOLDMOST`, `HOLDROUT`.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
