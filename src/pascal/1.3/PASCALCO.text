@@ -46,7 +46,7 @@ PROCEDURE NEWSEG(FNEWSEG: BOOLEAN);
   FORWARD;
 PROCEDURE CHECKEND;
   FORWARD;
-PROCEDURE SEGINFO(FSEG: INTEGER; VAR FADDR,FLENG: INTEGER);
+FUNCTION SEGINFO(FSEG: INTEGER): INTEGER;
   FORWARD;
 PROCEDURE SKIP(FSYS: SETOFSYS);
   FORWARD;
@@ -312,8 +312,28 @@ BEGIN (* CHECKS FOR THE END OF THE PAGE *)
   IF DP THEN LINEINFO := LC ELSE LINEINFO := IC
 END;
 
-PROCEDURE SEGINFO(*FSEG: INTEGER; VAR FADDR,FLENG: INTEGER*); (*STUB*)
+FUNCTION SEGINFO(*FSEG: INTEGER): INTEGER*);
+{ The word Apple 1.3 added to the codefile's segment dictionary: segment
+  number in bits 0..7, machine type in 8..11, one unused bit, version in
+  13..15. `codefile.py` reads the same layout out of the file, from the
+  other side. }
+  TYPE SEGINFOREC = PACKED RECORD CASE INTEGER OF
+                      0: (WORDVAL: INTEGER);
+                      1: (SEGNUM: 0..255; MTYPE: 0..15;
+                          UNUSED: 0..1; VERSION: 0..7);
+                      2: (BYTES: PACKED ARRAY [0..1] OF 0..255)
+                    END;
+  VAR LMSB: BOOLEAN; LINFO: SEGINFOREC;
 BEGIN
+  LINFO.WORDVAL := 0;
+  LINFO.MTYPE := 2;
+  LMSB := LINFO.BYTES[0] <> 0;
+  IF FLIPBYTES THEN LMSB := LMSB = FALSE;
+  IF LMSB THEN LINFO.MTYPE := 1;
+  LINFO.SEGNUM := SEGTABLE[FSEG].SEGNUM;
+  LINFO.UNUSED := 0;
+  LINFO.VERSION := 6;
+  SEGINFO := LINFO.WORDVAL
 END;
 
 PROCEDURE SKIP(*FSYS: SETOFSYS*);

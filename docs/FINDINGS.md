@@ -6859,7 +6859,111 @@ the compiler's heap is allocated forward and the node is the most recent
 one, so the words past it are unallocated at the moment of the copy.
 
 Twenty-seven of segment 1's thirty now match. Three stubs remain:
-`SEGINFO`, `HOLDMOST`, `HOLDROUT`.
+`SEGINFO`, `HOLDMOST`, `HOLDROUT`. (`SEGINFO` falls in finding 74.)
+
+## 74. SEGINFO is a function, and it builds the 1.3 dictionary word
+
+**VERIFIED BINARY FACT.** `PASCALCO.15 SEGINFO` now compiles to 47
+instructions identical to Apple's. Twenty-eight of segment 1's thirty.
+
+### 74a. The signature was wrong
+
+The forward block carried `PROCEDURE SEGINFO(FSEG: INTEGER; VAR
+FADDR,FLENG: INTEGER)`, a guess from the name. The frame says otherwise:
+`PARAM SIZE 6`, three words, and the last thing the body does is `SLDL 5 /
+STL 1` -- a store into local 1, which for a procedure would be a parameter
+and for a function is the result. A UCSD function reserves **two** words for
+its result regardless of the result's actual size (`COMPTYPES` returns
+`BOOLEAN` and also has two), so three words is two of result plus one
+parameter:
+
+```pascal
+FUNCTION SEGINFO(FSEG: INTEGER): INTEGER;
+```
+
+`FSEG` is local 3, and it indexes `SEGTABLE` with `IXA 9 / SIND 6` --
+Apple's stride, and `SEGNUM` at offset 6, exactly as finding 71 has it.
+
+### 74b. The result is the segment dictionary's SEGINFO word
+
+`DATA SIZE 4` is two locals: a `BOOLEAN` at 4 and, at 5, a word that gets
+written four times with `STP`. The four stores partition the word exactly:
+
+| width | right bit | bits | value |
+|---|---|---|---|
+| 8 | 0 | 0..7 | `SEGTABLE[FSEG].SEGNUM` |
+| 4 | 8 | 8..11 | 2, or 1 |
+| 1 | 12 | 12 | 0 |
+| 3 | 13 | 13..15 | 6 |
+
+That is the word Apple 1.3 added to the codefile's segment dictionary, and
+`codefile.py` has read the same layout out of the file since long before
+this procedure was reconstructed -- "bits 0-7 segnum, bits 8-11 mtype, bits
+13-15 version". The two sides were derived independently and agree.
+
+**Incidentally this fixes the operand order for `STP`.** The disassembler
+prints the three words below the value as pushed, and only one reading
+partitions 16 bits: the *last* push is the right bit and the one before it
+is the field width. Read the other way round, the `SLDC 8 / SLDC 0` store
+would have width 0.
+
+### 74c. A function cannot return a record, so the record has a word variant
+
+The obvious source -- a `PACKED RECORD` local returned directly -- does not
+compile. Apple's own compiler answers `error 120` on
+
+```pascal
+FUNCTION F(FSEG: INTEGER): SEGINFOREC;
+```
+
+*result type of function must be scalar, subrange or pointer.* So the word
+has to be reached through a variant, which is also what `SLDC 0 / STL 5`
+(clearing the whole word) and `SLDL 5 / STL 1` (returning it) require:
+
+```pascal
+TYPE SEGINFOREC = PACKED RECORD CASE INTEGER OF
+                    0: (WORDVAL: INTEGER);
+                    1: (SEGNUM: 0..255; MTYPE: 0..15;
+                        UNUSED: 0..1; VERSION: 0..7);
+                    2: (BYTES: PACKED ARRAY [0..1] OF 0..255)
+                  END;
+```
+
+The three variants are each forced by a distinct instruction -- the word by
+`STL 5`/`SLDL 5`, the bit fields by the four `STP`s, and the byte array by
+the `LDB` in 74d. The **field names** are not recoverable from p-code;
+`SEGNUM`, `MTYPE` and `VERSION` are the documented names for this word's
+fields and are used here, `WORDVAL`, `UNUSED` and `BYTES` are
+**SPECULATION** and cost nothing, since no identifier reaches the codefile.
+Whether Apple declared the type inside the function or among the globals is
+likewise invisible; it is local here because nothing else uses it.
+
+### 74d. The mystery read is dead code, and it is Apple's
+
+The open question from the earlier pass -- *"SEGINFO reads bits 0..7 of its
+result word before anything is stored there"* -- is now pinned down
+mechanically. The instruction is `LLA 5 / SLDC 0 / LDB`, a **byte** load,
+not a packed-field load: reading `LINFO.SEGNUM` compiles to `LDP`, and only
+indexing a byte array gives `LDB`. So the source is `LINFO.BYTES[0]`.
+
+What it computes is nothing. The word was cleared two statements earlier and
+only bits 8..11 have been written, so byte 0 is 0 and `LMSB` is always
+`FALSE`:
+
+```pascal
+LINFO.WORDVAL := 0;
+LINFO.MTYPE := 2;
+LMSB := LINFO.BYTES[0] <> 0;
+IF FLIPBYTES THEN LMSB := LMSB = FALSE;
+IF LMSB THEN LINFO.MTYPE := 1;
+```
+
+The net effect is `MTYPE := 2, or 1 when FLIPBYTES` -- P-code LSB normally,
+P-code MSB when the compiler is byte-flipping its output. The three
+statements that get there are a residue of something else. This is Apple's
+code, not a reconstruction artifact: the bytes are identical, including the
+`SLDC 0 / EQU BOOL` that says Apple wrote `LMSB = FALSE` where `NOT LMSB`
+would have compiled to a single `LNOT`.
 
 ## 16. Open questions
 
