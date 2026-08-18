@@ -6736,6 +6736,131 @@ order.
 Twenty-six of segment 1's thirty now match. Four stubs remain: `SEGINFO`,
 `CONSTANT`, `HOLDMOST`, `HOLDROUT`.
 
+## 73. CONSTANT, and a field list read back-to-front
+
+**VERIFIED BINARY FACT.** `PASCALCO.20 CONSTANT` now compiles to 320
+instructions identical to Apple's, under Apple's own 1.3 compiler.
+
+II.0's body is right for everything except the two long-integer arms, and
+one of the two is a bug II.0 shipped and Apple fixed.
+
+### 73a. The extra local is a `FOR` counter
+
+Finding 64c read the frame right: Apple's `DATA SIZE` is 12 (six words) and
+the `WITH LCP^` temporary lands at local **12**, so five locals are declared
+where II.0 declares four. The fifth is an `INTEGER` at local 11, and it is a
+loop counter -- `SLDC 1 / STL 11`, `SLDL 11 / SLDL 12 / LEQI`, `SLDL 11 /
+SLDC 1 / ADI / STL 11`. A UCSD `FOR` counter has to be a declared variable,
+which is why it is a local and not a temporary; the *limit* is a temporary
+and reuses local 12, the same slot the `WITH` uses.
+
+Local order follows the declaration groups going forward -- `LSP` 7, `LCP`
+8, `SIGN` 9, `LVP` 10 -- so the new one is declared last:
+
+```pascal
+VAR LSP: STP; LCP: CTP; SIGN: (NONE,POS,NEG);
+    LVP: CSP; I: INTEGER;
+```
+
+Its name is not recoverable from p-code; `I` is a **SPECULATION** that
+costs nothing, since the identifier does not reach the codefile.
+
+### 73b. `LLENG,LLAST` allocates back-to-front, and Apple's loop wants LLENG
+
+The negation loop reads its limit with `SIND 2` and addresses the array
+with `INC 3`. Writing II.0's `LLAST` produced `SIND 1` instead -- the only
+divergence in the whole procedure, in both arms.
+
+`CONSTREC`'s `LONG` variant is
+
+```pascal
+LONG: (LLENG,LLAST: INTEGER; LONGVAL: ARRAY[1..9] OF INTEGER);
+```
+
+with the named tag `CCLASS` at offset 0. That accounts for `LONGVAL` at 3
+and for the `NEW(LVP,LONG)` size of 12 words, both of which matched from the
+start. It leaves offsets 1 and 2 for `LLENG` and `LLAST` -- and **finding
+33's reverse allocation applies to a record field list**, so the list
+`LLENG,LLAST` puts `LLAST` at 1 and `LLENG` at 2.
+
+So Apple's `SIND 2` is `LLENG`, and the loop is
+
+```pascal
+FOR I := 1 TO LVP^.LLENG DO
+  LVP^.LONGVAL[I] := -LVP^.LONGVAL[I];
+```
+
+which is also the reading that makes sense: `LLENG` is how many words the
+long constant occupies, and every one of them is negated. This is an
+independent confirmation of finding 33 from a record rather than a `VAR`
+block -- the check could have failed and did, once, before the field was
+corrected.
+
+The same shape appears twice, once on `LVP^` in the `IDENT` arm and once on
+`VAL.VALP^` in the `LONGCONST` arm.
+
+### 73c. II.0's LONGCONST arm never handled an unsigned long constant
+
+II.0 has the entire arm inside the sign test:
+
+```pascal
+IF SY = LONGCONST THEN
+  BEGIN
+    IF SIGN = NEG THEN
+      BEGIN VAL.VALP^.LONGVAL[1] := - VAL.VALP^.LONGVAL[1];
+        NEW(LSP,LONGINT);
+        LSP^.SIZE := DECSIZE(LGTH);
+        ...
+      END
+  END
+```
+
+so a positive long constant falls out with `LSP` still `NIL`, `FVALU`
+unset, and no `INSYMBOL` -- the scanner does not advance. Apple's `FJP` at
+`$0AD5` and the loop exit both land on `$0B00`, where the `NEW` is, so only
+the negation is conditional:
+
+```pascal
+IF SY = LONGCONST THEN
+  BEGIN
+    IF SIGN = NEG THEN
+      FOR I := 1 TO VAL.VALP^.LLENG DO
+        VAL.VALP^.LONGVAL[I] := -VAL.VALP^.LONGVAL[I];
+    NEW(LSP,LONGINT);
+    LSP^.SIZE := DECSIZE(LGTH);
+    LSP^.FORM := LONGINT;
+    FVALU := VAL;
+    INSYMBOL
+  END
+```
+
+### 73d. The named-constant arm copies the whole record first
+
+II.0 negates in place through a fresh node whose class it sets by hand.
+Apple allocates the `LONG` variant, copies the source node over it whole,
+then negates:
+
+```pascal
+BEGIN NEW(LVP,LONG);
+  LVP^ := FVALU.VALP^;
+  FOR I := 1 TO LVP^.LLENG DO
+    LVP^.LONGVAL[I] := -LVP^.LONGVAL[I];
+  FVALU.VALP := LVP
+END
+```
+
+`NEW(LVP,LONG)` is `SLDC 12`, the size of the `LONG` variant, but the
+record assignment is `MOV 130` -- the size of the *whole* variant record,
+which is what the `STRG` arm needs and what the untagged `NEW(LVP)` in the
+string branch allocates. **Apple's compiler copies 130 words into a
+12-word node.** The overrun is real and is Apple's, not a reconstruction
+artifact: the bytes are identical. It is harmless in practice only because
+the compiler's heap is allocated forward and the node is the most recent
+one, so the words past it are unallocated at the moment of the copy.
+
+Twenty-seven of segment 1's thirty now match. Three stubs remain:
+`SEGINFO`, `HOLDMOST`, `HOLDROUT`.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

@@ -337,13 +337,98 @@ BEGIN DECSIZE := (I + 3) DIV 4 + 1
 END;
 
 PROCEDURE CONSTANT(*FSYS: SETOFSYS; VAR FSP: STP; VAR FVALU: VALU*);
-                                                              (*STUB*)
-{ II.0's body is right for all of this except the LONGCONST arm, which
-  Apple rewrote: the binary negates a long constant with a FOR loop over
-  its words and a 130-word MOV, where II.0 negates LONGVAL[1] alone. Apple
-  also has one more local than II.0 declares -- its WITH temporary lands at
-  12, not 11. See finding 64c. }
-BEGIN
+  VAR LSP: STP; LCP: CTP; SIGN: (NONE,POS,NEG);
+      LVP: CSP; I: INTEGER;
+BEGIN LSP := NIL; FVALU.IVAL := 0;
+  IF NOT(SY IN CONSTBEGSYS) THEN
+    BEGIN ERROR(50); SKIP(FSYS+CONSTBEGSYS) END;
+  IF SY IN CONSTBEGSYS THEN
+    BEGIN
+      IF SY = STRINGCONST THEN
+        BEGIN
+          IF LGTH = 1 THEN LSP := CHARPTR
+          ELSE
+            BEGIN
+              NEW(LSP,ARRAYS,TRUE,TRUE);
+              LSP^ := STRGPTR^;
+              LSP^.MAXLENG := LGTH;
+              LSP^.INXTYPE := NIL;
+              NEW(LVP);
+              LVP^ := VAL.VALP^;
+              VAL.VALP := LVP
+            END;
+          FVALU := VAL; INSYMBOL
+        END
+      ELSE
+        BEGIN
+          SIGN := NONE;
+          IF (SY = ADDOP) AND (OP IN [PLUS,MINUS]) THEN
+            BEGIN IF OP = PLUS THEN SIGN := POS ELSE SIGN := NEG;
+              INSYMBOL
+            END;
+          IF SY = IDENT THEN
+            BEGIN SEARCHID([KONST],LCP);
+              WITH LCP^ DO
+                BEGIN LSP := IDTYPE; FVALU := VALUES END;
+              IF SIGN <> NONE THEN
+                IF LSP = INTPTR THEN
+                  BEGIN IF SIGN = NEG THEN
+                    FVALU.IVAL := -FVALU.IVAL END
+                ELSE
+                  IF LSP = REALPTR THEN
+                    BEGIN
+                      IF SIGN = NEG THEN
+                        BEGIN NEW(LVP,REEL);
+                          LVP^.CCLASS := REEL;
+                          LVP^.RVAL := -FVALU.VALP^.RVAL;
+                          FVALU.VALP := LVP;
+                        END
+                    END
+                  ELSE
+                    IF COMPTYPES(LSP,LONGINTPTR) THEN
+                      BEGIN
+                        IF SIGN = NEG THEN
+                          BEGIN NEW(LVP,LONG);
+                            LVP^ := FVALU.VALP^;
+                            FOR I := 1 TO LVP^.LLENG DO
+                              LVP^.LONGVAL[I] := -LVP^.LONGVAL[I];
+                            FVALU.VALP := LVP
+                          END
+                      END
+                    ELSE ERROR(105);
+              INSYMBOL;
+            END
+          ELSE
+            IF SY = INTCONST THEN
+              BEGIN IF SIGN = NEG THEN VAL.IVAL := -VAL.IVAL;
+                LSP := INTPTR; FVALU := VAL; INSYMBOL
+              END
+            ELSE
+              IF SY = REALCONST THEN
+                BEGIN IF SIGN = NEG THEN
+                        VAL.VALP^.RVAL := -VAL.VALP^.RVAL;
+                  LSP := REALPTR; FVALU := VAL; INSYMBOL
+                END
+              ELSE
+                IF SY = LONGCONST THEN
+                  BEGIN
+                    IF SIGN = NEG THEN
+                      FOR I := 1 TO VAL.VALP^.LLENG DO
+                        VAL.VALP^.LONGVAL[I] :=
+                                            -VAL.VALP^.LONGVAL[I];
+                    NEW(LSP,LONGINT);
+                    LSP^.SIZE := DECSIZE(LGTH);
+                    LSP^.FORM := LONGINT;
+                    FVALU := VAL;
+                    INSYMBOL
+                  END
+                ELSE
+                  BEGIN ERROR(106); SKIP(FSYS) END
+        END;
+      IF NOT (SY IN FSYS) THEN
+        BEGIN ERROR(6); SKIP(FSYS) END
+    END;
+  FSP := LSP
 END;
 
 FUNCTION COMPTYPES(*FSP1,FSP2: STP) : BOOLEAN*);
