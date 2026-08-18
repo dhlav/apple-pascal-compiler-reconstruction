@@ -6965,6 +6965,104 @@ code, not a reconstruction artifact: the bytes are identical, including the
 `SLDC 0 / EQU BOOL` that says Apple wrote `LMSB = FALSE` where `NOT LMSB`
 would have compiled to a single `LNOT`.
 
+## 75. FINISHUP, the first phase segment, and a constant that doubled
+
+**VERIFIED BINARY FACT.** `FINISHUP`, segment 20, compiles to 323
+instructions identical to Apple's. It is the first of the fourteen phases
+to be reconstructed, and the first procedure verified that is not in
+segment 1.
+
+In UCSD II.0 it is not a procedure at all. It is the tail of
+`PASCALCOMPILER`'s own body -- `block.text:120-163`, from `IF SY <> PERIOD
+THEN ERROR(21)` to the last `WRITECODE(TRUE)`. Apple lifted it into a
+`SEGMENT PROCEDURE` so the code is not resident while the compile runs.
+
+### 75a. MAXCODE 1299 -> 1999: the code buffer doubled
+
+II.0 declares
+
+```pascal
+CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
+```
+
+with `MAXCODE = 1299`, which is 650 words. **1.1 asks `NEW(CODEP)` for
+exactly 650**, at all three of its call sites. **1.3 asks for 1000**, at
+all three of its. 1000 words is 2000 bytes, so 1.3's bound is 1999.
+
+This is the cleanest sort of constant evidence there is: the same
+instruction in the same three places in both releases, differing only in
+the operand, and one of the two operands is the arithmetic of a constant we
+already had from II.0. It is now in `applesrc.py`'s `CONSTS` alongside
+`MAXJTAB` and `MAXPROCNUM`.
+
+### 75b. Apple's edits to II.0's tail
+
+Six, and no more:
+
+1. **`UNITWRITE(3,IC,7)` is gone.** II.0 has it between the `TIME` call and
+   the linker-info test; 1.3's `FJP` on `LINKINFO` follows `SRO 97`
+   directly.
+2. **`DLINKERINFO OR CLINKERINFO` collapsed to one flag.** Apple tests a
+   single global, `LINKINFO`.
+3. **`SEGTABLE[SEG]` became `SEGTABLE[SEGMAP[SEG]]`.** The `IXP 4,4 / LDP`
+   is the packed nibble lookup of finding 70; `SEG` no longer indexes the
+   table directly.
+4. **`WRITELINKERINFO` lost its argument.** II.0 passes `TRUE`; the `CXP
+   16,1` pushes nothing.
+5. **`RELEASE(MARKP)` and two `CLOSE`s were added** before the summary is
+   printed -- the symbol table goes back to the heap, then `NEW(CODEP)`
+   takes a clean buffer for the dictionary.
+6. **The segment names are written with one `MOVELEFT`.** II.0 has `FOR
+   LGTH := 1 TO 8 DO GENBYTE(ORD(SEGNAME[LGTH]))`; Apple moves eight bytes
+   into `CODEP^[IC]` and adds 8 to `IC` itself.
+
+### 75c. The dictionary grew, and the padding is now a loop with a check
+
+II.0 writes the segment dictionary as a fixed 256 words and pads with a
+counted loop whose length is arithmetic on `MAXSEG`:
+
+```pascal
+FOR LGTH := 1 TO 256 - 8*(MAXSEG + 1) - 40 DO GENWORD(0);
+```
+
+Apple adds a sixteen-word `SEGINFO` array (finding 74) and a four-word
+`SEGSUSED`, which would overrun that arithmetic, and replaces it with a
+bound and a guard:
+
+```pascal
+IF IC >= 432 THEN ERROR(407);
+WHILE IC < 432 DO GENBYTE(0);
+```
+
+432 plus the 80-byte comment is 512, the block. The `ERROR(407)` is a real
+check on Apple's own layout: add one more array to the dictionary and the
+compiler says so rather than writing past the block.
+
+`SEGSUSED` is written through `PROCTABLE`: `MOVELEFT(SEGSUSED,PROCTABLE,8)`
+and then four `GENWORD(PROCTABLE[i])`. The copy is needed because
+**`SEGSUSED` is a `SET`, not the `ARRAY [0..3] OF INTEGER` the VAR block
+currently declares** -- `BODY3` compares it with `NEQ SET` against `[]`.
+A set cannot be indexed, so Apple lands it in a dead array and writes the
+words out of that. The declaration is left alone here because `FINISHUP`
+only `MOVELEFT`s it and cannot tell the difference; `BODY3` is what will
+force it.
+
+### 75d. The harness now compiles a phase's own body
+
+A phase's body is **procedure 1 of its segment** -- the segment procedure
+itself -- and `sources()` numbers the procedures it reads from 2, because
+procedure 1 is never declared in those files. So phase bodies get their own
+directory, `src/pascal/<ver>/phases/`, read by `phase_body()` and diffed by
+`report_phases()`. They are not beside `PASCALCO.text` because `sources()`
+globs that directory and would splice them a second time at the outer
+level.
+
+Thirteen phases remain. The four under `STATEMENT` -- `CASESTAT`,
+`FORSTATE`, `BODY1`, `BODY3` -- read their enclosing frames with `LOD 1,n`
+and `LOD 2,n`, so none of them can be written before `BODYPART` and
+`STATEMENT` have their locals. That is also what still blocks `HOLDMOST`
+and `HOLDROUT`, the last two stubs in segment 1.
+
 ## 16. Open questions
 
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by

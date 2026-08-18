@@ -196,6 +196,24 @@ def flat_segdecls(decls=None):
     return out
 
 
+def phase_body(ver: str, name: str) -> str | None:
+    """A phase segment's own source, or None while it is still empty.
+
+    Phase bodies live in `src/pascal/<ver>/phases/` and not beside
+    `PASCALCO.text`, because `sources()` globs that directory and would
+    splice anything there a second time at the outer level.
+
+    The file is the whole segment procedure from its own declarations down
+    to its `END;` -- procedure 1 of the segment is the segment procedure
+    itself, so unlike the files `sources()` reads there is nothing above it
+    to declare.
+    """
+    path = SRC / ver / "phases" / (name + ".text")
+    if not path.exists():
+        return None
+    return path.read_text(encoding="ascii", errors="replace").rstrip("\n")
+
+
 def render_segdecls(ver: str, decls=None, depth: int = 0) -> str:
     """The phase declarations as Pascal, bodies from src/pascal/<ver>/."""
     pad = "  " * depth
@@ -209,10 +227,13 @@ def render_segdecls(ver: str, decls=None, depth: int = 0) -> str:
             out.append(render_segdecls(ver, kids, depth + 1))
         if hdr.endswith("FORWARD;"):
             continue
-        body = SRC / ver / (name + ".text")
-        if body.exists():
-            out.append(body.read_text(encoding="ascii", errors="replace"))
-        out += [pad + "BEGIN", pad + "END;", ""]
+        body = phase_body(ver, name)
+        if body is not None:
+            # The file supplies the statement part too, so there is no
+            # empty one to add after it.
+            out += [body, ""]
+        else:
+            out += [pad + "BEGIN", pad + "END;", ""]
     return "\n".join(out)
 
 
@@ -353,25 +374,57 @@ def report(ver: str, segname: str, procs, mine, who: str) -> int:
             bad += 1
             continue
 
-        frame = ((a.param_size, a.data_size, a.lex_level)
-                 == (b.param_size, b.data_size, b.lex_level))
-        la = [strip_targets(x) for x in listing(apple, a)]
-        lb = [strip_targets(x) for x in listing(mine, b)]
-        if frame and la == lb:
-            print(f"[{ver}] {segname}.{num} {name}: {len(la)} instructions, "
-                  f"IDENTICAL  ({who})")
-            continue
-        bad += 1
-        print(f"[{ver}] {segname}.{num} {name}: DIFFERS  ({who})")
-        if not frame:
-            print(f"    frame: Apple param {a.param_size} / data "
-                  f"{a.data_size} / lex {a.lex_level}, ours param "
-                  f"{b.param_size} / data {b.data_size} / lex {b.lex_level}")
-        for k in range(max(len(la), len(lb))):
-            x = la[k] if k < len(la) else "-"
-            y = lb[k] if k < len(lb) else "-"
-            print(f"    {'  ' if x == y else '->'} {x:<24} {y}")
+        bad += diff_proc(f"[{ver}] {segname}.{num} {name}",
+                         apple, a, mine, b, who)
     return bad
+
+
+def diff_proc(label: str, apple, a, mine, b, who: str) -> int:
+    """One procedure against Apple's. Prints, and returns 1 if it differs."""
+    frame = ((a.param_size, a.data_size, a.lex_level)
+             == (b.param_size, b.data_size, b.lex_level))
+    la = [strip_targets(x) for x in listing(apple, a)]
+    lb = [strip_targets(x) for x in listing(mine, b)]
+    if frame and la == lb:
+        print(f"{label}: {len(la)} instructions, IDENTICAL  ({who})")
+        return 0
+    print(f"{label}: DIFFERS  ({who})")
+    if not frame:
+        print(f"    frame: Apple param {a.param_size} / data "
+              f"{a.data_size} / lex {a.lex_level}, ours param "
+              f"{b.param_size} / data {b.data_size} / lex {b.lex_level}")
+    for k in range(max(len(la), len(lb))):
+        x = la[k] if k < len(la) else "-"
+        y = lb[k] if k < len(lb) else "-"
+        print(f"    {'  ' if x == y else '->'} {x:<24} {y}")
+    return 1
+
+
+def report_phases(ver: str, cf, who: str) -> tuple[int, int, int]:
+    """Diff each written phase's own body -- procedure 1 of its segment.
+
+    `sources()` numbers a file's procedures from 2, because procedure 1 of
+    a segment is the segment procedure itself and is not declared in the
+    file it reads. For a phase that procedure *is* the body worth checking,
+    so it is checked here instead.
+    """
+    done = stubs = bad = 0
+    for _num, name in flat_segdecls():
+        if phase_body(ver, name) is None:
+            stubs += 1
+            continue
+        done += 1
+        apple = apple_segment(ver, name)
+        mine = cf.segment(name)
+        a = next((x for x in apple.procedures if x.number == 1), None)
+        b = next((x for x in mine.procedures if x.number == 1), None)
+        if a is None or b is None:
+            print(f"[{ver}] {name}.1: not found "
+                  f"(apple={a is not None}, ours={b is not None})")
+            bad += 1
+            continue
+        bad += diff_proc(f"[{ver}] {name}.1 {name}", apple, a, mine, b, who)
+    return done, stubs, bad
 
 
 def main() -> int:
@@ -433,6 +486,10 @@ def main() -> int:
             done += sum(1 for _n, s in shown if not s)
             stubs += sum(1 for _n, s in shown if s)
             bad += report(ver, segname, shown, cf.segment(segname), who)
+        pdone, pstubs, pbad = report_phases(ver, cf, who)
+        done += pdone
+        stubs += pstubs
+        bad += pbad
 
     if emu:
         return 0

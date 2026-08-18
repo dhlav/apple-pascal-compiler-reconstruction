@@ -6,6 +6,7 @@
 
     MAXJTAB 24 -> 36   { finding 40a; 1.1 keeps 24 }
     MAXPROCNUM 149 -> 254   { finding 40; 1.1 keeps 149 }
+    MAXCODE 1299 -> 1999   { finding 75; 1.1 keeps 1299 }
     dropped PUBLIC   { finding 54b }
     dropped IMPORTED   { finding 54b }
     removed 2 semicolon(s) left before `)` by the above
@@ -38,7 +39,7 @@ PROGRAM PASCALSYSTEM;
   CODEARRAY and SYMBUFARRAY restate the compiler's own, bounded
   by the MAXCODE and MAXCURSOR below. }
 
-CONST MAXCURSOR = 1023; MAXCODE = 1299;
+CONST MAXCURSOR = 1023; MAXCODE = 1999;
 
 TYPE SYMBUFARRAY = PACKED ARRAY [0..MAXCURSOR] OF CHAR;
      CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
@@ -78,7 +79,7 @@ CONST DISPLIMIT = 12; MAXLEVEL = 8; MAXADDR = 28000;
       FILESIZE = 300; NILFILESIZE = 40; BITSPERCHR = 8; CHRSPERWD = 2;
       STRINGSIZE = 0; STRGLGTH = 255; MAXINT = 32767; MAXDEC = 36;
       DEFSTRGLGTH = 80; LCAFTERMARKSTACK = 1; REFSPERBLK = 128;
-      EOL = 13; MAXCURSOR = 1023; MAXCODE = 1299;
+      EOL = 13; MAXCURSOR = 1023; MAXCODE = 1999;
       MAXJTAB = 36; MAXSEG = 15; MAXPROCNUM = 254;
 
 TYPE

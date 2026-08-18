@@ -27,6 +27,10 @@ CONSTS = {
         # Finding 40: PROCTABLE goes 150 -> 255 words, so the bound goes
         # 149 -> 254. A procedure number is a byte, so 254 is its ceiling.
         "MAXPROCNUM": (254, "finding 40; 1.1 keeps 149"),
+        # Finding 75: the code buffer doubles. All three `NEW(CODEP)` sites
+        # in 1.3 ask for 1000 words where 1.1 asks for 650, and 650 is
+        # exactly (1299+1) DIV 2 -- so 1.3's bound is 1999.
+        "MAXCODE": (1999, "finding 75; 1.1 keeps 1299"),
     },
 }
 
