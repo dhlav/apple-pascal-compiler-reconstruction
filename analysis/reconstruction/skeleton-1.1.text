@@ -4,9 +4,7 @@
   CONST and TYPE are UCSD II.0's, verbatim, with these edits and
   no others -- each one a number or an absence the binary states:
 
-    dropped PUBLIC   { finding 54b }
-    dropped IMPORTED   { finding 54b }
-    removed 2 semicolon(s) left before `)` by the above
+    added to MODULE   { finding 76b; two BOOLEANs at 10 and 11 }
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -166,7 +164,9 @@ TYPE
                      KONST: (VALUES: VALU);
                 FORMALVARS,
                 ACTUALVARS: (VLEV: LEVRANGE;
-                             VADDR: ADDRRANGE);
+                             VADDR: ADDRRANGE;
+                             CASE BOOLEAN OF
+                               TRUE: (PUBLIC: BOOLEAN));
                      FIELD: (FLDADDR: ADDRRANGE;
                              CASE FISPACKD: BOOLEAN OF
                                TRUE: (FLDRBIT,FLDWIDTH: BITRANGE));
@@ -181,8 +181,12 @@ TYPE
                                           ACTUAL: (LOCALLC: ADDRRANGE;
                                                    FORWDECL: BOOLEAN;
                                                    EXTURNAL: BOOLEAN;
-                                                   INSCOPE: BOOLEAN)));
-                   MODULE: (SEGID: INTEGER)
+                                                   INSCOPE: BOOLEAN;
+                                                   CASE BOOLEAN OF
+                                                    TRUE: (IMPORTED:BOOLEAN))));
+                   MODULE: (SEGID: INTEGER;
+                             MODUNK10: BOOLEAN;
+                             MODUNK11: BOOLEAN)
                    END;
 
 
@@ -311,8 +315,8 @@ VAR
   VARSTRG         : INTEGER;
   {   40,    1 word   II.0 }
   LSEPPROC        : BOOLEAN;
-  {   41,    1 word   ours: one word, type not recovered }
-  INTRINSIC       : INTEGER;
+  {   41,    1 word   LNOTed in WRITELINKERINFO }
+  INTRINSIC       : BOOLEAN;
   {   42,    1 word   II.0 }
   TINY            : BOOLEAN;
   {   43,    1 word   II.0 }

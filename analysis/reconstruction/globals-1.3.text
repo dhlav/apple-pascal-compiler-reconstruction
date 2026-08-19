@@ -57,7 +57,7 @@ VAR
   DP              : BOOLEAN;                           {   39,    1 word   II.0 }
   VARSTRG         : INTEGER;                           {   40,    1 word   ours: one word, type not recovered }
   LSEPPROC        : BOOLEAN;                           {   41,    1 word   II.0 }
-  INTRINSIC       : INTEGER;                           {   42,    1 word   ours: one word, type not recovered }
+  INTRINSIC       : BOOLEAN;                           {   42,    1 word   LNOTed in WRITELINKERINFO }
   TINY            : BOOLEAN;                           {   43,    1 word   II.0 }
   LIST            : BOOLEAN;                           {   44,    1 word   II.0 }
   LINKINFO        : BOOLEAN;                           {   45,    1 word   ANDed with LEVEL = 1 in BLOCK }

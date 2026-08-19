@@ -7,9 +7,7 @@
     MAXJTAB 24 -> 36   { finding 40a; 1.1 keeps 24 }
     MAXPROCNUM 149 -> 254   { finding 40; 1.1 keeps 149 }
     MAXCODE 1299 -> 1999   { finding 75; 1.1 keeps 1299 }
-    dropped PUBLIC   { finding 54b }
-    dropped IMPORTED   { finding 54b }
-    removed 2 semicolon(s) left before `)` by the above
+    added to MODULE   { finding 76b; two BOOLEANs at 10 and 11 }
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -169,7 +167,9 @@ TYPE
                      KONST: (VALUES: VALU);
                 FORMALVARS,
                 ACTUALVARS: (VLEV: LEVRANGE;
-                             VADDR: ADDRRANGE);
+                             VADDR: ADDRRANGE;
+                             CASE BOOLEAN OF
+                               TRUE: (PUBLIC: BOOLEAN));
                      FIELD: (FLDADDR: ADDRRANGE;
                              CASE FISPACKD: BOOLEAN OF
                                TRUE: (FLDRBIT,FLDWIDTH: BITRANGE));
@@ -184,8 +184,12 @@ TYPE
                                           ACTUAL: (LOCALLC: ADDRRANGE;
                                                    FORWDECL: BOOLEAN;
                                                    EXTURNAL: BOOLEAN;
-                                                   INSCOPE: BOOLEAN)));
-                   MODULE: (SEGID: INTEGER)
+                                                   INSCOPE: BOOLEAN;
+                                                   CASE BOOLEAN OF
+                                                    TRUE: (IMPORTED:BOOLEAN))));
+                   MODULE: (SEGID: INTEGER;
+                             MODUNK10: BOOLEAN;
+                             MODUNK11: BOOLEAN)
                    END;
 
 
@@ -316,8 +320,8 @@ VAR
   VARSTRG         : INTEGER;
   {   41,    1 word   II.0 }
   LSEPPROC        : BOOLEAN;
-  {   42,    1 word   ours: one word, type not recovered }
-  INTRINSIC       : INTEGER;
+  {   42,    1 word   LNOTed in WRITELINKERINFO }
+  INTRINSIC       : BOOLEAN;
   {   43,    1 word   II.0 }
   TINY            : BOOLEAN;
   {   44,    1 word   II.0 }

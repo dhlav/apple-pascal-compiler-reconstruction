@@ -156,6 +156,11 @@ RETYPE = {
     "SWAPPING": ("BOOLEAN", "ORed with HAS128K in BLOCK"),
     "HAS128K": ("BOOLEAN", "ORed with SWAPPING in BLOCK"),
     "LINKINFO": ("BOOLEAN", "ANDed with LEVEL = 1 in BLOCK"),
+    # WRITELIN.4 does `LDO 42; LNOT`, and `LNOT` takes a BOOLEAN. Its two
+    # uses there both read as "this compilation is of an INTRINSIC unit":
+    # it suppresses the linker record for a used unit, and it decides
+    # whether a variable's data segment is this unit's own.
+    "INTRINSIC": ("BOOLEAN", "LNOTed in WRITELINKERINFO"),
     "RESIDENT": ("^ INTEGER",
                  "assigned NIL in BLOCK; what it points at is not "
                  "recovered"),

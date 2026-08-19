@@ -401,29 +401,38 @@ def diff_proc(label: str, apple, a, mine, b, who: str) -> int:
 
 
 def report_phases(ver: str, cf, who: str) -> tuple[int, int, int]:
-    """Diff each written phase's own body -- procedure 1 of its segment.
+    """Diff every procedure of each written phase, its own body included.
 
     `sources()` numbers a file's procedures from 2, because procedure 1 of
     a segment is the segment procedure itself and is not declared in the
-    file it reads. For a phase that procedure *is* the body worth checking,
-    so it is checked here instead.
+    file it reads. A phase file is the whole segment procedure, so its
+    nested procedures are numbered from 2 by the compiler exactly as any
+    other segment's are, and all of them are checked here.
+
+    A missing procedure is a failure and not a stub: the file is either
+    written or it is not, and if it is written it has to declare every
+    procedure Apple's segment has, in Apple's order (finding 61).
     """
     done = stubs = bad = 0
     for _num, name in flat_segdecls():
         if phase_body(ver, name) is None:
             stubs += 1
             continue
-        done += 1
         apple = apple_segment(ver, name)
         mine = cf.segment(name)
-        a = next((x for x in apple.procedures if x.number == 1), None)
-        b = next((x for x in mine.procedures if x.number == 1), None)
-        if a is None or b is None:
-            print(f"[{ver}] {name}.1: not found "
-                  f"(apple={a is not None}, ours={b is not None})")
+        ours = {x.number: x for x in mine.procedures}
+        for a in sorted(apple.procedures, key=lambda x: x.number):
+            done += 1
+            b = ours.get(a.number)
+            if b is None:
+                print(f"[{ver}] {name}.{a.number}: Apple has it, we do not")
+                bad += 1
+                continue
+            bad += diff_proc(f"[{ver}] {name}.{a.number} {name}",
+                             apple, a, mine, b, who)
+        for num in sorted(set(ours) - {x.number for x in apple.procedures}):
+            print(f"[{ver}] {name}.{num}: we have it, Apple does not")
             bad += 1
-            continue
-        bad += diff_proc(f"[{ver}] {name}.1 {name}", apple, a, mine, b, who)
     return done, stubs, bad
 
 

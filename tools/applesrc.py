@@ -4,8 +4,10 @@ Both `varblock.py` and `srcskel.py` need these, and they need the *same* ones:
 a declaration only allocates Apple's offsets if it is laid out under Apple's
 constants. `MAXPROCNUM` alone moves 105 words in 1.3.
 
-Every entry below is a number the binary states or an absence the binary's
-record sizes require. Nothing here is a preference.
+Every entry below is a number the binary states or a field the binary reads
+at an offset UCSD's declaration does not reach. Nothing here is a preference,
+and nothing is here to make a size come out: finding 76 is what happens when
+a size is fitted rather than explained.
 """
 import re
 import sys
@@ -34,11 +36,27 @@ CONSTS = {
     },
 }
 
-# Fields UCSD declares that Apple's records do not have. Finding 54b: each is
-# a whole trailing `CASE BOOLEAN OF TRUE: (name: BOOLEAN)`, worth one word,
-# and without both the identifier record is a word too big in four of its
-# seven variants.
-DROP_FIELDS = ("PUBLIC", "IMPORTED")
+# Nothing is dropped from UCSD's TYPE block. Finding 54b once removed
+# `PUBLIC` and `IMPORTED` to make four `identifier` variants a word smaller;
+# finding 76 shows those sizes were never evidence of a missing field -- they
+# are what a *tagged* NEW allocates -- and the binary reads `PUBLIC` at its
+# declared offset in both releases, so the deletion was wrong.
+
+# Fields Apple's records have that UCSD's do not. Both releases, so these
+# are not keyed by version.
+TYPE_EDITS = (
+    # Finding 76b. WRITELINKERINFO's MODULE arm reads two more words off the
+    # identifier than UCSD declares -- `IND 10` and `IND 11`, both as
+    # BOOLEANs, ANDed into the test that decides whether a used unit gets a
+    # MODDULE record. They are declared separately rather than as one list
+    # so they allocate forward (finding 33). Nothing recovered names them,
+    # so they are not named: the offsets are the claim.
+    ("MODULE: (SEGID: INTEGER)",
+     "MODULE: (SEGID: INTEGER;\n"
+     "\t\t\t     MODUNK10: BOOLEAN;\n"
+     "\t\t\t     MODUNK11: BOOLEAN)",
+     "finding 76b; two BOOLEANs at 10 and 11"),
+)
 
 
 def section(text: str, kw: str, stop: str, after: int = 0) -> str:
@@ -70,23 +88,12 @@ def blocks(ver: str) -> tuple[str, str, list[str]]:
             raise SystemExit(f"{name} is not in the II.0 CONST block")
         notes.append(f"{name} {m.group(1)} -> {val}   {{ {why} }}")
         consts = pat.sub(f"{name} = {val}", consts, count=1)
-    for name in DROP_FIELDS:
-        pat = re.compile(r"\s*CASE\s+BOOLEAN\s+OF\s+TRUE\s*:\s*\(\s*" + name +
-                         r"\s*:\s*BOOLEAN\s*\)", re.I | re.S)
-        types, n = pat.subn("", types)
-        if n != 1:
-            raise SystemExit(f"{name}: {n} matches in the TYPE block, want 1")
-        notes.append(f"dropped {name}   {{ finding 54b }}")
-
-    # Removing a trailing variant leaves the semicolon that separated it from
-    # the field before, and `...: ADDRRANGE;)` is not a legal field list.
-    # Apple's compiler says so -- error 19, "Error in <field-list>", at the
-    # first of them -- while `ucsdpsys_compile` accepts it without comment
-    # (finding 57b). This is our own edit's debris, not anything of UCSD's,
-    # so cleaning it up is not a departure from the source.
-    types, n = re.subn(r";(\s*\))", r"\1", types)
-    if n:
-        notes.append(f"removed {n} semicolon(s) left before `)` by the above")
+    for old, new, why in TYPE_EDITS:
+        if types.count(old) != 1:
+            raise SystemExit(f"{old!r}: {types.count(old)} matches in the "
+                             f"TYPE block, want 1")
+        types = types.replace(old, new, 1)
+        notes.append(f"added to {old.split(':')[0]}   {{ {why} }}")
     return consts, types, notes
 
 

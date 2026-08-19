@@ -4873,6 +4873,12 @@ finding knew nothing about.
 
 ### 54b. `identifier`, and the two fields Apple does not have
 
+> **RETRACTED by finding 76.** Both fields are there. The four sizes below
+> are what a *tagged* `NEW` allocates, not what the record measures, and
+> `WRITELIN` reads `PUBLIC` at its declared offset in both releases. What
+> follows is left as written because the reasoning it records -- a size
+> agreeing with a deletion -- is the mistake worth keeping legible.
+
 Finding 22c observed `klass` 0..6 with sizes **9, 10, 11, 11, 13, 18, 18**.
 UCSD's declaration, laid out as written, gives
 
@@ -7063,8 +7069,196 @@ and `LOD 2,n`, so none of them can be written before `BODYPART` and
 `STATEMENT` have their locals. That is also what still blocks `HOLDMOST`
 and `HOLDROUT`, the last two stubs in segment 1.
 
+## 76. A size that was fitted, not explained: PUBLIC and IMPORTED are there
+
+### 76a. `NEW` allocates by its tag list, not by the type
+
+**VERIFIED BINARY FACT** for the seven sizes; **VERIFIED SOURCE FACT** for the
+tag lists; and it **retracts finding 54b**.
+
+Finding 22c read seven `identifier` record sizes out of `SYSTEM.COMPILER` --
+**9, 10, 11, 11, 13, 18, 18** for `klass` 0..6. UCSD's declaration, laid out
+as written, gives 9, 10, **12, 12**, 13, **19, 19**. Finding 54b closed the
+four-word gap by deleting two fields, `PUBLIC` from the end of the
+`FORMALVARS`/`ACTUALVARS` variant and `IMPORTED` from the end of the
+`DECLARED`/`ACTUAL` path, and said so as STRONG INFERENCE while noting:
+
+> What would settle it is offsets rather than sizes.
+
+`WRITELIN` settles it, and against the deletion. Its `GLOBALSEARCH` reads
+**`IND 11`** off an identifier in the `FORMALVARS`/`ACTUALVARS` arm, as a
+BOOLEAN, to choose between a `PUBBLIC` and a `PRIVVATE` linker record --
+exactly what II.0 uses `PUBLIC` for, at exactly the word `PUBLIC` occupies,
+with `VLEV` at 9 and `VADDR` at 10 on either side of it. 1.1 does the same at
+its own `$018E`. **The field is there in both releases.**
+
+What was wrong was never the declaration. It was the assumption that a record
+is allocated by its type. **UCSD allocates by the tag list the `NEW` call
+supplies, and stops at the last tag given** -- a variant below it contributes
+nothing, not its largest arm. Every one of the four short `klass` values is
+built by a `NEW` whose last tag selects the *empty* arm of a trailing
+`CASE BOOLEAN OF TRUE: (...)`, and II.0 writes those tags itself:
+
+    NEW(CP,TYPES)                          9
+    NEW(CP,KONST)                         10
+    NEW(CP,FORMALVARS,FALSE)              11     <- PUBLIC not allocated
+    NEW(UVARPTR,ACTUALVARS,FALSE)         11     <- PUBLIC not allocated
+    NEW(LCP,FIELD,TRUE)                   13
+    NEW(UPRCPTR,PROC,DECLARED,ACTUAL,FALSE)   18 <- IMPORTED not allocated
+    NEW(UFCTPTR,FUNC,DECLARED,ACTUAL,FALSE)   18 <- IMPORTED not allocated
+
+**9, 10, 11, 11, 13, 18, 18, with the record untouched.** The two fields exist,
+are declared, and are simply not paid for by the calls that make the objects
+finding 22c watched.
+
+The trailing `FALSE` in `NEW(CP,FORMALVARS,FALSE)` is not decoration, then. It
+is a word of heap, and UCSD's own initialiser is written to save it.
+
+### 76b. Two words of Apple's `MODULE` variant
+
+**VERIFIED BINARY FACT** for the offsets and their type; the names are
+**not recovered**.
+
+`GLOBALSEARCH`'s `MODULE` arm reads three fields, not UCSD's one: `SEGID` at
+9, and two more at **10 and 11**, both BOOLEAN, both `LAND`ed into the test
+that decides whether a used unit gets a `MODDULE` record at all --
+
+    IF INMODULE AND NOT INTRINSIC AND <10> AND <11> THEN
+
+Both releases read both. Nothing recovered so far says what they are, so they
+are declared and not named -- `MODUNK10`, `MODUNK11` -- on the same principle
+`SEGTABLE`'s ninth word was carried under before finding 71 identified it.
+They are declared as two statements rather than one list so they allocate
+forward (finding 33).
+
+### 76c. What this costs, and what it does not
+
+Nothing. `identifier` is only ever reached through `CTP`, so its size is not
+in any global offset, and no reconstructed body allocates one: the whole of
+the change is two fields back in the TYPE block. Re-running the 29 bodies
+already verified against Apple's own compiler under the corrected
+declarations returns 29 of 29, unchanged.
+
+`applesrc.py` loses `DROP_FIELDS` and gains `TYPE_EDITS`, which is the same
+mechanism pointed the other way -- what Apple has that UCSD does not, rather
+than the reverse. `reclayout.py` gains `Layout.new_size(type, *tags)`, the
+tagged rule, beside `record_variants`, the untagged one.
+
+`probe_record_layout.py` now reads the tag lists out of II.0's own `NEW` call
+sites instead of being handed them, and requires three things: that each
+binary size is one some tag list in the compiler actually produces, that the
+untagged rule does **not** reproduce them (or the tag path would be explaining
+nothing), and that `PUBLIC` lands on word 11 where `WRITELIN` reads it.
+
+The lesson is the one the probe's own docstring used to state and did not
+apply to itself. **A size is a weak fact.** Four numbers agreed with a
+deletion of two fields and also with a rule about `NEW`, and the deletion was
+taken because it was the first explanation found, not because anything ruled
+the other out. An offset is a strong fact: there is only one word the binary
+can be reading.
+
+## 77. WRITELINKERINFO, and a record that is written before it is wanted
+
+Segment 16, four procedures, **427 instructions, all four identical to
+Apple's** on the first emulator run. `src/pascal/1.3/phases/WRITELIN.text`.
+
+Its origin is `unitpart.text:10-247`, where it is already a `SEGMENT
+PROCEDURE` -- but the first of two in one file. Apple gave it a file and a
+segment to itself, and `UNITPART` kept the other.
+
+### 77a. Apple writes first and takes it back
+
+II.0 decides whether a symbol interests the linker **before** writing
+anything. `GLOBALSEARCH` carries a `NEEDEDBYLINKER` boolean through a
+`CASE KLASS OF` whose only job in five of its arms is to clear it, tests it
+twice more afterwards, and only then emits the record.
+
+Apple deleted the flag. It saves `IC`, writes the eight-character name
+immediately, and where the answer turns out to be no it **winds `IC` back**:
+
+    SAVEIC := IC;
+    ...
+    MOVELEFT(NAME,CODEP^[IC],8); IC := IC + 8;
+    CASE KLASS OF
+      ...
+      ELSE IC := SAVEIC
+
+`IC := SAVEIC` appears seven times in the arms and is the whole of the
+rejection path. `GETREFS` uses the same trick one level down -- when it
+matches no references at all it does `IC := IC - 16`, discarding the entire
+sixteen-byte record its caller had already written, where II.0 wrote a zero
+count into it and kept it.
+
+The `IF SAVEIC <> IC THEN` guard on the `PROC`/`FUNC` arm is the flag's last
+trace: having spent the flag, Apple asks `IC` the question instead.
+
+### 77b. Six things smaller
+
+* The **`DECSTUFF` parameter is gone**, with the `IF DECSTUFF` around the
+  tree walk and the `IF DECSTUFF THEN DLINKERINFO := FALSE` at the end.
+  Finding 75b already had the call site losing its `TRUE`.
+* The **NIL test moved into `GLOBALSEARCH`**. II.0 tests before all three
+  calls -- `IF FCP <> NIL THEN GLOBALSEARCH(FCP)` at the top and
+  `IF FCP^.LLINK <> NIL` / `RLINK` at the bottom. Apple tests once, at entry.
+* `GETREFS` **lost its second parameter.** II.0 declares
+  `GETREFS(ID,LENGTH: INTEGER)` and never reads `LENGTH`.
+* `GETREFS` computes its own **`FIC := IC - 4`** instead of taking it from a
+  variable the caller sets, so `FIC` moved from the segment procedure's
+  locals into `GETREFS`'s.
+* The whole **nonresident-procedure loop is gone** -- `FOR I := SEEK TO
+  DECOPS`, the six `FSEEK`/`FREADREAL`/`FWRITEDEC` names and the
+  `PFNUMOF` array with them. So is every `SEPPROC` branch: no `SSEPPROC`,
+  `SSEPFUNC`, `SEPPREF` or `SEPFREF` record is ever written, which takes
+  out the longest arm of the `CASE LITYPE` and the `FORMAT`/`BYTE` handling
+  around it.
+* **`LIENTRY` is gone.** Apple keeps `LITYPES` and `OPFORMAT` -- it needs the
+  ordinals, and `LITYPE IN [EXTPROC,EXTFUNC]` needs the set -- but the record
+  became five scalars in the segment procedure's own `VAR`, and one of them
+  does for both `NWORDS` and `NPARAMS`, which were never live together.
+* `IF BLOCKREAD(...) <> 1 THEN;` -- II.0's **empty statement** -- became
+  `ERROR(404)`.
+
+### 77c. Three things larger, all of them intrinsic units
+
+Apple 1.3 has intrinsic units, and every addition here is one:
+
+* `GENWORD(0)` in the EOF record became **`GENWORD(DATASEG)`**, so the
+  end-record now carries the data segment number beside `LCMAX`.
+* A variable's `VLEV` can be **negative, and then it is a data segment
+  number**: `INDATASEG := VLEV < 0`, and the arm that follows compares
+  `-VLEV` against `DATASEG` to decide whether the variable lives in *this*
+  unit's data segment. A `PUBLICDEF` record is written only when it does
+  not. That is what pins global 42 as `INTRINSIC` -- `LDO 42; LNOT` needs a
+  BOOLEAN, and both its uses read as "this compilation is of an intrinsic
+  unit".
+* The `MODULE` arm gained the two words of finding 76b.
+
+### 77d. What it confirmed on the way
+
+`REFARRAY`'s element is `RECORD KEY,OFFSET: INTEGER END` and the binary reads
+`SIND 1` for the key, `SIND 0` for the offset -- **finding 33 again**, a
+two-name list allocated back to front. And `GETREFS`'s locals come out
+`LIC` 2, `FIC` 3, `COUNT` 4, `BLOCKCOUNT` 5, `MAX` 6, `J` 7, which is II.0's
+own `J,MAX,BLOCKCOUNT,COUNT: INTEGER` reversed, unchanged, with `FIC`
+inserted after `LIC` as a separate declaration. The one II.0 line that
+survives Apple's rewrite intact survives it in Apple's order.
+
+### 77e. The harness diffs a phase's nested procedures now
+
+`report_phases` checked procedure 1 only, which was enough while `FINISHUP`
+was the only phase and had nothing else in it. It now diffs every procedure
+of a written phase, and reports a procedure Apple has and we do not -- or the
+reverse -- as a failure rather than a stub. **47 procedures declared, 33 of 33
+reconstructed bodies matching Apple's p-code, 14 still stubs.**
+
 ## 16. Open questions
 
+* **The two BOOLEANs at words 10 and 11 of the `MODULE` variant.** Finding
+  76b has their offsets, their type and the one test that reads them --
+  `INMODULE AND NOT INTRINSIC AND <10> AND <11>` decides whether a used unit
+  gets a `MODDULE` linker record -- and nothing that names them. Both are
+  written somewhere in `DECLARAT` or `UNITPART`, neither of which is
+  reconstructed yet, so whichever of those comes first should settle it.
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
   finding 55c**: `SYMBUFP` and `CODEP` are the outer block's two *parameter*
   words, not `VAR` declarations, and the reconstruction was writing them as

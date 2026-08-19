@@ -183,6 +183,46 @@ class Layout:
                 out[label.upper()] = base + inner
         return out
 
+    def new_size(self, expr: str, *tags: str) -> int:
+        """The words `NEW(p, t1, ..., tn)` allocates for a record type.
+
+        UCSD sizes the record along the tag path it is *given*, and stops:
+        a variant below the last tag supplied contributes nothing at all,
+        not its largest arm. `record_variants` takes the largest instead,
+        which is what a bare pointer assignment needs; this is what a
+        tagged `NEW` needs, and the two differ by a word wherever a variant
+        ends in another one (finding 76).
+
+        A label with no arm of its own -- the implicit `FALSE` of a
+        `CASE BOOLEAN OF TRUE: (...)` -- is an empty variant, so the walk
+        stops there with nothing added.
+        """
+        e = " ".join(expr.split())
+        m = re.match(r"(PACKED\s+)?RECORD\b", e, re.I)
+        if not m:
+            raise ValueError(f"not a record: {expr[:40]}")
+        body = e[m.end():]
+        body = body[:_matching_end(body)]
+        total = 0
+        todo = [t.upper() for t in tags]
+        while True:
+            fixed, cases = _split_variant(body)
+            total += sum(self._field_words(f) for f in _fields(fixed))
+            if not cases:
+                return total
+            tag, arms = cases
+            # A named tag occupies a word; `CASE BOOLEAN OF` does not.
+            total += 1 if tag else 0
+            if not todo:
+                return total
+            want = todo.pop(0)
+            for labels, arm in arms:
+                if want in [l.upper() for l in labels]:
+                    body = arm
+                    break
+            else:
+                return total
+
     def _arm_words(self, arm: str) -> int:
         """A variant arm: its own fields, plus its own largest sub-variant."""
         fixed, cases = _split_variant(arm)
