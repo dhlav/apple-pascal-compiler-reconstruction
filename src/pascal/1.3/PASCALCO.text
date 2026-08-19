@@ -619,7 +619,7 @@ BEGIN (* INSYMBOL *)
   OP := NOOP;
 1:  SY := OTHERSY; (* IF NO CASES EXERCISED BLOW UP *)
   CASE SYMBUFP^[SYMCURSOR] OF
-  '''':NUMSTRING(0,LVP);
+  '''':NUMSTRING(FALSE,LVP);
   '0','1','2','3','4','5','6','7','8','9':
        BEGIN
          LCH := SYMBUFP^[SYMCURSOR];
@@ -630,7 +630,7 @@ BEGIN (* INSYMBOL *)
              LI := LI+1;
              LCH := SYMBUFP^[SYMCURSOR+LI]
            END;
-         IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(1,LVP)
+         IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(TRUE,LVP)
          ELSE
            BEGIN
              SYMCURSOR := SYMCURSOR+LI-1;

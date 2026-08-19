@@ -7251,6 +7251,129 @@ of a written phase, and reports a procedure Apple has and we do not -- or the
 reverse -- as a failure rather than a stub. **47 procedures declared, 33 of 33
 reconstructed bodies matching Apple's p-code, 14 still stubs.**
 
+## 78. NUMSTRING: two scanners lifted out of INSYMBOL, and a rewritten float
+
+Segment 19, three procedures, **597 instructions, all three identical to
+Apple's** on the first emulator run. `src/pascal/1.3/phases/NUMSTRIN.text`.
+
+II.0 declares `STRING` and `NUMBER` as procedures nested inside `INSYMBOL`
+(`procs.a.text:265` and `:301`) and calls them from `INSYMBOL`'s own `CASE`.
+Apple lifted both into a phase and put a two-line dispatcher in front:
+
+    BEGIN (*NUMSTRING*)
+      IF FISNUM THEN NUMBER ELSE STRING
+    END;
+
+Six instructions, and the whole of segment 19's procedure 1.
+
+### 78a. The flag is a BOOLEAN, and the parameters confirm finding 61b
+
+`SEGDECLS` carried `NUMSTRING(FKIND: INTEGER; VAR FVP: CSP)`, which was
+right about the widths and wrong about the type: the dispatcher is
+`SLDL 2; FJP`, with no comparison, and only a BOOLEAN compiles to that.
+`INSYMBOL`'s two call sites become `NUMSTRING(FALSE,LVP)` and
+`NUMSTRING(TRUE,LVP)` -- identical p-code to the `0` and `1` they were, so
+nothing there moved.
+
+The interesting part is *which* local the flag is. It is the **first**
+parameter and it lands at **local 2**; `FVP`, the second, lands at local 1.
+That is finding 61b's rule -- a parameter list allocates back to front, as a
+whole rather than within each group -- and here it holds across two groups of
+different types, which `BUMPSEG` could not show.
+
+The lift cost exactly one parameter. `NUMBER` does `NEW(LVP,LONG)` on
+`INSYMBOL`'s own local, which is a frame away now, so `LVP` came across as
+`VAR FVP` and every reference to it followed.
+
+### 78b. `NUMBER`'s VAR block is II.0's, unchanged, and proves the rule again
+
+    VAR EXPONENT,ENDI,ENDF,ENDE,SIGN,IPART,FPART,EPART,
+        ISUM:  INTEGER;
+        TIPE: (REALTIPE,INTEGERTIPE);
+        RSUM: REAL;
+        NOTLONG: BOOLEAN;
+        K,J: INTEGER;
+
+Reversed, that nine-name list gives `ISUM` 1, `EPART` 2, `FPART` 3, `IPART` 4,
+`SIGN` 5, `ENDE` 6, `ENDF` 7, `ENDI` 8, `EXPONENT` 9, then `TIPE` 10, `RSUM`
+11-12, `NOTLONG` 13, and `J` 14, `K` 15 from the second reversed list. **The
+binary uses every one of those offsets and no other**, with a `FOR` limit
+temp at 16. Sixteen words, and not a name of II.0's moved.
+
+`STRING`'s block is the same story, and it settles a small oddity in II.0's:
+`TP,NBLANKS,L: INTEGER` declares two variables the procedure never reads.
+Reversed after the 40-word `T`, that puts `L` at 41, `NBLANKS` at 42 and `TP`
+at 43 -- and 41 and 42 are exactly the two words Apple's `STRING` allocates
+and never touches. **Apple kept the dead declarations**, which is why the
+frame is 46 words and not 44.
+
+### 78c. A string that is too long now says so
+
+II.0's `STRING` writes `T[TP]` with no bound on `TP`. `T` is
+`PACKED ARRAY [1..80] OF CHAR` and the loop runs to a closing quote, so a
+long-enough literal walks off the end of the frame. Apple guards it:
+
+    IF TP <= 80 THEN T[TP] := SYMBUFP^[SYMCURSOR]
+    ELSE
+      BEGIN
+        IF NOT TOOLONG THEN ERROR(277);
+        TOOLONG := TRUE
+      END
+
+The latch means one error per literal rather than one per character past 80.
+
+`TOOLONG` is then assigned `FALSE` **at label 1**, where it is dead -- the
+`GOTO 1` from the end-of-line error and the normal fall-through both land on
+it and nothing reads it again. It is in the binary (`SLDC 0; STL 45` at
+`$0062`, and the `UJP $0062` that is the `GOTO`), so it is in the source.
+
+### 78d. The real conversion is Apple's, not UCSD's
+
+This is the one place where Apple replaced an algorithm rather than trimming
+one. II.0 accumulates the fraction digit by digit, dividing each by its own
+power of ten:
+
+    FOR J := ENDF DOWNTO FPART DO
+      RSUM := RSUM+(ORD(SYMBUFP^[J])-ORD('0'))/PWROFTEN(J-FPART+1);
+
+That is one `PWROFTEN` and one division per fractional digit, and it rounds
+at every step. Apple runs the fraction digits through the **same** `*10`
+accumulation as the integer part -- the two `FOR` loops are the same
+statement twice -- and pays for it once, in the exponent:
+
+    EXPONENT := SIGN*EXPONENT;
+    IF FPART <> 9999 THEN
+      EXPONENT := EXPONENT + FPART - ENDF - 1;
+    IF EXPONENT < 0 THEN RSUM := RSUM/PWROFTEN(-EXPONENT)
+    ELSE RSUM := RSUM*PWROFTEN(EXPONENT);
+
+One `PWROFTEN`, one divide, and the digits enter the float exactly.
+
+That is what the added `FPART := 9999` at the top is for. II.0 leaves `FPART`
+uninitialised -- it only ever reads it inside the branch that sets it -- and
+Apple needs a sentinel meaning "no fraction part" to know whether the
+correction applies. It reuses `EPART`'s 9999 for it, on the next line.
+
+The sign went the same way: II.0 branches on `IF SIGN=-1` around two whole
+statements, Apple folds the sign into `EXPONENT` and branches on its sign.
+
+Two smaller edits in the same procedure: **`e` is accepted as well as `E`**
+in an exponent, and `ENDI := 0` is dropped from the initialisation (it is
+assigned unconditionally a few lines later).
+
+### 78e. Two spellings of one expression, both preserved
+
+`NUMBER` accumulates a digit twice, and II.0 punctuates the two differently:
+
+    ISUM := ISUM*10+(ORD(SYMBUFP^[J])-ORD('0'));      { overflow scan }
+    ISUM := ISUM * 10 + ORD(SYMBUFP^[K])-ORD('0');    { long build }
+
+The parentheses are not cosmetic. The first emits `MPI ... LDB SLDC 48 SBI
+ADI`, the second `MPI ... LDB ADI SLDC 48 SBI` -- subtract-then-add against
+add-then-subtract. Apple preserved both, so the binary distinguishes them and
+so must the reconstruction. It is the sharpest reminder yet that what is
+being recovered is a *source text*, not a meaning.
+
 ## 16. Open questions
 
 * **The two BOOLEANs at words 10 and 11 of the `MODULE` variant.** Finding
