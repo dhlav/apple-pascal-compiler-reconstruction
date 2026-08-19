@@ -154,7 +154,7 @@ RETYPE = {
     # yet dereferences it, so what it points at is not recovered.
     "ISPROG": ("BOOLEAN", "assigned NOT INMODULE in BLOCK"),
     "SWAPPING": ("BOOLEAN", "ORed with HAS128K in BLOCK"),
-    "HAS128K": ("BOOLEAN", "ORed with SWAPPING in BLOCK"),
+    "HAS128K": ("BOOLEAN", "the bit COMPINIT reads out of $BF22"),
     "LINKINFO": ("BOOLEAN", "ANDed with LEVEL = 1 in BLOCK"),
     # WRITELIN.4 does `LDO 42; LNOT`, and `LNOT` takes a BOOLEAN. Its two
     # uses there both read as "this compilation is of an INTRINSIC unit":

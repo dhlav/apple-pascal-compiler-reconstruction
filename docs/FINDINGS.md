@@ -7690,6 +7690,144 @@ them back, and `build_all.py` runs it. The ceiling is real and will be met
 again: 280 blocks is the whole budget for the source and its output
 together.
 
+## 81. COMPINIT: the standard identifiers, and a version check
+
+Segment 7, eleven procedures, **1875 instructions**, eight of them identical
+on the first emulator run and all eleven on the second.
+`src/pascal/1.3/phases/COMPINIT.text`.
+
+Most of it is II.0's `compinit.text` verbatim, down to the order of the
+field assignments inside each `WITH`. What Apple changed is worth the
+listing.
+
+### 81a. Forty-four names in five string literals
+
+II.0 builds its table of special-procedure names with forty-three
+assignments to an `ARRAY [1..43] OF ALPHA`. Apple packs them into
+dot-separated literals, appends them into one 512-byte buffer, and cuts
+them out again with `SCAN`:
+
+    ADDNAMES('READ.READLN.WRITE.WRITELN.EOF.EOLN.PRED.SUCC.ORD.SQR.ABS.NEW.');
+    ADDNAMES('UNITREAD.UNITWRIT.CONCAT.LENGTH.INSERT.DELETE.COPY.POS.');
+    ...
+    WHILE NPOS < NCHARS DO
+      BEGIN NEXTNAME(LNAME); I := I + 1; ...
+
+`NEXTNAME` is five statements -- blank the ALPHA, `SCAN(8,='.',...)`,
+`MOVELEFT`, step the cursor -- and it replaces eighty-one lines of source
+and about 700 bytes of `LDC`/`STM` pairs. The buffer and its two cursors
+live in **COMPINIT's own frame**, which is why both helpers reach them with
+`LOD 1,n`; that is what makes COMPINIT's `DATA SIZE` 608 bytes, the largest
+frame in the compiler.
+
+Apple's list runs to **44**: `UNITSTAT` is Apple's, and the `TINY` exclusion
+set gains it and loses `SUCC`.
+
+### 81b. BYTESTREAM and WORDSTREAM
+
+`ENTSTDTYPES` gains three records II.0 does not have -- a `SUBRANGE` of
+`0..MAXINT` and two `ARRAYS` over it:
+
+    NEW(BYTEPTR,ARRAYS,TRUE,FALSE);    { PACKED ARRAY [0..MAXINT] OF CHAR }
+    NEW(WORDPTR,ARRAYS,FALSE);         { ARRAY [0..MAXINT] OF INTEGER    }
+
+and `ENTSTDNAMES` enters them as `BYTESTRE` and `WORDSTRE`. These are the
+types a `UNITREAD` or `BLOCKREAD` buffer is checked against. Finding 64 had
+`BYTEPTR` and `WORDPTR` as "compared against an STP in COMPTYPES" and no
+more; this is what they are.
+
+### 81c. The transcendentals are gone, and the CSP numbers have a hole
+
+II.0's `ENTSTDPROCS` enters nineteen standard procedures, seven of them
+`SIN`, `COS`, `LOG`, `ATAN`, `LN`, `EXP` and `SQRT`. Apple moved those into
+the `TRANSCEND` unit, so thirteen are left -- and the CSP numbers they map
+to are no longer contiguous:
+
+    IF I < 5 THEN CSPNUM := I + 20 ELSE CSPNUM := I + 27
+
+`ODD`..`ROUND` are CSP 21..24 and `MARK`..`MEMAVAIL` are 32..40, with the
+transcendentals' 25..31 left empty in the interpreter's table. II.0's
+single `CSPNUM := I + 20` could not survive that. Apple also keeps `XXX` at
+3 -- a name that cannot be typed and whose case arm is `GOTO 1`, skipping
+the entry entirely; the slot is there so that the numbering after it is
+right.
+
+### 81d. CHECKVERS, and the only way to put an address in a pointer
+
+The first thing COMPINIT does -- before `INITSCALARS`, before anything --
+is check that it is running under the right operating system:
+
+    LPTR.LADDR := -16607;
+    IF LPTR.LBYTE^[0] <> CHR(4) THEN
+      BEGIN ... 'Version 1.3 of SYSTEM.COMPILER cannot run' ...
+        EXIT(PASCALCOMPILER)
+      END;
+    LPTR.LADDR := -16606;
+    HAS128K := LPTR.LBIT^[6]
+
+$BF21 is SYSTEM.PASCAL's version byte and $BF22 carries the
+machine-configuration bits. Neither is reachable through a declaration, and
+Pascal has no cast, so the source must use a **variant record** with an
+INTEGER arm and a pointer arm. The two reads are different widths -- a byte
+for the version, a single bit for the 128K flag, which the binary takes
+with `IXP 16,1` -- so the pointer arm is itself a variant of two pointer
+types. That is three arms over one word, and it is forced by the code.
+
+`^` must be followed by a type *identifier* in UCSD, so the two array types
+are named; Apple's compiler reports error 2 on an inline `^ PACKED ARRAY`,
+which is how that was learned.
+
+This also settles `HAS128K`, which the global map had only as "ORed with
+SWAPPING in BLOCK".
+
+### 81e. The listing file is asked for, not declared
+
+II.0 has no listing file at all. Apple prompts for one before reading a
+line of source, and the prompt is a `REPEAT` that only ends when the file
+opens or the answer is empty. Inside it: a leading `DLE` is deleted (the
+editor's indent prefix), `ESC` quits the compiler, `OSPROC43` is called on
+the title -- the third of its three call sites, finding 79b -- a volume
+name is upper-cased in place, and `CONSOLE:` or `#1:` turns `NOISY` off and
+`CONLIST` on so that the listing and the progress display do not fight over
+the screen.
+
+`I/O Error #n occured while opening ...` is Apple's spelling, not a
+transcription slip.
+
+### 81f. What INITSCALARS settles
+
+* **`NEXTSEG := 7`** where II.0 has 10. Finding 68 inferred 7 from the
+  segment numbers of the phases; here it is, written down.
+* **`SEGSUSED := []`**, which is finding 80c's set being initialised.
+* **`SWAPPING`, not `NOSWAP`.** II.0 sets `NOSWAP := MEMAVAIL > 9950`;
+  Apple sets `SWAPPING := NOT ((MEMAVAIL < 0) OR (MEMAVAIL > 9950))`. The
+  extra `< 0` guard is for a machine with more than 32K words free, where
+  `MEMAVAIL` overflows.
+* **`SYSTEMLIB := '*'`** -- one character, not II.0's `'*SYSTEM.LIBRARY'`
+  and not the `USERINFO.STUPID` test it sat behind.
+* `CODEP := NIL` rather than `NEW(CODEP)`. The buffer is allocated on first
+  use, which is what `UNITPART`'s opening `IF CODEP = NIL THEN NEW(CODEP)`
+  is for (finding 80).
+* Six of the booleans this reconstruction typed from a single comparison
+  get their initial value here too, which is a second sighting of each:
+  `LINKINFO`, `INTRINSIC`, `VARSTRG`, `OPT_E`, `NOLOAD` and `SWAPMORE`.
+
+### 81g. Three corrections, and two of them were the same mistake
+
+The diff found exactly three things, and all three are worth naming because
+none was a reasoning error about the code:
+
+* `VAR CP1,CP: CTP` where II.0 has `VAR CP,CP1: CTP`, and `VAR PARAM,LCP`
+  where II.0 has `VAR LCP,PARAM`. I had read the offsets off the binary and
+  written the names in the order the offsets came out -- which is exactly
+  backwards, because a list allocates in reverse (finding 33). **II.0's own
+  declaration was right both times.** The rule is now stated where it
+  belongs: when II.0 has a list and the offsets are consistent with it,
+  copy the list.
+* `RESET(LP,LTITLE)` for `REWRITE(LP,LTITLE)`. `FOPEN`'s fourth argument is
+  0 for a new file and 1 for an existing one, and a listing file is
+  written.
+
 ## 16. Open questions
 
 * **The four unnamed words of the `MODULE` variant.** Finding 76b has 10

@@ -152,7 +152,7 @@ VAR
   CURBLK          : INTEGER;                           { 1097,    1 word   II.0 }
   CURBYTE         : INTEGER;                           { 1098,    1 word   II.0 }
   DISKBUF         : PACKED ARRAY [0..511] OF CHAR;     { 1099,  256 words  II.0 }
-  HAS128K         : BOOLEAN;                           { 1355,    1 word   ORed with SWAPPING in BLOCK }
+  HAS128K         : BOOLEAN;                           { 1355,    1 word   the bit COMPINIT reads out of $BF22 }
   CONLIST         : BOOLEAN;                           { 1356,    1 word   negated in ERROR }
   LSTOPEN         : BOOLEAN;                           { 1357,    1 word   LNOTed in COMPOPTIONS }
 
