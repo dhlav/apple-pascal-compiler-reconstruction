@@ -45,17 +45,26 @@ CONSTS = {
 # Fields Apple's records have that UCSD's do not. Both releases, so these
 # are not keyed by version.
 TYPE_EDITS = (
-    # Finding 76b. WRITELINKERINFO's MODULE arm reads two more words off the
-    # identifier than UCSD declares -- `IND 10` and `IND 11`, both as
-    # BOOLEANs, ANDed into the test that decides whether a used unit gets a
-    # MODDULE record. They are declared separately rather than as one list
-    # so they allocate forward (finding 33). Nothing recovered names them,
-    # so they are not named: the offsets are the claim.
+    # Findings 76b and 79c. Apple's MODULE variant is four words where
+    # UCSD's is one, and two independent measurements agree on it:
+    #
+    #   * WRITELINKERINFO's MODULE arm reads `IND 10` and `IND 11`, both as
+    #     BOOLEANs, ANDed into the test that decides whether a used unit
+    #     gets a MODDULE record. Two words that must be there.
+    #   * every `NEW(...,MODULE)` in the binary asks for 13 words, which is
+    #     the fixed part plus four. COMPOPTIONS builds the RESIDENT chain
+    #     out of them and DECLARATIONPART enters used units as them.
+    #
+    # So word 12 is required by the allocations and read by nothing, and
+    # words 10 and 11 are read and never allocated any other way. They are
+    # declared separately rather than as one list so they allocate forward
+    # (finding 33). Nothing recovered names any of the three.
     ("MODULE: (SEGID: INTEGER)",
      "MODULE: (SEGID: INTEGER;\n"
      "\t\t\t     MODUNK10: BOOLEAN;\n"
-     "\t\t\t     MODUNK11: BOOLEAN)",
-     "finding 76b; two BOOLEANs at 10 and 11"),
+     "\t\t\t     MODUNK11: BOOLEAN;\n"
+     "\t\t\t     MODUNK12: INTEGER)",
+     "finding 76b/79c; three words at 10..12"),
 )
 
 

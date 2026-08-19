@@ -4,7 +4,7 @@
   CONST and TYPE are UCSD II.0's, verbatim, with these edits and
   no others -- each one a number or an absence the binary states:
 
-    added to MODULE   { finding 76b; two BOOLEANs at 10 and 11 }
+    added to MODULE   { finding 76b/79c; three words at 10..12 }
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -52,6 +52,75 @@ TYPE SYMBUFARRAY = PACKED ARRAY [0..MAXCURSOR] OF CHAR;
 VAR SYSCOM: ^ INTEGER;
     GFILES: ARRAY [0..5] OF FIBP;
     USERINFO: INFOREC;
+
+{ The operating system's own procedures, and the reason they
+  are here at all: COMPOPTIONS calls one of them BY NAME.
+  Almost every `CXP 0,n` in the compiler is emitted for a
+  standard procedure -- RESET is FOPEN, WRITE is FWRITECHAR,
+  BLOCKREAD is FBLOCKIO -- and needs no declaration. `CXP 0,43`
+  is not: no standard procedure emits it, at any argument shape
+  (finding 79 probed all of them). It is a call to the 42nd
+  procedure declared at lex -1.
+
+  An unresolved FORWARD is legal under (*$U-*) and is how a
+  system program names the OS: it takes a segment 0 procedure
+  number and compiles the call, and the body it never gets is
+  SYSTEM.PASCAL's. Bodies here would not do -- code at lex -1
+  before a SEGMENT PROCEDURE is error 399, which is the same
+  CODEINSEG the compiler itself reports in WRITELINKERINFO.
+
+  Only the COUNT is recovered, and it is exact: the call is
+  procedure 43, procedure 1 is the outer block, so there are 42
+  of them. The NAMES are UCSD II.0's GLOBALS.TEXT in order, for
+  legibility and so the numbering can be read; the PARAMETERS
+  are dropped, because a forward that is never called and never
+  defined contributes nothing but its number. Number 43 is the
+  exception and is not II.0's: II.0 has COMMAND there, taking
+  nothing, and Apple's takes three words (finding 51). What it
+  is called and what it does are not recovered. }
+
+PROCEDURE EXECERRO; FORWARD;   { CXP 0,2 }
+PROCEDURE FINIT; FORWARD;   { CXP 0,3 }
+PROCEDURE FRESET; FORWARD;   { CXP 0,4 }
+PROCEDURE FOPEN; FORWARD;   { CXP 0,5 }
+PROCEDURE FCLOSE; FORWARD;   { CXP 0,6 }
+PROCEDURE FGET; FORWARD;   { CXP 0,7 }
+PROCEDURE FPUT; FORWARD;   { CXP 0,8 }
+PROCEDURE XSEEK; FORWARD;   { CXP 0,9 }
+FUNCTION FEOF: INTEGER; FORWARD;   { CXP 0,10 }
+FUNCTION FEOLN: INTEGER; FORWARD;   { CXP 0,11 }
+PROCEDURE FREADINT; FORWARD;   { CXP 0,12 }
+PROCEDURE FWRITEIN; FORWARD;   { CXP 0,13 }
+PROCEDURE XREADREA; FORWARD;   { CXP 0,14 }
+PROCEDURE XWRITERE; FORWARD;   { CXP 0,15 }
+PROCEDURE FREADCHA; FORWARD;   { CXP 0,16 }
+PROCEDURE FWRITECH; FORWARD;   { CXP 0,17 }
+PROCEDURE FREADSTR; FORWARD;   { CXP 0,18 }
+PROCEDURE FWRITEST; FORWARD;   { CXP 0,19 }
+PROCEDURE FWRITEBY; FORWARD;   { CXP 0,20 }
+PROCEDURE FREADLN; FORWARD;   { CXP 0,21 }
+PROCEDURE FWRITELN; FORWARD;   { CXP 0,22 }
+PROCEDURE SCONCAT; FORWARD;   { CXP 0,23 }
+PROCEDURE SINSERT; FORWARD;   { CXP 0,24 }
+PROCEDURE SCOPY; FORWARD;   { CXP 0,25 }
+PROCEDURE SDELETE; FORWARD;   { CXP 0,26 }
+FUNCTION SPOS: INTEGER; FORWARD;   { CXP 0,27 }
+FUNCTION FBLOCKIO: INTEGER; FORWARD;   { CXP 0,28 }
+PROCEDURE FGOTOXY; FORWARD;   { CXP 0,29 }
+FUNCTION VOLSEARC: INTEGER; FORWARD;   { CXP 0,30 }
+PROCEDURE WRITEDIR; FORWARD;   { CXP 0,31 }
+FUNCTION DIRSEARC: INTEGER; FORWARD;   { CXP 0,32 }
+FUNCTION SCANTITL: INTEGER; FORWARD;   { CXP 0,33 }
+PROCEDURE DELENTRY; FORWARD;   { CXP 0,34 }
+PROCEDURE INSENTRY; FORWARD;   { CXP 0,35 }
+PROCEDURE HOMECURS; FORWARD;   { CXP 0,36 }
+PROCEDURE CLEARSCR; FORWARD;   { CXP 0,37 }
+PROCEDURE CLEARLIN; FORWARD;   { CXP 0,38 }
+PROCEDURE PROMPT; FORWARD;   { CXP 0,39 }
+FUNCTION SPACEWAI: INTEGER; FORWARD;   { CXP 0,40 }
+FUNCTION GETCHAR: INTEGER; FORWARD;   { CXP 0,41 }
+FUNCTION FETCHDIR: INTEGER; FORWARD;   { CXP 0,42 }
+PROCEDURE OSPROC43(VAR S: STRING; I,N: INTEGER); FORWARD;   { CXP 0,43 }
 
 { The operating system enters segment 1 as USERPROGRAM(NIL,NIL)
   -- two words of parameters, which is Apple's PARAM SIZE 4.
@@ -186,7 +255,8 @@ TYPE
                                                     TRUE: (IMPORTED:BOOLEAN))));
                    MODULE: (SEGID: INTEGER;
                              MODUNK10: BOOLEAN;
-                             MODUNK11: BOOLEAN)
+                             MODUNK11: BOOLEAN;
+                             MODUNK12: INTEGER)
                    END;
 
 
@@ -303,16 +373,16 @@ VAR
   SWAPMORE        : BOOLEAN;
   {   34,    1 word   ORed with HAS128K in BLOCK }
   SWAPPING        : BOOLEAN;
-  {   35,    1 word   ours: one word, type not recovered }
-  NOLOAD          : INTEGER;
+  {   35,    1 word   assigned (SW = '+') in COMPOPTIONS }
+  NOLOAD          : BOOLEAN;
   {   36,    1 word   II.0 }
   USING           : BOOLEAN;
   {   37,    1 word   II.0 }
   INCLUDING       : BOOLEAN;
   {   38,    1 word   II.0 }
   DP              : BOOLEAN;
-  {   39,    1 word   ours: one word, type not recovered }
-  VARSTRG         : INTEGER;
+  {   39,    1 word   assigned (SW = '+') in COMPOPTIONS }
+  VARSTRG         : BOOLEAN;
   {   40,    1 word   II.0 }
   LSEPPROC        : BOOLEAN;
   {   41,    1 word   LNOTed in WRITELINKERINFO }
@@ -323,8 +393,8 @@ VAR
   LIST            : BOOLEAN;
   {   44,    1 word   ANDed with LEVEL = 1 in BLOCK }
   LINKINFO        : BOOLEAN;
-  {   45,    1 word   ours: one word, type not recovered }
-  OPT_E           : INTEGER;
+  {   45,    1 word   assigned (SW = '+') in COMPOPTIONS }
+  OPT_E           : BOOLEAN;
   {   46,    1 word   II.0 }
   BPTONLINE       : BOOLEAN;
   {   47,    1 word   II.0 }
@@ -357,9 +427,9 @@ VAR
   LONGINTPTR      : STP;
   {   61,    1 word   II.0 }
   REALPTR         : STP;
-  {   62,    1 word   assigned NIL in BLOCK; what it points at is not recovered
-  }
-  RESIDENT        : ^ INTEGER;
+  {   62,    1 word   a chain of MODULE identifiers, built in COMPOPTIONS and
+  linked through NEXT }
+  RESIDENT        : CTP;
   {   63,    1 word   II.0 }
   USINGLIST       : CTP;
   {   64,    1 word   II.0 }

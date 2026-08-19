@@ -161,9 +161,19 @@ RETYPE = {
     # it suppresses the linker record for a used unit, and it decides
     # whether a variable's data segment is this unit's own.
     "INTRINSIC": ("BOOLEAN", "LNOTed in WRITELINKERINFO"),
-    "RESIDENT": ("^ INTEGER",
-                 "assigned NIL in BLOCK; what it points at is not "
-                 "recovered"),
+    # Five more the option handler settles. Each is assigned the value of a
+    # `(SW = '+')` comparison in COMPOPTIONS, which is a BOOLEAN expression,
+    # and LSTOPEN is LNOTed there besides.
+    "OPT_E": ("BOOLEAN", "assigned (SW = '+') in COMPOPTIONS"),
+    "VARSTRG": ("BOOLEAN", "assigned (SW = '+') in COMPOPTIONS"),
+    "NOLOAD": ("BOOLEAN", "assigned (SW = '+') in COMPOPTIONS"),
+    "LSTOPEN": ("BOOLEAN", "LNOTed in COMPOPTIONS"),
+    # And the one COMPOPTIONS builds. RESIDENT is a chain of MODULE
+    # identifier records: `MARKRESIDENT` NEWs one, writes SEGID at 9 and
+    # links it through NEXT at 7, which is the identifier record's own
+    # link field. Finding 79c.
+    "RESIDENT": ("CTP", "a chain of MODULE identifiers, built in "
+                        "COMPOPTIONS and linked through NEXT"),
     "WORDPTR": ("STP", "compared against an STP in COMPTYPES"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's

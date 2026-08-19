@@ -35,6 +35,7 @@ from a2pascal.codefile import CodeFile
 from a2pascal.textfile import decode_text
 from a2pascal.pcode import disassemble, sweep_exit
 import xcompile
+import procbuild
 
 ROOT = Path(__file__).resolve().parents[2]
 DISK = ROOT / "evidence" / "disks" / "UCSD Pascal 1.1_3.dsk"
@@ -138,8 +139,13 @@ for ver, dname in COMPILER.items():
         fails.append(f"{skel.name} has not been generated (tools/srcskel.py)")
         continue
     try:
-        mine = CodeFile(xcompile.compile_text(
-            skel.read_text(encoding="ascii", errors="replace")))
+        # The OS forwards are unresolved on purpose -- that is how a
+        # (*$U-*) program names segment 0 (finding 79b) -- and Apple's
+        # compiler takes them where `ucsdpsys_compile` will not. What is
+        # being checked here is the declarations, which the forwards do not
+        # touch, so the fast tier gets procbuild's stand-in for them.
+        mine = CodeFile(xcompile.compile_text(procbuild.defang_forwards(
+            skel.read_text(encoding="ascii", errors="replace"))))
     except xcompile.CompileError as exc:
         fails.append(f"skeleton-{ver}: did not compile -- {exc}")
         continue

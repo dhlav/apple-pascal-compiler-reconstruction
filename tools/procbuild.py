@@ -276,10 +276,41 @@ def sources(ver: str) -> list[tuple[str, str, list]]:
     return out
 
 
-def spliced(ver: str, segs) -> str:
-    """The skeleton with these segment sources declared at lex 1."""
+OSFWD = re.compile(r"(?m)^((?:PROCEDURE|FUNCTION) .*?;) FORWARD;   \{ CXP 0,"
+                   r"(\d+) \}\n")
+
+
+def defang_forwards(text: str) -> str:
+    """Replace the OS forwards with one stub, for the fast tier only.
+
+    An unresolved FORWARD is how a `(*$U-*)` program names the operating
+    system, and Apple's compiler accepts it; `ucsdpsys_compile` reports
+    every one of them as "declared forward, but has not been defined" and
+    gives up. Only `OSPROC43` is ever called, so the fast tier gets that one
+    with an empty body and none of the numbering.
+
+    The cost is confined and known: the fast tier's `CXP 0,n` for it comes
+    out at whatever number the stub lands on rather than 43. That is two
+    instructions in COMPOPTIONS, on a tier that already differs from Apple's
+    compiler at every `AND` (finding 58), and Apple's compiler is the one
+    this is checked against.
+    """
+    keep = [m.group(1) for m in OSFWD.finditer(text) if m.group(2) == "43"]
+    return OSFWD.sub("", text).replace(
+        "\n{ The operating system enters segment 1",
+        "\n" + "\n".join(f"{d} BEGIN END;" for d in keep) +
+        "\n\n{ The operating system enters segment 1", 1)
+
+
+def spliced(ver: str, segs, fast: bool = False) -> str:
+    """The skeleton with these segment sources declared at lex 1.
+
+    `fast` is for `ucsdpsys_compile`, which cannot take the OS forwards.
+    """
     text = (SKEL / f"skeleton-{ver}.text").read_text(encoding="ascii",
                                                      errors="replace")
+    if fast:
+        text = defang_forwards(text)
     # The skeleton ends with the segment procedure's body and then the host
     # program's: "BEGIN END;" followed by "BEGIN END." (finding 60). Bodies
     # belong inside PASCALCOMPILER, so splice before the *first* of those two
@@ -472,7 +503,7 @@ def main() -> int:
             cf = CodeFile(dsk.read_blocks(e.first_block, e.blocks))
             who = "Apple's compiler"
         else:
-            source = spliced(ver, segs)
+            source = spliced(ver, segs, fast=True)
             long = over_width(source.split("\n"))
             if long:
                 print(f"[{ver}] {len(long)} lines over {WIDTH} columns: "

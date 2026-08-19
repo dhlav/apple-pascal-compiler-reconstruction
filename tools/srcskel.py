@@ -29,6 +29,42 @@ from a2pascal.srcfmt import WIDTH, format_lines, over_width
 from varblock import build as build_vars
 
 ROOT = Path(__file__).resolve().parent.parent
+GLOBALS = ROOT / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT"
+
+# Apple's segment 0 procedure 43, which II.0's GLOBALS.TEXT does not have --
+# it has COMMAND there, taking no parameters, and Apple's takes three words
+# (finding 51). Every call site pushes a string's address, then 1, then that
+# string's declared length, so this is its shape and not its meaning. The
+# name is withheld: nothing recovers it.
+OS43 = "PROCEDURE OSPROC43(VAR S: STRING; I,N: INTEGER);"
+
+
+def osforwards() -> list[str]:
+    """The OS's segment 0 procedures, as unresolved FORWARDs at lex -1.
+
+    Numbering is the whole content: procedure 1 is the outer block, so the
+    Nth declaration here is procedure N+1, and `CXP 0,43` needs 42 of them.
+    Parameters are dropped for all but 43 -- see the comment at the call
+    site in srcskel's header.
+    """
+    from a2pascal.syscall import segment0_signatures
+    sig = segment0_signatures(GLOBALS)
+    out = []
+    for n in range(2, 44):
+        name, _words, _isfn = sig[n]
+        if n == 43:
+            decl = OS43
+        elif _isfn:
+            # Which of these are FUNCTIONs *is* recovered -- finding 51
+            # checked it against Apple's own attribute tables -- so the
+            # distinction is kept even though the result type is not used.
+            decl = f"FUNCTION {name[:8]}: INTEGER;"
+        else:
+            decl = f"PROCEDURE {name[:8]};"
+        out.append(f"{decl} FORWARD;   {{ CXP 0,{n} }}")
+    return out
+
+
 OUT = ROOT / "analysis" / "reconstruction"
 
 
@@ -119,6 +155,34 @@ def main() -> int:
               "VAR SYSCOM: ^ INTEGER;",
               "    GFILES: ARRAY [0..5] OF FIBP;",
               "    USERINFO: INFOREC;",
+              "",
+              "{ The operating system's own procedures, and the reason they",
+              "  are here at all: COMPOPTIONS calls one of them BY NAME.",
+              "  Almost every `CXP 0,n` in the compiler is emitted for a",
+              "  standard procedure -- RESET is FOPEN, WRITE is FWRITECHAR,",
+              "  BLOCKREAD is FBLOCKIO -- and needs no declaration. `CXP 0,43`",
+              "  is not: no standard procedure emits it, at any argument shape",
+              "  (finding 79 probed all of them). It is a call to the 42nd",
+              "  procedure declared at lex -1.",
+              "",
+              "  An unresolved FORWARD is legal under (*$U-*) and is how a",
+              "  system program names the OS: it takes a segment 0 procedure",
+              "  number and compiles the call, and the body it never gets is",
+              "  SYSTEM.PASCAL's. Bodies here would not do -- code at lex -1",
+              "  before a SEGMENT PROCEDURE is error 399, which is the same",
+              "  CODEINSEG the compiler itself reports in WRITELINKERINFO.",
+              "",
+              "  Only the COUNT is recovered, and it is exact: the call is",
+              "  procedure 43, procedure 1 is the outer block, so there are 42",
+              "  of them. The NAMES are UCSD II.0's GLOBALS.TEXT in order, for",
+              "  legibility and so the numbering can be read; the PARAMETERS",
+              "  are dropped, because a forward that is never called and never",
+              "  defined contributes nothing but its number. Number 43 is the",
+              "  exception and is not II.0's: II.0 has COMMAND there, taking",
+              "  nothing, and Apple's takes three words (finding 51). What it",
+              "  is called and what it does are not recovered. }",
+              "",
+              ] + osforwards() + [
               "",
               "{ The operating system enters segment 1 as USERPROGRAM(NIL,NIL)",
               "  -- two words of parameters, which is Apple's PARAM SIZE 4.",

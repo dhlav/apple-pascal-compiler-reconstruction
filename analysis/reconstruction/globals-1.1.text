@@ -50,17 +50,17 @@ VAR
   INMODULE        : BOOLEAN;                           {   32,    1 word   II.0 }
   SWAPMORE        : BOOLEAN;                           {   33,    1 word   the condition in HOLDMOST }
   SWAPPING        : BOOLEAN;                           {   34,    1 word   ORed with HAS128K in BLOCK }
-  NOLOAD          : INTEGER;                           {   35,    1 word   ours: one word, type not recovered }
+  NOLOAD          : BOOLEAN;                           {   35,    1 word   assigned (SW = '+') in COMPOPTIONS }
   USING           : BOOLEAN;                           {   36,    1 word   II.0 }
   INCLUDING       : BOOLEAN;                           {   37,    1 word   II.0 }
   DP              : BOOLEAN;                           {   38,    1 word   II.0 }
-  VARSTRG         : INTEGER;                           {   39,    1 word   ours: one word, type not recovered }
+  VARSTRG         : BOOLEAN;                           {   39,    1 word   assigned (SW = '+') in COMPOPTIONS }
   LSEPPROC        : BOOLEAN;                           {   40,    1 word   II.0 }
   INTRINSIC       : BOOLEAN;                           {   41,    1 word   LNOTed in WRITELINKERINFO }
   TINY            : BOOLEAN;                           {   42,    1 word   II.0 }
   LIST            : BOOLEAN;                           {   43,    1 word   II.0 }
   LINKINFO        : BOOLEAN;                           {   44,    1 word   ANDed with LEVEL = 1 in BLOCK }
-  OPT_E           : INTEGER;                           {   45,    1 word   ours: one word, type not recovered }
+  OPT_E           : BOOLEAN;                           {   45,    1 word   assigned (SW = '+') in COMPOPTIONS }
   BPTONLINE       : BOOLEAN;                           {   46,    1 word   II.0 }
   IOCHECK         : BOOLEAN;                           {   47,    1 word   II.0 }
   CODEINSEG       : BOOLEAN;                           {   48,    1 word   II.0 }
@@ -77,7 +77,7 @@ VAR
   CHARPTR         : STP;                               {   59,    1 word   II.0 }
   LONGINTPTR      : STP;                               {   60,    1 word   II.0 }
   REALPTR         : STP;                               {   61,    1 word   II.0 }
-  RESIDENT        : ^ INTEGER;                         {   62,    1 word   assigned NIL in BLOCK; what it points at is not recovered }
+  RESIDENT        : CTP;                               {   62,    1 word   a chain of MODULE identifiers, built in COMPOPTIONS and linked through NEXT }
   USINGLIST       : CTP;                               {   63,    1 word   II.0 }
   FWPTR           : CTP;                               {   64,    1 word   II.0 }
   OUTERBLOCK      : CTP;                               {   65,    1 word   II.0 }

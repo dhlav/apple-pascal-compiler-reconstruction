@@ -7374,14 +7374,173 @@ add-then-subtract. Apple preserved both, so the binary distinguishes them and
 so must the reconstruction. It is the sharpest reminder yet that what is
 being recovered is a *source text*, not a meaning.
 
+## 79. COMPOPTIONS, and the compiler calling the operating system by name
+
+Segment 18, five procedures, **647 instructions, all five identical to
+Apple's**. `src/pascal/1.3/phases/COMPOPTI.text`.
+
+II.0's `COMMENTER` (`procs.a.text:168`) is one procedure that reads the `$`
+options *and* skips the rest of the comment. Apple split it: the skipping
+stayed in segment 1's `COMMENTER`, already reconstructed, and everything from
+the `$` to the last option became a segment FUNCTION. The result carries
+II.0's `EXIT(COMMENTER)` across the boundary -- an EXIT cannot name a
+procedure it is no longer inside -- so the caller's whole use of it is
+
+    IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
+
+and the four II.0 arms that exited now call an `EXITOPTIONS` that assigns
+FALSE and returns. That procedure is six instructions and the second of the
+segment.
+
+### 79a. `CXP 0,43` is not a standard procedure
+
+Almost every `CXP 0,n` in the compiler is emitted for a standard procedure --
+`RESET` is `FOPEN`, `WRITE` is `FWRITECHAR`, `BLOCKREAD` is `FBLOCKIO` -- and
+needs no declaration anywhere. `CXP 0,43` is different, and `syscall.py` has
+been carrying it as `OS.43` with the name withheld since finding 51.
+
+It is not emitted by anything. Two probes compiled under Apple's own
+compiler settle it: `RESET` and `REWRITE` on a file with a `STRING[40]`
+variable title, a `STRING` variable, a `STRING[80]` local and a literal;
+then `CONCAT`, `COPY`, `INSERT`, `DELETE`, `POS`, `LENGTH`, `STR`, string
+assignment and string subscription. The string intrinsics are `CXP 0,23`
+through `0,27` and the file ones `0,5` and `0,6`. **Nothing emits 43 at any
+argument shape.**
+
+So the compiler is calling it *by name*, and that means Apple's source
+declares it.
+
+### 79b. Forty-two forwards that are never defined
+
+Under `(*$U-*)` the outer block is lex -1 and its procedures are segment 0's
+-- which at run time is `SYSTEM.PASCAL`, not the compiler. A third probe
+shows the mechanism exactly:
+
+    (*$U-*)
+    PROGRAM PASCALSYSTEM;
+    PROCEDURE A1; FORWARD;
+    PROCEDURE A2; FORWARD;
+    PROCEDURE A3(VAR S: STRING; I,N: INTEGER); FORWARD;
+    SEGMENT PROCEDURE PASCALCOMPILER; ...
+
+`A1` compiles to `CXP 0,2`, `A2` to `CXP 0,3`, and `A3(T,1,40)` to
+
+    LAO 1; SLDC 1; SLDC 40; CXP 0,4
+
+which is the shape of every one of the compiler's `OS.43` call sites. **An
+unresolved FORWARD is legal here and is how a system program names the OS.**
+It takes a procedure number, compiles the call, and the body it never gets is
+the operating system's.
+
+The same probe rules out the obvious alternative. With *bodies* instead of
+FORWARDs the compile stops at **error 399** on the following
+`SEGMENT PROCEDURE` -- which is `CODEINSEG`, the very error
+`WRITELINKERINFO` reports at its own first line. Code at lex -1 before a
+segment procedure is not allowed, so the forwards cannot be defined.
+
+The count is exact and is the whole content of the claim: procedure 1 is the
+outer block, the call is procedure 43, so there are **42** of them. II.0's
+`GLOBALS.TEXT` has exactly 42 forward declarations, ending at `COMMAND`.
+Apple's 43rd is not `COMMAND` -- II.0's takes nothing and Apple's takes three
+words -- but everything up to 42 lines up, so the skeleton emits II.0's names
+in II.0's order and Apple's shape for 43 alone. The parameters of the other
+41 are dropped: a forward that is never called and never defined contributes
+nothing but its number.
+
+What 43 *is* stays unrecovered. `SYSTEM.PASCAL`'s own procedure 43 forwards
+straight into `FILEPROC.1`, its file-name segment, and the three call sites
+pass a string, 1, and that string's declared length -- twice on a title about
+to be `RESET`, once in segment 1 on an 80-character buffer whose `LENGTH` is
+read immediately after. It is declared `OSPROC43` and left at that.
+
+`ucsdpsys_compile` rejects unresolved forwards outright, so `procbuild` has a
+`defang_forwards` that swaps the block for a single stub before handing the
+source to the fast tier. The cost is two instructions in one procedure on a
+tier that already differs at every `AND`.
+
+### 79c. RESIDENT is a chain of MODULE identifiers
+
+`(*$R name,name*)` is Apple's, with no UCSD equivalent: it names segments
+that must stay resident. `RESSEGLIST` reads the list, and for each name --
+a unit, a segment procedure, or a plain number -- calls `MARKRESIDENT`, which
+is the only thing in the compiler that builds the `RESIDENT` chain. The only
+other references anywhere are `BLOCK` setting it NIL and `BODY1` asking
+whether it still is.
+
+    NEW(LCP,MODULE);
+    WITH LCP^ DO
+      BEGIN SEGID := FSEG;
+        NEXT := RESIDENT;
+        MODUNK11 := (SY = IDENT) AND INMODULE AND NOT INTRINSIC
+      END;
+    RESIDENT := LCP
+
+The cell is an `identifier`: the link is `NEXT` at word 7, the identifier
+record's own link field, and the segment number goes to `SEGID` at 9. So
+`RESIDENT` is a `CTP`, not the `^ INTEGER` placeholder it has been carrying.
+
+And the allocation measures the variant. `NEW(...,MODULE)` asks for **13**
+words, which is the 9-word fixed part plus four -- so Apple's `MODULE` is
+four words where UCSD's is one. Finding 76b already had two of them from
+`WRITELINKERINFO`'s reads at 10 and 11; the fourth is required by the
+allocation and read by nothing. The count checks out across the whole
+binary: five 13-word `NEW`s, and `decpart.a`'s two `NEW(LCP,FIELD,TRUE)`
+plus `decpart.b`'s one `NEW(LCP,MODULE)` account for the three in
+`DECLARAT` exactly.
+
+`MODUNK10` gets a use here too, and a suggestive one: a named unit is marked
+resident **only if** it is set. Whatever it means, it distinguishes units
+that have a segment of their own.
+
+### 79d. Six globals typed, one collision, and two orderings
+
+Typed by this segment, each from an assignment whose right side is a
+comparison: `OPT_E`, `VARSTRG`, `NOLOAD` and `LSTOPEN` are BOOLEAN, as is
+`INTRINSIC` from finding 77c. `RESIDENT` is `CTP` as above.
+
+The collision is worth recording because it is the **eight-character rule**
+biting for the first time in a way that changed the source. `RESIDENTLIST`
+truncates to `RESIDENT`, which is the global it assigns to, and the compiler
+sees an assignment to a function result. Renamed `RESSEGLIST`.
+
+Two orderings came out of the diff rather than out of reasoning, which is the
+point of running it:
+
+* **The case arms are in source order.** Apple's jump table sends `P` to a
+  later address than `Q`, so `Q` is written first -- II.0's order, which the
+  reconstruction had tidied.
+* **`LVAL*10 + (ORD(LTITLE[LI])-ORD('0'))` is parenthesised** and
+  `NUMSTRIN`'s other accumulation is not. Same lesson as finding 78e, in a
+  different segment, found the same way.
+
+### 79e. What Apple added to the options
+
+`E`, `N`, `NS`, `R name`, `S` and `V` have no UCSD counterpart. `NS` is the
+one finding 68 predicted: it scans up to two digits and, if the value is
+above `NEXTSEG` and below 63, moves the segment counter -- which is what puts
+the compiler's own phases at 7 and up. `S` takes two switches at once,
+`SWAPPING` from `SW` and `SWAPMORE` from `DEL`, and steps the cursor when
+`DEL` is `+` or `-`. `Q` gained `NOT CONLIST`, `L` and `U` gained the
+`LSTOPEN` and `LIBNOTOPEN` guards, and `SCANSTRING` gained blank-trimming at
+both ends plus the rule that a `*` inside a `(* *)` comment only terminates
+it when a `)` follows.
+
+II.0's include handling shrank in one place: it opens the file, and on
+failure retries with `.TEXT` appended. Apple calls `OSPROC43` on the title
+and opens once.
+
 ## 16. Open questions
 
-* **The two BOOLEANs at words 10 and 11 of the `MODULE` variant.** Finding
-  76b has their offsets, their type and the one test that reads them --
-  `INMODULE AND NOT INTRINSIC AND <10> AND <11>` decides whether a used unit
-  gets a `MODDULE` linker record -- and nothing that names them. Both are
-  written somewhere in `DECLARAT` or `UNITPART`, neither of which is
-  reconstructed yet, so whichever of those comes first should settle it.
+* **The three unnamed words of the `MODULE` variant.** Finding 76b has 10
+  and 11 from `WRITELINKERINFO`'s reads and finding 79c adds 12 from the
+  13-word `NEW`. `COMPOPTIONS` writes 11 and reads 10, which narrows them --
+  a used unit is marked resident only if 10 is set -- but names none of the
+  three, and nothing touches 12 at all. `DECLARATIONPART` enters used units
+  and is where the rest of the writes must be.
+* **What `OSPROC43` is.** Finding 79b has its number, its three-word shape
+  and its three call sites, and `SYSTEM.PASCAL` forwards it into `FILEPROC`.
+  II.0's `GLOBALS.TEXT` stops one short of naming it, so what would settle it
+  is Apple's own GLOBALS equivalent, or disassembling `FILEPROC.8`.
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
   finding 55c**: `SYMBUFP` and `CODEP` are the outer block's two *parameter*
   words, not `VAR` declarations, and the reconstruction was writing them as

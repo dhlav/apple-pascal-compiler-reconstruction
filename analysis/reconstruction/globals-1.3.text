@@ -51,17 +51,17 @@ VAR
   INMODULE        : BOOLEAN;                           {   33,    1 word   II.0 }
   SWAPMORE        : BOOLEAN;                           {   34,    1 word   the condition in HOLDMOST }
   SWAPPING        : BOOLEAN;                           {   35,    1 word   ORed with HAS128K in BLOCK }
-  NOLOAD          : INTEGER;                           {   36,    1 word   ours: one word, type not recovered }
+  NOLOAD          : BOOLEAN;                           {   36,    1 word   assigned (SW = '+') in COMPOPTIONS }
   USING           : BOOLEAN;                           {   37,    1 word   II.0 }
   INCLUDING       : BOOLEAN;                           {   38,    1 word   II.0 }
   DP              : BOOLEAN;                           {   39,    1 word   II.0 }
-  VARSTRG         : INTEGER;                           {   40,    1 word   ours: one word, type not recovered }
+  VARSTRG         : BOOLEAN;                           {   40,    1 word   assigned (SW = '+') in COMPOPTIONS }
   LSEPPROC        : BOOLEAN;                           {   41,    1 word   II.0 }
   INTRINSIC       : BOOLEAN;                           {   42,    1 word   LNOTed in WRITELINKERINFO }
   TINY            : BOOLEAN;                           {   43,    1 word   II.0 }
   LIST            : BOOLEAN;                           {   44,    1 word   II.0 }
   LINKINFO        : BOOLEAN;                           {   45,    1 word   ANDed with LEVEL = 1 in BLOCK }
-  OPT_E           : INTEGER;                           {   46,    1 word   ours: one word, type not recovered }
+  OPT_E           : BOOLEAN;                           {   46,    1 word   assigned (SW = '+') in COMPOPTIONS }
   BPTONLINE       : BOOLEAN;                           {   47,    1 word   II.0 }
   IOCHECK         : BOOLEAN;                           {   48,    1 word   II.0 }
   CODEINSEG       : BOOLEAN;                           {   49,    1 word   II.0 }
@@ -80,7 +80,7 @@ VAR
   CHARPTR         : STP;                               {   62,    1 word   II.0 }
   LONGINTPTR      : STP;                               {   63,    1 word   II.0 }
   REALPTR         : STP;                               {   64,    1 word   II.0 }
-  RESIDENT        : ^ INTEGER;                         {   65,    1 word   assigned NIL in BLOCK; what it points at is not recovered }
+  RESIDENT        : CTP;                               {   65,    1 word   a chain of MODULE identifiers, built in COMPOPTIONS and linked through NEXT }
   USINGLIST       : CTP;                               {   66,    1 word   II.0 }
   FWPTR           : CTP;                               {   67,    1 word   II.0 }
   OUTERBLOCK      : CTP;                               {   68,    1 word   II.0 }
@@ -154,6 +154,6 @@ VAR
   DISKBUF         : PACKED ARRAY [0..511] OF CHAR;     { 1099,  256 words  II.0 }
   HAS128K         : BOOLEAN;                           { 1355,    1 word   ORed with SWAPPING in BLOCK }
   CONLIST         : BOOLEAN;                           { 1356,    1 word   negated in ERROR }
-  LSTOPEN         : INTEGER;                           { 1357,    1 word   ours: one word, type not recovered }
+  LSTOPEN         : BOOLEAN;                           { 1357,    1 word   LNOTed in COMPOPTIONS }
 
 { 4 touched offsets are not objects: [965, 1016, 1056, 1096] -- finding 43 }
