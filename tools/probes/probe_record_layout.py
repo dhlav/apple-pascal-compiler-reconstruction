@@ -19,10 +19,13 @@ For `identifier`, three of the seven `klass` sizes match as written and four
 are one word over. Finding 54b closed that gap by deleting two fields,
 `PUBLIC` and `IMPORTED`. Finding 76 shows the gap was never a missing field
 at all: **a record is not allocated by its type, it is allocated by the tag
-list the `NEW` call supplies**, and UCSD stops at the last tag given. Every
-one of those four `klass` values is created by a `NEW` whose last tag selects
-the *empty* arm of a trailing `CASE BOOLEAN OF TRUE: (...)`, so the word is
-not there in the allocation even though it is there in the declaration.
+list the `NEW` call supplies**. Every one of those four `klass` values is
+created by a `NEW` whose last tag selects the *empty* arm of a trailing
+`CASE BOOLEAN OF TRUE: (...)`, so the word is not there in the allocation
+even though it is there in the declaration. A tag list that merely runs out
+allocates the largest remaining arm instead -- finding 80b, measured against
+Apple's own compiler -- so it is the empty label doing the work here and not
+the shortness of the list.
 
 The probe reads the tag lists out of II.0's own `NEW` call sites rather than
 supplying them, sizes `identifier` along each, and requires that the result

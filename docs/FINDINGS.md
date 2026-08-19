@@ -7094,10 +7094,17 @@ its own `$018E`. **The field is there in both releases.**
 
 What was wrong was never the declaration. It was the assumption that a record
 is allocated by its type. **UCSD allocates by the tag list the `NEW` call
-supplies, and stops at the last tag given** -- a variant below it contributes
-nothing, not its largest arm. Every one of the four short `klass` values is
-built by a `NEW` whose last tag selects the *empty* arm of a trailing
-`CASE BOOLEAN OF TRUE: (...)`, and II.0 writes those tags itself:
+supplies**, and a tag that selects an *empty* arm allocates nothing for it.
+Every one of the four short `klass` values is built by a `NEW` whose last tag
+selects the empty arm of a trailing `CASE BOOLEAN OF TRUE: (...)`, and II.0
+writes those tags itself:
+
+> Refined by **finding 80b**. This section first said the walk stops at the
+> last tag given and that anything below it contributes nothing. It stops at
+> an empty *arm*; where the tag list simply runs out, the largest remaining
+> arm is allocated, exactly as for an untagged pointer. Every example below
+> supplies the empty label explicitly, so none of them distinguishes the two
+> readings and none of the sizes changes.
 
     NEW(CP,TYPES)                          9
     NEW(CP,KONST)                         10
@@ -7529,14 +7536,172 @@ II.0's include handling shrank in one place: it opens the file, and on
 failure retries with `.TEXT` appended. Apple calls `OSPROC43` on the title
 and opens once.
 
+## 80. UNITPART, the INTRINSIC unit, and a rule the emulator corrected
+
+Segment 17, four procedures, **906 instructions, all four identical to
+Apple's on the first run**. `src/pascal/1.3/phases/UNITPART.text`.
+
+II.0's `UNITPART` is the second of the two segment procedures in
+`unitpart.text`, the file `WRITELINKERINFO` came from. Apple gave each its
+own file and its own segment, and then added to this one the thing UCSD
+II.0 has no notion of: the **intrinsic unit**.
+
+### 80a. `UNIT X; INTRINSIC CODE 20 DATA 21;`
+
+A UCSD unit is compiled into the next free segment and linked into the host
+program. An Apple intrinsic unit names the two segment numbers it will own
+for good -- one for its code, one for its globals -- and lives in
+`SYSTEM.LIBRARY` for every program to share. `UNITDECLARATION` is where the
+clause is parsed, and it is most of what Apple added to II.0's procedure:
+
+    IF ID = 'INTRINSI' THEN
+      BEGIN INTRINSIC := TRUE;
+        LCODESEG := FALSE; LDATASEG := FALSE; DATASEG := 1;
+        INSYMBOL;
+        IF SY = IDENT THEN
+          BEGIN
+            IF ID = 'CODE    ' THEN ... SEGKIND := 6 ...
+            IF (SY = IDENT) AND (ID = 'DATA    ') THEN ... SEGKIND := 7 ...
+            IF NOT LCODESEG THEN
+              BEGIN ERROR(352); LCP^.MODUNK10 := FALSE END;
+            IF SY = SEMICOLON THEN INSYMBOL ELSE ERROR(14)
+          END
+      END
+    ELSE ERROR(22)
+
+`CODE` is required and `DATA` is not, and the two flags that say which were
+seen live in **UNITPART's frame, not this one** -- `STR 1,6` and `STR 1,7`.
+Everything that reads them is in the segment body: a data segment with
+nothing in it is error 355, globals with no data segment to hold them is
+error 350, and no code segment at all is error 352.
+
+II.0 also has no `SEGSLOT`. Apple's `SEGMAP` decouples a segment's number
+from its table slot (finding 71), so `NEWSEG` and `BUMPSEG` allocate the
+slot and `SEGNUM` records the number.
+
+### 80b. The MODULE variant's fifth word, and what NEW does when the tags run out
+
+**VERIFIED BINARY FACT** for the two sizes and the condition between them.
+
+`MARKRESIDENT` asks `NEW` for **13** words and `UNITDECLARATION` asks for
+**14**. Both build a `MODULE` identifier. Finding 76 says a `NEW` allocates
+by the tag list it is given, so the difference is a tag -- and
+`DECLARATIONPART` shows the two side by side, the arms of one `IF`:
+
+    IF LSEPPROC THEN NEW(LCP,MODULE,TRUE) ELSE NEW(LCP,MODULE,FALSE)
+
+So the fourth of Apple's added `MODULE` words is a **BOOLEAN tag** and there
+is a fifth behind its TRUE arm. The tag is written at both creation sites
+(FALSE) and again in `UNITDECLARATION`'s intrinsic `DATA` arm (TRUE); the
+word behind it is allocated by three call sites and read by none.
+
+Then Apple's compiler corrected the rule. Written `NEW(LCP,MODULE)`,
+`MARKRESIDENT` came back **14** where the binary has 13 -- the one
+divergence in the whole run, and the only one this session. A tag list that
+*runs out* does not stop: the largest remaining arm is allocated, exactly as
+for an untagged pointer. Only an empty *arm* stops it. So the short sizes of
+finding 76 come from supplying the empty label, never from withholding the
+tag, and `MARKRESIDENT` writes `NEW(LCP,MODULE,FALSE)`.
+
+Every example in finding 76 supplies the label explicitly, so nothing there
+moves; `probe_record_layout.py` passes its 49 checks under either reading.
+What settled it was a size the binary states and the fast tier cannot see.
+
+### 80c. SEGSUSED is a set, and it is written into the interface text
+
+**VERIFIED BINARY FACT.**
+
+`SEGSUSED` has been carried as four unnamed words since the global map.
+`UNITPART` uses `INN`, `INT` and `DIF` on all four, which will not compile
+against an array, so it is `SET OF 0..63` -- and 1.1's two words are
+`SET OF 0..31`.
+
+What it is for shows up in the same place. A unit's interface text is copied
+into the codefile verbatim, so that a program `USES`ing the unit can compile
+against it without the source:
+
+    IC := SYMCURSOR - TEXTSTRT + 10;
+    IF IC > 1024 THEN IC := 1034;
+    ...
+    MOVELEFT(SYMBUFP^[TEXTSTRT],CODEP^[0],IC);
+    FILLCHAR(CODEP^[IC-10],10,' ');
+    CODEP^[IC-2] := 'E';
+
+Ten blank bytes are left past the end of it. After `WRITECODE` has put the
+buffer on disk the block is read back and **two of those blanks are
+patched**:
+
+    IF [30,31]*SEGSUSED <> [] THEN
+      BEGIN
+        IF BLOCKREAD(USERINFO.WORKCODE^,DISKBUF,1,LBLK) <> 1 THEN ERROR(402);
+        IF 31 IN SEGSUSED THEN DISKBUF[LLENG+1] := 'P';
+        IF 30 IN SEGSUSED THEN DISKBUF[LLENG+3] := 'L';
+        ...
+        SEGSUSED := SEGSUSED - [30,31]
+      END;
+
+So the unit records, in its own interface text, that its code needs the two
+support segments -- and the block has to be remembered before `WRITECODE`
+runs, because `CURBLK` moves past it. That is what `LBLK` and `LLENG` are,
+and why the byte count is reduced modulo 512 before anything is written.
+
+`USERINFO.WORKCODE^` is `LOD 2,8`, two lex levels up, which is the operating
+system's own globals (finding 63) -- and it is `WORKCODE` at 8 rather than
+`WORKSYM` because a two-name list allocates backwards (finding 33).
+
+### 80d. The unit's initialisation body has no identifier, so one is built
+
+II.0 compiles a unit's `BEGIN ... END` through `BLOCK` like any other body.
+Apple's fourth procedure does it by hand: it pushes a lex stack entry,
+fills `DFPROCP` with a procedure identifier it makes up -- named for the
+unit, lex 1, procedure 1 of `SEG` -- and hands that to `BODYPART`.
+
+    NEW(DFPROCP,PROC,DECLARED,ACTUAL,TRUE);
+    WITH DFPROCP^ DO
+      BEGIN NAME := MODPTR^.NAME; IDTYPE := NIL; NEXT := NIL;
+        KLASS := PROC; PFDECKIND := DECLARED;
+        PFLEV := 1; PFNAME := 1; PFSEG := SEG; PFKIND := ACTUAL;
+        LOCALLC := 1; FORWDECL := FALSE; EXTURNAL := FALSE;
+        INSCOPE := TRUE; IMPORTED := FALSE
+      END;
+
+`LLINK` and `RLINK` are the only two fields left alone: the record never
+enters a symbol tree, and nothing ever looks it up by name.
+
+This is also the first `LEXSTKREC` the reconstruction has had to lay out,
+and it comes out II.0's verbatim -- eleven words, `DFPROCP` at 8,
+`PREVLEXSTACKP` at 11. The pair that would have moved is `POLDPROC,SOLDPROC`,
+and finding 33 puts them the right way round: the binary saves `CURPROC` to
+word 4 and `NEXTPROC` to word 3, which is what a reversed two-name list
+gives.
+
+### 80e. The work disk ran out before the compiler did
+
+Worth recording because the symptom names the wrong thing. Apple's compiler
+reported **error 402 at the last line of the source**, having compiled all
+2421 of them. 402 is the codefile: a Disk II volume is 280 blocks, the
+source had grown to 138 of them, and the 30 that were left were not enough
+to write the result into.
+
+`write_for_emulator` now drops `SKEL13.TEXT` and `SKEL11.TEXT` from the
+volume -- 82 blocks this run has no use for, since the body source carries
+the declarations itself -- and prints what is left. `mkworkdisk.py` puts
+them back, and `build_all.py` runs it. The ceiling is real and will be met
+again: 280 blocks is the whole budget for the source and its output
+together.
+
 ## 16. Open questions
 
-* **The three unnamed words of the `MODULE` variant.** Finding 76b has 10
-  and 11 from `WRITELINKERINFO`'s reads and finding 79c adds 12 from the
-  13-word `NEW`. `COMPOPTIONS` writes 11 and reads 10, which narrows them --
-  a used unit is marked resident only if 10 is set -- but names none of the
-  three, and nothing touches 12 at all. `DECLARATIONPART` enters used units
-  and is where the rest of the writes must be.
+* **The four unnamed words of the `MODULE` variant.** Finding 76b has 10
+  and 11 from `WRITELINKERINFO`'s reads, finding 79c adds 12 from the
+  13-word `NEW`, and finding 80b makes 12 a BOOLEAN tag with a fifth word,
+  13, behind it. The uses narrow them and name none: a used unit is marked
+  resident only if 10 is set; 10 also gates whether the unit gets a segment
+  table entry of its own, and is cleared when an intrinsic unit gives no
+  `CODE` segment; 11 is `(SY = IDENT) AND INMODULE AND NOT INTRINSIC` at
+  one site and `LSEPPROC` at another; 12 is set only in the intrinsic `DATA`
+  arm. Word 13 is allocated by three call sites and read by nothing at all.
+  `DECLARATIONPART` is the one place left that writes them.
 * **What `OSPROC43` is.** Finding 79b has its number, its three-word shape
   and its three call sites, and `SYSTEM.PASCAL` forwards it into `FILEPROC`.
   II.0's `GLOBALS.TEXT` stops one short of naming it, so what would settle it

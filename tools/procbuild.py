@@ -346,15 +346,27 @@ def write_for_emulator(ver: str, segs) -> Path:
     name = f"BODY{ver.replace('.', '')}.TEXT"
     dsk = ROOT / "build" / "disks" / "WORK.dsk"
     w = PascalWriter.from_file(dsk)
-    for stale in (name, name.replace(".TEXT", ".CODE")):
+    # A Disk II volume is 280 blocks and that is the whole budget: the
+    # source, the codefile Apple's compiler writes beside it, and whatever
+    # else mkworkdisk.py put there. The skeletons are 82 blocks of it and
+    # this run has no use for them -- the body source already carries the
+    # declarations -- so they go, and the codefile gets the room. A failed
+    # compile here reports error 402 at the last line, which is what a full
+    # output file looks like from inside the compiler. mkworkdisk.py puts
+    # them back, and build_all.py runs it.
+    for stale in (name, name.replace(".TEXT", ".CODE"),
+                  "SKEL13.TEXT", "SKEL11.TEXT"):
         try:
             w.remove_file(stale)
         except KeyError:
             pass
     w.add_file(name, encode_text(src), "textfile")
     w.save(dsk)
+    used = sum(e.blocks for e in PascalDisk.from_file(dsk).directory())
+    free = PascalDisk.from_file(dsk).volume().total_blocks - 6 - used
     print(f"wrote WORK:{name} ({len(src.splitlines())} lines, "
-          f"{nproc} procedures) to {dsk.relative_to(ROOT)}")
+          f"{nproc} procedures) to {dsk.relative_to(ROOT)}; "
+          f"{free} blocks left for the codefile")
     return dsk
 
 

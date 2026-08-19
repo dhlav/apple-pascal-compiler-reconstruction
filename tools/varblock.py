@@ -175,6 +175,12 @@ RETYPE = {
     "RESIDENT": ("CTP", "a chain of MODULE identifiers, built in "
                         "COMPOPTIONS and linked through NEXT"),
     "WORDPTR": ("STP", "compared against an STP in COMPTYPES"),
+    # A set, and UNITPART is what says so: `31 IN SEGSUSED`,
+    # `SEGSUSED * [30,31] <> []` and `SEGSUSED := SEGSUSED - [30,31]` are
+    # all set operators on the four words at 186, and INN/INT/DIF will not
+    # compile against an array. Finding 80c.
+    "SEGSUSED": ("SET OF 0..{bits}",
+                 "INN, INT and DIF on all {words} words in UNITPART"),
 }
 # Offsets that hold a word Apple declared and never uses. Finding 39b: 1.1's
 # 72 sits between UFLDPTR at 71 and UPRCPTR at 73, and no LDO, SRO or LAO on
@@ -201,7 +207,8 @@ def reconcile(rows, ver: str):
         # A retyped object's bounds can depend on how many words Apple gave
         # it -- SEGMAP is 16 words in 1.3 and 8 in 1.1, and its element count
         # is four times either.
-        fmt = dict(words=words, entries=4 * words, last=4 * words - 1)
+        fmt = dict(words=words, entries=4 * words, last=4 * words - 1,
+                   bits=16 * words - 1)
         typ = RETYPE[name][0].format(**fmt) if name in RETYPE \
             else types.get(name)
         if forced or not typ:

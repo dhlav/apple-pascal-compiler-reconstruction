@@ -45,26 +45,31 @@ CONSTS = {
 # Fields Apple's records have that UCSD's do not. Both releases, so these
 # are not keyed by version.
 TYPE_EDITS = (
-    # Findings 76b and 79c. Apple's MODULE variant is four words where
-    # UCSD's is one, and two independent measurements agree on it:
+    # Findings 76b, 79c and 80b. Apple's MODULE variant is five words where
+    # UCSD's is one, and three independent measurements agree on it:
     #
     #   * WRITELINKERINFO's MODULE arm reads `IND 10` and `IND 11`, both as
     #     BOOLEANs, ANDed into the test that decides whether a used unit
     #     gets a MODDULE record. Two words that must be there.
-    #   * every `NEW(...,MODULE)` in the binary asks for 13 words, which is
-    #     the fixed part plus four. COMPOPTIONS builds the RESIDENT chain
-    #     out of them and DECLARATIONPART enters used units as them.
+    #   * MARKRESIDENT's `NEW(...,MODULE)` asks for 13 words, which is the
+    #     fixed part plus four -- so a fourth word follows those two.
+    #   * DECLARATIONPART asks for 14 or 13 on one condition, the two arms
+    #     of a single IF, and UNITDECLARATION asks for 14 flat. A tagged NEW
+    #     allocates by the tag list it is given (finding 76), so the fourth
+    #     word is a BOOLEAN tag and the fifth is its TRUE arm.
     #
-    # So word 12 is required by the allocations and read by nothing, and
-    # words 10 and 11 are read and never allocated any other way. They are
-    # declared separately rather than as one list so they allocate forward
-    # (finding 33). Nothing recovered names any of the three.
+    # That fifth word is allocated and never touched; the tag is written --
+    # FALSE at both creation sites, TRUE in UNITDECLARATION's intrinsic
+    # DATA arm. The names are ours: nothing recovered any of the four.
+    # They are declared separately rather than as one list so that they
+    # allocate forward (finding 33).
     ("MODULE: (SEGID: INTEGER)",
      "MODULE: (SEGID: INTEGER;\n"
      "\t\t\t     MODUNK10: BOOLEAN;\n"
      "\t\t\t     MODUNK11: BOOLEAN;\n"
-     "\t\t\t     MODUNK12: INTEGER)",
-     "finding 76b/79c; three words at 10..12"),
+     "\t\t\t     CASE MODUNK12: BOOLEAN OF\n"
+     "\t\t\t       TRUE: (MODUNK13: INTEGER))",
+     "findings 76b/79c/80b; four words at 10..13"),
 )
 
 

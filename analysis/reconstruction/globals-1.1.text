@@ -123,7 +123,7 @@ VAR
   CONSTBEGSYS     : SETOFSYS;                          {  126,    4 words  II.0 }
   VARS            : SETOFIDS;                          {  130,    1 word   II.0 }
   DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL: ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END; {  131,   52 words  II.0 }
-  SEGSUSED        : ARRAY [0..1] OF INTEGER;           {  183,    2 words  ours: 2 words, shape not recovered }
+  SEGSUSED        : SET OF 0..31;                      {  183,    2 words  INN, INT and DIF on all 2 words in UNITPART }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;      {  185,  150 words  II.0 }
   SEGTABLE        : ARRAY [SEGRANGE] OF RECORD DISKADDR,CODELENG: INTEGER; SEGNAME: ALPHA; SEGKIND, TEXTADDR, SEGNUM: INTEGER END; {  335,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9]; SEGKIND at 8 (BLOCK's INC 8), SEGNUM at 6 (SEGINFO) }
   SEGMAP          : PACKED ARRAY [0..31] OF SEGRANGE;  {  479,    8 words  reached only by IXP 4,4: 32 four-bit entries in 8 words }

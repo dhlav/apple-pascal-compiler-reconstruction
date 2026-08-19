@@ -186,16 +186,20 @@ class Layout:
     def new_size(self, expr: str, *tags: str) -> int:
         """The words `NEW(p, t1, ..., tn)` allocates for a record type.
 
-        UCSD sizes the record along the tag path it is *given*, and stops:
-        a variant below the last tag supplied contributes nothing at all,
-        not its largest arm. `record_variants` takes the largest instead,
-        which is what a bare pointer assignment needs; this is what a
-        tagged `NEW` needs, and the two differ by a word wherever a variant
-        ends in another one (finding 76).
-
-        A label with no arm of its own -- the implicit `FALSE` of a
+        UCSD sizes the record along the tag path it is *given*. A label with
+        no arm of its own -- the implicit `FALSE` of a
         `CASE BOOLEAN OF TRUE: (...)` -- is an empty variant, so the walk
-        stops there with nothing added.
+        stops there with nothing added, and that is what makes four `klass`
+        values a word shorter in the binary than the declaration reads
+        (finding 76).
+
+        Where the tag list simply RUNS OUT, the largest remaining arm is
+        allocated, exactly as for an untagged pointer. Apple's own compiler
+        says so: `NEW(LCP,MODULE)` asks for 14 words, which is the MODULE
+        arm plus the one-word TRUE arm of the variant that ends it, and 13
+        -- the same NEW with the tag written out as FALSE -- is what
+        MARKRESIDENT emits (finding 80b). So the short sizes come from
+        supplying the empty label, never from withholding the tag.
         """
         e = " ".join(expr.split())
         m = re.match(r"(PACKED\s+)?RECORD\b", e, re.I)
@@ -214,7 +218,7 @@ class Layout:
             # A named tag occupies a word; `CASE BOOLEAN OF` does not.
             total += 1 if tag else 0
             if not todo:
-                return total
+                return total + max(self._arm_words(a) for _l, a in arms)
             want = todo.pop(0)
             for labels, arm in arms:
                 if want in [l.upper() for l in labels]:

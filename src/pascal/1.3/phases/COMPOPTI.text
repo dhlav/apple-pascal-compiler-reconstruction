@@ -54,7 +54,7 @@
   and BODY1 asking whether it is. }
       VAR LCP: CTP;
     BEGIN
-      NEW(LCP,MODULE);
+      NEW(LCP,MODULE,FALSE);
       WITH LCP^ DO
 	BEGIN SEGID := FSEG;
 	  NEXT := RESIDENT;

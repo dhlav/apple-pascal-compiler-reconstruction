@@ -7,7 +7,7 @@
     MAXJTAB 24 -> 36   { finding 40a; 1.1 keeps 24 }
     MAXPROCNUM 149 -> 254   { finding 40; 1.1 keeps 149 }
     MAXCODE 1299 -> 1999   { finding 75; 1.1 keeps 1299 }
-    added to MODULE   { finding 76b/79c; three words at 10..12 }
+    added to MODULE   { findings 76b/79c/80b; four words at 10..13 }
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -259,7 +259,8 @@ TYPE
                    MODULE: (SEGID: INTEGER;
                              MODUNK10: BOOLEAN;
                              MODUNK11: BOOLEAN;
-                             MODUNK12: INTEGER)
+                             CASE MODUNK12: BOOLEAN OF
+                               TRUE: (MODUNK13: INTEGER))
                    END;
 
 
@@ -531,8 +532,8 @@ VAR
   DISPLAY         : ARRAY [DISPRANGE] OF RECORD FNAME: CTP; CASE OCCUR: WHERE OF
       BLCK: (FFILE: CTP; FLABEL: LABELP); CREC: (CLEV: LEVRANGE; CDSPL:
       ADDRRANGE); VREC: (VDSPL: ADDRRANGE) END;
-  {  186,    4 words  ours: 4 words, shape not recovered }
-  SEGSUSED        : ARRAY [0..3] OF INTEGER;
+  {  186,    4 words  INN, INT and DIF on all 4 words in UNITPART }
+  SEGSUSED        : SET OF 0..63;
   {  190,  255 words  II.0 declares 150 words, Apple has 255 }
   PROCTABLE       : ARRAY [PROCRANGE] OF INTEGER;
   {  445,  144 words  Apple's entry is 9 words, indexed SEGTABLE[slot*9];
