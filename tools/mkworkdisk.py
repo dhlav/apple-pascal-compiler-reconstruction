@@ -33,6 +33,7 @@ from a2pascal.textfile import decode_text, encode_text
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "disks"
 VOLUME = "WORK"
+VOLUME2 = "WORK2"
 
 # (name on the volume, source file). Names are upper case and at most 15
 # characters, and `SKEL13`/`SKEL11` are inside Apple Pascal's eight
@@ -72,6 +73,16 @@ def main() -> int:
 
     dsk = OUT / f"{VOLUME}.dsk"
     w.save(dsk)
+
+    # A second, empty volume. A Disk II is 280 blocks and that is the whole
+    # budget for the source and the codefile Apple's compiler writes beside
+    # it; once the source passed 260 blocks there was no longer room for
+    # both. WORK2 goes in S5D2 in place of APPLE3, which a compile does not
+    # need, and `--emu` answers the compiler's second prompt with
+    # `WORK2:...CODE`. See finding 82.
+    PascalWriter.blank(VOLUME2, order="dos").save(OUT / f"{VOLUME2}.dsk")
+    print(f"wrote {(OUT / (VOLUME2 + '.dsk')).relative_to(ROOT)}: "
+          f"{VOLUME2}:, empty, for the codefile")
 
     # Read it back with the reader, not the writer's own accessors, and
     # require the text out to equal the text in.

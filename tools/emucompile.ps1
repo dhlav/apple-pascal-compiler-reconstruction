@@ -16,7 +16,8 @@ param(
   [string]$Name = "BODY13",
   [int]$Boot = 3,          # seconds to let the system boot before typing
   [int]$Compile = 25,      # seconds to let the compile run
-  [string]$Shot = ""
+  [string]$Shot = "",
+  [switch]$Work2          # put the codefile on WORK2: (S5D2), not WORK:
 )
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -25,12 +26,14 @@ if ($Shot -eq "") { $Shot = Join-Path $env:TEMP "emucompile-$Name.png" }
 
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 500
-Start-Process -FilePath "python" -ArgumentList "$root\tools\runemu.py","--boot128" `
-              -WindowStyle Hidden
+$emuargs = @("$root\tools\runemu.py","--boot128")
+if ($Work2) { $emuargs += "--work2" }
+Start-Process -FilePath "python" -ArgumentList $emuargs -WindowStyle Hidden
 Start-Sleep -Seconds 2
 
 # C(ompile, the source file, the codefile, then <ret> for no listing.
-$keys = "CWORK:$Name.TEXT{ENTER}WORK:$Name.CODE{ENTER}{ENTER}"
+$out = if ($Work2) { "WORK2:" } else { "WORK:" }
+$keys = "CWORK:$Name.TEXT{ENTER}$out$Name.CODE{ENTER}{ENTER}"
 & "$here\emukeys.ps1" -Wait ($Boot * 1000) | Out-Null
 & "$here\emukeys.ps1" -Keys $keys -Wait ($Compile * 1000) -Shot $Shot
 

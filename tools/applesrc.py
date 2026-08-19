@@ -58,18 +58,29 @@ TYPE_EDITS = (
     #     allocates by the tag list it is given (finding 76), so the fourth
     #     word is a BOOLEAN tag and the fifth is its TRUE arm.
     #
-    # That fifth word is allocated and never touched; the tag is written --
-    # FALSE at both creation sites, TRUE in UNITDECLARATION's intrinsic
-    # DATA arm. The names are ours: nothing recovered any of the four.
+    # What each is for comes from DECLARATIONPART (finding 83c), and the
+    # names below say it. MODSEG: the module owns a code segment -- set at
+    # every creation, cleared when an INTRINSIC clause names no CODE
+    # segment, and the guard on both the segment table entry and the linker
+    # record. MODLINK: it is not an intrinsic's own code segment, which is
+    # the other half of that linker test. MODDATA: it owns a data segment;
+    # it is the tag, and MODDSEG behind it is that segment's number.
     # They are declared separately rather than as one list so that they
     # allocate forward (finding 33).
     ("MODULE: (SEGID: INTEGER)",
      "MODULE: (SEGID: INTEGER;\n"
-     "\t\t\t     MODUNK10: BOOLEAN;\n"
-     "\t\t\t     MODUNK11: BOOLEAN;\n"
-     "\t\t\t     CASE MODUNK12: BOOLEAN OF\n"
-     "\t\t\t       TRUE: (MODUNK13: INTEGER))",
+     "\t\t\t     MODSEG: BOOLEAN;\n"
+     "\t\t\t     MODLINK: BOOLEAN;\n"
+     "\t\t\t     CASE MODDATA: BOOLEAN OF\n"
+     "\t\t\t       TRUE: (MODDSEG: INTEGER))",
      "findings 76b/79c/80b; four words at 10..13"),
+    # Finding 82. Apple's GETTEXT sets USEFILE to 0, 1 and 2: the work
+    # codefile, `*SYSTEM.LIBRARY` after it has had to open it itself, and
+    # the library that was already open -- the one `(*$U name*)` gave it.
+    # II.0 has only the first two.
+    ("UNITFILE = (WORKCODE,SYSLIBRARY)",
+     "UNITFILE = (WORKCODE,SYSLIBRARY,USERLIB)",
+     "finding 82; GETTEXT stores 2 as well"),
 )
 
 

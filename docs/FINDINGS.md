@@ -7828,18 +7828,159 @@ none was a reasoning error about the code:
   0 for a new file and 1 for an existing one, and a listing file is
   written.
 
+## 82. DECLARATIONPART, and what the MODULE record is for
+
+Segment 8, twenty procedures, **4334 instructions**, all matching Apple's
+p-code. `src/pascal/1.3/phases/DECLARAT.text`. Ten of the twenty were
+identical on the first emulator run; six rounds settled the rest.
+
+II.0 writes this as three files and one procedure. Apple has twenty
+procedures to II.0's fifteen, and the five extra are restructuring rather
+than new work:
+
+* **CHECKSYS**, which is `IF NOT (SY IN X) THEN BEGIN ERROR(6); SKIP(X) END`
+  -- ten sites in II.0, one procedure and ten calls here.
+* **USEUNIT**, the ELSE arm of II.0's `USESDECLARATION` loop lifted into a
+  procedure of its own. That is where II.0's `MAGIC` parameter went: it
+  existed to reach Turtlegraphics behind the user's back, and Apple has no
+  such thing.
+* **FINDUNIT** and **FINDNAME** under GETTEXT. Apple's library search has to
+  find a unit's code segment and then, separately, its data segment, so the
+  search became a function and the thing that calls it twice became another.
+  They are lex 5 and lex 6 -- the deepest nesting anywhere in the compiler.
+
+### 82a. Sets hoisted out of loops
+
+Six sets that II.0 recomputes on every pass are computed once into locals:
+two in DECLARATIONPART's own frame (`FSYS+[IDENT]` for the three
+declaration parsers, `FSYS+[COMMA,SEMICOLON]` for LABELDECLARATION, both
+reached from below with `LDA 1,n`), one in SIMPLETYPE, one in FIELDLIST.
+Not all of them -- the opening `SKIP(FSYS + [IDENT])` in CONSTDECLARATION
+and TYPEDECLARATION is still computed inline, which is how the hoisting was
+measured: those procedures read *both* lex-1 local 1 and lex-1 local 8.
+
+### 82b. What Apple added to the language here
+
+* **BYTESTREAM and WORDSTREAM are not simple types.** SIMPLETYPE rejects
+  them with error 103 and PARAMETERLIST rejects them as value parameters
+  with error 7. Finding 81b entered them; this is what stops them being
+  used as ordinary types.
+* **`(*$E+*)` relaxes the no-private-files rule.** II.0's `IF INMODULE THEN
+  IF NOT ININTERFACE THEN ERROR(191)` becomes `IF NOT (ININTERFACE OR
+  OPT_E)` in both places it appears. That is the first use recovered for
+  `OPT_E`, which finding 79d had only as "assigned `(SW = '+')` in
+  COMPOPTIONS".
+* **`BUMPSEG(NEXTPROC,MAXPROCNUM,251)`** replaces II.0's `IF NEXTPROC =
+  MAXPROCNUM THEN ERROR(251) ELSE NEXTPROC := NEXTPROC + 1`. MAXPROCNUM is
+  254 here (finding 40), and the same helper does the segment counter.
+* **An EXTERNAL procedure that is not followed by `EXTERNAL`** gives back
+  its procedure number: `NEXTPROC := NEXTPROC - 1; LCP^.PFNAME := 0`. The
+  test that guards it (`IF SY <> EXTERNLSY`) is dead -- nothing between it
+  and the `IF SY = EXTERNLSY` that got there reads a symbol -- and the
+  binary has both, so the source did.
+
+### 82c. The MODULE record, named at last
+
+**VERIFIED BINARY FACT.** This closes the open question findings 76b, 79c
+and 80b left standing, and the four words are renamed from `MODUNK10`..13.
+
+`GETTEXT` and `USEUNIT` write every one of them and read three, and each
+use agrees with the uses already recorded elsewhere:
+
+    MODSEG   (word 11)  the module owns a code segment
+    MODLINK  (word 12)  it is not an intrinsic's own code segment
+    MODDATA  (word 13)  it owns a data segment          -- the variant tag
+    MODDSEG  (word 14)  that data segment's number      -- behind the tag
+
+`USEUNIT` sets `MODSEG := LKIND IN [3,5,6]` and `MODLINK := LKIND <> 6`,
+where LKIND is the used unit's SEGKIND: 3 a unit, 4 a separate procedure,
+5 a linked intrinsic, 6 an intrinsic's code, 7 an intrinsic's data. So
+MODSEG is "this has code of its own" and MODLINK is "and it is not an
+intrinsic", which is exactly the pair `WRITELINKERINFO` ANDs together to
+decide whether a used unit gets a MODDULE record (finding 76b), and exactly
+what `UNITPART` guards the segment table entry with (finding 80).
+`UNITDECLARATION` clears MODSEG when an INTRINSIC clause names no CODE
+segment, which is the same statement from the other side.
+
+MODDATA and MODDSEG are settled twice over. `UNITDECLARATION` sets MODDATA
+in the `DATA` arm and nowhere else; `GETTEXT` reads it to decide whether to
+switch DATASEG, and takes the new value from MODDSEG. And the allocation
+matches: `NEW(LCP,MODULE,TRUE)` when the unit has a data segment, `FALSE`
+when it does not.
+
+### 82d. A variable's VLEV can be negative, and now it is known why
+
+`VARDECLARATION` does not simply write `VLEV := LEVEL`:
+
+    IF LSEPPROC OR INTRINSIC THEN
+      IF LEVEL <= 1 THEN VLEV := -DATASEG
+      ELSE VLEV := LEVEL
+    ELSE VLEV := LEVEL;
+
+A global of an intrinsic unit gets **minus its data segment number** in the
+level field. `WRITELINKERINFO` reads it back that way -- finding 79's
+`INDATASEG := VLEV < 0` and `-VLEV <> DATASEG` -- and this is where the
+negative comes from.
+
+### 82e. The library dictionary, and a third UNITFILE
+
+`SEGDICT` is a block of `*SYSTEM.LIBRARY` read straight into a 256-word
+record, and Apple's has one array II.0's does not: a packed record per
+segment whose low byte is the segment number. That is finding 71's SEGINFO
+word seen from the reading side -- Apple's SEGMAP decouples a slot from a
+number, so the number has to be in the dictionary.
+
+`USEFILE` gains a third value. II.0 has `UNITFILE = (WORKCODE,SYSLIBRARY)`;
+Apple stores 2 as well, for the library that was already open -- the one
+`(*$U name*)` gave it. GETTEXT tries a BLOCKREAD on whatever LIBRARY is
+first, and only falls back to opening `*SYSTEM.LIBRARY` itself if that
+fails.
+
+### 82f. Corrections the diff found
+
+Six rounds, and worth listing because none was a misreading of the binary
+-- all six were places where II.0's text was assumed to have survived and
+had not:
+
+* SIMPLETYPE's `INSYMBOL` after `SEARCHID` is pushed down into each of the
+  four arms below it, so that `LSP = STRGPTR` is tested before the symbol
+  after the identifier is read rather than after.
+* FIELDLIST sets `LAST := NXT` on every field, not only on the last of a
+  group -- II.0's `IF NEXT = NXT1 THEN` is gone.
+* `ERROR(399)`, not II.0's 398, for an array whose size comes out
+  non-positive.
+* PARAMETERLIST's `FSYS + [COMMA,SEMICOLON,COLON]` test gains RPARENT, so
+  that the set it tests and the set it skips to are the same one.
+* `IF LKIND = FORMAL THEN EXTONLY := TRUE` also does
+  `LC := LC + COUNT * PTRSIZE`.
+* `PROCTABLE[NEXTPROC] := 0` is unconditional where II.0 does it only
+  `IF USING`, and `IMPORTED := NOT LSEPPROC AND USING` replaces II.0's
+  nested IF.
+
+### 82g. The disk ceiling, and the second drive
+
+Finding 80e said 280 blocks would be met again, and this segment met it:
+the source reached 262 blocks and left 18 for a codefile that needs about
+forty. A Disk II image cannot grow, so the codefile got a volume of its
+own. `mkworkdisk.py` now writes an empty `WORK2`, `runemu.py --work2`
+mounts it at S5D2 in place of APPLE3 -- which a compile does not need --
+and `--emu` answers the compiler's second prompt with `WORK2:BODY13.CODE`.
+`--emu-check` takes the codefile from whichever volume has it.
+
+That buys 280 blocks for output and leaves the whole of WORK for source.
+The source ceiling is still real and still 274 blocks; when it arrives, the
+next move is `(*$I *)` includes, and after that dropping the comments and
+shortening the names for the disk copy only.
+
 ## 16. Open questions
 
-* **The four unnamed words of the `MODULE` variant.** Finding 76b has 10
-  and 11 from `WRITELINKERINFO`'s reads, finding 79c adds 12 from the
-  13-word `NEW`, and finding 80b makes 12 a BOOLEAN tag with a fifth word,
-  13, behind it. The uses narrow them and name none: a used unit is marked
-  resident only if 10 is set; 10 also gates whether the unit gets a segment
-  table entry of its own, and is cleared when an intrinsic unit gives no
-  `CODE` segment; 11 is `(SY = IDENT) AND INMODULE AND NOT INTRINSIC` at
-  one site and `LSEPPROC` at another; 12 is set only in the intrinsic `DATA`
-  arm. Word 13 is allocated by three call sites and read by nothing at all.
-  `DECLARATIONPART` is the one place left that writes them.
+* ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by
+  finding 82c.** `DECLARATIONPART` writes all four and reads three, and
+  every use agrees with the ones findings 76b, 79c and 80b had recorded:
+  `MODSEG` at 11 is "owns a code segment", `MODLINK` at 12 is "and is not
+  an intrinsic's own code segment" -- together, `WRITELINKERINFO`'s test --
+  `MODDATA` at 13 is "owns a data segment" and is the variant tag, and
+  `MODDSEG` at 14 behind it is that segment's number.
 * **What `OSPROC43` is.** Finding 79b has its number, its three-word shape
   and its three call sites, and `SYSTEM.PASCAL` forwards it into `FILEPROC`.
   II.0's `GLOBALS.TEXT` stops one short of naming it, so what would settle it

@@ -5,6 +5,8 @@
   no others -- each one a number or an absence the binary states:
 
     added to MODULE   { findings 76b/79c/80b; four words at 10..13 }
+    { finding 82; GETTEXT stores 2 as well }
+    added to UNITFILE = (WORKCODE,SYSLIBRARY)
 
   VAR is tools/varblock.py's output, which allocates back to
   Apple's own offsets under the compiler's allocation rule.
@@ -254,10 +256,10 @@ TYPE
                                                    CASE BOOLEAN OF
                                                     TRUE: (IMPORTED:BOOLEAN))));
                    MODULE: (SEGID: INTEGER;
-                             MODUNK10: BOOLEAN;
-                             MODUNK11: BOOLEAN;
-                             CASE MODUNK12: BOOLEAN OF
-                               TRUE: (MODUNK13: INTEGER))
+                             MODSEG: BOOLEAN;
+                             MODLINK: BOOLEAN;
+                             CASE MODDATA: BOOLEAN OF
+                               TRUE: (MODDSEG: INTEGER))
                    END;
 
 
@@ -304,7 +306,7 @@ TYPE
      CODEARRAY = PACKED ARRAY [0..MAXCODE] OF CHAR;
      SYMBUFARRAY = PACKED ARRAY [CURSRANGE] OF CHAR;
      
-     UNITFILE = (WORKCODE,SYSLIBRARY);
+     UNITFILE = (WORKCODE,SYSLIBRARY,USERLIB);
 
      LEXSTKREC = RECORD
                    DOLDTOP: DISPRANGE;

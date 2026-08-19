@@ -6,7 +6,8 @@ two acceptance tests need four volumes online at once:
     S6D1  APPLE1   the boot disk
     S6D2  APPLE2   SYSTEM.COMPILER and SYSTEM.ASSMBLER
     S5D1  WORK     ours -- the reconstructed source, and where output lands
-    S5D2  APPLE3   utilities
+    S5D2  APPLE3   utilities, or WORK2 with --work2 -- a volume for the
+                   codefile, which no longer fits beside the source
 
 `-conf` points AppleWin at an INI under `build/`, so running this does not
 touch whatever configuration is already in the registry.
@@ -33,6 +34,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EXE = Path(r"C:\AppleWin\AppleWin.exe")
 DISKS = ROOT / "evidence" / "disks"
 WORK = ROOT / "build" / "disks" / "WORK.dsk"
+WORK2 = ROOT / "build" / "disks" / "WORK2.dsk"
 
 # Applied before every launch. AppleWin reads these from the registry at
 # startup and there is no command-line switch for any of them.
@@ -98,6 +100,9 @@ def main() -> int:
                          "the same disk with Apple's 128K system substituted "
                          "in (mkbootdisk.py). The 64K system cannot compile "
                          "even its own sample programs.")
+    ap.add_argument("--work2", action="store_true",
+                    help="mount build/disks/WORK2.dsk at S5D2 instead of "
+                         "APPLE3, so the codefile has a volume of its own")
     args = ap.parse_args()
 
     if not EXE.exists():
@@ -126,7 +131,7 @@ def main() -> int:
            "-d2", str(DISKS / r["d2"]),
            "-s5", "diskii",
            "-s5d1", str(WORK),
-           "-s5d2", str(DISKS / r["s5d2"]),
+           "-s5d2", str(WORK2 if args.work2 else DISKS / r["s5d2"]),
            "-power-on"]
 
     print("AppleWin settings (registry; no switch exists for these):")
@@ -136,7 +141,7 @@ def main() -> int:
     print("S6D1", d1.name)
     print("S6D2", r["d2"])
     print("S5D1", WORK.name, "  <- ours: SEARCH.TEXT, SKEL13.TEXT, SKEL11.TEXT")
-    print("S5D2", r["s5d2"])
+    print("S5D2", WORK2.name if args.work2 else r["s5d2"])
     print()
     print(" ".join(f'"{c}"' if " " in c else c for c in cmd))
     if args.dry_run:

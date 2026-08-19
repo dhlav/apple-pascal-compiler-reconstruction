@@ -510,9 +510,25 @@ def main() -> int:
             # Apple's own compiler produced this, in the emulator, from the
             # source `--emu` put on the disk. It is the authority: where the
             # fast tier and this disagree, this is right.
-            dsk = PascalDisk.from_file(ROOT / "build" / "disks" / "WORK.dsk")
-            e = dsk.find(f"BODY{ver.replace('.', '')}.CODE")
-            cf = CodeFile(dsk.read_blocks(e.first_block, e.blocks))
+            # The codefile is on WORK2 once the source stopped leaving room
+            # for it on WORK (finding 82). Take whichever volume has it, and
+            # prefer the newer if somehow both do.
+            name = f"BODY{ver.replace('.', '')}.CODE"
+            cf = None
+            for vol in ("WORK2.dsk", "WORK.dsk"):
+                path = ROOT / "build" / "disks" / vol
+                if not path.exists():
+                    continue
+                dsk = PascalDisk.from_file(path)
+                try:
+                    e = dsk.find(name)
+                except KeyError:
+                    continue
+                cf = CodeFile(dsk.read_blocks(e.first_block, e.blocks))
+                break
+            if cf is None:
+                raise SystemExit(f"{name} is on neither WORK: nor WORK2: -- "
+                                 f"the emulator run did not produce it")
             who = "Apple's compiler"
         else:
             source = spliced(ver, segs, fast=True)
