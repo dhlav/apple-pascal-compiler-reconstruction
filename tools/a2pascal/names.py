@@ -413,8 +413,11 @@ BODYPART_REST: dict[int, str] = {
                        # UNLOADSEGMENT(11). BODY takes this path under
                        # {$S+}. Compare PASCALCO.28 HOLDMOST.
     28: "READ",
-    29: "WRITE",       # the only caller of DECSIZE here -- writing a long
-                       # integer needs its digit count -- and of PAOFCHAR
+    29: "WRITEPROC",   # the only caller of DECSIZE here -- writing a long
+                       # integer needs its digit count -- and of PAOFCHAR.
+                       # II.0 calls it WRITE; the name is ours because the
+                       # fast tier will not take a redeclaration of the
+                       # predeclared one.
     30: "CALLNONSPECIAL",  # calls LINKERREF and NEWPROC, which is what a
                        # call to a not-yet-declared or separate procedure
                        # needs; 640 bytes, the largest of the three

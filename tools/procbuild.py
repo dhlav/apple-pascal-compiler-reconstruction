@@ -101,7 +101,13 @@ HEADER = re.compile(r"(?m)^[ \t]*(?:PROCEDURE|FUNCTION)\s+(\w+)")
 # of its procedure 1 says how deep it is declared: 1 for a phase declared
 # directly in PASCALCOMPILER, 2 for one inside a phase, 3 for one inside
 # that. ROUTINE and STATEMENT are lex 2, so they are declared inside
-# BODYPART; CASESTAT, FORSTATE, BODY1 and BODY3 are lex 3, inside STATEMENT.
+# BODYPART; CASESTAT, FORSTATE, BODY1 and BODY3 are lex 3, so each is inside
+# one of BODYPART's own procedures. Which one is fixed by who calls it:
+# CASESTAT and FORSTATE are `CXP 12,1` and `CXP 13,1` from inside STATEMENT,
+# BODY1 and BODY3 are `CXP 14,1` and `CXP 15,1` from BODYPART.24:BODY. A
+# segment procedure is only in scope where it is declared, so that settles
+# it -- and the segment numbers then follow from the declaration order,
+# STATEMENT and its two coming before BODY and its two.
 #
 # Under `$U-` segment procedures number from 1, so PASCALCOMPILER is 1 and
 # the phases would follow at 2. They have to start at 7, because SYSTEM.PASCAL
@@ -135,9 +141,9 @@ SEGDECLS = [
          (11, "STATEMEN", "SEGMENT PROCEDURE STATEMENT(FSYS: SETOFSYS);", [
              (12, "CASESTAT", "SEGMENT PROCEDURE CASESTATEMENT;", []),
              (13, "FORSTATE", "SEGMENT PROCEDURE FORSTATEMENT;", []),
-             (14, "BODY1", "SEGMENT PROCEDURE BODY1;", []),
-             (15, "BODY3", "SEGMENT PROCEDURE BODY3;", []),
          ]),
+         (14, "BODY1", "SEGMENT PROCEDURE BODY1;", []),
+         (15, "BODY3", "SEGMENT PROCEDURE BODY3;", []),
      ]),
     (16, "WRITELIN", "SEGMENT PROCEDURE WRITELINKERINFO;", []),
     (17, "UNITPART", "SEGMENT PROCEDURE UNITPART(FSYS: SETOFSYS);", []),
@@ -154,8 +160,9 @@ def check_segments(ver: str, cf) -> int:
 
     The lex level is the sharp part: it says how deep a phase is declared,
     and nothing else recovers that. ROUTINE and STATEMENT come out lex 2
-    only if they are declared inside BODYPART, and CASESTAT, FORSTATE,
-    BODY1 and BODY3 lex 3 only if they are inside STATEMENT.
+    only if they are declared inside BODYPART; CASESTAT and FORSTATE lex 3
+    only if they are inside STATEMENT, and BODY1 and BODY3 lex 3 only if
+    they are inside BODYPART's own BODY.
     """
     apple = {}
     d = PascalDisk.from_file(ROOT / "evidence" / "disks" / DISKS[ver])
@@ -223,11 +230,29 @@ def render_segdecls(ver: str, decls=None, depth: int = 0) -> str:
             out += [pad + "(*$NS " + str(NS_FIRST) + "*)", ""]
         out.append(pad + hdr + "  { segment " + str(num) + " }")
         out.append("")
-        if kids:
-            out.append(render_segdecls(ver, kids, depth + 1))
         if hdr.endswith("FORWARD;"):
             continue
         body = phase_body(ver, name)
+        # A phase that declares phases of its own says where each one goes,
+        # with `{SEGMENT <name>}`. The position is not cosmetic: BODYPART's
+        # nested ROUTINE and STATEMENT call back into BODYPART with
+        # `CXP 9,n`, so every procedure they call has to be declared --
+        # forward is enough -- before the SEGMENT PROCEDURE that calls it;
+        # BODY has to come after STATEMENT because it calls it; and BODY1
+        # and BODY3 are declared *inside* BODY, which is the only place
+        # they are in scope and the only way their procedure 1 comes out at
+        # lex 3. Whatever the body does not place goes first, which is
+        # where PASCALCO's own children belong.
+        rendered = [(nm, render_segdecls(ver, [kid], depth + 1))
+                    for kid in kids for nm in (kid[1],)]
+        if body is not None:
+            for nm, text in rendered:
+                if "{SEGMENT " + nm + "}" in body:
+                    body = body.replace("{SEGMENT " + nm + "}", text)
+                    rendered = [(n, t) for n, t in rendered if n != nm]
+        kidtext = "\n".join(t for _n, t in rendered)
+        if kidtext:
+            out.append(kidtext)
         if body is not None:
             # The file supplies the statement part too, so there is no
             # empty one to add after it.
@@ -325,6 +350,51 @@ def spliced(ver: str, segs, fast: bool = False) -> str:
     return text[:at] + "\n" + body + text[at:]
 
 
+def uncomment(text: str) -> str:
+    """The same program with its commentary removed.
+
+    A Disk II volume is 280 blocks and cannot grow, and the reconstruction
+    passed the point where the source and Apple's codefile both fit on one.
+    Comments are the part of a source file that provably cannot change a
+    byte of the output, so they are what goes. The repository keeps the
+    commented text; this is what the emulator is handed.
+
+    Two comments are not commentary and stay: `{$...}` and `(*$...*)` are
+    compiler options, and `(*$R STATEMENT*)` in particular is the whole
+    reason BODYPART.24 emits a LOADSEGMENT. Each comment that goes is
+    replaced by one space, because `50(*LDA*),0` must not become `50,0`
+    with the digits run together somewhere else.
+    """
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if c == "'":
+            j = i + 1
+            while j < n:
+                if text[j] == "'":
+                    if text[j + 1:j + 2] == "'":
+                        j += 2
+                        continue
+                    break
+                j += 1
+            out.append(text[i:j + 1])
+            i = j + 1
+        elif c == "{":
+            j = text.index("}", i)
+            out.append(text[i:j + 1] if text[i + 1:i + 2] == "$" else " ")
+            i = j + 1
+        elif text.startswith("(*", i):
+            j = text.index("*)", i + 2)
+            out.append(text[i:j + 2] if text[i + 2:i + 3] == "$" else " ")
+            i = j + 2
+        else:
+            out.append(c)
+            i += 1
+    lines = [x.rstrip() for x in "".join(out).split("\n")]
+    return "\n".join(x for k, x in enumerate(lines)
+                     if x or (k and lines[k - 1]))
+
+
 def write_for_emulator(ver: str, segs) -> Path:
     """Put the spliced source on the work disk for Apple's own compiler.
 
@@ -340,7 +410,7 @@ def write_for_emulator(ver: str, segs) -> Path:
 
     global USE_NS
     USE_NS = True
-    src = expand_tabs(spliced(ver, segs))
+    src = expand_tabs(uncomment(spliced(ver, segs)))
     src = src[:-1] if src.endswith("\n") else src
     nproc = sum(len(p) for _n, _t, p in segs)
     name = f"BODY{ver.replace('.', '')}.TEXT"
@@ -355,7 +425,7 @@ def write_for_emulator(ver: str, segs) -> Path:
     # output file looks like from inside the compiler. mkworkdisk.py puts
     # them back, and build_all.py runs it.
     for stale in (name, name.replace(".TEXT", ".CODE"),
-                  "SKEL13.TEXT", "SKEL11.TEXT"):
+                  "SKEL13.TEXT", "SKEL11.TEXT", "SEARCH.TEXT"):
         try:
             w.remove_file(stale)
         except KeyError:

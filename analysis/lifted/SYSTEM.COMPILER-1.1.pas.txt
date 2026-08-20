@@ -4087,7 +4087,7 @@ procedure BODYPART.23:CALL(args 5 words);  { locals 2 words, lex 2 }
       BODYPART.28:READ();
     end else begin
       if (24 in 1) then begin
-        BODYPART.29:WRITE();
+        BODYPART.29:WRITEPROC();
       end else begin
         ROUTINE.1:ROUTINE(?, L6, L6, @L2^<4w>, L7, L6);
       end;
@@ -4268,7 +4268,7 @@ procedure BODYPART.28:READ(args 0 words);  { locals 2 words, lex 3 }
     end;
   end;
 
-procedure BODYPART.29:WRITE(args 0 words);  { locals 8 words, lex 3 }
+procedure BODYPART.29:WRITEPROC(args 0 words);  { locals 8 words, lex 3 }
   L4 := OUTPUTPTR;
   if ((SY = 0) and I1,7) then begin
     PASCALCO.8:SEARCHID(adjust((82 + 1),1), @L3);
