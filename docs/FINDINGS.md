@@ -8134,7 +8134,7 @@ bracket. Both spellings — the name and the bare segment number — reach
 `MARKRESIDENT` with the same value and are indistinguishable in the
 output.
 
-That is the mechanism `PASCALCO.28 HOLDMOST` and `.29 HOLDROUT` are still
+That is the mechanism `PASCALCO.28 HOLDMOST` and `.29 HOLDROUT` were still
 stubs for, and it is now demonstrated rather than inferred: both wrappers
 match Apple's bytes.
 
@@ -8150,6 +8150,163 @@ comes off the volume for the run as well.
 
 5415 commented lines come out as 4466 and 206 blocks. The repository keeps
 the commented text; only the disk copy is stripped.
+
+## 84. BODY, its three segments, and the last of segment 1
+
+VERIFIED BINARY FACT unless marked otherwise. Segments 9, 14 and 15 are
+complete, and so is segment 1: every procedure of `SYSTEM.COMPILER`'s
+outer segment now compiles, under Apple's own 1.3 compiler, to Apple's
+p-code instruction for instruction.
+
+### 84a. One procedure, three segments, one frame
+
+II.0's `BODY` is a single procedure. Apple's is `BODY` (BODYPART.24) with
+eight instructions —
+
+```
+BODY1;
+IF SWAPPING THEN HOLDSTMT ELSE BODY2;
+BODY3
+```
+
+— and the work in three pieces: `BODY1` is segment 14, `BODY2` is
+BODYPART.25, `BODY3` is segment 15. Splitting a procedure into segments is
+what makes it swappable, and the cost is that all three read `BODY`'s frame
+from outside themselves, with `LOD 1,n` and `LOD 2,n`. That is what forces
+`BODY1` and `BODY3` to be declared *inside* `BODY` (finding 83b) and what
+makes the frame recoverable: nineteen words, and every one of them is
+written by one piece and read by another.
+
+```
+ 1 EXITIC   4 LPREV   7 LOP     10 JTINX  13 LOLDIC  16 LDONELB
+ 2 LLC1     5 LNEXT   8 LMAIN   11 LMAX   14 LSEGIC  17 LLOADLB
+ 3 LRES     6 LCP     9 LLP     12 LMIN   15 LI      18 LBODYLB
+                                                     19 DUMMYVAR
+```
+
+Eleven are II.0's. `LMAIN`, `LRES`, `LPREV`, `LNEXT`, `LI`, `LOLDIC`,
+`LSEGIC` and the three `LBP`s are Apple's, and all ten belong to the
+segment-holding machinery in 84b. The declaration order is not a choice
+either: `LCP,LNEXT,LPREV,LRES: CTP` is one identifier list, because
+separate declarations would allocate them the other way round (finding 33),
+and the same goes for `LMIN,LMAX`, `LSEGIC,LOLDIC` and
+`LBODYLB,LLOADLB,LDONELB`.
+
+### 84b. What `(*$R*)` actually emits
+
+`BODY1` reserves two bytes at the head of the body and puts a label on the
+instruction after them:
+
+```
+LRES := RESIDENT;
+IF (LRES <> NIL) OR LMAIN THEN
+  BEGIN LSEGIC := IC;
+    GENBYTE(215(*NOP*)); GENBYTE(215(*NOP*));
+    GENLABEL(LBODYLB); PUTLABEL(LBODYLB)
+  END
+```
+
+and `BODY3`, if the block turns out to want segments held, goes back and
+overwrites the pair. `HOLDSEGS` — BODY3.2, and it has no II.0 ancestor at
+all — writes the whole bracket:
+
+```
+	UJP  load          <- the two bytes BODY1 reserved
+  body: ...
+	<unload each segment>
+	UJP  done
+  load: <load each segment>
+	UJP  body
+  done:
+```
+
+so the loading runs once on entry, the unloading once on the way out, and
+neither is in the path of anything else. It walks `RESIDENT` and
+`USINGLIST` **reversing each chain as it goes**, which is why a segment is
+unloaded in the order it was named and loaded in the reverse.
+
+That is the shape `BODYPART.27 HOLDSTMT`, `BODYPART.38 HOLDRTN`,
+`PASCALCO.30 HOLDMOST` and `PASCALCO.31 HOLDROUT` are made of, and all four
+now match Apple's bytes. `HOLDMOST` is the compiler holding *itself*:
+
+```
+PROCEDURE HOLDMOST;
+  PROCEDURE HOLDROUT;
+  BEGIN (*$R 10*)
+    COMPILE
+  END ;
+BEGIN (*$R 8,9,19,11,12,13,14,15*)
+  IF SWAPMORE THEN COMPILE ELSE HOLDROUT
+END ;
+```
+
+— DECLARATIONPART, BODYPART, NUMSTRING, STATEMENT, CASESTATEMENT,
+FORSTATEMENT, BODY1 and BODY3 held across the whole compilation, and
+ROUTINE as well one level in. The load order in the binary is 8, 9, 19, 11,
+12, 13, 14, 15 and the unload order is its exact reverse, which is what the
+chain reversal predicts and is the check on it.
+
+The numbers are written rather than the names because eight names do not
+fit in eighty columns and `RESSEGLIST` scans one line; both spellings reach
+`MARKRESIDENT` with the same value, so they are indistinguishable in the
+output. **SPECULATION** as to which Apple wrote.
+
+### 84c. Segment 1's procedure 1, and what is not source
+
+`PASCALCOMPILER`'s own statement part is three statements:
+
+```
+BEGIN
+  COMPINIT;
+  IF NOT SWAPPING THEN HOLDMOST ELSE COMPILE;
+  FINISHUP
+END;
+```
+
+The eight file operations that bracket it in the binary — a `FINIT` for
+each of `LP`, `LIBRARY`, `INCLFILE` and `REFFILE` on the way in, an
+`FCLOSE` for each on the way out — are not source at all. `BODY2` emits a
+`FINIT` for every `FILE` in `DISPLAY[TOP].FFILE` before the first
+statement, and `BODY3` emits the `FCLOSE`s after the last. The compiler
+compiling itself writes its own prologue.
+
+`procbuild.py` could not check this body before: `sources()` numbers a
+file's procedures from 2, because procedure 1 of a segment is the segment
+procedure itself. `PASCALCO.text` now ends with a `{PASCALCOMPILER}` marker
+and the body after it goes where the skeleton's empty `BEGIN END;` was.
+
+### 84d. The FFILE chain recovers a grouping the offsets cannot
+
+Those eight operations are the sharpest check in the file, and they failed
+first time round. Apple's order is LP, LIBRARY, INCLFILE, REFFILE. Ours was
+LP, INCLFILE, LIBRARY, REFFILE.
+
+The order is the `FFILE` chain, and `VARDECLARATION` builds it by hanging a
+whole declaration group on the head at once:
+
+```
+IF NEXT = NIL THEN
+  IF LSP^.FORM = FILES THEN
+    BEGIN NEXT := DISPLAY[TOP].FFILE;
+      DISPLAY[TOP].FFILE := IDLIST
+    END
+```
+
+So separate declarations interleave in reverse, and a group stays together
+and in allocation order. `VAR LIBRARY: FILE; INCLFILE: FILE;` and
+`VAR INCLFILE,LIBRARY: FILE;` put the two on exactly the same words and
+produce **different chains** — and only the second produces Apple's.
+
+This is the first grouping in the global `VAR` block recovered from the
+binary rather than assumed from II.0, and it is worth stating what made it
+visible: a declaration group leaves no trace in the frame at all. Offsets
+are blind to it. It shows up only where something walks a chain the
+grouping built, which here is one procedure emitting eight instructions.
+1.1's segment 1 has the same four `FINIT`s in the same order at its own
+offsets, so the grouping holds there too.
+
+`varblock.py` grew a `GROUPS` table for it, with the adjacency, the equal
+size and the reversed order all checked rather than asserted.
 
 ## 16. Open questions
 

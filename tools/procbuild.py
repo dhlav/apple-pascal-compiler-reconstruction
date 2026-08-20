@@ -329,6 +329,24 @@ def defang_forwards(text: str) -> str:
         "\n\n{ The operating system enters segment 1", 1)
 
 
+RESIDENT_OPT = re.compile(r"\(\*\$R (?![-+])[^*]*\*\)")
+
+
+def defang_resident(text: str) -> str:
+    """Drop Apple's resident-segment option, for the fast tier only.
+
+    `(*$R+*)` and `(*$R-*)` are UCSD's range-check switch and both
+    compilers take them. `(*$R name,name*)` and `(*$R 8,9*)` are Apple's
+    own overload of the same letter -- the list of segments to hold in
+    memory across a block -- and `ucsdpsys_compile` has never heard of it.
+
+    The cost is exactly the LOADSEGMENT/UNLOADSEGMENT bracket around three
+    procedure bodies, on a tier that already differs from Apple's at every
+    `AND`. Apple's own compiler is the one that has to get this right.
+    """
+    return RESIDENT_OPT.sub("", text)
+
+
 def spliced(ver: str, segs, fast: bool = False) -> str:
     """The skeleton with these segment sources declared at lex 1.
 
@@ -343,13 +361,25 @@ def spliced(ver: str, segs, fast: bool = False) -> str:
     # belong inside PASCALCOMPILER, so splice before the *first* of those two
     # -- past it they are declared in the host program, where none of the
     # compiler's own types are in scope.
-    at = text.rindex("\nBEGIN\nEND;")
+    empty = "\nBEGIN\nEND;"
+    at = text.rindex(empty)
     body = "\n".join(s for _n, s, _p in segs)
     # The phases are nested SEGMENT PROCEDUREs and have to be declared before
     # anything calls them: COMMENTER's `CXP 18,1` and INSYMBOL's `CXP 19,1`
     # will not compile otherwise. PASCALCO.text marks the spot.
     body = body.replace("{SEGMENTS}", render_segdecls(ver))
-    return text[:at] + "\n" + body + text[at:]
+    if fast:
+        body = defang_resident(body)
+    # ...and PASCALCOMPILER's own statement part, if the file supplies one,
+    # goes where the skeleton's empty `BEGIN END;` is. That is procedure 1
+    # of segment 1, and it is the only body a segment file cannot hold in
+    # the ordinary way: `sources()` numbers a file's procedures from 2,
+    # because procedure 1 of a segment is the segment procedure itself.
+    outer = empty
+    if "{PASCALCOMPILER}" in body:
+        body, outer = body.split("{PASCALCOMPILER}", 1)
+        outer = "\n" + outer.strip("\n")
+    return text[:at] + "\n" + body + outer + text[at + len(empty):]
 
 
 def uncomment(text: str) -> str:
@@ -626,6 +656,19 @@ def main() -> int:
             done += sum(1 for _n, s in shown if not s)
             stubs += sum(1 for _n, s in shown if s)
             bad += report(ver, segname, shown, cf.segment(segname), who)
+            if segname == "PASCALCO" and "{PASCALCOMPILER}" in _text:
+                # Procedure 1 of segment 1: the outer block's statement
+                # part. Three statements, and the eight file operations
+                # around them are not source at all -- BODY2 and BODY3
+                # emit a FINIT on entry and an FCLOSE on exit for every
+                # FILE declared in the block.
+                apple = apple_segment(ver, segname)
+                mine = cf.segment(segname)
+                a = next(x for x in apple.procedures if x.number == 1)
+                b = next(x for x in mine.procedures if x.number == 1)
+                done += 1
+                bad += diff_proc(f"[{ver}] {segname}.1 PASCALCOMPILER",
+                                 apple, a, mine, b, who)
         pdone, pstubs, pbad = report_phases(ver, cf, who)
         done += pdone
         stubs += pstubs

@@ -568,9 +568,7 @@ VAR
   {  585,    1 word   II.0 }
   USEFILE         : UNITFILE;
   {  586,   40 words  II.0 }
-  LIBRARY         : FILE;
-  {  626,   40 words  II.0 }
-  INCLFILE        : FILE;
+  INCLFILE,LIBRARY : FILE;
   {  666,  301 words  II.0 }
   LP              : TEXT;
   {  967,    1 word   II.0 }

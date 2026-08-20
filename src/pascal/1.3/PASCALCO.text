@@ -830,11 +830,37 @@ BEGIN (*BLOCK*)
   FINISHSEG
 END;
 
-PROCEDURE HOLDMOST; (*STUB*)
+PROCEDURE HOLDMOST;
+{ Everything except ROUTINE, held in memory across the whole compilation.
+  The list is Apple's own `(*$R*)`, applied to the compiler itself: the two
+  wrappers are compiled by the very code they are wrappers for. BODY1
+  reserves two bytes at the head of the body, BODY3 fills them with a jump
+  into the loading code and writes the unloading code at the exit, and
+  BODYPART.27 and .38 come out of the same machinery a level down.
 
-  PROCEDURE HOLDROUT; (*STUB*)
-  BEGIN
-  END;
+  Written with segment numbers rather than names because eight names --
+  DECLARATIONPART, BODYPART, NUMSTRING, STATEMENT, CASESTATEMENT,
+  FORSTATEMENT, BODY1, BODY3 -- do not fit in eighty columns, and
+  RESSEGLIST scans one line. Either spelling reaches MARKRESIDENT with the
+  same value, so the two are indistinguishable in the output. }
 
+  PROCEDURE HOLDROUT;
+  BEGIN (*$R 10*)
+    COMPILE
+  END (*HOLDROUT*) ;
+
+BEGIN (*$R 8,9,19,11,12,13,14,15*)
+  IF SWAPMORE THEN COMPILE ELSE HOLDROUT
+END (*HOLDMOST*) ;
+
+{ PASCALCOMPILER's own statement part. The eight file operations that
+  bracket it in the binary -- a FINIT for each of LP, LIBRARY, INCLFILE and
+  REFFILE on the way in, an FCLOSE for each on the way out -- are not source
+  at all: BODY2 and BODY3 emit them for every FILE declared in a block. }
+
+{PASCALCOMPILER}
 BEGIN
+  COMPINIT;
+  IF NOT SWAPPING THEN HOLDMOST ELSE COMPILE;
+  FINISHUP
 END;

@@ -143,8 +143,7 @@ VAR
   OLDLINESTART    : CURSRANGE;                         {  583,    1 word   II.0 }
   OLDSYMCURSOR    : CURSRANGE;                         {  584,    1 word   II.0 }
   USEFILE         : UNITFILE;                          {  585,    1 word   II.0 }
-  LIBRARY         : FILE;                              {  586,   40 words  II.0 }
-  INCLFILE        : FILE;                              {  626,   40 words  II.0 }
+  INCLFILE,LIBRARY : FILE;                              {  586,   40 words  II.0 }
   LP              : TEXT;                              {  666,  301 words  II.0 }
   CURBLK          : INTEGER;                           {  967,    1 word   II.0 }
   CURBYTE         : INTEGER;                           {  968,    1 word   II.0 }

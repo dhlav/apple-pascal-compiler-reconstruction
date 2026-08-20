@@ -238,6 +238,48 @@ def reconcile(rows, ver: str):
     return out
 
 
+# Identifier lists Apple wrote as ONE declaration, in source order --
+# the first name here takes the HIGHEST offset, because a list allocates
+# back to front (finding 33).
+#
+# Offsets alone cannot see a grouping: `VAR A: T; B: T;` and `VAR B,A: T;`
+# put A and B on the same two words, and the compiled frame is identical.
+# What sees it is the FFILE chain. DECLARATIONPART hangs a whole group on
+# DISPLAY[TOP].FFILE at once, head first, so a group's members stay
+# together and in allocation order while separate declarations interleave
+# in reverse -- and BODY2 walks that chain to emit one FINIT per file.
+# PASCALCOMPILER's own prologue is LP, LIBRARY, INCLFILE, REFFILE, which
+# comes out only if LIBRARY and INCLFILE are one declaration. Finding 84.
+GROUPS = [("INCLFILE", "LIBRARY")]
+
+
+def grouped(rows, ver: str) -> dict:
+    """{offset: label or None} folding each GROUPS list into one line.
+
+    The lowest-offset member carries the whole list; the rest are dropped.
+    Everything the grouping asserts is checked here and none of it is
+    cosmetic: the members must be adjacent in the block, the same size, and
+    in the reverse of the order they are written in.
+    """
+    at = {name: (i, off, words) for i, (off, name, words, *_) in enumerate(rows)}
+    out = {}
+    for group in GROUPS:
+        if not all(n in at for n in group):
+            continue
+        seen = [at[n] for n in group]
+        if len({w for _i, _o, w in seen}) != 1:
+            raise SystemExit(f"[{ver}] {', '.join(group)} differ in size, "
+                             f"so they cannot be one declaration")
+        if [i for i, _o, _w in seen] != list(
+                range(seen[-1][0], seen[0][0] + 1))[::-1]:
+            raise SystemExit(f"[{ver}] {', '.join(group)} are not adjacent "
+                             f"in reverse allocation order")
+        out[seen[-1][1]] = ",".join(group)
+        for _i, off, _w in seen[:-1]:
+            out[off] = None
+    return out
+
+
 def build(ver: str) -> list[str]:
     disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / DISKS[ver])
     e = disk.find("SYSTEM.COMPILER")
@@ -267,6 +309,7 @@ def build(ver: str) -> list[str]:
         rows.append((off, names[off], nxt - off, None, None))
 
     rows = reconcile(rows, ver)
+
 
     # Round-trip: allocate the block back under the compiler's own rule --
     # start at word 1, each object at the running total -- and require every
@@ -315,10 +358,17 @@ def build(ver: str) -> list[str]:
          "",
          "VAR",
          ]
+    merged = grouped(rows, ver)
     for off, name, words, forced, note in rows:
+        if off in merged and merged[off] is None:
+            continue
         typ, why = ((forced, note) if forced
                     else render_type(name, words, types.get(name)))
-        L.append(f"  {name:<16}: {typ};"
+        label = merged.get(off) or name
+        # At least one space before the colon whatever the label's width:
+        # srcskel.py picks the declarations out of this by looking for
+        # " : ", and a grouped label can be wider than the column.
+        L.append(f"  {label:<{max(16, len(label) + 1)}}: {typ};"
                  f"{'':<{max(1, 34 - len(typ))}}"
                  f"{{ {off:>4}, {words:>4} word{'s' if words != 1 else ' '}"
                  f"  {why} }}")
