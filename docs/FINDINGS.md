@@ -7972,6 +7972,185 @@ The source ceiling is still real and still 274 blocks; when it arrives, the
 next move is `(*$I *)` includes, and after that dropping the comments and
 shortening the names for the disk copy only.
 
+## 83. BODYPART — segment 9, the code generator and the expression parser
+
+VERIFIED BINARY FACT unless marked otherwise. Thirty-six of the segment's
+thirty-eight procedures compile, under Apple's own 1.3 compiler, to Apple's
+p-code instruction for instruction. `BODY` and `BODY2` are the two still
+open, and they are open together with `BODY1` and `BODY3` — see 83g.
+
+### 83a. The shape of the file is read off the code order
+
+II.0's `BODYPART` is five files and one procedure. Apple's is 38
+procedures and three segments: II.0's `ROUTINE` became
+`SEGMENT PROCEDURE ROUTINE` (segment 10) and took `LOADIDADDR`, `READ`,
+`WRITE` and `CALLNONSPECIAL`'s siblings with it, and II.0's `STATEMENT`
+became `SEGMENT PROCEDURE STATEMENT` (segment 11).
+
+That forces a forward block, and the binary says where it ends. Procedure
+code is emitted in declaration order, innermost first — the run of `enter`
+addresses in every verified segment says so, `DECLARAT` included. In
+`BODYPART`, `BODY`'s code comes **first** of all the lex-2 procedures,
+ahead of `LINKERREF`'s. A procedure whose body is compiled first can only
+carry number 24 if numbers 2..23 were already taken when it was parsed —
+which is what a forward block does, exactly as in `PASCALCO` (finding 61).
+
+`GENBIG` (28) and `HOLDRTN` (38) are the check on that reading. Neither is
+in the forward block: each is declared where its body is, so each takes the
+next free number at that point, which lands `GENBIG` above `BODY`'s nested
+25, 26 and 27 rather than beside the emitters it belongs with. Nothing else
+explains a `GENBIG` numbered 28 and called from `GEN1`.
+
+The nested phases go between the forward block and `BODY`: everything
+`ROUTINE` and `STATEMENT` reach with `CXP 9,n` is declared above them
+(forward is enough), and `BODY` is below because it calls `STATEMENT`.
+
+### 83b. BODY1 and BODY3 are declared inside BODY
+
+Their procedure 1 is lex 3, so each is declared inside one of `BODYPART`'s
+own procedures, and `BODY` is the only one that calls them —
+`CXP 14,1` and `CXP 15,1` are its first and last instructions. A segment
+procedure is in scope only where it is declared, so that settles it.
+`CASESTAT` and `FORSTATE` are lex 3 for the same reason and sit inside
+`STATEMENT`. The segment numbers then follow from declaration order:
+`ROUTINE` 10, `STATEMENT` 11 with its two at 12 and 13, then `BODY` with
+its two at 14 and 15.
+
+`procbuild.py` grew `{SEGMENT <name>}` markers so a phase's source says
+where each of its children goes.
+
+### 83c. GEN2 takes an absolute level, and a negative one is a data segment
+
+The one procedure of the twenty-three that did not match on the first
+emulator run. II.0 passes `GEN2` a level *difference*, with `FP1 = 0`
+meaning "this frame"; every caller subtracts, and `STORE`, `LOAD` and
+`LOADADDRESS` each carry a `VLEVEL = 1` test for the global case.
+
+Apple passes the **absolute** level. The three tests move into `GEN2`:
+
+```
+IF FP1 = 1 THEN GEN1(FOP-13,FP2)            { LDA->LAO, LOD->LDO, STR->SRO }
+ELSE IF FP1 = LEVEL THEN GEN1(FOP+20,FP2)   { ->LLA, LDL, STL }
+ELSE IF FP1 < 0 THEN ...
+ELSE BEGIN GENBYTE(FOP+128); GENBYTE(LEVEL-FP1); GENBIG(FP2) END
+```
+
+and that makes room for the fourth case, which II.0 has no equivalent of. A
+negative `FP1` is not a level at all: it is a **data segment**, and it is
+the same negative `VLEV` that `DECLARATIONPART` writes for a global of an
+intrinsic unit (findings 79, 82d). It emits `LDE` ($9D), `STE` ($D1) or
+`LAE` ($A7) — Apple's load, store and load-address across a separate data
+segment — followed by the segment number and the offset.
+
+So the three callers lose their `VLEVEL = 1` arms and pass `VLEVEL`
+straight through, and `ATTR.VLEVEL` holds an absolute level throughout.
+
+### 83d. MASKBOOL, and where a boolean has to be clean
+
+`BODYPART.15` has no II.0 ancestor. Its whole body is
+
+```
+IF GATTR.TYPTR = BOOLPTR THEN
+  BEGIN GENBYTE(1(*SLDC 1*)); GENBYTE(132(*LAND*)) END
+```
+
+— two bytes that mask the loaded value to its low bit. UCSD's booleans are
+only guaranteed there, and it is called in exactly three places, all of
+which then use the value as a *number*: `SELECTOR` after the `LOAD` of an
+array subscript, `FACTOR` after the `LOAD` of a set element, and
+`EXPRESSION` after the left operand of a relational operator, but only
+`IF OP = INOP`. `b IN [...]`, `a[b]` and `[b]` are the three places a
+boolean becomes an index.
+
+### 83e. GENNR, and the two library segments
+
+II.0's `GENNR(EXTPROC: NONRESIDENT)` keeps a `PFNUMOF` table and assigns a
+local procedure number to each of six runtime operations the first time it
+is used. Apple's takes a segment and a procedure number directly:
+
+```
+PROCEDURE GENNR(FSEG,FPROC: INTEGER);
+BEGIN SEGSUSED := SEGSUSED + [FSEG]; GEN2(77(*CXP*),FSEG,FPROC) END
+```
+
+The five call sets recovered are `DECOPS` = (30,4), `FREADDEC` = (30,2),
+`FWRITEDEC` = (30,3), `FREADREAL` = (31,3) and `FWRITEREAL` = (31,4).
+Segment 30 is the long-integer support and 31 the real I/O — which is what
+`UNITPART` reads back out of `SEGSUSED` to stamp `L` and `P` on a unit's
+interface text (finding 80).
+
+### 83f. BYTEPTR and WORDPTR, the untyped array parameters
+
+Apple's two pseudo-types have no index type and are compatible with
+nothing, so every place they can appear had to be written out. Three were
+recovered here:
+
+* `MAKEPA` (37) is rewritten. II.0's checks a packed array's length
+  against a string's and assigns. Apple's does that only when `PAFSP` is
+  not `BYTEPTR`; when it is, it **manufactures** an index type — a fresh
+  `SUBRANGE` of `INTPTR`, `MIN := 1`, `MAX := STRGFSP^.MAXLENG` — hangs it
+  on the string's `INXTYPE`, and clears `AISSTRNG`.
+* `EXPRESSION`'s `ARRAYS` arm takes the length from the other side when
+  one operand is `BYTEPTR` (packed) or `WORDPTR` (unpacked), and reports
+  error 129 when both are.
+* `CALLNONSPECIAL` spells out what a formal of either will accept: for
+  `BYTEPTR`, a packed byte array (`ELSPERWD = 2`, `ELWIDTH = 8`), a `CHAR`
+  already addressed as a byte, or a `0..255` subrange; for `WORDPTR`, any
+  unpacked array or any one-word type. Everything else is error 142.
+
+`WRITEPROC`'s `PAOFCHAR(LSP)` gains `AND (LSP <> BYTEPTR)` for the same
+reason: `BYTEPTR` has no bounds to get a field width from.
+
+`CALLNONSPECIAL` also carries an optimisation II.0 has no trace of. It
+precomputes `LADJ := (LSP^.SIZE <> GATTR.TYPTR^.SIZE) OR (GATTR.KIND <>
+VARBL)` *before* the `LOAD` — `LOAD` overwrites `KIND` — and when it is
+false the `ADJ` (or the long-integer `DAJ` triple) is not emitted at all;
+`IC` is wound back over the byte `LOAD` just wrote instead, by one, or by
+three when the size needed a two-byte operand.
+
+### 83g. `(*$R name*)` holds a segment across a call
+
+`HOLDSTMT` (27) and `HOLDRTN` (38) are nine instructions each and have the
+same shape: enter, jump forward to `LOADSEGMENT(n)`, jump back to a single
+`CIP`, fall through to `UNLOADSEGMENT(n)`, return. Segment 11 for the
+first, segment 10 for the second, and `BODYPART.1` picks `HOLDRTN` over
+`BODY` when `NOT SWAPPING OR SWAPMORE` is false.
+
+The source that produces it is
+
+```
+PROCEDURE HOLDRTN;
+BEGIN (*$R ROUTINE*)
+  BODY
+END ;
+```
+
+and the position of the option is forced. `BLOCK` sets `RESIDENT := NIL`
+immediately before `IF SY = BEGINSY THEN INSYMBOL`, so an option written
+above the `BEGIN` has already been scanned and is wiped; written after it,
+`INSYMBOL` picks it up, `COMPOPTIONS`' `RESSEGLIST` chains a `MODULE`
+record onto `RESIDENT` (finding 78), and `BODY1` and `BODY3` emit the
+bracket. Both spellings — the name and the bare segment number — reach
+`MARKRESIDENT` with the same value and are indistinguishable in the
+output.
+
+That is the mechanism `PASCALCO.28 HOLDMOST` and `.29 HOLDROUT` are still
+stubs for, and it is now demonstrated rather than inferred: both wrappers
+match Apple's bytes.
+
+### 83h. The comment-stripped disk copy
+
+Finding 82g said the source ceiling was still ahead. `BODYPART` took the
+spliced source from 234 blocks to well past 274, so `--emu` now writes a
+copy with everything that provably cannot change a byte removed —
+comments, except `{$...}` and `(*$...*)`, which are compiler options and in
+`(*$R STATEMENT*)`'s case load a segment. Each comment becomes one space,
+so `50(*LDA*),0` cannot become `50,0`. Blank runs collapse. `SEARCH.TEXT`
+comes off the volume for the run as well.
+
+5415 commented lines come out as 4466 and 206 blocks. The repository keeps
+the commented text; only the disk copy is stripped.
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by
