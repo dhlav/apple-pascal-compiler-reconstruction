@@ -8424,6 +8424,95 @@ With segment 11 in, the 1.3 reconstruction stands at **128 of 128 bodies
 matching Apple's p-code under Apple's own compiler**, with `ROUTINE`,
 `CASESTATEMENT` and `FORSTATEMENT` the three remaining stubs.
 
+## 86. CASESTATEMENT and FORSTATEMENT, STATEMENT's two segments
+
+VERIFIED BINARY FACT unless marked otherwise. Both now compile, under
+Apple's own 1.3 compiler, to Apple's p-code instruction for instruction:
+segment 12 in 303 instructions, segment 13 in 272.
+
+### 86a. Segment 12, and one UJP too many
+
+`CASESTATEMENT` is II.0's, with the case list still built as a sorted
+chain of three-word `CASEINFO` records and reversed before the jump table
+is emitted. The frame is 28 bytes — fourteen words, thirteen declared and
+one the compiler takes for the `WITH`, which all three `WITH` statements
+reuse. With reverse allocation inside a list (finding 33) there is exactly
+one arrangement of the declarations that puts `LSP1` at 1 and `LMIN` at 12.
+
+The sharpest correction came from a single instruction. The natural way to
+write the insertion walk is
+
+```
+IF CSLAB <= LVAL.IVAL THEN
+  BEGIN IF CSLAB = LVAL.IVAL THEN ERROR(156); GOTO 1 END
+ELSE BEGIN LPT2 := LPT1; LPT1 := NEXT END
+```
+
+and that emits two `UJP`s: one for the `GOTO` and one jumping over the else
+part. Apple's segment has exactly one. The else part is not there at all —
+the `GOTO 1` **is** the branch, and the walk falls through to the step:
+
+```
+WHILE LPT1 <> NIL DO
+  WITH LPT1^ DO
+    BEGIN
+      IF CSLAB <= LVAL.IVAL THEN
+        BEGIN IF CSLAB = LVAL.IVAL THEN ERROR(156); GOTO 1 END;
+      LPT2 := LPT1; LPT1 := NEXT
+    END;
+```
+
+Apple's compiler always emits the jump over an else part, so an `ELSE`
+here cannot be hidden: counting `UJP`s decides it. The `LABEL 1`/`GOTO 1`
+pair is II.0's and is what makes the shape legal.
+
+The `OTHERWISE` clause is Apple's addition — symbol 54, which 1.1 spells
+`SEPARATE` — and it appears three times: in the follow set handed to
+`STATEMENT`, in the `UNTIL` of the outer loop, and as the clause itself,
+between `PUTLABEL(LCIX1)` and `PUTLABEL(LCIX)`. The generated skeletons
+still name the enumerator `SEPARATSY`, so that is what the source has to
+say to compile today; the rename is unresolved.
+
+The three `LBP`s occupy 8, 9 and 10 in the order they are first used, so a
+single list has to name them in the reverse of that order. A list in II.0's
+order — `LADDR,LCIX,LCIX1` — allocates the same three words and compiles to
+the same bytes with all three names moved one role along. **SPECULATION**
+as to which Apple wrote; the offsets cannot tell them apart.
+
+### 86b. Segment 13, and a word nothing touches
+
+`FORSTATEMENT`'s frame is twenty bytes — ten words. Five are `LATTR`, one
+each are `LSY`, `LADDR` and `LCIX`, one is the `WITH LCP^` temp, and the
+word at offset 6 is never touched by any instruction in the segment.
+
+That word is II.0's `LSP`. II.0 keeps the control variable's type there and
+range-checks against `LSP^.MIN`/`LSP^.MAX`; Apple's code goes back to
+`LATTR.TYPTR^` each time and never assigns it, so the declaration survives
+with nothing reading it — the same leftover as `WITHSTATEMENT`'s `LLC`
+(finding 85c). Its position between `LATTR` and `LSY` is fixed by the
+offsets. **STRONG INFERENCE** that it is an `STP`, **SPECULATION** as to
+the name. `LADDR` at 8 and `LCIX` at 9 are one list named in the reverse of
+the order they are used, exactly as in 86a.
+
+The control variable is not searched for in `FORSTATEMENT`'s own frame at
+all. `SEARCHID(VARS,LCP)` writes into `LCP` at `1,5` — *`STATEMENT`'s*
+fifth word — and the `WITH` copies it from there. That is an independent
+check on `STATEMENT`'s declarations: `LCP` has to be its fifth word, and
+`LDISX`, `LLP`, `LMARKP` and `LLC` the four after it, for this segment to
+compile as Apple's does. Segment 12 does not reach out of itself this way;
+segment 13 does it twice.
+
+Two details II.0 would not predict. The loop limit is stored with
+`GEN2(56(*STR*),LEVEL,LC)` and `LC` is stepped once and never given back
+inside this segment. And the step is `GENLDC(1)` followed by `GEN0(2
+(*ADI*))` or `GEN0(21(*SBI*))` — one increment either way, chosen by the
+saved `LSY` rather than by re-reading `SY`, which is what makes the saved
+symbol a local at all.
+
+With both segments in, the 1.3 reconstruction stands at **130 of 130
+bodies matching Apple's p-code under Apple's own compiler**, and `ROUTINE`
+— segment 10, seventeen procedures, 2892 bytes — is the only stub left.
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by
