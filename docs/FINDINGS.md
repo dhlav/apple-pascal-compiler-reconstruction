@@ -8308,6 +8308,122 @@ offsets, so the grouping holds there too.
 `varblock.py` grew a `GROUPS` table for it, with the adjacency, the equal
 size and the reversed order all checked rather than asserted.
 
+## 85. STATEMENT, and where a segment procedure may be declared
+
+VERIFIED BINARY FACT unless marked otherwise. Segment 11 is complete: all
+eight procedures compile, under Apple's own 1.3 compiler, to Apple's p-code
+instruction for instruction.
+
+### 85a. Nine procedures, seven of them numbered
+
+II.0's `STATEMENT` is one procedure of `BODYPART` with nine nested ones.
+Apple's is a segment procedure with seven, because `CASESTATEMENT` and
+`FORSTATEMENT` were made segments 12 and 13. They take no procedure number
+in the parent, so the numbering is the declaration order of what is left:
+
+```
+  1 STATEMENT       5 IFSTATEMENT       (12 CASESTATEMENT)
+  2 ASSIGNMENT      6 REPEATSTATEMENT
+  3 GOTOSTATEMENT   7 WHILESTATEMENT    (13 FORSTATEMENT)
+  4 COMPOUNDSTMT    8 WITHSTATEMENT
+```
+
+and it is not II.0's: II.0 has `WHILE` before `REPEAT`, which is also the
+order of the `CASE` arms in `STATEMENT`'s own body. The `XJP` table settles
+the arms independently of the procedure numbers, and the two disagree — the
+`CASE` dispatches WHILE before REPEAT while the declarations run REPEAT
+before WHILE, so neither can have been derived from the other.
+
+`STATEMENT`'s own body carries a `LABEL 1` and a `GOTO 1` out of the middle
+of the label search, and closes over a follow set of five symbols including
+`SEPARATSY`. That last one was nearly misread: the `LDC 4w` set constant
+prints as `[$0001 $0000 $0138 $0001]` for `CONSTBEGSYS`, which is what
+proves our decoder prints w0..w3 and therefore that the bit is 54
+(`SEPARATSY`) and not 47 (`OTHERSY`) — and `OTHERSY` would have compiled to
+`SLDC 47` anyway.
+
+### 85b. `(*$I *)` and error 399
+
+The first run of segment 11 under Apple's compiler stopped at
+
+```
+    SEGMENT PROCEDURE <<<<
+Line 2576, error 399
+```
+
+and the compiler explains itself. `PROCDECLARATION` opens with
+
+```
+IF SEGDEC THEN
+  BEGIN
+    IF CODEINSEG THEN
+      BEGIN ERROR(399); SEGINX:=0; CURBYTE:=0 END;
+```
+
+and `CODEINSEG` goes true in `BODY3` the moment any procedure body is
+written into the current segment, staying true until `FINISHSEG` clears it.
+So **a segment procedure has to be declared before the first ordinary
+procedure of the block that encloses it.** II.0 declares `CASESTATEMENT`
+between `IFSTATEMENT` and `REPEATSTATEMENT`; Apple could not, and the two
+segment declarations have to head `STATEMENT`'s declaration part — which is
+exactly where `BODYPART` already keeps `ROUTINE`, `STATEMENT`, `BODY1` and
+`BODY3`.
+
+This is a placement recovered from the compiler's own rule rather than from
+the offsets, and it costs nothing to check: any other placement fails to
+compile at all. It also leaves the seven numbered procedures untouched,
+since a segment takes no number.
+
+### 85c. Three things in the frame that do nothing
+
+`IFSTATEMENT` declares `LCONST,LVAL: BOOLEAN`. `LCONST` is set false once
+and never set again, nothing anywhere assigns `LVAL`, and three arms of the
+procedure are guarded by them:
+
+```
+IF LCONST THEN
+  BEGIN IF NOT LVAL THEN IC := LOLDIC END
+ELSE PUTLABEL(LCIX2)
+```
+
+The arms are unreachable, the two words are in the frame, and the code for
+them is in the binary. **STRONG INFERENCE** that this is constant folding of
+`IF` conditions, written and then disabled by the one assignment.
+
+`WITHSTATEMENT` declares an `LLC: ADDRRANGE` it never touches. II.0's
+`WITHSTATEMENT` saves `LC` there and restores it at the end; Apple moved the
+save and restore up into `STATEMENT`, where `MARK`/`RELEASE` and `LC := LLC`
+now bracket *every* statement rather than only a `WITH`, and the word stayed
+behind.
+
+`ASSIGNMENT` has an `ELSE` with nothing after it:
+
+```
+IF LSTRGCST AND (GATTR.TYPTR = CHARPTR) THEN
+  GATTR.TYPTR := STRGPTR
+ELSE
+  ELSE
+```
+
+which is what keeps the outer `ELSE` attached to the outer `IF`. The binary
+shows the branch ending in a jump over an else part that is not there, and a
+plain `IF`-`THEN` does not emit one, so the empty `ELSE` is visible in the
+code.
+
+### 85d. The volume ceiling, and the split Apple used too
+
+The spliced source reached 276 blocks, and an emptied Disk II volume has
+274. `(*$I *)` is the remedy, and `write_for_emulator` now takes it: the
+break goes at a top-level procedure heading nearest the halfway point, part
+one keeps `WORK:BODY13.TEXT` with an `(*$I WORK2:BODY13B*)` line on the end,
+and part two goes to `WORK2:` beside the codefile — 3043 lines and 2870,
+with 128 and 142 blocks left over. The include is textual and would work
+anywhere; the heading is chosen so the seam is readable.
+
+With segment 11 in, the 1.3 reconstruction stands at **128 of 128 bodies
+matching Apple's p-code under Apple's own compiler**, with `ROUTINE`,
+`CASESTATEMENT` and `FORSTATEMENT` the three remaining stubs.
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by

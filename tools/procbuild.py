@@ -456,20 +456,88 @@ def write_for_emulator(ver: str, segs) -> Path:
     # compile here reports error 402 at the last line, which is what a full
     # output file looks like from inside the compiler. mkworkdisk.py puts
     # them back, and build_all.py runs it.
-    for stale in (name, name.replace(".TEXT", ".CODE"),
+    part2 = name.replace(".TEXT", "B.TEXT")
+    for stale in (name, part2, name.replace(".TEXT", ".CODE"),
                   "SKEL13.TEXT", "SKEL11.TEXT", "SEARCH.TEXT"):
         try:
             w.remove_file(stale)
         except KeyError:
             pass
-    w.add_file(name, encode_text(src), "textfile")
-    w.save(dsk)
+
+    # 274 blocks is the whole of an emptied volume, and the spliced source
+    # has passed that. `(*$I *)` is how Apple's own sources were split, and
+    # the second half goes on WORK2: beside the codefile -- that volume is
+    # already mounted in S5D2 for exactly this reason (finding 82). The
+    # break is put at a top-level procedure heading rather than at the
+    # halfway line: the include is textual and would work anywhere, but a
+    # boundary the reader recognises is worth more than an even halving.
+    head, tail = split_source(src, w.free_blocks())
+    if tail is None:
+        w.add_file(name, encode_text(src), "textfile")
+        w.save(dsk)
+    else:
+        w.add_file(name, encode_text(head + "(*$I WORK2:" + part2[:-5] + "*)"),
+                   "textfile")
+        w.save(dsk)
+        dsk2 = ROOT / "build" / "disks" / "WORK2.dsk"
+        w2 = PascalWriter.from_file(dsk2)
+        for stale in (part2, name, name.replace(".TEXT", ".CODE")):
+            try:
+                w2.remove_file(stale)
+            except KeyError:
+                pass
+        w2.add_file(part2, encode_text(tail), "textfile")
+        w2.save(dsk2)
+        print(f"wrote WORK2:{part2} ({len(tail.splitlines())} lines); "
+              f"{w2.free_blocks()} blocks left on WORK2: for the codefile")
+
     used = sum(e.blocks for e in PascalDisk.from_file(dsk).directory())
     free = PascalDisk.from_file(dsk).volume().total_blocks - 6 - used
     print(f"wrote WORK:{name} ({len(src.splitlines())} lines, "
           f"{nproc} procedures) to {dsk.relative_to(ROOT)}; "
-          f"{free} blocks left for the codefile")
+          f"{free} blocks left on WORK:")
     return dsk
+
+
+def split_source(src: str, budget: int):
+    """Split a source too big for one volume at a procedure heading.
+
+    Returns `(head, tail)`, or `(src, None)` when it fits. The head has to
+    carry the `(*$I *)` line as well, so it is measured against a budget one
+    block short of what the volume has free.
+    """
+    from a2pascal.textfile import encode_text
+
+    def blocks(text: str) -> int:
+        return (len(encode_text(text)) + 511) // 512
+
+    if blocks(src) <= budget:
+        return src, None
+    nl = chr(10)
+    lines = src.split(nl)
+    # Candidate break points: a procedure or function heading at the outer
+    # level of the file, which is where a `(*$I *)` reads as a split rather
+    # than as an interruption.
+    pat = re.compile(r"^ {0,2}(SEGMENT +)?(PROCEDURE|FUNCTION)\b")
+    heads = [k for k, x in enumerate(lines) if pat.match(x)]
+    if not heads:
+        raise SystemExit("source is too big to fit and has nowhere to split")
+
+    def at(k):
+        return nl.join(lines[:k]) + nl, nl.join(lines[k:])
+
+    # The heading that leaves the two halves closest to even, and failing
+    # that the last one whose head still fits.
+    mid = min(heads, key=lambda k: abs(2 * len(nl.join(lines[:k])) - len(src)))
+    head, tail = at(mid)
+    if blocks(head) + 1 > budget:
+        for k in reversed(heads):
+            head, tail = at(k)
+            if blocks(head) + 1 <= budget:
+                break
+        else:
+            raise SystemExit("no split point leaves a head that fits")
+    return head, tail
 
 
 def report(ver: str, segname: str, procs, mine, who: str) -> int:
