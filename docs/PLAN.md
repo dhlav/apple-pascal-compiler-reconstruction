@@ -243,22 +243,30 @@ Done, and reproducible via `python tools/build_all.py`:
    listings for structure. Note that `ii0src.sdk` cannot help here — it is
    the OS, not the compiler (finding 8).
 
-4. **Write the procedure bodies.** **Started** (finding 58).
+4. ~~**Write the procedure bodies.**~~ **Done for 1.3** (finding 87).
+   All **147 of 147** — every p-code procedure of 1.3's `SYSTEM.COMPILER`,
+   plus `IDSEARCH` and `TREESEARCH` from the assembler tier — compile under
+   Apple's own compiler to Apple's p-code, instruction for instruction.
+   `ROUTINE`, segment 10, was the last one in.
+
    `tools/procbuild.py` is the harness: it splices bodies into the verified
    skeleton, compiles, and diffs instruction for instruction against the
-   binary. `DECSIZE` and `PAOFCHAR` are done and identical.
-
-   Work the leaves first — the ones that call nothing, 9-63 bytes each.
-   `src/pascal/1.3/PASCALCO.text` holds them in Apple's declaration order.
+   binary. `python tools/procbuild.py --emu` writes the spliced source to
+   `WORK:`/`WORK2:`; `tools/emucompile.ps1 -Name BODY13 -Work2 -Compile 300`
+   drives Apple's compiler over it and shuts the emulator down (which is what
+   flushes the image); `--emu-check` reads the codefile back and diffs.
+   `build_all.py` puts the work disks back afterwards.
 
    **Use `--emu-check` for anything with `AND` or `OR` in it.** The fast tier
    short-circuits where Apple emits `LAND`, so it can falsify such a body but
    never accept one (finding 58c). Everything else it settles in a second.
+   It also allocates no `WITH` temporary where Apple takes one word per
+   `WITH` statement, so a frame short by the `WITH` count is the tier's bias
+   and not a source error (finding 87c).
 
-   Two procedures are blocked on the same thing: `GENBYTE` and anything else
-   touching globals 1 or 2 (`SYMBUFP`, `CODEP`). Those are the outer block's
-   *parameter* words (finding 55c) and there is still no known way to spell
-   them in source — the open question that now actually bites.
+   What is left is 1.1: `src/pascal/` has only `1.3`, and `procbuild.py`'s
+   1.1 pass finds no sources. Carry the result across through the
+   correspondence table.
 
 5. ~~**Resolve the non-standard CSPs.**~~ **Done** (finding 17). The whole
    table is named and aritied from interpreter source and confirmed against

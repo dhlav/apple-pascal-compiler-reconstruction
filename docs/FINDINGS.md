@@ -8513,6 +8513,101 @@ With both segments in, the 1.3 reconstruction stands at **130 of 130
 bodies matching Apple's p-code under Apple's own compiler**, and `ROUTINE`
 — segment 10, seventeen procedures, 2892 bytes — is the only stub left.
 
+## 87. ROUTINE — segment 10, and the reconstruction is complete
+
+VERIFIED BINARY FACT unless marked otherwise. Segment 10's seventeen
+procedures now compile, under Apple's own 1.3 compiler, to Apple's p-code
+instruction for instruction. With them in, the count is **147 of 147
+bodies matching, 0 stubs**: every p-code procedure of `SYSTEM.COMPILER`
+1.3, plus `IDSEARCH` and `TREESEARCH`, which the assembler tier holds
+byte-identical (finding 57a).
+
+### 87a. Apple turned ROUTINE inside out to reach CALL's own CASE
+
+II.0 split this work in two. `ROUTINE` took the twenty-one keys that need
+real argument parsing; the rest stayed inline in `CALL` as a `CASE`. Apple
+moved that whole `CASE` down into the segment as **`SPECIALS`, procedure
+17**, and inverted `ROUTINE`'s body to reach it:
+
+```
+IF NOT (LKEY IN [12,13,14,15,18,19,21,22,23,27,31,32,34,35,36,37,38,
+                 40,41,42,43]) THEN SPECIALS
+ELSE CASE LKEY OF ...
+```
+
+The `LNOT` before the `FJP` is what proves the `NOT`; the set is a
+three-word constant, `$F000 $88EC $0F7D`, which is exactly those
+twenty-one keys — II.0's membership test with the sense reversed. The
+`XJP` arm map is II.0's arm order unchanged, and `SPECIALS`' own `XJP`
+runs 5..44 with everything unlisted falling to the default.
+
+`ROUTINE`'s frame is 24 bytes — twelve words, six of them parameters,
+leaving three four-word sets assigned in the first three statements of the
+body. Reverse allocation inside a list (finding 33) fixes which offset is
+which: `FSYS + [COMMA]` at 15, `FSYS + [RPARENT]` at 11, their union at 7.
+The names are **SPECULATION**; that they exist and are computed once is
+not — II.0 rebuilt `FSYS + [COMMA,RPARENT]` at every call site.
+
+Two small helpers are Apple's. `GETCOMMA` and `CHECKINT` are procedures 2
+and 3, and they replace the twenty-odd longhand copies of
+`IF SY = COMMA THEN INSYMBOL ELSE ERROR(20)` and
+`IF GATTR.TYPTR <> INTPTR THEN ERROR(125)`. They have to be declared
+first: every `CIP 2` and `CIP 3` in the segment depends on it, and so does
+the number of every procedure after them.
+
+### 87b. Where Apple changed II.0's behaviour, and not just its shape
+
+* **`IDSEARCH` and `TREESEARCH` compile to `ERROR(124)`**, not to `CSP 7`
+  and `CSP 8`. In 1.3 they are native 6502 and are reached as ordinary
+  external procedures (finding 44), so the compiler refuses the intrinsic
+  form outright. `TREESEARCH` also leaves `GATTR.TYPTR` `NIL` where II.0
+  set `INTPTR`.
+* **`UNITSTATUS`, key 44, is Apple's** and has no II.0 original: an
+  integer unit number, a byte-addressed buffer, and a boolean direction,
+  then `CSP 12 (UST)`.
+* **`NEWSTMT`'s two `ERROR(116)` become `ERROR(125)`**, and so does
+  `STR`'s.
+* **`SEEK` with no second argument is `ERROR(20)`**, not `ERROR(125)` —
+  it goes through `GETCOMMA` like everything else.
+* **`ORD` rejects a type whose `SIZE` is not 1** as well as one whose
+  `FORM` is at or past `POWER`.
+* **`EXIT` calls `NEWPROC` when `PFNAME` is still 0**, and its
+  `LINKERREF` is guarded by `NOT INTRINSIC` and points at `IC-1`, not
+  `IC-2`; II.0's second `LINKERREF` for a separate procedure is gone.
+* **`CONCAT` and `COPYDELETE` both drop II.0's final `LC := LLC`**, and
+  `CONCAT` passes `LEVEL` to `STR` and `LDA` where II.0 passed 0.
+
+### 87c. Two things the tooling learned
+
+**The fast tier allocates no `WITH` temporary.** Apple's compiler takes
+one word of the frame per `WITH` statement; `ucsdpsys_compile` takes none.
+Comparing frame sizes across the 130 procedures that were *already*
+verified against Apple's own compiler turns up 57 mismatches and every one
+of them is exactly one word per `WITH` in that body. So a fast-tier frame
+that is short by the `WITH` count is not evidence of a source error —
+which is what let `STRGVAR` and `EXIT` through, each low by one word, with
+the other fifteen exact. **VERIFIED SOURCE FACT** for Apple's side (the
+frames are in the binary); the fast tier's behaviour is measured, not
+documented.
+
+**`SCAN` and `SIZEOF` are reserved words in `ucsdpsys_compile`.** They are
+UCSD intrinsics with their own argument syntax and its grammar builds them
+in, so no program compiled there may *declare* a procedure of either name:
+*"syntax error, unexpected SCAN, expecting NAME or TYPE_NAME"*. Apple's
+compiler will, and segment 10 declares both, exactly as II.0 did.
+`procbuild.py` now renames them for the fast tier only, and only where
+they are being declared — the regex is anchored on the `;` of the heading
+or the `*)` of the closing comment, which is the one form the intrinsic
+never takes. A blanket rename would be wrong: `SCAN(` is genuinely called
+as an intrinsic in `PASCALCO`, `COMPINIT` and `COMPOPTI`, and both names
+appear inside `ADDNAMES` string literals.
+
+### 87d. What is left
+
+The 1.3 reconstruction is whole. What has not been done is pushing it
+through the correspondence table to 1.1 — `src/pascal/` has only `1.3`,
+and `procbuild.py`'s 1.1 pass finds no sources to compile.
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by

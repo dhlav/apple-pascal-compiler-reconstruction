@@ -347,6 +347,22 @@ def defang_resident(text: str) -> str:
     return RESIDENT_OPT.sub("", text)
 
 
+# SCAN and SIZEOF are UCSD intrinsics with their own syntax, and
+# `ucsdpsys_compile` builds them into its grammar as reserved words: it will
+# not let a program declare a procedure of either name. Apple's compiler
+# will, and does -- segment 10 declares both, exactly as II.0 did. Rename
+# them for the fast tier only, and only where they are being declared or
+# called as procedures, which is the one form the intrinsics never take:
+# every genuine use in the source is `SCAN(` or `SIZEOF(` with an argument
+# list, and `ADDNAMES` carries the names inside string literals.
+RESERVED_PROC = re.compile(r"\b(SCAN|SIZEOF)(\s*;|\*\))")
+
+
+def defang_reserved(text: str) -> str:
+    """Rename the two phase procedures whose names the fast tier reserves."""
+    return RESERVED_PROC.sub(lambda m: m.group(1) + "PROC" + m.group(2), text)
+
+
 def spliced(ver: str, segs, fast: bool = False) -> str:
     """The skeleton with these segment sources declared at lex 1.
 
@@ -369,7 +385,7 @@ def spliced(ver: str, segs, fast: bool = False) -> str:
     # will not compile otherwise. PASCALCO.text marks the spot.
     body = body.replace("{SEGMENTS}", render_segdecls(ver))
     if fast:
-        body = defang_resident(body)
+        body = defang_reserved(defang_resident(body))
     # ...and PASCALCOMPILER's own statement part, if the file supplies one,
     # goes where the skeleton's empty `BEGIN END;` is. That is procedure 1
     # of segment 1, and it is the only body a segment file cannot hold in
