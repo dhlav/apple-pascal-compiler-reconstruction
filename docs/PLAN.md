@@ -257,6 +257,17 @@ Done, and reproducible via `python tools/build_all.py`:
    flushes the image); `--emu-check` reads the codefile back and diffs.
    `build_all.py` puts the work disks back afterwards.
 
+   **Drive the compiler from the menu, with `C(ompile`. Do not `X(ecute`
+   it.** `C` prompts for the source and the codefile; X'd, the compiler
+   takes its source from the system workfile and dies at *error 401, line
+   0* when there isn't one. Two more traps on the way there: X appends
+   `.CODE`, and `SYSTEM.COMPILER.CODE` is 20 characters against a 15-character
+   limit, so it answers *"Illegal file name"*; and the compiler is not on the
+   boot volume at all — `BOOT128:` is APPLE1 with the 128K system swapped in,
+   and `SYSTEM.COMPILER` is on `APPLE2:` in drive 2, so `*SYSTEM.COMPILER` is
+   *"No file"*. None of this is a `{$U-}` restriction: `PASCALCO.1` has
+   `lex 0` and the compiler is an ordinary user program (findings 23c, 47).
+
    **Use `--emu-check` for anything with `AND` or `OR` in it.** The fast tier
    short-circuits where Apple emits `LAND`, so it can falsify such a body but
    never accept one (finding 58c). Everything else it settles in a second.

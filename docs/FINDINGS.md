@@ -8602,7 +8602,33 @@ never takes. A blanket rename would be wrong: `SCAN(` is genuinely called
 as an intrinsic in `PASCALCO`, `COMPINIT` and `COMPOPTI`, and both names
 appear inside `ADDNAMES` string literals.
 
-### 87d. What is left
+### 87d. The compiler is invoked from the menu, and it is not `{$U-}`
+
+**VERIFIED BINARY FACT.** Three separate refusals stand between a fresh
+128K boot and a running compiler, and none of them is a privilege:
+
+| typed | answer | why |
+|---|---|---|
+| `X` `*SYSTEM.COMPILER` | *Illegal file name* | X appends `.CODE`; `SYSTEM.COMPILER.CODE` is 20 characters against a 15-character limit |
+| `X` `*SYSTEM.COMPILER.` | *No file `*SYSTEM.COMPILER`* | the boot volume is `BOOT128:` — APPLE1 with the 128K system substituted in — and the compiler is on `APPLE2:`, in drive 2 |
+| `X` `APPLE2:SYSTEM.COMPILER.` | *Line 0, error 401* | it runs, prints *"Apple Pascal Compiler [1.3]"* and asks for a listing file — then looks for its source in the system workfile, and there is none |
+
+So **`C(ompile` from the command menu is the way in**: it prompts for the
+source file and the codefile instead of reaching for a workfile, which is
+what `tools/emucompile.ps1` sends —
+`CWORK:BODY13.TEXT{ENTER}WORK2:BODY13.CODE{ENTER}{ENTER}`.
+
+It would be natural to read the 401 as a `{$U-}` restriction — a system
+program that may not be `X`'d. It is not. `PASCALCO.1` carries `lex 0`,
+the ordinary user-program level, and finding 47 found the `$FF` lex byte
+on 7 of 39 codefiles across the six disk images — both operating systems,
+`128K.PASCAL`, `SETUP`, the two `GOTOXY` replacements — and never on
+`SYSTEM.COMPILER`. Finding 23c already said the compiler was not built
+`{$U-}`; this is the same fact seen from the console. The 401 is `NEXTBLOCK`
+raising *"Unexpected end of input"* on an empty workfile (finding 27),
+nothing more.
+
+### 87e. What is left
 
 The 1.3 reconstruction is whole. What has not been done is pushing it
 through the correspondence table to 1.1 — `src/pascal/` has only `1.3`,
