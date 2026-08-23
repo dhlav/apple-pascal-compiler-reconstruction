@@ -63,6 +63,9 @@ STEPS = [
     # Not an artifact: PRINTERROR's nested case against UCSD's source for it,
     # where the arm strings are the answer key (finding 53).
     ("lifter calibration, case", "probes/probe_case_calibrate.py"),
+    # Not an artifact: the operating system routine the compiler calls by
+    # number, re-derived from all four binaries (finding 89).
+    ("OSPROC43 vs the binaries", "probes/probe_osproc43.py"),
 ]
 
 for label, script in STEPS:

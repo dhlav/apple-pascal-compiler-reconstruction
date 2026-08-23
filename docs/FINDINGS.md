@@ -8905,6 +8905,113 @@ The other six -- `BODY1`, `BODY3`, `FINISHUP`, `NUMSTRIN`, `UNITPART`,
 procedure numbers, so the header transfers whole, `GENBYTE(215)` reservation
 included.
 
+## 89. `OSPROC43` is the file-title normaliser, and it is `FILEPROC.8`
+
+Finding 79b recovered the *number* -- the compiler names the operating
+system by declaring 42 unresolved `FORWARD`s and calling the 43rd -- and
+left what it does open, with the method written down: disassemble
+`FILEPROC.8`. Done. Everything here is **VERIFIED BINARY FACT** off
+`SYSTEM.PASCAL` on both three-disk sets, except where marked.
+
+### 89a. The forwarder, and how the parameters get there
+
+`SYSTEM.PASCAL`'s procedure 43 is seven instructions and identical in 1.1
+and 1.3, byte for byte:
+
+    SLDC 4 ; LAO 4 ; SLDO 3 ; SLDO 2 ; LDO 294 ; SLDO 1 ; CXP 6,1
+
+`FILEPROC.1` is a four-arm dispatcher over one shared six-word signature,
+and `4` is the arm that calls `FILEPROC.8`. The rest of the push is the
+signature being filled: `@G4` is procedure 43's own 291-word local buffer,
+which arm 4 never looks at, and `G294` the last word of it, which arm 4
+never looks at either. Both are there because arms 1..3 want them.
+
+**Why the operands are globals in a procedure that has parameters.** The
+operating system is built `{$U-}`, so its outer block is lex -1 (finding
+47) and its procedures are lex 0 -- which makes a procedure's *own* frame
+the one `LDO`/`SLDO`/`LAO` reach, and the outer block's variables the
+*intermediate* ones the lift renders `I1,n`. So `SLDO 1,2,3` are procedure
+43's three parameter words and `LDO 294` a local. Read the other way round
+this is nonsense, and it is worth stating because every lex-0 procedure in
+`SYSTEM.PASCAL` reads this way.
+
+Parameters are allocated backwards (finding 33), so the compiler's
+
+    LAO 1 ; SLDC 1 ; SLDC 40 ; CXP 0,4
+
+leaves the string at word 3, the flag at 2 and the length at 1, and arm 4
+hands `FILEPROC.8` exactly those three in that order.
+
+### 89b. What it does
+
+`FILEPROC.8(VAR S: STRING; ISTEXT, N: INTEGER)` -- 3 parameter words, 90
+words of local -- is the routine that turns what a user typed into a file
+title. In order:
+
+1. Every blank is deleted, wherever it is.
+2. If `S` is empty, nothing happens.
+3. If `S` ends in `'.'` the period is dropped and **nothing else is done**
+   -- that, and only that, is what defeats the suffix.
+4. Otherwise a trailing `[...]` size specification is split off and held
+   aside.
+5. If what is left ends in `':'` it is a volume name and takes no suffix.
+6. Otherwise `a`..`z` are upshifted and every character below `' '` becomes
+   `'?'`; then the suffix -- `'.TEXT'` if the flag is set, `'.CODE'` if not
+   -- is appended, unless the last five characters already are it, or the
+   result would not fit: the test is `LENGTH(S) + LENGTH(bracket) <=
+   N - 5`, which is what makes the third parameter the *declared* length of
+   the caller's buffer.
+7. The size specification is put back on the end.
+
+Every one of those is in the 1.3 manual, which is the confirmation this
+had to have: "the suffix .TEXT is automatically supplied ... if you want to
+prevent this from happening, add a period to the end of your filename"
+(II-2, Compiler prompts), the same rule again for the Editor and the
+Assembler, and the codefile's `.CODE[8].` example at II-2 for the
+interaction with a size specification.
+
+### 89c. The call sites, and a cross-check on finding 88a
+
+`CXP 0,43` occurs **twice** in 1.1's `SYSTEM.COMPILER` and **three times**
+in 1.3's, and the third is the one this port has just been reading about
+from the other side: 1.3's `COMPINIT.1` normalises the title typed at the
+listing-file prompt, in an 80-byte buffer, and 1.1 has no such prompt
+(finding 88a). The other two are in `COMPOPTI.1` and are in both releases:
+the `(*$I*)` include title, about to be `RESET`, and the `(*$L*)` listing
+title, about to be `REWRITE`n -- both `LTITLE`, `LLA 7`, declared
+`STRING[40]`.
+
+All of them pass the flag as `SLDC 1`: **the compiler only ever asks for
+`.TEXT`**. The `.CODE` half of the routine is reached from the operating
+system's own Command level, which calls it with `0` on a 23-byte buffer
+where it is about to `FOPEN` a codefile, and that is where a compiled
+program's output title gets its suffix.
+
+`tools/probes/probe_osproc43.py` re-derives all of this from the four
+binaries -- the forwarder instruction for instruction, the dispatcher's
+arm, `FILEPROC.8`'s literals and the two constants it compares against,
+the five-character length guard, the clamp's presence in 1.3 and absence in
+1.1, and the call-site census -- and `build_all.py` runs it.
+
+### 89d. One release difference, in the direction 1.3 usually goes
+
+1.1's loop upshifts and does nothing else; 1.3 adds
+`IF S[I] < ' ' THEN S[I] := '?'`. Every other line of the procedure is the
+same, and the forwarder and both frame sizes are identical, so a control
+character in a typed title reaches the directory in 1.1 and is fenced in
+1.3.
+
+### 89e. What is still not recovered
+
+The *name*. II.0's `GLOBALS.TEXT` has 42 forwards and stops at `COMMAND`,
+Apple's 43rd has no II.0 counterpart, and nothing in the codefile names a
+procedure that is not a segment's procedure 1 (finding 30). The
+reconstruction keeps `OSPROC43`, which says what is actually known -- a
+procedure number -- and is eight characters, so it is what Apple's compiler
+sees. Naming it for its behaviour would be SPECULATION dressed as a
+recovery; the behaviour is written down here instead.
+
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by
@@ -8914,10 +9021,14 @@ included.
   an intrinsic's own code segment" -- together, `WRITELINKERINFO`'s test --
   `MODDATA` at 13 is "owns a data segment" and is the variant tag, and
   `MODDSEG` at 14 behind it is that segment's number.
-* **What `OSPROC43` is.** Finding 79b has its number, its three-word shape
-  and its three call sites, and `SYSTEM.PASCAL` forwards it into `FILEPROC`.
-  II.0's `GLOBALS.TEXT` stops one short of naming it, so what would settle it
-  is Apple's own GLOBALS equivalent, or disassembling `FILEPROC.8`.
+* ~~**What `OSPROC43` is.**~~ **Resolved by finding 89**, by the second of
+  the two routes the question named: `FILEPROC.8` is the file-title
+  normaliser -- delete the blanks, a trailing `'.'` defeats the suffix, a
+  `[...]` size specification is held aside, a name ending `':'` is a volume,
+  otherwise upshift and append `'.TEXT'` or `'.CODE'` if the declared length
+  has room. The 1.3 manual documents every rule of it. What is still not
+  recovered is Apple's *name* for it, and nothing in either binary carries
+  one, so the reconstruction keeps `OSPROC43`.
 * ~~**The outer block is two words wide of Apple's.**~~ **Resolved by
   finding 55c**: `SYMBUFP` and `CODEP` are the outer block's two *parameter*
   words, not `VAR` declarations, and the reconstruction was writing them as
