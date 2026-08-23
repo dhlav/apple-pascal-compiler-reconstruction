@@ -11,8 +11,8 @@
   forward block already provides.
 
   The declaration order is read off the code. Bodies are emitted in
-  declaration order, so ASSIGNMENT at $0000 through WITHSTATEMENT at $0410,
-  with STATEMENT's own body last at $04EE, is the order they were written
+  declaration order, so ASSIGNMENT at $0000 through WITHSTATEMENT at $03B4,
+  with STATEMENT's own body last at $04A8, is the order they were written
   in. CASESTAT and FORSTATE take no procedure number here -- a segment does
   not -- so the seven numbered procedures below are unaffected by where the
   two segments sit, and their own numbers, 12 before 13, are the whole of

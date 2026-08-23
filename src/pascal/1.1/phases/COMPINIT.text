@@ -1,18 +1,26 @@
-{ Segment 7. UCSD II.0's COMPINIT, which is compinit.text, with four
-  additions and one deletion.
+{ Segment 7. UCSD II.0's COMPINIT, which is compinit.text, with one
+  addition and one deletion. Ten procedures, where 1.3 has eleven.
 
   The deletion is the transcendentals. II.0's ENTSTDPROCS enters SIN, COS,
   LOG, ATAN, LN, EXP and SQRT as standard functions; Apple moved them into
   the TRANSCEND unit, so nineteen names become thirteen.
 
-  The additions are Apple's: a version check against SYSTEM.PASCAL before
-  anything else runs, a prompt for the listing file, and -- the one that
-  changes the shape of two procedures -- the standard identifier names are
-  no longer forty-three assignments to an ARRAY OF ALPHA. They are five
-  dot-separated string literals appended into one 512-byte buffer, and
-  NEXTNAME cuts the next name out of it with SCAN. The buffer and its two
-  cursors live in COMPINIT's own frame, which is why both helpers reach
-  them with LOD 1,n. }
+  The addition is the one that changes the shape of two procedures: the
+  standard identifier names are no longer forty-three assignments to an
+  ARRAY OF ALPHA. They are five dot-separated string literals appended into
+  one 512-byte buffer, and NEXTNAME cuts the next name out of it with SCAN.
+  The buffer and its two cursors live in COMPINIT's own frame -- 518 bytes,
+  256 words plus NPOS, NCHARS and one WITH temp -- which is why both
+  helpers reach them with LOD 1,n.
+
+  The two additions 1.3's file describes are not here (finding 88a). There
+  is no CHECKVERS: 1.1's body runs INITSCALARS first and never looks at
+  SYSTEM.PASCAL's version, which is what makes 1.3's frame 608 bytes and
+  its procedure count one higher. And there is no prompt for the listing
+  file -- no LTITLE, no LSTOPEN, no CONLIST; the L option opens
+  '*SYSTEM.LST.TEXT' unconditionally when it is asked for. What 1.1 writes
+  before it reads a line of source is II.0's banner with Apple's text,
+  seven blank lines and 'Apple Pascal Compiler [1.1]'. }
 
   VAR LNAMES: PACKED ARRAY [0..511] OF CHAR;
       NPOS: INTEGER;

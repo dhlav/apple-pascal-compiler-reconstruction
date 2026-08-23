@@ -8858,11 +8858,52 @@ still yields a readable answer.
 That is the fast tier exhausted. What is left is the emulator tier: build
 1.1 under Apple's own 1.1 compiler and compare the codefile.
 
-A note for whoever picks it up: the phase files' header comments came
-across with the copy and described the segment as 1.3 has it.
-`BODYPART`'s "38 procedures", `CASESTAT`'s `OTHERWISE` note and `ROUTINE`'s
-list of "where Apple changed II.0's behaviour" have been corrected; the
-rest have not been audited line by line.
+### 88g. The header comments, audited
+
+The phase files' header comments came across with the copy and described
+the segment as 1.3 has it. `BODYPART`'s "38 procedures", `CASESTAT`'s
+`OTHERWISE` note and `ROUTINE`'s list of "where Apple changed II.0's
+behaviour" were corrected with the port; `PASCALCO`'s was rewritten. The
+remaining eleven were byte-identical to 1.3's, and have now been read
+against the 1.1 binary. Four carried a claim that is 1.3's and not 1.1's,
+and they are corrected in `src/pascal/1.1/`:
+
+* **`COMPINIT`** claimed "four additions", two of which 1.1 does not have.
+  There is no `CHECKVERS` -- the body opens `INITSCALARS; INITSETS` and
+  never reads `SYSTEM.PASCAL`'s version -- and no listing-file prompt:
+  no `LTITLE`, no `LSTOPEN`, no `CONLIST`, and the banner is II.0's seven
+  blank lines with `'Apple Pascal Compiler [1.1]'`. What is left is the
+  512-byte name buffer, which the 518-byte frame confirms. Ten procedures
+  here against 1.3's eleven.
+* **`FORSTATE`** claimed the loop-limit word is "stepped once and never
+  given back here". That is 1.3, which hoists the bookkeeping into
+  `STATEMENT` (88e). 1.1's `FORSTATEMENT` claims and releases it itself:
+  `LC := LC + 1` with `IF LC > LCMAX THEN LCMAX := LC` where the limit is
+  stored, and `LC := LC - 1` after the closing `PUTLABEL(LCIX)`. The rest
+  of that header holds in 1.1 -- ten words, `LATTR` five, the untouched
+  word at offset 6, `LADDR` at 8 and `LCIX` at 9.
+* **`STATEMEN`** gave 1.3's addresses for the declaration order it reads
+  off the code. In 1.1 the run is `ASSIGNMENT` at `$0000` through
+  `WITHSTATEMENT` at `$03B4`, with `STATEMENT`'s own body last at `$04A8`.
+  The order itself, and both segment children at lex 3, are unchanged.
+* **`COMPOPTI`** said nothing about the release at all, which for this
+  segment is misleading: four procedures against 1.3's five, and the quiet
+  option is `'O'` (88e). Both are now in the header.
+
+`DECLARAT`'s header was wrong in a way that has nothing to do with the
+release, and is wrong in the 1.3 file too: the hoisted sets are not "one
+in `DECLARATIONPART`'s frame for each of the four declaration parsers".
+There are two there, `LIDSYS` and `LLABSYS`, which is what makes that
+frame eleven words, plus `LCRSYS` in `SIMPLETYPE` and `LSEMSYS` in
+`FIELDLIST` -- four in all. Corrected in 1.1; `src/pascal/1.3` still
+carries the old wording, and being a comment it changes no byte of the
+verified codefile.
+
+The other six -- `BODY1`, `BODY3`, `FINISHUP`, `NUMSTRIN`, `UNITPART`,
+`WRITELIN` -- were checked claim by claim and stand as written for 1.1.
+`BODY1` is the strongest of those: the two lifts differ in nothing but
+procedure numbers, so the header transfers whole, `GENBYTE(215)` reservation
+included.
 
 ## 16. Open questions
 

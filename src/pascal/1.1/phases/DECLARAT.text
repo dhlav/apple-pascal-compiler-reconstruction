@@ -12,9 +12,10 @@
       segment and then, separately, its data segment, so the search itself
       became a function and the thing that calls it twice became another.
 
-  The sets II.0 recomputes inside loops are hoisted into locals here, one in
-  DECLARATIONPART's frame for each of the four declaration parsers, one in
-  SIMPLETYPE and one in FIELDLIST. }
+  The sets II.0 recomputes inside loops are hoisted into locals here, four
+  of them: LIDSYS and LLABSYS in DECLARATIONPART's own frame -- which is
+  eleven words, LSY, NOTDONE, DUMMYVAR and those two sets at four words
+  each -- LCRSYS in SIMPLETYPE and LSEMSYS in FIELDLIST. }
 
   VAR LSY: SYMBOL;
       NOTDONE: BOOLEAN;

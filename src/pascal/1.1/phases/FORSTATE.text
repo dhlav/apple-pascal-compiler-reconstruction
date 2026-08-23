@@ -19,10 +19,14 @@
   be STATEMENT's fifth word for this segment to compile as Apple's does.
 
   Two things the binary settles that II.0 would not predict. The loop
-  limit is stored with GEN2(56(*STR*),LEVEL,LC) and LC is stepped once and
-  never given back here. And the step is GENLDC(1) followed by GEN0(2
-  (*ADI*)) or GEN0(21(*SBI*)) -- one increment either way, chosen by the
-  saved LSY rather than by re-reading SY. }
+  limit is stored with GEN2(56(*STR*),LEVEL,LC), and the word it takes is
+  both claimed and given back here: LC := LC + 1 with IF LC > LCMAX THEN
+  LCMAX := LC where the limit is stored, and LC := LC - 1 after the closing
+  PUTLABEL(LCIX). 1.3 hoists that bookkeeping up into STATEMENT, which
+  brackets every statement with LLC := LC ... LC := LLC, and its
+  FORSTATEMENT ends at the PUTLABEL (finding 88e). And the step is
+  GENLDC(1) followed by GEN0(2(*ADI*)) or GEN0(21(*SBI*)) -- one increment
+  either way, chosen by the saved LSY rather than by re-reading SY. }
 
     VAR LATTR: ATTR;
         LSP: STP;
