@@ -18,6 +18,7 @@ STEPS = [
     # refuse a damaged one (finding 50).
     ("split segment 0", "probes/probe_split_segment.py"),
     ("segment/procedure maps", "map_compiler.py"),
+    ("SYSTEM.LIBRARY unit map and interfaces", "libmap.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
     ("native 6502 listings", "disasm6502.py"),

@@ -1,0 +1,25 @@
+
+    
+  TYPE DECMAX = INTEGER[36];
+       STUNT = RECORD CASE INTEGER OF
+                 2:(W2:INTEGER[4]);
+                 3:(W3:INTEGER[8]);
+                 4:(W4:INTEGER[12]);
+                 5:(W5:INTEGER[16]);
+                 6:(W6:INTEGER[20]);
+                 7:(W7:INTEGER[24]);
+                 8:(W8:INTEGER[28]);
+                 9:(W9:INTEGER[32]);
+                 10:(W10:INTEGER[36])
+               END;
+       
+  
+  PROCEDURE FSEEK(VAR F: FIB; RECNUM: INTEGER);
+  PROCEDURE FREADREAL(VAR F: FIB; VAR X: REAL);
+  PROCEDURE FWRITEREAL(VAR F: FIB; X: REAL; W, D: INTEGER);
+  PROCEDURE FREADDEC(VAR F: FIB; VAR D: STUNT; L: INTEGER);
+  PROCEDURE FWRITEDEC(VAR F: FIB; D: DECMAX; RLENG: INTEGER);
+  FUNCTION SUPER_MOD(A,B : INTEGER) : INTEGER;
+  FUNCTION SUPER_DIV(A,B : INTEGER) : INTEGER;
+  
+IMPLEMENTATION

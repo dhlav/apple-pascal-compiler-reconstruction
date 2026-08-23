@@ -1,0 +1,103 @@
+SYSTEM.LIBRARY unit map -- Apple Pascal 1.1
+source image : UCSD Pascal 1.1_1.dsk
+file blocks  : 155..189 (34 blocks, 17408 bytes)
+
+Derived directly from the binary by tools/libmap.py.
+VERIFIED BINARY FACT unless marked otherwise.
+
+
+--- slot 0  LONGINTI  block=2 len=2452 segkind=6 (LINKED-INTRINS) textaddr=1
+      #  param   data  lex  size  kind
+      1      0      0    1    10  pcode
+      2      6     14    1   638  pcode
+      3     24     42    1    30  pcode
+      4      0     58    1  1756  6502
+    4 procedures, 1 native
+    INTERFACE text: blocks 1..2, 576 characters, written to analysis/library/interface/1.1/LONGINTI.text
+
+--- slot 1  PASCALIO  block=9 len=1238 segkind=6 (LINKED-INTRINS) textaddr=7
+      #  param   data  lex  size  kind
+      1      0      0    1    10  pcode
+      2      4     10    1   382  pcode
+      3      4     10    1   326  pcode
+      4     10     44    1   502  pcode
+    4 procedures, 0 native
+    INTERFACE text: blocks 7..9, 181 characters, written to analysis/library/interface/1.1/PASCALIO.text
+
+--- slot 2  CHAINSTU  block=33 len=214 segkind=6 (LINKED-INTRINS) textaddr=32
+      #  param   data  lex  size  kind
+      1      0      0    1    10  pcode
+      2      2    164    1    50  pcode
+      3      2    164    1    50  pcode
+      4      2     82    1    46  pcode
+      5      0      0    1    16  pcode
+      6      0      0    1    16  pcode
+    6 procedures, 0 native
+    INTERFACE text: blocks 32..33, 166 characters, written to analysis/library/interface/1.1/CHAINSTU.text
+
+--- slot 3  TRANSCEN  block=13 len=1202 segkind=6 (LINKED-INTRINS) textaddr=12
+      #  param   data  lex  size  kind
+      1      0      0    1    10  pcode
+      2      8      0    1    54  pcode
+      3      8      0    1    32  pcode
+      4      8     14    1   190  pcode
+      5      8     14    1   210  pcode
+      6      8     22    1   244  pcode
+      7      8      0    1    30  pcode
+      8      8     14    1   214  pcode
+      9     10      6    1   180  pcode
+    9 procedures, 0 native
+    INTERFACE text: blocks 12..13, 221 characters, written to analysis/library/interface/1.1/TRANSCEN.text
+
+--- slot 4  TURTLEGR  block=18 len=5202 segkind=6 (LINKED-INTRINS) textaddr=16
+      #  param   data  lex  size  kind
+      1      0      0    1   138  pcode
+      2      0      0    1    18  pcode
+      3      2      0    1    52  pcode
+      4      2      0    1    48  pcode
+      5      2      2    1   274  pcode
+      6      4      0    1    14  pcode
+      7      2      2    1    22  pcode
+      8      0      0    1    22  pcode
+      9      0      0    1    52  pcode
+     10      2      4    1    32  pcode
+     11      8      2    1   110  pcode
+     12      4      0    1    18  pcode
+     13      4      0    1    18  pcode
+     14      4      0    1    16  pcode
+     15      2     26   21    64  6502
+     16      5     61   21   564  6502
+     17      2      0    1    56  pcode
+     18      2     86    1    50  pcode
+     19      2      0    1    16  pcode
+     20      4     13   21   116  6502
+     21      1      7   21    62  6502
+     22      3     33   21   114  6502
+     23      2      4    1    22  pcode
+     24      8   2112    1   130  pcode
+     25      0      0    1   838  pcode
+     26      0      0    1   820  pcode
+     27      0      2    1    70  pcode
+     28      2      2    1    30  pcode
+     29      2      0    1    20  pcode
+     30      0     28   21   710  6502
+     31      0     18   21   560  6502
+    31 procedures, 7 native
+    INTERFACE text: blocks 16..18, 910 characters, written to analysis/library/interface/1.1/TURTLEGR.text
+
+--- slot 5  TURTLEGR  block=0 len=386 segkind=7 (DATASEG) textaddr=0
+      #  param   data  lex  size  kind
+    0 procedures, 0 native
+
+--- slot 6  APPLESTU  block=30 len=678 segkind=6 (LINKED-INTRINS) textaddr=29
+      #  param   data  lex  size  kind
+      1      0      0    1    10  pcode
+      2      0      0    1    54  6502
+      3      0      0    1    50  6502
+      4      0      0    1    36  6502
+      5      0      1    1    62  6502
+      6      0      7    1    86  6502
+      7      6     18    1    52  6502
+      8      0     15    1   294  6502
+    8 procedures, 7 native
+    INTERFACE text: blocks 29..30, 308 characters, written to analysis/library/interface/1.1/APPLESTU.text

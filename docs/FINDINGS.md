@@ -9159,6 +9159,111 @@ is unavoidable, and carried into a comparison that could have afforded the
 stronger form from the start.
 
 
+## 91. The shipped `SYSTEM.COMPILER` is a *linked* codefile
+
+**VERIFIED BINARY FACT**, and it settles what finding 90d could only
+describe. Every segment of Apple's shipped `SYSTEM.COMPILER` carries
+`segkind = 0`, `LINKED`. The codefile our source produces carries
+`segkind = 0` on fourteen of its fifteen and **`segkind = 1`, `HOSTSEG`,
+on `PASCALCO`** -- the marker for a segment with an unresolved `EXTERNAL`
+in it.
+
+That is the whole of the 948-byte difference, stated in the file's own
+terms. `IDSEARCH` and `TREESEARCH` are not compiled; they are assembled
+separately and brought in by the **linker**, and what Apple shipped is the
+linker's output. A compile alone cannot produce them and was never going to:
+
+| | Apple's | ours, straight from the compiler |
+|---|---|---|
+| `PASCALCO` segkind | 0 `LINKED` | 1 `HOSTSEG` |
+| `PASCALCO` length | 5606 | 4658 |
+| procedures 2 and 3 | 800 + 148 bytes of 6502 | unresolved declarations |
+
+So the reconstruction is complete in the sense that matters -- every byte
+Apple's *compiler* produced, our source reproduces (finding 90e), and every
+byte Apple's *assembler* produced, `src/native/SEARCH.TEXT` reproduces
+(findings 45, 57a) -- and the one step never yet run is the one that joins
+them: `L(ink` under the emulator, `BODY13.CODE` against the assembled
+`SEARCH.CODE`. If that is right the result is `PASCALCO` at 5606 bytes,
+segkind 0, and a fifteen-for-fifteen byte-identical codefile. **Nothing
+else is missing.**
+
+Two things not to assume on the way there. The library is not where those
+two came from: `SYSTEM.LIBRARY` holds six units and neither routine is in
+any of them (finding 92), so the linker's input was a separate assembled
+codefile that Apple did not ship. And `LIBRARY.CODE` on `APPLE2:` is the
+librarian *utility*, not a library.
+
+## 92. What is in `SYSTEM.LIBRARY`, and the interfaces are Apple's own text
+
+**VERIFIED BINARY FACT.** `tools/libmap.py` takes the library apart and
+`build_all.py` runs it. Six units in seven slots, the same six in both
+releases, every one of them `segkind = 6`, a **linked intrinsic** -- code
+already bound, segment number fixed, so a program that `USES` one is bound
+to the copy already on the boot disk rather than getting a copy of its own.
+
+| unit | 1.1 | 1.3 | procedures (1.3) | native |
+|---|---|---|---|---|
+| `LONGINTIO` | 2452 | 2546 | 4 | 1 |
+| `PASCALIO` | 1238 | 2070 | 9 | 0 |
+| `CHAINSTUFF` | 214 | 410 | 8 | 0 |
+| `TRANSCEND` | 1202 | 1268 | 9 | 0 |
+| `TURTLEGRAPHICS` | 5202 | 5230 | 31 | 7 |
+| `TURTLEGRAPHICS` data | 386 | 386 | -- | -- |
+| `APPLESTUFF` | 678 | 652 | 8 | 6 |
+
+`TURTLEGRAPHICS` takes two slots: a code segment and a 386-byte **data
+segment** (`segkind = 7`), which is the `INTRINSIC CODE n DATA n` form
+`UNITPART` parses (finding 80) seen from the other end -- the only worked
+example of it in the evidence.
+
+### 92a. The INTERFACE text is in the file
+
+Each unit's dictionary entry carries a `TEXTADDR`, a block *inside the
+library*, and what is there is the unit's `INTERFACE` section **as source
+text**. The compiler puts it there so a later `USES` can compile against it
+(finding 80), and it is Apple's own text -- indentation, spelling and all.
+All six are extracted to `analysis/library/interface/{ver}/`.
+
+That changes the shape of this reconstruction completely. For the compiler
+every declaration had to be recovered from the code it emitted; here the
+types, the constants and **every procedure heading with its exact parameter
+names and types** are given. `TURTLEGRAPHICS` hands over its `SCREENCOLOR`
+enumeration in Apple's own member order; `PASCALIO` and `LONGINTIO` hand
+over `DECMAX` and the ten-variant `STUNT` record. What is left to recover
+is the `IMPLEMENTATION` of each, against the p-code that is right there in
+the same file.
+
+### 92b. What differs between the releases
+
+`LONGINTIO`, `TRANSCEND` and `TURTLEGRAPHICS` have the same interface in
+both, to the character. Two changed:
+
+* **`CHAINSTUFF`** gains `SWAPGPON` in 1.3, a seventh entry point beside
+  `SETCHAIN`, `SETCVAL`, `GETCVAL`, `SWAPON` and `SWAPOFF`.
+* **`PASCALIO`** grows from three procedures to seven. 1.1 has `FSEEK`,
+  `FREADREAL` and `FWRITEREAL`; 1.3 adds `FREADDEC`, `FWRITEDEC` -- with
+  the `DECMAX`/`STUNT` declarations `LONGINTIO` already carried -- and
+  `SUPER_MOD` and `SUPER_DIV`. Those last two are the only identifiers
+  anywhere in this evidence with an underscore in them, which under the
+  eight-character rule (finding 29) fold to `SUPERMOD` and `SUPERDIV` and
+  so are two distinct names by one character.
+
+### 92c. A trap in the extraction, and a rule that generalises
+
+The text does not end where the block does. The compiler stops copying at
+`IMPLEMENTATION`, and the rest of the block is whatever the buffer held
+before -- which in 1.1's `TURTLEGRAPHICS` is six procedure headings from an
+*earlier* version of its own interface, in the right typeface, indented the
+same way, reading exactly like the real thing. `libmap.py` cuts at the
+`IMPLEMENTATION` token for that reason.
+
+The general form is worth keeping, because this evidence is full of buffers
+that are written but never cleared: **a fossil of the artifact is not the
+artifact.** Take the terminator the writer used, not the one the container
+provides.
+
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by
