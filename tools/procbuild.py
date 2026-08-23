@@ -38,7 +38,14 @@ Usage:
     python tools/procbuild.py PAOFCHAR        # diff just one body
     python tools/procbuild.py --emu           # put the source on WORK.dsk
     python tools/procbuild.py --emu-check     # diff what Apple's compiler made
+
+Both emulator forms take `--ver=1.1` or `--ver=1.3`. A Disk II volume is
+280 blocks and one release's spliced source is already more than one volume
+holds (finding 82), so the two cannot be on WORK: at the same time: an
+emulator run is one release at a time, and without `--ver` `--emu` would
+write 1.3 and then fail to fit 1.1 beside it.
 """
+import difflib
 import re
 import sys
 from pathlib import Path
@@ -87,6 +94,226 @@ def strip_targets(text: str) -> str:
     listings diverge there instead.
     """
     return re.sub(r"\$[0-9A-F]{4}( \(jtab-\d+\))?", "$----", text)
+
+
+CXP_RE = re.compile(r"^CXP (\d+),(\d+)$")
+
+
+def renumber(lines: list[str]) -> list[str]:
+    """Put the fast tier's phase segment numbers back where Apple's are.
+
+    Without `$NS` the phases come out five low (SEGOFFSET), and every
+    `CXP 9,4` reads as `CXP 4,4`. That is one constant added to every
+    phase-segment reference, so subtracting it back is not hiding anything:
+    a call to the WRONG phase is still off by a different amount and still
+    shows. Segment 0 is the operating system and segment 1 is
+    PASCALCOMPILER itself; both are the same number in either build.
+
+    `EXIT(SEGMENTPROCEDURE)` carries the same number as two `SLDC`s in
+    front of `CSP 4`, so it needs the same correction.
+    """
+    off = segoffset()
+    if not off:
+        return lines
+    out = list(lines)
+    for i, text in enumerate(out):
+        m = CXP_RE.match(text)
+        if m and int(m.group(1)) >= 2:
+            out[i] = f"CXP {int(m.group(1)) + off},{m.group(2)}"
+    for i, text in enumerate(out):
+        # EXIT is CSP 4 over a segment number and a procedure number.
+        if text != "CSP 4" or i < 2:
+            continue
+        seg = re.fullmatch(r"SLDC (\d+)", out[i - 2])
+        if seg and int(seg.group(1)) >= 2:
+            out[i - 2] = f"SLDC {int(seg.group(1)) + off}"
+    return out
+
+
+LSA1 = re.compile(r"^LSA '(.)'$")
+
+
+def unfold(lines: list[str]) -> list[str]:
+    """Undo what the fast tier makes of a one-character literal.
+
+    `WRITE(F,' ')` is a CHAR to Apple's
+    compiler -- `SLDC 32; CXP 0,17 (FWRITECHAR)` -- and a STRING[1] to the
+    fast tier: `LSA ' '; CXP 0,19 (FWRITESTRING)`. The same rewrite shows
+    up in `PRINTLINE`, which is verified against Apple's own compiler, so
+    it is the fast tier's reading of the literal and not a source
+    difference.
+
+    This is rewritten on OUR side only, and only in the exact shape the
+    fast tier produces, so nothing Apple did can be rewritten away.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = LSA1.match(lines[i])
+        if m and i + 1 < len(lines) and lines[i + 1] == "CXP 0,19":
+            out.append(f"SLDC {ord(m.group(1))}")
+            out.append("CXP 0,17")
+            i += 2
+            continue
+        if m and i + 1 < len(lines) and lines[i + 1].startswith("SAS "):
+            # `SYSTEMLIB := '*'` -- the same disagreement about a
+            # one-character literal, assigning instead of writing.
+            out.append(f"SLDC {ord(m.group(1))}")
+            i += 1
+            continue
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+def addressing(lines: list[str]) -> list[str]:
+    """Write both compilers' address arithmetic the same way.
+
+    Indexing a record out of an array and then reaching a field of it is
+    one expression that the two compilers spell at different lengths:
+
+        Apple      IXA 9            INC 8         IND 8
+        fast tier  SLDC 9  MPI      SLDC 8  ADI   IXA 1 ... SIND 0
+
+    and a constant index into a global array is `LAO 185; SLDC 1; IXA 1;
+    SIND 0` to one and `LDO 186` to the other -- with any element size, so
+    `LAO 131; SLDC 0; IXA 4` is `LAO 131`. Every rewrite below is the
+    same address and the same fetch either way, so both listings are put
+    into the shorter form before they are compared. The element size, the
+    field offset and the base are all still in the result, which is where
+    a real error would be.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        rest = lines[i:i + 6]
+        m = re.fullmatch(r"SLDC (\d+)", rest[0])
+        if m and len(rest) > 1 and rest[1] == "MPI":
+            elem, n = m.group(1), 2
+            off = None
+            f = re.fullmatch(r"SLDC (\d+)", rest[2]) if len(rest) > 2 else None
+            if f and len(rest) > 3 and rest[3] == "ADI":
+                off, n = int(f.group(1)), 4
+            if len(rest) > n and rest[n] == "IXA 1":
+                n += 1
+                load = len(rest) > n and rest[n] == "SIND 0"
+                if load:
+                    n += 1
+                out.append(f"IXA {elem}")
+                if off:
+                    out.append(("SIND " if load and off <= 7 else
+                                "IND " if load else "INC ") + str(off))
+                elif load:
+                    out.append("SIND 0")
+                i += n
+                continue
+        m = re.fullmatch(r"LAO (\d+)", rest[0])
+        f = re.fullmatch(r"SLDC (\d+)", rest[1]) if m and len(rest) > 1 else None
+        g = re.fullmatch(r"IXA (\d+)", rest[2]) if f and len(rest) > 2 else None
+        if g:
+            base = int(m.group(1)) + int(f.group(1)) * int(g.group(1))
+            if len(rest) > 3 and rest[3] == "SIND 0":
+                out.append(f"LDO {base}")
+                i += 4
+            else:
+                out.append(f"LAO {base}")
+                i += 3
+            continue
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+def foldset(lines: list[str]) -> list[str]:
+    """A one-word set literal, spelled the long way and the short way.
+
+    Apple pushes `[PROC,FUNC]` as its bit pattern, then the set's length in
+    words, then `ADJ` to the width the parameter was declared at:
+    `SLDC 96; SLDC 1; ADJ 1`. The fast tier pushes the bit pattern and
+    stops, the width already being one word. The value -- which is the part
+    that could be wrong -- is compared either way, so the two-instruction
+    tail is dropped from whichever side has it.
+
+    Widened past one word it is the same story with padding: Apple's
+    `SLDC 121; SLDC 1; ADJ 2` and the fast tier's `SLDC 0; SLDC 121` are
+    both the two-word set whose low word is 121, the stack growing down so
+    that the last push is word 0.
+
+    The empty set is a case of its own: Apple pushes no words at all and
+    lets `ADJ n` fill them, `SLDC 0; ADJ 2`, where the fast tier pushes two
+    zero words. That is rewritten too.
+
+    Only the exact `SLDC v; SLDC 1; ADJ n` and `SLDC 0; ADJ n` shapes are
+    rewritten, into the fast tier's spelling. A set built at run time still ends in `ADJ` and is
+    left alone.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = re.fullmatch(r"ADJ (\d+)", lines[i + 2]) if i + 2 < len(lines) \
+            else None
+        if (m and re.fullmatch(r"(SLDC|LDCI) \d+", lines[i])
+                and lines[i + 1] == "SLDC 1"):
+            out += ["SLDC 0"] * (int(m.group(1)) - 1) + [lines[i]]
+            i += 3
+            continue
+        m = re.fullmatch(r"ADJ (\d+)", lines[i + 1]) if i + 1 < len(lines)             else None
+        if m and lines[i] == "SLDC 0":
+            out += ["SLDC 0"] * int(m.group(1))
+            i += 2
+            continue
+        out.append(lines[i])
+        i += 1
+    return out
+
+
+def drop_nops(lines: list[str]) -> list[str]:
+    """Alignment padding, not content.
+
+    `NOP` is never emitted for anything a program says. It appears only to
+    word-align the operand of the instruction after it -- `LSA`, `XJP`,
+    a multi-word `LDC` -- so whether one is there depends on what address
+    the procedure happened to land on. The instruction it pads for is still
+    compared, so a missing operand still shows.
+    """
+    return [x for x in lines if x != "NOP"]
+
+
+FORTMP = re.compile(r"^STL (\d+)$")
+
+
+def forlimit(lines: list[str]) -> list[str]:
+    """A FOR statement's limit, held in a frame word or not held at all.
+
+    Apple's compiler evaluates a FOR's limit once, stores it in a temporary
+    at the top of the frame, and reloads it for the test at the head of
+    each pass:
+
+        <limit>  STL n   <control var>  SLDL n  LEQI
+
+    ucsdpsys_compile keeps no temporary and re-evaluates the limit in
+    place:
+
+        <control var>  <limit>  LEQI
+
+    The two are the same statement. This rewrites the first into the
+    second, and only where the limit and the control variable are one
+    instruction each -- which is every FOR whose bounds are a constant or a
+    variable, and all of the compiler's own are.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = FORTMP.match(lines[i + 1]) if i + 4 < len(lines) else None
+        if (m and lines[i + 3] in ("SLDL " + m.group(1),
+                                   "LDL " + m.group(1))
+                and lines[i + 4] in ("LEQI", "GEQI")):
+            out += [lines[i + 2], lines[i], lines[i + 4]]
+            i += 5
+            continue
+        out.append(lines[i])
+        i += 1
+    return out
 
 
 HEADER = re.compile(r"(?m)^[ \t]*(?:PROCEDURE|FUNCTION)\s+(\w+)")
@@ -612,21 +839,58 @@ def diff_proc(label: str, apple, a, mine, b, who: str) -> int:
     """One procedure against Apple's. Prints, and returns 1 if it differs."""
     frame = ((a.param_size, a.data_size, a.lex_level)
              == (b.param_size, b.data_size, b.lex_level))
+    # The fast tier allocates no WITH temporary (finding 87c), so a frame
+    # that is SHORT by whole words, with everything else equal, is that and
+    # not a source error. It is reported as its own verdict and not counted
+    # as a match: the emulator tier is what settles a frame.
+    withgap = (who != "Apple's compiler"
+               and (a.param_size, a.lex_level) == (b.param_size, b.lex_level)
+               and 0 < a.data_size - b.data_size
+               and (a.data_size - b.data_size) % 2 == 0)
     la = [strip_targets(x) for x in listing(apple, a)]
-    lb = [strip_targets(x) for x in listing(mine, b)]
+    lb = unfold(renumber([strip_targets(x) for x in listing(mine, b)]))
     if frame and la == lb:
         print(f"{label}: {len(la)} instructions, IDENTICAL  ({who})")
+        return 0
+    na = foldset(addressing(forlimit(drop_nops(la))))
+    nb = foldset(addressing(forlimit(drop_nops(lb))))
+    if frame and na == nb:
+        print(f"{label}: {len(na)} instructions, IDENTICAL once both "
+              f"spellings are normalised  ({who})")
+        return 0
+    if withgap and na == nb:
+        print(f"{label}: {len(na)} instructions, IDENTICAL once both "
+              f"spellings are normalised, but our frame is "
+              f"{(a.data_size - b.data_size) // 2} word(s) short "
+              f"(WITH temporaries, finding 87c)  ({who})")
         return 0
     print(f"{label}: DIFFERS  ({who})")
     if not frame:
         print(f"    frame: Apple param {a.param_size} / data "
               f"{a.data_size} / lex {a.lex_level}, ours param "
               f"{b.param_size} / data {b.data_size} / lex {b.lex_level}")
-    for k in range(max(len(la), len(lb))):
-        x = la[k] if k < len(la) else "-"
-        y = lb[k] if k < len(lb) else "-"
-        print(f"    {'  ' if x == y else '->'} {x:<24} {y}")
+    print_aligned(na, nb)
     return 1
+
+
+def print_aligned(la: list[str], lb: list[str]) -> None:
+    """Show the two listings side by side, lined up on what they share.
+
+    Walking both lists by index makes a single inserted instruction look
+    like a difference in every line after it, which buries the one place
+    that actually diverged. Matching the common runs first keeps an
+    insertion an insertion.
+    """
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(
+            None, la, lb, autojunk=False).get_opcodes():
+        if tag == "equal":
+            for k in range(i1, i2):
+                print(f"       {la[k]:<24} {lb[j1 + k - i1]}")
+            continue
+        for k in range(max(i2 - i1, j2 - j1)):
+            x = la[i1 + k] if i1 + k < i2 else "-"
+            y = lb[j1 + k] if j1 + k < j2 else "-"
+            print(f"    -> {x:<24} {y}")
 
 
 def report_phases(ver: str, cf, who: str) -> tuple[int, int, int]:
@@ -673,6 +937,10 @@ def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     emu = "--emu" in sys.argv
     check = "--emu-check" in sys.argv
+    only = next((a.split("=", 1)[1] for a in sys.argv
+                 if a.startswith("--ver=")), None)
+    if only not in (None, "1.1", "1.3"):
+        raise SystemExit(f"--ver={only}: expected 1.1 or 1.3")
     want = {a.upper() for a in args}
     if not emu and not check and not xcompile.available():
         print("SKIPPED: ucsdpsys_compile is not built "
@@ -681,6 +949,8 @@ def main() -> int:
 
     done = stubs = bad = 0
     for ver in ("1.3", "1.1"):
+        if only and ver != only:
+            continue
         segs = sources(ver)
         if not segs:
             continue

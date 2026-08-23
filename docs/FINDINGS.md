@@ -8632,7 +8632,237 @@ nothing more.
 
 The 1.3 reconstruction is whole. What has not been done is pushing it
 through the correspondence table to 1.1 — `src/pascal/` has only `1.3`,
-and `procbuild.py`'s 1.1 pass finds no sources to compile.
+and `procbuild.py`'s 1.1 pass finds no sources to compile. **Superseded by
+finding 88**: `src/pascal/1.1/` exists and compiles; what is left there is
+the per-procedure diff, not the port.
+
+## 88. The 1.1 port — `src/pascal/1.1` and what the two releases differ by
+
+Finding 87e left the reconstruction whole for 1.3 and untouched for 1.1.
+`src/pascal/1.1/` now exists: the 1.3 tree copied across and edited against
+the 1.1 binary until it compiles, declares exactly Apple's 1.1 procedure
+list in Apple's order, and produces a per-procedure diff. Everything below
+is read out of `SYSTEM.COMPILER` on
+`Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk`, so it is **VERIFIED BINARY
+FACT** unless said otherwise.
+
+### 88a. Five procedures 1.3 has and 1.1 does not
+
+Declaration order is procedure numbering (finding 61), so a procedure that
+1.3 added shifts every number after it. The correspondence table already
+had the shifts; what it did not say is what the extra procedures *are*.
+
+* **`IDSEARCH` and `TREESEARCH`**, the two `EXTERNAL` native declarations
+  in segment 1. 1.1 has no native code (finding 44) and no forwards for
+  them.
+* **`CHECKVERS`** in `COMPINIT`. 1.1's `COMPINIT` ends `ENTSTDTYPES` at
+  `STRGPTR` and has no version check at all; the frame is 518 bytes
+  against 1.3's 608, which is `LNAMES` 256 words plus `NPOS`, `NCHARS`
+  and one `WITH` temp and nothing else.
+* **`INITUNIT`** in `BODYPART`. 1.1 walks `USINGLIST` inline in `BODY2`
+  and emits `CXP 77` for each `MODSEG` entry. 1.3's separate procedure is
+  a documented bug fix (finding 42a).
+* **`MARKRESIDENT`** in `COMPOPTI`, the fifth procedure of a segment
+  Apple's 1.1 gives four. 1.1's `RESSEGLIST` builds the `RESIDENT` node in
+  place at all three `(*$R*)` sites — `NEW`, `SEGID`, `NEXT`, `RESIDENT` —
+  and never sets `MODLINK`, which 1.3's factored version does. The local
+  that holds the new node is `L1`, the slot 1.3 later gave to the unused
+  `LSEG: INTEGER`. It also has no `ELSE ERROR(273)`: an unknown name in a
+  `(*$R*)` list is silently ignored in 1.1.
+
+Four globals go with them — `ISPROG`, `HAS128K`, `CONLIST`, `LSTOPEN` —
+and so do the `BYTEPTR` and `WORDPTR` standard types (finding 83f).
+
+### 88b. What the missing globals were guarding
+
+Each of the four is one test, and the 1.1 binary shows what stands in its
+place.
+
+* **`ISPROG`** exists only to pick between two branches in `FINISHUP`.
+  1.1 has neither branch: it is always `MOVELEFT(SEGSUSED,PROCTABLE,4)`
+  followed by two `GENWORD`s, four bytes and two words because 1.1's
+  `SEGSUSED` is a two-word set over 32 segments. `BLOCK` correspondingly
+  has no `ISPROG := NOT INMODULE`.
+* **`HAS128K`** is `BLOCK`'s `IF SWAPPING OR HAS128K`; 1.1 tests
+  `SWAPPING` alone.
+* **`CONLIST`** appears twice. `ERROR`'s early exit is
+  `IF LIST AND (ERRORNUM <= 400)`, and the `Q` option is plain
+  `NOISY := (SW = '-')`.
+* **`LSTOPEN`** is the `L` option's guard. 1.1 rewrites the listing file
+  unconditionally, and the name is `'*SYSTEM.LST.TEXT'` without 1.3's
+  `[*]`.
+
+### 88c. Three more differences in `FINISHUP`, and two in `ERROR`
+
+`FINISHUP` is the tail of the segment dictionary and every word of it is
+visible, which makes it the easiest place to see the release boundary.
+
+* The `SEGINFO` loop is guarded in 1.1:
+  `IF SEGTABLE[SEG].SEGNUM <> 0 THEN GENWORD(SEGINFO(SEG)) ELSE
+  GENWORD(0)`. The field is offset 6 — `SIND 6`, the same word `SEGINFO`
+  itself reads — which is `SEGNUM` under the backwards field allocation
+  the skeleton already assumes (`SEGKIND, TEXTADDR, SEGNUM` declares them
+  at 8, 7, 6).
+* 1.1 has a trailing block 1.3 dropped: when `SEGSUSED * [30,31]` is not
+  empty it emits `GENBYTE(42); GENBYTE(0)`, then `GENBYTE(seg);
+  GENBYTE(6); GENBYTE(0)` for each of segments 30 and 31 that is used, and
+  a final `GENBYTE(0)`.
+* The comment field is copied whole: `IF COMMENT <> NIL THEN
+  MOVELEFT(COMMENT^[0],CODEP^[IC],80) ELSE FILLCHAR(CODEP^[IC],80,CHR(0))`.
+  1.3's `NEW(COMMENT)`/`LENGTH(COMMENT^)` version is later.
+
+In `ERROR`, the `<sp>(continue), <esc>(terminate), E(dit` prompt is
+guarded by `IF NOISY`, and the `REPEAT ... UNTIL` reads
+`USERINFO.ALTMODE` — `LOD 2,15` — where 1.3 has a literal `CHR(27)`. The
+`IF (ERRORNUM > 400) OR (CH = CHR(27))` two lines below is a literal in
+*both*, which is finding 66c seen from the other release.
+
+### 88d. `pairdiff.py` -- asking whether a 1.1 body's leftover is 1.3's
+
+The fast tier can falsify a body but cannot accept one (findings 58c, 87c),
+so most procedures come back DIFFERS for reasons that have nothing to do
+with the source. Reading each one to decide which is a slow way to spend a
+port, and there is a control the single-version comparison does not use:
+the 1.3 tree is verified procedure by procedure against Apple's own
+compiler (finding 87). So for a procedure that exists in both releases,
+
+    if  diff(Apple 1.1, ours 1.1)  ==  diff(Apple 1.3, ours 1.3)
+
+then whatever the fast tier is doing to the 1.1 body it does identically to
+a 1.3 body that is known right. That is not proof -- the 1.1 body inherits
+exactly the confidence 1.3's has, no more -- but it takes the procedure off
+the worklist. `tools/pairdiff.py` does this, pairing bodies by name and
+rewriting 1.1's global offsets and procedure numbers into 1.3's from
+`correspondence-1.1-to-1.3.txt` first, so that only a difference of
+substance survives. What it prints is the chunks 1.1 diverges in that 1.3
+does not.
+
+Five normalisers were added to `procbuild.py` while working the list, all
+of them documented spelling differences and all applied to **both** sides:
+
+* `drop_nops` -- alignment padding.
+* `addressing` -- `SLDC e; MPI; [SLDC f; ADI;] IXA 1 [; SIND 0]` against
+  `IXA e [; SIND/IND/INC f]`, and a constant index into a global array,
+  `LAO n; SLDC k; IXA s` against `LAO n+ks`.
+* `foldset` -- `(SLDC|LDCI) v; SLDC 1; ADJ n`, and the empty set's
+  `SLDC 0; ADJ n`, against the fast tier's zero-padded push.
+* `forlimit` -- a FOR statement's limit. Apple evaluates it once into a
+  frame word and reloads it each pass, `<limit> STL n <var> SLDL n LEQI`;
+  the fast tier keeps no temporary and re-evaluates in place. Rewritten
+  only where limit and control variable are one instruction each.
+* `unfold` (ours only) -- a one-character literal as CHAR rather than
+  STRING[1].
+
+`pairdiff` adds two of its own: naming the topmost frame word `WITHTMP`
+where Apple's frame is larger than ours, and accepting a chunk that is a
+lone `LAND`/`LOR`, a lone conditional jump, or nothing but references to
+frame words -- the two compilers do not allocate the same temporaries.
+
+The effect is a floor moving, not a score: the instruction-identical count
+across both trees went 46 -> 93 as the normalisers went in, 1.3's own half
+rising with 1.1's, which is the control confirming they only removed noise.
+
+### 88e. The per-procedure deltas the diff turned up
+
+Everything here is 1.1 behaviour read off the 1.1 binary, against what the
+1.3 file said. These are the source changes the port needed beyond 88a-c.
+
+* **`CASESTATEMENT`** has no `OTHERWISE` clause -- 1.3 added it -- and with
+  it goes 1.3's third label. Without an `OTHERWISE` part the default arm of
+  the `XJP` has nowhere to go but the end of the statement, so one label
+  serves both the default jump and the jump out of each arm. 1.3 also
+  guards the jump table with `IC + (LMAX-LMIN)*2 >= MAXCODE` / `ERROR(302)`;
+  1.1 emits it unchecked. The frame is thirteen words, not fourteen.
+* **`STATEMENT`** does not bracket every statement with `LLC := LC` /
+  `IF LC > LCMAX THEN LCMAX := LC` / `LC := LLC`. That bookkeeping is in
+  **`WITHSTATEMENT`** and **`FORSTATEMENT`** instead, each counting what it
+  allocated and handing it back: `WITHSTATEMENT` keeps a second counter
+  beside `LCNT` and ends `TOP := TOP - LCNT; LC := LC - LCCNT`, and
+  `FORSTATEMENT` ends `LC := LC - 1` after `PUTLABEL(LCIX)` and raises
+  `LCMAX` where it steps `LC`. 1.3 hoists all of it into `STATEMENT` and
+  leaves `WITHSTATEMENT`'s word behind as an unused `LLC`. `STATEMENT`'s
+  follow set is `[SEMICOLON,ENDSY,UNTILSY,ELSESY]` -- one word, $2608 --
+  with no `SEPARATSY`.
+* **`SIMPLETYPE`** calls `INSYMBOL` once, straight after
+  `SEARCHID([TYPES,KONST],LCP)`, where 1.3 calls it separately in each arm;
+  the `STRGPTR` test is then one condition, `(LSP = STRGPTR) AND
+  (SY = LBRACK)`, and the `INTPTR` arm is a plain nested `IF`.
+* **`TYP`** reports a non-positive array size as `ERROR(398)`, not 399.
+* **`DECLARATIONPART`** still makes II.0's stack-and-heap display call,
+  `IF NOISY THEN UNITWRITE(3,DUMMYVAR[-1600],0,35,0)`. 1.3 drops the call
+  and keeps `DUMMYVAR`. This one cannot be checked in the fast tier at all:
+  Apple emits the -1600 as `LDCI 1600; NGI` where `ucsdpsys_compile` folds
+  it, and both compilers push a sixth word for the CSP -- Apple's last,
+  `ucsdpsys_compile`'s fourth -- while six explicit arguments are a fatal
+  error there. It wants the emulator tier.
+* **`STRING`** has no `TOOLONG`: it stores every character without the
+  `TP <= 80` test and never reports 277.
+* **`HOLDSEGS`** unloads `USINGLIST` *before* `LRES` and loads it *after*,
+  the reverse of 1.3, and emits no `IF LCP^.MODLINK THEN LINKERREF` for an
+  `LRES` segment at either end.
+* **`SPECIALS`** compiles `IDSEARCH` and `TREESEARCH` as the intrinsics
+  they are, `GEN1(30,7)` and `GEN1(30,8)`, and `TREESEARCH` sets
+  `GATTR.TYPTR := INTPTR`. 1.3 makes them native 6502 and refuses the
+  intrinsic form with `ERROR(124)`.
+* **`COMPOPTIONS`**: the quiet flag is `'O'`, not 1.3's `'Q'` -- the arm
+  sits between `'N'` and `'P'` in the jump table, which fixes the letter.
+  The `'S'` arm does not re-read `DEL` after stepping `SYMCURSOR`.
+* **`CONSTANT`** negates only the first word of a long constant, in both
+  places, where 1.3 walks all `LLENG` of them; there is no loop counter in
+  the frame.
+* **`BLOCK`** releases `TOS^.DMARKP` unconditionally; 1.3 guards it with
+  `TOS^.DFPROCP <> OUTERBLOCK`.
+* **`ERROR`** does not `CLOSE(LP,LOCK)` on the way out of a fatal error.
+* **`CALLNONSPECIAL`** reports a non-`ACTUAL` `PFKIND` as `ERROR(400)`,
+  not 399; keeps no copy of `GATTR.ACCESS`; and emits `GEN2(77,0,PFNAME)`
+  for an imported procedure where 1.3 emits `GEN2(77,PFSEG,PFNAME)`.
+* **`INITSCALARS`** clears `SEGSUSED` as a two-word set: the ceiling is 31
+  in 1.1, 63 in 1.3, the same bound as `BUMPSEG`, `KINDSET`, the `$NS`
+  limit and the linker's KEY offset.
+
+### 88f. Where the tree stands
+
+`procbuild.py` compiles both versions and reports zero stubs, zero
+"Apple has it, we do not" and zero "we have it, Apple does not" in either.
+93 of the 289 bodies across the two releases come out instruction-identical
+under the fast tier, and `pairdiff.py` puts 89 of 1.1's still-differing
+bodies at exactly 1.3's diff and no more.
+
+The nine that remain have each been read, and none of them is a source
+question:
+
+* `PASCALCOMPILER` -- the `FINIT` calls the compiler emits for the outer
+  block's four `FILE`s. Apple passes a 40-character title buffer and -2/-1;
+  `ucsdpsys_compile` passes `LDCN` and -1, and in a different order.
+* `ERROR` -- the `UNTIL (CH=' ') OR (CH='E') OR (CH='e') OR (CH=ALTMODE)`
+  chain, `LOR` against a jump chain (finding 58c).
+* `INSYMBOL` -- a `CASE` with sixty arms, laid out in source order by Apple
+  and in label order by the fast tier, so the two listings do not align at
+  all. Lifting both *binaries* and comparing those shows the releases
+  differ in exactly one line: 1.1's `IDSEARCH` is the intrinsic, 1.3's is
+  `PASCALCO.2`. Nothing else in the procedure changed.
+* `CONSTANT` -- `LONGVAL[1]`, whose `(1-1)` Apple computes at run time and
+  the fast tier folds.
+* `FINDFORW`, `CALLNONSPECIAL`, `COMPINIT` -- the `WITH` temporary alone
+  (finding 87c).
+* `FACTOR` -- the two releases' binaries lift identically and the two
+  source files are byte-identical; the chunks are placement.
+* `DECLARATIONPART` -- the `UNITWRITE` above, which the fast tier cannot
+  spell.
+
+Comparing two *lifts* rather than two listings is the technique that broke
+the last of these open, and it is worth keeping: the lift is in source
+order on both sides, so a procedure whose `CASE` defeats the p-code diff
+still yields a readable answer.
+
+That is the fast tier exhausted. What is left is the emulator tier: build
+1.1 under Apple's own 1.1 compiler and compare the codefile.
+
+A note for whoever picks it up: the phase files' header comments came
+across with the copy and described the segment as 1.3 has it.
+`BODYPART`'s "38 procedures", `CASESTAT`'s `OTHERWISE` note and `ROUTINE`'s
+list of "where Apple changed II.0's behaviour" have been corrected; the
+rest have not been audited line by line.
 
 ## 16. Open questions
 
