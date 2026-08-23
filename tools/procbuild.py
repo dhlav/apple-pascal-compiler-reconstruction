@@ -64,6 +64,7 @@ SKEL = ROOT / "analysis" / "reconstruction"
 DISKS = {"1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
          "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"}
 END = ("RNP", "RBP", "XIT")
+HOSTSEG = "PASCALSY"      # the skeleton's host program, finding 63
 
 
 def apple_segment(ver: str, segname: str):
@@ -893,6 +894,97 @@ def print_aligned(la: list[str], lb: list[str]) -> None:
             print(f"    -> {x:<24} {y}")
 
 
+def bytes_check(ver: str, cf) -> int:
+    """Every procedure's bytes against Apple's -- jump tables included.
+
+    `diff_proc` blanks absolute jump targets, and has to: two codefiles that
+    place a procedure at different addresses would otherwise differ at every
+    branch. The cost is a blind spot, and it is not hypothetical. A UCSD
+    backward branch carries a *negative* operand, which is an index into the
+    procedure's jump table, and the destination lives in that table -- so a
+    label placed one statement too far along changes a word the instruction
+    stream does not carry, and both listings read the same. Finding 90 is
+    the worked example: one word of `UNITPART.3`, and an `IF` whose two
+    trailing statements sat inside it instead of after it.
+
+    A procedure's extent is `enter_ic .. jtab + 2`: body, exit sequence,
+    jump table, attribute table. Comparing that leaves nothing of a
+    procedure unchecked. The two native procedures have no p-code and
+    belong to the assembler tier (finding 44e); they are named and skipped.
+    """
+    print()
+    bad = whole_ok = segs_seen = 0
+    for mine in cf.segments:
+        segname = mine.name.strip()
+        if segname == HOSTSEG:
+            # The skeleton's `PROGRAM PASCALSYSTEM` under (*$U-*): the host
+            # program that stands in for the operating system, holding its
+            # 42 forwards and its globals (findings 63, 79b). Apple's
+            # SYSTEM.COMPILER has no segment 0 -- it is entered as a segment
+            # by an operating system that is already loaded -- so this one
+            # is scaffolding, and has nothing to be compared against.
+            print(f"[{ver}] {segname}: the host program, not part of the "
+                  f"compiler -- skipped")
+            continue
+        try:
+            apple = apple_segment(ver, segname)
+        except (KeyError, StopIteration):
+            print(f"[{ver}] {segname}: no such segment in Apple's codefile")
+            bad += 1
+            continue
+        same = skipped = 0
+        for a in apple.procedures:
+            b = next((x for x in mine.procedures if x.number == a.number),
+                     None)
+            if b is None:
+                print(f"[{ver}] {segname}.{a.number}: absent from ours")
+                bad += 1
+                continue
+            if a.is_native or not b.consistent:
+                skipped += 1
+                continue
+            x = apple.data[a.enter_ic:a.jtab + 2]
+            y = mine.data[b.enter_ic:b.jtab + 2]
+            if x == y:
+                same += 1
+                continue
+            bad += 1
+            if len(x) != len(y):
+                print(f"[{ver}] {segname}.{a.number}: {len(x)} bytes against "
+                      f"{len(y)}")
+                continue
+            off = [i for i, (u, v) in enumerate(zip(x, y)) if u != v]
+            print(f"[{ver}] {segname}.{a.number}: {len(off)} byte(s) differ "
+                  f"in {len(x)}")
+            for i in off[:8]:
+                at = a.enter_ic + i
+                if at >= a.jtab - 8:
+                    where = "attribute table"
+                elif at >= a.exit_ic:
+                    where = f"jump table, jtab{at - a.jtab:d}"
+                else:
+                    where = "code"
+                print(f"      ${at:04X} ({where}): Apple ${x[i]:02X}, "
+                      f"ours ${y[i]:02X}")
+        note = f", {skipped} native or unlinked" if skipped else ""
+        # The whole segment is stronger than the sum of its procedures: it
+        # takes in the padding between them and the segment's own tail.
+        # PASCALCO cannot reach it -- Apple's carries IDSEARCH and
+        # TREESEARCH, 948 bytes of 6502 that this codefile has no linker to
+        # put there (finding 44e).
+        whole = ("and the whole segment end to end"
+                 if apple.data == mine.data
+                 else f"whole segment {len(apple.data)} bytes against "
+                      f"{len(mine.data)}")
+        whole_ok += apple.data == mine.data
+        print(f"[{ver}] {segname}: {same} of {len(apple.procedures)} "
+              f"procedures byte-identical{note}; {whole}")
+        segs_seen += 1
+    print(f"[{ver}] {whole_ok} of {segs_seen} segments byte-identical end "
+          f"to end")
+    return bad
+
+
 def report_phases(ver: str, cf, who: str) -> tuple[int, int, int]:
     """Diff every procedure of each written phase, its own body included.
 
@@ -947,7 +1039,7 @@ def main() -> int:
               "(thirdparty/ucsd-psystem-xc/build.sh)")
         return 0
 
-    done = stubs = bad = 0
+    done = stubs = bad = bytebad = 0
     for ver in ("1.3", "1.1"):
         if only and ver != only:
             continue
@@ -1027,13 +1119,20 @@ def main() -> int:
         done += pdone
         stubs += pstubs
         bad += pbad
+        # Only against Apple's own compiler. The fast tier lays a segment
+        # out differently and every procedure would differ, which would say
+        # nothing.
+        if who == "Apple's compiler":
+            bytebad += bytes_check(ver, cf)
 
     if emu:
         return 0
     print(chr(10) + f"{done + stubs} procedures declared, {done - bad} of "
           f"{done} reconstructed bodies matching Apple's p-code, "
           f"{stubs} still stubs")
-    return 1 if bad else 0
+    if check:
+        print(f"{bytebad} procedure(s) differ from Apple's bytes")
+    return 1 if bad or bytebad else 0
 
 
 if __name__ == "__main__":

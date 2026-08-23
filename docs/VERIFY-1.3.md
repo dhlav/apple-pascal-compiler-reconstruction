@@ -2,7 +2,9 @@
 
 The claim this repository makes is narrow and mechanical: **the
 reconstructed source, compiled by Apple's own 1.3 compiler, produces
-Apple's own 1.3 compiler, instruction for instruction.** This file is the
+Apple's own 1.3 compiler, byte for byte** -- every p-code procedure, and
+fourteen of the fifteen segments as whole images; the fifteenth is short by
+its two native 6502 routines and nothing else. This file is the
 procedure for reproducing that from a clean checkout. It takes about five
 minutes, most of it the emulator.
 
@@ -11,7 +13,14 @@ The result to expect, and the only one that counts:
 ```
 147 procedures declared, 147 of 147 reconstructed bodies matching
 Apple's p-code, 0 still stubs
+0 procedure(s) differ from Apple's bytes
+14 of 15 segments byte-identical end to end
 ```
+
+All three lines matter, and the second is the one with teeth. The first
+compares disassembly with the addresses blanked, which cannot see a branch
+that goes somewhere else; the second compares the bytes, jump tables
+included. Finding 90 is what happens when only the first is run.
 
 ## Why there are two tiers, and why only one of them is the authority
 
@@ -45,7 +54,7 @@ is the **emulator tier**, and it is the whole of the procedure below.
 python tools/mkbootdisk.py                      # once; build/disks/BOOT128.dsk
 python tools/mkworkdisk.py                      # fresh WORK: and WORK2:
 python tools/procbuild.py --emu --ver=1.3       # splice source onto WORK:
-.\tools\emucompile.ps1 -Name BODY13 -Release 1.3 -Work2 -Compile 120
+.\tools\emucompile.ps1 -Name BODY13 -Release 1.3 -Work2 -Compile 150 -PerKey 150
 python tools/procbuild.py --emu-check --ver=1.3 # diff, procedure by procedure
 ```
 
@@ -98,8 +107,12 @@ Three things about driving it, each of which cost a run to learn:
   compiler looking for a workfile that is not there. Not a privilege
   problem -- the compiler is not `{$U-}` (finding 87d).
 * **Send the whole command in one call.** Apple Pascal has a type-ahead
-  buffer, so there is no need to wait for each prompt -- but keep 60ms
-  between characters or the system drops them.
+  buffer, so there is no need to wait for each prompt -- but keep a gap
+  between characters or the system drops them. 60ms is the default and it
+  is not always enough: a run that comes back sitting at the *Listing file*
+  prompt lost the last `{ENTER}`, and the compile never started. Raise it
+  with `-PerKey 150` rather than lengthening the waits -- lengthening a
+  wait cannot recover a character that was never delivered.
 * **Do not touch the keyboard or click anything while it runs.**
   `emukeys.ps1` throws rather than type into the wrong window, and a
   stolen focus aborts the run. Both failure modes are real and both were
@@ -118,9 +131,15 @@ instruction text of every procedure from `enter_ic` through the return,
 including the exit sweep, because UCSD puts case jump tables past the
 return and they are part of the procedure.
 
-Absolute jump targets are blanked to `$----`: `FJP $092A` and `FJP $0417`
-are the same instruction in two codefiles, and a jump to the *wrong* place
-still shows, because the instructions after it land in the wrong order.
+Absolute jump targets are blanked to `$----` in that comparison: `FJP
+$092A` and `FJP $0417` are the same instruction in two codefiles. **That is
+why the byte comparison exists.** A jump to the wrong place does *not*
+always show in the instruction stream -- a short forward branch's
+displacement is resolved to an address before the blanking, and a backward
+branch's destination is a word in the jump table and not in the stream at
+all -- so the run then compares the bytes of every procedure over
+`enter_ic .. jtab + 2`, and each segment as a whole image. Two real errors
+were hiding behind the blanking until it did (finding 90).
 Identifiers are not compared -- they are not recoverable from the binary
 and change no byte. Procedure *numbers* are compared and must match:
 declaration order is the numbering (finding 61).
@@ -128,11 +147,15 @@ declaration order is the numbering (finding 61).
 ## What the result does and does not establish
 
 **Does:** every p-code procedure of 1.3's `SYSTEM.COMPILER` is reproduced
-exactly by this source under Apple's compiler. Plus `IDSEARCH` and
-`TREESEARCH`, the two native 6502 routines, which the assembler tier holds
-byte-identical (finding 57a) -- reassemble those with `SYSTEM.ASSMBLER`,
-not a host assembler, because Apple's assembler is what emits the
-relocation tables.
+**byte for byte** by this source under Apple's compiler -- body, exit
+sequence, jump table and attribute table -- and fourteen of the fifteen
+segments match as whole images, padding and tails included. The fifteenth
+is `PASCALCO`, and it is short by exactly 948 bytes: `IDSEARCH` at 800 and
+`TREESEARCH` at 148, the two native 6502 routines, which arrive here as
+unlinked declarations and which the assembler tier holds byte-identical
+separately (finding 57a) -- reassemble those with `SYSTEM.ASSMBLER`, not a
+host assembler, because Apple's assembler is what emits the relocation
+tables.
 
 **Does not:** recover Apple's identifiers, comments, or formatting. Those
 are not in the binary. Where a name here is a guess it is marked
@@ -142,6 +165,7 @@ SPECULATION in `docs/FINDINGS.md`.
 
 | symptom | cause |
 |---|---|
+| sitting at the *Listing file* prompt | a keystroke was dropped; raise `-PerKey` |
 | *error 402* at the last line | output volume full -- rerun `mkworkdisk.py` |
 | *Stack overflow* | booted 64K by mistake; check `BOOT128.dsk` is in S6D1 |
 | *is not version 1.3* | a non-1.3 compiler in drive 2 |

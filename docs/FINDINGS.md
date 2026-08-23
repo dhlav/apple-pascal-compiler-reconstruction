@@ -9012,6 +9012,153 @@ sees. Naming it for its behaviour would be SPECULATION dressed as a
 recovery; the behaviour is written down here instead.
 
 
+## 90. The p-code diff had a blind spot, and it was hiding two real errors
+
+Finding 87 closed the reconstruction at *147 of 147 bodies matching Apple's
+p-code*, and `docs/VERIFY-1.3.md` is the runbook for reproducing it. The
+claim was true as stated and weaker than it sounded. Re-running the
+verification and then comparing the **bytes** rather than the disassembly
+found two places where the reconstruction and Apple's binary genuinely
+differ. Both are now fixed, and the check that could not see them has been
+replaced.
+
+### 90a. Why blanking a jump target costs more than it looks
+
+`diff_proc` renders both sides and blanks every absolute address to
+`$----`, because the two codefiles do not lay a segment out identically --
+Apple's `PASCALCO` carries 948 bytes of native 6502 that ours has no linker
+to place -- so a comparison that kept addresses would differ at every
+branch and say nothing.
+
+The cost is that **a branch that goes somewhere else reads the same**. Two
+ways, and the reconstruction had one of each:
+
+* a *short forward* branch carries its displacement in the instruction
+  stream, and the disassembler resolves it to an absolute address before
+  the blanking happens;
+* a *backward* branch carries a negative operand, which is an index into
+  the procedure's jump table, and the destination is a word in that
+  table -- outside the instruction stream altogether.
+
+In both cases a label placed one statement too far along moves nothing but
+the target. And there is a Pascal edit that does exactly that and nothing
+else: taking a statement that follows an `IF` and putting it inside the
+`IF`. The statements are emitted in the same order either way, so every
+byte of code is identical; only the false branch's destination moves.
+
+### 90b. `NEWSEG` -- a dictionary slot that was not being allocated
+
+`PASCALCO.13:NEWSEG` is 42 bytes and one byte of it differed: the `FJP` at
+`$08CD` jumps to `$08D7` in Apple's and `$08DF` in ours. Ours read
+
+    IF FNEWSEG THEN
+      BEGIN BUMPSEG(NEXTSEG,63,354); BUMPSEG(SEGSLOT,15,354) END;
+    SEGMAP[SEG] := SEGSLOT
+
+and Apple's bumps `SEGSLOT` unconditionally:
+
+    IF FNEWSEG THEN BUMPSEG(NEXTSEG,63,354);
+    BUMPSEG(SEGSLOT,15,354);
+    SEGMAP[SEG] := SEGSLOT
+
+Only the segment *number* is conditional. This is not a stylistic
+difference: `NEWSEG(FALSE)` is what an `INTRINSIC` unit's `CODE` clause
+calls, with `SEG` already set to the number the source named (finding 80),
+and the `WITH SEGTABLE[SEGSLOT]` on the next line of `UNITPART` has to be
+addressing a slot of its own. Ours would have written the unit's segment
+over its predecessor's dictionary entry. **A compiler built from the
+reconstruction as it stood would have miscompiled `INTRINSIC` units.**
+
+### 90c. `UNITPART.3` -- two statements a level too deep
+
+One word of the jump table, `jtab-14`: Apple's `$00CC` against our `$00AD`,
+so the `FJP` at `$012F` that opens `IF SY = IDENT` landed 31 bytes further
+on in ours. Apple closes that `IF` after the `CODE` and `DATA` clauses:
+
+    IF SY = IDENT THEN
+      BEGIN <CODE clause>; <DATA clause> END;
+    IF NOT LCODESEG THEN BEGIN ERROR(352); LCP^.MODSEG := FALSE END;
+    IF SY = SEMICOLON THEN INSYMBOL ELSE ERROR(14)
+
+Ours had the last two statements inside the `BEGIN ... END`, so an
+`INTRINSIC` clause with no identifier after it raised neither *352* nor
+*14* and left the semicolon unread. The second half of the same feature as
+90b, found in the same run.
+
+### 90d. What replaced the check
+
+`procbuild.py --emu-check` now also compares **bytes**, procedure by
+procedure, over `enter_ic .. jtab + 2` -- body, exit sequence, jump table,
+attribute table -- and then the whole segment end to end, which takes in
+the padding between procedures and the segment's tail as well. Nothing of a
+procedure is left out, and no address is normalised away, because the two
+codefiles put every p-code procedure at the same offset anyway.
+
+Three things it has to say out loud rather than silently pass:
+
+* `PASCALSY` is skipped by name. It is the skeleton's `PROGRAM
+  PASCALSYSTEM` under `(*$U-*)`, the host program that stands in for the
+  operating system and holds its 42 forwards (findings 63, 79b). Apple's
+  `SYSTEM.COMPILER` has no segment 0 -- it is entered as a segment by an
+  operating system that is already loaded -- so there is nothing to compare
+  it against.
+* `PASCALCO.2` and `.3` are skipped: `IDSEARCH` and `TREESEARCH` are native
+  6502, they arrive in our codefile as unlinked declarations, and the
+  assembler tier holds them byte-identical separately (finding 57a).
+* `PASCALCO` therefore cannot match end to end. It misses exactly **948
+  bytes**, which is 800 for `IDSEARCH` plus 148 for `TREESEARCH` -- the two
+  numbers finding 45 assembled -- and not a byte more.
+
+### 90e. Where the verification now stands
+
+With both fixes in, from a fresh `mkworkdisk` and one emulator run:
+
+```
+147 procedures declared, 147 of 147 reconstructed bodies matching
+Apple's p-code, 0 still stubs
+0 procedure(s) differ from Apple's bytes
+14 of 15 segments byte-identical end to end
+```
+
+Every p-code procedure of Apple's 1.3 `SYSTEM.COMPILER` is now reproduced
+**byte for byte**, not merely instruction for instruction, and fourteen of
+the fifteen segments match as whole images -- attribute tables, jump
+tables, inter-procedure padding and all. The fifteenth is `PASCALCO`, short
+by its two native procedures alone.
+
+### 90e-bis. 1.1 carries one of the two
+
+`src/pascal/1.1` was copied from 1.3 (finding 88), so it inherited both
+errors. 1.1's own binary settles one of them the same way: `PASCALCO.11` is
+`NEWSEG` there, and its `FJP` at `$088F` goes to `$0899`, the second
+`BUMPSEG`, exactly as 1.3's does. Fixed, on 1.1's own evidence.
+
+The `UNITPART.3` one does not transfer. 1.1's `FJP` through `jtab-14` lands
+on `SLDC 22; CXP 1,2` -- `ERROR(22)` -- and not on the `LCODESEG` test, so
+the two releases do not have the same statement structure there and the 1.3
+correction is not a 1.1 fact. Settling 1.1's would take a jump-table
+comparison, which takes a compiled 1.1 codefile, which is the emulator tier
+1.1 does not reach (finding 88f). Left alone rather than guessed at.
+
+### 90f. The lesson, in the form the working rules already have it
+
+*"Prefer a check the binary can fail -- but check that it can fail for the
+property you care about."* This is the third time that rule has been paid
+for. Finding 47 was a linear sweep that re-synchronised after corruption
+and still landed on the right end address; finding 28 was a probe that
+verified the output and not the routine claimed to produce it; this is a
+diff that verified every instruction and not where they jump to. The
+question to ask of a normalisation is not "is it necessary" -- blanking the
+addresses was necessary -- but **what does it make invisible, and is there
+a second check that sees that**.
+
+A practical corollary for this codebase: the two compilers place every
+p-code procedure at the same offset, so the normalisation was not needed
+for the emulator tier at all. It was inherited from the fast tier, where it
+is unavoidable, and carried into a comparison that could have afforded the
+stronger form from the start.
+
+
 ## 16. Open questions
 
 * ~~**The four unnamed words of the `MODULE` variant.**~~ **Resolved by

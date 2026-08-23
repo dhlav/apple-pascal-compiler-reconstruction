@@ -243,11 +243,21 @@ Done, and reproducible via `python tools/build_all.py`:
    listings for structure. Note that `ii0src.sdk` cannot help here — it is
    the OS, not the compiler (finding 8).
 
-4. ~~**Write the procedure bodies.**~~ **Done for 1.3** (finding 87).
+4. ~~**Write the procedure bodies.**~~ **Done for 1.3** (findings 87, 90).
    All **147 of 147** — every p-code procedure of 1.3's `SYSTEM.COMPILER`,
    plus `IDSEARCH` and `TREESEARCH` from the assembler tier — compile under
-   Apple's own compiler to Apple's p-code, instruction for instruction.
-   `ROUTINE`, segment 10, was the last one in.
+   Apple's own compiler to Apple's p-code. `ROUTINE`, segment 10, was the
+   last one in.
+
+   Finding 90 raised that from *instruction for instruction* to **byte for
+   byte**, and found two real errors on the way: `--emu-check` blanked
+   absolute jump targets, so a label placed one statement too far along was
+   invisible to it. `NEWSEG` was not allocating a dictionary slot for an
+   `INTRINSIC` unit and `UNITPART.3` had two error checks a level too deep.
+   The check now compares bytes — jump tables and attribute tables included
+   — and each segment as a whole image: **14 of 15 segments byte-identical
+   end to end**, `PASCALCO` short by exactly the 948 bytes of its two native
+   procedures. `docs/VERIFY-1.3.md` is the runbook.
 
    `tools/procbuild.py` is the harness: it splices bodies into the verified
    skeleton, compiles, and diffs instruction for instruction against the

@@ -132,11 +132,16 @@
 			  LCP^.MODDATA := TRUE
 			END
 		      ELSE ERROR(15)
-		    END;
-		  IF NOT LCODESEG THEN
-		    BEGIN ERROR(352); LCP^.MODSEG := FALSE END;
-		  IF SY = SEMICOLON THEN INSYMBOL ELSE ERROR(14)
-		END
+		    END
+		END;
+{ Apple closes the IF SY = IDENT here, not after the two statements below.
+  Both spellings emit the same bytes -- the statements follow either way --
+  and the only trace of the difference is the jump table word the FJP at
+  the head of the IF resolves through, which is why the p-code diff cannot
+  see it and the codefile comparison can (finding 90). }
+	      IF NOT LCODESEG THEN
+		BEGIN ERROR(352); LCP^.MODSEG := FALSE END;
+	      IF SY = SEMICOLON THEN INSYMBOL ELSE ERROR(14)
 	    END
 	  ELSE ERROR(22)
 	ELSE

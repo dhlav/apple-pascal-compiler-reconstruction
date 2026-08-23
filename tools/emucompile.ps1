@@ -26,7 +26,8 @@ param(
   [string]$Shot = "",
   [ValidateSet("1.1", "1.3")]
   [string]$Release = "1.3",   # which APPLE2 -- which compiler -- is in D2
-  [switch]$Work2          # put the codefile on WORK2: (S5D2), not WORK:
+  [switch]$Work2,         # put the codefile on WORK2: (S5D2), not WORK:
+  [int]$PerKey = 60       # ms between characters; raise it if keys are lost
 )
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -44,7 +45,7 @@ Start-Sleep -Seconds 2
 $out = if ($Work2) { "WORK2:" } else { "WORK:" }
 $keys = "CWORK:$Name.TEXT{ENTER}$out$Name.CODE{ENTER}{ENTER}"
 & "$here\emukeys.ps1" -Wait ($Boot * 1000) | Out-Null
-& "$here\emukeys.ps1" -Keys $keys -Wait ($Compile * 1000) -Shot $Shot
+& "$here\emukeys.ps1" -Keys $keys -Wait ($Compile * 1000) -Shot $Shot -PerKey $PerKey
 
 Get-Process AppleWin -EA SilentlyContinue |
   ForEach-Object { $_.CloseMainWindow() | Out-Null }

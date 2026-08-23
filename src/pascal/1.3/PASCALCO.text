@@ -271,9 +271,16 @@ BEGIN
 END;
 
 PROCEDURE NEWSEG(*FNEWSEG: BOOLEAN*);
+{ Only the segment *number* is conditional. A dictionary slot is taken
+  either way, which is what an INTRINSIC unit needs: UNITPART calls
+  NEWSEG(FALSE) with SEG already set from the CODE clause, and the
+  WITH SEGTABLE[SEGSLOT] on the next line has to be addressing a slot of
+  its own. Bracketing both calls in the IF emits the same six
+  instructions and moves only the FJP's operand, which is why the p-code
+  diff could not see it (finding 90). }
 BEGIN
-  IF FNEWSEG THEN
-    BEGIN BUMPSEG(NEXTSEG,63,354); BUMPSEG(SEGSLOT,15,354) END;
+  IF FNEWSEG THEN BUMPSEG(NEXTSEG,63,354);
+  BUMPSEG(SEGSLOT,15,354);
   SEGMAP[SEG] := SEGSLOT
 END;
 

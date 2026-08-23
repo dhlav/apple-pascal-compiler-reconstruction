@@ -265,9 +265,12 @@ BEGIN
 END;
 
 PROCEDURE NEWSEG(*FNEWSEG: BOOLEAN*);
+{ The slot is taken either way; only the segment number is conditional.
+  1.1's binary says so at the same place 1.3's does -- the FJP skips one
+  call, not two (finding 90b). }
 BEGIN
-  IF FNEWSEG THEN
-    BEGIN BUMPSEG(NEXTSEG,31,354); BUMPSEG(SEGSLOT,15,354) END;
+  IF FNEWSEG THEN BUMPSEG(NEXTSEG,31,354);
+  BUMPSEG(SEGSLOT,15,354);
   SEGMAP[SEG] := SEGSLOT
 END;
 
