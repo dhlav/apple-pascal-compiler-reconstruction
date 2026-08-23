@@ -685,7 +685,18 @@ def write_for_emulator(ver: str, segs) -> Path:
 
     global USE_NS
     USE_NS = True
-    src = expand_tabs(uncomment(spliced(ver, segs)))
+    # `(*$S+*)` is swapping mode, and it is not a stylistic carry-over from
+    # Apple's `compiler.text:3` (finding 28): 1.1's compiler runs on a 64K
+    # machine, and without it the compile dies at *Stack overflow, S# 8,
+    # P# 3, I# 59* about a hundred lines in -- the symbol table meeting the
+    # compiler's own code with nowhere to go. `$S+` lets the compiler swap
+    # its phase segments out and gives the table the room. It changes no
+    # emitted byte: SWAPPING gates HOLDMOST/HOLDROUT and BLOCK's error 408,
+    # both of them memory management in the running compiler (finding 28).
+    # 1.3 compiles on the 128K system and has the room without it, and its
+    # codefile is the verified one (finding 87): leave that path alone.
+    swap = "(*$S++*)\n" if ver == "1.1" else ""
+    src = swap + expand_tabs(uncomment(spliced(ver, segs)))
     src = src[:-1] if src.endswith("\n") else src
     nproc = sum(len(p) for _n, _t, p in segs)
     name = f"BODY{ver.replace('.', '')}.TEXT"
