@@ -9349,3 +9349,77 @@ provides.
   which gives finding 24e the positive control it lacked. The same addition
   brings `SYSTEM.LIBRARY` in for finding 6, which stays deferred but is no
   longer blocked, and `SYSTEM.APPLE` for finding 48.
+
+## 93. TRANSCEND is reconstructed, byte for byte
+
+VERIFIED BINARY FACT. `src/pascal/units/1.3/TRANSCEND.text`, compiled by
+Apple's own 1.3 compiler under the emulator, produces segment 29 of
+`SYSTEM.LIBRARY` exactly: nine procedures, 1268 bytes, identical as a whole
+segment image and not merely procedure by procedure.
+
+```
+python tools/mkworkdisk.py
+python tools/unitbuild.py --emu TRANSCEND
+.\tools\emucompile.ps1 -Name TRANSCND -Release 1.3 -Compile 30 -PerKey 150
+python tools/unitbuild.py --emu-check TRANSCEND
+  -> 9 of 9 procedures byte-identical, and the whole segment end to end
+```
+
+Three things came out of it that the compiler work could not have reached.
+
+### 93a. The local allocation rule, stated exactly
+
+Finding 61 said a declaration list allocates backwards. That is half of it,
+and the half that is easy to state wrongly. What the binary shows, once five
+frames are matched offset by offset, is:
+
+* **Declaration groups ascend.** Each `name : type ;` group is placed above
+  the group declared before it, starting at the first free local word.
+* **Identifiers inside one group descend.** In `A, B : REAL`, `B` gets the
+  *lower* address and `A` the higher.
+
+So `VAR N: INTEGER; Z, G: REAL; V: FLOAT;` lays out as `N` at 5, `G` at 6-7,
+`Z` at 8-9, `V` at 10-11 -- and that is EXP's frame. This is a property
+nothing but Apple's compiler can settle: `ucsdpsys_compile` allocates
+identifiers *forward* inside a group, so every one of these five frames read
+as DIFFERS under the fast tier while being structurally right. Getting
+TRANSCEND from 8/9 to 9/9 was one group's order.
+
+### 93b. Real constants are recoverable, digits and all
+
+Apple's compiler converts a real literal by accumulating the digits into a
+single-precision accumulator (`RSUM := RSUM*10 + digit`) and then scaling by
+`PWROFTEN` -- `NUMSTRIN.NUMBER`, which is reconstructed source we can read.
+That conversion is not correctly rounded: it lands a ulp or two off, and
+*differently* off for different digit strings.
+
+That is the lever. Simulating those four lines in single precision turns the
+question "what did Apple type?" into a search: for each of the 22 constants
+in TRANSCEND, find the decimal string whose Apple-conversion reproduces the
+stored bytes. Every one of them resolves, and they resolve to the same story
+-- Cody & Waite's coefficients, typed to seven or eight significant digits:
+
+```
+   $3FC90FDA  1.5707963      pi/2          $3FB8AA3B  1.442695      log2 e
+   $3F317FFF  0.6933593      ln2 hi        $B95E8083 -2.1219444E-4  ln2 lo
+   $40493F3A  3.140625       pi hi         $3A7DAA23  9.6765359E-4  pi lo
+   $BE2AAAA4 -0.16666657     R1            $3C08873D  0.008333025   R2
+   $B94FB224 -1.9807419E-4   R3            $362E9C5A  2.601903E-6   R4
+```
+
+Note that the correctly rounded conversion of the *full* published constant
+disagrees with what is in the file for nine of the twenty-two. Reading those
+as "Apple used a different constant" would have been wrong twice over: the
+digits are short, and the conversion is sloppy. STRONG INFERENCE for the
+exact digit strings -- another string could in principle land on the same
+four bytes -- but VERIFIED BINARY FACT for the bytes, which is what the
+check compares.
+
+### 93c. The private procedure has to be declared first
+
+The interface headings are what assign procedure numbers, so `SIN`..`SQRT`
+are 2..8 before the implementation is parsed. `TRANSCEND`'s ninth procedure
+is a sine kernel that `SIN` and `COS` both call (`CGP 9`), and 9 is the next
+free number -- so it must be the *first* thing in the IMPLEMENTATION and is
+still numbered last. That is a general fact about units, not about this one,
+and it will decide the shape of every remaining library unit.

@@ -1,0 +1,197 @@
+{ TRANSCEND -- SYSTEM.LIBRARY slot 3, segment 29, 9 procedures, 1268 bytes,
+  no native code.
+
+  The INTERFACE below is not a reconstruction. The compiler copies a unit's
+  interface into the codefile as source text so that a later USES can compile
+  against it, and nobody took it out again: it is in SYSTEM.LIBRARY at block
+  17 and is reproduced here verbatim (finding 92a). Everything from
+  IMPLEMENTATION down is read back from the p-code.
+
+  The interface headings are what assign the procedure numbers, so SIN..SQRT
+  are 2..8 before a line of implementation is written, and the one private
+  routine has to be number 9 -- which is why the sine kernel is declared
+  first below and still comes last. VERIFIED BINARY FACT: nine procedures,
+  and 9 is the only one nothing outside the unit can reach.
+
+  The algorithms are Cody & Waite, "Software Manual for the Elementary
+  Functions", down to the coefficient values: SIN/COS by range reduction on a
+  split pi and a degree-4 odd polynomial, EXP and LN by a rational form over
+  the split ln2, ATAN by an eight-term continued fraction, SQRT by three
+  Newton steps from a linear seed. STRONG INFERENCE for the attribution;
+  VERIFIED BINARY FACT for every constant, which are compared as bytes.
+
+  About the decimal digits. Apple's compiler converts a real literal by
+  accumulating the digits in single precision and then scaling by PWROFTEN
+  (NUMSTRIN.NUMBER), so the result is a ulp or two off a correctly rounded
+  conversion -- and the constants below are exactly what that conversion
+  produces from these digit strings, which is how they were recovered. The
+  bytes are fact; the digits are the shortest string that yields them, and
+  where Cody & Waite print more digits than this, Apple typed fewer. }
+
+UNIT TRANSCEND; INTRINSIC CODE 29;
+
+INTERFACE
+
+  FUNCTION SIN(X:REAL):REAL;
+  FUNCTION COS(X:REAL):REAL;
+  FUNCTION EXP(X:REAL):REAL;
+  FUNCTION ATAN(X:REAL):REAL;
+  FUNCTION LN(X:REAL):REAL;
+  FUNCTION LOG(X:REAL):REAL;
+  FUNCTION SQRT(X:REAL):REAL;
+
+IMPLEMENTATION
+
+CONST
+  BIG      =  1E30;          { overflows on squaring -- the error exit }
+  PIOVER2  =  1.5707963;
+  PILO     =  9.6765359E-4;  { pi = 3.140625 + PILO, Cody & Waite's split }
+  ONEOVERPI=  0.3183099;
+  EPS      =  2.5E-4;        { below this, SIN(X) = X to single precision }
+  R1       = -0.16666657;
+  R2       =  0.008333025;
+  R3       = -1.9807419E-4;
+  R4       =  2.601903E-6;
+  LOG2E    =  1.442695;
+  LN2HI    =  0.6933593;     { ln2 = LN2HI + LN2LO }
+  LN2LO    = -2.1219444E-4;
+  P0       =  0.25;
+  P1       =  0.004160289;
+  Q1       =  0.04998718;
+  SQRTHALF =  0.7071068;
+  A0       =  0.5527075;
+  B0       =  6.632718;
+  LOG10E   =  0.4342945;
+  S0       =  0.41731;       { the SQRT seed, 0.41731 + 0.59016*X }
+  S1       =  0.59016;
+  JMAX     =  8;             { terms of ATAN's continued fraction }
+
+TYPE
+  FLOAT = RECORD CASE INTEGER OF
+            1: (R: REAL);
+            2: (LO: INTEGER;
+                HI: PACKED RECORD
+                      MANT: 0..127;
+                      EXPO: 0..255;
+                      NEG : BOOLEAN
+                    END)
+          END;
+
+{ The kernel. Procedure 9, and the only one here that is not in the
+  interface: SIN and COS are two lines each because both come here. SIGN
+  folds the caller's quadrant knowledge in, so COS can pass ABS(X)+pi/2
+  and SIN the negated argument, and neither needs its own reduction. }
+
+  FUNCTION SINE(X: REAL; SIGN: INTEGER): REAL;
+    VAR G: REAL; N: INTEGER;
+  BEGIN
+    IF X > 1E6 THEN BEGIN X := BIG; X := X*X END;
+    N := ROUND(X*ONEOVERPI);
+    IF ODD(N) THEN SIGN := -SIGN;
+    X := (X - N*3.140625) - N*PILO;
+    IF ABS(X) >= EPS THEN
+      BEGIN G := X*X;
+        X := X + X*((((R4*G + R3)*G + R2)*G + R1)*G)
+      END;
+    SINE := SIGN*X
+  END (*SINE*) ;
+
+  FUNCTION SIN;
+  BEGIN
+    IF X < 0.0 THEN SIN := SINE(-X,-1)
+               ELSE SIN := SINE(X,1)
+  END (*SIN*) ;
+
+  FUNCTION COS;
+  BEGIN
+    COS := SINE(ABS(X)+PIOVER2,1)
+  END (*COS*) ;
+
+  FUNCTION EXP;
+{ Cody & Waite's EXP: X = N*ln2 + r, and 2**N is applied by adding N to the
+  exponent field rather than multiplying, which is what the variant record
+  is for. The +1 is because the rational form is built around 0.5. }
+    VAR N: INTEGER; Z, G: REAL; V: FLOAT;
+  BEGIN
+    IF X = 0.0 THEN EXP := 1.0
+    ELSE
+      BEGIN
+        N := ROUND(X*LOG2E);
+        X := (X - N*LN2HI) - N*LN2LO;
+        G := X*X;
+        Z := X*(P1*G + P0);
+        V.R := 0.5 + Z/((Q1*G + 0.5) - Z);
+        V.HI.EXPO := V.HI.EXPO + (N+1);
+        EXP := V.R
+      END
+  END (*EXP*) ;
+
+  FUNCTION ATAN;
+{ An eight-term continued fraction, evaluated from the tail inwards, on
+  X or 1/X according to which is inside the unit circle. ZSQ carries the
+  square on the way in and the result on the way out. }
+    VAR SUM, ZSQ: REAL; NEG: BOOLEAN; J: INTEGER;
+  BEGIN
+    ZSQ := X*X;
+    IF ABS(X) > 1.0 THEN ZSQ := 1.0/ZSQ;
+    SUM := 2*JMAX+1;
+    FOR J := JMAX DOWNTO 1 DO
+      SUM := 2.0*J - 1.0 + (J*J)*ZSQ/SUM;
+    IF ABS(X) > 1.0 THEN
+      BEGIN
+        NEG := X < 0;
+        ZSQ := PIOVER2 - 1.0/(ABS(X)*SUM);
+        IF NEG THEN ATAN := -ZSQ ELSE ATAN := ZSQ
+      END
+    ELSE ATAN := X/SUM
+  END (*ATAN*) ;
+
+  FUNCTION LN;
+{ The exponent field gives N and the mantissa is forced into [0.5,1) by
+  writing 126 back, so what is left is a log over a short range. }
+    VAR V: FLOAT; XN, W, Z, ZSQ: REAL; N: INTEGER;
+  BEGIN
+    IF X <= 0.0 THEN BEGIN X := BIG; X := X*X END;
+    V.R := X;
+    N := V.HI.EXPO - 126;
+    V.HI.EXPO := 126;
+    X := V.R;
+    IF X > SQRTHALF THEN Z := ((X-0.5)-0.5)/((X*0.5)+0.5)
+    ELSE
+      BEGIN N := N-1;
+        W := X - 0.5;
+        Z := W/((W*0.5)+0.5)
+      END;
+    ZSQ := Z*Z;
+    LN := N*LN2HI + (Z + Z*(ZSQ*A0/(B0-ZSQ))) + N*LN2LO
+  END (*LN*) ;
+
+  FUNCTION LOG;
+  BEGIN
+    LOG := LN(X)*LOG10E
+  END (*LOG*) ;
+
+  FUNCTION SQRT;
+{ Halve the exponent and Newton three times. An odd exponent cannot be
+  halved, so the mantissa absorbs the odd factor as 1/sqrt(2) first. }
+    VAR Y: REAL; V: FLOAT; I, N: INTEGER;
+  BEGIN
+    IF X < 0 THEN BEGIN X := BIG; X := X*X END;
+    IF X = 0.0 THEN SQRT := 0.0
+    ELSE
+      BEGIN
+        V.R := X;
+        N := V.HI.EXPO - 126;
+        V.HI.EXPO := 126;
+        X := V.R;
+        Y := S0 + S1*X;
+        FOR I := 0 TO 2 DO Y := 0.5*(Y + X/Y);
+        IF ODD(N) THEN BEGIN Y := Y*SQRTHALF; N := N+1 END;
+        V.R := Y;
+        V.HI.EXPO := N DIV 2 + V.HI.EXPO;
+        SQRT := V.R
+      END
+  END (*SQRT*) ;
+
+BEGIN
+END.
