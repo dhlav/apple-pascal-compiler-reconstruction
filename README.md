@@ -25,10 +25,13 @@ evidence/          original inputs, never modified
     manuals/       the Apple Pascal 1.3 manual set, the 1980 language
                    reference, the 1.1 update notice, Hyde's P-Source --
                    scans plus their OCR. Copyrighted; this repo is private.
-src/               reconstructed source, hand-written. Currently
-                   native/SEARCH.TEXT -- 1.3's IDSEARCH and TREESEARCH in
-                   the Apple Pascal Assembler's language, which reassemble
-                   to Apple's exact bytes (finding 45).
+src/               reconstructed source, hand-written
+  pascal/1.3/      SYSTEM.COMPILER: PASCALCO and its fourteen phases
+  pascal/1.1/      the same, ported back to 1.1 (finding 88)
+  pascal/units/1.3/  the six SYSTEM.LIBRARY units (findings 93-97)
+  native/SEARCH.TEXT  1.3's IDSEARCH and TREESEARCH in the Apple Pascal
+                   Assembler's language, which reassemble to Apple's exact
+                   bytes (finding 45).
 tools/             all analysis code
   a2pascal/        disk.py codefile.py pcode.py m6502.py textfile.py
                    nufx.py syscall.py lift.py structure.py globals.py
@@ -391,3 +394,38 @@ Three corrections to the inherited handoff matter most: `COMPINIT` has
 PASCALCO's map; `ii0src.sdk` is the UCSD **operating system** source, not
 compiler source; and PASCALCO was never "rewritten in native 6502" — 1.3
 hand-coded just two routines, `IDSEARCH` and `TREESEARCH`.
+
+## `SYSTEM.LIBRARY`
+
+The compiler is statically linked against the library, so reconstructing it
+led straight into the six units the library holds. All six are done
+(findings 92–97), and each one's INTERFACE is not a reconstruction at all:
+the compiler copies a unit's interface into the codefile as source text so a
+later `USES` can compile against it, and nobody took it out again
+(finding 92a).
+
+| unit | segment | result |
+|---|---|---|
+| `TRANSCEND` | 29 | 9 of 9 procedures — the whole segment, end to end |
+| `CHAINSTUFF` | 28 | 8 of 8 — the whole segment, end to end |
+| `PASCALIO` | 31 | 9 of 9 — the whole segment, end to end |
+| `LONGINTIO` | 30 | 3 of 3 p-code, short by the 1850-byte native tail |
+| `APPLESTUFF` | 22 | 2 of 2 p-code, short by 572 bytes of native |
+| `TURTLEGRAPHICS` | 20 (+ 21) | 24 of 24 p-code and the 386-byte data segment, short by 2246 bytes of native |
+
+Every one of those is Apple's own compiler running under the emulator and
+the output compared byte for byte. Where a unit is "short by" something, the
+missing bytes are 6502 that the *linker* puts in, not Pascal that has yet to
+be written — the same reason `SYSTEM.COMPILER` itself cannot be closed from
+the compiler alone (finding 91).
+
+Two of the six needed something recovered rather than read. `TRANSCEND`'s
+coefficients are Cody & Waite's, and the decimal each was typed as is
+recovered by simulating Apple's own decimal-to-float conversion (finding
+93b). `TURTLEGRAPHICS` is the library's only unit with a `DATA` segment, and
+nothing in the codefile describes its contents: the 193-word layout was
+rebuilt from every `LDE`/`LAE`/`STE` against segment 21, and its 91-entry
+sine table read back constant by constant — six significant digits, with
+five entries a unit low in the last place, which is a hand-typed table with
+five slips in it that have shipped in every Apple Pascal system since
+(finding 97).
