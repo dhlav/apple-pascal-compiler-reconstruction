@@ -232,7 +232,15 @@ def main() -> int:
                       f"the assembler tier's (finding 44e)")
                 continue
             done += 1
-            bad += procbuild.diff_proc(label, apple, a, mine, b, who)
+            # Under --emu-check the instruction listing can cry wolf: a
+            # `CXP 30,4` into LONGINTIO is rendered through the codefile's
+            # own segment dictionary, and a unit compiled on its own numbers
+            # its intrinsics differently from the shipped library. Same
+            # bytes, different printed segment. The byte comparison is the
+            # verdict, so under --emu-check it is what counts.
+            n = procbuild.diff_proc(label, apple, a, mine, b, who)
+            if not check:
+                bad += n
         if check:
             bad += unit_bytes(ver, unit, apple, mine)
     if emu:

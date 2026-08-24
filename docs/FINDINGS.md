@@ -9482,3 +9482,71 @@ Reported because both look like reconstruction errors and neither is.
 the bytes -- so a title of exactly 24 characters is a run-time error.
 `SETCVAL` guards on `LENGTH > 82` against a value parameter that is a
 `STRING[80]`, so that arm is unreachable.
+
+## 95. PASCALIO is reconstructed, byte for byte
+
+VERIFIED BINARY FACT. `src/pascal/units/1.3/PASCALIO.text` under Apple's 1.3
+compiler reproduces segment 31 of `SYSTEM.LIBRARY` exactly: nine procedures,
+2070 bytes, identical as a whole segment image. It is the biggest unit in
+the library that is p-code all the way down, and `FWRITEREAL` -- 350
+instructions of decimal formatting -- came out identical on the first
+compile.
+
+Like CHAINSTUFF it is not free-standing (finding 94a): it reads `SYSCOM` at
+lex -1 offset 1 and takes a `FIB` apart field by field, so it needs an
+operating-system host. Unlike CHAINSTUFF, nearly all of what the host must
+supply is recoverable, because it is UCSD II.0's and `GLOBALS.TEXT` is in
+`reference_source/`. The CONST and TYPE blocks in the source file are II.0's
+verbatim, and every FIB field this unit touches lands where the binary puts
+it.
+
+### 95a. The allocation rule makes II.0's records legible
+
+Two FIB declarations only read correctly backwards, which is finding 93a
+applied to record fields rather than locals:
+
+* `FEOF,FEOLN: BOOLEAN` puts **FEOF at word 2** and FEOLN at word 1. FSEEK
+  clears word 2 before word 1, which is `FEOF := FALSE` written first, and
+  the "not end of file" test every read loop in this unit makes is word 2.
+* `FREPTCNT,FNXTBLK,FMAXBLK: INTEGER` puts **FMAXBLK at 12**, FNXTBLK at 13,
+  FREPTCNT at 14. Forwards, FSEEK would be comparing a block number against
+  the number of times the window is valid without a GET; backwards it is
+  `IF BLK <= FMAXBLK`, the file's high-water mark, which is what the code is
+  plainly doing.
+
+So the rule is not a quirk of the compiler's local allocator. It is how
+Apple's compiler lays out any identifier list, and it decides what II.0's
+own source *means*.
+
+### 95b. `(*$U-*)` turns range checking off, and that is visible
+
+`COMPOPTIONS`' `'U'` arm sets `RANGECHECK := NOT SYSCOMP` and
+`GOTOOK := SYSCOMP`. Under `(*$U-*)`, SYSCOMP is TRUE: no `CHK` is emitted
+anywhere in this unit, and `GOTO` is available without asking for it.
+Both show. TRANSCEND, which is not a system compilation, emits `CHK` on
+every packed-field store -- the positive control.
+
+### 95c. The jump table distinguishes GOTO from nested IFs
+
+`FSEEK` and `FREADREAL` each leave early from four places. Written as
+`IF cond THEN (*nothing*) ELSE BEGIN rest END`, nested, the **instruction
+stream is identical** to Apple's -- same opcodes, same order, same operands
+once targets are blanked. The jump table is not: four `GOTO 1` share one
+table entry, and four nested IFs finish at four addresses two bytes apart
+and take three. Apple's table has one entry; the nested version's had
+three, and the procedure was four bytes long.
+
+There is no way to see that in a disassembly diff. It is the second time
+the blanking has hidden a real structural difference (finding 90) and the
+first time it has hidden one that no amount of reading the instruction
+listing could have resolved.
+
+### 95d. Two more small facts
+
+`STR(D,S)` passes **S's declared maximum** as an operand, so the local
+buffer in FWRITEDEC is `STRING[38]` and not a byte more -- the frame is one
+word wider than that, and the spare word is not recovered. And a `CXP` into
+another segment is rendered through the *codefile's* segment dictionary, so
+a unit compiled on its own prints `CXP 35,4` where the library prints
+`CXP 30,4` with the same bytes; `tools/unitbuild.py` now takes the byte
+comparison as the verdict under `--emu-check` for that reason.
