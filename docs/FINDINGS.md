@@ -9596,3 +9596,89 @@ The six 6502 procedures sit in the shipped image in the order 2, 3, 4, 8,
 changed from Pascal: the linker appends native code in the order it finds
 it in the assembled file. Finding 94b -- declaration order is an address --
 is about p-code only.
+
+## 97. TURTLEGRAPHICS is reconstructed, and its data segment with it
+
+VERIFIED BINARY FACT. `src/pascal/units/1.3/TURTLEGRAPHICS.text`, compiled by
+Apple's own compiler, reproduces **24 of the unit's 24 p-code procedures byte
+for byte** and its data segment byte for byte. Segment 20 comes out 2984
+bytes against Apple's 5230; the difference is 2246 bytes, and 2246 bytes is
+exactly the seven native procedures (15, 16, 20, 21, 22, 30, 31), which
+belong to the assembler tier (finding 44e) the same way `PASCALCO`'s do
+(finding 91). Segment 21 comes out 386 bytes, which is Apple's 386 exactly.
+
+That closes the six library units:
+
+| unit | segment | p-code | result |
+|---|---|---|---|
+| TRANSCEND | 29 | 9 of 9 | whole segment, end to end |
+| CHAINSTUFF | 28 | 8 of 8 | whole segment, end to end |
+| PASCALIO | 31 | 9 of 9 | whole segment, end to end |
+| LONGINTIO | 30 | 3 of 4 | 3 of 3 identical, short by the native tail |
+| APPLESTUFF | 22 | 2 of 8 | 2 of 2 identical, short by the native tail |
+| TURTLEGRAPHICS | 20 (+ 21) | 24 of 31 | 24 of 24 identical, short by the native tail |
+
+### 97a. The data segment can be read straight off the global references
+
+TURTLEGRAPHICS is the only library unit with a `DATASEG`, and nothing in the
+codefile describes its contents -- the dictionary carries a length and
+nothing else. But every access to it is an `LDE/LAE/STE 21,n`, so the whole
+layout is recoverable by collecting the offsets: eleven scalars in words 1
+through 11 and a 91-element `ARRAY OF REAL` in words 12 through 193. 193
+words is 386 bytes, which is the shipped length, so the reading is complete
+and there is no room in it for anything unaccounted for.
+
+Word 10 is never referenced by any instruction in the segment. It is not
+slack at the end -- word 11 is the character-set pointer and words 12 up are
+the table -- so the source declares a dead `SPARE: INTEGER` to hold the place.
+VERIFIED BINARY FACT that the word exists and is untouched; STRONG INFERENCE
+that Apple had a variable there and stopped using it.
+
+The one thing the offsets do not give is a name, and one name mattered: the
+interface declares `PROCEDURE TURN(ANGLE: INTEGER)`, so a global called
+`ANGLE` would be shadowed inside `TURN` and the body would compile to the
+wrong thing. Word 9 is `HEADING` here for that reason.
+
+### 97b. The sine table is 91 decimal literals, and they can be read back
+
+The unit ships a 91-entry sine table for whole degrees, and it is not
+computed at run time: procedures 25 and 26 are 369 and 361 instructions of
+nothing but `LDC` a real constant and store it. So the constants are in the
+code segment as float32 and the question is what Apple *typed*.
+
+Running finding 93b's method on all 91 -- simulate the compiler's own
+decimal conversion (`RSUM := RSUM*10 + digit`, then scale by `PWROFTEN`) and
+search for the shortest string that lands on the shipped bytes -- gives a
+single rule for 86 of them: **six significant digits, correctly rounded**.
+The remaining five, entries 28, 40, 49, 53 and 87, are each one unit low in
+the last place: `0.469471`, `0.642787`, `0.754709`, `0.798635`, `0.998629`.
+Those five are not a different rounding rule, because no rule produces
+exactly five exceptions in a monotone table -- they are what was typed. The
+table was entered by hand, and it has five typos in it that have been in
+every Apple Pascal system since.
+
+All 91 strings re-encode to the shipped bytes, so this is VERIFIED BINARY
+FACT for the values; STRONG INFERENCE that six significant digits was the
+intent and the five are slips.
+
+### 97c. One CONST section, then one TYPE section
+
+Apple's compiler takes the declaration sections of a block in order and does
+not let you reopen one. A unit that declares types, then needs a constant,
+then declares more types is `Line 53, error 18` -- error in declaration part,
+pointing at the second `CONST`. The reconstruction therefore hoists the four
+operating-system constants above the turtle types even though they belong
+with the directory declarations that follow them. This is a property of the
+compiler, not of the source that was compiled, so it constrains the shape of
+every reconstruction but says nothing about the bytes.
+
+Identifiers are significant to eight characters, which matters for the same
+reason: `SINETABLE1` and `SINETABLE2` are the same identifier.
+
+### 97d. TURTLEGRAPHICS is free-standing
+
+Procedure 23 emits `CHK 0,1`. Range checking is off under `(*$U-*)` (finding
+95b), so this unit -- like APPLESTUFF and unlike CHAINSTUFF, PASCALIO and
+LONGINTIO -- was compiled as an ordinary program is, and needs no
+operating-system host to compile. It reaches the machine through `$00BB` and
+the soft switches instead of through lex -1.

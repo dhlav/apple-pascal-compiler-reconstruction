@@ -95,7 +95,10 @@ def emu_codefile(unit: str):
         if not dsk.exists():
             continue
         d = PascalDisk.from_file(dsk)
-        e = d.find(name)
+        try:
+            e = d.find(name)
+        except KeyError:
+            e = None
         if e is not None:
             print(f"reading {vol}:{name} ({e.blocks} blocks)")
             return CodeFile(d.read_blocks(e.first_block, e.blocks))
