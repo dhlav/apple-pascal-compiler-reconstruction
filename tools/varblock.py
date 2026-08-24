@@ -153,7 +153,12 @@ RETYPE = {
     # comparison. RESIDENT is assigned NIL, so it is a pointer; nothing
     # yet dereferences it, so what it points at is not recovered.
     "ISPROG": ("BOOLEAN", "assigned NOT INMODULE in BLOCK"),
-    "SWAPPING": ("BOOLEAN", "ORed with HAS128K in BLOCK"),
+    # Release-neutral on purpose: 1.3's BLOCK tests SWAPPING OR HAS128K and
+    # 1.1's tests SWAPPING alone, because 1.1 has no HAS128K (finding 88b).
+    # This text is generated into both skeletons, so it has to be true of
+    # both -- the 1.1 skeleton was hand-corrected once and build_all put it
+    # straight back.
+    "SWAPPING": ("BOOLEAN", "BLOCK tests it; 1.3 ORs in HAS128K"),
     "HAS128K": ("BOOLEAN", "the bit COMPINIT reads out of $BF22"),
     "LINKINFO": ("BOOLEAN", "ANDed with LEVEL = 1 in BLOCK"),
     # WRITELIN.4 does `LDO 42; LNOT`, and `LNOT` takes a BOOLEAN. Its two

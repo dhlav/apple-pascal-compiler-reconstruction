@@ -50,6 +50,7 @@ STEPS = [
     ("OS signatures vs the binary", "probes/probe_os_signatures.py"),
     ("lift to pseudo-Pascal", "liftall.py"),
     ("lift the operating system", "liftos.py"),
+    ("lift SYSTEM.LIBRARY", "liblift.py"),
     # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
     # on the same disk and diffs the result against it (finding 49).
     ("lifter calibration", "probes/probe_calibrate.py"),

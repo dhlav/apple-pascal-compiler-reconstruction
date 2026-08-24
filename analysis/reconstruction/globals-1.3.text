@@ -50,7 +50,7 @@ VAR
   ININTERFACE     : BOOLEAN;                           {   32,    1 word   II.0 }
   INMODULE        : BOOLEAN;                           {   33,    1 word   II.0 }
   SWAPMORE        : BOOLEAN;                           {   34,    1 word   the condition in HOLDMOST }
-  SWAPPING        : BOOLEAN;                           {   35,    1 word   ORed with HAS128K in BLOCK }
+  SWAPPING        : BOOLEAN;                           {   35,    1 word   BLOCK tests it; 1.3 ORs in HAS128K }
   NOLOAD          : BOOLEAN;                           {   36,    1 word   assigned (SW = '+') in COMPOPTIONS }
   USING           : BOOLEAN;                           {   37,    1 word   II.0 }
   INCLUDING       : BOOLEAN;                           {   38,    1 word   II.0 }

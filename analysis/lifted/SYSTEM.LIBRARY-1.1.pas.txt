@@ -1,0 +1,1985 @@
+Apple Pascal 1.1 SYSTEM.LIBRARY -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is
+global word n, L<n> local word n, I<lex>,<n> intermediate.
+No name table is applied -- the interfaces in
+analysis/library/interface/ are what supply real names, and
+matching them to these procedures is the reconstruction.
+
+======================================================================
+SEGMENT 30 LONGINTI  (4 procedures)
+======================================================================
+
+procedure LONGINTI.1(args 0 words);  { locals 0 words, lex 1 }
+
+procedure LONGINTI.2(args 3 words);  { locals 7 words, lex 1 }
+  L9 := L3;
+  L10 := L2;
+  case L1 of   { table 2..10 }
+    2: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 2 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 2 }
+      { UJP $00CA (jtab-12) }
+    end;
+    3: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 3 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 3 }
+      { UJP $00CA (jtab-12) }
+    end;
+    4: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 4 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 4 }
+      { UJP $00CA }
+    end;
+    5: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 5 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 5 }
+      { UJP $00CA }
+    end;
+    6: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 6 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 6 }
+      { UJP $00CA }
+    end;
+    7: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 7 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 7 }
+      { UJP $00CA }
+    end;
+    8: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 8 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 8 }
+      { UJP $00CA }
+    end;
+    9: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 9 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 9 }
+      { UJP $00CA }
+    end;
+    10: begin
+      { stack tracking stopped: 'LONGINTI.4' }
+      { CXP 30,4 }
+      { SLDC 10 }
+      { SLDC 0 }
+      { CXP 30,4 }
+      { STM 10 }
+      { UJP $00CA }
+    end;
+  end;
+  L6 := 0;
+  L5 := 0;
+  if (L9^.f3 = 1) then begin
+    FGET(L3);
+  end;
+  while ((L9^^[0] = 32) and not (L9^.f2)) do begin
+    FGET(L3);
+  end;
+  if L9^.f2 then begin
+  end else begin
+    L4 := L9^^[0];
+    if ((L4 = 43) or (L4 = 45)) then begin
+      L6 := (L4 = 45);
+      FGET(L3);
+      L4 := L9^^[0];
+    end;
+    while ((L4 in @I2,122^<4w>) and not (L9^.f2)) do begin
+      L5 := 1;
+      L8 := (L4-48);
+      if L6 then begin
+        L8 := -(L8);
+      end;
+      L10 := L2;
+      case L1 of   { table 2..10 }
+        2: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 2 }
+          { UJP $026C (jtab-18) }
+        end;
+        3: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 3 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 3 }
+          { UJP $026C (jtab-18) }
+        end;
+        4: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 4 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 4 }
+          { UJP $026C (jtab-18) }
+        end;
+        5: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 5 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 5 }
+          { UJP $026C (jtab-18) }
+        end;
+        6: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 6 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 6 }
+          { UJP $026C (jtab-18) }
+        end;
+        7: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 7 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 7 }
+          { UJP $026C }
+        end;
+        8: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 8 }
+          { UJP $026C }
+        end;
+        9: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 9 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 9 }
+          { UJP $026C }
+        end;
+        10: begin
+          { stack tracking stopped: 'LONGINTI.4' }
+          { CXP 30,4 }
+          { SLDC 8 }
+          { CXP 30,4 }
+          { SLDL 8 }
+          { SLDC 18 }
+          { CXP 30,4 }
+          { SLDC 2 }
+          { CXP 30,4 }
+          { SLDC 10 }
+          { SLDC 0 }
+          { CXP 30,4 }
+          { STM 10 }
+          { UJP $026C }
+        end;
+      end;
+      FGET(L3);
+      L4 := L9^^[0];
+    end;
+    if not ((L5 or L9^.f2)) then begin
+      I2,1^ := 14;
+    end;
+  end;
+
+procedure LONGINTI.3(args 12 words);  { locals 21 words, lex 1 }
+  { stack tracking stopped: 'LONGINTI.4' }
+  { CXP 30,4 }
+  { SLDL 12 }
+  { LLA 13 }
+  { SLDL 1 }
+  { CXP 0,19 }
+  { RNP 0 }
+
+procedure LONGINTI.4;  { native 6502, 1756 bytes, not lifted }
+
+======================================================================
+SEGMENT 31 PASCALIO  (4 procedures)
+======================================================================
+
+procedure PASCALIO.1(args 0 words);  { locals 0 words, lex 1 }
+
+procedure PASCALIO.2(args 2 words);  { locals 5 words, lex 1 }
+  I2,1^ := 0;
+  if L2^.f5 then begin
+    L6 := L2;
+    L7 := (L6+16);
+    L4 := 0;
+    L5 := 512;
+    if not ((4 or ((0 = 3) and (L6^.f4 = 1)))) then goto L0033;
+    goto L0168;
+L0033:
+    if (L6^.f4 < 512) then begin
+      L3 := (512 div L6^.f4);
+      while ((L1-L3) >= 0) do begin
+        L1 := (L1-L3);
+        L5 := (L5+(L3*L6^.f4));
+        while (L5 > 512) do begin
+          L4 := (L4+1);
+          L5 := (L5-512);
+        end;
+      end;
+    end;
+    while (L1 > 0) do begin
+      L1 := (L1-1);
+      L5 := (L5+L6^.f4);
+      while (L5 > 512) do begin
+        L4 := (L4+1);
+        L5 := (L5-512);
+      end;
+    end;
+    L3 := (L7^.f1-L7^);
+    if ((L4 > L3) or ((L4 = L3) and (L5 >= L7^.f11))) then begin
+      L4 := L3;
+      L5 := L7^.f11;
+    end;
+    if not ((L4 <> L6^.f13)) then goto L010C;
+    if not (L6^.f32) then goto L00E5;
+    (L6+32)^ := 0;
+    (L6+15)^ := 1;
+    UNITWRITE(L6^.f7, (L6+33), 0, 512, ((L7^+L6^.f13)-1), 0);
+    if not ((IORESULT() <> 0)) then goto L00E5;
+    goto L0168;
+L00E5:
+    if not (((L4 <= L6^.f12) and (L5 <> 512))) then goto L010C;
+    UNITREAD(L6^.f7, (L6+33), 0, 512, ((L7^+L4)-1), 0);
+    if not ((IORESULT() <> 0)) then goto L010C;
+    goto L0168;
+L010C:
+    if (L6^.f13 > L6^.f12) then begin
+      (L6+12)^ := L6^.f13;
+      (L6+30)^ := L6^.f31;
+    end else begin
+      if ((L6^.f13 = L6^.f12) and (L6^.f31 > L6^.f30)) then begin
+        (L6+30)^ := L6^.f31;
+      end;
+    end;
+    (L6+2)^ := 0;
+    (L6+1)^ := 0;
+    (L6+14)^ := 0;
+    if (L6^.f3 <> 0) then begin
+      (L6+3)^ := 1;
+    end;
+    (L6+13)^ := L4;
+    (L6+31)^ := L5;
+  end else begin
+    I2,1^ := 13;
+  end;
+L0168:
+  { paths disagree on stack depth here }
+
+procedure PASCALIO.3(args 2 words);  { locals 5 words, lex 1 }
+  L7 := L2;
+  L1^ := flt(0)  {2 words};
+  L5 := 0;
+  L4 := 0;
+  if (L7^.f3 = 1) then begin
+    FGET(L2);
+  end;
+  while ((L7^^[0] = 32) and not (L7^.f2)) do begin
+    FGET(L2);
+  end;
+  if L7^.f2 then begin
+  end else begin
+    L3 := L7^^[0];
+    if ((L3 = 43) or (L3 = 45)) then begin
+      L5 := (L3 = 45);
+      FGET(L2);
+      L3 := L7^^[0];
+    end;
+    while ((L3 in @I2,122^<4w>) and not (L7^.f2)) do begin
+      L4 := 1;
+      L1^ := ((L1^<2w>*flt(10))+flt((L3-48)))  {2 words};
+      FGET(L2);
+      L3 := L7^^[0];
+    end;
+    if L7^.f2 then begin
+    end else begin
+      L6 := -(1);
+      if (L3 = 46) then begin
+        L6 := 0;
+        repeat
+          FGET(L2);
+          L3 := L7^^[0];
+          if (L3 in @I2,122^<4w>) then begin
+            L4 := 1;
+            L6 := (L6+1);
+            L1^ := (L1^<2w>+((L3-48)/flo(PWROFTEN(L6))))  {2 words};
+          end;
+        until (L7^.f2 or not ((L3 in @I2,122^<4w>)));
+        if not (L7^.f2) then goto L024A;
+      end else begin
+L024A:
+        if not ((((L3 = 101) or (L3 = 69)) and (L4 or (L6 < 0)))) then goto L029E;
+        if (L7^.f3 = 0) then begin
+          FGET(L2);
+        end else begin
+          (L7+3)^ := 1;
+        end;
+        FREADINT(L2, @L6);
+        if L7^.f2 then begin
+        end else begin
+          if not (L4) then begin
+            L1^ := flt(1)  {2 words};
+          end;
+          L4 := 1;
+          if (L6 < 0) then begin
+            L1^ := (L1^<2w>/PWROFTEN(abs(L6)))  {2 words};
+          end else begin
+            L1^ := (L1^<2w>*PWROFTEN(L6))  {2 words};
+          end;
+L029E:
+          if L4 then begin
+            if L5 then begin
+              L1^ := -(L1^<2w>)  {2 words};
+              goto L02AD;
+            end;
+L02AD:
+          end else begin
+            I2,1^ := 14;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+procedure PASCALIO.4(args 5 words);  { locals 22 words, lex 1 }
+  if ((L2 < 0) or (L1 < 0)) then begin
+    L2 := 0;
+    L1 := 0;
+  end;
+  if (@L3^<2w> < flt(0)) then begin
+    @L3^ := -(@L3^<2w>)  {2 words};
+    @L11^[1] := 45;
+  end else begin
+    @L11^[1] := 32;
+  end;
+  L6 := 0;
+  @L9^ := @L3^<2w>  {2 words};
+  if (@L3^<2w> >= PWROFTEN(0)) then begin
+    while (@L9^<2w> >= PWROFTEN(1)) do begin
+      L6 := (L6+1);
+      @L9^ := (@L3^<2w>/PWROFTEN(L6))  {2 words};
+    end;
+  end else begin
+    if (@L3^<2w> <> flt(0)) then begin
+L0336:
+      L6 := (L6-1);
+      @L9^ := (@L3^<2w>*PWROFTEN(-(L6)))  {2 words};
+      if not ((@L9^<2w> >= PWROFTEN(0))) then goto L0336;
+    end;
+  end;
+  if ((L1 = 0) or (((L1+L6)+1) > 6)) then begin
+    @L9^ := (@L9^<2w>+(5/flo(PWROFTEN(6))))  {2 words};
+  end else begin
+    if (((L1+L6)+1) >= 0) then begin
+      @L9^ := (@L9^<2w>+(5/flo(PWROFTEN(((L1+L6)+1)))))  {2 words};
+    end;
+  end;
+  if (@L9^<2w> >= PWROFTEN(1)) then begin
+    L6 := (L6+1);
+    @L9^ := (@L9^<2w>/PWROFTEN(1))  {2 words};
+  end;
+  L8 := 3;
+  L27 := 8;
+  while (L8 <= L27) do begin
+    L7 := TRUNC(?, @L9^<2w>);
+    @L11^[L8] := (L7+48);
+    @L9^ := ((@L9^<2w>-flt(L7))*PWROFTEN(1))  {2 words};
+    L8 := (L8+1);
+  end;
+  if ((L1 = 0) or (L6 >= 6)) then begin
+    @L11^[2] := @L11^[3];
+    @L11^[3] := 46;
+    L8 := 8;
+    if (L6 <> 0) then begin
+      L8 := 9;
+      @L11^[9] := 69;
+      if (L6 < 0) then begin
+        L8 := 10;
+        @L11^[10] := 45;
+        L6 := -(L6);
+      end;
+      if (L6 > 9) then begin
+        L8 := (L8+1);
+        @L11^[L8] := ((L6 div 10)+48);
+      end;
+      L8 := (L8+1);
+      @L11^[L8] := ((L6 mod 10)+48);
+    end;
+    @L11^[0] := L8;
+  end else begin
+    if (L6 >= 0) then begin
+      MOVELEFT(@L11, 3, @L11, 2, (L6+1));
+      @L11^[(3+L6)] := 46;
+      FILLCHAR(@L11, 9, (L1-(5-L6)), 32);
+      @L11^[0] := ((3+L1)+L6);
+    end else begin
+      MOVERIGHT(@L11, 3, @L11, (3-L6), 6);
+      @L11^[2] := 48;
+      @L11^[3] := 46;
+      FILLCHAR(@L11, 4, (-(L6)-1), 48);
+      FILLCHAR(@L11, (9-L6), ((L1-6)+L6), 32);
+      @L11^[0] := (3+L1);
+    end;
+  end;
+  if (L2 < @L11^[0]) then begin
+    L2 := @L11^[0];
+  end;
+  FWRITESTRING(L5, @L11, L2);
+
+======================================================================
+SEGMENT 28 CHAINSTU  (6 procedures)
+======================================================================
+
+procedure CHAINSTU.1(args 0 words);  { locals 0 words, lex 1 }
+
+procedure CHAINSTU.2(args 1 words);  { locals 82 words, lex 1 }
+  @L2^ := L1  {string};
+  if (@L2^[0] > 24) then begin
+    SCOPY(@L2, @L43, 1, 24);
+    @I2,282^ := @L43  {string};
+  end else begin
+    @I2,282^ := @L2  {string};
+  end;
+
+procedure CHAINSTU.3(args 1 words);  { locals 82 words, lex 1 }
+  @L2^ := L1  {string};
+  if (@L2^[0] > 82) then begin
+    SCOPY(@L2, @L43, 1, 82);
+    @I2,294^ := @L43  {string};
+  end else begin
+    @I2,294^ := @L2  {string};
+  end;
+
+procedure CHAINSTU.4(args 1 words);  { locals 41 words, lex 1 }
+  if (@I2,294^[0] > 82) then begin
+    SCOPY(@I2,294, @L2, 1, 82);
+    L1^ := @L2  {string};
+  end else begin
+    L1^ := @I2,294  {string};
+  end;
+
+procedure CHAINSTU.5(args 0 words);  { locals 0 words, lex 1 }
+  I2,342 := 1;
+
+procedure CHAINSTU.6(args 0 words);  { locals 0 words, lex 1 }
+  I2,342 := 0;
+
+======================================================================
+SEGMENT 29 TRANSCEN  (9 procedures)
+======================================================================
+
+procedure TRANSCEN.1(args 0 words);  { locals 0 words, lex 1 }
+
+function TRANSCEN.2(args 2 words) : <2 word result>;  { locals 0 words, lex 1 }
+  if (@L3^<2w> < 0.0) then begin
+    ?^ := TRANSCEN.9(@L1, -(@L3^<2w>), -(1))  {2 words};
+  end else begin
+    ?^ := TRANSCEN.9(@L1, @L3^<2w>, 1)  {2 words};
+  end;
+
+function TRANSCEN.3(args 2 words) : <2 word result>;  { locals 0 words, lex 1 }
+  ?^ := TRANSCEN.9(@L1, (abs(@L3^<2w>)+1.57079625), 1)  {2 words};
+
+function TRANSCEN.4(args 2 words) : <2 word result>;  { locals 7 words, lex 1 }
+  if (@L3^<2w> = 0.0) then begin
+    @L1^ := [$0000,$3F80]  {2 words};
+  end else begin
+    L5 := ROUND(?, (@L3^<2w>*1.44269502));
+    @L3^ := ((@L3^<2w>-(L5*flo(0.693359315)))-(L5*flo(-0.000212194442)))  {2 words};
+    @L6^ := (@L3^<2w>*@L3^<2w>)  {2 words};
+    @L8^ := (@L3^<2w>*((0.00416028919*@L6^<2w>)+0.25))  {2 words};
+    @L10^ := (0.5+(@L8^<2w>/(((0.0499871783*@L6^<2w>)+0.5)-@L8^<2w>)))  {2 words};
+    { unmodelled packed store of chk((7+(L5+1)),0..255) }
+    @L1^ := @L10^<2w>  {2 words};
+  end;
+  { paths disagree on stack depth here }
+
+function TRANSCEN.5(args 2 words) : <2 word result>;  { locals 7 words, lex 1 }
+  @L5^ := (@L3^<2w>*@L3^<2w>)  {2 words};
+  if (abs(@L3^<2w>) > 1.0) then begin
+    @L5^ := (1.0/@L5^<2w>)  {2 words};
+  end;
+  @L7^ := flt(((2*8)+1))  {2 words};
+  L10 := 8;
+  L11 := 1;
+  while (L10 >= L11) do begin
+    @L7^ := (((2.0*flt(L10))-1.0)+(((L10*L10)*flo(@L5^<2w>))/@L7^<2w>))  {2 words};
+    L10 := (L10-1);
+  end;
+  if (abs(@L3^<2w>) > 1.0) then begin
+    L9 := (@L3^<2w> < flt(0));
+    @L5^ := (1.57079625-(1.0/(abs(@L3^<2w>)*@L7^<2w>)))  {2 words};
+    if L9 then begin
+      @L1^ := -(@L5^<2w>)  {2 words};
+    end else begin
+      @L1^ := @L5^<2w>  {2 words};
+    end;
+  end else begin
+    @L1^ := (@L3^<2w>/@L7^<2w>)  {2 words};
+  end;
+
+function TRANSCEN.6(args 2 words) : <2 word result>;  { locals 11 words, lex 1 }
+  if (@L3^<2w> <= 0.0) then begin
+    HALT();
+  end;
+  @L5^ := @L3^<2w>  {2 words};
+  L15 := (7-126);
+  { unmodelled packed store of chk(126,0..255) }
+  @L3^ := @L5^<2w>  {2 words};
+  if (@L3^<2w> > 0.707106829) then begin
+    @L9^ := (((@L3^<2w>-0.5)-0.5)/((@L3^<2w>*0.5)+0.5))  {2 words};
+  end else begin
+    L15 := (L15-1);
+    @L11^ := (@L3^<2w>-0.5)  {2 words};
+    @L9^ := (@L11^<2w>/((@L11^<2w>*0.5)+0.5))  {2 words};
+  end;
+  @L7^ := (@L9^<2w>*@L9^<2w>)  {2 words};
+  @L1^ := (((L15*flo(0.693359315))+(@L9^<2w>+(@L9^<2w>*((@L7^<2w>*0.552707493)/(6.63271809-@L7^<2w>)))))+(L15*flo(-0.000212194442)))  {2 words};
+  { left on stack: @L6 }
+  { left on stack: 8 }
+  { left on stack: @L6 }
+  { left on stack: 8 }
+
+function TRANSCEN.7(args 2 words) : <2 word result>;  { locals 0 words, lex 1 }
+  ?^ := (TRANSCEN.6(@L1, @L3^<2w>)*0.434294492)  {2 words};
+
+function TRANSCEN.8(args 2 words) : <2 word result>;  { locals 7 words, lex 1 }
+  if (@L3^<2w> < flt(0)) then begin
+    HALT();
+  end;
+  if (@L3^<2w> = 0.0) then begin
+    @L1^ := [$0000,$0000]  {2 words};
+  end else begin
+    @L7^ := @L3^<2w>  {2 words};
+    L9 := (7-126);
+    { unmodelled packed store of chk(126,0..255) }
+    @L3^ := @L7^<2w>  {2 words};
+    @L5^ := (0.417309999+(0.590160012*@L3^<2w>))  {2 words};
+    L10 := 0;
+    L11 := 2;
+    while (L10 <= L11) do begin
+      @L5^ := (0.5*(@L5^<2w>+(@L3^<2w>/@L5^<2w>)))  {2 words};
+      L10 := (L10+1);
+    end;
+    if L9 then begin
+      @L5^ := (@L5^<2w>*0.707106829)  {2 words};
+      L9 := (L9+1);
+    end;
+    @L7^ := @L5^<2w>  {2 words};
+    @L8 := chk((8+7),0..255);
+    @L1^ := @L7^<2w>  {2 words};
+  end;
+  { paths disagree on stack depth here }
+
+function TRANSCEN.9(args 3 words) : <2 word result>;  { locals 3 words, lex 1 }
+  if (@L4^<2w> > 1000000.0) then begin
+    HALT();
+  end;
+  L8 := ROUND(?, (@L4^<2w>*0.318309903));
+  if L8 then begin
+    L3 := -(L3);
+  end;
+  @L4^ := ((@L4^<2w>-(L8*flo(3.140625)))-(L8*flo(0.000967653643)))  {2 words};
+  if (abs(@L4^<2w>) >= 0.000250000012) then begin
+    @L6^ := (@L4^<2w>*@L4^<2w>)  {2 words};
+    @L4^ := (@L4^<2w>+(@L4^<2w>*(((((((2.60190291e-06*@L6^<2w>)+-0.000198074209)*@L6^<2w>)+0.00833302457)*@L6^<2w>)+-0.166666567)*@L6^<2w>)))  {2 words};
+  end;
+  @L1^ := (L3*flo(@L4^<2w>))  {2 words};
+
+======================================================================
+SEGMENT 20 TURTLEGR  (31 procedures)
+======================================================================
+
+procedure TURTLEGR.1(args 0 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'STE' }
+  { STE 21,7 }
+  { SLDC 4 }
+  { STE 21,6 }
+  { SLDC 4 }
+  { LSA 'SYSTEM.CHARSET' }
+  { NOP }
+  { SLDC 0 }
+  { SLDC 0 }
+  { CGP 24 }
+  { STE 21,3 }
+  { LDE 21,3 }
+  { SLDC 0 }
+  { EQUI }
+  { FJP $0B2F }
+  goto L0B2F;
+  { stack tracking stopped: 'STE' }
+  { STE 21,6 }
+  { SLDC 5 }
+  { LSA 'SYSTEM.CHARSET' }
+  { NOP }
+  { SLDC 0 }
+  { SLDC 0 }
+  { CGP 24 }
+  { STE 21,3 }
+L0B2F:
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,3 }
+  { SLDC 0 }
+  { NEQI }
+  { STE 21,9 }
+  { LDE 21,9 }
+  { FJP $0B54 }
+  goto L0B54;
+  { stack tracking stopped: 'LAE' }
+  { LAE 21,8 }
+  { LDCI 512 }
+  { CSP 1 }
+  { LDE 21,6 }
+  { LDE 21,8 }
+  { SLDC 0 }
+  { LDCI 1024 }
+  { LDE 21,3 }
+  { SLDC 0 }
+  { CSP 5 }
+L0B54:
+  TURTLEGR.25();
+  TURTLEGR.26();
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,192 }
+  { CGP 29 }
+  { LDCI 16384 }
+  { STE 21,4 }
+  { LAE 21,4 }
+  { CSP 33 }
+  { RNP 0 }
+
+procedure TURTLEGR.2(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.27();
+  TURTLEGR.10(2);
+  TURTLEGR.9();
+
+procedure TURTLEGR.3(args 1 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { SLDL 1 }
+  { ADI }
+  { STE 21,1 }
+  { LDE 21,1 }
+  { SLDC 0 }
+  { LESI }
+  { FJP $0A0F }
+  goto L0A0F;
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { LDCI 360 }
+  { MODI }
+  { SBI }
+  { STE 21,1 }
+  { UJP $0A19 }
+  goto L0A19;
+L0A0F:
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { LDCI 360 }
+  { MODI }
+  { STE 21,1 }
+L0A19:
+
+procedure TURTLEGR.4(args 1 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'STE' }
+  { STE 21,1 }
+  { LDE 21,1 }
+  { SLDC 0 }
+  { LESI }
+  { FJP $0A41 }
+  goto L0A41;
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { LDCI 360 }
+  { MODI }
+  { SBI }
+  { STE 21,1 }
+  { UJP $0A4B }
+  goto L0A4B;
+L0A41:
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { LDCI 360 }
+  { MODI }
+  { STE 21,1 }
+L0A4B:
+
+procedure TURTLEGR.5(args 1 words);  { locals 1 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { SLDC 90 }
+  { DVI }
+  { STL 2 }
+  { LDE 21,1 }
+  { SLDC 90 }
+  { MODI }
+  { STE 21,2 }
+  { LDE 21,2 }
+  { SLDC 0 }
+  { EQUI }
+  { FJP $0920 }
+  goto L0920;
+  case L2 of   { table 0..3 }
+    0: begin
+      { stack tracking stopped: 'TURTLEGR.21' }
+      { CGP 21 }
+      { UJP $091E }
+    end;
+    1: begin
+      { stack tracking stopped: 'TURTLEGR.21' }
+      { CGP 21 }
+      { UJP $091E }
+    end;
+    2: begin
+      { stack tracking stopped: 'TURTLEGR.21' }
+      { CGP 21 }
+      { UJP $091E }
+    end;
+    3: begin
+      { stack tracking stopped: 'TURTLEGR.21' }
+      { CGP 21 }
+      { UJP $091E }
+    end;
+  end;
+  goto L09DE;
+L0920:
+  case L2 of   { table 0..3 }
+    0: begin
+      { stack tracking stopped: 'LAE' }
+      { LAE 21,10 }
+      { SLDC 90 }
+      { LDE 21,2 }
+      { SBI }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { SLDL 1 }
+      { LAE 21,10 }
+      { LDE 21,2 }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { CGP 21 }
+      { UJP $09DE (jtab-12) }
+    end;
+    1: begin
+      { stack tracking stopped: 'LAE' }
+      { LAE 21,10 }
+      { LDE 21,2 }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { NGI }
+      { SLDL 1 }
+      { LAE 21,10 }
+      { SLDC 90 }
+      { LDE 21,2 }
+      { SBI }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { CGP 21 }
+      { UJP $09DE }
+    end;
+    2: begin
+      { stack tracking stopped: 'LAE' }
+      { LAE 21,10 }
+      { SLDC 90 }
+      { LDE 21,2 }
+      { SBI }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { NGI }
+      { SLDL 1 }
+      { LAE 21,10 }
+      { LDE 21,2 }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { NGI }
+      { CGP 21 }
+      { UJP $09DE }
+    end;
+    3: begin
+      { stack tracking stopped: 'LAE' }
+      { LAE 21,10 }
+      { LDE 21,2 }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { SLDL 1 }
+      { LAE 21,10 }
+      { SLDC 90 }
+      { LDE 21,2 }
+      { SBI }
+      { SLDC 0 }
+      { SLDC 90 }
+      { CHK }
+      { IXA 2 }
+      { LDM 2 }
+      { FLO }
+      { MPR }
+      { CSP 24 }
+      { NGI }
+      { CGP 21 }
+      { UJP $09DE }
+    end;
+  end;
+L09DE:
+
+procedure TURTLEGR.6(args 2 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'TURTLEGR.20' }
+  { CGP 20 }
+  { RNP 0 }
+
+procedure TURTLEGR.7(args 1 words);  { locals 1 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { STL 2 }
+  { SLDL 2 }
+  { INC 6 }
+  { SLDL 1 }
+  { STO }
+  { RNP 0 }
+
+procedure TURTLEGR.8(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.23(-(16303));
+  TURTLEGR.23(-(16300));
+
+procedure TURTLEGR.9(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.23(-(16304));
+  TURTLEGR.23(-(16302));
+  TURTLEGR.23(-(16297));
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { SIND 7 }
+  { SLDC 2 }
+  { EQUI }
+  { FJP $0053 }
+  goto L0053;
+  TURTLEGR.23(-(16299));
+  goto L0059;
+L0053:
+  TURTLEGR.23(-(16300));
+L0059:
+
+procedure TURTLEGR.10(args 1 words);  { locals 2 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { STL 3 }
+  { SLDL 3 }
+  { SIND 6 }
+  { STL 2 }
+  { SLDL 3 }
+  { INC 6 }
+  { SLDL 1 }
+  { STO }
+  { CGP 22 }
+  { SLDL 3 }
+  { INC 6 }
+  { SLDL 2 }
+  { STO }
+  { RNP 0 }
+
+procedure TURTLEGR.11(args 4 words);  { locals 1 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { STL 5 }
+  { SLDL 5 }
+  { SLDL 4 }
+  { STO }
+  { SLDL 5 }
+  { INC 1 }
+  { SLDL 3 }
+  { STO }
+  { SLDL 5 }
+  { INC 2 }
+  { SLDL 2 }
+  { STO }
+  { SLDL 5 }
+  { INC 3 }
+  { SLDL 1 }
+  { STO }
+  { SLDL 5 }
+  { SIND 0 }
+  { SLDC 0 }
+  { LESI }
+  { FJP $00C1 }
+  goto L00C1;
+  L5^ := 0;
+L00C1:
+  if (L5^.f1 > 279) then begin
+    (L5+1)^ := 279;
+  end;
+  if (L5^.f2 < 0) then begin
+    (L5+2)^ := 0;
+  end;
+  if (L5^.f3 > 191) then begin
+    (L5+3)^ := 191;
+  end;
+  if (L5^.f1 < L5^) then begin
+    (L5+1)^ := L5^;
+  end;
+  if (L5^.f3 < L5^.f2) then begin
+    (L5+3)^ := L5^.f2;
+  end;
+
+function TURTLEGR.12(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { SIND 4 }
+  { STL 1 }
+  { RNP 1 }
+
+function TURTLEGR.13(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,193 }
+  { SIND 5 }
+  { STL 1 }
+  { RNP 1 }
+
+function TURTLEGR.14(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,1 }
+  { STL 1 }
+  { RNP 1 }
+
+procedure TURTLEGR.15;  { native 6502, 64 bytes, not lifted }
+
+procedure TURTLEGR.16;  { native 6502, 564 bytes, not lifted }
+
+procedure TURTLEGR.17(args 1 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,9 }
+  { FJP $020E }
+  goto L020E;
+  { stack tracking stopped: 'LDE' }
+  { LDE 21,8 }
+  { SLDL 1 }
+  { SLDC 0 }
+  { SLDC 127 }
+  { CHK }
+  { IXA 4 }
+  { SLDC 1 }
+  { SLDC 0 }
+  { SLDC 0 }
+  { SLDC 7 }
+  { SLDC 8 }
+  { SLDC 0 }
+  { SLDC 0 }
+  { CGP 12 }
+  { SLDC 0 }
+  { SLDC 0 }
+  { CGP 13 }
+  { LDE 21,7 }
+  { CGP 16 }
+  { LDE 21,193 }
+  { INC 4 }
+  { LDE 21,193 }
+  { SIND 4 }
+  { SLDC 7 }
+  { ADI }
+  { STO }
+L020E:
+
+procedure TURTLEGR.18(args 1 words);  { locals 43 words, lex 1 }
+  @L2^ := L1  {string};
+  L43 := 1;
+  L44 := @L2^[0];
+  while (L43 <= L44) do begin
+    { stack tracking stopped: 'IXS' }
+    { IXS }
+    { LDB }
+    { CGP 17 }
+    { LDL 43 }
+    { SLDC 1 }
+    { ADI }
+    { STL 43 }
+    { UJP $0228 (jtab-10) }
+  end;
+
+procedure TURTLEGR.19(args 1 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'STE' }
+  { STE 21,7 }
+  { RNP 0 }
+
+procedure TURTLEGR.20;  { native 6502, 116 bytes, not lifted }
+
+procedure TURTLEGR.21;  { native 6502, 62 bytes, not lifted }
+
+procedure TURTLEGR.22;  { native 6502, 114 bytes, not lifted }
+
+procedure TURTLEGR.23(args 1 words);  { locals 2 words, lex 1 }
+  L3 := L1;
+  L2 := L3^[chk(0,0..1)];
+
+function TURTLEGR.24(args 2 words) : <1 word result>;  { locals 1056 words, lex 1 }
+  @L5^ := L3  {string};
+  UNITREAD(L4, @L46, 0, 2028, 2, 0);
+  if (IORESULT() <> 0) then begin
+    L1 := 0;
+  end else begin
+    L1060 := 1;
+    while (((L1060 < 78) and ((@L46[chk(L1060,0..77)*13w]+3)^[0] > 0)) and ((@L46[chk(L1060,0..77)*13w]+3) <> @L5)) do begin
+      L1060 := (L1060+1);
+    end;
+    if ((@L46[chk(L1060,0..77)*13w]+3) = @L5) then begin
+      L1 := @L46[chk(L1060,0..77)*13w]^;
+    end else begin
+      L1 := 0;
+    end;
+  end;
+
+procedure TURTLEGR.25(args 0 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LAE' }
+  { LAE 21,10 }
+  { SLDC 0 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$0000 $0000] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 1 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$F856 $3C8E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 2 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$F2C7 $3D0E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 3 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$5E46 $3D56] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 4 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$DC7F $3D8E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 5 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7EB0 $3DB2] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 6 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$12C7 $3DD6] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 7 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$9674 $3DF9] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 8 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$835E $3E0E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 9 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$303C $3E20] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 10 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D0C8 $3E31] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 11 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$636F $3E43] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 12 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$E6E2 $3E54] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 13 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$598E $3E66] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 14 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$BA67 $3E77] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 15 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$83ED $3E84] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 16 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$204B $3E8D] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 17 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$B1C8 $3E95] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 18 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$377A $3E9E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 19 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$B0D9 $3EA6] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 20 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1D3F $3EAF] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 21 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7C03 $3EB7] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 22 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$CC7D $3EBF] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 23 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$0DE5 $3EC8] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 24 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$3FD5 $3ED0] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 25 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$6163 $3ED8] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 26 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$722A $3EE0] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 27 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7161 $3EE8] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 28 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$5E81 $3EF0] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 29 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$3904 $3EF8] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 30 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$0000 $3F00] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 31 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D988 $3F03] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 32 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$A8C6 $3F07] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 33 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$6D76 $3F0B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 34 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$2746 $3F0F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 35 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D5E0 $3F12] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 36 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7914 $3F16] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 37 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$108C $3F1A] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 38 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$9BF6 $3F1D] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 39 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1B1E $3F21] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 40 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$8DB0 $3F24] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 41 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$F37C $3F27] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 42 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$4C2B $3F2B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 43 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$976C $3F2E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 44 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D51B $3F31] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 45 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$04F7 $3F35] }
+  { STM 2 }
+  { RNP 0 }
+
+procedure TURTLEGR.26(args 0 words);  { locals 0 words, lex 1 }
+  { stack tracking stopped: 'LAE' }
+  { LAE 21,10 }
+  { SLDC 46 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$26AB $3F38] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 47 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$3A04 $3F3B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 48 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$3EC0 $3F3E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 49 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$349C $3F41] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 50 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1B76 $3F44] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 51 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$F30A $3F46] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 52 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$BB17 $3F49] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 53 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7358 $3F4C] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 54 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1BBD $3F4F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 55 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$B3F2 $3F51] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 56 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$3BD6 $3F54] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 57 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$B325 $3F56] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 58 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$19AC $3F59] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 59 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$6F4C $3F5B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 60 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$B3D0 $3F5D] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 61 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$E719 $3F5F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 62 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$08E1 $3F62] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 63 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1909 $3F64] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 64 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$175D $3F66] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 65 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$03CD $3F68] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 66 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$DE16 $3F69] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 67 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$A637 $3F6B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 68 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$5BEE $3F6D] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 69 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$FF19 $3F6E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 70 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$8FB8 $3F70] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 71 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$0D88 $3F72] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 72 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7879 $3F73] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 73 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D068 $3F74] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 74 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1544 $3F76] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 75 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$46ED $3F77] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 76 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$6552 $3F78] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 77 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$7050 $3F79] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 78 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$67E8 $3F7A] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 79 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$4BE8 $3F7B] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 80 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$1C61 $3F7C] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 81 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D91F $3F7C] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 82 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$8234 $3F7D] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 83 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$177F $3F7E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 84 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$98FE $3F7E] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 85 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$06A3 $3F7F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 86 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$605B $3F7F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 87 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$A626 $3F7F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 88 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$D817 $3F7F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 89 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$F60A $3F7F] }
+  { STM 2 }
+  { LAE 21,10 }
+  { SLDC 90 }
+  { SLDC 0 }
+  { SLDC 90 }
+  { CHK }
+  { IXA 2 }
+  { LDC 2w [$0000 $3F80] }
+  { STM 2 }
+  { RNP 0 }
+
+procedure TURTLEGR.27(args 0 words);  { locals 1 words, lex 1 }
+  { stack tracking stopped: 'STE' }
+  { STE 21,1 }
+  { LDE 21,193 }
+  { STL 1 }
+  { SLDL 1 }
+  { SLDC 0 }
+  { STO }
+  { SLDL 1 }
+  { INC 1 }
+  { LDCI 279 }
+  { STO }
+  { SLDL 1 }
+  { INC 2 }
+  { SLDC 0 }
+  { STO }
+  { SLDL 1 }
+  { INC 3 }
+  { LDCI 191 }
+  { STO }
+  { SLDL 1 }
+  { INC 4 }
+  { LDCI 279 }
+  { SLDC 2 }
+  { DVI }
+  { STO }
+  { SLDL 1 }
+  { INC 5 }
+  { LDCI 191 }
+  { SLDC 2 }
+  { DVI }
+  { STO }
+  { SLDL 1 }
+  { INC 6 }
+  { SLDC 0 }
+  { STO }
+  { SLDL 1 }
+  { INC 7 }
+  { SLDC 1 }
+  { STO }
+  { RNP 0 }
+
+procedure TURTLEGR.28(args 1 words);  { locals 1 words, lex 1 }
+  { stack tracking stopped: 'STE' }
+  { STE 21,193 }
+  { SLDL 1 }
+  { STL 2 }
+  { LDCI 254 }
+  { STE 21,4 }
+  { LDE 21,4 }
+  { SLDL 2 }
+  { STO }
+  { RNP 0 }
+
+procedure TURTLEGR.29(args 1 words);  { locals 0 words, lex 1 }
+  NEW(@L1, 8);
+  TURTLEGR.28(L1);
+  TURTLEGR.27();
+
+procedure TURTLEGR.30;  { native 6502, 710 bytes, not lifted }
+
+procedure TURTLEGR.31;  { native 6502, 560 bytes, not lifted }
+
+======================================================================
+SEGMENT 21 TURTLEGR  (0 procedures)
+======================================================================
+
+======================================================================
+SEGMENT 22 APPLESTU  (8 procedures)
+======================================================================
+
+procedure APPLESTU.1(args 0 words);  { locals 0 words, lex 1 }
+
+procedure APPLESTU.2;  { native 6502, 54 bytes, not lifted }
+
+procedure APPLESTU.3;  { native 6502, 50 bytes, not lifted }
+
+procedure APPLESTU.4;  { native 6502, 36 bytes, not lifted }
+
+procedure APPLESTU.5;  { native 6502, 62 bytes, not lifted }
+
+procedure APPLESTU.6;  { native 6502, 86 bytes, not lifted }
+
+procedure APPLESTU.7;  { native 6502, 52 bytes, not lifted }
+
+procedure APPLESTU.8;  { native 6502, 294 bytes, not lifted }

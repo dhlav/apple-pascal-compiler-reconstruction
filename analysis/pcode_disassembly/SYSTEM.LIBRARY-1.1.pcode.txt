@@ -1,0 +1,3229 @@
+Apple Pascal 1.1 SYSTEM.LIBRARY -- p-code listing
+
+======================================================================
+SEGMENT 30 LONGINTI  block=2 len=2452
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $02A0  RNP 0
+
+--- procedure 2  param 6 data 14 lex 1
+  $0020  SLDL 3
+  $0021  STL 9
+  $0023  SLDL 2
+  $0024  STL 10
+  $0026  SLDL 1
+  $0027  UJP $00B0 (jtab-10)
+  $0029  SLDL 10
+  $002A  SLDC 0
+  $002B  SLDC 18
+  $002C  CXP 30,4
+  $002F  SLDC 2
+  $0030  SLDC 0
+  $0031  CXP 30,4
+  $0034  STM 2
+  $0036  UJP $00CA (jtab-12)
+  $0038  SLDL 10
+  $0039  SLDC 0
+  $003A  SLDC 18
+  $003B  CXP 30,4
+  $003E  SLDC 3
+  $003F  SLDC 0
+  $0040  CXP 30,4
+  $0043  STM 3
+  $0045  UJP $00CA (jtab-12)
+  $0047  SLDL 10
+  $0048  SLDC 0
+  $0049  SLDC 18
+  $004A  CXP 30,4
+  $004D  SLDC 4
+  $004E  SLDC 0
+  $004F  CXP 30,4
+  $0052  STM 4
+  $0054  UJP $00CA
+  $0056  SLDL 10
+  $0057  SLDC 0
+  $0058  SLDC 18
+  $0059  CXP 30,4
+  $005C  SLDC 5
+  $005D  SLDC 0
+  $005E  CXP 30,4
+  $0061  STM 5
+  $0063  UJP $00CA
+  $0065  SLDL 10
+  $0066  SLDC 0
+  $0067  SLDC 18
+  $0068  CXP 30,4
+  $006B  SLDC 6
+  $006C  SLDC 0
+  $006D  CXP 30,4
+  $0070  STM 6
+  $0072  UJP $00CA
+  $0074  SLDL 10
+  $0075  SLDC 0
+  $0076  SLDC 18
+  $0077  CXP 30,4
+  $007A  SLDC 7
+  $007B  SLDC 0
+  $007C  CXP 30,4
+  $007F  STM 7
+  $0081  UJP $00CA
+  $0083  SLDL 10
+  $0084  SLDC 0
+  $0085  SLDC 18
+  $0086  CXP 30,4
+  $0089  SLDC 8
+  $008A  SLDC 0
+  $008B  CXP 30,4
+  $008E  STM 8
+  $0090  UJP $00CA
+  $0092  SLDL 10
+  $0093  SLDC 0
+  $0094  SLDC 18
+  $0095  CXP 30,4
+  $0098  SLDC 9
+  $0099  SLDC 0
+  $009A  CXP 30,4
+  $009D  STM 9
+  $009F  UJP $00CA
+  $00A1  SLDL 10
+  $00A2  SLDC 0
+  $00A3  SLDC 18
+  $00A4  CXP 30,4
+  $00A7  SLDC 10
+  $00A8  SLDC 0
+  $00A9  CXP 30,4
+  $00AC  STM 10
+  $00AE  UJP $00CA
+  $00B0  XJP 2..10 else $00CA [$0029 $0038 $0047 $0056 $0065 $0074 $0083 $0092 $00A1]
+  $00CA  SLDC 0
+  $00CB  STL 6
+  $00CD  SLDC 0
+  $00CE  STL 5
+  $00D0  SLDL 9
+  $00D1  SIND 3
+  $00D2  SLDC 1
+  $00D3  EQUI
+  $00D4  FJP $00DA
+  $00D6  SLDL 3
+  $00D7  CXP 0,7
+  $00DA  SLDL 9
+  $00DB  SIND 0
+  $00DC  SLDC 0
+  $00DD  LDB
+  $00DE  SLDC 32
+  $00DF  EQUI
+  $00E0  SLDL 9
+  $00E1  SIND 2
+  $00E2  LNOT
+  $00E3  LAND
+  $00E4  FJP $00EC
+  $00E6  SLDL 3
+  $00E7  CXP 0,7
+  $00EA  UJP $00DA (jtab-14)
+  $00EC  SLDL 9
+  $00ED  SIND 2
+  $00EE  FJP $00F2
+  $00F0  UJP $0284 (jtab-24)
+  $00F2  SLDL 9
+  $00F3  SIND 0
+  $00F4  SLDC 0
+  $00F5  LDB
+  $00F6  STL 4
+  $00F8  SLDL 4
+  $00F9  SLDC 43
+  $00FA  EQUI
+  $00FB  SLDL 4
+  $00FC  SLDC 45
+  $00FD  EQUI
+  $00FE  LOR
+  $00FF  FJP $0110
+  $0101  SLDL 4
+  $0102  SLDC 45
+  $0103  EQUI
+  $0104  STL 6
+  $0106  SLDL 3
+  $0107  CXP 0,7
+  $010A  SLDL 9
+  $010B  SIND 0
+  $010C  SLDC 0
+  $010D  LDB
+  $010E  STL 4
+  $0110  SLDL 4
+  $0111  LDA 2,122
+  $0114  LDM 4
+  $0116  SLDC 4
+  $0117  INN
+  $0118  SLDL 9
+  $0119  SIND 2
+  $011A  LNOT
+  $011B  LAND
+  $011C  FJP $0278 (jtab-22)
+  $011E  SLDC 1
+  $011F  STL 5
+  $0121  SLDL 4
+  $0122  SLDC 48
+  $0123  SBI
+  $0124  STL 8
+  $0126  SLDL 6
+  $0127  FJP $012D
+  $0129  SLDL 8
+  $012A  NGI
+  $012B  STL 8
+  $012D  SLDL 2
+  $012E  STL 10
+  $0130  SLDL 1
+  $0131  UJP $0253 (jtab-16)
+  $0133  SLDL 10
+  $0134  SLDC 10
+  $0135  SLDL 10
+  $0136  LDM 2
+  $0138  SLDC 2
+  $0139  SLDC 14
+  $013A  CXP 30,4
+  $013D  SLDC 8
+  $013E  CXP 30,4
+  $0141  SLDL 8
+  $0142  SLDC 18
+  $0143  CXP 30,4
+  $0146  SLDC 2
+  $0147  CXP 30,4
+  $014A  SLDC 2
+  $014B  SLDC 0
+  $014C  CXP 30,4
+  $014F  STM 2
+  $0151  UJP $026C (jtab-18)
+  $0153  SLDL 10
+  $0154  SLDC 10
+  $0155  SLDL 10
+  $0156  LDM 3
+  $0158  SLDC 3
+  $0159  SLDC 14
+  $015A  CXP 30,4
+  $015D  SLDC 8
+  $015E  CXP 30,4
+  $0161  SLDL 8
+  $0162  SLDC 18
+  $0163  CXP 30,4
+  $0166  SLDC 2
+  $0167  CXP 30,4
+  $016A  SLDC 3
+  $016B  SLDC 0
+  $016C  CXP 30,4
+  $016F  STM 3
+  $0171  UJP $026C (jtab-18)
+  $0173  SLDL 10
+  $0174  SLDC 10
+  $0175  SLDL 10
+  $0176  LDM 4
+  $0178  SLDC 4
+  $0179  SLDC 14
+  $017A  CXP 30,4
+  $017D  SLDC 8
+  $017E  CXP 30,4
+  $0181  SLDL 8
+  $0182  SLDC 18
+  $0183  CXP 30,4
+  $0186  SLDC 2
+  $0187  CXP 30,4
+  $018A  SLDC 4
+  $018B  SLDC 0
+  $018C  CXP 30,4
+  $018F  STM 4
+  $0191  UJP $026C (jtab-18)
+  $0193  SLDL 10
+  $0194  SLDC 10
+  $0195  SLDL 10
+  $0196  LDM 5
+  $0198  SLDC 5
+  $0199  SLDC 14
+  $019A  CXP 30,4
+  $019D  SLDC 8
+  $019E  CXP 30,4
+  $01A1  SLDL 8
+  $01A2  SLDC 18
+  $01A3  CXP 30,4
+  $01A6  SLDC 2
+  $01A7  CXP 30,4
+  $01AA  SLDC 5
+  $01AB  SLDC 0
+  $01AC  CXP 30,4
+  $01AF  STM 5
+  $01B1  UJP $026C (jtab-18)
+  $01B3  SLDL 10
+  $01B4  SLDC 10
+  $01B5  SLDL 10
+  $01B6  LDM 6
+  $01B8  SLDC 6
+  $01B9  SLDC 14
+  $01BA  CXP 30,4
+  $01BD  SLDC 8
+  $01BE  CXP 30,4
+  $01C1  SLDL 8
+  $01C2  SLDC 18
+  $01C3  CXP 30,4
+  $01C6  SLDC 2
+  $01C7  CXP 30,4
+  $01CA  SLDC 6
+  $01CB  SLDC 0
+  $01CC  CXP 30,4
+  $01CF  STM 6
+  $01D1  UJP $026C (jtab-18)
+  $01D3  SLDL 10
+  $01D4  SLDC 10
+  $01D5  SLDL 10
+  $01D6  LDM 7
+  $01D8  SLDC 7
+  $01D9  SLDC 14
+  $01DA  CXP 30,4
+  $01DD  SLDC 8
+  $01DE  CXP 30,4
+  $01E1  SLDL 8
+  $01E2  SLDC 18
+  $01E3  CXP 30,4
+  $01E6  SLDC 2
+  $01E7  CXP 30,4
+  $01EA  SLDC 7
+  $01EB  SLDC 0
+  $01EC  CXP 30,4
+  $01EF  STM 7
+  $01F1  UJP $026C
+  $01F3  SLDL 10
+  $01F4  SLDC 10
+  $01F5  SLDL 10
+  $01F6  LDM 8
+  $01F8  SLDC 8
+  $01F9  SLDC 14
+  $01FA  CXP 30,4
+  $01FD  SLDC 8
+  $01FE  CXP 30,4
+  $0201  SLDL 8
+  $0202  SLDC 18
+  $0203  CXP 30,4
+  $0206  SLDC 2
+  $0207  CXP 30,4
+  $020A  SLDC 8
+  $020B  SLDC 0
+  $020C  CXP 30,4
+  $020F  STM 8
+  $0211  UJP $026C
+  $0213  SLDL 10
+  $0214  SLDC 10
+  $0215  SLDL 10
+  $0216  LDM 9
+  $0218  SLDC 9
+  $0219  SLDC 14
+  $021A  CXP 30,4
+  $021D  SLDC 8
+  $021E  CXP 30,4
+  $0221  SLDL 8
+  $0222  SLDC 18
+  $0223  CXP 30,4
+  $0226  SLDC 2
+  $0227  CXP 30,4
+  $022A  SLDC 9
+  $022B  SLDC 0
+  $022C  CXP 30,4
+  $022F  STM 9
+  $0231  UJP $026C
+  $0233  SLDL 10
+  $0234  SLDC 10
+  $0235  SLDL 10
+  $0236  LDM 10
+  $0238  SLDC 10
+  $0239  SLDC 14
+  $023A  CXP 30,4
+  $023D  SLDC 8
+  $023E  CXP 30,4
+  $0241  SLDL 8
+  $0242  SLDC 18
+  $0243  CXP 30,4
+  $0246  SLDC 2
+  $0247  CXP 30,4
+  $024A  SLDC 10
+  $024B  SLDC 0
+  $024C  CXP 30,4
+  $024F  STM 10
+  $0251  UJP $026C
+  $0253  XJP 2..10 else $026C [$0133 $0153 $0173 $0193 $01B3 $01D3 $01F3 $0213 $0233]
+  $026C  SLDL 3
+  $026D  CXP 0,7
+  $0270  SLDL 9
+  $0271  SIND 0
+  $0272  SLDC 0
+  $0273  LDB
+  $0274  STL 4
+  $0276  UJP $0110 (jtab-20)
+  $0278  SLDL 5
+  $0279  SLDL 9
+  $027A  SIND 2
+  $027B  LOR
+  $027C  LNOT
+  $027D  FJP $0284
+  $027F  LOD 2,1
+  $0282  SLDC 14
+  $0283  STO
+  $0284  RNP 0
+
+--- procedure 3  param 24 data 42 lex 1
+  $0000  LLA 2
+  $0002  LDM 10
+  $0004  SLDC 10
+  $0005  LLA 13
+  $0007  SLDC 38
+  $0008  SLDC 12
+  $0009  CXP 30,4
+  $000C  SLDL 12
+  $000D  LLA 13
+  $000F  SLDL 1
+  $0010  CXP 0,19
+  $0013  RNP 0
+======================================================================
+SEGMENT 31 PASCALIO  block=9 len=1238
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $04C0  RNP 0
+
+--- procedure 2  param 4 data 10 lex 1
+  $0000  LOD 2,1
+  $0003  SLDC 0
+  $0004  STO
+  $0005  SLDL 2
+  $0006  SIND 5
+  $0007  FJP $0163 (jtab-18)
+  $0009  SLDL 2
+  $000A  STL 6
+  $000C  SLDL 6
+  $000D  INC 16
+  $000F  STL 7
+  $0011  SLDC 0
+  $0012  STL 4
+  $0014  LDCI 512
+  $0017  STL 5
+  $0019  SLDL 1
+  $001A  SLDC 0
+  $001B  LESI
+  $001C  SLDL 6
+  $001D  IND 29
+  $001F  LNOT
+  $0020  LOR
+  $0021  SLDL 7
+  $0022  INC 2
+  $0024  SLDC 4
+  $0025  SLDC 0
+  $0026  LDP
+  $0027  SLDC 3
+  $0028  EQUI
+  $0029  SLDL 6
+  $002A  SIND 4
+  $002B  SLDC 1
+  $002C  EQUI
+  $002D  LAND
+  $002E  LOR
+  $002F  FJP $0033
+  $0031  UJP $0168 (jtab-20)
+  $0033  SLDL 6
+  $0034  SIND 4
+  $0035  LDCI 512
+  $0038  LESI
+  $0039  FJP $006E
+  $003B  LDCI 512
+  $003E  SLDL 6
+  $003F  SIND 4
+  $0040  DVI
+  $0041  STL 3
+  $0043  SLDL 1
+  $0044  SLDL 3
+  $0045  SBI
+  $0046  SLDC 0
+  $0047  GEQI
+  $0048  FJP $006E
+  $004A  SLDL 1
+  $004B  SLDL 3
+  $004C  SBI
+  $004D  STL 1
+  $004F  SLDL 5
+  $0050  SLDL 3
+  $0051  SLDL 6
+  $0052  SIND 4
+  $0053  MPI
+  $0054  ADI
+  $0055  STL 5
+  $0057  SLDL 5
+  $0058  LDCI 512
+  $005B  GRTI
+  $005C  FJP $006C
+  $005E  SLDL 4
+  $005F  SLDC 1
+  $0060  ADI
+  $0061  STL 4
+  $0063  SLDL 5
+  $0064  LDCI 512
+  $0067  SBI
+  $0068  STL 5
+  $006A  UJP $0057 (jtab-10)
+  $006C  UJP $0043 (jtab-12)
+  $006E  SLDL 1
+  $006F  SLDC 0
+  $0070  GRTI
+  $0071  FJP $0095
+  $0073  SLDL 1
+  $0074  SLDC 1
+  $0075  SBI
+  $0076  STL 1
+  $0078  SLDL 5
+  $0079  SLDL 6
+  $007A  SIND 4
+  $007B  ADI
+  $007C  STL 5
+  $007E  SLDL 5
+  $007F  LDCI 512
+  $0082  GRTI
+  $0083  FJP $0093
+  $0085  SLDL 4
+  $0086  SLDC 1
+  $0087  ADI
+  $0088  STL 4
+  $008A  SLDL 5
+  $008B  LDCI 512
+  $008E  SBI
+  $008F  STL 5
+  $0091  UJP $007E (jtab-14)
+  $0093  UJP $006E (jtab-16)
+  $0095  SLDL 7
+  $0096  SIND 1
+  $0097  SLDL 7
+  $0098  SIND 0
+  $0099  SBI
+  $009A  STL 3
+  $009C  SLDL 4
+  $009D  SLDL 3
+  $009E  GRTI
+  $009F  SLDL 4
+  $00A0  SLDL 3
+  $00A1  EQUI
+  $00A2  SLDL 5
+  $00A3  SLDL 7
+  $00A4  IND 11
+  $00A6  GEQI
+  $00A7  LAND
+  $00A8  LOR
+  $00A9  FJP $00B3
+  $00AB  SLDL 3
+  $00AC  STL 4
+  $00AE  SLDL 7
+  $00AF  IND 11
+  $00B1  STL 5
+  $00B3  SLDL 4
+  $00B4  SLDL 6
+  $00B5  IND 13
+  $00B7  NEQI
+  $00B8  FJP $010C
+  $00BA  SLDL 6
+  $00BB  IND 32
+  $00BD  FJP $00E5
+  $00BF  SLDL 6
+  $00C0  INC 32
+  $00C2  SLDC 0
+  $00C3  STO
+  $00C4  SLDL 6
+  $00C5  INC 15
+  $00C7  SLDC 1
+  $00C8  STO
+  $00C9  SLDL 6
+  $00CA  SIND 7
+  $00CB  SLDL 6
+  $00CC  INC 33
+  $00CE  SLDC 0
+  $00CF  LDCI 512
+  $00D2  SLDL 7
+  $00D3  SIND 0
+  $00D4  SLDL 6
+  $00D5  IND 13
+  $00D7  ADI
+  $00D8  SLDC 1
+  $00D9  SBI
+  $00DA  SLDC 0
+  $00DB  CSP 6
+  $00DD  CSP 34
+  $00DF  SLDC 0
+  $00E0  NEQI
+  $00E1  FJP $00E5
+  $00E3  UJP $0168 (jtab-20)
+  $00E5  SLDL 4
+  $00E6  SLDL 6
+  $00E7  IND 12
+  $00E9  LEQI
+  $00EA  SLDL 5
+  $00EB  LDCI 512
+  $00EE  NEQI
+  $00EF  LAND
+  $00F0  FJP $010C
+  $00F2  SLDL 6
+  $00F3  SIND 7
+  $00F4  SLDL 6
+  $00F5  INC 33
+  $00F7  SLDC 0
+  $00F8  LDCI 512
+  $00FB  SLDL 7
+  $00FC  SIND 0
+  $00FD  SLDL 4
+  $00FE  ADI
+  $00FF  SLDC 1
+  $0100  SBI
+  $0101  SLDC 0
+  $0102  CSP 5
+  $0104  CSP 34
+  $0106  SLDC 0
+  $0107  NEQI
+  $0108  FJP $010C
+  $010A  UJP $0168
+  $010C  SLDL 6
+  $010D  IND 13
+  $010F  SLDL 6
+  $0110  IND 12
+  $0112  GRTI
+  $0113  FJP $0125
+  $0115  SLDL 6
+  $0116  INC 12
+  $0118  SLDL 6
+  $0119  IND 13
+  $011B  STO
+  $011C  SLDL 6
+  $011D  INC 30
+  $011F  SLDL 6
+  $0120  IND 31
+  $0122  STO
+  $0123  UJP $013D
+  $0125  SLDL 6
+  $0126  IND 13
+  $0128  SLDL 6
+  $0129  IND 12
+  $012B  EQUI
+  $012C  SLDL 6
+  $012D  IND 31
+  $012F  SLDL 6
+  $0130  IND 30
+  $0132  GRTI
+  $0133  LAND
+  $0134  FJP $013D
+  $0136  SLDL 6
+  $0137  INC 30
+  $0139  SLDL 6
+  $013A  IND 31
+  $013C  STO
+  $013D  SLDL 6
+  $013E  INC 2
+  $0140  SLDC 0
+  $0141  STO
+  $0142  SLDL 6
+  $0143  INC 1
+  $0145  SLDC 0
+  $0146  STO
+  $0147  SLDL 6
+  $0148  INC 14
+  $014A  SLDC 0
+  $014B  STO
+  $014C  SLDL 6
+  $014D  SIND 3
+  $014E  SLDC 0
+  $014F  NEQI
+  $0150  FJP $0157
+  $0152  SLDL 6
+  $0153  INC 3
+  $0155  SLDC 1
+  $0156  STO
+  $0157  SLDL 6
+  $0158  INC 13
+  $015A  SLDL 4
+  $015B  STO
+  $015C  SLDL 6
+  $015D  INC 31
+  $015F  SLDL 5
+  $0160  STO
+  $0161  UJP $0168
+  $0163  LOD 2,1
+  $0166  SLDC 13
+  $0167  STO
+  $0168  RNP 0
+
+--- procedure 3  param 4 data 10 lex 1
+  $0180  SLDL 2
+  $0181  STL 7
+  $0183  SLDL 1
+  $0184  SLDC 0
+  $0185  FLT
+  $0186  STM 2
+  $0188  SLDC 0
+  $0189  STL 5
+  $018B  SLDC 0
+  $018C  STL 4
+  $018E  SLDL 7
+  $018F  SIND 3
+  $0190  SLDC 1
+  $0191  EQUI
+  $0192  FJP $0198
+  $0194  SLDL 2
+  $0195  CXP 0,7
+  $0198  SLDL 7
+  $0199  SIND 0
+  $019A  SLDC 0
+  $019B  LDB
+  $019C  SLDC 32
+  $019D  EQUI
+  $019E  SLDL 7
+  $019F  SIND 2
+  $01A0  LNOT
+  $01A1  LAND
+  $01A2  FJP $01AA
+  $01A4  SLDL 2
+  $01A5  CXP 0,7
+  $01A8  UJP $0198 (jtab-10)
+  $01AA  SLDL 7
+  $01AB  SIND 2
+  $01AC  FJP $01B0
+  $01AE  UJP $02B4 (jtab-16)
+  $01B0  SLDL 7
+  $01B1  SIND 0
+  $01B2  SLDC 0
+  $01B3  LDB
+  $01B4  STL 3
+  $01B6  SLDL 3
+  $01B7  SLDC 43
+  $01B8  EQUI
+  $01B9  SLDL 3
+  $01BA  SLDC 45
+  $01BB  EQUI
+  $01BC  LOR
+  $01BD  FJP $01CE
+  $01BF  SLDL 3
+  $01C0  SLDC 45
+  $01C1  EQUI
+  $01C2  STL 5
+  $01C4  SLDL 2
+  $01C5  CXP 0,7
+  $01C8  SLDL 7
+  $01C9  SIND 0
+  $01CA  SLDC 0
+  $01CB  LDB
+  $01CC  STL 3
+  $01CE  SLDL 3
+  $01CF  LDA 2,122
+  $01D2  LDM 4
+  $01D4  SLDC 4
+  $01D5  INN
+  $01D6  SLDL 7
+  $01D7  SIND 2
+  $01D8  LNOT
+  $01D9  LAND
+  $01DA  FJP $01F9
+  $01DC  SLDC 1
+  $01DD  STL 4
+  $01DF  SLDL 1
+  $01E0  SLDL 1
+  $01E1  LDM 2
+  $01E3  SLDC 10
+  $01E4  FLT
+  $01E5  MPR
+  $01E6  SLDL 3
+  $01E7  SLDC 48
+  $01E8  SBI
+  $01E9  FLT
+  $01EA  ADR
+  $01EB  STM 2
+  $01ED  SLDL 2
+  $01EE  CXP 0,7
+  $01F1  SLDL 7
+  $01F2  SIND 0
+  $01F3  SLDC 0
+  $01F4  LDB
+  $01F5  STL 3
+  $01F7  UJP $01CE (jtab-12)
+  $01F9  SLDL 7
+  $01FA  SIND 2
+  $01FB  FJP $01FF
+  $01FD  UJP $02B4 (jtab-16)
+  $01FF  SLDC 1
+  $0200  NGI
+  $0201  STL 6
+  $0203  SLDL 3
+  $0204  SLDC 46
+  $0205  EQUI
+  $0206  FJP $024A
+  $0208  SLDC 0
+  $0209  STL 6
+  $020B  SLDL 2
+  $020C  CXP 0,7
+  $020F  SLDL 7
+  $0210  SIND 0
+  $0211  SLDC 0
+  $0212  LDB
+  $0213  STL 3
+  $0215  SLDL 3
+  $0216  LDA 2,122
+  $0219  LDM 4
+  $021B  SLDC 4
+  $021C  INN
+  $021D  FJP $0236
+  $021F  SLDC 1
+  $0220  STL 4
+  $0222  SLDL 6
+  $0223  SLDC 1
+  $0224  ADI
+  $0225  STL 6
+  $0227  SLDL 1
+  $0228  SLDL 1
+  $0229  LDM 2
+  $022B  SLDL 3
+  $022C  SLDC 48
+  $022D  SBI
+  $022E  SLDL 6
+  $022F  CSP 36
+  $0231  FLO
+  $0232  DVR
+  $0233  ADR
+  $0234  STM 2
+  $0236  SLDL 7
+  $0237  SIND 2
+  $0238  SLDL 3
+  $0239  LDA 2,122
+  $023C  LDM 4
+  $023E  SLDC 4
+  $023F  INN
+  $0240  LNOT
+  $0241  LOR
+  $0242  FJP $020B (jtab-14)
+  $0244  SLDL 7
+  $0245  SIND 2
+  $0246  FJP $024A
+  $0248  UJP $02B4
+  $024A  SLDL 3
+  $024B  SLDC 101
+  $024C  EQUI
+  $024D  SLDL 3
+  $024E  SLDC 69
+  $024F  EQUI
+  $0250  LOR
+  $0251  SLDL 4
+  $0252  SLDL 6
+  $0253  SLDC 0
+  $0254  LESI
+  $0255  LOR
+  $0256  LAND
+  $0257  FJP $029E
+  $0259  SLDL 7
+  $025A  SIND 3
+  $025B  SLDC 0
+  $025C  EQUI
+  $025D  FJP $0265
+  $025F  SLDL 2
+  $0260  CXP 0,7
+  $0263  UJP $026A
+  $0265  SLDL 7
+  $0266  INC 3
+  $0268  SLDC 1
+  $0269  STO
+  $026A  SLDL 2
+  $026B  LLA 6
+  $026D  CXP 0,12
+  $0270  SLDL 7
+  $0271  SIND 2
+  $0272  FJP $0276
+  $0274  UJP $02B4
+  $0276  SLDL 4
+  $0277  LNOT
+  $0278  FJP $027F
+  $027A  SLDL 1
+  $027B  SLDC 1
+  $027C  FLT
+  $027D  STM 2
+  $027F  SLDC 1
+  $0280  STL 4
+  $0282  SLDL 6
+  $0283  SLDC 0
+  $0284  LESI
+  $0285  FJP $0294
+  $0287  SLDL 1
+  $0288  SLDL 1
+  $0289  LDM 2
+  $028B  SLDL 6
+  $028C  ABI
+  $028D  CSP 36
+  $028F  DVR
+  $0290  STM 2
+  $0292  UJP $029E
+  $0294  SLDL 1
+  $0295  SLDL 1
+  $0296  LDM 2
+  $0298  SLDL 6
+  $0299  CSP 36
+  $029B  MPR
+  $029C  STM 2
+  $029E  SLDL 4
+  $029F  FJP $02AF
+  $02A1  SLDL 5
+  $02A2  FJP $02AD
+  $02A4  SLDL 1
+  $02A5  SLDL 1
+  $02A6  LDM 2
+  $02A8  NGR
+  $02A9  STM 2
+  $02AB  UJP $02AD
+  $02AD  UJP $02B4
+  $02AF  LOD 2,1
+  $02B2  SLDC 14
+  $02B3  STO
+  $02B4  RNP 0
+
+--- procedure 4  param 10 data 44 lex 1
+  $02C8  SLDL 2
+  $02C9  SLDC 0
+  $02CA  LESI
+  $02CB  SLDL 1
+  $02CC  SLDC 0
+  $02CD  LESI
+  $02CE  LOR
+  $02CF  FJP $02D7
+  $02D1  SLDC 0
+  $02D2  STL 2
+  $02D4  SLDC 0
+  $02D5  STL 1
+  $02D7  LLA 3
+  $02D9  LDM 2
+  $02DB  SLDC 0
+  $02DC  FLT
+  $02DD  LES REAL
+  $02DF  FJP $02F1
+  $02E1  LLA 3
+  $02E3  LLA 3
+  $02E5  LDM 2
+  $02E7  NGR
+  $02E8  STM 2
+  $02EA  LLA 11
+  $02EC  SLDC 1
+  $02ED  SLDC 45
+  $02EE  STB
+  $02EF  UJP $02F6
+  $02F1  LLA 11
+  $02F3  SLDC 1
+  $02F4  SLDC 32
+  $02F5  STB
+  $02F6  SLDC 0
+  $02F7  STL 6
+  $02F9  LLA 9
+  $02FB  LLA 3
+  $02FD  LDM 2
+  $02FF  STM 2
+  $0301  LLA 3
+  $0303  LDM 2
+  $0305  SLDC 0
+  $0306  CSP 36
+  $0308  GEQ REAL
+  $030A  FJP $032C
+  $030C  LLA 9
+  $030E  LDM 2
+  $0310  SLDC 1
+  $0311  CSP 36
+  $0313  GEQ REAL
+  $0315  FJP $032A
+  $0317  SLDL 6
+  $0318  SLDC 1
+  $0319  ADI
+  $031A  STL 6
+  $031C  LLA 9
+  $031E  LLA 3
+  $0320  LDM 2
+  $0322  SLDL 6
+  $0323  CSP 36
+  $0325  DVR
+  $0326  STM 2
+  $0328  UJP $030C (jtab-10)
+  $032A  UJP $0353
+  $032C  LLA 3
+  $032E  LDM 2
+  $0330  SLDC 0
+  $0331  FLT
+  $0332  NEQ REAL
+  $0334  FJP $0353
+  $0336  SLDL 6
+  $0337  SLDC 1
+  $0338  SBI
+  $0339  STL 6
+  $033B  LLA 9
+  $033D  LLA 3
+  $033F  LDM 2
+  $0341  SLDL 6
+  $0342  NGI
+  $0343  CSP 36
+  $0345  MPR
+  $0346  STM 2
+  $0348  LLA 9
+  $034A  LDM 2
+  $034C  SLDC 0
+  $034D  CSP 36
+  $034F  GEQ REAL
+  $0351  FJP $0336 (jtab-12)
+  $0353  SLDL 1
+  $0354  SLDC 0
+  $0355  EQUI
+  $0356  SLDL 1
+  $0357  SLDL 6
+  $0358  ADI
+  $0359  SLDC 1
+  $035A  ADI
+  $035B  SLDC 6
+  $035C  GRTI
+  $035D  LOR
+  $035E  FJP $0371
+  $0360  LLA 9
+  $0362  LLA 9
+  $0364  LDM 2
+  $0366  SLDC 5
+  $0367  SLDC 6
+  $0368  CSP 36
+  $036A  FLO
+  $036B  DVR
+  $036C  ADR
+  $036D  STM 2
+  $036F  UJP $038D
+  $0371  SLDL 1
+  $0372  SLDL 6
+  $0373  ADI
+  $0374  SLDC 1
+  $0375  ADI
+  $0376  SLDC 0
+  $0377  GEQI
+  $0378  FJP $038D
+  $037A  LLA 9
+  $037C  LLA 9
+  $037E  LDM 2
+  $0380  SLDC 5
+  $0381  SLDL 1
+  $0382  SLDL 6
+  $0383  ADI
+  $0384  SLDC 1
+  $0385  ADI
+  $0386  CSP 36
+  $0388  FLO
+  $0389  DVR
+  $038A  ADR
+  $038B  STM 2
+  $038D  LLA 9
+  $038F  LDM 2
+  $0391  SLDC 1
+  $0392  CSP 36
+  $0394  GEQ REAL
+  $0396  FJP $03A9
+  $0398  SLDL 6
+  $0399  SLDC 1
+  $039A  ADI
+  $039B  STL 6
+  $039D  LLA 9
+  $039F  LLA 9
+  $03A1  LDM 2
+  $03A3  SLDC 1
+  $03A4  CSP 36
+  $03A6  DVR
+  $03A7  STM 2
+  $03A9  SLDC 3
+  $03AA  STL 8
+  $03AC  SLDC 8
+  $03AD  STL 27
+  $03AF  SLDL 8
+  $03B0  LDL 27
+  $03B2  LEQI
+  $03B3  FJP $03DA
+  $03B5  LLA 9
+  $03B7  LDM 2
+  $03B9  CSP 23
+  $03BB  STL 7
+  $03BD  LLA 11
+  $03BF  SLDL 8
+  $03C0  SLDL 7
+  $03C1  SLDC 48
+  $03C2  ADI
+  $03C3  STB
+  $03C4  LLA 9
+  $03C6  LLA 9
+  $03C8  LDM 2
+  $03CA  SLDL 7
+  $03CB  FLT
+  $03CC  SBR
+  $03CD  SLDC 1
+  $03CE  CSP 36
+  $03D0  MPR
+  $03D1  STM 2
+  $03D3  SLDL 8
+  $03D4  SLDC 1
+  $03D5  ADI
+  $03D6  STL 8
+  $03D8  UJP $03AF (jtab-14)
+  $03DA  SLDL 1
+  $03DB  SLDC 0
+  $03DC  EQUI
+  $03DD  SLDL 6
+  $03DE  SLDC 6
+  $03DF  GEQI
+  $03E0  LOR
+  $03E1  FJP $0439
+  $03E3  LLA 11
+  $03E5  SLDC 2
+  $03E6  LLA 11
+  $03E8  SLDC 3
+  $03E9  LDB
+  $03EA  STB
+  $03EB  LLA 11
+  $03ED  SLDC 3
+  $03EE  SLDC 46
+  $03EF  STB
+  $03F0  SLDC 8
+  $03F1  STL 8
+  $03F3  SLDL 6
+  $03F4  SLDC 0
+  $03F5  NEQI
+  $03F6  FJP $0432
+  $03F8  SLDC 9
+  $03F9  STL 8
+  $03FB  LLA 11
+  $03FD  SLDC 9
+  $03FE  SLDC 69
+  $03FF  STB
+  $0400  SLDL 6
+  $0401  SLDC 0
+  $0402  LESI
+  $0403  FJP $0411
+  $0405  SLDC 10
+  $0406  STL 8
+  $0408  LLA 11
+  $040A  SLDC 10
+  $040B  SLDC 45
+  $040C  STB
+  $040D  SLDL 6
+  $040E  NGI
+  $040F  STL 6
+  $0411  SLDL 6
+  $0412  SLDC 9
+  $0413  GRTI
+  $0414  FJP $0424
+  $0416  SLDL 8
+  $0417  SLDC 1
+  $0418  ADI
+  $0419  STL 8
+  $041B  LLA 11
+  $041D  SLDL 8
+  $041E  SLDL 6
+  $041F  SLDC 10
+  $0420  DVI
+  $0421  SLDC 48
+  $0422  ADI
+  $0423  STB
+  $0424  SLDL 8
+  $0425  SLDC 1
+  $0426  ADI
+  $0427  STL 8
+  $0429  LLA 11
+  $042B  SLDL 8
+  $042C  SLDL 6
+  $042D  SLDC 10
+  $042E  MODI
+  $042F  SLDC 48
+  $0430  ADI
+  $0431  STB
+  $0432  LLA 11
+  $0434  SLDC 0
+  $0435  SLDL 8
+  $0436  STB
+  $0437  UJP $0499
+  $0439  SLDL 6
+  $043A  SLDC 0
+  $043B  GEQI
+  $043C  FJP $0466
+  $043E  LLA 11
+  $0440  SLDC 3
+  $0441  LLA 11
+  $0443  SLDC 2
+  $0444  SLDL 6
+  $0445  SLDC 1
+  $0446  ADI
+  $0447  CSP 2
+  $0449  LLA 11
+  $044B  SLDC 3
+  $044C  SLDL 6
+  $044D  ADI
+  $044E  SLDC 46
+  $044F  STB
+  $0450  LLA 11
+  $0452  SLDC 9
+  $0453  SLDL 1
+  $0454  SLDC 5
+  $0455  SLDL 6
+  $0456  SBI
+  $0457  SBI
+  $0458  SLDC 32
+  $0459  CSP 10
+  $045B  LLA 11
+  $045D  SLDC 0
+  $045E  SLDC 3
+  $045F  SLDL 1
+  $0460  ADI
+  $0461  SLDL 6
+  $0462  ADI
+  $0463  STB
+  $0464  UJP $0499
+  $0466  LLA 11
+  $0468  SLDC 3
+  $0469  LLA 11
+  $046B  SLDC 3
+  $046C  SLDL 6
+  $046D  SBI
+  $046E  SLDC 6
+  $046F  CSP 3
+  $0471  LLA 11
+  $0473  SLDC 2
+  $0474  SLDC 48
+  $0475  STB
+  $0476  LLA 11
+  $0478  SLDC 3
+  $0479  SLDC 46
+  $047A  STB
+  $047B  LLA 11
+  $047D  SLDC 4
+  $047E  SLDL 6
+  $047F  NGI
+  $0480  SLDC 1
+  $0481  SBI
+  $0482  SLDC 48
+  $0483  CSP 10
+  $0485  LLA 11
+  $0487  SLDC 9
+  $0488  SLDL 6
+  $0489  SBI
+  $048A  SLDL 1
+  $048B  SLDC 6
+  $048C  SBI
+  $048D  SLDL 6
+  $048E  ADI
+  $048F  SLDC 32
+  $0490  CSP 10
+  $0492  LLA 11
+  $0494  SLDC 0
+  $0495  SLDC 3
+  $0496  SLDL 1
+  $0497  ADI
+  $0498  STB
+  $0499  SLDL 2
+  $049A  LLA 11
+  $049C  SLDC 0
+  $049D  LDB
+  $049E  LESI
+  $049F  FJP $04A7
+  $04A1  LLA 11
+  $04A3  SLDC 0
+  $04A4  LDB
+  $04A5  STL 2
+  $04A7  SLDL 5
+  $04A8  LLA 11
+  $04AA  SLDL 2
+  $04AB  CXP 0,19
+  $04AE  RNP 0
+======================================================================
+SEGMENT 28 CHAINSTU  block=33 len=214
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $00BC  RNP 0
+
+--- procedure 2  param 2 data 164 lex 1
+  $0000  LLA 2
+  $0002  SLDL 1
+  $0003  SAS 80
+  $0005  LLA 2
+  $0007  SLDC 0
+  $0008  LDB
+  $0009  SLDC 24
+  $000A  GRTI
+  $000B  FJP $0020
+  $000D  LDA 2,282
+  $0011  LLA 2
+  $0013  LLA 43
+  $0015  SLDC 1
+  $0016  SLDC 24
+  $0017  CXP 0,25
+  $001A  LLA 43
+  $001C  SAS 23
+  $001E  UJP $0028
+  $0020  LDA 2,282
+  $0024  LLA 2
+  $0026  SAS 23
+  $0028  RNP 0
+
+--- procedure 3  param 2 data 164 lex 1
+  $0034  LLA 2
+  $0036  SLDL 1
+  $0037  SAS 80
+  $0039  LLA 2
+  $003B  SLDC 0
+  $003C  LDB
+  $003D  SLDC 82
+  $003E  GRTI
+  $003F  FJP $0054
+  $0041  LDA 2,294
+  $0045  LLA 2
+  $0047  LLA 43
+  $0049  SLDC 1
+  $004A  SLDC 82
+  $004B  CXP 0,25
+  $004E  LLA 43
+  $0050  SAS 80
+  $0052  UJP $005C
+  $0054  LDA 2,294
+  $0058  LLA 2
+  $005A  SAS 80
+  $005C  RNP 0
+
+--- procedure 4  param 2 data 82 lex 1
+  $0068  LDA 2,294
+  $006C  SLDC 0
+  $006D  LDB
+  $006E  SLDC 82
+  $006F  GRTI
+  $0070  FJP $0084
+  $0072  SLDL 1
+  $0073  LDA 2,294
+  $0077  LLA 2
+  $0079  SLDC 1
+  $007A  SLDC 82
+  $007B  CXP 0,25
+  $007E  LLA 2
+  $0080  SAS 80
+  $0082  UJP $008B
+  $0084  SLDL 1
+  $0085  LDA 2,294
+  $0089  SAS 80
+  $008B  RNP 0
+
+--- procedure 5  param 0 data 0 lex 1
+  $0098  SLDC 1
+  $0099  STR 2,342
+  $009D  RNP 0
+
+--- procedure 6  param 0 data 0 lex 1
+  $00AA  SLDC 0
+  $00AB  STR 2,342
+  $00AF  RNP 0
+======================================================================
+SEGMENT 29 TRANSCEN  block=13 len=1202
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $0492  RNP 0
+
+--- procedure 2  param 8 data 0 lex 1
+  $00B6  LLA 3
+  $00B8  LDM 2
+  $00BA  LDC 2w [$0000 $0000]
+  $00C0  LES REAL
+  $00C2  FJP $00D5
+  $00C4  LLA 1
+  $00C6  LLA 3
+  $00C8  LDM 2
+  $00CA  NGR
+  $00CB  SLDC 1
+  $00CC  NGI
+  $00CD  SLDC 0
+  $00CE  SLDC 0
+  $00CF  CGP 9
+  $00D1  STM 2
+  $00D3  UJP $00E2
+  $00D5  LLA 1
+  $00D7  LLA 3
+  $00D9  LDM 2
+  $00DB  SLDC 1
+  $00DC  SLDC 0
+  $00DD  SLDC 0
+  $00DE  CGP 9
+  $00E0  STM 2
+  $00E2  RNP 2
+
+--- procedure 3  param 8 data 0 lex 1
+  $00EE  LLA 1
+  $00F0  LLA 3
+  $00F2  LDM 2
+  $00F4  ABR
+  $00F5  LDC 2w [$0FDA $3FC9]
+  $00FC  ADR
+  $00FD  SLDC 1
+  $00FE  SLDC 0
+  $00FF  SLDC 0
+  $0100  CGP 9
+  $0102  STM 2
+  $0104  RNP 2
+
+--- procedure 4  param 8 data 14 lex 1
+  $0110  LLA 3
+  $0112  LDM 2
+  $0114  LDC 2w [$0000 $0000]
+  $011A  EQU REAL
+  $011C  FJP $012A
+  $011E  LLA 1
+  $0120  LDC 2w [$0000 $3F80]
+  $0126  STM 2
+  $0128  UJP $01C1 (jtab-10)
+  $012A  LLA 3
+  $012C  LDM 2
+  $012E  LDC 2w [$AA3B $3FB8]
+  $0134  MPR
+  $0135  CSP 24
+  $0137  STL 5
+  $0139  LLA 3
+  $013B  LLA 3
+  $013D  LDM 2
+  $013F  SLDL 5
+  $0140  LDC 2w [$7FFF $3F31]
+  $0146  FLO
+  $0147  MPR
+  $0148  SBR
+  $0149  SLDL 5
+  $014A  LDC 2w [$8083 $B95E]
+  $0150  FLO
+  $0151  MPR
+  $0152  SBR
+  $0153  STM 2
+  $0155  LLA 6
+  $0157  LLA 3
+  $0159  LDM 2
+  $015B  LLA 3
+  $015D  LDM 2
+  $015F  MPR
+  $0160  STM 2
+  $0162  LLA 8
+  $0164  LLA 3
+  $0166  LDM 2
+  $0168  LDC 2w [$5309 $3B88]
+  $016E  LLA 6
+  $0170  LDM 2
+  $0172  MPR
+  $0173  LDC 2w [$0000 $3E80]
+  $017A  ADR
+  $017B  MPR
+  $017C  STM 2
+  $017E  LLA 10
+  $0180  LDC 2w [$0000 $3F00]
+  $0186  LLA 8
+  $0188  LDM 2
+  $018A  LDC 2w [$BF5B $3D4C]
+  $0190  LLA 6
+  $0192  LDM 2
+  $0194  MPR
+  $0195  LDC 2w [$0000 $3F00]
+  $019C  ADR
+  $019D  LLA 8
+  $019F  LDM 2
+  $01A1  SBR
+  $01A2  DVR
+  $01A3  ADR
+  $01A4  STM 2
+  $01A6  LLA 11
+  $01A8  SLDC 8
+  $01A9  SLDC 7
+  $01AA  LLA 11
+  $01AC  SLDC 8
+  $01AD  SLDC 7
+  $01AE  LDP
+  $01AF  SLDL 5
+  $01B0  SLDC 1
+  $01B1  ADI
+  $01B2  ADI
+  $01B3  SLDC 0
+  $01B4  LDCI 255
+  $01B7  CHK
+  $01B8  STP
+  $01B9  LLA 1
+  $01BB  LLA 10
+  $01BD  LDM 2
+  $01BF  STM 2
+  $01C1  RNP 2
+
+--- procedure 5  param 8 data 14 lex 1
+  $01D0  LLA 5
+  $01D2  LLA 3
+  $01D4  LDM 2
+  $01D6  LLA 3
+  $01D8  LDM 2
+  $01DA  MPR
+  $01DB  STM 2
+  $01DD  LLA 3
+  $01DF  LDM 2
+  $01E1  ABR
+  $01E2  LDC 2w [$0000 $3F80]
+  $01E8  GRT REAL
+  $01EA  FJP $01FB
+  $01EC  LLA 5
+  $01EE  LDC 2w [$0000 $3F80]
+  $01F4  LLA 5
+  $01F6  LDM 2
+  $01F8  DVR
+  $01F9  STM 2
+  $01FB  LLA 7
+  $01FD  SLDC 2
+  $01FE  SLDC 8
+  $01FF  MPI
+  $0200  SLDC 1
+  $0201  ADI
+  $0202  FLT
+  $0203  STM 2
+  $0205  SLDC 8
+  $0206  STL 10
+  $0208  SLDC 1
+  $0209  STL 11
+  $020B  SLDL 10
+  $020C  SLDL 11
+  $020D  GEQI
+  $020E  FJP $023B
+  $0210  LLA 7
+  $0212  LDC 2w [$0000 $4000]
+  $0218  SLDL 10
+  $0219  FLT
+  $021A  MPR
+  $021B  LDC 2w [$0000 $3F80]
+  $0222  SBR
+  $0223  SLDL 10
+  $0224  SLDL 10
+  $0225  MPI
+  $0226  LLA 5
+  $0228  LDM 2
+  $022A  FLO
+  $022B  MPR
+  $022C  LLA 7
+  $022E  LDM 2
+  $0230  DVR
+  $0231  ADR
+  $0232  STM 2
+  $0234  SLDL 10
+  $0235  SLDC 1
+  $0236  SBI
+  $0237  STL 10
+  $0239  UJP $020B (jtab-10)
+  $023B  LLA 3
+  $023D  LDM 2
+  $023F  ABR
+  $0240  LDC 2w [$0000 $3F80]
+  $0246  GRT REAL
+  $0248  FJP $0288
+  $024A  LLA 3
+  $024C  LDM 2
+  $024E  SLDC 0
+  $024F  FLT
+  $0250  LES REAL
+  $0252  STL 9
+  $0254  LLA 5
+  $0256  LDC 2w [$0FDA $3FC9]
+  $025C  LDC 2w [$0000 $3F80]
+  $0262  LLA 3
+  $0264  LDM 2
+  $0266  ABR
+  $0267  LLA 7
+  $0269  LDM 2
+  $026B  MPR
+  $026C  DVR
+  $026D  SBR
+  $026E  STM 2
+  $0270  SLDL 9
+  $0271  FJP $027E
+  $0273  LLA 1
+  $0275  LLA 5
+  $0277  LDM 2
+  $0279  NGR
+  $027A  STM 2
+  $027C  UJP $0286
+  $027E  LLA 1
+  $0280  LLA 5
+  $0282  LDM 2
+  $0284  STM 2
+  $0286  UJP $0295
+  $0288  LLA 1
+  $028A  LLA 3
+  $028C  LDM 2
+  $028E  LLA 7
+  $0290  LDM 2
+  $0292  DVR
+  $0293  STM 2
+  $0295  RNP 2
+
+--- procedure 6  param 8 data 22 lex 1
+  $02A4  LLA 3
+  $02A6  LDM 2
+  $02A8  LDC 2w [$0000 $0000]
+  $02AE  LEQ REAL
+  $02B0  FJP $02B4
+  $02B2  CSP 39
+  $02B4  LLA 5
+  $02B6  LLA 3
+  $02B8  LDM 2
+  $02BA  STM 2
+  $02BC  LLA 6
+  $02BE  SLDC 8
+  $02BF  SLDC 7
+  $02C0  LDP
+  $02C1  SLDC 126
+  $02C2  SBI
+  $02C3  STL 15
+  $02C5  LLA 6
+  $02C7  SLDC 8
+  $02C8  SLDC 7
+  $02C9  SLDC 126
+  $02CA  SLDC 0
+  $02CB  LDCI 255
+  $02CE  CHK
+  $02CF  STP
+  $02D0  LLA 3
+  $02D2  LLA 5
+  $02D4  LDM 2
+  $02D6  STM 2
+  $02D8  LLA 3
+  $02DA  LDM 2
+  $02DC  LDC 2w [$04F4 $3F35]
+  $02E2  GRT REAL
+  $02E4  FJP $0314
+  $02E6  LLA 9
+  $02E8  LLA 3
+  $02EA  LDM 2
+  $02EC  LDC 2w [$0000 $3F00]
+  $02F2  SBR
+  $02F3  LDC 2w [$0000 $3F00]
+  $02FA  SBR
+  $02FB  LLA 3
+  $02FD  LDM 2
+  $02FF  LDC 2w [$0000 $3F00]
+  $0306  MPR
+  $0307  LDC 2w [$0000 $3F00]
+  $030E  ADR
+  $030F  DVR
+  $0310  STM 2
+  $0312  UJP $0346
+  $0314  SLDL 15
+  $0315  SLDC 1
+  $0316  SBI
+  $0317  STL 15
+  $0319  LLA 11
+  $031B  LLA 3
+  $031D  LDM 2
+  $031F  LDC 2w [$0000 $3F00]
+  $0326  SBR
+  $0327  STM 2
+  $0329  LLA 9
+  $032B  LLA 11
+  $032D  LDM 2
+  $032F  LLA 11
+  $0331  LDM 2
+  $0333  LDC 2w [$0000 $3F00]
+  $033A  MPR
+  $033B  LDC 2w [$0000 $3F00]
+  $0342  ADR
+  $0343  DVR
+  $0344  STM 2
+  $0346  LLA 7
+  $0348  LLA 9
+  $034A  LDM 2
+  $034C  LLA 9
+  $034E  LDM 2
+  $0350  MPR
+  $0351  STM 2
+  $0353  LLA 1
+  $0355  SLDL 15
+  $0356  LDC 2w [$7FFF $3F31]
+  $035C  FLO
+  $035D  MPR
+  $035E  LLA 9
+  $0360  LDM 2
+  $0362  LLA 9
+  $0364  LDM 2
+  $0366  LLA 7
+  $0368  LDM 2
+  $036A  LDC 2w [$7E3D $3F0D]
+  $0370  MPR
+  $0371  LDC 2w [$3F3A $40D4]
+  $0378  LLA 7
+  $037A  LDM 2
+  $037C  SBR
+  $037D  DVR
+  $037E  MPR
+  $037F  ADR
+  $0380  ADR
+  $0381  SLDL 15
+  $0382  LDC 2w [$8083 $B95E]
+  $0388  FLO
+  $0389  MPR
+  $038A  ADR
+  $038B  STM 2
+  $038D  RNP 2
+
+--- procedure 7  param 8 data 0 lex 1
+  $039A  LLA 1
+  $039C  LLA 3
+  $039E  LDM 2
+  $03A0  SLDC 0
+  $03A1  SLDC 0
+  $03A2  CGP 6
+  $03A4  LDC 2w [$5BD9 $3EDE]
+  $03AA  MPR
+  $03AB  STM 2
+  $03AD  RNP 2
+
+--- procedure 8  param 8 data 14 lex 1
+  $03BA  LLA 3
+  $03BC  LDM 2
+  $03BE  SLDC 0
+  $03BF  FLT
+  $03C0  LES REAL
+  $03C2  FJP $03C6
+  $03C4  CSP 39
+  $03C6  LLA 3
+  $03C8  LDM 2
+  $03CA  LDC 2w [$0000 $0000]
+  $03D0  EQU REAL
+  $03D2  FJP $03E0
+  $03D4  LLA 1
+  $03D6  LDC 2w [$0000 $0000]
+  $03DC  STM 2
+  $03DE  UJP $0481 (jtab-12)
+  $03E0  LLA 7
+  $03E2  LLA 3
+  $03E4  LDM 2
+  $03E6  STM 2
+  $03E8  LLA 8
+  $03EA  SLDC 8
+  $03EB  SLDC 7
+  $03EC  LDP
+  $03ED  SLDC 126
+  $03EE  SBI
+  $03EF  STL 9
+  $03F1  LLA 8
+  $03F3  SLDC 8
+  $03F4  SLDC 7
+  $03F5  SLDC 126
+  $03F6  SLDC 0
+  $03F7  LDCI 255
+  $03FA  CHK
+  $03FB  STP
+  $03FC  LLA 3
+  $03FE  LLA 7
+  $0400  LDM 2
+  $0402  STM 2
+  $0404  LLA 5
+  $0406  LDC 2w [$A9A8 $3ED5]
+  $040C  LDC 2w [$14BA $3F17]
+  $0412  LLA 3
+  $0414  LDM 2
+  $0416  MPR
+  $0417  ADR
+  $0418  STM 2
+  $041A  SLDC 0
+  $041B  STL 10
+  $041D  SLDC 2
+  $041E  STL 11
+  $0420  SLDL 10
+  $0421  SLDL 11
+  $0422  LEQI
+  $0423  FJP $0446
+  $0425  LLA 5
+  $0427  LDC 2w [$0000 $3F00]
+  $042E  LLA 5
+  $0430  LDM 2
+  $0432  LLA 3
+  $0434  LDM 2
+  $0436  LLA 5
+  $0438  LDM 2
+  $043A  DVR
+  $043B  ADR
+  $043C  MPR
+  $043D  STM 2
+  $043F  SLDL 10
+  $0440  SLDC 1
+  $0441  ADI
+  $0442  STL 10
+  $0444  UJP $0420 (jtab-10)
+  $0446  SLDL 9
+  $0447  FJP $045E
+  $0449  LLA 5
+  $044B  LLA 5
+  $044D  LDM 2
+  $044F  LDC 2w [$04F4 $3F35]
+  $0456  MPR
+  $0457  STM 2
+  $0459  SLDL 9
+  $045A  SLDC 1
+  $045B  ADI
+  $045C  STL 9
+  $045E  LLA 7
+  $0460  LLA 5
+  $0462  LDM 2
+  $0464  STM 2
+  $0466  LLA 8
+  $0468  SLDC 8
+  $0469  SLDC 7
+  $046A  SLDL 9
+  $046B  SLDC 2
+  $046C  DVI
+  $046D  LLA 8
+  $046F  SLDC 8
+  $0470  SLDC 7
+  $0471  LDP
+  $0472  ADI
+  $0473  SLDC 0
+  $0474  LDCI 255
+  $0477  CHK
+  $0478  STP
+  $0479  LLA 1
+  $047B  LLA 7
+  $047D  LDM 2
+  $047F  STM 2
+  $0481  RNP 2
+
+--- procedure 9  param 10 data 6 lex 1
+  $0000  LLA 4
+  $0002  LDM 2
+  $0004  LDC 2w [$2400 $4974]
+  $000A  GRT REAL
+  $000C  FJP $0010
+  $000E  CSP 39
+  $0010  LLA 4
+  $0012  LDM 2
+  $0014  LDC 2w [$F984 $3EA2]
+  $001A  MPR
+  $001B  CSP 24
+  $001D  STL 8
+  $001F  SLDL 8
+  $0020  FJP $0026
+  $0022  SLDL 3
+  $0023  NGI
+  $0024  STL 3
+  $0026  LLA 4
+  $0028  LLA 4
+  $002A  LDM 2
+  $002C  SLDL 8
+  $002D  LDC 2w [$0000 $4049]
+  $0034  FLO
+  $0035  MPR
+  $0036  SBR
+  $0037  SLDL 8
+  $0038  LDC 2w [$AA23 $3A7D]
+  $003E  FLO
+  $003F  MPR
+  $0040  SBR
+  $0041  STM 2
+  $0043  LLA 4
+  $0045  LDM 2
+  $0047  ABR
+  $0048  LDC 2w [$126F $3983]
+  $004E  GEQ REAL
+  $0050  FJP $009E
+  $0052  LLA 6
+  $0054  LLA 4
+  $0056  LDM 2
+  $0058  LLA 4
+  $005A  LDM 2
+  $005C  MPR
+  $005D  STM 2
+  $005F  LLA 4
+  $0061  LLA 4
+  $0063  LDM 2
+  $0065  LLA 4
+  $0067  LDM 2
+  $0069  LDC 2w [$9C5A $362E]
+  $0070  LLA 6
+  $0072  LDM 2
+  $0074  MPR
+  $0075  LDC 2w [$B224 $B94F]
+  $007C  ADR
+  $007D  LLA 6
+  $007F  LDM 2
+  $0081  MPR
+  $0082  LDC 2w [$873D $3C08]
+  $0088  ADR
+  $0089  LLA 6
+  $008B  LDM 2
+  $008D  MPR
+  $008E  LDC 2w [$AAA4 $BE2A]
+  $0094  ADR
+  $0095  LLA 6
+  $0097  LDM 2
+  $0099  MPR
+  $009A  MPR
+  $009B  ADR
+  $009C  STM 2
+  $009E  LLA 1
+  $00A0  SLDL 3
+  $00A1  LLA 4
+  $00A3  LDM 2
+  $00A5  FLO
+  $00A6  MPR
+  $00A7  STM 2
+  $00A9  RNP 2
+======================================================================
+SEGMENT 20 TURTLEGR  block=18 len=5202
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $0AEA  SLDC 10
+  $0AEB  STE 21,7
+  $0AEE  SLDC 4
+  $0AEF  STE 21,6
+  $0AF2  SLDC 4
+  $0AF3  LSA 'SYSTEM.CHARSET'
+  $0B03  NOP
+  $0B04  SLDC 0
+  $0B05  SLDC 0
+  $0B06  CGP 24
+  $0B08  STE 21,3
+  $0B0B  LDE 21,3
+  $0B0E  SLDC 0
+  $0B0F  EQUI
+  $0B10  FJP $0B2F
+  $0B12  SLDC 5
+  $0B13  STE 21,6
+  $0B16  SLDC 5
+  $0B17  LSA 'SYSTEM.CHARSET'
+  $0B27  NOP
+  $0B28  SLDC 0
+  $0B29  SLDC 0
+  $0B2A  CGP 24
+  $0B2C  STE 21,3
+  $0B2F  LDE 21,3
+  $0B32  SLDC 0
+  $0B33  NEQI
+  $0B34  STE 21,9
+  $0B37  LDE 21,9
+  $0B3A  FJP $0B54
+  $0B3C  LAE 21,8
+  $0B3F  LDCI 512
+  $0B42  CSP 1
+  $0B44  LDE 21,6
+  $0B47  LDE 21,8
+  $0B4A  SLDC 0
+  $0B4B  LDCI 1024
+  $0B4E  LDE 21,3
+  $0B51  SLDC 0
+  $0B52  CSP 5
+  $0B54  CGP 25
+  $0B56  CGP 26
+  $0B58  LDE 21,192
+  $0B5C  CGP 29
+  $0B5E  LDCI 16384
+  $0B61  STE 21,4
+  $0B64  LAE 21,4
+  $0B67  CSP 33
+  $0B69  RNP 0
+
+--- procedure 2  param 0 data 0 lex 1
+  $0AA0  CGP 27
+  $0AA2  SLDC 2
+  $0AA3  CGP 10
+  $0AA5  CGP 9
+  $0AA7  RNP 0
+
+--- procedure 3  param 2 data 0 lex 1
+  $09F0  LDE 21,1
+  $09F3  SLDL 1
+  $09F4  ADI
+  $09F5  STE 21,1
+  $09F8  LDE 21,1
+  $09FB  SLDC 0
+  $09FC  LESI
+  $09FD  FJP $0A0F
+  $09FF  LDCI 360
+  $0A02  LDE 21,1
+  $0A05  LDCI 360
+  $0A08  MODI
+  $0A09  SBI
+  $0A0A  STE 21,1
+  $0A0D  UJP $0A19
+  $0A0F  LDE 21,1
+  $0A12  LDCI 360
+  $0A15  MODI
+  $0A16  STE 21,1
+  $0A19  RNP 0
+
+--- procedure 4  param 2 data 0 lex 1
+  $0A26  SLDL 1
+  $0A27  STE 21,1
+  $0A2A  LDE 21,1
+  $0A2D  SLDC 0
+  $0A2E  LESI
+  $0A2F  FJP $0A41
+  $0A31  LDCI 360
+  $0A34  LDE 21,1
+  $0A37  LDCI 360
+  $0A3A  MODI
+  $0A3B  SBI
+  $0A3C  STE 21,1
+  $0A3F  UJP $0A4B
+  $0A41  LDE 21,1
+  $0A44  LDCI 360
+  $0A47  MODI
+  $0A48  STE 21,1
+  $0A4B  RNP 0
+
+--- procedure 5  param 2 data 2 lex 1
+  $08DC  LDE 21,1
+  $08DF  SLDC 90
+  $08E0  DVI
+  $08E1  STL 2
+  $08E3  LDE 21,1
+  $08E6  SLDC 90
+  $08E7  MODI
+  $08E8  STE 21,2
+  $08EB  LDE 21,2
+  $08EE  SLDC 0
+  $08EF  EQUI
+  $08F0  FJP $0920
+  $08F2  SLDL 2
+  $08F3  UJP $090F
+  $08F5  SLDL 1
+  $08F6  SLDC 0
+  $08F7  CGP 21
+  $08F9  UJP $091E
+  $08FB  SLDC 0
+  $08FC  SLDL 1
+  $08FD  CGP 21
+  $08FF  UJP $091E
+  $0901  SLDL 1
+  $0902  NGI
+  $0903  SLDC 0
+  $0904  CGP 21
+  $0906  UJP $091E
+  $0908  SLDC 0
+  $0909  SLDL 1
+  $090A  NGI
+  $090B  CGP 21
+  $090D  UJP $091E
+  $090F  XJP 0..3 else $091E [$08F5 $08FB $0901 $0908]
+  $091E  UJP $09DE (jtab-14)
+  $0920  SLDL 2
+  $0921  UJP $09CF (jtab-10)
+  $0923  SLDL 1
+  $0924  LAE 21,10
+  $0927  SLDC 90
+  $0928  LDE 21,2
+  $092B  SBI
+  $092C  SLDC 0
+  $092D  SLDC 90
+  $092E  CHK
+  $092F  IXA 2
+  $0931  LDM 2
+  $0933  FLO
+  $0934  MPR
+  $0935  CSP 24
+  $0937  SLDL 1
+  $0938  LAE 21,10
+  $093B  LDE 21,2
+  $093E  SLDC 0
+  $093F  SLDC 90
+  $0940  CHK
+  $0941  IXA 2
+  $0943  LDM 2
+  $0945  FLO
+  $0946  MPR
+  $0947  CSP 24
+  $0949  CGP 21
+  $094B  UJP $09DE (jtab-12)
+  $094D  SLDL 1
+  $094E  LAE 21,10
+  $0951  LDE 21,2
+  $0954  SLDC 0
+  $0955  SLDC 90
+  $0956  CHK
+  $0957  IXA 2
+  $0959  LDM 2
+  $095B  FLO
+  $095C  MPR
+  $095D  CSP 24
+  $095F  NGI
+  $0960  SLDL 1
+  $0961  LAE 21,10
+  $0964  SLDC 90
+  $0965  LDE 21,2
+  $0968  SBI
+  $0969  SLDC 0
+  $096A  SLDC 90
+  $096B  CHK
+  $096C  IXA 2
+  $096E  LDM 2
+  $0970  FLO
+  $0971  MPR
+  $0972  CSP 24
+  $0974  CGP 21
+  $0976  UJP $09DE
+  $0978  SLDL 1
+  $0979  LAE 21,10
+  $097C  SLDC 90
+  $097D  LDE 21,2
+  $0980  SBI
+  $0981  SLDC 0
+  $0982  SLDC 90
+  $0983  CHK
+  $0984  IXA 2
+  $0986  LDM 2
+  $0988  FLO
+  $0989  MPR
+  $098A  CSP 24
+  $098C  NGI
+  $098D  SLDL 1
+  $098E  LAE 21,10
+  $0991  LDE 21,2
+  $0994  SLDC 0
+  $0995  SLDC 90
+  $0996  CHK
+  $0997  IXA 2
+  $0999  LDM 2
+  $099B  FLO
+  $099C  MPR
+  $099D  CSP 24
+  $099F  NGI
+  $09A0  CGP 21
+  $09A2  UJP $09DE
+  $09A4  SLDL 1
+  $09A5  LAE 21,10
+  $09A8  LDE 21,2
+  $09AB  SLDC 0
+  $09AC  SLDC 90
+  $09AD  CHK
+  $09AE  IXA 2
+  $09B0  LDM 2
+  $09B2  FLO
+  $09B3  MPR
+  $09B4  CSP 24
+  $09B6  SLDL 1
+  $09B7  LAE 21,10
+  $09BA  SLDC 90
+  $09BB  LDE 21,2
+  $09BE  SBI
+  $09BF  SLDC 0
+  $09C0  SLDC 90
+  $09C1  CHK
+  $09C2  IXA 2
+  $09C4  LDM 2
+  $09C6  FLO
+  $09C7  MPR
+  $09C8  CSP 24
+  $09CA  NGI
+  $09CB  CGP 21
+  $09CD  UJP $09DE
+  $09CF  XJP 0..3 else $09DE [$0923 $094D $0978 $09A4]
+  $09DE  RNP 0
+
+--- procedure 6  param 4 data 0 lex 1
+  $08CC  SLDL 2
+  $08CD  SLDL 1
+  $08CE  CGP 20
+  $08D0  RNP 0
+
+--- procedure 7  param 2 data 2 lex 1
+  $0066  LDE 21,193
+  $006A  STL 2
+  $006C  SLDL 2
+  $006D  INC 6
+  $006F  SLDL 1
+  $0070  STO
+  $0071  RNP 0
+
+--- procedure 8  param 0 data 0 lex 1
+  $0018  LDCI 16303
+  $001B  NGI
+  $001C  CGP 23
+  $001E  LDCI 16300
+  $0021  NGI
+  $0022  CGP 23
+  $0024  RNP 0
+
+--- procedure 9  param 0 data 0 lex 1
+  $0030  LDCI 16304
+  $0033  NGI
+  $0034  CGP 23
+  $0036  LDCI 16302
+  $0039  NGI
+  $003A  CGP 23
+  $003C  LDCI 16297
+  $003F  NGI
+  $0040  CGP 23
+  $0042  LDE 21,193
+  $0046  SIND 7
+  $0047  SLDC 2
+  $0048  EQUI
+  $0049  FJP $0053
+  $004B  LDCI 16299
+  $004E  NGI
+  $004F  CGP 23
+  $0051  UJP $0059
+  $0053  LDCI 16300
+  $0056  NGI
+  $0057  CGP 23
+  $0059  RNP 0
+
+--- procedure 10  param 2 data 4 lex 1
+  $007E  LDE 21,193
+  $0082  STL 3
+  $0084  SLDL 3
+  $0085  SIND 6
+  $0086  STL 2
+  $0088  SLDL 3
+  $0089  INC 6
+  $008B  SLDL 1
+  $008C  STO
+  $008D  CGP 22
+  $008F  SLDL 3
+  $0090  INC 6
+  $0092  SLDL 2
+  $0093  STO
+  $0094  RNP 0
+
+--- procedure 11  param 8 data 2 lex 1
+  $00A0  LDE 21,193
+  $00A4  STL 5
+  $00A6  SLDL 5
+  $00A7  SLDL 4
+  $00A8  STO
+  $00A9  SLDL 5
+  $00AA  INC 1
+  $00AC  SLDL 3
+  $00AD  STO
+  $00AE  SLDL 5
+  $00AF  INC 2
+  $00B1  SLDL 2
+  $00B2  STO
+  $00B3  SLDL 5
+  $00B4  INC 3
+  $00B6  SLDL 1
+  $00B7  STO
+  $00B8  SLDL 5
+  $00B9  SIND 0
+  $00BA  SLDC 0
+  $00BB  LESI
+  $00BC  FJP $00C1
+  $00BE  SLDL 5
+  $00BF  SLDC 0
+  $00C0  STO
+  $00C1  SLDL 5
+  $00C2  SIND 1
+  $00C3  LDCI 279
+  $00C6  GRTI
+  $00C7  FJP $00D0
+  $00C9  SLDL 5
+  $00CA  INC 1
+  $00CC  LDCI 279
+  $00CF  STO
+  $00D0  SLDL 5
+  $00D1  SIND 2
+  $00D2  SLDC 0
+  $00D3  LESI
+  $00D4  FJP $00DB
+  $00D6  SLDL 5
+  $00D7  INC 2
+  $00D9  SLDC 0
+  $00DA  STO
+  $00DB  SLDL 5
+  $00DC  SIND 3
+  $00DD  LDCI 191
+  $00E0  GRTI
+  $00E1  FJP $00EA
+  $00E3  SLDL 5
+  $00E4  INC 3
+  $00E6  LDCI 191
+  $00E9  STO
+  $00EA  SLDL 5
+  $00EB  SIND 1
+  $00EC  SLDL 5
+  $00ED  SIND 0
+  $00EE  LESI
+  $00EF  FJP $00F7
+  $00F1  SLDL 5
+  $00F2  INC 1
+  $00F4  SLDL 5
+  $00F5  SIND 0
+  $00F6  STO
+  $00F7  SLDL 5
+  $00F8  SIND 3
+  $00F9  SLDL 5
+  $00FA  SIND 2
+  $00FB  LESI
+  $00FC  FJP $0104
+  $00FE  SLDL 5
+  $00FF  INC 3
+  $0101  SLDL 5
+  $0102  SIND 2
+  $0103  STO
+  $0104  RNP 0
+
+--- procedure 12  param 4 data 0 lex 1
+  $0110  LDE 21,193
+  $0114  SIND 4
+  $0115  STL 1
+  $0117  RNP 1
+
+--- procedure 13  param 4 data 0 lex 1
+  $0124  LDE 21,193
+  $0128  SIND 5
+  $0129  STL 1
+  $012B  RNP 1
+
+--- procedure 14  param 4 data 0 lex 1
+  $0138  LDE 21,1
+  $013B  STL 1
+  $013D  RNP 1
+
+--- procedure 17  param 2 data 0 lex 1
+  $01E0  LDE 21,9
+  $01E3  FJP $020E
+  $01E5  LDE 21,8
+  $01E8  SLDL 1
+  $01E9  SLDC 0
+  $01EA  SLDC 127
+  $01EB  CHK
+  $01EC  IXA 4
+  $01EE  SLDC 1
+  $01EF  SLDC 0
+  $01F0  SLDC 0
+  $01F1  SLDC 7
+  $01F2  SLDC 8
+  $01F3  SLDC 0
+  $01F4  SLDC 0
+  $01F5  CGP 12
+  $01F7  SLDC 0
+  $01F8  SLDC 0
+  $01F9  CGP 13
+  $01FB  LDE 21,7
+  $01FE  CGP 16
+  $0200  LDE 21,193
+  $0204  INC 4
+  $0206  LDE 21,193
+  $020A  SIND 4
+  $020B  SLDC 7
+  $020C  ADI
+  $020D  STO
+  $020E  RNP 0
+
+--- procedure 18  param 2 data 86 lex 1
+  $021A  LLA 2
+  $021C  SLDL 1
+  $021D  SAS 80
+  $021F  SLDC 1
+  $0220  STL 43
+  $0222  LLA 2
+  $0224  SLDC 0
+  $0225  LDB
+  $0226  STL 44
+  $0228  LDL 43
+  $022A  LDL 44
+  $022C  LEQI
+  $022D  FJP $023F
+  $022F  LLA 2
+  $0231  LDL 43
+  $0233  IXS
+  $0234  LDB
+  $0235  CGP 17
+  $0237  LDL 43
+  $0239  SLDC 1
+  $023A  ADI
+  $023B  STL 43
+  $023D  UJP $0228 (jtab-10)
+  $023F  RNP 0
+
+--- procedure 19  param 2 data 0 lex 1
+  $01CE  SLDL 1
+  $01CF  SLDC 16
+  $01D0  MODI
+  $01D1  STE 21,7
+  $01D4  RNP 0
+
+--- procedure 23  param 2 data 4 lex 1
+  $0000  SLDL 1
+  $0001  STL 3
+  $0003  SLDL 3
+  $0004  SLDC 0
+  $0005  SLDC 0
+  $0006  SLDC 1
+  $0007  CHK
+  $0008  LDB
+  $0009  STL 2
+  $000B  RNP 0
+
+--- procedure 24  param 8 data 2112 lex 1
+  $014A  LLA 5
+  $014C  SLDL 3
+  $014D  SAS 80
+  $014F  SLDL 4
+  $0150  LLA 46
+  $0152  SLDC 0
+  $0153  LDCI 2028
+  $0156  SLDC 2
+  $0157  SLDC 0
+  $0158  CSP 5
+  $015A  CSP 34
+  $015C  SLDC 0
+  $015D  NEQI
+  $015E  FJP $0165
+  $0160  SLDC 0
+  $0161  STL 1
+  $0163  UJP $01C0
+  $0165  SLDC 1
+  $0166  STL 1060
+  $0169  LDL 1060
+  $016C  SLDC 78
+  $016D  LESI
+  $016E  LLA 46
+  $0170  LDL 1060
+  $0173  SLDC 0
+  $0174  SLDC 77
+  $0175  CHK
+  $0176  IXA 13
+  $0178  INC 3
+  $017A  SLDC 0
+  $017B  LDB
+  $017C  SLDC 0
+  $017D  GRTI
+  $017E  LAND
+  $017F  LLA 46
+  $0181  LDL 1060
+  $0184  SLDC 0
+  $0185  SLDC 77
+  $0186  CHK
+  $0187  IXA 13
+  $0189  INC 3
+  $018B  LLA 5
+  $018D  NEQ STR
+  $018F  LAND
+  $0190  FJP $019C
+  $0192  LDL 1060
+  $0195  SLDC 1
+  $0196  ADI
+  $0197  STL 1060
+  $019A  UJP $0169 (jtab-10)
+  $019C  LLA 46
+  $019E  LDL 1060
+  $01A1  SLDC 0
+  $01A2  SLDC 77
+  $01A3  CHK
+  $01A4  IXA 13
+  $01A6  INC 3
+  $01A8  LLA 5
+  $01AA  EQU STR
+  $01AC  FJP $01BD
+  $01AE  LLA 46
+  $01B0  LDL 1060
+  $01B3  SLDC 0
+  $01B4  SLDC 77
+  $01B5  CHK
+  $01B6  IXA 13
+  $01B8  SIND 0
+  $01B9  STL 1
+  $01BB  UJP $01C0
+  $01BD  SLDC 0
+  $01BE  STL 1
+  $01C0  RNP 1
+
+--- procedure 25  param 0 data 0 lex 1
+  $024E  LAE 21,10
+  $0251  SLDC 0
+  $0252  SLDC 0
+  $0253  SLDC 90
+  $0254  CHK
+  $0255  IXA 2
+  $0257  LDC 2w [$0000 $0000]
+  $025E  STM 2
+  $0260  LAE 21,10
+  $0263  SLDC 1
+  $0264  SLDC 0
+  $0265  SLDC 90
+  $0266  CHK
+  $0267  IXA 2
+  $0269  LDC 2w [$F856 $3C8E]
+  $0270  STM 2
+  $0272  LAE 21,10
+  $0275  SLDC 2
+  $0276  SLDC 0
+  $0277  SLDC 90
+  $0278  CHK
+  $0279  IXA 2
+  $027B  LDC 2w [$F2C7 $3D0E]
+  $0282  STM 2
+  $0284  LAE 21,10
+  $0287  SLDC 3
+  $0288  SLDC 0
+  $0289  SLDC 90
+  $028A  CHK
+  $028B  IXA 2
+  $028D  LDC 2w [$5E46 $3D56]
+  $0294  STM 2
+  $0296  LAE 21,10
+  $0299  SLDC 4
+  $029A  SLDC 0
+  $029B  SLDC 90
+  $029C  CHK
+  $029D  IXA 2
+  $029F  LDC 2w [$DC7F $3D8E]
+  $02A6  STM 2
+  $02A8  LAE 21,10
+  $02AB  SLDC 5
+  $02AC  SLDC 0
+  $02AD  SLDC 90
+  $02AE  CHK
+  $02AF  IXA 2
+  $02B1  LDC 2w [$7EB0 $3DB2]
+  $02B8  STM 2
+  $02BA  LAE 21,10
+  $02BD  SLDC 6
+  $02BE  SLDC 0
+  $02BF  SLDC 90
+  $02C0  CHK
+  $02C1  IXA 2
+  $02C3  LDC 2w [$12C7 $3DD6]
+  $02CA  STM 2
+  $02CC  LAE 21,10
+  $02CF  SLDC 7
+  $02D0  SLDC 0
+  $02D1  SLDC 90
+  $02D2  CHK
+  $02D3  IXA 2
+  $02D5  LDC 2w [$9674 $3DF9]
+  $02DC  STM 2
+  $02DE  LAE 21,10
+  $02E1  SLDC 8
+  $02E2  SLDC 0
+  $02E3  SLDC 90
+  $02E4  CHK
+  $02E5  IXA 2
+  $02E7  LDC 2w [$835E $3E0E]
+  $02EE  STM 2
+  $02F0  LAE 21,10
+  $02F3  SLDC 9
+  $02F4  SLDC 0
+  $02F5  SLDC 90
+  $02F6  CHK
+  $02F7  IXA 2
+  $02F9  LDC 2w [$303C $3E20]
+  $0300  STM 2
+  $0302  LAE 21,10
+  $0305  SLDC 10
+  $0306  SLDC 0
+  $0307  SLDC 90
+  $0308  CHK
+  $0309  IXA 2
+  $030B  LDC 2w [$D0C8 $3E31]
+  $0312  STM 2
+  $0314  LAE 21,10
+  $0317  SLDC 11
+  $0318  SLDC 0
+  $0319  SLDC 90
+  $031A  CHK
+  $031B  IXA 2
+  $031D  LDC 2w [$636F $3E43]
+  $0324  STM 2
+  $0326  LAE 21,10
+  $0329  SLDC 12
+  $032A  SLDC 0
+  $032B  SLDC 90
+  $032C  CHK
+  $032D  IXA 2
+  $032F  LDC 2w [$E6E2 $3E54]
+  $0336  STM 2
+  $0338  LAE 21,10
+  $033B  SLDC 13
+  $033C  SLDC 0
+  $033D  SLDC 90
+  $033E  CHK
+  $033F  IXA 2
+  $0341  LDC 2w [$598E $3E66]
+  $0348  STM 2
+  $034A  LAE 21,10
+  $034D  SLDC 14
+  $034E  SLDC 0
+  $034F  SLDC 90
+  $0350  CHK
+  $0351  IXA 2
+  $0353  LDC 2w [$BA67 $3E77]
+  $035A  STM 2
+  $035C  LAE 21,10
+  $035F  SLDC 15
+  $0360  SLDC 0
+  $0361  SLDC 90
+  $0362  CHK
+  $0363  IXA 2
+  $0365  LDC 2w [$83ED $3E84]
+  $036C  STM 2
+  $036E  LAE 21,10
+  $0371  SLDC 16
+  $0372  SLDC 0
+  $0373  SLDC 90
+  $0374  CHK
+  $0375  IXA 2
+  $0377  LDC 2w [$204B $3E8D]
+  $037E  STM 2
+  $0380  LAE 21,10
+  $0383  SLDC 17
+  $0384  SLDC 0
+  $0385  SLDC 90
+  $0386  CHK
+  $0387  IXA 2
+  $0389  LDC 2w [$B1C8 $3E95]
+  $0390  STM 2
+  $0392  LAE 21,10
+  $0395  SLDC 18
+  $0396  SLDC 0
+  $0397  SLDC 90
+  $0398  CHK
+  $0399  IXA 2
+  $039B  LDC 2w [$377A $3E9E]
+  $03A2  STM 2
+  $03A4  LAE 21,10
+  $03A7  SLDC 19
+  $03A8  SLDC 0
+  $03A9  SLDC 90
+  $03AA  CHK
+  $03AB  IXA 2
+  $03AD  LDC 2w [$B0D9 $3EA6]
+  $03B4  STM 2
+  $03B6  LAE 21,10
+  $03B9  SLDC 20
+  $03BA  SLDC 0
+  $03BB  SLDC 90
+  $03BC  CHK
+  $03BD  IXA 2
+  $03BF  LDC 2w [$1D3F $3EAF]
+  $03C6  STM 2
+  $03C8  LAE 21,10
+  $03CB  SLDC 21
+  $03CC  SLDC 0
+  $03CD  SLDC 90
+  $03CE  CHK
+  $03CF  IXA 2
+  $03D1  LDC 2w [$7C03 $3EB7]
+  $03D8  STM 2
+  $03DA  LAE 21,10
+  $03DD  SLDC 22
+  $03DE  SLDC 0
+  $03DF  SLDC 90
+  $03E0  CHK
+  $03E1  IXA 2
+  $03E3  LDC 2w [$CC7D $3EBF]
+  $03EA  STM 2
+  $03EC  LAE 21,10
+  $03EF  SLDC 23
+  $03F0  SLDC 0
+  $03F1  SLDC 90
+  $03F2  CHK
+  $03F3  IXA 2
+  $03F5  LDC 2w [$0DE5 $3EC8]
+  $03FC  STM 2
+  $03FE  LAE 21,10
+  $0401  SLDC 24
+  $0402  SLDC 0
+  $0403  SLDC 90
+  $0404  CHK
+  $0405  IXA 2
+  $0407  LDC 2w [$3FD5 $3ED0]
+  $040E  STM 2
+  $0410  LAE 21,10
+  $0413  SLDC 25
+  $0414  SLDC 0
+  $0415  SLDC 90
+  $0416  CHK
+  $0417  IXA 2
+  $0419  LDC 2w [$6163 $3ED8]
+  $0420  STM 2
+  $0422  LAE 21,10
+  $0425  SLDC 26
+  $0426  SLDC 0
+  $0427  SLDC 90
+  $0428  CHK
+  $0429  IXA 2
+  $042B  LDC 2w [$722A $3EE0]
+  $0432  STM 2
+  $0434  LAE 21,10
+  $0437  SLDC 27
+  $0438  SLDC 0
+  $0439  SLDC 90
+  $043A  CHK
+  $043B  IXA 2
+  $043D  LDC 2w [$7161 $3EE8]
+  $0444  STM 2
+  $0446  LAE 21,10
+  $0449  SLDC 28
+  $044A  SLDC 0
+  $044B  SLDC 90
+  $044C  CHK
+  $044D  IXA 2
+  $044F  LDC 2w [$5E81 $3EF0]
+  $0456  STM 2
+  $0458  LAE 21,10
+  $045B  SLDC 29
+  $045C  SLDC 0
+  $045D  SLDC 90
+  $045E  CHK
+  $045F  IXA 2
+  $0461  LDC 2w [$3904 $3EF8]
+  $0468  STM 2
+  $046A  LAE 21,10
+  $046D  SLDC 30
+  $046E  SLDC 0
+  $046F  SLDC 90
+  $0470  CHK
+  $0471  IXA 2
+  $0473  LDC 2w [$0000 $3F00]
+  $047A  STM 2
+  $047C  LAE 21,10
+  $047F  SLDC 31
+  $0480  SLDC 0
+  $0481  SLDC 90
+  $0482  CHK
+  $0483  IXA 2
+  $0485  LDC 2w [$D988 $3F03]
+  $048C  STM 2
+  $048E  LAE 21,10
+  $0491  SLDC 32
+  $0492  SLDC 0
+  $0493  SLDC 90
+  $0494  CHK
+  $0495  IXA 2
+  $0497  LDC 2w [$A8C6 $3F07]
+  $049E  STM 2
+  $04A0  LAE 21,10
+  $04A3  SLDC 33
+  $04A4  SLDC 0
+  $04A5  SLDC 90
+  $04A6  CHK
+  $04A7  IXA 2
+  $04A9  LDC 2w [$6D76 $3F0B]
+  $04B0  STM 2
+  $04B2  LAE 21,10
+  $04B5  SLDC 34
+  $04B6  SLDC 0
+  $04B7  SLDC 90
+  $04B8  CHK
+  $04B9  IXA 2
+  $04BB  LDC 2w [$2746 $3F0F]
+  $04C2  STM 2
+  $04C4  LAE 21,10
+  $04C7  SLDC 35
+  $04C8  SLDC 0
+  $04C9  SLDC 90
+  $04CA  CHK
+  $04CB  IXA 2
+  $04CD  LDC 2w [$D5E0 $3F12]
+  $04D4  STM 2
+  $04D6  LAE 21,10
+  $04D9  SLDC 36
+  $04DA  SLDC 0
+  $04DB  SLDC 90
+  $04DC  CHK
+  $04DD  IXA 2
+  $04DF  LDC 2w [$7914 $3F16]
+  $04E6  STM 2
+  $04E8  LAE 21,10
+  $04EB  SLDC 37
+  $04EC  SLDC 0
+  $04ED  SLDC 90
+  $04EE  CHK
+  $04EF  IXA 2
+  $04F1  LDC 2w [$108C $3F1A]
+  $04F8  STM 2
+  $04FA  LAE 21,10
+  $04FD  SLDC 38
+  $04FE  SLDC 0
+  $04FF  SLDC 90
+  $0500  CHK
+  $0501  IXA 2
+  $0503  LDC 2w [$9BF6 $3F1D]
+  $050A  STM 2
+  $050C  LAE 21,10
+  $050F  SLDC 39
+  $0510  SLDC 0
+  $0511  SLDC 90
+  $0512  CHK
+  $0513  IXA 2
+  $0515  LDC 2w [$1B1E $3F21]
+  $051C  STM 2
+  $051E  LAE 21,10
+  $0521  SLDC 40
+  $0522  SLDC 0
+  $0523  SLDC 90
+  $0524  CHK
+  $0525  IXA 2
+  $0527  LDC 2w [$8DB0 $3F24]
+  $052E  STM 2
+  $0530  LAE 21,10
+  $0533  SLDC 41
+  $0534  SLDC 0
+  $0535  SLDC 90
+  $0536  CHK
+  $0537  IXA 2
+  $0539  LDC 2w [$F37C $3F27]
+  $0540  STM 2
+  $0542  LAE 21,10
+  $0545  SLDC 42
+  $0546  SLDC 0
+  $0547  SLDC 90
+  $0548  CHK
+  $0549  IXA 2
+  $054B  LDC 2w [$4C2B $3F2B]
+  $0552  STM 2
+  $0554  LAE 21,10
+  $0557  SLDC 43
+  $0558  SLDC 0
+  $0559  SLDC 90
+  $055A  CHK
+  $055B  IXA 2
+  $055D  LDC 2w [$976C $3F2E]
+  $0564  STM 2
+  $0566  LAE 21,10
+  $0569  SLDC 44
+  $056A  SLDC 0
+  $056B  SLDC 90
+  $056C  CHK
+  $056D  IXA 2
+  $056F  LDC 2w [$D51B $3F31]
+  $0576  STM 2
+  $0578  LAE 21,10
+  $057B  SLDC 45
+  $057C  SLDC 0
+  $057D  SLDC 90
+  $057E  CHK
+  $057F  IXA 2
+  $0581  LDC 2w [$04F7 $3F35]
+  $0588  STM 2
+  $058A  RNP 0
+
+--- procedure 26  param 0 data 0 lex 1
+  $0596  LAE 21,10
+  $0599  SLDC 46
+  $059A  SLDC 0
+  $059B  SLDC 90
+  $059C  CHK
+  $059D  IXA 2
+  $059F  LDC 2w [$26AB $3F38]
+  $05A6  STM 2
+  $05A8  LAE 21,10
+  $05AB  SLDC 47
+  $05AC  SLDC 0
+  $05AD  SLDC 90
+  $05AE  CHK
+  $05AF  IXA 2
+  $05B1  LDC 2w [$3A04 $3F3B]
+  $05B8  STM 2
+  $05BA  LAE 21,10
+  $05BD  SLDC 48
+  $05BE  SLDC 0
+  $05BF  SLDC 90
+  $05C0  CHK
+  $05C1  IXA 2
+  $05C3  LDC 2w [$3EC0 $3F3E]
+  $05CA  STM 2
+  $05CC  LAE 21,10
+  $05CF  SLDC 49
+  $05D0  SLDC 0
+  $05D1  SLDC 90
+  $05D2  CHK
+  $05D3  IXA 2
+  $05D5  LDC 2w [$349C $3F41]
+  $05DC  STM 2
+  $05DE  LAE 21,10
+  $05E1  SLDC 50
+  $05E2  SLDC 0
+  $05E3  SLDC 90
+  $05E4  CHK
+  $05E5  IXA 2
+  $05E7  LDC 2w [$1B76 $3F44]
+  $05EE  STM 2
+  $05F0  LAE 21,10
+  $05F3  SLDC 51
+  $05F4  SLDC 0
+  $05F5  SLDC 90
+  $05F6  CHK
+  $05F7  IXA 2
+  $05F9  LDC 2w [$F30A $3F46]
+  $0600  STM 2
+  $0602  LAE 21,10
+  $0605  SLDC 52
+  $0606  SLDC 0
+  $0607  SLDC 90
+  $0608  CHK
+  $0609  IXA 2
+  $060B  LDC 2w [$BB17 $3F49]
+  $0612  STM 2
+  $0614  LAE 21,10
+  $0617  SLDC 53
+  $0618  SLDC 0
+  $0619  SLDC 90
+  $061A  CHK
+  $061B  IXA 2
+  $061D  LDC 2w [$7358 $3F4C]
+  $0624  STM 2
+  $0626  LAE 21,10
+  $0629  SLDC 54
+  $062A  SLDC 0
+  $062B  SLDC 90
+  $062C  CHK
+  $062D  IXA 2
+  $062F  LDC 2w [$1BBD $3F4F]
+  $0636  STM 2
+  $0638  LAE 21,10
+  $063B  SLDC 55
+  $063C  SLDC 0
+  $063D  SLDC 90
+  $063E  CHK
+  $063F  IXA 2
+  $0641  LDC 2w [$B3F2 $3F51]
+  $0648  STM 2
+  $064A  LAE 21,10
+  $064D  SLDC 56
+  $064E  SLDC 0
+  $064F  SLDC 90
+  $0650  CHK
+  $0651  IXA 2
+  $0653  LDC 2w [$3BD6 $3F54]
+  $065A  STM 2
+  $065C  LAE 21,10
+  $065F  SLDC 57
+  $0660  SLDC 0
+  $0661  SLDC 90
+  $0662  CHK
+  $0663  IXA 2
+  $0665  LDC 2w [$B325 $3F56]
+  $066C  STM 2
+  $066E  LAE 21,10
+  $0671  SLDC 58
+  $0672  SLDC 0
+  $0673  SLDC 90
+  $0674  CHK
+  $0675  IXA 2
+  $0677  LDC 2w [$19AC $3F59]
+  $067E  STM 2
+  $0680  LAE 21,10
+  $0683  SLDC 59
+  $0684  SLDC 0
+  $0685  SLDC 90
+  $0686  CHK
+  $0687  IXA 2
+  $0689  LDC 2w [$6F4C $3F5B]
+  $0690  STM 2
+  $0692  LAE 21,10
+  $0695  SLDC 60
+  $0696  SLDC 0
+  $0697  SLDC 90
+  $0698  CHK
+  $0699  IXA 2
+  $069B  LDC 2w [$B3D0 $3F5D]
+  $06A2  STM 2
+  $06A4  LAE 21,10
+  $06A7  SLDC 61
+  $06A8  SLDC 0
+  $06A9  SLDC 90
+  $06AA  CHK
+  $06AB  IXA 2
+  $06AD  LDC 2w [$E719 $3F5F]
+  $06B4  STM 2
+  $06B6  LAE 21,10
+  $06B9  SLDC 62
+  $06BA  SLDC 0
+  $06BB  SLDC 90
+  $06BC  CHK
+  $06BD  IXA 2
+  $06BF  LDC 2w [$08E1 $3F62]
+  $06C6  STM 2
+  $06C8  LAE 21,10
+  $06CB  SLDC 63
+  $06CC  SLDC 0
+  $06CD  SLDC 90
+  $06CE  CHK
+  $06CF  IXA 2
+  $06D1  LDC 2w [$1909 $3F64]
+  $06D8  STM 2
+  $06DA  LAE 21,10
+  $06DD  SLDC 64
+  $06DE  SLDC 0
+  $06DF  SLDC 90
+  $06E0  CHK
+  $06E1  IXA 2
+  $06E3  LDC 2w [$175D $3F66]
+  $06EA  STM 2
+  $06EC  LAE 21,10
+  $06EF  SLDC 65
+  $06F0  SLDC 0
+  $06F1  SLDC 90
+  $06F2  CHK
+  $06F3  IXA 2
+  $06F5  LDC 2w [$03CD $3F68]
+  $06FC  STM 2
+  $06FE  LAE 21,10
+  $0701  SLDC 66
+  $0702  SLDC 0
+  $0703  SLDC 90
+  $0704  CHK
+  $0705  IXA 2
+  $0707  LDC 2w [$DE16 $3F69]
+  $070E  STM 2
+  $0710  LAE 21,10
+  $0713  SLDC 67
+  $0714  SLDC 0
+  $0715  SLDC 90
+  $0716  CHK
+  $0717  IXA 2
+  $0719  LDC 2w [$A637 $3F6B]
+  $0720  STM 2
+  $0722  LAE 21,10
+  $0725  SLDC 68
+  $0726  SLDC 0
+  $0727  SLDC 90
+  $0728  CHK
+  $0729  IXA 2
+  $072B  LDC 2w [$5BEE $3F6D]
+  $0732  STM 2
+  $0734  LAE 21,10
+  $0737  SLDC 69
+  $0738  SLDC 0
+  $0739  SLDC 90
+  $073A  CHK
+  $073B  IXA 2
+  $073D  LDC 2w [$FF19 $3F6E]
+  $0744  STM 2
+  $0746  LAE 21,10
+  $0749  SLDC 70
+  $074A  SLDC 0
+  $074B  SLDC 90
+  $074C  CHK
+  $074D  IXA 2
+  $074F  LDC 2w [$8FB8 $3F70]
+  $0756  STM 2
+  $0758  LAE 21,10
+  $075B  SLDC 71
+  $075C  SLDC 0
+  $075D  SLDC 90
+  $075E  CHK
+  $075F  IXA 2
+  $0761  LDC 2w [$0D88 $3F72]
+  $0768  STM 2
+  $076A  LAE 21,10
+  $076D  SLDC 72
+  $076E  SLDC 0
+  $076F  SLDC 90
+  $0770  CHK
+  $0771  IXA 2
+  $0773  LDC 2w [$7879 $3F73]
+  $077A  STM 2
+  $077C  LAE 21,10
+  $077F  SLDC 73
+  $0780  SLDC 0
+  $0781  SLDC 90
+  $0782  CHK
+  $0783  IXA 2
+  $0785  LDC 2w [$D068 $3F74]
+  $078C  STM 2
+  $078E  LAE 21,10
+  $0791  SLDC 74
+  $0792  SLDC 0
+  $0793  SLDC 90
+  $0794  CHK
+  $0795  IXA 2
+  $0797  LDC 2w [$1544 $3F76]
+  $079E  STM 2
+  $07A0  LAE 21,10
+  $07A3  SLDC 75
+  $07A4  SLDC 0
+  $07A5  SLDC 90
+  $07A6  CHK
+  $07A7  IXA 2
+  $07A9  LDC 2w [$46ED $3F77]
+  $07B0  STM 2
+  $07B2  LAE 21,10
+  $07B5  SLDC 76
+  $07B6  SLDC 0
+  $07B7  SLDC 90
+  $07B8  CHK
+  $07B9  IXA 2
+  $07BB  LDC 2w [$6552 $3F78]
+  $07C2  STM 2
+  $07C4  LAE 21,10
+  $07C7  SLDC 77
+  $07C8  SLDC 0
+  $07C9  SLDC 90
+  $07CA  CHK
+  $07CB  IXA 2
+  $07CD  LDC 2w [$7050 $3F79]
+  $07D4  STM 2
+  $07D6  LAE 21,10
+  $07D9  SLDC 78
+  $07DA  SLDC 0
+  $07DB  SLDC 90
+  $07DC  CHK
+  $07DD  IXA 2
+  $07DF  LDC 2w [$67E8 $3F7A]
+  $07E6  STM 2
+  $07E8  LAE 21,10
+  $07EB  SLDC 79
+  $07EC  SLDC 0
+  $07ED  SLDC 90
+  $07EE  CHK
+  $07EF  IXA 2
+  $07F1  LDC 2w [$4BE8 $3F7B]
+  $07F8  STM 2
+  $07FA  LAE 21,10
+  $07FD  SLDC 80
+  $07FE  SLDC 0
+  $07FF  SLDC 90
+  $0800  CHK
+  $0801  IXA 2
+  $0803  LDC 2w [$1C61 $3F7C]
+  $080A  STM 2
+  $080C  LAE 21,10
+  $080F  SLDC 81
+  $0810  SLDC 0
+  $0811  SLDC 90
+  $0812  CHK
+  $0813  IXA 2
+  $0815  LDC 2w [$D91F $3F7C]
+  $081C  STM 2
+  $081E  LAE 21,10
+  $0821  SLDC 82
+  $0822  SLDC 0
+  $0823  SLDC 90
+  $0824  CHK
+  $0825  IXA 2
+  $0827  LDC 2w [$8234 $3F7D]
+  $082E  STM 2
+  $0830  LAE 21,10
+  $0833  SLDC 83
+  $0834  SLDC 0
+  $0835  SLDC 90
+  $0836  CHK
+  $0837  IXA 2
+  $0839  LDC 2w [$177F $3F7E]
+  $0840  STM 2
+  $0842  LAE 21,10
+  $0845  SLDC 84
+  $0846  SLDC 0
+  $0847  SLDC 90
+  $0848  CHK
+  $0849  IXA 2
+  $084B  LDC 2w [$98FE $3F7E]
+  $0852  STM 2
+  $0854  LAE 21,10
+  $0857  SLDC 85
+  $0858  SLDC 0
+  $0859  SLDC 90
+  $085A  CHK
+  $085B  IXA 2
+  $085D  LDC 2w [$06A3 $3F7F]
+  $0864  STM 2
+  $0866  LAE 21,10
+  $0869  SLDC 86
+  $086A  SLDC 0
+  $086B  SLDC 90
+  $086C  CHK
+  $086D  IXA 2
+  $086F  LDC 2w [$605B $3F7F]
+  $0876  STM 2
+  $0878  LAE 21,10
+  $087B  SLDC 87
+  $087C  SLDC 0
+  $087D  SLDC 90
+  $087E  CHK
+  $087F  IXA 2
+  $0881  LDC 2w [$A626 $3F7F]
+  $0888  STM 2
+  $088A  LAE 21,10
+  $088D  SLDC 88
+  $088E  SLDC 0
+  $088F  SLDC 90
+  $0890  CHK
+  $0891  IXA 2
+  $0893  LDC 2w [$D817 $3F7F]
+  $089A  STM 2
+  $089C  LAE 21,10
+  $089F  SLDC 89
+  $08A0  SLDC 0
+  $08A1  SLDC 90
+  $08A2  CHK
+  $08A3  IXA 2
+  $08A5  LDC 2w [$F60A $3F7F]
+  $08AC  STM 2
+  $08AE  LAE 21,10
+  $08B1  SLDC 90
+  $08B2  SLDC 0
+  $08B3  SLDC 90
+  $08B4  CHK
+  $08B5  IXA 2
+  $08B7  LDC 2w [$0000 $3F80]
+  $08BE  STM 2
+  $08C0  RNP 0
+
+--- procedure 27  param 0 data 2 lex 1
+  $0A58  SLDC 0
+  $0A59  STE 21,1
+  $0A5C  LDE 21,193
+  $0A60  STL 1
+  $0A62  SLDL 1
+  $0A63  SLDC 0
+  $0A64  STO
+  $0A65  SLDL 1
+  $0A66  INC 1
+  $0A68  LDCI 279
+  $0A6B  STO
+  $0A6C  SLDL 1
+  $0A6D  INC 2
+  $0A6F  SLDC 0
+  $0A70  STO
+  $0A71  SLDL 1
+  $0A72  INC 3
+  $0A74  LDCI 191
+  $0A77  STO
+  $0A78  SLDL 1
+  $0A79  INC 4
+  $0A7B  LDCI 279
+  $0A7E  SLDC 2
+  $0A7F  DVI
+  $0A80  STO
+  $0A81  SLDL 1
+  $0A82  INC 5
+  $0A84  LDCI 191
+  $0A87  SLDC 2
+  $0A88  DVI
+  $0A89  STO
+  $0A8A  SLDL 1
+  $0A8B  INC 6
+  $0A8D  SLDC 0
+  $0A8E  STO
+  $0A8F  SLDL 1
+  $0A90  INC 7
+  $0A92  SLDC 1
+  $0A93  STO
+  $0A94  RNP 0
+
+--- procedure 28  param 2 data 2 lex 1
+  $0AB4  SLDL 1
+  $0AB5  STE 21,193
+  $0AB9  SLDL 1
+  $0ABA  STL 2
+  $0ABC  LDCI 254
+  $0ABF  STE 21,4
+  $0AC2  LDE 21,4
+  $0AC5  SLDL 2
+  $0AC6  STO
+  $0AC7  RNP 0
+
+--- procedure 29  param 2 data 0 lex 1
+  $0AD4  LLA 1
+  $0AD6  SLDC 8
+  $0AD7  CSP 1
+  $0AD9  SLDL 1
+  $0ADA  CGP 28
+  $0ADC  CGP 27
+  $0ADE  RNP 0
+======================================================================
+SEGMENT 21 TURTLEGR  block=0 len=386
+======================================================================
+======================================================================
+SEGMENT 22 APPLESTU  block=30 len=678
+======================================================================
+
+--- procedure 1  param 0 data 0 lex 1
+  $0000  RNP 0

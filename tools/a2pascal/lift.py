@@ -17,6 +17,7 @@ instructions are emitted verbatim rather than guessed at.
 
 from __future__ import annotations
 
+import struct
 from dataclasses import dataclass, field
 
 from pathlib import Path
@@ -184,6 +185,33 @@ def split_blocks(stream: list[Insn]) -> list[Block]:
     return blocks
 
 
+def _real(words: list[int]) -> str:
+    """A two-word REAL constant, as a number.
+
+    Apple Pascal's REAL is **IEEE 754 single precision**, stored low word
+    first: `[$0FDA,$3FC9]` is `DA 0F C9 3F`, which is `$3FC90FDA`, which is
+    1.5707963 -- and TRANSCEND's COS adds exactly that to its argument
+    before calling the sine kernel, which is what says the reading is right
+    rather than merely arithmetically possible. `LN` carries log(2) and
+    `EXP` carries log2(e) in the same format.
+
+    Rendered to nine significant figures, which is more than a single holds
+    and so never loses one. Where the caller cannot tell a real from a set
+    it keeps the words instead of guessing.
+    """
+    try:
+        v = struct.unpack("<f", struct.pack("<HH", *words))[0]
+    except (struct.error, OverflowError):
+        return "[" + ",".join(f"${w:04X}" for w in words) + "]"
+    if v != v or v in (float("inf"), float("-inf")):
+        return "[" + ",".join(f"${w:04X}" for w in words) + "]"
+    s = f"{v:.9g}"
+    # A real has to look like one: `0` and `2` are the same characters an
+    # integer constant would print, and the point of rendering it at all is
+    # that the reader can see which it is.
+    return s if any(c in s for c in ".e") else s + ".0"
+
+
 class _Lifter:
     def __init__(self, param_words: int, callee_words, release: str = "1.1",
                  sets_only: bool = False):
@@ -237,9 +265,16 @@ class _Lifter:
             for i in after:
                 if i.mnemonic in SET_OPS:
                     break
-                if i.mnemonic in REAL_OPS:
-                    return "[" + ",".join(f"${w:04X}" for w in words) + "]"
+                if (i.mnemonic in REAL_OPS
+                        or (i.mnemonic in CMP_OPS and i.operands
+                            and i.operands[0] == 2)):
+                    # A comparison whose type byte is 2 is REAL, which is
+                    # what settles `IF X = 0.0` and `SQRT(1.0)` -- the
+                    # constants a real-arithmetic procedure compares
+                    # against rather than computes with.
+                    return _real(words)
             else:
+                # Nothing downstream says which it is; leave the words.
                 return "[" + ",".join(f"${w:04X}" for w in words) + "]"
             return self._set(words, under)
         if len(words) >= 3 or self.sets_only:

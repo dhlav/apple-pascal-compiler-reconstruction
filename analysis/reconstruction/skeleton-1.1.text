@@ -374,7 +374,7 @@ VAR
   INMODULE        : BOOLEAN;
   {   33,    1 word   the condition in HOLDMOST }
   SWAPMORE        : BOOLEAN;
-  {   34,    1 word   II.0; BLOCK tests it alone (1.3 ORs in HAS128K) }
+  {   34,    1 word   BLOCK tests it; 1.3 ORs in HAS128K }
   SWAPPING        : BOOLEAN;
   {   35,    1 word   assigned (SW = '+') in COMPOPTIONS }
   NOLOAD          : BOOLEAN;
