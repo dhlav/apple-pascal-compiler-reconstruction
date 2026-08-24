@@ -194,7 +194,17 @@ def main() -> int:
         apple = apple_unit(ver, unit)
         if check:
             cf = emu_codefile(unit)
-            mine = next(s for s in cf.segments if s.procedures)
+            # Not simply the first segment with code in it: a unit that has
+            # to be compiled inside a host program (CHAINSTUFF) puts the
+            # host's own segment first. Take the one that carries the name.
+            want = SEGNAME[unit]
+            mine = next((s for s in cf.segments
+                         if s.name.strip().upper().startswith(want[:8])
+                         and s.procedures), None)
+            if mine is None:
+                raise SystemExit(f"{unit}: the codefile has no segment named "
+                                 f"{want}; it has "
+                                 f"{[s.name for s in cf.segments]}")
             who = "Apple's compiler"
         else:
             who = "fast tier"

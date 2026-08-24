@@ -9423,3 +9423,62 @@ is a sine kernel that `SIN` and `COS` both call (`CGP 9`), and 9 is the next
 free number -- so it must be the *first* thing in the IMPLEMENTATION and is
 still numbered last. That is a general fact about units, not about this one,
 and it will decide the shape of every remaining library unit.
+
+## 94. CHAINSTUFF is reconstructed, and it is not a free-standing unit
+
+VERIFIED BINARY FACT. `src/pascal/units/1.3/CHAINSTUFF.text` under Apple's
+1.3 compiler reproduces segment 28 of `SYSTEM.LIBRARY` exactly: eight
+procedures, 410 bytes, identical as a whole segment image.
+
+### 94a. It was compiled inside the operating system
+
+Every procedure in it reaches a variable it does not declare -- `LDA 2,328`,
+`LDA 2,340`, `STR 2,389`, `STR 2,390`, and `LOD 2,3` for OUTPUT. A lex-2
+reference from a lex-1 procedure is two levels down, which under `(*$U-*)`
+is the outer block (finding 87d). CHAINSTUFF cannot be compiled on its own;
+it has to be nested inside a `(*$U-*)` PROGRAM whose globals are
+SYSTEM.PASCAL's, and that is confirmed twice over -- it compiles, and the
+bytes come out identical, which they cannot if an offset is wrong.
+
+That a `UNIT ... INTRINSIC CODE n` may be *declared inside* a PROGRAM at all
+is itself new here, and it is how Apple built the shipped library: the
+library units are part of the operating system's compilation, not separate
+files. TRANSCEND needs no host and takes none.
+
+Four of SYSTEM.PASCAL's globals are therefore fixed:
+
+| offset | size | what |
+|---|---|---|
+| 3 | 1 word | `GFILES[1]`, OUTPUT -- II.0's own layout, unchanged |
+| 328 | 12 words | the chain title, `STRING[23]` |
+| 340 | 41 words | the chain value, `STRING[80]` |
+| 389 | 1 word | the graphics-swap flag |
+| 390 | 1 word | the swapping flag |
+
+The sizes are not guesses: 340 - 328 is twelve words, which is `STRING[23]`
+and nothing else. What sits at 8..327 and 381..388 is *not* recovered -- the
+host in the source file names it FILL and says so. II.0's `GLOBALS.TEXT` has
+neither a chain title nor swap flags; both are Apple's.
+
+### 94b. The private procedure is emitted first, again
+
+Same rule as finding 93c, and now with a second witness. The interface
+headings take 2..7; the version check is 8. Declared *last* in the
+IMPLEMENTATION, every procedure was still byte-identical and the segment
+image was not -- the procedures sat at the wrong addresses. Apple's
+layout puts procedure 8 at $0000 and procedure 1 last, which is emission
+order, which is declaration order. Moving it to the top of the
+IMPLEMENTATION closed the segment.
+
+So: **a unit's private procedures are declared first and numbered last.**
+The procedure-by-procedure diff cannot see this and the whole-segment
+comparison can, which is one more reason it exists (finding 90).
+
+### 94c. Two things in it are Apple's own mistakes
+
+Reported because both look like reconstruction errors and neither is.
+`SETCHAIN` guards on `LENGTH > 24` and copies 24 characters into the
+`STRING[23]` at offset 328 -- `SLDC 24; GRTI` and `SAS 23`, unambiguous in
+the bytes -- so a title of exactly 24 characters is a run-time error.
+`SETCVAL` guards on `LENGTH > 82` against a value parameter that is a
+`STRING[80]`, so that arm is unreachable.
