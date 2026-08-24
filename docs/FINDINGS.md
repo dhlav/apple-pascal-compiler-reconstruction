@@ -9550,3 +9550,49 @@ another segment is rendered through the *codefile's* segment dictionary, so
 a unit compiled on its own prints `CXP 35,4` where the library prints
 `CXP 30,4` with the same bytes; `tools/unitbuild.py` now takes the byte
 comparison as the verdict under `--emu-check` for that reason.
+
+## 96. LONGINTIO and APPLESTUFF: every p-code procedure, byte for byte
+
+VERIFIED BINARY FACT. Both units' p-code halves are reproduced exactly by
+`src/pascal/units/1.3/{LONGINTIO,APPLESTUFF}.text` under Apple's compiler.
+Neither segment can be closed end to end from here, and for the same reason
+`PASCALCO` cannot (finding 91): the 6502 arrives through the linker.
+
+| unit | segment | p-code | native | result |
+|---|---|---|---|---|
+| LONGINTIO | 30 | 3 of 4 | 1850 bytes | 3 of 3 byte-identical, short by the native tail |
+| APPLESTUFF | 22 | 2 of 8 | 572 bytes in six | 2 of 2 byte-identical, short by the native tail |
+
+### 96a. LONGINTIO's two procedures are PASCALIO's two procedures
+
+`LONGINTI.2` and `PASCALIO.5` are 640 bytes each and differ in **one byte**:
+the procedure number in the attribute table. `LONGINTI.3` and `PASCALIO.6`
+are 32 bytes and differ in the same one byte. Apple compiled the same
+`FREADDEC` and `FWRITEDEC` text into both units, and the source file here
+says so by using the same text.
+
+The 6502 procedure 4 is the long-integer engine that every `CXP 30,4` in the
+library calls -- including the two calls its own `FREADDEC` makes. A unit
+calling itself by segment number rather than by `CGP` is what you would
+expect if the compiler treats long-integer arithmetic as a fixed intrinsic
+and does not notice it is compiling the intrinsic.
+
+### 96b. APPLESTUFF is free-standing, and the binary says which way
+
+`KEYPRESS` emits a `CHK` on its array index. Range checking is only on when
+the compilation is *not* `(*$U-*)` (finding 95b), so APPLESTUFF -- alone
+among the units that touch the machine -- was compiled as an ordinary
+program would be, and it needs no operating-system host. That agrees with
+the other evidence: it reaches no lex -1 offset at all.
+
+Its whole Pascal content is `UNITSTATUS(2,A[0],0)` and a test that the
+console has something buffered. Everything else -- paddles, buttons,
+annunciators, RANDOM, the speaker -- is 6502.
+
+### 96c. Declaration order buys nothing for native procedures
+
+The six 6502 procedures sit in the shipped image in the order 2, 3, 4, 8,
+6, 7. That is not the order the interface declares them and it cannot be
+changed from Pascal: the linker appends native code in the order it finds
+it in the assembled file. Finding 94b -- declaration order is an address --
+is about p-code only.

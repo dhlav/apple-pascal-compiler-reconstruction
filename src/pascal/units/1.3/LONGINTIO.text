@@ -1,0 +1,261 @@
+{ LONGINTIO -- SYSTEM.LIBRARY slot 0, segment 30, 4 procedures, 2546 bytes.
+
+  Three of them are p-code and this source reproduces all three exactly.
+  The fourth is 1850 bytes of 6502 -- the long-integer engine itself, which
+  every `CXP 30,4` in the library calls, this unit's own two procedures
+  included -- and it belongs to the assembler tier (finding 44e). It is
+  declared EXTERNAL below, the way IDSEARCH and TREESEARCH are declared in
+  PASCALCO, so the segment here is short by exactly that tail and identical
+  everywhere else. Its name is not recovered.
+
+  FREADDEC and FWRITEDEC are the *same two procedures* that PASCALIO ships
+  as its 5 and 6: 640 and 32 bytes each, and the only byte that differs
+  between the two copies is the procedure number in the attribute table
+  (finding 96). So the bodies below are PASCALIO's, unchanged, and the host
+  they need is the same host -- II.0's GLOBALS.TEXT, for FIB.
+
+  The interface is Apple's own text from block 1 of the library. }
+
+(*$U-*)
+PROGRAM PASCALSYSTEM;
+
+CONST
+     MMAXINT = 32767;
+     MAXUNIT = 12;
+     MAXDIR = 77;
+     VIDLENG = 7;
+     TIDLENG = 15;
+     MAX_SEG = 31;
+     FBLKSIZE = 512;
+     NAME_LEN = 23;
+
+TYPE
+     IORSLTWD = (INOERROR,IBADBLOCK,IBADUNIT,IBADMODE,ITIMEOUT,
+                 ILOSTUNIT,ILOSTFILE,IBADTITLE,INOROOM,INOUNIT,
+                 INOFILE,IDUPFILE,INOTCLOSED,INOTOPEN,IBADFORMAT,
+                 ISTRGOVFL);
+
+     DATEREC = PACKED RECORD
+                 MONTH: 0..12;
+                 DAY: 0..31;
+                 YEAR: 0..100
+               END (*DATEREC*) ;
+
+     UNITNUM = 0..MAXUNIT;
+     VID = STRING[VIDLENG];
+     DIRRANGE = 0..MAXDIR;
+     TID = STRING[TIDLENG];
+
+     FILEKIND = (UNTYPEDFILE,XDSKFILE,CODEFILE,TEXTFILE,
+                 INFOFILE,DATAFILE,GRAFFILE,FOTOFILE,SECUREDIR);
+
+     DIRENTRY = PACKED RECORD
+                  DFIRSTBLK: INTEGER;
+                  DLASTBLK: INTEGER;
+                  CASE DFKIND: FILEKIND OF
+                    SECUREDIR,
+                    UNTYPEDFILE:
+                       (FILLER1 : 0..2048;
+                        DVID: VID;
+                        DEOVBLK: INTEGER;
+                        DNUMFILES: DIRRANGE;
+                        DLOADTIME: INTEGER;
+                        DLASTBOOT: DATEREC);
+                    XDSKFILE,CODEFILE,TEXTFILE,INFOFILE,
+                    DATAFILE,GRAFFILE,FOTOFILE:
+                       (FILLER2 : 0..1024;
+                        STATUS : BOOLEAN;
+                        DTID: TID;
+                        DLASTBYTE: 1..FBLKSIZE;
+                        DACCESS: DATEREC)
+                END (*DIRENTRY*) ;
+
+     DIRP = ^ DIRECTORY;
+     DIRECTORY = ARRAY [DIRRANGE] OF DIRENTRY;
+
+     WINDOWP = ^ WINDOW;
+     WINDOW = PACKED ARRAY [0..0] OF CHAR;
+     FIBP = ^ FIB;
+
+     FIB = RECORD
+             FWINDOW: WINDOWP;
+             FEOF,FEOLN: BOOLEAN;
+             FSTATE: (FJANDW,FNEEDCHAR,FGOTCHAR);
+             FRECSIZE: INTEGER;
+             CASE FISOPEN: BOOLEAN OF
+               TRUE: (FISBLKD: BOOLEAN;
+                      FUNIT: UNITNUM;
+                      FVID: VID;
+                      FREPTCNT,
+                      FNXTBLK,
+                      FMAXBLK: INTEGER;
+                      FMODIFIED:BOOLEAN;
+                      FHEADER: DIRENTRY;
+                      CASE FSOFTBUF: BOOLEAN OF
+                        TRUE: (FNXTBYTE,FMAXBYTE: INTEGER;
+                               FBUFCHNGD: BOOLEAN;
+                               FBUFFER: PACKED ARRAY [0..FBLKSIZE] OF CHAR))
+           END (*FIB*) ;
+
+     SYSCOMREC = RECORD
+                   IORSLT: IORSLTWD;
+                   XEQERR: INTEGER
+                 END (*SYSCOMREC*) ;
+
+VAR SYSCOM: ^ SYSCOMREC;                {   1 }
+    GFILES: ARRAY [0..5] OF FIBP;       {   2..7 }
+
+{ The operating system's own procedures. Only the numbering matters:
+  a forward that is never called and never defined contributes nothing
+  but its position, and the position is what CXP 0,n names. }
+
+PROCEDURE EXECERRO; FORWARD;   { CXP 0,2 }
+PROCEDURE FINIT; FORWARD;   { CXP 0,3 }
+PROCEDURE FRESET; FORWARD;   { CXP 0,4 }
+PROCEDURE FOPEN; FORWARD;   { CXP 0,5 }
+PROCEDURE FCLOSE; FORWARD;   { CXP 0,6 }
+PROCEDURE FGET(VAR F: FIB); FORWARD;   { CXP 0,7 }
+PROCEDURE FPUT; FORWARD;   { CXP 0,8 }
+PROCEDURE XSEEK; FORWARD;   { CXP 0,9 }
+FUNCTION FEOFF: INTEGER; FORWARD;   { CXP 0,10 }
+FUNCTION FEOLNN: INTEGER; FORWARD;   { CXP 0,11 }
+PROCEDURE FREADINT(VAR F: FIB; VAR I: INTEGER); FORWARD;   { CXP 0,12 }
+PROCEDURE FWRITEIN; FORWARD;   { CXP 0,13 }
+PROCEDURE XREADREA; FORWARD;   { CXP 0,14 }
+PROCEDURE XWRITERE; FORWARD;   { CXP 0,15 }
+PROCEDURE FREADCHA; FORWARD;   { CXP 0,16 }
+PROCEDURE FWRITECH; FORWARD;   { CXP 0,17 }
+PROCEDURE FREADSTR; FORWARD;   { CXP 0,18 }
+PROCEDURE FWRITESTRING(VAR F: FIB; VAR S: STRING; RLENG: INTEGER); FORWARD;
+PROCEDURE FWRITEBY; FORWARD;   { CXP 0,20 }
+PROCEDURE FREADLN; FORWARD;   { CXP 0,21 }
+PROCEDURE FWRITELN; FORWARD;   { CXP 0,22 }
+PROCEDURE SCONCAT; FORWARD;   { CXP 0,23 }
+PROCEDURE SINSERT; FORWARD;   { CXP 0,24 }
+PROCEDURE SCOPY; FORWARD;   { CXP 0,25 }
+PROCEDURE SDELETE; FORWARD;   { CXP 0,26 }
+FUNCTION SPOS: INTEGER; FORWARD;   { CXP 0,27 }
+FUNCTION FBLOCKIO: INTEGER; FORWARD;   { CXP 0,28 }
+PROCEDURE FGOTOXY; FORWARD;   { CXP 0,29 }
+FUNCTION VOLSEARC: INTEGER; FORWARD;   { CXP 0,30 }
+PROCEDURE WRITEDIR; FORWARD;   { CXP 0,31 }
+FUNCTION DIRSEARC: INTEGER; FORWARD;   { CXP 0,32 }
+FUNCTION SCANTITL: INTEGER; FORWARD;   { CXP 0,33 }
+PROCEDURE DELENTRY; FORWARD;   { CXP 0,34 }
+PROCEDURE INSENTRY; FORWARD;   { CXP 0,35 }
+PROCEDURE HOMECURS; FORWARD;   { CXP 0,36 }
+PROCEDURE CLEARSCR; FORWARD;   { CXP 0,37 }
+PROCEDURE CLEARLIN; FORWARD;   { CXP 0,38 }
+PROCEDURE PROMPT; FORWARD;   { CXP 0,39 }
+FUNCTION SPACEWAI: INTEGER; FORWARD;   { CXP 0,40 }
+FUNCTION GETCHAR: INTEGER; FORWARD;   { CXP 0,41 }
+FUNCTION FETCHDIR: INTEGER; FORWARD;   { CXP 0,42 }
+PROCEDURE OSPROC43; FORWARD;   { CXP 0,43 }
+PROCEDURE OSPROC44; FORWARD;   { CXP 0,44 }
+PROCEDURE OSPROC45; FORWARD;   { CXP 0,45 }
+PROCEDURE OSPROC46; FORWARD;   { CXP 0,46 }
+PROCEDURE OSPROC47; FORWARD;   { CXP 0,47 }
+PROCEDURE OSPROC48; FORWARD;   { CXP 0,48 }
+FUNCTION OSPROC49(VAR F: FIB): BOOLEAN; FORWARD;   { CXP 0,49 }
+
+UNIT LONGINTIO; INTRINSIC CODE 30;
+
+INTERFACE
+
+  TYPE DECMAX = INTEGER[36];
+       STUNT = RECORD CASE INTEGER OF
+                 2:(W2:INTEGER[4]);
+                 3:(W3:INTEGER[8]);
+                 4:(W4:INTEGER[12]);
+                 5:(W5:INTEGER[16]);
+                 6:(W6:INTEGER[20]);
+                 7:(W7:INTEGER[24]);
+                 8:(W8:INTEGER[28]);
+                 9:(W9:INTEGER[32]);
+                 10:(W10:INTEGER[36])
+               END;
+
+  PROCEDURE FREADDEC(VAR F: FIB; VAR D: STUNT; L: INTEGER);
+  PROCEDURE FWRITEDEC(VAR F: FIB; D: DECMAX; RLENG: INTEGER);
+
+IMPLEMENTATION
+
+{ Apple declares FWRITEDEC first and FREADDEC second: the shipped segment
+  puts procedure 3 at $0000 and procedure 2 at $0020, and procedures are
+  emitted where they are declared (finding 94b). }
+
+  PROCEDURE FWRITEDEC;
+    VAR S: STRING[38]; SPARE: INTEGER;
+  BEGIN
+    STR(D,S);
+    FWRITESTRING(F,S,RLENG)
+  END (*FWRITEDEC*) ;
+
+  PROCEDURE FREADDEC;
+    VAR CH: CHAR; NEG, GOTDIGIT: BOOLEAN; DIGIT, SPARE: INTEGER;
+  BEGIN
+    WITH F DO
+      BEGIN
+        WITH D DO
+          CASE L OF
+            2: W2 := 0;
+            3: W3 := 0;
+            4: W4 := 0;
+            5: W5 := 0;
+            6: W6 := 0;
+            7: W7 := 0;
+            8: W8 := 0;
+            9: W9 := 0;
+            10: W10 := 0
+          END;
+        NEG := FALSE;
+        GOTDIGIT := FALSE;
+        IF FSTATE = FNEEDCHAR THEN FGET(F);
+        WHILE (FWINDOW^[0] = ' ') AND NOT FEOF DO FGET(F);
+        IF FEOF THEN
+        ELSE
+          BEGIN
+            CH := FWINDOW^[0];
+            IF (CH = '+') OR (CH = '-') THEN
+              BEGIN
+                NEG := CH = '-';
+                FGET(F);
+                CH := FWINDOW^[0]
+              END;
+            WHILE (CH >= '0') AND (CH <= '9') AND NOT FEOF DO
+              BEGIN
+                GOTDIGIT := TRUE;
+                DIGIT := ORD(CH) - 48;
+                IF NEG THEN DIGIT := -DIGIT;
+                WITH D DO
+                  CASE L OF
+                    2: W2 := 10*W2 + DIGIT;
+                    3: W3 := 10*W3 + DIGIT;
+                    4: W4 := 10*W4 + DIGIT;
+                    5: W5 := 10*W5 + DIGIT;
+                    6: W6 := 10*W6 + DIGIT;
+                    7: W7 := 10*W7 + DIGIT;
+                    8: W8 := 10*W8 + DIGIT;
+                    9: W9 := 10*W9 + DIGIT;
+                    10: W10 := 10*W10 + DIGIT
+                  END;
+                FGET(F);
+                CH := FWINDOW^[0]
+              END;
+            IF NOT (GOTDIGIT OR FEOF) THEN SYSCOM^.IORSLT := IBADFORMAT
+          END
+      END
+  END (*FREADDEC*) ;
+
+{ Procedure 4: the 6502 long-integer engine. Declared last because it is
+  number 4, and EXTERNAL because it is not Pascal. The linker appends it
+  after the unit body, which is why procedure 1 sits below it in the
+  shipped image. }
+
+  PROCEDURE LONGOPS; EXTERNAL;
+
+BEGIN
+END (*LONGINTIO*) ;
+
+BEGIN
+END.
