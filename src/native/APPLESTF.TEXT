@@ -1,0 +1,437 @@
+;---------------------------------------------------
+; APPLESTUFF's six native procedures, SYSTEM.LIBRARY
+; segment 22: PADDLE, BUTTON, TTLOUT, NOTE, RANDOM
+; and RANDOMIZE.
+;
+; Everything in the unit that touches the machine is
+; here; what is left in Pascal is KEYPRESS and the
+; unit body, and those are in
+; src/pascal/units/1.3/APPLESTUFF.text.
+;
+; Reconstructed from the 1.3 binary. Assemble with
+; Apple's own SYSTEM.ASSMBLER: it generates the
+; relocation tables (finding 44), and those are part
+; of what has to match.
+;
+; The order below is the order the six sit in the
+; shipped segment, which is the order they were
+; assembled in and not the order the interface
+; declares them (finding 96c).
+;
+; The file name is ours, and so are the labels;
+; Apple's are not in the codefile.
+;
+; Zero page: $00-$06. A native procedure runs inside
+; the interpreter, and everything below $50 is free
+; while it does -- the p-machine's own registers
+; start at BASE, $50.
+;---------------------------------------------------
+
+RTN     .EQU 00         ; return address, saved here
+T1      .EQU 03         ; NOTE: first half-period
+T2      .EQU 04         ; NOTE: second half-period
+CNTLO   .EQU 05         ; NOTE: duration counter
+CNTHI   .EQU 06
+
+;
+; The Apple II's own addresses.
+;
+PTRIG   .EQU 0C070      ; start the paddle timers
+PADDL0  .EQU 0C064      ; paddle 0 timer, +X for the rest
+BUTN0   .EQU 0C060      ; BUTTON's base: BUTN0+1 is button 0
+TTL0    .EQU 0C058      ; annunciator 0 off; +1 is 0 on
+SPKR    .EQU 0C030      ; toggles the speaker
+TIME    .EQU 0BF13      ; SYSCOM's date word, for a seed
+
+        .FUNC PADDLE,1
+        .TITLE "PADDLE Function"
+;---------------------------------------------------
+; FUNCTION PADDLE(SELECT: INTEGER): INTEGER
+;
+; Read one of the four paddles. Reading PTRIG starts
+; all four timers at once; PADDL0+SELECT then reads
+; high until its own timer runs out, so counting the
+; iterations gives the position, 0..255.
+;
+; The count saturates rather than wrapping: DEY after
+; the loop falls out at zero puts back the 255.
+;---------------------------------------------------
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+;
+; Four bytes of function result space, then SELECT.
+; The parameter arrives low byte first; only the low
+; two bits of it are used, and the high byte is
+; dropped.
+;
+        PLA
+        PLA
+        PLA
+        PLA
+        PLA
+        AND #03
+        TAX
+        PLA
+;
+; NOP NOP is timing: the loop has to take the same
+; number of cycles per iteration as the hardware
+; expects, and this is where Apple padded it.
+;
+        LDA PTRIG
+        LDY #00
+        NOP
+        NOP
+COUNT   LDA PADDL0,X
+        BPL DONE
+        INY
+        BNE COUNT
+        DEY
+DONE    LDA #00
+        PHA
+        TYA
+        PHA
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+        .FUNC BUTTON,1
+        .TITLE "BUTTON Function"
+;---------------------------------------------------
+; FUNCTION BUTTON(SELECT: INTEGER): BOOLEAN
+;
+; The three pushbuttons are at BUTN0+1, +2 and +3, so
+; SELECT is biased up by one before it indexes. That
+; also means BUTTON(3) reads BUTN0, the cassette
+; input, which is what the wrap makes of it.
+;---------------------------------------------------
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+        PLA
+        PLA
+        PLA
+        PLA
+        PLA
+        CLC
+        ADC #01
+        AND #03
+        TAX
+        PLA
+        LDA #00
+        PHA
+        LDA BUTN0,X
+        BPL FALSE
+        LDA #01
+        BNE PUSH
+FALSE   LDA #00
+PUSH    PHA
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+        .PROC TTLOUT,2
+        .TITLE "TTLOUT Procedure"
+;---------------------------------------------------
+; PROCEDURE TTLOUT(SELECT: INTEGER; DATA: BOOLEAN)
+;
+; Set annunciator SELECT to DATA. The switches are
+; two per annunciator, off then on, so the address is
+; TTL0 + 2*SELECT + DATA -- which is what shifting
+; DATA into the carry and rolling it back in on top
+; of SELECT builds.
+;
+; DATA is popped first: it is the last parameter, so
+; it is on top.
+;---------------------------------------------------
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+        PLA
+        LSR A
+        PLA
+        PLA
+        AND #03
+        ROL A
+        TAY
+        LDA TTL0,Y
+        PLA
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+        .PROC NOTE,2
+        .TITLE "NOTE Procedure"
+;---------------------------------------------------
+; PROCEDURE NOTE(PITCH,DURATION: INTEGER)
+;
+; A square wave on the speaker. PITCH indexes a table
+; of half-periods, two bytes per semitone, 0..50;
+; DURATION counts toggles, and pitch 0 is the rest --
+; its table entry is zero, so the wave never toggles
+; and only the counter runs.
+;
+; The three JMPs to the following instruction and the
+; three NOPs are not dead code: they are cycle
+; padding, so that the toggling path and the
+; counting path take the same time whichever way the
+; carry falls. Each has to be written as a label
+; reference, not as an address, or the relocation
+; table comes out three entries short.
+;---------------------------------------------------
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+        PLA
+        STA DUR
+        PLA
+        PLA
+        STA PITCH
+        PLA
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        JMP SETUP
+;
+; Toggle, then wait out the first half-period.
+;
+HALF1   LDY T2
+        LDA SPKR
+TICK1   INC CNTLO
+        BNE T1A
+        INC CNTHI
+        BNE T1B
+        RTS
+T1A     NOP
+        JMP T1B
+T1B     DEY
+        BEQ HALF2
+        JMP T1C
+T1C     BNE TICK1
+;
+; Toggle again, and wait out the second.
+;
+HALF2   LDY T1
+        LDA SPKR
+TICK2   INC CNTLO
+        BNE T2A
+        INC CNTHI
+        BNE T2B
+        RTS
+T2A     NOP
+        JMP T2B
+T2B     DEY
+        BEQ HALF1
+        JMP T2C
+T2C     BNE TICK2
+;
+; Split the semitone's two halves by VOLUME. The
+; shift loop divides the first half-period by two
+; once per bit of VOLUME, and takes what it gets off
+; one half and adds it to the other, so the wave
+; stays at pitch and changes duty. Shipped as $FF,
+; which shifts eight times and leaves nothing: the
+; wave comes out symmetric.
+;
+SETUP   LDA PITCH
+        ASL A
+        TAY
+        LDA TABLE,Y
+        STA T1
+        LDA VOLUME
+SHIFT   LSR A
+        BEQ SKEW
+        LSR T1
+        BNE SHIFT
+SKEW    LDA TABLE,Y
+        SEC
+        SBC T1
+        STA T2
+        INY
+        LDA TABLE,Y
+        ADC T1
+        STA T1
+;
+; Count up to zero from -DURATION, and start.
+;
+        LDA #00
+        SEC
+        SBC DUR
+        STA CNTHI
+        LDA #00
+        STA CNTLO
+        LDA T2
+        BNE HALF1
+;
+; Pitch 0: the same loop with the speaker left alone.
+;
+REST    NOP
+        NOP
+        JMP T3
+T3      INC CNTLO
+        BNE T3A
+        INC CNTHI
+        BNE T3B
+        RTS
+T3A     NOP
+        JMP T3B
+T3B     BNE REST
+
+PITCH   .BYTE 000
+DUR     .BYTE 000
+VOLUME  .BYTE 0FF
+
+;
+; Half-periods, two per semitone. Where the two
+; differ by one the pair averages to a period the
+; single byte cannot hold.
+;
+TABLE   .BYTE 000,000          ; 0, the rest
+        .BYTE 0F6,0F6          ; 1
+        .BYTE 0E8,0E8          ; 2
+        .BYTE 0DB,0DB          ; 3
+        .BYTE 0CF,0CF          ; 4
+        .BYTE 0C3,0C3          ; 5
+        .BYTE 0B8,0B8          ; 6
+        .BYTE 0AE,0AE          ; 7
+        .BYTE 0A4,0A4          ; 8
+        .BYTE 09B,09B          ; 9
+        .BYTE 092,092          ; 10
+        .BYTE 08A,08A          ; 11
+        .BYTE 082,082          ; 12
+        .BYTE 07B,07B          ; 13
+        .BYTE 074,074          ; 14
+        .BYTE 06D,06E          ; 15
+        .BYTE 067,068          ; 16
+        .BYTE 061,062          ; 17
+        .BYTE 05C,05C          ; 18
+        .BYTE 057,057          ; 19
+        .BYTE 052,052          ; 20
+        .BYTE 04D,04E          ; 21
+        .BYTE 049,049          ; 22
+        .BYTE 045,045          ; 23
+        .BYTE 041,041          ; 24
+        .BYTE 03D,03E          ; 25
+        .BYTE 03A,03A          ; 26
+        .BYTE 036,037          ; 27
+        .BYTE 033,034          ; 28
+        .BYTE 030,031          ; 29
+        .BYTE 02E,02E          ; 30
+        .BYTE 02B,02C          ; 31
+        .BYTE 029,029          ; 32
+        .BYTE 026,027          ; 33
+        .BYTE 024,025          ; 34
+        .BYTE 022,023          ; 35
+        .BYTE 020,021          ; 36
+        .BYTE 01E,01F          ; 37
+        .BYTE 01D,01D          ; 38
+        .BYTE 01B,01C          ; 39
+        .BYTE 01A,01A          ; 40
+        .BYTE 018,019          ; 41
+        .BYTE 017,017          ; 42
+        .BYTE 015,016          ; 43
+        .BYTE 014,015          ; 44
+        .BYTE 013,014          ; 45
+        .BYTE 012,012          ; 46
+        .BYTE 011,011          ; 47
+        .BYTE 010,010          ; 48
+        .BYTE 00F,010          ; 49
+        .BYTE 00E,00F          ; 50
+
+        .FUNC RANDOM,0
+        .TITLE "RANDOM Function"
+;---------------------------------------------------
+; FUNCTION RANDOM: INTEGER
+;
+; A 32-bit shift register, eight steps per call. The
+; feedback is the exclusive-or of the bit shifted out
+; of the low byte -- saved in the carry by PHP -- and
+; the sign of the new high byte, and there is no
+; branch that computes it: the two BMI/BPL pairs pick
+; the arm that puts the answer back with INC.
+;
+; The result is fifteen bits, high byte from SEED
+; shifted down so it cannot go negative.
+;
+; SEED is .DEF'd because RANDOMIZE writes it, and
+; that is what makes RANDOMIZE's six references
+; segment-relative rather than procedure-relative.
+;---------------------------------------------------
+        .DEF SEED
+        PLA
+        STA RTN
+        PLA
+        STA RTN+1
+        PLA
+        PLA
+        PLA
+        PLA
+        LDY #07
+SPIN    ASL SEED
+        PHP
+        ROL SEED+1
+        ROL SEED+2
+        ROL SEED+3
+        BMI HIGH
+        PLP
+        BPL NEXT
+        BMI FEED
+HIGH    PLP
+        BMI NEXT
+FEED    INC SEED
+NEXT    DEY
+        BNE SPIN
+        LDA SEED
+        LSR A
+        PHA
+        LDA SEED+2
+        PHA
+        LDA RTN+1
+        PHA
+        LDA RTN
+        PHA
+        RTS
+
+SEED    .BYTE 05A,0B2,0F6,093
+
+        .PROC RANDOMIZE,0
+        .TITLE "RANDOMIZE Procedure"
+;---------------------------------------------------
+; PROCEDURE RANDOMIZE
+;
+; Reseed from the system date in SYSCOM. Each of the
+; two words goes into two bytes of the seed, so the
+; seed is only sixteen bits of entropy however long
+; it is -- and an all-zero seed would stick, since
+; the shift register would have nothing to shift, so
+; a zero date is turned into $55.
+;
+; It takes no parameters and returns nothing, so
+; there is no return address to save: the RTS at the
+; end returns straight through.
+;---------------------------------------------------
+        .REF SEED
+        LDA TIME
+        STA SEED
+        STA SEED+1
+        LDA TIME+1
+        STA SEED+2
+        STA SEED+3
+        ORA SEED
+        BNE DONE
+        LDA #55
+        STA SEED+3
+DONE    RTS
+
+        .END

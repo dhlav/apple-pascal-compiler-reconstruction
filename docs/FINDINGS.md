@@ -9560,8 +9560,13 @@ Neither segment can be closed end to end from here, and for the same reason
 
 | unit | segment | p-code | native | result |
 |---|---|---|---|---|
-| LONGINTIO | 30 | 3 of 4 | 1850 bytes | 3 of 3 byte-identical, short by the native tail |
-| APPLESTUFF | 22 | 2 of 8 | 572 bytes in six | 2 of 2 byte-identical, short by the native tail |
+| LONGINTIO | 30 | 3 of 4 | 1852 bytes | 3 of 3 byte-identical, short by the native tail |
+| APPLESTUFF | 22 | 2 of 8 | 584 bytes in six | 2 of 2 byte-identical, short by the native tail |
+
+The native figures are each procedure's whole extent, `enter_ic` through
+`jtab + 2`, which is what the segment is actually short by. This table first
+gave 1850 and 572, which left out the two-byte attribute word per
+procedure; the corrected figures are what finding 98 reassembles.
 
 ### 96a. LONGINTIO's two procedures are PASCALIO's two procedures
 
@@ -9682,3 +9687,112 @@ Procedure 23 emits `CHK 0,1`. Range checking is off under `(*$U-*)` (finding
 LONGINTIO -- was compiled as an ordinary program is, and needs no
 operating-system host to compile. It reaches the machine through `$00BB` and
 the soft switches instead of through lex -1.
+
+## 98. The library's native half: all fourteen procedures reassemble to Apple's bytes
+
+*Confidence: VERIFIED BINARY FACT. `tools/probes/probe_lib_native_asm.py`,
+146 checks, run by `tools/build_all.py`.*
+
+Three of the six library units are part 6502, and `src/native/` now carries
+every one of those procedures as source in the Apple Pascal Assembler's
+language. All fourteen assemble to the shipped bytes over the whole
+procedure -- `enter_ic` through `jtab + 2`, so instructions, embedded data,
+all four relocation tables, ENTER IC and the attribute word.
+
+| file | unit | procedures | bytes |
+|---|---|---|---|
+| `APPLESTF.TEXT` | APPLESTUFF | 6 | 584 |
+| `TURTLEGR.TEXT` | TURTLEGRAPHICS | 7 | 2246 |
+| `LONGINTS.TEXT` | LONGINTIO | 1 | 1852 |
+
+With finding 97's Pascal, that closes APPLESTUFF and TURTLEGRAPHICS and
+LONGINTIO end to end: every byte of all six library units is now accounted
+for by source in this repository, 55 p-code procedures and 14 native ones.
+
+As with finding 45, the relocation tables are what make this a real test.
+Nothing in the source names an entry; they are derived from which operands
+mention a label, so getting them right means having written every reference
+the way Apple did. The three files come to 4682 bytes and
+170 relocation entries -- 144 procedure-relative, 21 segment-relative and 5
+Interpreter-relative, and none base-relative -- and the probe checks each
+kind separately rather than only the byte total.
+
+### 98a. Segment-relative relocation is a `.DEF`/`.REF` pair, and it is how the natives call each other
+
+APPLESTUFF and TURTLEGRAPHICS both have segment-relative entries -- 6 and
+15 of them -- which `SYSTEM.COMPILER`'s two natives do not (finding 44e).
+Every one is a
+reference from one `.PROC` to a label in another `.PROC` of the same
+assembly: the Linker resolves it to an offset within the segment, which is
+why it cannot be procedure-relative.
+
+They are also the evidence for structure that nothing else would show:
+
+* **RANDOMIZE reseeds four bytes that live inside RANDOM.** RANDOM's own
+  references to its seed are procedure-relative; RANDOMIZE's six references
+  to the same four bytes are segment-relative. So the seed is a label in
+  RANDOM, `.DEF`'d, and the two are separate procedures in one file.
+* **TURTLEGRAPHICS' two private natives are a subroutine library for the
+  other five.** Procedure 30 exports six entry points and procedure 31 one,
+  and the fifteen segment-relative entries across the unit are calls to
+  them: page select, pen colour, position, plot, step right, draw a line,
+  and clip to the viewport. MOVEREL's single entry is a jump into the middle
+  of MOVEABS, which is where the two become the same routine.
+
+That is why 30 and 31 are declared last in the Pascal (finding 97's
+declaration order): nothing in the Pascal calls them at all.
+
+### 98b. RELOCSEG is determined, and it is not in the assembly
+
+The high byte of a native procedure's attribute word is RELOCSEG, and the
+manual fixes what it means (IV-36): base-relative relocation goes through
+the BASE register when it is 0, and through the data segment it names when
+it is not, with 1 for an Intrinsic Unit that has no data segment. The disk
+agrees exactly -- `PASCALCO`'s two natives are 0, APPLESTUFF's and
+LONGINTIO's are 1, and TURTLEGRAPHICS' seven are 21, which is its DATA
+segment. So the byte is a Linker product derived from the Pascal host's
+`INTRINSIC CODE 20 DATA 21`, and the probe checks the disk against the rule
+rather than reading the byte off the disk and handing it back.
+
+### 98c. What a linear sweep cannot tell you, and what the relocation tables can
+
+Five of the fourteen have data inside them, and a linear sweep runs straight
+through it producing plausible nonsense. Two of the five are found by the
+sweep failing -- an illegal opcode -- but three are not, and one of those
+matters:
+
+`LONGINTIO`'s comparison dispatcher holds six four-byte patches, one per
+relational operator, that it copies over four NOPs in its own body before
+running them. Swept linearly they decode as branches, and they decode
+*legally*: the sweep lands on the end of the procedure with nothing to
+complain about. What gives them away is that the branches they decode to
+land in the middle of other instructions, which is exactly the check that
+reassembly is: a label cannot go there, so no source can produce those bytes
+as code.
+
+### 98d. What the bytes do not settle
+
+The same limits as finding 45b. Every label name and every comment is ours;
+Apple's are not in the codefile. Two of the three files are named and
+commented throughout; `LONGINTS.TEXT` is not. Its eleven operations are
+reached through a jump table and the source says so, but what each of them
+computes has not been read out, and its interior labels are written
+`L<nnnn>` -- the label's offset from the start of the procedure -- as
+placeholders. Nothing about those is recovered, and nothing about them needs
+to be for the bytes to be right; it is the reading that is missing, not the
+reconstruction.
+
+`tools/asmskel.py` writes that mechanical layer -- labels where something
+jumps or a relocation points, symbolic operands where the binary says the
+operand was symbolic, `.BYTE` for the data regions. It is deliberately not
+wired into `build_all.py`: nothing in `analysis/` should look like source.
+
+### 98e. The acceptance test is still the emulator
+
+`tools/asm6502.py` has grown `.DEF`, `.REF`, `.INTERP`, `JMP` indirect and
+the zero-page-to-absolute widening that `STA abs,Y` needs, because the
+library uses all of them and `SEARCH.TEXT` used none. It is still not the
+authority: **`SYSTEM.ASSMBLER`** is, and running these three files through it
+under AppleWin is what would finally settle the native half, exactly as
+recompiling under Apple's compiler settles the Pascal half. What the probe
+rules out is the whole class of errors that would fail there too.

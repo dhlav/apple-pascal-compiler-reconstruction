@@ -1,0 +1,967 @@
+;---------------------------------------------------
+; LONGINTIO's fourth procedure: the long-integer
+; engine, SYSTEM.LIBRARY segment 30.
+;
+; The unit's other three procedures are Pascal and
+; are in src/pascal/units/1.3/LONGINTIO.text. This
+; one is 1706 bytes of 6502 and is the whole of Apple
+; Pascal's long-integer arithmetic: every CXP 30,4 in
+; the library lands here, including the two that
+; LONGINTIO's own FREADDEC makes (finding 96a).
+;
+; Reconstructed from the 1.3 binary. Assemble with
+; Apple's own SYSTEM.ASSMBLER: it generates the
+; relocation tables (finding 44), and those are part
+; of what has to match. It comes out byte for byte --
+; 1852 bytes with the tables, 62 procedure-relative
+; and 5 Interpreter-relative relocations.
+;
+; How it is entered. The caller pushes an operation
+; number, and the first thing the procedure does is
+; index OPS with it and jump indirect. The eleven
+; words of OPS are the eleven operations; they are
+; .WORDs of labels, which is what puts them in the
+; procedure-relative relocation table, and writing
+; them as addresses would leave the table eleven
+; entries short and the jumps would go into page
+; zero.
+;
+; RETURN is the common exit: it steps the saved
+; return address on by one before returning through
+; it, so the byte after the call site is skipped.
+;
+; DECLEN reaches into SYSCOM through .INTERP+4 and
+; takes one off a word at offset $3C. The three
+; entries after it are the error exits -- they load
+; A with 5, 13 and 6 and jump through .INTERP+0, the
+; Interpreter's error poster, which is the documented
+; way for assembly code to raise a runtime error
+; (1.3 manual IV-10).
+;
+; What is ours: every label name and every comment.
+; Labels written L<nnnn> are the label's offset from
+; the start of the procedure and are placeholders --
+; nothing about them is recovered, and naming the
+; eleven operations would take reading the whole
+; engine, which has not been done. The bytes are
+; settled; the reading of them is not.
+;
+; Zero page: $76 up. The engine works on the 6502
+; stack page directly, which is why $0100 turns up
+; indexed throughout.
+;---------------------------------------------------
+
+RTN     .EQU 076        ; return address, saved on entry
+VECTOR  .EQU 078        ; the operation's address
+
+        .PROC LONGOPS,0
+
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        PLA
+        TAX
+        PLA
+        LDA  OPS,X
+        STA  VECTOR
+        LDA  OPS+001,X
+        STA  VECTOR+1
+        JMP  @VECTOR
+;       ---- data
+OPS     .WORD L00ED
+        .WORD L0298
+        .WORD L02C5
+        .WORD L011C
+        .WORD L02F8
+        .WORD L040E
+        .WORD L064E
+        .WORD L056A
+        .WORD L012B
+        .WORD L054E
+        .WORD L05C7
+RETURN  INC  RTN
+        BNE  L0032
+        INC  RTN+1
+L0032   JMP  @RTN
+DECLEN  LDA  .INTERP+4
+        STA  086
+        LDA  .INTERP+5
+        STA  087
+        LDA  0BF22
+        AND  #040
+        BEQ  L0051
+        LDA  #0A0
+        STA  088
+        LDA  #001
+        STA  089
+        JMP  L0059
+L0051   LDA  #0C0
+        STA  088
+        LDA  #000
+        STA  089
+L0059   SEC
+        LDA  086
+        SBC  088
+        STA  086
+        LDA  087
+        SBC  089
+        STA  087
+        LDY  #03C
+        SEC
+        LDA  @086,Y
+        SBC  #001
+        STA  @086,Y
+        INY
+        LDA  @086,Y
+        SBC  #000
+        STA  @086,Y
+        RTS
+L0077   JSR  DECLEN
+        LDA  #005
+        JMP  @.INTERP
+L007F   JSR  DECLEN
+        LDA  #00D
+        JMP  @.INTERP
+L0087   JSR  DECLEN
+        LDA  #006
+        JMP  @.INTERP
+L008F   PLA
+        STA  07A
+        PLA
+        STA  07B
+        PLA
+        STA  081
+        DEC  081
+        ASL  081
+        PLA
+        PLA
+        STA  083
+        PLA
+        TSX
+        INX
+L00A3   LDA  00100,X
+        BNE  L00AD
+        INX
+        DEC  081
+        BNE  L00A3
+L00AD   STX  07D
+        TXA
+        CLC
+        ADC  081
+        TAX
+        DEX
+        STX  07F
+        INX
+        LDA  00100,X
+        STA  080
+        DEC  080
+        ASL  080
+        INX
+        INX
+        LDA  00100,X
+        STA  082
+        INX
+        INX
+L00CA   LDA  00100,X
+        BNE  L00D4
+        INX
+        DEC  080
+        BNE  L00CA
+L00D4   STX  07C
+        DEX
+        TXA
+        CLC
+        ADC  080
+        STA  07E
+        LDA  080
+        SEC
+        SBC  081
+        STA  084
+        INC  07A
+        BNE  L00EA
+        INC  07B
+L00EA   JMP  @0007A
+L00ED   PLA
+        STA  086
+        PLA
+        PLA
+        STA  080
+        PLA
+        PLA
+        STA  082
+        PLA
+        LDA  080
+        SEC
+        SBC  086
+        BCC  L010A
+        ASL  A
+        TAX
+L0102   DEX
+        BMI  L0112
+        PLA
+        BNE  L0119
+        BEQ  L0102
+L010A   ASL  A
+        TAX
+        LDA  #000
+L010E   PHA
+        INX
+        BNE  L010E
+L0112   PHA
+        LDA  082
+        PHA
+        JMP  RETURN
+L0119   JMP  L0077
+L011C   TSX
+        INX
+        INX
+        INX
+        LDA  00100,X
+        EOR  #0FF
+        STA  00100,X
+        JMP  RETURN
+L012B   PLA
+        ASL  A
+        ASL  A
+        TAX
+        PLA
+        LDY  #003
+L0132   LDA  L0171+001,X
+        STA  L0173,Y
+        DEX
+        DEY
+        BPL  L0132
+        JSR  L008F
+        LDA  080
+        ORA  081
+        BEQ  L0173
+        LDA  083
+        CMP  082
+        BNE  L0173
+        CMP  #0FF
+        BEQ  L015B
+        LDA  080
+        CMP  081
+        BNE  L0173
+        LDX  07C
+        LDY  07D
+        BNE  L0165
+L015B   LDA  081
+        CMP  080
+        BNE  L0173
+        LDX  07D
+        LDY  07C
+L0165   LDA  00100,X
+        CMP  00100,Y
+        BNE  L0173
+        INX
+        INY
+        DEC  080
+L0171   BNE  L0165
+L0173   NOP
+        NOP
+        NOP
+        NOP
+        JMP  L0186
+        LDX  07E
+        TXS
+        LDA  #000
+        PHA
+        LDA  #001
+        PHA
+L0183   JMP  RETURN
+L0186   LDX  07E
+        TXS
+        LDA  #000
+        PHA
+        PHA
+        BEQ  L0183
+;       ---- data
+        .BYTE 090,005,0EA,0EA,090,005,0F0,003
+        .BYTE 0B0,005,0EA,0EA,0F0,002,0B0,003
+        .BYTE 0D0,005,0EA,0EA,0F0,005,0EA,0EA
+L01A7   LDX  07E
+        TXS
+        LDA  #000
+        PHA
+        PHA
+        PHA
+        PHA
+        PHA
+        LDA  #002
+        PHA
+        JMP  RETURN
+L01B7   LDA  081
+        STA  085
+        LDY  07F
+        LDX  07E
+L01BF   LDA  00100,Y
+        STA  00100,X
+        DEX
+        DEY
+        DEC  085
+        BNE  L01BF
+        TXS
+L01CC   LSR  081
+        BCC  L01D5
+        LDA  #000
+        PHA
+        INC  081
+L01D5   PHA
+        LDA  083
+        PHA
+        PHA
+        INC  081
+        LDA  081
+        PHA
+        JMP  RETURN
+L01E2   LDY  080
+        LDX  084
+        BMI  L01EE
+        LDY  081
+        LDA  080
+        STA  081
+L01EE   STY  085
+        LDY  07F
+        LDX  07E
+        CLC
+        SED
+L01F6   LDA  00100,Y
+        ADC  00100,X
+        STA  00100,X
+        DEX
+        DEY
+        DEC  085
+        BNE  L01F6
+        LDA  084
+        BEQ  L0221
+        BMI  L0213
+        EOR  #0FF
+        STA  084
+        INC  084
+        TXA
+        TAY
+L0213   LDA  00100,Y
+        ADC  #000
+        STA  00100,X
+        DEX
+        DEY
+        INC  084
+        BNE  L0213
+L0221   CLD
+        TXS
+        BCC  L022A
+        LDA  #001
+        PHA
+        INC  081
+L022A   LDA  082
+        STA  083
+        JMP  L01CC
+L0231   LDA  080
+        CMP  081
+        BNE  L024E
+        STA  085
+        LDX  07C
+        LDY  07D
+L023D   LDA  00100,X
+        CMP  00100,Y
+        BNE  L024E
+        INX
+        INY
+        DEC  085
+        BNE  L023D
+        JMP  L01A7
+L024E   BCS  L025A
+        LDX  07E
+        LDY  07F
+        LDA  080
+        STA  085
+        BNE  L0262
+L025A   LDX  07F
+        LDY  07E
+        LDA  081
+        STA  085
+L0262   SEC
+        SED
+L0264   LDA  00100,Y
+        SBC  00100,X
+        STA  00100,Y
+        DEX
+        DEY
+        DEC  085
+        BNE  L0264
+        BCS  L0280
+L0275   LDA  00100,Y
+        SBC  #000
+        STA  00100,Y
+        DEY
+        BCC  L0275
+L0280   CLD
+        CPY  07F
+        BCS  L0292
+        LDA  086
+        BEQ  L028F
+        LDA  083
+        EOR  #0FF
+        STA  083
+L028F   JMP  L01B7
+L0292   LDX  07F
+        TXS
+        JMP  RETURN
+L0298   JSR  L008F
+        LDA  080
+        ORA  081
+        BNE  L02A4
+        JMP  L01A7
+L02A4   LDA  080
+        BNE  L02AB
+        JMP  L01B7
+L02AB   LDA  081
+        BNE  L02B5
+        LDX  07F
+        TXS
+        JMP  RETURN
+L02B5   LDA  082
+        EOR  083
+        BMI  L02BE
+        JMP  L01E2
+L02BE   LDA  #000
+        STA  086
+        JMP  L0231
+L02C5   JSR  L008F
+        LDA  080
+        ORA  081
+        BNE  L02D1
+        JMP  L01A7
+L02D1   LDA  080
+        BNE  L02DE
+        LDA  083
+        EOR  #0FF
+        STA  083
+        JMP  L01B7
+L02DE   LDA  081
+        BNE  L02E8
+        LDX  07F
+        TXS
+        JMP  RETURN
+L02E8   LDA  082
+        EOR  083
+        BPL  L02F1
+        JMP  L01E2
+L02F1   LDA  #001
+        STA  086
+        JMP  L0231
+L02F8   JSR  L008F
+        LDA  080
+        BEQ  L0303
+        LDA  081
+        BNE  L0306
+L0303   JMP  L01A7
+L0306   LDA  082
+        EOR  083
+        STA  083
+        TSX
+        STX  086
+        LDA  080
+        STA  089
+        INC  089
+        CLC
+        ADC  081
+        STA  088
+        TXA
+        SEC
+        SBC  088
+        STA  087
+        SBC  088
+        TAX
+        TXS
+        LDY  088
+        LDX  086
+        LDA  #000
+L032A   STA  00100,X
+        DEX
+        DEY
+        BNE  L032A
+        LDA  086
+        STA  08D
+        LDA  088
+        STA  08E
+        LDA  081
+        STA  08A
+        LDA  07F
+        STA  08B
+        SED
+L0342   LDA  #000
+        STA  08C
+        LDY  088
+        LDX  087
+L034A   STA  00100,X
+        DEX
+        DEY
+        BNE  L034A
+        LDX  08B
+        LDA  00100,X
+        LDX  #006
+L0358   CMP  L03C2,X
+        BCC  L0360
+        SBC  L03C2,X
+L0360   ROL  08C
+        DEX
+        BPL  L0358
+        LDX  07E
+        LDY  087
+        LDA  080
+        STA  085
+L036D   LDA  00100,X
+        STA  00100,Y
+        DEX
+        DEY
+        DEC  085
+        BNE  L036D
+L0379   LSR  08C
+        BCC  L0395
+        LDX  087
+        LDY  08D
+        LDA  08E
+        STA  085
+        CLC
+L0386   LDA  00100,X
+        ADC  00100,Y
+        STA  00100,Y
+        DEX
+        DEY
+        DEC  085
+        BNE  L0386
+L0395   LDA  08C
+        BEQ  L03AC
+        LDX  087
+        LDY  089
+L039D   LDA  00100,X
+        ADC  00100,X
+        STA  00100,X
+        DEX
+        DEY
+        BNE  L039D
+        BEQ  L0379
+L03AC   DEC  08D
+        DEC  08E
+        DEC  08B
+        DEC  08A
+        BNE  L0342
+        CLD
+        LDA  086
+        STA  07F
+        LDA  088
+        STA  081
+        JMP  L01B7
+;       ---- data
+L03C2   .BYTE 001,002,004,008,016,032,064
+L03C9   LDA  #000
+        STA  089
+        LDA  07C
+        CLC
+        ADC  088
+        TAX
+        DEX
+        CPX  07E
+        BEQ  L03DA
+        BCS  L040C
+L03DA   STX  086
+        SED
+        SEC
+L03DE   LDX  086
+        LDY  087
+        LDA  088
+        STA  085
+        BCC  L03FB
+L03E8   LDA  00100,X
+        SBC  00100,Y
+        STA  00100,X
+        DEX
+        DEY
+        DEC  085
+        BNE  L03E8
+        INC  089
+        BNE  L03DE
+L03FB   LDA  00100,X
+        ADC  00100,Y
+        STA  00100,X
+        DEX
+        DEY
+        DEC  085
+        BNE  L03FB
+        DEC  089
+L040C   CLD
+        RTS
+L040E   JSR  L008F
+        LDA  081
+        BNE  L0418
+        JMP  L0087
+L0418   LDA  080
+        CMP  081
+        BNE  L0434
+        LDX  07C
+        LDY  07D
+        LDA  080
+        STA  085
+L0426   LDA  00100,X
+        CMP  00100,Y
+        BNE  L0434
+        INX
+        INY
+        DEC  085
+        BNE  L0426
+L0434   BCS  L0439
+        JMP  L01A7
+L0439   LDA  082
+        EOR  083
+        STA  083
+        LDA  #000
+        DEC  07C
+        LDY  07C
+        STA  00100,Y
+        INC  080
+        LDX  07D
+        DEX
+        TXS
+        PHA
+        INC  081
+        TSX
+        STX  08B
+        TXA
+        SEC
+        SBC  080
+        STA  08C
+        STA  08A
+        SBC  081
+        TAX
+        TXS
+        LDA  081
+        STA  08F
+        STA  091
+        STA  090
+        LDX  07F
+        LDY  08C
+        STX  08D
+        STY  08E
+        LDA  081
+        STA  085
+L0474   LDA  00100,X
+        STA  00100,Y
+        DEX
+        DEY
+        DEC  085
+        BNE  L0474
+        LDX  #001
+        STX  092
+        LDX  07D
+        LDA  00100,X
+        AND  #0F0
+        BEQ  L04A0
+        LDA  #000
+        STA  092
+        PHA
+        INC  08F
+        LDA  08F
+        STA  090
+        LDA  08C
+        STA  08D
+        LDA  07F
+        STA  08E
+L04A0   LDA  #004
+        STA  085
+L04A4   CLC
+        LDX  08C
+        LDY  08F
+L04A9   ROL  00100,X
+        DEX
+        DEY
+        BNE  L04A9
+        DEC  085
+        BNE  L04A4
+        LDA  #000
+        STA  093
+L04B8   LDA  08E
+        STA  087
+        LDA  091
+        STA  088
+        JSR  L03C9
+        LDX  086
+        CPX  07E
+        BNE  L04CB
+        INC  093
+L04CB   LDA  089
+        STA  084
+        LDA  08D
+        STA  087
+        LDA  090
+        STA  088
+        JSR  L03C9
+        LDA  084
+        ASL  A
+        ASL  A
+        ASL  A
+        ASL  A
+        ORA  089
+        INC  08A
+        LDX  08A
+        STA  00100,X
+        INC  07C
+        LDA  093
+        BEQ  L04B8
+        LDA  08A
+        STA  07F
+        SEC
+        SBC  08C
+        STA  081
+        LDA  092
+        BNE  L0510
+        LDA  #004
+        STA  085
+L0500   CLC
+        LDX  08C
+        LDY  081
+L0505   INX
+        ROR  00100,X
+        DEY
+        BNE  L0505
+        DEC  085
+        BNE  L0500
+L0510   JMP  L01B7
+L0513   LDA  #000
+        STA  082
+        STA  088
+        STA  089
+        STA  08A
+        STA  08B
+        LDA  087
+        BPL  L0537
+        EOR  #0FF
+        STA  087
+        LDA  086
+        EOR  #0FF
+        STA  086
+        INC  086
+        BNE  L0533
+        INC  087
+L0533   LDA  #0FF
+        STA  082
+L0537   LDY  #010
+        SED
+L053A   ROL  086
+        ROL  087
+        LDX  #003
+L0540   LDA  088,X
+        ADC  088,X
+        STA  088,X
+        DEX
+        BPL  L0540
+        DEY
+        BNE  L053A
+        CLD
+        RTS
+L054E   PLA
+        STA  086
+        PLA
+        STA  087
+        JSR  L0513
+        LDX  #003
+L0559   LDA  088,X
+        PHA
+        DEX
+        BPL  L0559
+        PHA
+        LDA  082
+        PHA
+        PHA
+        LDA  #003
+        PHA
+        JMP  RETURN
+L056A   TSX
+        INX
+        STX  07D
+        LDY  00100,X
+        DEY
+        TYA
+        ASL  A
+        STA  081
+        TXA
+        CLC
+        ADC  081
+        ADC  #005
+        STA  07C
+        TAX
+        LDA  00100,X
+        STA  087
+        DEX
+        LDA  00100,X
+        STA  086
+        JSR  L0513
+        TSX
+        TXA
+        SEC
+        SBC  #006
+        TAX
+        TXS
+        INX
+        LDA  081
+        CLC
+        ADC  #004
+        STA  085
+        LDY  07D
+L059E   LDA  00100,Y
+        STA  00100,X
+        INX
+        INY
+        DEC  085
+        BNE  L059E
+        LDY  07C
+        LDX  #003
+L05AE   LDA  088,X
+        STA  00100,Y
+        DEY
+        DEX
+        BPL  L05AE
+        DEY
+        LDA  082
+        STA  00100,Y
+        DEY
+        DEY
+        LDA  #003
+        STA  00100,Y
+        JMP  RETURN
+L05C7   PLA
+        STA  080
+        DEC  080
+        PLA
+        PLA
+        STA  082
+        PLA
+        LDA  080
+        SEC
+        SBC  #003
+        BCC  L05E6
+        TAX
+L05D9   PLA
+        BNE  L064B
+        PLA
+        BNE  L064B
+        DEX
+        BPL  L05D9
+        LDA  #002
+        STA  080
+L05E6   LDA  #000
+        STA  088
+        LDA  080
+        CMP  #001
+        BEQ  L05F6
+        PLA
+        BNE  L064B
+        PLA
+        STA  088
+L05F6   PLA
+        STA  089
+        PLA
+        STA  08A
+        LDA  #00F
+        STA  085
+L0600   LSR  088
+        ROR  089
+        ROR  08A
+        ROR  087
+        ROR  086
+        LDX  #002
+L060C   LDA  088,X
+        BPL  L0613
+        SEC
+        SBC  #030
+L0613   TAY
+        AND  #008
+        BEQ  L061B
+        DEY
+        DEY
+        DEY
+L061B   STY  088,X
+        DEX
+        BPL  L060C
+        DEC  085
+        BNE  L0600
+        LDA  08A
+        BNE  L064B
+        LSR  087
+        ROR  086
+        LDA  082
+        BPL  L0642
+        LDA  087
+        EOR  #0FF
+        STA  087
+        LDA  086
+        EOR  #0FF
+        STA  086
+        INC  086
+        BNE  L0642
+        INC  087
+L0642   LDA  087
+        PHA
+        LDA  086
+        PHA
+        JMP  RETURN
+L064B   JMP  L0077
+L064E   PLA
+        STA  086
+        PLA
+        PLA
+        STA  088
+        PLA
+        STA  089
+        PLA
+        STA  080
+        DEC  080
+        ASL  080
+        PLA
+        LDY  #000
+        PLA
+        BPL  L066A
+        LDA  #02D
+        INY
+        STA  @088,Y
+L066A   PLA
+L066B   PLA
+        BNE  L0672
+        DEC  080
+        BNE  L066B
+L0672   CMP  #010
+        BCS  L0682
+        ORA  #030
+        INY
+        STA  @088,Y
+        DEC  080
+        BEQ  L0698
+        BMI  L0698
+L0681   PLA
+L0682   TAX
+        LSR  A
+        LSR  A
+        LSR  A
+        LSR  A
+        ORA  #030
+        INY
+        STA  @088,Y
+        TXA
+        AND  #00F
+        ORA  #030
+        INY
+        STA  @088,Y
+        DEC  080
+        BNE  L0681
+L0698   CPY  086
+        BCC  L06A1
+        BEQ  L06A1
+        JMP  L007F
+L06A1   TYA
+        LDY  #000
+        STA  @088,Y
+        JMP  RETURN
+
+        .END

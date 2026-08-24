@@ -23,9 +23,17 @@ Relocation is the part that matters. A label defined inside the procedure is
 *procedure-relative*: its value is its offset from the procedure's first
 byte, and every operand that mentions one goes into the procedure-relative
 relocation table, which the Linker uses to fix the operand up when the
-segment is loaded. `.EQU` symbols are absolute and never relocate. That is
-the whole of the model, and it is enough for these two routines, which
-declare nothing base-relative, segment-relative or Interpreter-relative.
+segment is loaded. `.EQU` symbols are absolute and never relocate.
+
+A label one procedure exports with `.DEF` and another imports with `.REF` is
+*segment-relative* instead: the Linker resolves it to an offset within the
+whole segment, so its final value depends on where the defining procedure
+lands, which the assembler cannot know. `assemble_file(path, bases=...)`
+supplies those procedure bases, exactly as the Linker does, and the
+reference goes into the segment-relative table. APPLESTUFF needs this --
+RANDOMIZE reseeds four bytes that live inside RANDOM.
+
+Nothing here is base-relative or Interpreter-relative yet.
 """
 from __future__ import annotations
 
@@ -36,7 +44,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from a2pascal.m6502 import (TABLE, IMP, ACC, IMM, ZP, ZPX, ZPY,
-                            IZY, ABS, ABX, ABY, REL)
+                            IZX, IZY, IND, ABS, ABX, ABY, REL)
 
 # opcode for (mnemonic, mode)
 ENCODE = {ent: op for op, ent in enumerate(TABLE) if ent is not None}
@@ -55,7 +63,13 @@ class Proc:
     code: bytearray = field(default_factory=bytearray)
     # offset of every operand that mentions a label in this procedure
     reloc: list[int] = field(default_factory=list)
+    # ... and of every operand that mentions another procedure's .DEF
+    segreloc: list[int] = field(default_factory=list)
+    # ... and of every operand written against .INTERP
+    interpreloc: list[int] = field(default_factory=list)
     labels: dict[str, int] = field(default_factory=dict)
+    defs: set[str] = field(default_factory=set)
+    refs: set[str] = field(default_factory=set)
     enter: int = 0
 
     def define(self, label: str, off: int) -> None:
@@ -67,7 +81,7 @@ class Proc:
                            f"between passes")
         self.labels[label] = off
 
-    def image(self) -> bytes:
+    def image(self, relocseg: int = 0) -> bytes:
         """Code, relocation area and attribute table, as the Linker sees it.
 
         Layout is finding 44: low to high, the four relocation tables run
@@ -80,14 +94,21 @@ class Proc:
             out.append(0)          # tables are word-aligned
         def w(v: int) -> None:
             out.extend((v & 0xFF, (v >> 8) & 0xFF))
-        w(0)                                   # interp: no entries
+        for off in self.interpreloc:           # interp, ascending
+            w(len(out) - off)
+        w(len(self.interpreloc))
         for off in self.reloc:                 # procedure, ascending
             w(len(out) - off)                  # self-relative, downward
         w(len(self.reloc))
-        w(0)                                   # segment
+        for off in self.segreloc:              # segment, ascending
+            w(len(out) - off)
+        w(len(self.segreloc))
         w(0)                                   # base
         w(len(out) - self.enter)               # ENTER IC
-        w(0)                                   # proc number 0, RELOCSEG 0
+        # Procedure number 0 marks a native procedure; the high byte is
+        # RELOCSEG, which the Linker fills in and nothing in the source
+        # determines. PASCALCO's two come out 0; the library's come out 1.
+        w(relocseg << 8)
         return bytes(out)
 
 
@@ -105,29 +126,50 @@ class Assembler:
     def __init__(self) -> None:
         self.procs: list[Proc] = []
         self.abs: dict[str, int] = {}     # .EQU symbols, never relocatable
+        # .DEF symbol -> (defining procedure, offset within it)
+        self.exported: dict[str, tuple[str, int]] = {}
+        # procedure -> its offset within the linked segment, from the caller
+        self.bases: dict[str, int] = {}
         # Labels carried from the sizing pass, so the final pass can resolve
         # forward references.
         self.seed: dict[str, dict[str, int]] = {}
         self.final = False
 
     # -- expressions ------------------------------------------------------
-    def value(self, expr: str, p: Proc | None) -> tuple[int, bool]:
-        """Return (value, relocatable). Accepts `sym`, `n`, `sym+n`, `sym-n`."""
+    def value(self, expr: str, p: Proc | None) -> tuple[int, str]:
+        """Return (value, kind), kind being "", "proc" or "seg".
+
+        "" is absolute -- a literal or an `.EQU`. "proc" is a label in this
+        procedure, whose value is an offset from the procedure's first byte.
+        "seg" is another procedure's `.DEF`, which the Linker resolves to an
+        offset within the segment; `bases` supplies where each procedure
+        lands, since nothing in the source says.
+        """
         m = re.fullmatch(r"([^-+]+?)\s*(?:([-+])\s*(.+))?", expr.strip())
         if not m:
             raise AsmError(f"cannot parse expression {expr!r}")
         head, op, tail = m.group(1), m.group(2), m.group(3)
         n = _number(head)
-        if n is not None:
-            base, rel = n, False
+        if head.upper() == ".INTERP":
+            base, rel = 0, "interp"
+        elif n is not None:
+            base, rel = n, ""
         elif head in self.abs:
-            base, rel = self.abs[head], False
+            base, rel = self.abs[head], ""
         elif p is not None and head in p.labels:
-            base, rel = p.labels[head], True
+            base, rel = p.labels[head], "proc"
+        elif p is not None and head in p.refs:
+            if head not in self.exported:
+                if self.final:
+                    raise AsmError(f".REF {head} is not .DEF'd anywhere")
+                base, rel = 0, "seg"
+            else:
+                owner, off = self.exported[head]
+                base, rel = self.bases.get(owner, 0) + off, "seg"
         elif not self.final:
             # Sizing pass: a forward reference is a label we have not reached
             # yet, so assume the relocatable (and therefore wider) form.
-            base, rel = 0, True
+            base, rel = 0, "proc"
         else:
             raise AsmError(f"undefined symbol {head!r}")
         if op:
@@ -187,6 +229,15 @@ class Assembler:
             return
         if op == ".TITLE":
             return
+        if op in (".DEF", ".REF"):
+            if p is None:
+                raise AsmError(f"{op} outside a procedure")
+            for sym in arg.split(","):
+                sym = sym.strip()
+                if not sym:
+                    raise AsmError(f"{op} with no symbol")
+                (p.defs if op == ".DEF" else p.refs).add(sym)
+            return
         if op == ".END":
             return
         if op == ".EQU":
@@ -213,8 +264,12 @@ class Assembler:
         if op == ".WORD":
             for t in arg.split(","):
                 v, rel = self.value(t, p)
-                if rel:
+                if rel == "proc":
                     p.reloc.append(len(p.code))
+                elif rel == "seg":
+                    p.segreloc.append(len(p.code))
+                elif rel == "interp":
+                    p.interpreloc.append(len(p.code))
                 p.code.extend((v & 0xFF, (v >> 8) & 0xFF))
             return
         raise AsmError(f"unsupported directive {op}")
@@ -233,8 +288,17 @@ class Assembler:
             p.code.append(ENCODE[(mnem, mode)])
             return
         v, rel = self.value(expr, p)
-        if mode is IZY:
-            p.code.extend((ENCODE[(mnem, IZY)], v & 0xFF))
+        if mode in (IZY, IZX):
+            p.code.extend((ENCODE[(mnem, mode)], v & 0xFF))
+            return
+        if mode is IND:
+            if rel == "proc":
+                p.reloc.append(len(p.code) + 1)
+            elif rel == "seg":
+                p.segreloc.append(len(p.code) + 1)
+            elif rel == "interp":
+                p.interpreloc.append(len(p.code) + 1)
+            p.code.extend((ENCODE[(mnem, IND)], v & 0xFF, (v >> 8) & 0xFF))
             return
         if mode is IMM:
             p.code.extend((ENCODE[(mnem, IMM)], v & 0xFF))
@@ -242,15 +306,25 @@ class Assembler:
         # A reference to a label in this procedure is always a 16-bit
         # relocatable operand, even when its value would fit in a byte:
         # the loader adds the procedure's base to it.
-        wide = rel or not 0 <= v <= 0xFF
-        m = {("", True): ABS, ("", False): ZP,
-             ("X", True): ABX, ("X", False): ZPX,
-             ("Y", True): ABY, ("Y", False): ZPY}[(index, wide)]
+        wide = bool(rel) or not 0 <= v <= 0xFF
+        forms = {("", True): ABS, ("", False): ZP,
+                 ("X", True): ABX, ("X", False): ZPX,
+                 ("Y", True): ABY, ("Y", False): ZPY}
+        m = forms[(index, wide)]
+        if not wide and (mnem, m) not in ENCODE:
+            # STA and LDX have no zero page,Y; the assembler widens rather
+            # than refusing, and the operand is then two bytes.
+            wide = True
+            m = forms[(index, True)]
         if (mnem, m) not in ENCODE:
             raise AsmError(f"{mnem} has no {'absolute' if wide else 'zero page'}"
                            f"{',' + index if index else ''} form")
-        if wide and rel:
+        if wide and rel == "proc":
             p.reloc.append(len(p.code) + 1)
+        elif wide and rel == "seg":
+            p.segreloc.append(len(p.code) + 1)
+        elif wide and rel == "interp":
+            p.interpreloc.append(len(p.code) + 1)
         p.code.append(ENCODE[(mnem, m)])
         if wide:
             p.code.extend((v & 0xFF, (v >> 8) & 0xFF))
@@ -271,21 +345,41 @@ class Assembler:
         if m:
             arg, index = m.group(1).strip(), m.group(2).upper()
         if arg.startswith("@"):
-            if index != "Y":
-                raise AsmError("@sym is only supported as (zero page),Y")
-            return IZY, arg[1:], ""
+            if index == "Y":
+                return IZY, arg[1:], ""
+            if index == "X":
+                return IZX, arg[1:], ""
+            if mnem == "JMP":
+                return IND, arg[1:], ""
+            raise AsmError("@sym is (zero page),Y, (zero page,X) or JMP @")
+        
         return None, arg, index
 
     def assemble(self, text: str) -> list[Proc]:
         lines = text.splitlines()
         self._pass(lines, final=False)      # sizing: fixes every label
         self.seed = {pr.name: dict(pr.labels) for pr in self.procs}
+        # What each procedure exports is only known once it has been sized.
+        self.exported = {}
+        for pr in self.procs:
+            for sym in pr.defs:
+                if sym not in pr.labels:
+                    raise AsmError(f"{pr.name}: .DEF {sym} is never defined")
+                self.exported[sym] = (pr.name, pr.labels[sym])
         self._pass(lines, final=True)       # Proc.define re-checks each one
         return self.procs
 
 
-def assemble_file(path: Path) -> list[Proc]:
-    return Assembler().assemble(path.read_text())
+def assemble_file(path: Path,
+                  bases: dict[str, int] | None = None) -> list[Proc]:
+    """Assemble, and link at `bases` -- procedure name to segment offset.
+
+    Only `.REF` operands need a base: everything else is either absolute or
+    procedure-relative, and neither depends on where the procedure lands.
+    """
+    a = Assembler()
+    a.bases = dict(bases or {})
+    return a.assemble(path.read_text())
 
 
 def main() -> None:
@@ -293,7 +387,9 @@ def main() -> None:
         for pr in assemble_file(Path(arg)):
             img = pr.image()
             print(f"{pr.kind} {pr.name},{pr.words}: {len(pr.code)} bytes of "
-                  f"code, {len(pr.reloc)} procedure-relative relocations, "
+                  f"code, {len(pr.reloc)} procedure-relative, "
+                  f"{len(pr.segreloc)} segment-relative and "
+                  f"{len(pr.interpreloc)} Interpreter-relative relocations, "
                   f"{len(img)} bytes linked")
 
 

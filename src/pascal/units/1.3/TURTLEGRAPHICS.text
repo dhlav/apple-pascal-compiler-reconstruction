@@ -6,10 +6,10 @@
   character-set buffer, and a 91-entry table of sines. Twenty-four of the
   thirty-one procedures are p-code and are reproduced here; the other seven
   (SCREENBIT, DRAWBLOCK, and the five privates 20, 21, 22, 30 and 31) are
-  6502 and belong to the assembler tier, so they are EXTERNAL and the linker
-  is what puts them in (finding 44e, and finding 96c: their order in the
-  shipped image is the order they were assembled in, not the order they are
-  declared).
+  6502 and are in src/native/TURTLEGR.TEXT, which assembles to Apple's exact
+  bytes (finding 98). They are EXTERNAL here and the linker is what puts
+  them in (finding 44e, and finding 96c: their order in the shipped image is
+  the order they were assembled in, not the order they are declared).
 
   The unit is free-standing -- it reaches no operating-system global and
   needs no host program. The binary says so: the private soft-switch routine
@@ -488,8 +488,13 @@ INTERFACE
       INITSTATE
     END (*MAKETURTLE*) ;
 
-    PROCEDURE NATIVE30; EXTERNAL;
-    PROCEDURE NATIVE31; EXTERNAL;
+{ The last two privates, 30 and 31: the hi-res primitives and the line
+  clipper, both 6502 and both in src/native/TURTLEGR.TEXT. Nothing in this
+  file calls them -- the other five native procedures do, through .DEF/.REF
+  -- but they have to be declared here, after 29, to be numbered 30 and 31. }
+
+    PROCEDURE HIRES; EXTERNAL;
+    PROCEDURE CLIP; EXTERNAL;
 
 { Unit initialisation. SYSTEM.CHARSET is looked for on unit 4 and then on
   unit 5; if it is there it is read into a 512-word buffer. The buffer comes

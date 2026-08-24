@@ -1,0 +1,2611 @@
+Apple Pascal 1.3 SYSTEM.LIBRARY -- native 6502 procedures
+source image : Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk
+
+Disassembled by tools/a2pascal/m6502.py. Addresses are offsets
+within the unit's code segment, not absolute memory addresses.
+Every word the loader fixes up is named by the procedure's own
+relocation tables and marked [reloc: kind] below; reproducing
+those tables is the acceptance test for reassembled source
+(finding 44e).
+
+####################################################################
+# LONGINTI  segment 30: 1 native of 4 procedures
+####################################################################
+
+====================================================================
+LONGINTI.4  the long-integer engine
+  code $02AC..$0956  (1706 bytes, 890 instructions)
+  relocation area $0956..$09E4   [procedure 62, interp 5]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  02AC 68        L02AC:  PLA
+  02AD 85 76             STA $76 [CmpType]
+  02AF 68                PLA
+  02B0 85 77     L02B0:  STA $77
+  02B2 68                PLA
+  02B3 aa                TAX
+  02B4 68                PLA
+  02B5 bd 16 00          LDA $0016,X   ; [reloc: procedure] base = proc+$0016, then indexed
+  02B8 85 78             STA $78
+  02BA bd 17 00          LDA $0017,X   ; [reloc: procedure] base = proc+$0017, then indexed
+  02BD 85 79             STA $79
+  02BF 6c 78 00          JMP ($0078)
+
+  ---- data $02C2..$02D8: the entry jump table: eleven procedure-relative words
+  02C2 ed 00 98 02 c5 02 1c 01
+  02CA f8 02 0e 04 4e 06 6a 05
+  02D2 2b 01 4e 05 c7 05
+
+  02D8 e6 76     L02D8:  INC $76 [CmpType]
+  02DA d0 02             BNE $02DE
+  02DC e6 77             INC $77
+  02DE 6c 76 00  L02DE:  JMP ($0076)
+  02E1 ad 04 00  L02E1:  LDA $0004   ; [reloc: interp] -> $02B0
+  02E4 85 86             STA $86
+  02E6 ad 05 00          LDA $0005   ; [reloc: interp] -> $02B1
+  02E9 85 87             STA $87
+  02EB ad 22 bf          LDA $BF22
+  02EE 29 40             AND #$40
+  02F0 f0 0b             BEQ $02FD
+  02F2 a9 a0             LDA #$A0
+  02F4 85 88             STA $88
+  02F6 a9 01             LDA #$01
+  02F8 85 89             STA $89
+  02FA 4c 59 00          JMP $0059   ; [reloc: procedure] -> $0305
+  02FD a9 c0     L02FD:  LDA #$C0
+  02FF 85 88             STA $88
+  0301 a9 00             LDA #$00
+  0303 85 89             STA $89
+  0305 38        L0305:  SEC
+  0306 a5 86             LDA $86
+  0308 e5 88             SBC $88
+  030A 85 86             STA $86
+  030C a5 87             LDA $87
+  030E e5 89             SBC $89
+  0310 85 87             STA $87
+  0312 a0 3c             LDY #$3C
+  0314 38                SEC
+  0315 b1 86             LDA ($86),Y
+  0317 e9 01             SBC #$01
+  0319 91 86             STA ($86),Y
+  031B c8                INY
+  031C b1 86             LDA ($86),Y
+  031E e9 00             SBC #$00
+  0320 91 86             STA ($86),Y
+  0322 60                RTS
+  0323 20 35 00  L0323:  JSR $0035   ; [reloc: procedure] -> $02E1
+  0326 a9 05             LDA #$05
+  0328 6c 00 00          JMP ($0000)   ; [reloc: interp] -> $02AC
+  032B 20 35 00  L032B:  JSR $0035   ; [reloc: procedure] -> $02E1
+  032E a9 0d             LDA #$0D
+  0330 6c 00 00          JMP ($0000)   ; [reloc: interp] -> $02AC
+  0333 20 35 00  L0333:  JSR $0035   ; [reloc: procedure] -> $02E1
+  0336 a9 06             LDA #$06
+  0338 6c 00 00          JMP ($0000)   ; [reloc: interp] -> $02AC
+  033B 68        L033B:  PLA
+  033C 85 7a             STA $7A
+  033E 68                PLA
+  033F 85 7b             STA $7B
+  0341 68                PLA
+  0342 85 81             STA $81
+  0344 c6 81             DEC $81
+  0346 06 81             ASL $81
+  0348 68                PLA
+  0349 68                PLA
+  034A 85 83             STA $83
+  034C 68                PLA
+  034D ba                TSX
+  034E e8                INX
+  034F bd 00 01  L034F:  LDA $0100,X
+  0352 d0 05             BNE $0359
+  0354 e8                INX
+  0355 c6 81             DEC $81
+  0357 d0 f6             BNE $034F
+  0359 86 7d     L0359:  STX $7D
+  035B 8a                TXA
+  035C 18                CLC
+  035D 65 81             ADC $81
+  035F aa                TAX
+  0360 ca                DEX
+  0361 86 7f             STX $7F
+  0363 e8                INX
+  0364 bd 00 01          LDA $0100,X
+  0367 85 80             STA $80
+  0369 c6 80             DEC $80
+  036B 06 80             ASL $80
+  036D e8                INX
+  036E e8                INX
+  036F bd 00 01          LDA $0100,X
+  0372 85 82             STA $82
+  0374 e8                INX
+  0375 e8                INX
+  0376 bd 00 01  L0376:  LDA $0100,X
+  0379 d0 05             BNE $0380
+  037B e8                INX
+  037C c6 80             DEC $80
+  037E d0 f6             BNE $0376
+  0380 86 7c     L0380:  STX $7C
+  0382 ca                DEX
+  0383 8a                TXA
+  0384 18                CLC
+  0385 65 80             ADC $80
+  0387 85 7e             STA $7E
+  0389 a5 80             LDA $80
+  038B 38                SEC
+  038C e5 81             SBC $81
+  038E 85 84             STA $84
+  0390 e6 7a             INC $7A
+  0392 d0 02             BNE $0396
+  0394 e6 7b             INC $7B
+  0396 6c 7a 00  L0396:  JMP ($007A)
+  0399 68                PLA
+  039A 85 86             STA $86
+  039C 68                PLA
+  039D 68                PLA
+  039E 85 80             STA $80
+  03A0 68                PLA
+  03A1 68                PLA
+  03A2 85 82             STA $82
+  03A4 68                PLA
+  03A5 a5 80             LDA $80
+  03A7 38                SEC
+  03A8 e5 86             SBC $86
+  03AA 90 0a             BCC $03B6
+  03AC 0a                ASL A
+  03AD aa                TAX
+  03AE ca        L03AE:  DEX
+  03AF 30 0d             BMI $03BE
+  03B1 68                PLA
+  03B2 d0 11             BNE $03C5
+  03B4 f0 f8             BEQ $03AE
+  03B6 0a        L03B6:  ASL A
+  03B7 aa                TAX
+  03B8 a9 00             LDA #$00
+  03BA 48        L03BA:  PHA
+  03BB e8                INX
+  03BC d0 fc             BNE $03BA
+  03BE 48        L03BE:  PHA
+  03BF a5 82             LDA $82
+  03C1 48                PHA
+  03C2 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  03C5 4c 77 00  L03C5:  JMP $0077   ; [reloc: procedure] -> $0323
+  03C8 ba                TSX
+  03C9 e8        L03C9:  INX
+  03CA e8                INX
+  03CB e8                INX
+  03CC bd 00 01          LDA $0100,X
+  03CF 49 ff             EOR #$FF
+  03D1 9d 00 01          STA $0100,X
+  03D4 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  03D7 68                PLA
+  03D8 0a                ASL A
+  03D9 0a                ASL A
+  03DA aa                TAX
+  03DB 68                PLA
+  03DC a0 03             LDY #$03
+  03DE bd 72 01  L03DE:  LDA $0172,X   ; [reloc: procedure] base = proc+$0172, then indexed
+  03E1 99 73 01          STA $0173,Y   ; [reloc: procedure] base = proc+$0173, then indexed
+  03E4 ca                DEX
+  03E5 88                DEY
+  03E6 10 f6             BPL $03DE
+  03E8 20 8f 00          JSR $008F   ; [reloc: procedure] -> $033B
+  03EB a5 80             LDA $80
+  03ED 05 81             ORA $81
+  03EF f0 2e             BEQ $041F
+  03F1 a5 83             LDA $83
+  03F3 c5 82             CMP $82
+  03F5 d0 28             BNE $041F
+  03F7 c9 ff             CMP #$FF
+  03F9 f0 0c             BEQ $0407
+  03FB a5 80             LDA $80
+  03FD c5 81             CMP $81
+  03FF d0 1e             BNE $041F
+  0401 a6 7c             LDX $7C
+  0403 a4 7d             LDY $7D
+  0405 d0 0a             BNE $0411
+  0407 a5 81     L0407:  LDA $81
+  0409 c5 80             CMP $80
+  040B d0 12             BNE $041F
+  040D a6 7d             LDX $7D
+  040F a4 7c             LDY $7C
+  0411 bd 00 01  L0411:  LDA $0100,X
+  0414 d9 00 01          CMP $0100,Y
+  0417 d0 06             BNE $041F
+  0419 e8                INX
+  041A c8                INY
+  041B c6 80             DEC $80
+  041D d0 f2             BNE $0411
+  041F ea        L041F:  NOP
+  0420 ea                NOP
+  0421 ea                NOP
+  0422 ea                NOP
+  0423 4c 86 01          JMP $0186   ; [reloc: procedure] -> $0432
+  0426 a6 7e             LDX $7E
+  0428 9a                TXS
+  0429 a9 00             LDA #$00
+  042B 48                PHA
+  042C a9 01             LDA #$01
+  042E 48                PHA
+  042F 4c 2c 00  L042F:  JMP $002C   ; [reloc: procedure] -> $02D8
+  0432 a6 7e     L0432:  LDX $7E
+  0434 9a                TXS
+  0435 a9 00             LDA #$00
+  0437 48                PHA
+  0438 48                PHA
+  0439 f0 f4             BEQ $042F
+
+  ---- data $043B..$0453: six four-byte patches, one per relational operator
+  043B 90 05 ea ea 90 05 f0 03
+  0443 b0 05 ea ea f0 02 b0 03
+  044B d0 05 ea ea f0 05 ea ea
+
+  0453 a6 7e     L0453:  LDX $7E
+  0455 9a                TXS
+  0456 a9 00             LDA #$00
+  0458 48                PHA
+  0459 48                PHA
+  045A 48                PHA
+  045B 48                PHA
+  045C 48                PHA
+  045D a9 02             LDA #$02
+  045F 48                PHA
+  0460 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0463 a5 81     L0463:  LDA $81
+  0465 85 85             STA $85
+  0467 a4 7f             LDY $7F
+  0469 a6 7e             LDX $7E
+  046B b9 00 01  L046B:  LDA $0100,Y
+  046E 9d 00 01          STA $0100,X
+  0471 ca                DEX
+  0472 88                DEY
+  0473 c6 85             DEC $85
+  0475 d0 f4             BNE $046B
+  0477 9a                TXS
+  0478 46 81     L0478:  LSR $81
+  047A 90 05             BCC $0481
+  047C a9 00             LDA #$00
+  047E 48                PHA
+  047F e6 81             INC $81
+  0481 48        L0481:  PHA
+  0482 a5 83             LDA $83
+  0484 48                PHA
+  0485 48                PHA
+  0486 e6 81             INC $81
+  0488 a5 81             LDA $81
+  048A 48                PHA
+  048B 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  048E a4 80     L048E:  LDY $80
+  0490 a6 84             LDX $84
+  0492 30 06             BMI $049A
+  0494 a4 81             LDY $81
+  0496 a5 80             LDA $80
+  0498 85 81             STA $81
+  049A 84 85     L049A:  STY $85
+  049C a4 7f             LDY $7F
+  049E a6 7e             LDX $7E
+  04A0 18                CLC
+  04A1 f8                SED
+  04A2 b9 00 01  L04A2:  LDA $0100,Y
+  04A5 7d 00 01          ADC $0100,X
+  04A8 9d 00 01          STA $0100,X
+  04AB ca                DEX
+  04AC 88                DEY
+  04AD c6 85             DEC $85
+  04AF d0 f1             BNE $04A2
+  04B1 a5 84             LDA $84
+  04B3 f0 18             BEQ $04CD
+  04B5 30 08             BMI $04BF
+  04B7 49 ff             EOR #$FF
+  04B9 85 84             STA $84
+  04BB e6 84             INC $84
+  04BD 8a                TXA
+  04BE a8                TAY
+  04BF b9 00 01  L04BF:  LDA $0100,Y
+  04C2 69 00             ADC #$00
+  04C4 9d 00 01          STA $0100,X
+  04C7 ca                DEX
+  04C8 88                DEY
+  04C9 e6 84             INC $84
+  04CB d0 f2             BNE $04BF
+  04CD d8        L04CD:  CLD
+  04CE 9a                TXS
+  04CF 90 05             BCC $04D6
+  04D1 a9 01             LDA #$01
+  04D3 48                PHA
+  04D4 e6 81             INC $81
+  04D6 a5 82     L04D6:  LDA $82
+  04D8 85 83             STA $83
+  04DA 4c cc 01          JMP $01CC   ; [reloc: procedure] -> $0478
+  04DD a5 80     L04DD:  LDA $80
+  04DF c5 81             CMP $81
+  04E1 d0 17             BNE $04FA
+  04E3 85 85             STA $85
+  04E5 a6 7c             LDX $7C
+  04E7 a4 7d             LDY $7D
+  04E9 bd 00 01  L04E9:  LDA $0100,X
+  04EC d9 00 01          CMP $0100,Y
+  04EF d0 09             BNE $04FA
+  04F1 e8                INX
+  04F2 c8                INY
+  04F3 c6 85             DEC $85
+  04F5 d0 f2             BNE $04E9
+  04F7 4c a7 01          JMP $01A7   ; [reloc: procedure] -> $0453
+  04FA b0 0a     L04FA:  BCS $0506
+  04FC a6 7e             LDX $7E
+  04FE a4 7f             LDY $7F
+  0500 a5 80             LDA $80
+  0502 85 85             STA $85
+  0504 d0 08             BNE $050E
+  0506 a6 7f     L0506:  LDX $7F
+  0508 a4 7e             LDY $7E
+  050A a5 81             LDA $81
+  050C 85 85             STA $85
+  050E 38        L050E:  SEC
+  050F f8                SED
+  0510 b9 00 01  L0510:  LDA $0100,Y
+  0513 fd 00 01  L0513:  SBC $0100,X
+  0516 99 00 01          STA $0100,Y
+  0519 ca                DEX
+  051A 88                DEY
+  051B c6 85             DEC $85
+  051D d0 f1             BNE $0510
+  051F b0 0b             BCS $052C
+  0521 b9 00 01  L0521:  LDA $0100,Y
+  0524 e9 00             SBC #$00
+  0526 99 00 01          STA $0100,Y
+  0529 88                DEY
+  052A 90 f5             BCC $0521
+  052C d8        L052C:  CLD
+  052D c4 7f             CPY $7F
+  052F b0 0d             BCS $053E
+  0531 a5 86             LDA $86
+  0533 f0 06             BEQ $053B
+  0535 a5 83             LDA $83
+  0537 49 ff             EOR #$FF
+  0539 85 83             STA $83
+  053B 4c b7 01  L053B:  JMP $01B7   ; [reloc: procedure] -> $0463
+  053E a6 7f     L053E:  LDX $7F
+  0540 9a                TXS
+  0541 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0544 20 8f 00          JSR $008F   ; [reloc: procedure] -> $033B
+  0547 a5 80             LDA $80
+  0549 05 81             ORA $81
+  054B d0 03             BNE $0550
+  054D 4c a7 01          JMP $01A7   ; [reloc: procedure] -> $0453
+  0550 a5 80     L0550:  LDA $80
+  0552 d0 03             BNE $0557
+  0554 4c b7 01          JMP $01B7   ; [reloc: procedure] -> $0463
+  0557 a5 81     L0557:  LDA $81
+  0559 d0 06             BNE $0561
+  055B a6 7f             LDX $7F
+  055D 9a                TXS
+  055E 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0561 a5 82     L0561:  LDA $82
+  0563 45 83             EOR $83
+  0565 30 03             BMI $056A
+  0567 4c e2 01          JMP $01E2   ; [reloc: procedure] -> $048E
+  056A a9 00     L056A:  LDA #$00
+  056C 85 86             STA $86
+  056E 4c 31 02          JMP $0231   ; [reloc: procedure] -> $04DD
+  0571 20 8f 00          JSR $008F   ; [reloc: procedure] -> $033B
+  0574 a5 80             LDA $80
+  0576 05 81             ORA $81
+  0578 d0 03             BNE $057D
+  057A 4c a7 01          JMP $01A7   ; [reloc: procedure] -> $0453
+  057D a5 80     L057D:  LDA $80
+  057F d0 09             BNE $058A
+  0581 a5 83             LDA $83
+  0583 49 ff             EOR #$FF
+  0585 85 83             STA $83
+  0587 4c b7 01          JMP $01B7   ; [reloc: procedure] -> $0463
+  058A a5 81     L058A:  LDA $81
+  058C d0 06             BNE $0594
+  058E a6 7f             LDX $7F
+  0590 9a                TXS
+  0591 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0594 a5 82     L0594:  LDA $82
+  0596 45 83             EOR $83
+  0598 10 03             BPL $059D
+  059A 4c e2 01          JMP $01E2   ; [reloc: procedure] -> $048E
+  059D a9 01     L059D:  LDA #$01
+  059F 85 86             STA $86
+  05A1 4c 31 02          JMP $0231   ; [reloc: procedure] -> $04DD
+  05A4 20 8f 00          JSR $008F   ; [reloc: procedure] -> $033B
+  05A7 a5 80             LDA $80
+  05A9 f0 04             BEQ $05AF
+  05AB a5 81             LDA $81
+  05AD d0 03             BNE $05B2
+  05AF 4c a7 01  L05AF:  JMP $01A7   ; [reloc: procedure] -> $0453
+  05B2 a5 82     L05B2:  LDA $82
+  05B4 45 83             EOR $83
+  05B6 85 83             STA $83
+  05B8 ba                TSX
+  05B9 86 86             STX $86
+  05BB a5 80             LDA $80
+  05BD 85 89             STA $89
+  05BF e6 89             INC $89
+  05C1 18                CLC
+  05C2 65 81             ADC $81
+  05C4 85 88             STA $88
+  05C6 8a                TXA
+  05C7 38                SEC
+  05C8 e5 88             SBC $88
+  05CA 85 87             STA $87
+  05CC e5 88             SBC $88
+  05CE aa                TAX
+  05CF 9a                TXS
+  05D0 a4 88             LDY $88
+  05D2 a6 86             LDX $86
+  05D4 a9 00             LDA #$00
+  05D6 9d 00 01  L05D6:  STA $0100,X
+  05D9 ca                DEX
+  05DA 88                DEY
+  05DB d0 f9             BNE $05D6
+  05DD a5 86             LDA $86
+  05DF 85 8d             STA $8D
+  05E1 a5 88             LDA $88
+  05E3 85 8e             STA $8E
+  05E5 a5 81             LDA $81
+  05E7 85 8a             STA $8A
+  05E9 a5 7f             LDA $7F
+  05EB 85 8b             STA $8B
+  05ED f8                SED
+  05EE a9 00     L05EE:  LDA #$00
+  05F0 85 8c             STA $8C
+  05F2 a4 88             LDY $88
+  05F4 a6 87             LDX $87
+  05F6 9d 00 01  L05F6:  STA $0100,X
+  05F9 ca                DEX
+  05FA 88                DEY
+  05FB d0 f9             BNE $05F6
+  05FD a6 8b             LDX $8B
+  05FF bd 00 01          LDA $0100,X
+  0602 a2 06             LDX #$06
+  0604 dd c2 03  L0604:  CMP $03C2,X   ; [reloc: procedure] base = proc+$03C2, then indexed
+  0607 90 03             BCC $060C
+  0609 fd c2 03          SBC $03C2,X   ; [reloc: procedure] base = proc+$03C2, then indexed
+  060C 26 8c     L060C:  ROL $8C
+  060E ca                DEX
+  060F 10 f3             BPL $0604
+  0611 a6 7e             LDX $7E
+  0613 a4 87             LDY $87
+  0615 a5 80             LDA $80
+  0617 85 85             STA $85
+  0619 bd 00 01  L0619:  LDA $0100,X
+  061C 99 00 01          STA $0100,Y
+  061F ca                DEX
+  0620 88                DEY
+  0621 c6 85             DEC $85
+  0623 d0 f4             BNE $0619
+  0625 46 8c     L0625:  LSR $8C
+  0627 90 18             BCC $0641
+  0629 a6 87             LDX $87
+  062B a4 8d             LDY $8D
+  062D a5 8e             LDA $8E
+  062F 85 85             STA $85
+  0631 18                CLC
+  0632 bd 00 01  L0632:  LDA $0100,X
+  0635 79 00 01          ADC $0100,Y
+  0638 99 00 01          STA $0100,Y
+  063B ca                DEX
+  063C 88                DEY
+  063D c6 85             DEC $85
+  063F d0 f1             BNE $0632
+  0641 a5 8c     L0641:  LDA $8C
+  0643 f0 13             BEQ $0658
+  0645 a6 87             LDX $87
+  0647 a4 89             LDY $89
+  0649 bd 00 01  L0649:  LDA $0100,X
+  064C 7d 00 01          ADC $0100,X
+  064F 9d 00 01          STA $0100,X
+  0652 ca                DEX
+  0653 88                DEY
+  0654 d0 f3             BNE $0649
+  0656 f0 cd             BEQ $0625
+  0658 c6 8d     L0658:  DEC $8D
+  065A c6 8e             DEC $8E
+  065C c6 8b             DEC $8B
+  065E c6 8a             DEC $8A
+  0660 d0 8c             BNE $05EE
+  0662 d8                CLD
+  0663 a5 86             LDA $86
+  0665 85 7f             STA $7F
+  0667 a5 88             LDA $88
+  0669 85 81             STA $81
+  066B 4c b7 01          JMP $01B7   ; [reloc: procedure] -> $0463
+
+  ---- data $066E..$0675: powers of two in BCD: 1 2 4 8 16 32 64
+  066E 01 02 04 08 16 32 64
+
+  0675 a9 00     L0675:  LDA #$00
+  0677 85 89             STA $89
+  0679 a5 7c             LDA $7C
+  067B 18                CLC
+  067C 65 88             ADC $88
+  067E aa                TAX
+  067F ca                DEX
+  0680 e4 7e             CPX $7E
+  0682 f0 02             BEQ $0686
+  0684 b0 32             BCS $06B8
+  0686 86 86     L0686:  STX $86
+  0688 f8                SED
+  0689 38                SEC
+  068A a6 86     L068A:  LDX $86
+  068C a4 87             LDY $87
+  068E a5 88             LDA $88
+  0690 85 85             STA $85
+  0692 90 13             BCC $06A7
+  0694 bd 00 01  L0694:  LDA $0100,X
+  0697 f9 00 01          SBC $0100,Y
+  069A 9d 00 01          STA $0100,X
+  069D ca                DEX
+  069E 88                DEY
+  069F c6 85             DEC $85
+  06A1 d0 f1             BNE $0694
+  06A3 e6 89             INC $89
+  06A5 d0 e3             BNE $068A
+  06A7 bd 00 01  L06A7:  LDA $0100,X
+  06AA 79 00 01          ADC $0100,Y
+  06AD 9d 00 01          STA $0100,X
+  06B0 ca                DEX
+  06B1 88                DEY
+  06B2 c6 85             DEC $85
+  06B4 d0 f1             BNE $06A7
+  06B6 c6 89             DEC $89
+  06B8 d8        L06B8:  CLD
+  06B9 60                RTS
+  06BA 20 8f 00          JSR $008F   ; [reloc: procedure] -> $033B
+  06BD a5 81             LDA $81
+  06BF d0 03             BNE $06C4
+  06C1 4c 87 00          JMP $0087   ; [reloc: procedure] -> $0333
+  06C4 a5 80     L06C4:  LDA $80
+  06C6 c5 81             CMP $81
+  06C8 d0 16             BNE $06E0
+  06CA a6 7c             LDX $7C
+  06CC a4 7d             LDY $7D
+  06CE a5 80             LDA $80
+  06D0 85 85             STA $85
+  06D2 bd 00 01  L06D2:  LDA $0100,X
+  06D5 d9 00 01          CMP $0100,Y
+  06D8 d0 06             BNE $06E0
+  06DA e8                INX
+  06DB c8                INY
+  06DC c6 85             DEC $85
+  06DE d0 f2             BNE $06D2
+  06E0 b0 03     L06E0:  BCS $06E5
+  06E2 4c a7 01          JMP $01A7   ; [reloc: procedure] -> $0453
+  06E5 a5 82     L06E5:  LDA $82
+  06E7 45 83             EOR $83
+  06E9 85 83             STA $83
+  06EB a9 00             LDA #$00
+  06ED c6 7c             DEC $7C
+  06EF a4 7c             LDY $7C
+  06F1 99 00 01          STA $0100,Y
+  06F4 e6 80             INC $80
+  06F6 a6 7d             LDX $7D
+  06F8 ca                DEX
+  06F9 9a                TXS
+  06FA 48                PHA
+  06FB e6 81             INC $81
+  06FD ba                TSX
+  06FE 86 8b             STX $8B
+  0700 8a                TXA
+  0701 38                SEC
+  0702 e5 80             SBC $80
+  0704 85 8c             STA $8C
+  0706 85 8a             STA $8A
+  0708 e5 81             SBC $81
+  070A aa                TAX
+  070B 9a                TXS
+  070C a5 81             LDA $81
+  070E 85 8f             STA $8F
+  0710 85 91             STA $91
+  0712 85 90             STA $90
+  0714 a6 7f             LDX $7F
+  0716 a4 8c             LDY $8C
+  0718 86 8d             STX $8D
+  071A 84 8e             STY $8E
+  071C a5 81             LDA $81
+  071E 85 85             STA $85
+  0720 bd 00 01  L0720:  LDA $0100,X
+  0723 99 00 01          STA $0100,Y
+  0726 ca                DEX
+  0727 88                DEY
+  0728 c6 85             DEC $85
+  072A d0 f4             BNE $0720
+  072C a2 01             LDX #$01
+  072E 86 92             STX $92
+  0730 a6 7d             LDX $7D
+  0732 bd 00 01          LDA $0100,X
+  0735 29 f0             AND #$F0
+  0737 f0 13             BEQ $074C
+  0739 a9 00             LDA #$00
+  073B 85 92             STA $92
+  073D 48                PHA
+  073E e6 8f             INC $8F
+  0740 a5 8f             LDA $8F
+  0742 85 90             STA $90
+  0744 a5 8c             LDA $8C
+  0746 85 8d             STA $8D
+  0748 a5 7f             LDA $7F
+  074A 85 8e             STA $8E
+  074C a9 04     L074C:  LDA #$04
+  074E 85 85             STA $85
+  0750 18        L0750:  CLC
+  0751 a6 8c             LDX $8C
+  0753 a4 8f             LDY $8F
+  0755 3e 00 01  L0755:  ROL $0100,X
+  0758 ca                DEX
+  0759 88                DEY
+  075A d0 f9             BNE $0755
+  075C c6 85             DEC $85
+  075E d0 f0             BNE $0750
+  0760 a9 00             LDA #$00
+  0762 85 93             STA $93
+  0764 a5 8e     L0764:  LDA $8E
+  0766 85 87             STA $87
+  0768 a5 91             LDA $91
+  076A 85 88             STA $88
+  076C 20 c9 03          JSR $03C9   ; [reloc: procedure] -> $0675
+  076F a6 86             LDX $86
+  0771 e4 7e             CPX $7E
+  0773 d0 02             BNE $0777
+  0775 e6 93             INC $93
+  0777 a5 89     L0777:  LDA $89
+  0779 85 84             STA $84
+  077B a5 8d             LDA $8D
+  077D 85 87             STA $87
+  077F a5 90             LDA $90
+  0781 85 88             STA $88
+  0783 20 c9 03          JSR $03C9   ; [reloc: procedure] -> $0675
+  0786 a5 84             LDA $84
+  0788 0a                ASL A
+  0789 0a                ASL A
+  078A 0a                ASL A
+  078B 0a                ASL A
+  078C 05 89             ORA $89
+  078E e6 8a             INC $8A
+  0790 a6 8a             LDX $8A
+  0792 9d 00 01          STA $0100,X
+  0795 e6 7c             INC $7C
+  0797 a5 93             LDA $93
+  0799 f0 c9             BEQ $0764
+  079B a5 8a             LDA $8A
+  079D 85 7f             STA $7F
+  079F 38                SEC
+  07A0 e5 8c             SBC $8C
+  07A2 85 81             STA $81
+  07A4 a5 92             LDA $92
+  07A6 d0 14             BNE $07BC
+  07A8 a9 04             LDA #$04
+  07AA 85 85             STA $85
+  07AC 18        L07AC:  CLC
+  07AD a6 8c             LDX $8C
+  07AF a4 81             LDY $81
+  07B1 e8        L07B1:  INX
+  07B2 7e 00 01          ROR $0100,X
+  07B5 88                DEY
+  07B6 d0 f9             BNE $07B1
+  07B8 c6 85             DEC $85
+  07BA d0 f0             BNE $07AC
+  07BC 4c b7 01  L07BC:  JMP $01B7   ; [reloc: procedure] -> $0463
+  07BF a9 00     L07BF:  LDA #$00
+  07C1 85 82             STA $82
+  07C3 85 88             STA $88
+  07C5 85 89             STA $89
+  07C7 85 8a             STA $8A
+  07C9 85 8b             STA $8B
+  07CB a5 87             LDA $87
+  07CD 10 14             BPL $07E3
+  07CF 49 ff             EOR #$FF
+  07D1 85 87             STA $87
+  07D3 a5 86             LDA $86
+  07D5 49 ff             EOR #$FF
+  07D7 85 86             STA $86
+  07D9 e6 86             INC $86
+  07DB d0 02             BNE $07DF
+  07DD e6 87             INC $87
+  07DF a9 ff     L07DF:  LDA #$FF
+  07E1 85 82             STA $82
+  07E3 a0 10     L07E3:  LDY #$10
+  07E5 f8                SED
+  07E6 26 86     L07E6:  ROL $86
+  07E8 26 87             ROL $87
+  07EA a2 03             LDX #$03
+  07EC b5 88     L07EC:  LDA $88,X
+  07EE 75 88             ADC $88,X
+  07F0 95 88             STA $88,X
+  07F2 ca                DEX
+  07F3 10 f7             BPL $07EC
+  07F5 88                DEY
+  07F6 d0 ee             BNE $07E6
+  07F8 d8                CLD
+  07F9 60                RTS
+  07FA 68                PLA
+  07FB 85 86             STA $86
+  07FD 68                PLA
+  07FE 85 87             STA $87
+  0800 20 13 05          JSR $0513   ; [reloc: procedure] -> $07BF
+  0803 a2 03             LDX #$03
+  0805 b5 88     L0805:  LDA $88,X
+  0807 48                PHA
+  0808 ca                DEX
+  0809 10 fa             BPL $0805
+  080B 48                PHA
+  080C a5 82             LDA $82
+  080E 48                PHA
+  080F 48                PHA
+  0810 a9 03             LDA #$03
+  0812 48                PHA
+  0813 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0816 ba                TSX
+  0817 e8                INX
+  0818 86 7d             STX $7D
+  081A bc 00 01          LDY $0100,X
+  081D 88                DEY
+  081E 98                TYA
+  081F 0a                ASL A
+  0820 85 81             STA $81
+  0822 8a                TXA
+  0823 18                CLC
+  0824 65 81             ADC $81
+  0826 69 05             ADC #$05
+  0828 85 7c             STA $7C
+  082A aa                TAX
+  082B bd 00 01          LDA $0100,X
+  082E 85 87             STA $87
+  0830 ca                DEX
+  0831 bd 00 01          LDA $0100,X
+  0834 85 86             STA $86
+  0836 20 13 05          JSR $0513   ; [reloc: procedure] -> $07BF
+  0839 ba                TSX
+  083A 8a                TXA
+  083B 38                SEC
+  083C e9 06             SBC #$06
+  083E aa                TAX
+  083F 9a                TXS
+  0840 e8                INX
+  0841 a5 81             LDA $81
+  0843 18                CLC
+  0844 69 04             ADC #$04
+  0846 85 85             STA $85
+  0848 a4 7d             LDY $7D
+  084A b9 00 01  L084A:  LDA $0100,Y
+  084D 9d 00 01          STA $0100,X
+  0850 e8                INX
+  0851 c8                INY
+  0852 c6 85             DEC $85
+  0854 d0 f4             BNE $084A
+  0856 a4 7c             LDY $7C
+  0858 a2 03             LDX #$03
+  085A b5 88     L085A:  LDA $88,X
+  085C 99 00 01          STA $0100,Y
+  085F 88                DEY
+  0860 ca                DEX
+  0861 10 f7             BPL $085A
+  0863 88                DEY
+  0864 a5 82             LDA $82
+  0866 99 00 01          STA $0100,Y
+  0869 88                DEY
+  086A 88                DEY
+  086B a9 03             LDA #$03
+  086D 99 00 01          STA $0100,Y
+  0870 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0873 68                PLA
+  0874 85 80             STA $80
+  0876 c6 80             DEC $80
+  0878 68                PLA
+  0879 68                PLA
+  087A 85 82             STA $82
+  087C 68                PLA
+  087D a5 80             LDA $80
+  087F 38                SEC
+  0880 e9 03             SBC #$03
+  0882 90 0e             BCC $0892
+  0884 aa                TAX
+  0885 68        L0885:  PLA
+  0886 d0 6f             BNE $08F7
+  0888 68                PLA
+  0889 d0 6c             BNE $08F7
+  088B ca                DEX
+  088C 10 f7             BPL $0885
+  088E a9 02             LDA #$02
+  0890 85 80             STA $80
+  0892 a9 00     L0892:  LDA #$00
+  0894 85 88             STA $88
+  0896 a5 80             LDA $80
+  0898 c9 01             CMP #$01
+  089A f0 06             BEQ $08A2
+  089C 68                PLA
+  089D d0 58             BNE $08F7
+  089F 68                PLA
+  08A0 85 88             STA $88
+  08A2 68        L08A2:  PLA
+  08A3 85 89             STA $89
+  08A5 68                PLA
+  08A6 85 8a             STA $8A
+  08A8 a9 0f             LDA #$0F
+  08AA 85 85             STA $85
+  08AC 46 88     L08AC:  LSR $88
+  08AE 66 89             ROR $89
+  08B0 66 8a             ROR $8A
+  08B2 66 87             ROR $87
+  08B4 66 86             ROR $86
+  08B6 a2 02             LDX #$02
+  08B8 b5 88     L08B8:  LDA $88,X
+  08BA 10 03             BPL $08BF
+  08BC 38                SEC
+  08BD e9 30             SBC #$30
+  08BF a8        L08BF:  TAY
+  08C0 29 08             AND #$08
+  08C2 f0 03             BEQ $08C7
+  08C4 88                DEY
+  08C5 88                DEY
+  08C6 88                DEY
+  08C7 94 88     L08C7:  STY $88,X
+  08C9 ca                DEX
+  08CA 10 ec             BPL $08B8
+  08CC c6 85             DEC $85
+  08CE d0 dc             BNE $08AC
+  08D0 a5 8a             LDA $8A
+  08D2 d0 23             BNE $08F7
+  08D4 46 87             LSR $87
+  08D6 66 86             ROR $86
+  08D8 a5 82             LDA $82
+  08DA 10 12             BPL $08EE
+  08DC a5 87             LDA $87
+  08DE 49 ff             EOR #$FF
+  08E0 85 87             STA $87
+  08E2 a5 86             LDA $86
+  08E4 49 ff             EOR #$FF
+  08E6 85 86             STA $86
+  08E8 e6 86             INC $86
+  08EA d0 02             BNE $08EE
+  08EC e6 87             INC $87
+  08EE a5 87     L08EE:  LDA $87
+  08F0 48                PHA
+  08F1 a5 86             LDA $86
+  08F3 48                PHA
+  08F4 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  08F7 4c 77 00  L08F7:  JMP $0077   ; [reloc: procedure] -> $0323
+  08FA 68                PLA
+  08FB 85 86             STA $86
+  08FD 68                PLA
+  08FE 68                PLA
+  08FF 85 88             STA $88
+  0901 68                PLA
+  0902 85 89             STA $89
+  0904 68                PLA
+  0905 85 80             STA $80
+  0907 c6 80             DEC $80
+  0909 06 80             ASL $80
+  090B 68                PLA
+  090C a0 00             LDY #$00
+  090E 68                PLA
+  090F 10 05             BPL $0916
+  0911 a9 2d             LDA #$2D
+  0913 c8                INY
+  0914 91 88             STA ($88),Y
+  0916 68        L0916:  PLA
+  0917 68        L0917:  PLA
+  0918 d0 04             BNE $091E
+  091A c6 80             DEC $80
+  091C d0 f9             BNE $0917
+  091E c9 10     L091E:  CMP #$10
+  0920 b0 0c             BCS $092E
+  0922 09 30             ORA #$30
+  0924 c8                INY
+  0925 91 88             STA ($88),Y
+  0927 c6 80             DEC $80
+  0929 f0 19             BEQ $0944
+  092B 30 17             BMI $0944
+  092D 68        L092D:  PLA
+  092E aa        L092E:  TAX
+  092F 4a                LSR A
+  0930 4a                LSR A
+  0931 4a                LSR A
+  0932 4a                LSR A
+  0933 09 30             ORA #$30
+  0935 c8                INY
+  0936 91 88             STA ($88),Y
+  0938 8a                TXA
+  0939 29 0f             AND #$0F
+  093B 09 30             ORA #$30
+  093D c8                INY
+  093E 91 88             STA ($88),Y
+  0940 c6 80             DEC $80
+  0942 d0 e9             BNE $092D
+  0944 c4 86     L0944:  CPY $86
+  0946 90 05             BCC $094D
+  0948 f0 03             BEQ $094D
+  094A 4c 7f 00          JMP $007F   ; [reloc: procedure] -> $032B
+  094D 98        L094D:  TYA
+  094E a0 00             LDY #$00
+  0950 91 88             STA ($88),Y
+  0952 4c 2c 00          JMP $002C   ; [reloc: procedure] -> $02D8
+  0955 00                BRK
+
+  ---- attribute table and relocation area $0956..$09E8
+  09E6 .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  09E4 .word $0738   ; ENTER IC, self-relative -> $02AC
+  09E2 .word $0000   ; base-relative relocation table: 0 entries
+  09E0 .word $0000   ; segment-relative relocation table: 0 entries
+  09DE .word $003E   ; procedure-relative relocation table: 62 entries
+  09DC .word $0089   ;   fix up $0953
+  09DA .word $008F   ;   fix up $094B
+  09D8 .word $00E0   ;   fix up $08F8
+  09D6 .word $00E1   ;   fix up $08F5
+  09D4 .word $0163   ;   fix up $0871
+  09D2 .word $019B   ;   fix up $0837
+  09D0 .word $01BC   ;   fix up $0814
+  09CE .word $01CD   ;   fix up $0801
+  09CC .word $020F   ;   fix up $07BD
+  09CA .word $0246   ;   fix up $0784
+  09C8 .word $025B   ;   fix up $076D
+  09C6 .word $02E3   ;   fix up $06E3
+  09C4 .word $0302   ;   fix up $06C2
+  09C2 .word $0307   ;   fix up $06BB
+  09C0 .word $0354   ;   fix up $066C
+  09BE .word $03B4   ;   fix up $060A
+  09BC .word $03B7   ;   fix up $0605
+  09BA .word $040A   ;   fix up $05B0
+  09B8 .word $0413   ;   fix up $05A5
+  09B6 .word $0414   ;   fix up $05A2
+  09B4 .word $0419   ;   fix up $059B
+  09B2 .word $0420   ;   fix up $0592
+  09B0 .word $0428   ;   fix up $0588
+  09AE .word $0433   ;   fix up $057B
+  09AC .word $043A   ;   fix up $0572
+  09AA .word $043B   ;   fix up $056F
+  09A8 .word $0440   ;   fix up $0568
+  09A6 .word $0447   ;   fix up $055F
+  09A4 .word $044F   ;   fix up $0555
+  09A2 .word $0454   ;   fix up $054E
+  09A0 .word $045B   ;   fix up $0545
+  099E .word $045C   ;   fix up $0542
+  099C .word $0460   ;   fix up $053C
+  099A .word $04A2   ;   fix up $04F8
+  0998 .word $04BD   ;   fix up $04DB
+  0996 .word $050A   ;   fix up $048C
+  0994 .word $0533   ;   fix up $0461
+  0992 .word $0562   ;   fix up $0430
+  0990 .word $056C   ;   fix up $0424
+  098E .word $05A5   ;   fix up $03E9
+  098C .word $05AA   ;   fix up $03E2
+  098A .word $05AB   ;   fix up $03DF
+  0988 .word $05B3   ;   fix up $03D5
+  0986 .word $05C0   ;   fix up $03C6
+  0984 .word $05C1   ;   fix up $03C3
+  0982 .word $064E   ;   fix up $0334
+  0980 .word $0654   ;   fix up $032C
+  097E .word $065A   ;   fix up $0324
+  097C .word $0681   ;   fix up $02FB
+  097A .word $06A4   ;   fix up $02D6
+  0978 .word $06A4   ;   fix up $02D4
+  0976 .word $06A4   ;   fix up $02D2
+  0974 .word $06A4   ;   fix up $02D0
+  0972 .word $06A4   ;   fix up $02CE
+  0970 .word $06A4   ;   fix up $02CC
+  096E .word $06A4   ;   fix up $02CA
+  096C .word $06A4   ;   fix up $02C8
+  096A .word $06A4   ;   fix up $02C6
+  0968 .word $06A4   ;   fix up $02C4
+  0966 .word $06A4   ;   fix up $02C2
+  0964 .word $06A9   ;   fix up $02BB
+  0962 .word $06AC   ;   fix up $02B6
+  0960 .word $0005   ; interp-relative relocation table: 5 entries
+  095E .word $0625   ;   fix up $0339
+  095C .word $062B   ;   fix up $0331
+  095A .word $0631   ;   fix up $0329
+  0958 .word $0671   ;   fix up $02E7
+  0956 .word $0674   ;   fix up $02E2
+
+####################################################################
+# TURTLEGR  segment 20: 7 native of 31 procedures
+####################################################################
+
+====================================================================
+TURTLEGR.30  private 30
+  code $0B68..$0DEC  (644 bytes, 332 instructions)
+  relocation area $0DEC..$0E2C   [procedure 28]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  0B68 a0 0e     L0B68:  LDY #$0E
+  0B6A b1 bb             LDA ($BB),Y
+  0B6C c9 02             CMP #$02
+  0B6E f0 04             BEQ $0B74
+  0B70 a9 20             LDA #$20
+  0B72 d0 02             BNE $0B76
+  0B74 a9 40     L0B74:  LDA #$40
+  0B76 85 34     L0B76:  STA $34
+  0B78 60                RTS
+  0B79 20 00 00          JSR $0000   ; [reloc: procedure] -> $0B68
+  0B7C a0 0c             LDY #$0C
+  0B7E b1 bb             LDA ($BB),Y
+  0B80 a8                TAY
+  0B81 c0 0d             CPY #$0D
+  0B83 b0 2d             BCS $0BB2
+  0B85 a2 00             LDX #$00
+  0B87 86 1e             STX $1E
+  0B89 86 1d             STX $1D
+  0B8B c0 05             CPY #$05
+  0B8D 90 09             BCC $0B98
+  0B8F e6 1d             INC $1D
+  0B91 b9 47 00          LDA $0047,Y   ; [reloc: procedure] base = proc+$0047, then indexed
+  0B94 85 1f             STA $1F
+  0B96 18                CLC
+  0B97 60                RTS
+  0B98 c0 03     L0B98:  CPY #$03
+  0B9A d0 08             BNE $0BA4
+  0B9C a2 7f             LDX #$7F
+  0B9E 86 1e             STX $1E
+  0BA0 86 1f     L0BA0:  STX $1F
+  0BA2 18                CLC
+  0BA3 60                RTS
+  0BA4 90 02     L0BA4:  BCC $0BA8
+  0BA6 b0 0a             BCS $0BB2
+  0BA8 c0 01     L0BA8:  CPY #$01
+  0BAA d0 04             BNE $0BB0
+  0BAC a2 7f             LDX #$7F
+  0BAE d0 f0             BNE $0BA0
+  0BB0 b0 ee     L0BB0:  BCS $0BA0
+  0BB2 38        L0BB2:  SEC
+  0BB3 60                RTS
+
+  ---- data $0BB4..$0BBC: hi-res colour masks, one per SCREENCOLOR from 5 up
+  0BB4 00 2a 55 7f 80 aa d5 ff
+
+  0BBC 85 11     L0BBC:  STA $11
+  0BBE 86 0f             STX $0F
+  0BC0 84 10             STY $10
+  0BC2 48        L0BC2:  PHA
+  0BC3 29 c0             AND #$C0
+  0BC5 85 04             STA $04
+  0BC7 4a                LSR A
+  0BC8 4a                LSR A
+  0BC9 05 04             ORA $04
+  0BCB 85 04             STA $04
+  0BCD 68                PLA
+  0BCE 85 05             STA $05
+  0BD0 0a                ASL A
+  0BD1 0a                ASL A
+  0BD2 0a                ASL A
+  0BD3 26 05             ROL $05
+  0BD5 0a                ASL A
+  0BD6 26 05             ROL $05
+  0BD8 0a                ASL A
+  0BD9 66 04             ROR $04
+  0BDB a5 05             LDA $05
+  0BDD 29 1f             AND #$1F
+  0BDF 05 34             ORA $34
+  0BE1 85 05             STA $05
+  0BE3 8a                TXA
+  0BE4 c0 00             CPY #$00
+  0BE6 f0 05             BEQ $0BED
+  0BE8 a0 23             LDY #$23
+  0BEA 69 04             ADC #$04
+  0BEC c8        L0BEC:  INY
+  0BED e9 07     L0BED:  SBC #$07
+  0BEF b0 fb             BCS $0BEC
+  0BF1 84 0d             STY $0D
+  0BF3 aa                TAX
+  0BF4 bd 82 01          LDA $0182,X   ; [reloc: procedure] base = proc+$0182, then indexed
+  0BF7 85 06             STA $06
+  0BF9 98                TYA
+  0BFA 4a                LSR A
+  0BFB a5 1f             LDA $1F
+  0BFD 85 02             STA $02
+  0BFF 90 03             BCC $0C04
+  0C01 4c e0 00          JMP $00E0   ; [reloc: procedure] -> $0C48
+  0C04 60        L0C04:  RTS
+  0C05 20 54 00          JSR $0054   ; [reloc: procedure] -> $0BBC
+  0C08 24 1e     L0C08:  BIT $1E
+  0C0A a5 02             LDA $02
+  0C0C 51 04             EOR ($04),Y
+  0C0E 25 06             AND $06
+  0C10 d0 02             BNE $0C14
+  0C12 e6 0e             INC $0E
+  0C14 50 04     L0C14:  BVC $0C1A
+  0C16 a5 06             LDA $06
+  0C18 29 7f             AND #$7F
+  0C1A 51 04     L0C1A:  EOR ($04),Y
+  0C1C 91 04             STA ($04),Y
+  0C1E a5 1d             LDA $1D
+  0C20 f0 0c             BEQ $0C2E
+  0C22 49 ff             EOR #$FF
+  0C24 85 1d             STA $1D
+  0C26 10 09             BPL $0C31
+  0C28 20 ec 00          JSR $00EC   ; [reloc: procedure] -> $0C54
+  0C2B 4c a0 00          JMP $00A0   ; [reloc: procedure] -> $0C08
+  0C2E 60        L0C2E:  RTS
+  0C2F 10 23     L0C2F:  BPL $0C54
+  0C31 a5 06     L0C31:  LDA $06
+  0C33 4a                LSR A
+  0C34 b0 05             BCS $0C3B
+  0C36 49 c0             EOR #$C0
+  0C38 85 06     L0C38:  STA $06
+  0C3A 60                RTS
+  0C3B 88        L0C3B:  DEY
+  0C3C 10 02             BPL $0C40
+  0C3E a0 27             LDY #$27
+  0C40 a9 c0     L0C40:  LDA #$C0
+  0C42 85 06     L0C42:  STA $06
+  0C44 84 0d             STY $0D
+  0C46 a5 02             LDA $02
+  0C48 0a        L0C48:  ASL A
+  0C49 c9 c0             CMP #$C0
+  0C4B 10 06             BPL $0C53
+  0C4D a5 02             LDA $02
+  0C4F 49 7f             EOR #$7F
+  0C51 85 02             STA $02
+  0C53 60        L0C53:  RTS
+  0C54 a5 06     L0C54:  LDA $06
+  0C56 0a                ASL A
+  0C57 49 80             EOR #$80
+  0C59 30 dd             BMI $0C38
+  0C5B a9 81             LDA #$81
+  0C5D c8                INY
+  0C5E c0 28             CPY #$28
+  0C60 90 e0             BCC $0C42
+  0C62 a0 00             LDY #$00
+  0C64 b0 dc             BCS $0C42
+  0C66 30 2f     L0C66:  BMI $0C97
+  0C68 18                CLC
+  0C69 a5 05             LDA $05
+  0C6B 2c 83 02          BIT $0283   ; [reloc: procedure] -> $0DEB
+  0C6E d0 22             BNE $0C92
+  0C70 06 04             ASL $04
+  0C72 b0 1a             BCS $0C8E
+  0C74 2c 82 02          BIT $0282   ; [reloc: procedure] -> $0DEA
+  0C77 f0 05             BEQ $0C7E
+  0C79 69 1f             ADC #$1F
+  0C7B 38                SEC
+  0C7C b0 12             BCS $0C90
+  0C7E 69 23     L0C7E:  ADC #$23
+  0C80 48                PHA
+  0C81 a5 04             LDA $04
+  0C83 69 b0             ADC #$B0
+  0C85 b0 02             BCS $0C89
+  0C87 69 f0             ADC #$F0
+  0C89 85 04     L0C89:  STA $04
+  0C8B 68                PLA
+  0C8C b0 02             BCS $0C90
+  0C8E 69 1f     L0C8E:  ADC #$1F
+  0C90 66 04     L0C90:  ROR $04
+  0C92 69 fc     L0C92:  ADC #$FC
+  0C94 85 05     L0C94:  STA $05
+  0C96 60                RTS
+  0C97 18        L0C97:  CLC
+  0C98 a5 05             LDA $05
+  0C9A 69 04             ADC #$04
+  0C9C 2c 83 02          BIT $0283   ; [reloc: procedure] -> $0DEB
+  0C9F d0 f3             BNE $0C94
+  0CA1 06 04             ASL $04
+  0CA3 90 18             BCC $0CBD
+  0CA5 69 e0             ADC #$E0
+  0CA7 18                CLC
+  0CA8 2c 33 01          BIT $0133   ; [reloc: procedure] -> $0C9B
+  0CAB f0 12             BEQ $0CBF
+  0CAD a5 04             LDA $04
+  0CAF 69 50             ADC #$50
+  0CB1 49 f0             EOR #$F0
+  0CB3 f0 02             BEQ $0CB7
+  0CB5 49 f0             EOR #$F0
+  0CB7 85 04     L0CB7:  STA $04
+  0CB9 a5 34             LDA $34
+  0CBB 90 02             BCC $0CBF
+  0CBD 69 e0     L0CBD:  ADC #$E0
+  0CBF 66 04     L0CBF:  ROR $04
+  0CC1 90 d1             BCC $0C94
+  0CC3 48                PHA
+  0CC4 38                SEC
+  0CC5 e5 0f             SBC $0F
+  0CC7 48                PHA
+  0CC8 8a                TXA
+  0CC9 e5 10             SBC $10
+  0CCB 85 0c             STA $0C
+  0CCD b0 0a             BCS $0CD9
+  0CCF 68                PLA
+  0CD0 49 ff             EOR #$FF
+  0CD2 69 01             ADC #$01
+  0CD4 48                PHA
+  0CD5 a9 00             LDA #$00
+  0CD7 e5 0c             SBC $0C
+  0CD9 85 09     L0CD9:  STA $09
+  0CDB 85 0b             STA $0B
+  0CDD 68                PLA
+  0CDE 85 08             STA $08
+  0CE0 85 0a             STA $0A
+  0CE2 68                PLA
+  0CE3 c4 11             CPY $11
+  0CE5 d0 03             BNE $0CEA
+  0CE7 4c 13 02          JMP $0213   ; [reloc: procedure] -> $0D7B
+  0CEA 85 0f     L0CEA:  STA $0F
+  0CEC 86 10             STX $10
+  0CEE 98                TYA
+  0CEF 38                SEC
+  0CF0 e5 11             SBC $11
+  0CF2 b0 04             BCS $0CF8
+  0CF4 49 ff             EOR #$FF
+  0CF6 69 01             ADC #$01
+  0CF8 85 07     L0CF8:  STA $07
+  0CFA 84 11             STY $11
+  0CFC 66 0c             ROR $0C
+  0CFE a4 0d             LDY $0D
+  0D00 a5 09             LDA $09
+  0D02 d0 08             BNE $0D0C
+  0D04 a5 07             LDA $07
+  0D06 c5 08             CMP $08
+  0D08 b0 45             BCS $0D4F
+  0D0A a5 09             LDA $09
+  0D0C 85 03     L0D0C:  STA $03
+  0D0E 4a                LSR A
+  0D0F 85 0b             STA $0B
+  0D11 a5 08             LDA $08
+  0D13 d0 02             BNE $0D17
+  0D15 85 03             STA $03
+  0D17 aa        L0D17:  TAX
+  0D18 6a                ROR A
+  0D19 85 0a             STA $0A
+  0D1B a5 0a     L0D1B:  LDA $0A
+  0D1D 38                SEC
+  0D1E e5 07             SBC $07
+  0D20 85 0a             STA $0A
+  0D22 b0 1a             BCS $0D3E
+  0D24 c6 0b             DEC $0B
+  0D26 10 16             BPL $0D3E
+  0D28 65 08             ADC $08
+  0D2A 85 0a             STA $0A
+  0D2C a5 0b             LDA $0B
+  0D2E 65 09             ADC $09
+  0D30 85 0b             STA $0B
+  0D32 a5 0c             LDA $0C
+  0D34 20 fe 00          JSR $00FE   ; [reloc: procedure] -> $0C66
+  0D37 a5 1d             LDA $1D
+  0D39 f0 03             BEQ $0D3E
+  0D3B 20 a0 00          JSR $00A0   ; [reloc: procedure] -> $0C08
+  0D3E a5 0c     L0D3E:  LDA $0C
+  0D40 0a                ASL A
+  0D41 20 c7 00          JSR $00C7   ; [reloc: procedure] -> $0C2F
+  0D44 20 a0 00          JSR $00A0   ; [reloc: procedure] -> $0C08
+  0D47 ca                DEX
+  0D48 d0 d1             BNE $0D1B
+  0D4A c6 03             DEC $03
+  0D4C 10 cd             BPL $0D1B
+  0D4E 60                RTS
+  0D4F aa        L0D4F:  TAX
+  0D50 f0 28             BEQ $0D7A
+  0D52 4a                LSR A
+  0D53 85 0a             STA $0A
+  0D55 a5 0a     L0D55:  LDA $0A
+  0D57 38                SEC
+  0D58 e5 08             SBC $08
+  0D5A 85 0a             STA $0A
+  0D5C b0 11             BCS $0D6F
+  0D5E 65 07             ADC $07
+  0D60 85 0a             STA $0A
+  0D62 a5 0c             LDA $0C
+  0D64 0a                ASL A
+  0D65 20 c7 00          JSR $00C7   ; [reloc: procedure] -> $0C2F
+  0D68 a5 1d             LDA $1D
+  0D6A f0 03             BEQ $0D6F
+  0D6C 20 a0 00          JSR $00A0   ; [reloc: procedure] -> $0C08
+  0D6F a5 0c     L0D6F:  LDA $0C
+  0D71 20 fe 00          JSR $00FE   ; [reloc: procedure] -> $0C66
+  0D74 20 a0 00          JSR $00A0   ; [reloc: procedure] -> $0C08
+  0D77 ca                DEX
+  0D78 d0 db             BNE $0D55
+  0D7A 60        L0D7A:  RTS
+  0D7B 86 00     L0D7B:  STX $00
+  0D7D aa                TAX
+  0D7E a4 00             LDY $00
+  0D80 a5 11             LDA $11
+  0D82 20 5a 00          JSR $005A   ; [reloc: procedure] -> $0BC2
+  0D85 84 13             STY $13
+  0D87 a5 06             LDA $06
+  0D89 85 14             STA $14
+  0D8B a6 0f             LDX $0F
+  0D8D a4 10             LDY $10
+  0D8F a5 11             LDA $11
+  0D91 20 5a 00          JSR $005A   ; [reloc: procedure] -> $0BC2
+  0D94 c4 13             CPY $13
+  0D96 f0 3c             BEQ $0DD4
+  0D98 84 12             STY $12
+  0D9A d0 03             BNE $0D9F
+  0D9C 20 a0 00  L0D9C:  JSR $00A0   ; [reloc: procedure] -> $0C08
+  0D9F 24 0c     L0D9F:  BIT $0C
+  0DA1 20 c7 00          JSR $00C7   ; [reloc: procedure] -> $0C2F
+  0DA4 c4 12             CPY $12
+  0DA6 f0 f4             BEQ $0D9C
+  0DA8 c4 13             CPY $13
+  0DAA f0 25             BEQ $0DD1
+  0DAC a5 02     L0DAC:  LDA $02
+  0DAE 24 1e             BIT $1E
+  0DB0 50 04             BVC $0DB6
+  0DB2 a9 7f             LDA #$7F
+  0DB4 51 04             EOR ($04),Y
+  0DB6 91 04     L0DB6:  STA ($04),Y
+  0DB8 20 e0 00          JSR $00E0   ; [reloc: procedure] -> $0C48
+  0DBB 24 0c             BIT $0C
+  0DBD 10 09             BPL $0DC8
+  0DBF 88                DEY
+  0DC0 c4 13             CPY $13
+  0DC2 d0 e8             BNE $0DAC
+  0DC4 a9 c0             LDA #$C0
+  0DC6 d0 07             BNE $0DCF
+  0DC8 c8        L0DC8:  INY
+  0DC9 c4 13             CPY $13
+  0DCB d0 df             BNE $0DAC
+  0DCD a9 81             LDA #$81
+  0DCF 85 06     L0DCF:  STA $06
+  0DD1 20 a0 00  L0DD1:  JSR $00A0   ; [reloc: procedure] -> $0C08
+  0DD4 a5 06     L0DD4:  LDA $06
+  0DD6 c5 14             CMP $14
+  0DD8 f0 08             BEQ $0DE2
+  0DDA 24 0c             BIT $0C
+  0DDC 20 c7 00          JSR $00C7   ; [reloc: procedure] -> $0C2F
+  0DDF 4c 69 02          JMP $0269   ; [reloc: procedure] -> $0DD1
+  0DE2 60        L0DE2:  RTS
+
+  ---- data $0DE3..$0DEC: bit masks and two constants
+  0DE3 81 82 84 88 90 a0 c0 03
+  0DEB 1c
+
+
+  ---- attribute table and relocation area $0DEC..$0E30
+  0E2E .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  0E2C .word $02C4   ; ENTER IC, self-relative -> $0B68
+  0E2A .word $0000   ; base-relative relocation table: 0 entries
+  0E28 .word $0000   ; segment-relative relocation table: 0 entries
+  0E26 .word $001C   ; procedure-relative relocation table: 28 entries
+  0E24 .word $0044   ;   fix up $0DE0
+  0E22 .word $0045   ;   fix up $0DDD
+  0E20 .word $004E   ;   fix up $0DD2
+  0E1E .word $0065   ;   fix up $0DB9
+  0E1C .word $007A   ;   fix up $0DA2
+  0E1A .word $007D   ;   fix up $0D9D
+  0E18 .word $0086   ;   fix up $0D92
+  0E16 .word $0093   ;   fix up $0D83
+  0E14 .word $009F   ;   fix up $0D75
+  0E12 .word $00A0   ;   fix up $0D72
+  0E10 .word $00A3   ;   fix up $0D6D
+  0E0E .word $00A8   ;   fix up $0D66
+  0E0C .word $00C7   ;   fix up $0D45
+  0E0A .word $00C8   ;   fix up $0D42
+  0E08 .word $00CC   ;   fix up $0D3C
+  0E06 .word $00D1   ;   fix up $0D35
+  0E04 .word $011C   ;   fix up $0CE8
+  0E02 .word $0159   ;   fix up $0CA9
+  0E00 .word $0163   ;   fix up $0C9D
+  0DFE .word $0189   ;   fix up $0C75
+  0DFC .word $0190   ;   fix up $0C6C
+  0DFA .word $01CE   ;   fix up $0C2C
+  0DF8 .word $01CF   ;   fix up $0C29
+  0DF6 .word $01F0   ;   fix up $0C06
+  0DF4 .word $01F2   ;   fix up $0C02
+  0DF2 .word $01FD   ;   fix up $0BF5
+  0DF0 .word $025E   ;   fix up $0B92
+  0DEE .word $0274   ;   fix up $0B7A
+  0DEC .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.31  private 31
+  code $0E30..$1032  (514 bytes, 270 instructions)
+  relocation area $1032..$105E   [procedure 18]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  0E30 68                PLA
+  0E31 85 30             STA $30
+  0E33 68                PLA
+  0E34 85 31             STA $31
+  0E36 68                PLA
+  0E37 68                PLA
+  0E38 68                PLA
+  0E39 68                PLA
+  0E3A 68                PLA
+  0E3B 85 2e             STA $2E
+  0E3D 68                PLA
+  0E3E 85 2f             STA $2F
+  0E40 68                PLA
+  0E41 85 2c             STA $2C
+  0E43 68                PLA
+  0E44 85 2d             STA $2D
+  0E46 68                PLA
+  0E47 85 2a             STA $2A
+  0E49 68                PLA
+  0E4A 85 2b             STA $2B
+  0E4C 68                PLA
+  0E4D 85 28             STA $28
+  0E4F 68                PLA
+  0E50 85 29             STA $29
+  0E52 a0 00             LDY #$00
+  0E54 b1 28             LDA ($28),Y
+  0E56 85 11             STA $11
+  0E58 c8                INY
+  0E59 b1 28             LDA ($28),Y
+  0E5B 85 12             STA $12
+  0E5D a0 00             LDY #$00
+  0E5F b1 2a             LDA ($2A),Y
+  0E61 85 13             STA $13
+  0E63 c8                INY
+  0E64 b1 2a             LDA ($2A),Y
+  0E66 85 14             STA $14
+  0E68 a0 00             LDY #$00
+  0E6A b1 2c             LDA ($2C),Y
+  0E6C 85 16             STA $16
+  0E6E c8                INY
+  0E6F b1 2c             LDA ($2C),Y
+  0E71 85 17             STA $17
+  0E73 a0 00             LDY #$00
+  0E75 b1 2e             LDA ($2E),Y
+  0E77 85 18             STA $18
+  0E79 c8                INY
+  0E7A b1 2e             LDA ($2E),Y
+  0E7C 85 19             STA $19
+  0E7E 20 90 00          JSR $0090   ; [reloc: procedure] -> $0EC0
+  0E81 a9 00             LDA #$00
+  0E83 48                PHA
+  0E84 b0 02             BCS $0E88
+  0E86 a9 01             LDA #$01
+  0E88 48        L0E88:  PHA
+  0E89 a5 31             LDA $31
+  0E8B 48                PHA
+  0E8C a5 30             LDA $30
+  0E8E 48                PHA
+  0E8F a0 00             LDY #$00
+  0E91 a5 11             LDA $11
+  0E93 91 28             STA ($28),Y
+  0E95 c8                INY
+  0E96 b9 11 00          LDA $0011,Y
+  0E99 91 28             STA ($28),Y
+  0E9B a0 00             LDY #$00
+  0E9D a5 13             LDA $13
+  0E9F 91 2a             STA ($2A),Y
+  0EA1 c8                INY
+  0EA2 b9 13 00          LDA $0013,Y
+  0EA5 91 2a             STA ($2A),Y
+  0EA7 a0 00             LDY #$00
+  0EA9 a5 16             LDA $16
+  0EAB 91 2c             STA ($2C),Y
+  0EAD c8                INY
+  0EAE b9 16 00          LDA $0016,Y
+  0EB1 91 2c             STA ($2C),Y
+  0EB3 a0 00             LDY #$00
+  0EB5 a5 18             LDA $18
+  0EB7 91 2e             STA ($2E),Y
+  0EB9 c8                INY
+  0EBA b9 18 00          LDA $0018,Y
+  0EBD 91 2e             STA ($2E),Y
+  0EBF 60                RTS
+  0EC0 a0 00     L0EC0:  LDY #$00
+  0EC2 b1 bb     L0EC2:  LDA ($BB),Y
+  0EC4 99 20 00          STA $0020,Y
+  0EC7 c8                INY
+  0EC8 c0 08             CPY #$08
+  0ECA d0 f6             BNE $0EC2
+  0ECC a0 0c             LDY #$0C
+  0ECE b1 bb             LDA ($BB),Y
+  0ED0 c9 05             CMP #$05
+  0ED2 90 0c             BCC $0EE0
+  0ED4 a5 22             LDA $22
+  0ED6 e9 01             SBC #$01
+  0ED8 85 22             STA $22
+  0EDA a5 23             LDA $23
+  0EDC e9 00             SBC #$00
+  0EDE 85 23             STA $23
+  0EE0 a0 0f     L0EE0:  LDY #$0F
+  0EE2 20 a5 01          JSR $01A5   ; [reloc: procedure] -> $0FD5
+  0EE5 85 15             STA $15
+  0EE7 a0 14             LDY #$14
+  0EE9 20 a5 01          JSR $01A5   ; [reloc: procedure] -> $0FD5
+  0EEC 85 1a             STA $1A
+  0EEE a5 1a     L0EEE:  LDA $1A
+  0EF0 05 15             ORA $15
+  0EF2 29 0f             AND #$0F
+  0EF4 d0 02             BNE $0EF8
+  0EF6 18        L0EF6:  CLC
+  0EF7 60                RTS
+  0EF8 a5 15     L0EF8:  LDA $15
+  0EFA 25 1a             AND $1A
+  0EFC 29 0f             AND #$0F
+  0EFE f0 02             BEQ $0F02
+  0F00 38                SEC
+  0F01 60        L0F01:  RTS
+  0F02 a5 15     L0F02:  LDA $15
+  0F04 29 0f             AND #$0F
+  0F06 f0 1d             BEQ $0F25
+  0F08 a2 00             LDX #$00
+  0F0A a0 0f             LDY #$0F
+  0F0C 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F0F a2 05             LDX #$05
+  0F11 a0 14             LDY #$14
+  0F13 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F16 20 18 01          JSR $0118   ; [reloc: procedure] -> $0F48
+  0F19 b0 e6             BCS $0F01
+  0F1B a2 0f             LDX #$0F
+  0F1D a0 0a             LDY #$0A
+  0F1F 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F22 4c be 00          JMP $00BE   ; [reloc: procedure] -> $0EEE
+  0F25 a5 1a     L0F25:  LDA $1A
+  0F27 29 0f             AND #$0F
+  0F29 f0 cb             BEQ $0EF6
+  0F2B a2 00             LDX #$00
+  0F2D a0 14             LDY #$14
+  0F2F 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F32 a2 05             LDX #$05
+  0F34 a0 0f             LDY #$0F
+  0F36 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F39 20 18 01          JSR $0118   ; [reloc: procedure] -> $0F48
+  0F3C b0 c3             BCS $0F01
+  0F3E a2 14             LDX #$14
+  0F40 a0 0a             LDY #$0A
+  0F42 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F45 4c c6 00          JMP $00C6   ; [reloc: procedure] -> $0EF6
+  0F48 a5 06     L0F48:  LDA $06
+  0F4A 45 0b             EOR $0B
+  0F4C 25 06             AND $06
+  0F4E 0a                ASL A
+  0F4F 0a                ASL A
+  0F50 0a                ASL A
+  0F51 0a                ASL A
+  0F52 85 00             STA $00
+  0F54 25 0b             AND $0B
+  0F56 f0 11             BEQ $0F69
+  0F58 a5 0b             LDA $0B
+  0F5A 29 0f             AND #$0F
+  0F5C d0 09             BNE $0F67
+  0F5E a0 05             LDY #$05
+  0F60 a2 0a             LDX #$0A
+  0F62 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0F65 18                CLC
+  0F66 60                RTS
+  0F67 38        L0F67:  SEC
+  0F68 60                RTS
+  0F69 85 1b     L0F69:  STA $1B
+  0F6B 85 1c             STA $1C
+  0F6D 26 1b     L0F6D:  ROL $1B
+  0F6F a5 02             LDA $02
+  0F71 65 07             ADC $07
+  0F73 85 0c             STA $0C
+  0F75 a5 03             LDA $03
+  0F77 65 08             ADC $08
+  0F79 70 02             BVS $0F7D
+  0F7B c9 80             CMP #$80
+  0F7D 6a        L0F7D:  ROR A
+  0F7E 85 0d             STA $0D
+  0F80 66 0c             ROR $0C
+  0F82 66 1b             ROR $1B
+  0F84 26 1c             ROL $1C
+  0F86 a5 04             LDA $04
+  0F88 65 09             ADC $09
+  0F8A 85 0e             STA $0E
+  0F8C a5 05             LDA $05
+  0F8E 65 0a             ADC $0A
+  0F90 70 02             BVS $0F94
+  0F92 c9 80             CMP #$80
+  0F94 6a        L0F94:  ROR A
+  0F95 85 0f             STA $0F
+  0F97 66 0e             ROR $0E
+  0F99 66 1c             ROR $1C
+  0F9B a0 0a             LDY #$0A
+  0F9D 20 a5 01          JSR $01A5   ; [reloc: procedure] -> $0FD5
+  0FA0 85 10             STA $10
+  0FA2 25 06             AND $06
+  0FA4 29 0f             AND #$0F
+  0FA6 f0 0f             BEQ $0FB7
+  0FA8 a2 00             LDX #$00
+  0FAA 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0FAD a5 06             LDA $06
+  0FAF 25 0b             AND $0B
+  0FB1 29 0f             AND #$0F
+  0FB3 f0 b8             BEQ $0F6D
+  0FB5 18        L0FB5:  CLC
+  0FB6 60                RTS
+  0FB7 a5 10     L0FB7:  LDA $10
+  0FB9 25 00             AND $00
+  0FBB d0 f8             BNE $0FB5
+  0FBD a2 05             LDX #$05
+  0FBF 20 95 01          JSR $0195   ; [reloc: procedure] -> $0FC5
+  0FC2 4c 3d 01          JMP $013D   ; [reloc: procedure] -> $0F6D
+  0FC5 a9 05     L0FC5:  LDA #$05
+  0FC7 85 01             STA $01
+  0FC9 b9 02 00  L0FC9:  LDA $0002,Y
+  0FCC 95 02             STA $02,X
+  0FCE e8                INX
+  0FCF c8                INY
+  0FD0 c6 01             DEC $01
+  0FD2 d0 f5             BNE $0FC9
+  0FD4 60                RTS
+  0FD5 a9 00     L0FD5:  LDA #$00
+  0FD7 b6 05             LDX $05,Y
+  0FD9 30 28             BMI $1003
+  0FDB e4 25             CPX $25
+  0FDD 90 24             BCC $1003
+  0FDF d0 0a             BNE $0FEB
+  0FE1 b6 04             LDX $04,Y
+  0FE3 e4 24             CPX $24
+  0FE5 90 1c             BCC $1003
+  0FE7 d0 02             BNE $0FEB
+  0FE9 09 40             ORA #$40
+  0FEB b6 05     L0FEB:  LDX $05,Y
+  0FED e4 27             CPX $27
+  0FEF 90 14             BCC $1005
+  0FF1 d0 0c             BNE $0FFF
+  0FF3 b6 04             LDX $04,Y
+  0FF5 e4 26             CPX $26
+  0FF7 90 0c             BCC $1005
+  0FF9 d0 04             BNE $0FFF
+  0FFB 09 80             ORA #$80
+  0FFD d0 06             BNE $1005
+  0FFF 09 08     L0FFF:  ORA #$08
+  1001 d0 02             BNE $1005
+  1003 09 04     L1003:  ORA #$04
+  1005 b6 03     L1005:  LDX $03,Y
+  1007 30 26             BMI $102F
+  1009 e4 21             CPX $21
+  100B 90 22             BCC $102F
+  100D d0 0a             BNE $1019
+  100F b6 02             LDX $02,Y
+  1011 e4 20             CPX $20
+  1013 90 1a             BCC $102F
+  1015 d0 02             BNE $1019
+  1017 09 10             ORA #$10
+  1019 b6 03     L1019:  LDX $03,Y
+  101B e4 23             CPX $23
+  101D 90 12             BCC $1031
+  101F d0 08             BNE $1029
+  1021 b6 02             LDX $02,Y
+  1023 e4 22             CPX $22
+  1025 90 0a             BCC $1031
+  1027 f0 03             BEQ $102C
+  1029 09 02     L1029:  ORA #$02
+  102B 60                RTS
+  102C 09 20     L102C:  ORA #$20
+  102E 60                RTS
+  102F 09 01     L102F:  ORA #$01
+  1031 60        L1031:  RTS
+
+  ---- attribute table and relocation area $1032..$1062
+  1060 .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  105E .word $022E   ; ENTER IC, self-relative -> $0E30
+  105C .word $0000   ; base-relative relocation table: 0 entries
+  105A .word $0000   ; segment-relative relocation table: 0 entries
+  1058 .word $0012   ; procedure-relative relocation table: 18 entries
+  1056 .word $0093   ;   fix up $0FC3
+  1054 .word $0094   ;   fix up $0FC0
+  1052 .word $00A7   ;   fix up $0FAB
+  1050 .word $00B2   ;   fix up $0F9E
+  104E .word $00EB   ;   fix up $0F63
+  104C .word $0106   ;   fix up $0F46
+  104A .word $0107   ;   fix up $0F43
+  1048 .word $010E   ;   fix up $0F3A
+  1046 .word $010F   ;   fix up $0F37
+  1044 .word $0114   ;   fix up $0F30
+  1042 .word $011F   ;   fix up $0F23
+  1040 .word $0120   ;   fix up $0F20
+  103E .word $0127   ;   fix up $0F17
+  103C .word $0128   ;   fix up $0F14
+  103A .word $012D   ;   fix up $0F0D
+  1038 .word $014E   ;   fix up $0EEA
+  1036 .word $0153   ;   fix up $0EE3
+  1034 .word $01B5   ;   fix up $0E7F
+  1032 .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.20  MOVEABS
+  code $1062..$10C4  (98 bytes, 57 instructions)
+  relocation area $10C4..$10D4   [segment 4]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  1062 a0 08             LDY #$08
+  1064 b1 bb     L1064:  LDA ($BB),Y
+  1066 99 09 00          STA $0009,Y
+  1069 c8                INY
+  106A c0 0c             CPY #$0C
+  106C d0 f6             BNE $1064
+  106E 68                PLA
+  106F 85 00             STA $00
+  1071 68                PLA
+  1072 85 01             STA $01
+  1074 68                PLA
+  1075 85 18             STA $18
+  1077 68                PLA
+  1078 85 19             STA $19
+  107A 68                PLA
+  107B 85 16             STA $16
+  107D 68                PLA
+  107E 85 17             STA $17
+  1080 a5 01             LDA $01
+  1082 48                PHA
+  1083 a5 00             LDA $00
+  1085 48                PHA
+  1086 a0 08             LDY #$08
+  1088 b9 0e 00  L1088:  LDA $000E,Y
+  108B 91 bb             STA ($BB),Y
+  108D c8                INY
+  108E c0 0c             CPY #$0C
+  1090 d0 f6             BNE $1088
+  1092 a0 0c             LDY #$0C
+  1094 b1 bb             LDA ($BB),Y
+  1096 d0 01             BNE $1099
+  1098 60        L1098:  RTS
+  1099 20 c0 0e  L1099:  JSR $0EC0   ; [reloc: segment] -> $1F22
+  109C b0 fa             BCS $1098
+  109E 20 79 0b          JSR $0B79   ; [reloc: segment] -> $1BDB
+  10A1 b0 f5             BCS $1098
+  10A3 a5 16             LDA $16
+  10A5 48                PHA
+  10A6 a5 17             LDA $17
+  10A8 48                PHA
+  10A9 a9 bf             LDA #$BF
+  10AB 38                SEC
+  10AC e5 18             SBC $18
+  10AE 48                PHA
+  10AF a9 bf             LDA #$BF
+  10B1 38                SEC
+  10B2 e5 13             SBC $13
+  10B4 a6 11             LDX $11
+  10B6 a4 12             LDY $12
+  10B8 20 05 0c          JSR $0C05   ; [reloc: segment] -> $1C67
+  10BB 68                PLA
+  10BC a8                TAY
+  10BD 68                PLA
+  10BE aa                TAX
+  10BF 68                PLA
+  10C0 4c c3 0c          JMP $0CC3   ; [reloc: segment] -> $1D25
+  10C3 00                BRK
+
+  ---- attribute table and relocation area $10C4..$10D8
+  10D6 .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  10D4 .word $0072   ; ENTER IC, self-relative -> $1062
+  10D2 .word $0000   ; base-relative relocation table: 0 entries
+  10D0 .word $0004   ; segment-relative relocation table: 4 entries
+  10CE .word $000D   ;   fix up $10C1
+  10CC .word $0013   ;   fix up $10B9
+  10CA .word $002B   ;   fix up $109F
+  10C8 .word $002E   ;   fix up $109A
+  10C6 .word $0000   ; procedure-relative relocation table: 0 entries
+  10C4 .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.21  MOVEREL
+  code $10D8..$110A  (50 bytes, 30 instructions)
+  relocation area $110A..$1114   [segment 1]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  10D8 68                PLA
+  10D9 85 00             STA $00
+  10DB 68                PLA
+  10DC 85 01             STA $01
+  10DE a0 08             LDY #$08
+  10E0 b1 bb     L10E0:  LDA ($BB),Y
+  10E2 99 09 00          STA $0009,Y
+  10E5 c8                INY
+  10E6 c0 0c             CPY #$0C
+  10E8 d0 f6             BNE $10E0
+  10EA 18                CLC
+  10EB 68                PLA
+  10EC 65 13             ADC $13
+  10EE 85 18             STA $18
+  10F0 68                PLA
+  10F1 65 14             ADC $14
+  10F3 85 19             STA $19
+  10F5 18                CLC
+  10F6 68                PLA
+  10F7 65 11             ADC $11
+  10F9 85 16             STA $16
+  10FB 68                PLA
+  10FC 65 12             ADC $12
+  10FE 85 17             STA $17
+  1100 a5 01             LDA $01
+  1102 48                PHA
+  1103 a5 00             LDA $00
+  1105 48                PHA
+  1106 4c 86 10          JMP $1086   ; [reloc: segment] -> $215E
+  1109 00                BRK
+
+  ---- attribute table and relocation area $110A..$1118
+  1116 .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  1114 .word $003C   ; ENTER IC, self-relative -> $10D8
+  1112 .word $0000   ; base-relative relocation table: 0 entries
+  1110 .word $0001   ; segment-relative relocation table: 1 entry
+  110E .word $0007   ;   fix up $1107
+  110C .word $0000   ; procedure-relative relocation table: 0 entries
+  110A .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.22  FILLIT
+  code $1118..$116E  (86 bytes, 41 instructions)
+  relocation area $116E..$1188   [segment 3, procedure 6]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  1118 a0 00             LDY #$00
+  111A b1 bb     L111A:  LDA ($BB),Y
+  111C 99 20 00          STA $0020,Y
+  111F c8                INY
+  1120 c0 08             CPY #$08
+  1122 d0 f6             BNE $111A
+  1124 20 79 0b          JSR $0B79   ; [reloc: segment] -> $1C91
+  1127 b0 42             BCS $116B
+  1129 a0 0c             LDY #$0C
+  112B b1 bb             LDA ($BB),Y
+  112D c9 05             CMP #$05
+  112F 90 0c             BCC $113D
+  1131 a5 22             LDA $22
+  1133 e9 01             SBC #$01
+  1135 85 22             STA $22
+  1137 a5 23             LDA $23
+  1139 e9 00             SBC #$00
+  113B 85 23             STA $23
+  113D 38        L113D:  SEC
+  113E a5 26             LDA $26
+  1140 e5 24             SBC $24
+  1142 69 00             ADC #$00
+  1144 8d 54 00          STA $0054   ; [reloc: procedure] -> $116C
+  1147 a9 bf             LDA #$BF
+  1149 38                SEC
+  114A e5 26             SBC $26
+  114C 8d 55 00          STA $0055   ; [reloc: procedure] -> $116D
+  114F ad 55 00  L114F:  LDA $0055   ; [reloc: procedure] -> $116D
+  1152 a6 20             LDX $20
+  1154 a4 21             LDY $21
+  1156 20 05 0c          JSR $0C05   ; [reloc: segment] -> $1D1D
+  1159 ac 55 00          LDY $0055   ; [reloc: procedure] -> $116D
+  115C a5 22             LDA $22
+  115E a6 23             LDX $23
+  1160 20 c3 0c          JSR $0CC3   ; [reloc: segment] -> $1DDB
+  1163 ee 55 00          INC $0055   ; [reloc: procedure] -> $116D
+  1166 ce 54 00          DEC $0054   ; [reloc: procedure] -> $116C
+  1169 d0 e4             BNE $114F
+  116B 60        L116B:  RTS
+  116C 00        L116C:  BRK
+  116D 00        L116D:  BRK
+
+  ---- attribute table and relocation area $116E..$118C
+  118A .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  1188 .word $0070   ; ENTER IC, self-relative -> $1118
+  1186 .word $0000   ; base-relative relocation table: 0 entries
+  1184 .word $0003   ; segment-relative relocation table: 3 entries
+  1182 .word $0021   ;   fix up $1161
+  1180 .word $0029   ;   fix up $1157
+  117E .word $0059   ;   fix up $1125
+  117C .word $0006   ; procedure-relative relocation table: 6 entries
+  117A .word $0013   ;   fix up $1167
+  1178 .word $0014   ;   fix up $1164
+  1176 .word $001C   ;   fix up $115A
+  1174 .word $0024   ;   fix up $1150
+  1172 .word $0025   ;   fix up $114D
+  1170 .word $002B   ;   fix up $1145
+  116E .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.15  SCREENBIT
+  code $118C..$11BE  (50 bytes, 33 instructions)
+  relocation area $11BE..$11CA   [segment 2]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  118C 20 68 0b          JSR $0B68   ; [reloc: segment] -> $1CF4
+  118F 68                PLA
+  1190 85 00             STA $00
+  1192 68                PLA
+  1193 85 01             STA $01
+  1195 68                PLA
+  1196 68                PLA
+  1197 68                PLA
+  1198 68                PLA
+  1199 68                PLA
+  119A 85 15             STA $15
+  119C 68                PLA
+  119D 68                PLA
+  119E aa                TAX
+  119F 68                PLA
+  11A0 a8                TAY
+  11A1 a9 00             LDA #$00
+  11A3 48                PHA
+  11A4 a9 bf             LDA #$BF
+  11A6 38                SEC
+  11A7 e5 15             SBC $15
+  11A9 20 c2 0b          JSR $0BC2   ; [reloc: segment] -> $1D4E
+  11AC b1 04             LDA ($04),Y
+  11AE 29 7f             AND #$7F
+  11B0 25 06             AND $06
+  11B2 f0 02             BEQ $11B6
+  11B4 a9 01             LDA #$01
+  11B6 48        L11B6:  PHA
+  11B7 a5 01             LDA $01
+  11B9 48                PHA
+  11BA a5 00             LDA $00
+  11BC 48                PHA
+  11BD 60                RTS
+
+  ---- attribute table and relocation area $11BE..$11CE
+  11CC .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  11CA .word $003E   ; ENTER IC, self-relative -> $118C
+  11C8 .word $0000   ; base-relative relocation table: 0 entries
+  11C6 .word $0002   ; segment-relative relocation table: 2 entries
+  11C4 .word $001A   ;   fix up $11AA
+  11C2 .word $0035   ;   fix up $118D
+  11C0 .word $0000   ; procedure-relative relocation table: 0 entries
+  11BE .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+TURTLEGR.16  DRAWBLOCK
+  code $11CE..$1408  (570 bytes, 288 instructions)
+  relocation area $1408..$142A   [segment 5, procedure 8]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  11CE 68                PLA
+  11CF 85 00             STA $00
+  11D1 68                PLA
+  11D2 85 01             STA $01
+  11D4 68                PLA
+  11D5 29 0f             AND #$0F
+  11D7 85 03             STA $03
+  11D9 68                PLA
+  11DA 68                PLA
+  11DB 85 0b             STA $0B
+  11DD 68                PLA
+  11DE 85 0c             STA $0C
+  11E0 68                PLA
+  11E1 85 09             STA $09
+  11E3 68                PLA
+  11E4 85 0a             STA $0A
+  11E6 68                PLA
+  11E7 85 0e             STA $0E
+  11E9 68                PLA
+  11EA 85 0f             STA $0F
+  11EC 68                PLA
+  11ED 85 10             STA $10
+  11EF 68                PLA
+  11F0 85 11             STA $11
+  11F2 68                PLA
+  11F3 85 12             STA $12
+  11F5 68                PLA
+  11F6 85 13             STA $13
+  11F8 68                PLA
+  11F9 85 14             STA $14
+  11FB 68                PLA
+  11FC 85 15             STA $15
+  11FE 68                PLA
+  11FF 85 16             STA $16
+  1201 68                PLA
+  1202 85 17             STA $17
+  1204 68                PLA
+  1205 85 18             STA $18
+  1207 68                PLA
+  1208 85 19             STA $19
+  120A a5 01             LDA $01
+  120C 48                PHA
+  120D a5 00             LDA $00
+  120F 48                PHA
+  1210 20 68 0b          JSR $0B68   ; [reloc: segment] -> $1D36
+  1213 a0 00             LDY #$00
+  1215 b1 bb     L1215:  LDA ($BB),Y
+  1217 99 20 00          STA $0020,Y
+  121A c8                INY
+  121B c0 08             CPY #$08
+  121D d0 f6             BNE $1215
+  121F a4 03             LDY $03
+  1221 b9 19 02          LDA $0219,Y   ; [reloc: procedure] base = proc+$0219, then indexed
+  1224 8d f5 01          STA $01F5   ; [reloc: procedure] -> $13C3
+  1227 b9 29 02          LDA $0229,Y   ; [reloc: procedure] base = proc+$0229, then indexed
+  122A 8d f7 01          STA $01F7   ; [reloc: procedure] -> $13C5
+  122D a5 23             LDA $23
+  122F c5 0a             CMP $0A
+  1231 90 08             BCC $123B
+  1233 d0 07             BNE $123C
+  1235 a5 22             LDA $22
+  1237 c5 09             CMP $09
+  1239 b0 01             BCS $123C
+  123B 60        L123B:  RTS
+  123C a5 27     L123C:  LDA $27
+  123E c5 0c             CMP $0C
+  1240 90 f9             BCC $123B
+  1242 d0 06             BNE $124A
+  1244 a5 26             LDA $26
+  1246 c5 0b             CMP $0B
+  1248 90 f1             BCC $123B
+  124A 38        L124A:  SEC
+  124B a5 20             LDA $20
+  124D e5 09             SBC $09
+  124F 85 1a             STA $1A
+  1251 a5 21             LDA $21
+  1253 e5 0a             SBC $0A
+  1255 85 1b             STA $1B
+  1257 30 25             BMI $127E
+  1259 18                CLC
+  125A a5 14             LDA $14
+  125C 65 1a             ADC $1A
+  125E 85 14             STA $14
+  1260 a5 15             LDA $15
+  1262 65 1b             ADC $1B
+  1264 85 15             STA $15
+  1266 38                SEC
+  1267 a5 10             LDA $10
+  1269 e5 1a             SBC $1A
+  126B 85 10             STA $10
+  126D a5 11             LDA $11
+  126F e5 1b             SBC $1B
+  1271 85 11             STA $11
+  1273 10 01             BPL $1276
+  1275 60                RTS
+  1276 a5 20     L1276:  LDA $20
+  1278 85 09             STA $09
+  127A a5 21             LDA $21
+  127C 85 0a             STA $0A
+  127E 18        L127E:  CLC
+  127F a5 09             LDA $09
+  1281 65 10             ADC $10
+  1283 85 1a             STA $1A
+  1285 a5 0a             LDA $0A
+  1287 65 11             ADC $11
+  1289 85 1b             STA $1B
+  128B 38                SEC
+  128C a5 1a             LDA $1A
+  128E e5 22             SBC $22
+  1290 85 1a             STA $1A
+  1292 a5 1b             LDA $1B
+  1294 e5 23             SBC $23
+  1296 85 1b             STA $1B
+  1298 30 0f             BMI $12A9
+  129A 38                SEC
+  129B a5 10             LDA $10
+  129D e5 1a             SBC $1A
+  129F 85 10             STA $10
+  12A1 a5 11             LDA $11
+  12A3 e5 1b             SBC $1B
+  12A5 85 11             STA $11
+  12A7 e6 10             INC $10
+  12A9 38        L12A9:  SEC
+  12AA a5 24             LDA $24
+  12AC e5 0b             SBC $0B
+  12AE 85 1a             STA $1A
+  12B0 a5 25             LDA $25
+  12B2 e5 0c             SBC $0C
+  12B4 85 1b             STA $1B
+  12B6 30 25             BMI $12DD
+  12B8 18                CLC
+  12B9 a5 12             LDA $12
+  12BB 65 1a             ADC $1A
+  12BD 85 12             STA $12
+  12BF a5 13             LDA $13
+  12C1 65 1b             ADC $1B
+  12C3 85 13             STA $13
+  12C5 38                SEC
+  12C6 a5 0e             LDA $0E
+  12C8 e5 1a             SBC $1A
+  12CA 85 0e             STA $0E
+  12CC a5 0f             LDA $0F
+  12CE e5 1b             SBC $1B
+  12D0 85 0f             STA $0F
+  12D2 10 01             BPL $12D5
+  12D4 60                RTS
+  12D5 a5 24     L12D5:  LDA $24
+  12D7 85 0b             STA $0B
+  12D9 a5 25             LDA $25
+  12DB 85 0c             STA $0C
+  12DD 18        L12DD:  CLC
+  12DE a5 0b             LDA $0B
+  12E0 65 0e             ADC $0E
+  12E2 85 1a             STA $1A
+  12E4 a5 0c             LDA $0C
+  12E6 65 0f             ADC $0F
+  12E8 85 1b             STA $1B
+  12EA 38                SEC
+  12EB a5 1a             LDA $1A
+  12ED e5 26             SBC $26
+  12EF 85 1a             STA $1A
+  12F1 a5 1b             LDA $1B
+  12F3 e5 27             SBC $27
+  12F5 85 1b             STA $1B
+  12F7 30 15             BMI $130E
+  12F9 a9 00             LDA #$00
+  12FB c5 1a             CMP $1A
+  12FD f0 0f             BEQ $130E
+  12FF 38                SEC
+  1300 a5 0e             LDA $0E
+  1302 e5 1a             SBC $1A
+  1304 85 0e             STA $0E
+  1306 a5 0f             LDA $0F
+  1308 e5 1b             SBC $1B
+  130A 85 0f             STA $0F
+  130C e6 0e             INC $0E
+  130E 18        L130E:  CLC
+  130F a5 14             LDA $14
+  1311 65 10             ADC $10
+  1313 85 2a             STA $2A
+  1315 a5 15             LDA $15
+  1317 65 11             ADC $11
+  1319 85 2b             STA $2B
+  131B a5 14             LDA $14
+  131D 29 07             AND #$07
+  131F 85 1c             STA $1C
+  1321 a5 2a             LDA $2A
+  1323 29 07             AND #$07
+  1325 85 1d             STA $1D
+  1327 a5 15             LDA $15
+  1329 85 08             STA $08
+  132B a5 14             LDA $14
+  132D 66 08             ROR $08
+  132F 6a                ROR A
+  1330 66 08             ROR $08
+  1332 6a                ROR A
+  1333 66 08             ROR $08
+  1335 6a                ROR A
+  1336 85 1e             STA $1E
+  1338 a5 2b             LDA $2B
+  133A 85 08             STA $08
+  133C a5 2a             LDA $2A
+  133E 66 08             ROR $08
+  1340 6a                ROR A
+  1341 66 08             ROR $08
+  1343 6a                ROR A
+  1344 66 08             ROR $08
+  1346 6a                ROR A
+  1347 85 1f             STA $1F
+  1349 38                SEC
+  134A a9 bf             LDA #$BF
+  134C e5 0b             SBC $0B
+  134E 85 0b             STA $0B
+  1350 38                SEC
+  1351 e5 0e             SBC $0E
+  1353 85 29             STA $29
+  1355 a5 12             LDA $12
+  1357 f0 14             BEQ $136D
+  1359 18        L1359:  CLC
+  135A a5 18             LDA $18
+  135C 65 16             ADC $16
+  135E 85 18             STA $18
+  1360 a5 19             LDA $19
+  1362 65 17             ADC $17
+  1364 85 19             STA $19
+  1366 c6 12             DEC $12
+  1368 f0 03             BEQ $136D
+  136A 4c 8b 01          JMP $018B   ; [reloc: procedure] -> $1359
+  136D a6 09     L136D:  LDX $09
+  136F a4 0a             LDY $0A
+  1371 a5 0b             LDA $0B
+  1373 c5 29             CMP $29
+  1375 d0 01             BNE $1378
+  1377 60                RTS
+  1378 20 c2 0b  L1378:  JSR $0BC2   ; [reloc: segment] -> $1D90
+  137B a4 1e             LDY $1E
+  137D 84 28             STY $28
+  137F b1 18             LDA ($18),Y
+  1381 a2 00             LDX #$00
+  1383 e4 1c     L1383:  CPX $1C
+  1385 f0 04             BEQ $138B
+  1387 4a                LSR A
+  1388 e8                INX
+  1389 d0 f8             BNE $1383
+  138B 85 07     L138B:  STA $07
+  138D e4 1d     L138D:  CPX $1D
+  138F d0 06             BNE $1397
+  1391 a5 28             LDA $28
+  1393 c5 1f             CMP $1F
+  1395 f0 17             BEQ $13AE
+  1397 46 07     L1397:  LSR $07
+  1399 20 f2 01          JSR $01F2   ; [reloc: procedure] -> $13C0
+  139C e8                INX
+  139D e0 08             CPX #$08
+  139F d0 ec             BNE $138D
+  13A1 a2 00             LDX #$00
+  13A3 e6 28             INC $28
+  13A5 a4 28             LDY $28
+  13A7 b1 18             LDA ($18),Y
+  13A9 85 07             STA $07
+  13AB 4c bf 01          JMP $01BF   ; [reloc: procedure] -> $138D
+  13AE 18        L13AE:  CLC
+  13AF a5 18             LDA $18
+  13B1 65 16             ADC $16
+  13B3 85 18             STA $18
+  13B5 a5 19             LDA $19
+  13B7 65 17             ADC $17
+  13B9 85 19             STA $19
+  13BB c6 0b             DEC $0B
+  13BD 4c 9f 01          JMP $019F   ; [reloc: procedure] -> $136D
+  13C0 a4 0d     L13C0:  LDY $0D
+  13C2 b0 02             BCS $13C6
+  13C4 90 0b             BCC $13D1
+  13C6 a5 06     L13C6:  LDA $06
+  13C8 29 7f             AND #$7F
+  13CA 11 04             ORA ($04),Y
+  13CC 91 04             STA ($04),Y
+  13CE 4c 54 0c          JMP $0C54   ; [reloc: segment] -> $1E22
+  13D1 a5 06     L13D1:  LDA $06
+  13D3 49 7f             EOR #$7F
+  13D5 31 04             AND ($04),Y
+  13D7 91 04             STA ($04),Y
+  13D9 4c 54 0c          JMP $0C54   ; [reloc: segment] -> $1E22
+  13DC a5 06             LDA $06
+  13DE 29 7f             AND #$7F
+  13E0 51 04             EOR ($04),Y
+  13E2 91 04             STA ($04),Y
+  13E4 4c 54 0c          JMP $0C54   ; [reloc: segment] -> $1E22
+
+  ---- data $13E7..$1408: DRAWBLOCK's mode tables
+  13E7 0d 0d 18 18 0d 0d 18 18
+  13EF 20 20 02 02 20 20 02 02
+  13F7 0b 16 0b 16 1e 00 1e 00
+  13FF 0b 16 0b 16 1e 00 1e 00
+  1407 00
+
+
+  ---- attribute table and relocation area $1408..$142E
+  142C .word $1500   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 21
+  142A .word $025C   ; ENTER IC, self-relative -> $11CE
+  1428 .word $0000   ; base-relative relocation table: 0 entries
+  1426 .word $0005   ; segment-relative relocation table: 5 entries
+  1424 .word $003F   ;   fix up $13E5
+  1422 .word $0048   ;   fix up $13DA
+  1420 .word $0051   ;   fix up $13CF
+  141E .word $00A5   ;   fix up $1379
+  141C .word $020B   ;   fix up $1211
+  141A .word $0008   ; procedure-relative relocation table: 8 entries
+  1418 .word $005A   ;   fix up $13BE
+  1416 .word $006A   ;   fix up $13AC
+  1414 .word $007A   ;   fix up $139A
+  1412 .word $00A7   ;   fix up $136B
+  1410 .word $01E5   ;   fix up $122B
+  140E .word $01E6   ;   fix up $1228
+  140C .word $01E7   ;   fix up $1225
+  140A .word $01E8   ;   fix up $1222
+  1408 .word $0000   ; interp-relative relocation table: 0 entries
+
+####################################################################
+# APPLESTU  segment 22: 6 native of 8 procedures
+####################################################################
+
+====================================================================
+APPLESTU.2  PADDLE
+  code $0032..$005E  (44 bytes, 31 instructions)
+  relocation area $005E..$0066   [no entries]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  0032 68                PLA
+  0033 85 00             STA $00
+  0035 68                PLA
+  0036 85 01             STA $01
+  0038 68                PLA
+  0039 68                PLA
+  003A 68                PLA
+  003B 68                PLA
+  003C 68                PLA
+  003D 29 03             AND #$03
+  003F aa                TAX
+  0040 68                PLA
+  0041 ad 70 c0          LDA $C070
+  0044 a0 00             LDY #$00
+  0046 ea                NOP
+  0047 ea                NOP
+  0048 bd 64 c0  L0048:  LDA $C064,X
+  004B 10 04             BPL $0051
+  004D c8                INY
+  004E d0 f8             BNE $0048
+  0050 88                DEY
+  0051 a9 00     L0051:  LDA #$00
+  0053 48                PHA
+  0054 98                TYA
+  0055 48                PHA
+  0056 a5 01             LDA $01
+  0058 48                PHA
+  0059 a5 00             LDA $00
+  005B 48                PHA
+  005C 60                RTS
+  005D 00                BRK
+
+  ---- attribute table and relocation area $005E..$006A
+  0068 .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  0066 .word $0034   ; ENTER IC, self-relative -> $0032
+  0064 .word $0000   ; base-relative relocation table: 0 entries
+  0062 .word $0000   ; segment-relative relocation table: 0 entries
+  0060 .word $0000   ; procedure-relative relocation table: 0 entries
+  005E .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+APPLESTU.3  BUTTON
+  code $006A..$0092  (40 bytes, 27 instructions)
+  relocation area $0092..$009A   [no entries]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  006A 68                PLA
+  006B 85 00             STA $00
+  006D 68                PLA
+  006E 85 01             STA $01
+  0070 68                PLA
+  0071 68                PLA
+  0072 68                PLA
+  0073 68                PLA
+  0074 68                PLA
+  0075 18                CLC
+  0076 69 01             ADC #$01
+  0078 29 03             AND #$03
+  007A aa                TAX
+  007B 68                PLA
+  007C a9 00             LDA #$00
+  007E 48                PHA
+  007F bd 60 c0          LDA $C060,X
+  0082 10 04             BPL $0088
+  0084 a9 01             LDA #$01
+  0086 d0 02             BNE $008A
+  0088 a9 00     L0088:  LDA #$00
+  008A 48        L008A:  PHA
+  008B a5 01             LDA $01
+  008D 48                PHA
+  008E a5 00             LDA $00
+  0090 48                PHA
+  0091 60                RTS
+
+  ---- attribute table and relocation area $0092..$009E
+  009C .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  009A .word $0030   ; ENTER IC, self-relative -> $006A
+  0098 .word $0000   ; base-relative relocation table: 0 entries
+  0096 .word $0000   ; segment-relative relocation table: 0 entries
+  0094 .word $0000   ; procedure-relative relocation table: 0 entries
+  0092 .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+APPLESTU.4  TTLOUT
+  code $009E..$00B8  (26 bytes, 19 instructions)
+  relocation area $00B8..$00C0   [no entries]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  009E 68                PLA
+  009F 85 00             STA $00
+  00A1 68                PLA
+  00A2 85 01             STA $01
+  00A4 68                PLA
+  00A5 4a                LSR A
+  00A6 68                PLA
+  00A7 68                PLA
+  00A8 29 03             AND #$03
+  00AA 2a                ROL A
+  00AB a8                TAY
+  00AC b9 58 c0          LDA $C058,Y
+  00AF 68                PLA
+  00B0 a5 01             LDA $01
+  00B2 48                PHA
+  00B3 a5 00             LDA $00
+  00B5 48                PHA
+  00B6 60                RTS
+  00B7 00                BRK
+
+  ---- attribute table and relocation area $00B8..$00C4
+  00C2 .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  00C0 .word $0022   ; ENTER IC, self-relative -> $009E
+  00BE .word $0000   ; base-relative relocation table: 0 entries
+  00BC .word $0000   ; segment-relative relocation table: 0 entries
+  00BA .word $0000   ; procedure-relative relocation table: 0 entries
+  00B8 .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+APPLESTU.8  NOTE
+  code $00C4..$01C2  (254 bytes, 78 instructions)
+  relocation area $01C2..$01E8   [procedure 15]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  00C4 68                PLA
+  00C5 85 00             STA $00
+  00C7 68                PLA
+  00C8 85 01             STA $01
+  00CA 68                PLA
+  00CB 8d 96 00          STA $0096   ; [reloc: procedure] -> $015A
+  00CE 68                PLA
+  00CF 68                PLA
+  00D0 8d 95 00          STA $0095   ; [reloc: procedure] -> $0159
+  00D3 68                PLA
+  00D4 a5 01             LDA $01
+  00D6 48                PHA
+  00D7 a5 00             LDA $00
+  00D9 48                PHA
+  00DA 4c 4d 00          JMP $004D   ; [reloc: procedure] -> $0111
+  00DD a4 04     L00DD:  LDY $04
+  00DF ad 30 c0          LDA $C030
+  00E2 e6 05     L00E2:  INC $05
+  00E4 d0 05             BNE $00EB
+  00E6 e6 06             INC $06
+  00E8 d0 05             BNE $00EF
+  00EA 60                RTS
+  00EB ea        L00EB:  NOP
+  00EC 4c 2b 00          JMP $002B   ; [reloc: procedure] -> $00EF
+  00EF 88        L00EF:  DEY
+  00F0 f0 05             BEQ $00F7
+  00F2 4c 31 00          JMP $0031   ; [reloc: procedure] -> $00F5
+  00F5 d0 eb     L00F5:  BNE $00E2
+  00F7 a4 03     L00F7:  LDY $03
+  00F9 ad 30 c0          LDA $C030
+  00FC e6 05     L00FC:  INC $05
+  00FE d0 05             BNE $0105
+  0100 e6 06             INC $06
+  0102 d0 05             BNE $0109
+  0104 60                RTS
+  0105 ea        L0105:  NOP
+  0106 4c 45 00          JMP $0045   ; [reloc: procedure] -> $0109
+  0109 88        L0109:  DEY
+  010A f0 d1             BEQ $00DD
+  010C 4c 4b 00          JMP $004B   ; [reloc: procedure] -> $010F
+  010F d0 eb     L010F:  BNE $00FC
+  0111 ad 95 00  L0111:  LDA $0095   ; [reloc: procedure] -> $0159
+  0114 0a                ASL A
+  0115 a8                TAY
+  0116 b9 98 00          LDA $0098,Y   ; [reloc: procedure] base = proc+$0098, then indexed
+  0119 85 03             STA $03
+  011B ad 97 00          LDA $0097   ; [reloc: procedure] -> $015B
+  011E 4a        L011E:  LSR A
+  011F f0 04             BEQ $0125
+  0121 46 03             LSR $03
+  0123 d0 f9             BNE $011E
+  0125 b9 98 00  L0125:  LDA $0098,Y   ; [reloc: procedure] base = proc+$0098, then indexed
+  0128 38                SEC
+  0129 e5 03             SBC $03
+  012B 85 04             STA $04
+  012D c8                INY
+  012E b9 98 00          LDA $0098,Y   ; [reloc: procedure] base = proc+$0098, then indexed
+  0131 65 03             ADC $03
+  0133 85 03             STA $03
+  0135 a9 00             LDA #$00
+  0137 38                SEC
+  0138 ed 96 00          SBC $0096   ; [reloc: procedure] -> $015A
+  013B 85 06             STA $06
+  013D a9 00             LDA #$00
+  013F 85 05             STA $05
+  0141 a5 04             LDA $04
+  0143 d0 98             BNE $00DD
+  0145 ea        L0145:  NOP
+  0146 ea                NOP
+  0147 4c 86 00          JMP $0086   ; [reloc: procedure] -> $014A
+  014A e6 05     L014A:  INC $05
+  014C d0 05             BNE $0153
+  014E e6 06             INC $06
+  0150 d0 05             BNE $0157
+  0152 60                RTS
+  0153 ea        L0153:  NOP
+  0154 4c 93 00          JMP $0093   ; [reloc: procedure] -> $0157
+  0157 d0 ec     L0157:  BNE $0145
+
+  ---- data $0159..$01C2: 3 bytes of scratch, then the pitch table: 2 bytes per semitone
+  0159 00 00 ff 00 00 f6 f6 e8
+  0161 e8 db db cf cf c3 c3 b8
+  0169 b8 ae ae a4 a4 9b 9b 92
+  0171 92 8a 8a 82 82 7b 7b 74
+  0179 74 6d 6e 67 68 61 62 5c
+  0181 5c 57 57 52 52 4d 4e 49
+  0189 49 45 45 41 41 3d 3e 3a
+  0191 3a 36 37 33 34 30 31 2e
+  0199 2e 2b 2c 29 29 26 27 24
+  01A1 25 22 23 20 21 1e 1f 1d
+  01A9 1d 1b 1c 1a 1a 18 19 17
+  01B1 17 15 16 14 15 13 14 12
+  01B9 12 11 11 10 10 0f 10 0e
+  01C1 0f
+
+
+  ---- attribute table and relocation area $01C2..$01EC
+  01EA .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  01E8 .word $0124   ; ENTER IC, self-relative -> $00C4
+  01E6 .word $0000   ; base-relative relocation table: 0 entries
+  01E4 .word $0000   ; segment-relative relocation table: 0 entries
+  01E2 .word $000F   ; procedure-relative relocation table: 15 entries
+  01E0 .word $008B   ;   fix up $0155
+  01DE .word $0096   ;   fix up $0148
+  01DC .word $00A3   ;   fix up $0139
+  01DA .word $00AB   ;   fix up $012F
+  01D8 .word $00B2   ;   fix up $0126
+  01D6 .word $00BA   ;   fix up $011C
+  01D4 .word $00BD   ;   fix up $0117
+  01D2 .word $00C0   ;   fix up $0112
+  01D0 .word $00C3   ;   fix up $010D
+  01CE .word $00C7   ;   fix up $0107
+  01CC .word $00D9   ;   fix up $00F3
+  01CA .word $00DD   ;   fix up $00ED
+  01C8 .word $00ED   ;   fix up $00DB
+  01C6 .word $00F5   ;   fix up $00D1
+  01C4 .word $00F8   ;   fix up $00CC
+  01C2 .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+APPLESTU.6  RANDOM
+  code $01EC..$022A  (62 bytes, 34 instructions)
+  relocation area $022A..$0240   [procedure 7]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  01EC 68                PLA
+  01ED 85 00             STA $00
+  01EF 68                PLA
+  01F0 85 01             STA $01
+  01F2 68                PLA
+  01F3 68                PLA
+  01F4 68                PLA
+  01F5 68                PLA
+  01F6 a0 07             LDY #$07
+  01F8 0e 39 00  L01F8:  ASL $0039   ; [reloc: procedure] -> $0225
+  01FB 08                PHP
+  01FC 2e 3a 00          ROL $003A   ; [reloc: procedure] -> $0226
+  01FF 2e 3b 00          ROL $003B   ; [reloc: procedure] -> $0227
+  0202 2e 3c 00          ROL $003C   ; [reloc: procedure] -> $0228
+  0205 30 05             BMI $020C
+  0207 28                PLP
+  0208 10 08             BPL $0212
+  020A 30 03             BMI $020F
+  020C 28        L020C:  PLP
+  020D 30 03             BMI $0212
+  020F ee 39 00  L020F:  INC $0039   ; [reloc: procedure] -> $0225
+  0212 88        L0212:  DEY
+  0213 d0 e3             BNE $01F8
+  0215 ad 39 00          LDA $0039   ; [reloc: procedure] -> $0225
+  0218 4a                LSR A
+  0219 48                PHA
+  021A ad 3b 00          LDA $003B   ; [reloc: procedure] -> $0227
+  021D 48                PHA
+  021E a5 01             LDA $01
+  0220 48                PHA
+  0221 a5 00             LDA $00
+  0223 48                PHA
+  0224 60                RTS
+
+  ---- data $0225..$0229: the random seed, 4 bytes
+  0225 5a b2 f6 93
+
+  0229 00                BRK
+
+  ---- attribute table and relocation area $022A..$0244
+  0242 .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  0240 .word $0054   ; ENTER IC, self-relative -> $01EC
+  023E .word $0000   ; base-relative relocation table: 0 entries
+  023C .word $0000   ; segment-relative relocation table: 0 entries
+  023A .word $0007   ; procedure-relative relocation table: 7 entries
+  0238 .word $001D   ;   fix up $021B
+  0236 .word $0020   ;   fix up $0216
+  0234 .word $0024   ;   fix up $0210
+  0232 .word $002F   ;   fix up $0203
+  0230 .word $0030   ;   fix up $0200
+  022E .word $0031   ;   fix up $01FD
+  022C .word $0033   ;   fix up $01F9
+  022A .word $0000   ; interp-relative relocation table: 0 entries
+
+====================================================================
+APPLESTU.7  RANDOMIZE
+  code $0244..$0262  (30 bytes, 12 instructions)
+  relocation area $0262..$0276   [segment 6]
+  sweep lands exactly on end: yes   undecodable bytes: 0
+====================================================================
+
+  0244 ad 13 bf          LDA $BF13
+  0247 8d 25 02          STA $0225   ; [reloc: segment] -> $0469
+  024A 8d 26 02          STA $0226   ; [reloc: segment] -> $046A
+  024D ad 14 bf          LDA $BF14
+  0250 8d 27 02          STA $0227   ; [reloc: segment] -> $046B
+  0253 8d 28 02          STA $0228   ; [reloc: segment] -> $046C
+  0256 0d 25 02          ORA $0225   ; [reloc: segment] -> $0469
+  0259 d0 05             BNE $0260
+  025B a9 55             LDA #$55
+  025D 8d 28 02          STA $0228   ; [reloc: segment] -> $046C
+  0260 60        L0260:  RTS
+  0261 00                BRK
+
+  ---- attribute table and relocation area $0262..$027A
+  0278 .word $0100   ; PROCEDURE NUMBER = 0 (0 marks native), RELOCSEG = 1
+  0276 .word $0032   ; ENTER IC, self-relative -> $0244
+  0274 .word $0000   ; base-relative relocation table: 0 entries
+  0272 .word $0006   ; segment-relative relocation table: 6 entries
+  0270 .word $0012   ;   fix up $025E
+  026E .word $0017   ;   fix up $0257
+  026C .word $0018   ;   fix up $0254
+  026A .word $0019   ;   fix up $0251
+  0268 .word $001D   ;   fix up $024B
+  0266 .word $001E   ;   fix up $0248
+  0264 .word $0000   ; procedure-relative relocation table: 0 entries
+  0262 .word $0000   ; interp-relative relocation table: 0 entries
