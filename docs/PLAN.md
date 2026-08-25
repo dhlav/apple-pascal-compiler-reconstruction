@@ -1,108 +1,161 @@
 # Reconstruction plan
 
-Recover Apple Pascal compiler source faithful enough that recompiling it
-reproduces the historical P-code. Readable pseudocode is not the target.
+**Reproduce the Apple Pascal 1.3 disk set** -- for every file Apple
+shipped, a source that Apple's own tools turn back into the shipped bytes.
+Readable pseudocode is not the target and never was; byte-identical output
+from `SYSTEM.COMPILER`, `SYSTEM.ASSMBLER` and `SYSTEM.LINKER` is.
 
-**Final deliverable is 1.3.** Analysis still leads with 1.1, for two
-reasons: it is the simpler artifact (no native code at all), and 1.3 is a
-recompile of a lightly edited 1.1 source, so 1.1 results transfer. Finding
-11 makes the transfer mechanical — 131 procedures and 128 globals are
-already mapped across, with zero contested entries. Every new 1.1 fact
-should be pushed through that table and checked against 1.3 rather than
-left version-specific.
+**The target is 1.3 and the 128K system** (`128K.APPLE` + `128K.PASCAL`).
+1.1 is not a goal and is not discarded: it ships *source* for utilities 1.3
+ships only as codefiles, its binaries are simpler (no native code at all),
+and comparing the two releases is what says which files Apple actually
+rebuilt. Every 1.1 fact should be pushed through the correspondence table
+of finding 11 and checked against 1.3 rather than left version-specific.
 
-Two things are 1.3-only and have no 1.1 counterpart, so they need their own
-track: the native `IDSEARCH` and `TREESEARCH` procedures (finding 6a), and
-whatever source-level changes produced the ~130-word growth in globals.
+`docs/DISKSET.md` is the file-by-file scoreboard;
+`analysis/diskset-inventory.txt` is its machine-readable companion,
+regenerated on every build.
 
-## Status
+## Where this stands
 
-Done, and reproducible via `python tools/build_all.py`:
+Four files are reconstructed -- source in `src/`, and Apple's own tools
+turn it back into Apple's bytes:
 
-* Pascal filesystem, codefile, segment and procedure-attribute readers.
-* A UCSD II.0 p-code decoder that passes a strict self-check on all 287
-  p-code procedures across both disks.
-* Full annotated listings for every segment of both versions.
-* Call graph and call-site index, with argument-setup context per site.
-* UCSD II.0 OS source unpacked from `ii0src.sdk`, and the segment-0
-  procedure numbering recovered from it.
-* **Global data map** for both versions (finding 10): area sizes, every
-  touched offset with access counts and shape evidence, the four file
-  variables, the identifier buffer.
-* **1.1 to 1.3 correspondence** for procedures and globals (finding 11).
-* **Procedure profiles** for every routine, and first names for the
-  PASCALCO service layer (finding 12).
+| file | what it took |
+|---|---|
+| `SYSTEM.COMPILER` | 147 of 147 procedures, 15 segments (finding 90) |
+| `SYSTEM.LIBRARY` | 55 p-code and 14 native procedures (finding 98) |
+| `LINEFEED.CODE` | 1.1's own source, unaltered, under the 1.3 compiler (finding 99a) |
+| `FORMATTER.CODE` | the first whole program: Pascal *and* 6502, linked (finding 104) |
+
+Counting procedures rather than bytes, and 1.3 only: **216 done of roughly
+861.** Every remaining target can be read before it is written -- the sweep
+covers every codefile a 1.3 disk carries plus the 1.1 copies of those same
+files, and lifts **1147 of 1147** with the stack fully tracked (finding
+100). Listings are in `analysis/utilities/`, p-code and pseudo-Pascal side
+by side.
+
+The infrastructure is done and is not the constraint: readers for the
+filesystem, codefiles, segments and procedure attributes; a p-code decoder
+that passes a strict self-check; a 6502 disassembler and assembler; a
+lifter that structures 79% of procedures with no goto at all; the global
+map and the 1.1/1.3 correspondence; and the emulator tier below.
+
+**All three of Apple's tools are now driven from here**, which is what made
+`FORMATTER` possible:
+
+* `tools/emucompile.ps1` -- `C(ompile`
+* `tools/emuassemble.ps1` -- `A(ssem`, with the Filer's `P(refix` set to
+  `APPLE2:` first, because the assembler opens `6502.OPCODES` with no
+  volume and the boot disk does not carry it
+* `tools/emulink.ps1` -- `L(ink`, which is the only thing that puts an
+  assembled `EXTERNAL` into a compiled host
+
+Their output is kept under `acceptance/` and re-checked against the shipped
+disks on every build by `tools/probes/probe_acceptance.py` -- the one check
+in the repo with none of this project's own code on either side.
 
 ## Next steps
 
-   ~~**Finish naming the PASCALCO service layer.**~~ **Done** (finding 22).
-   `.9`, `.15`, `.16`, `.17` are `GETBOUNDS`, `ISSTRING`, `STRINGTYPE` and
-   `LONGSIZE`; `.5` = `ENTERID` and `.18` = `CONSTANT` came with them.
-   Fourteen routines are now named, in `tools/a2pascal/names.py`, and the
-   lifter renders them.
+The order below is by what the evidence supports, not by size. A file whose
+1.1 release ships source is nearly free; a file with a native half now has
+a route end to end; everything else is a straight read-and-rebuild.
 
-   The phase segments are now started too: `BODYPART.3/4/5/6/27` are the
-   compiler's five code emitters, and `BODYPART.25` its block-body
-   generator (finding 24c). `NEXTLINE` and `SKIP` came out of finding 26,
-   and `NEXTBLOCK`, `BUMPSEG`, `NEWSEGMENT`, `COMPTYPES`, `EMITWORD`,
-   `BLOCK` and `COMMENT` out of finding 27. Finding 28 finished the
-   segment with `SEGINFO`, `ENDSEGMENT`, `COMPILE`,
-   `HOLDMOST` and `HOLDROUT` — **all 29 of PASCALCO's
-   procedures are now named**, and it carried three code-generation
-   routines in the phase segments with it: `BODY3.1` (which
-   finding 30 then showed the codefile already names, `BODY3`),
-   `BODYPART.13:NEWPROC` and `BODYPART.16:EMITJUMP`.
+1. **Close `SYSTEM.COMPILER`'s 948-byte gap.** Finding 91 says exactly what
+   it is: Apple shipped the *linker's* output, and a compile alone leaves
+   `PASCALCO` marked `HOSTSEG` with procedures 2 and 3 unresolved. The tool
+   that was missing then exists now. Compile the fifteen segments, assemble
+   `src/native/SEARCH.TEXT`, and `L(ink` the two -- the same three steps
+   that closed `FORMATTER` -- and the last reconstruction that stops short
+   of a whole shipped file stops short no longer.
 
-   The lever that worked in finding 27 is worth reusing: the manual's
-   error list (II-3E) names what every `ERROR(n)` means, so a routine's
-   error numbers say what it is for before its code is understood.
-   `BUMPSEG` was named off error 354 alone.
+2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. The reason to
+   take it next is `("LIBMAP", 2)`: it is the **last entry in `lift.py`'s
+   `NATIVE_SIG` still read off a call site** rather than a declaration, and
+   the way to retire it is to write the source. Same shape as `FORMATTER`,
+   a third of the size.
 
-   Finding 28 added a second lever, and it is the better one where it
-   applies: **the manual documents the compiler's own output formats**, so
-   a routine that writes one is named column by column. `ERRORWITHTEXT`
-   fell to Part II's description of the compiled listing — five globals
-   named at once, including Pascal-P's `dp` — and `ENDSEGMENT` to the
-   codefile's procedure dictionary. Prefer these to reading control flow:
-   an output format is a fixed target the binary can be held against.
+3. **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
+   are **1.1 binaries Apple never rebuilt** (finding 99c). That is what
+   made `LINEFEED` nearly free: 1.1's APPLE3 ships the source, and the
+   question is only whether it still compiles to the shipped bytes. Do
+   these two the same way and check the answer, which may well be no --
+   `BINDER` differs from its 1.1 copy in 15 bytes, all of them unused
+   SEGINFO slots.
 
-   **Every name must survive Apple Pascal's 8-character rule** (finding
-   29). Only the first eight significant characters count, underscores are
-   ignored and case is folded, so two names alike in eight characters are
-   one identifier, a name folding onto a reserved word is refused outright,
-   and a name folding onto a predeclared identifier silently steals its
-   meaning for the whole scope. `tools/probes/probe_identifiers.py`
-   enforces all three against the registry. A name we invent is eight
-   characters or fewer, so that what we write is what the compiler sees;
-   longer spellings are for names the evidence forces.
+4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native. The
+   smallest pure-Pascal target left, and it pairs with `LIBMAP`.
 
-   And the cautionary half of finding 28: a probe that verifies a property
-   of the *output* does not verify a claim about which code produced it.
-   `probe_attribtable.py` was green throughout the period finding 27b was
-   wrong, because every assertion in it was about the codefile and none
-   was about `PASCALCO.23`. When the claim is "routine X emits Y",
-   reconstruct Y from X's own logic and diff it against the bytes —
-   `probe_segtail.py` is the pattern.
+5. **`SETUP.CODE`** -- 54 procedures in 12 segments, nine of which are
+   16-byte stubs, and **byte-identical between 1.1 and 1.3**. The segment
+   structure is the interesting part; the stubs make it cheaper than the
+   count suggests. It also writes `SYSTEM.MISCINFO`, so it is the way in to
+   the three `.MISCINFO` files.
 
-   Finding 32 supersedes most of this track's guesswork: the UCSD II.0
-   compiler source is now in `evidence/`, and 56 names were corrected
-   against it. It is not an answer key — Apple changed the segmentation,
-   the segment numbering and the option letters — but any name we invent
-   should now be checked against it first, and `probe_identifiers.py`
-   requires every spelling over eight characters to appear there.
+6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
+   project depends on, so understanding it pays twice.
 
-   Finding 30 then added fifteen names for free, and a rule worth keeping
-   ahead of all the levers above: **before inventing a name, ask whether
-   the artifact already carries one.** The codefile's SEGNAME field holds
-   the first eight characters of each segment procedure's identifier, so
-   procedure 1 of every segment names itself — and one name invented two
-   findings earlier, `BODY3.1:ENDPROC`, turned out to be `BODY3`.
+7. **`SYSTEM.FILER`** -- 56 procedures, one segment.
 
-   The same finding recovers the declaration skeleton from the segment
-   procedures' lexical levels, which is a constraint on the reconstruction
-   rather than a convenience: the level is emitted into every
-   `LOD`/`LDA`/`STR` and into every attribute table, so nesting a segment
-   procedure at the wrong depth changes the code bytes.
+8. **`SYSTEM.ASSMBLER`** -- 95 procedures in 7 segments, and the acceptance
+   authority for everything in `src/native/`. Reconstructing the thing that
+   validates the reconstruction is worth doing carefully and last of the
+   utilities. Note `6502.OPCODES` and `6502.ERRORS` are its data, and
+   finding 103e records how it looks for each.
+
+9. **`SYSTEM.EDITOR`** -- 129 procedures in 12 segments, the largest single
+   target on the disk set.
+
+10. **The operating system** -- `128K.PASCAL`, 105 procedures. Four of its
+    seven segments are byte-identical to 64K `SYSTEM.PASCAL`'s
+    (`USERPROG`, `FIOPRIMS`, `PRINTERR`, `FILEPROC`), so the two releases
+    of the OS are one target and a bit. `ii0src.sdk` is the UCSD II.0 OS
+    source and is genuinely relevant here, unlike for the compiler
+    (finding 8).
+
+11. **The files that are not codefiles.** They still have to come from
+    somewhere before a disk can be written:
+    * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
+      codefile, so none of the codefile tooling applies; this is a
+      disassembly project of its own.
+    * `SYSTEM.CHARSET` (1024 B), `FORMATTER.DATA` (3584 B, the format
+      tables `FORMATDISK` calls at `$3D00`), `6502.OPCODES` (720 B),
+      `6502.ERRORS` (3570 B), the three `.MISCINFO` profiles. Each needs a
+      generator whose output is checked byte for byte, the way a source is.
+    * `SYSTEM.SYNTAX` and the eleven sample `.TEXT` programs are *already
+      text on the disk*, so they are reproduced by writing the volume and
+      nothing else.
+
+12. **Write the disks.** The end of the project: the volume writer already
+    re-encodes every evidence volume byte for byte from its own parsed
+    entries, so the writer is not the risk. What is missing is a build step
+    that assembles a full 1.3 volume out of reconstructed files and diffs
+    it against the evidence image -- one number for the whole project, and
+    a total that has to balance.
+
+### Carried forward, not scheduled
+
+* **`src/pascal/units/1.1/` is empty.** The 1.1 library has no
+  reconstruction at all yet.
+* **`LONGINTS.TEXT`'s eleven operations are not read out** (finding 98d).
+  The engine reassembles to Apple's bytes, but what each operation number
+  does is still unread, and it is the one native procedure deliberately
+  left out of `NATIVE_SIG` because its arity is variable.
+* **89 joins where the two paths disagree on stack depth**, mostly UCSD
+  sets. Do not "fix" these by loosening the merge -- the report is what
+  makes a wrong callee arity findable.
+* **The 1.1 side of the disk set.** `CALC.CODE` and the demo programs'
+  codefiles ship only on 1.1, so they are out of scope but still swept and
+  still listed. The demos' 1.1 `.CODE` beside their `.TEXT` is the only
+  source-and-output pair Apple left behind, and it is a calibration corpus
+  worth using before guessing at a construct.
+
+## The compiler phase, kept as the record
+
+Steps 1-8 below are the plan that produced `SYSTEM.COMPILER` and the
+library. They are left as they were written, including the guesses that
+turned out wrong and are marked as such -- the working rules at the end are
+mostly lessons from them.
 
 1. ~~**Finish naming the PASCALCO service layer.**~~ **Done, and then
    some** — finding 37 closed the last five segments and finding 42 the
@@ -555,6 +608,19 @@ Done, and reproducible via `python tools/build_all.py`:
   (finding 46). Require the sum to come out exactly, or say why it cannot.
 * Hyde's *P-Source* (finding 7a) settles p-machine questions directly. Use
   it before inferring.
+* **A file is not reconstructed until Apple's own tools rebuild it.** All
+  three are driven from here now -- `emucompile.ps1`, `emuassemble.ps1`,
+  `emulink.ps1` -- and a program with an `EXTERNAL` in it needs all three:
+  the compiler leaves the segment marked `HOSTSEG` and only the Linker
+  resolves it (findings 91, 104). Keep each run's output under
+  `acceptance/`, because the emulator tier is interactive and would
+  otherwise be a claim rather than a check.
+* **A backward branch is a loop condition before it is anything else.**
+  Fifteen bytes of `FORMATTER` stayed open for a round because an `FJP` to
+  the top of a `REPEAT` was read as a strangely-placed `IF` instead of as
+  the `UNTIL` it was -- an inner loop starting at the same statement as the
+  outer one (finding 104a). The lifter had been printing it correctly the
+  whole time. When the listing and the prose disagree, re-read the listing.
 * **Native 6502 code is finalised with Apple's own `SYSTEM.ASSMBLER`**, on
   both evidence disks. It handles relocation; a hand-written relocation
   table or a modern assembler will not reproduce the bytes. Write `.PROC`
