@@ -14,16 +14,16 @@ SEGMENT 1 DISKIO
 procedure DISKIO.1(args 2 words);  { locals 383 words, lex 0 }
   goto L0B4C;
 L0A20:
-  FINIT(@GATVLEV, @G306, 69);
+  FINIT(@G6, @G306, 69);
   DISKIO.2();
   FGOTOXY(0, 0);
   DISKIO.3(0);
   DISKIO.13();
   repeat
     DISKIO.4(0, '>DISKIO: V(iew, C(hange, N(ext, F(ile, Q(uit ');
-    GATTYPTR := DISKIO.5(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, adjust({67,70,78,81,86,99,102,110,113,118},16));
+    G3 := DISKIO.5(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, adjust({67,70,78,81,86,99,102,110,113,118},16));
     DISKIO.3(0);
-    case GATTYPTR of   { table 67..118 }
+    case G3 of   { table 67..118 }
       78, 110: begin
         DISKIO.16();
       end;
@@ -37,11 +37,11 @@ L0A20:
         DISKIO.14();
       end;
     end;
-  until (GATTYPTR in {81,113});
-  FCLOSE(@GATVLEV, 1);
+  until (G3 in {81,113});
+  FCLOSE(@G6, 1);
   IOCHECK();
   DISKIO.4(12, "THAT'S ALL FOLKS...");
-  FCLOSE(@GATVLEV, 0);
+  FCLOSE(@G6, 0);
   UNLOADSEGMENT(31);
   goto L0B51;
 L0B4C:
@@ -256,7 +256,7 @@ procedure DISKIO.12(args 1 words);  { locals 1 words, lex 1 }
   IOCHECK();
 
 procedure DISKIO.13(args 0 words);  { locals 20 words, lex 1 }
-  FCLOSE(@GATVLEV, 1);
+  FCLOSE(@G6, 1);
   IOCHECK();
   repeat
     FGOTOXY(0, 1);
@@ -264,19 +264,19 @@ procedure DISKIO.13(args 0 words);  { locals 20 words, lex 1 }
     DISKIO.4(8, 'File Name: ');
     FREADSTRING(I2,2, @L2, 30);
     FREADLN(I2,2);
-    FOPEN(@GATVLEV, @L2, 1, 0);
+    FOPEN(@G6, @L2, 1, 0);
     L1 := (IORESULT() = 0);
     if not (L1) then begin
       DISKIO.4(10, 'Start a new file ? ');
       if DISKIO.7() then begin
-        FOPEN(@GATVLEV, @L2, 0, 0);
+        FOPEN(@G6, @L2, 0, 0);
         DISKIO.4(12, 'Reserve how many records ? ');
         FREADINT(I2,2, @L18);
         FREADLN(I2,2);
-        PASCALIO.2(@GATVLEV, L18);
-        DISKIO.8(GATVLEV);
-        FPUT(@GATVLEV);
-        if ((IORESULT() <> 0) or FEOF(@GATVLEV)) then begin
+        PASCALIO.2(@G6, L18);
+        DISKIO.8(G6);
+        FPUT(@G6);
+        if ((IORESULT() <> 0) or FEOF(@G6)) then begin
           DISKIO.4(14, 'Not enough room. Press return ');
           FREADLN(I2,2);
           IOCHECK();
@@ -285,44 +285,44 @@ procedure DISKIO.13(args 0 words);  { locals 20 words, lex 1 }
           L19 := 0;
           L20 := L18;
           while (L19 <= L20) do begin
-            PASCALIO.2(@GATVLEV, L19);
+            PASCALIO.2(@G6, L19);
             IOCHECK();
-            FPUT(@GATVLEV);
+            FPUT(@G6);
             IOCHECK();
             L19 := (L19+1);
           end;
-          FCLOSE(@GATVLEV, 1);
+          FCLOSE(@G6, 1);
           IOCHECK();
-          FOPEN(@GATVLEV, @L2, 1, 0);
+          FOPEN(@G6, @L2, 1, 0);
           IOCHECK();
           L1 := (IORESULT() = 0);
         end;
       end;
     end;
   until L1;
-  GATKIND := -(1);
-  GATCVAL := 0;
+  G4 := -(1);
+  G5 := 0;
 
 procedure DISKIO.14(args 0 words);  { locals 0 words, lex 1 }
 L071E:
   DISKIO.4(2, 'Change which record ? ');
-  FREADINT(I2,2, @GATKIND);
+  FREADINT(I2,2, @G4);
   FREADLN(I2,2);
   if not ((IORESULT() = 0)) then goto L071E;
-  PASCALIO.2(@GATVLEV, GATKIND);
+  PASCALIO.2(@G6, G4);
   IOCHECK();
-  FGET(@GATVLEV);
+  FGET(@G6);
   IOCHECK();
-  if FEOF(@GATVLEV) then begin
-    DISKIO.8(GATVLEV);
+  if FEOF(@G6) then begin
+    DISKIO.8(G6);
   end;
-  DISKIO.9(GATVLEV);
-  DISKIO.11(GATVLEV);
-  DISKIO.12(GATVLEV);
-  PASCALIO.2(@GATVLEV, GATKIND);
+  DISKIO.9(G6);
+  DISKIO.11(G6);
+  DISKIO.12(G6);
+  PASCALIO.2(@G6, G4);
   IOCHECK();
-  FPUT(@GATVLEV);
-  if ((IORESULT() <> 0) or FEOF(@GATVLEV)) then begin
+  FPUT(@G6);
+  if ((IORESULT() <> 0) or FEOF(@G6)) then begin
     FGOTOXY(0, 20);
     FWRITECHAR(I2,3, 7, 0);
     IOCHECK();
@@ -335,45 +335,45 @@ L071E:
     FWRITELN(I2,3);
     IOCHECK();
   end;
-  GATCVAL := 1;
+  G5 := 1;
 
 procedure DISKIO.15(args 0 words);  { locals 0 words, lex 1 }
 L0830:
   DISKIO.4(2, 'View which record ? ');
-  FREADINT(I2,2, @GATKIND);
+  FREADINT(I2,2, @G4);
   FREADLN(I2,2);
   if not ((IORESULT() = 0)) then goto L0830;
-  PASCALIO.2(@GATVLEV, GATKIND);
+  PASCALIO.2(@G6, G4);
   IOCHECK();
-  FGET(@GATVLEV);
+  FGET(@G6);
   IOCHECK();
-  if FEOF(@GATVLEV) then begin
+  if FEOF(@G6) then begin
     FGOTOXY(0, 4);
     FWRITESTRING(I2,3, 'Record ', 0);
     IOCHECK();
-    FWRITEINT(I2,3, GATKIND, 0);
+    FWRITEINT(I2,3, G4, 0);
     IOCHECK();
     FWRITESTRING(I2,3, ' not in file.', 0);
     IOCHECK();
   end else begin
-    DISKIO.9(GATVLEV);
-    DISKIO.11(GATVLEV);
+    DISKIO.9(G6);
+    DISKIO.11(G6);
   end;
-  GATCVAL := 0;
+  G5 := 0;
 
 procedure DISKIO.16(args 0 words);  { locals 0 words, lex 1 }
-  GATKIND := (GATKIND+1);
-  PASCALIO.2(@GATVLEV, GATKIND);
+  G4 := (G4+1);
+  PASCALIO.2(@G6, G4);
   IOCHECK();
-  FGET(@GATVLEV);
+  FGET(@G6);
   IOCHECK();
-  if FEOF(@GATVLEV) then begin
-    DISKIO.8(GATVLEV);
-    if not (GATCVAL) then begin
+  if FEOF(@G6) then begin
+    DISKIO.8(G6);
+    if not (G5) then begin
       FGOTOXY(0, 4);
       FWRITESTRING(I2,3, 'Record ', 0);
       IOCHECK();
-      FWRITEINT(I2,3, GATKIND, 0);
+      FWRITEINT(I2,3, G4, 0);
       IOCHECK();
       FWRITESTRING(I2,3, ' not in file.', 0);
       IOCHECK();
@@ -383,16 +383,16 @@ procedure DISKIO.16(args 0 words);  { locals 0 words, lex 1 }
   FGOTOXY(0, 2);
   FWRITESTRING(I2,3, 'Record number ', 0);
   IOCHECK();
-  FWRITEINT(I2,3, GATKIND, 0);
+  FWRITEINT(I2,3, G4, 0);
   IOCHECK();
-  DISKIO.9(GATVLEV);
-  DISKIO.11(GATVLEV);
-  if GATCVAL then begin
-    DISKIO.12(GATVLEV);
-    PASCALIO.2(@GATVLEV, GATKIND);
+  DISKIO.9(G6);
+  DISKIO.11(G6);
+  if G5 then begin
+    DISKIO.12(G6);
+    PASCALIO.2(@G6, G4);
     IOCHECK();
-    FPUT(@GATVLEV);
-    if ((IORESULT() <> 0) or FEOF(@GATVLEV)) then begin
+    FPUT(@G6);
+    if ((IORESULT() <> 0) or FEOF(@G6)) then begin
       FGOTOXY(0, 20);
       FWRITECHAR(I2,3, 7, 0);
       IOCHECK();

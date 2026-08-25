@@ -15,37 +15,37 @@ procedure TREE.1(args 2 words);  { locals 92 words, lex 0 }
   goto L02BE;
 L01A8:
   TURTLEGR.1();
-  GATTYPTR := nil;
-  @NOISY[chk(0,0..4)]^ := 48;
-  @NOISY[chk(1,0..4)]^ := 24;
-  @NOISY[chk(2,0..4)]^ := 12;
-  @NOISY[chk(3,0..4)]^ := 6;
-  @NOISY[chk(4,0..4)]^ := 3;
+  G3 := nil;
+  @G49[chk(0,0..4)]^ := 48;
+  @G49[chk(1,0..4)]^ := 24;
+  @G49[chk(2,0..4)]^ := 12;
+  @G49[chk(3,0..4)]^ := 6;
+  @G49[chk(4,0..4)]^ := 3;
   repeat
     FWRITESTRING(I1,3, 'ENTER WORD: ', 0);
     IOCHECK();
     UNITCLEAR(1);
-    FREADSTRING(I1,2, @GATKIND, 80);
+    FREADSTRING(I1,2, @G4, 80);
     IOCHECK();
     FREADLN(I1,2);
     IOCHECK();
-    if (@GATKIND^[0] = 0) then begin
+    if (@G4^[0] = 0) then begin
       TREE.6();
     end;
-    if (@GATKIND^[0] <= 6) then begin
-      @OPT_E^ := @GATKIND  {string};
+    if (@G4^[0] <= 6) then begin
+      @G45^ := @G4  {string};
     end else begin
-      SCOPY(@GATKIND, @STRGPTR, 1, 6);
-      @OPT_E^ := @STRGPTR  {string};
+      SCOPY(@G4, @G54, 1, 6);
+      @G45^ := @G54  {string};
     end;
-    TREE.2(@OPT_E, @GATTYPTR);
+    TREE.2(@G45, @G3);
     FWRITELN(I1,3);
     IOCHECK();
     FWRITESTRING(I1,3, 'THE WORDS IN ORDER ARE:', 0);
     IOCHECK();
     FWRITELN(I1,3);
     IOCHECK();
-    TREE.3(GATTYPTR);
+    TREE.3(G3);
     FWRITELN(I1,3);
     IOCHECK();
     FREADLN(I1,2);
@@ -54,7 +54,7 @@ L01A8:
     TURTLEGR.6(0, 170);
     TURTLEGR.18('BINARY TREE:');
     TURTLEGR.6(0, 96);
-    TREE.5(GATTYPTR, 0);
+    TREE.5(G3, 0);
     FREADLN(I1,2);
     IOCHECK();
     TURTLEGR.8();
@@ -122,12 +122,12 @@ procedure TREE.5(args 2 words);  { locals 2 words, lex 1 }
       TURTLEGR.7(0);
       TURTLEGR.6((L4+44), (L3+3));
       TURTLEGR.7(1);
-      TURTLEGR.6((L4+56), (L3+@NOISY[chk(L1,0..4)]^));
+      TURTLEGR.6((L4+56), (L3+@G49[chk(L1,0..4)]^));
       TREE.5(L2^.f5, (L1+1));
       TURTLEGR.7(0);
       TURTLEGR.6((L4+44), (L3-3));
       TURTLEGR.7(1);
-      TURTLEGR.6((L4+56), (L3-@NOISY[chk(L1,0..4)]^));
+      TURTLEGR.6((L4+56), (L3-@G49[chk(L1,0..4)]^));
       TREE.5(L2^.f4, (L1+1));
     end;
   end;

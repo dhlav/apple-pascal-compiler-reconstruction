@@ -12,29 +12,29 @@ SEGMENT 1 FILEHAND
 ======================================================================
 
 procedure FILEHAND.1(args 2 words);  { locals 360 words, lex 0 }
-  FINIT(@PUBLICPROCS, @G327, -(1));
+  FINIT(@G27, @G327, -(1));
   FILEHAND.56();
-  TEST := (not (I1,17) or (I1,17 and (@I1,38 <> 'SYSTEM.WRK.TEXT')));
-  LC := (not (I1,16) or (I1,16 and (@I1,30 <> 'SYSTEM.WRK.CODE')));
-  SY := (1 and not (4));
+  G11 := (not (I1,17) or (I1,17 and (@I1,38 <> 'SYSTEM.WRK.TEXT')));
+  G10 := (not (I1,16) or (I1,16 and (@I1,30 <> 'SYSTEM.WRK.CODE')));
+  G15 := (1 and not (4));
   @G149^ := '???JanFebMarAprMayJunJulAugSepOctNovDec?????????'  {string};
   @G174^ := '    Bad CodeTextInfoDataGrafFoto'  {string};
   repeat
     MARK(@G18);
-    GATTYPTR := 0;
+    G3 := 0;
 L3864:
-    NEW(@GETSTMTLEV, 256);
-    GATTYPTR := (GATTYPTR+1);
-    if not ((((MEMAVAIL() < (((2028+2028)+580)+1024)) and (MEMAVAIL() > 0)) or (GATTYPTR = 63))) then goto L3864;
+    NEW(@G26, 256);
+    G3 := (G3+1);
+    if not ((((MEMAVAIL() < (((2028+2028)+580)+1024)) and (MEMAVAIL() > 0)) or (G3 = 63))) then goto L3864;
     FILEHAND.2();
-    if @I1,126[GATCVAL*6w]^.f4 then begin
-      FCLOSE(@PUBLICPROCS, 2);
+    if @I1,126[G5*6w]^.f4 then begin
+      FCLOSE(@G27, 2);
     end else begin
-      FCLOSE(@PUBLICPROCS, 0);
+      FCLOSE(@G27, 0);
     end;
     RELEASE(@G18);
   until 0;
-  FCLOSE(@PUBLICPROCS, 0);
+  FCLOSE(@G27, 0);
   { left on stack: (I1,1^.f38 >= 80) }
   { left on stack: (I1,1+29) }
 
@@ -43,13 +43,13 @@ procedure FILEHAND.2(args 0 words);  { locals 44 words, lex 1 }
   @G233^ := ''  {string};
   L3 := 1;
   repeat
-    if SY then begin
+    if G15 then begin
       FILEHAND.55('Filer: L(dir E(dir R(em T(rans C(hng D(ate P(refix K(rnch Z(ero V(ols Q(uit ?');
     end else begin
       FILEHAND.55('Filer: L, E, R, T, C, D, P, K, Z, V, Q,?');
     end;
-    if (GATDPLMT = 63) then begin
-      if SY then begin
+    if (G7 = 63) then begin
+      if G15 then begin
         FILEHAND.55('Filer: M(ake W(hat N(ew S(ave G(et B(ad-blks X(amine [1.3]');
       end else begin
         FILEHAND.55('Filer: M, W, N, S, G, B, X [1.3]');
@@ -58,7 +58,7 @@ procedure FILEHAND.2(args 0 words);  { locals 44 words, lex 1 }
   until L3;
   HOMECURSOR();
   CLEARLINE();
-  if (GATDPLMT in {32,66,68,81,86,90}) then begin
+  if (G7 in {32,66,68,81,86,90}) then begin
     CLEARSCREEN();
   end;
   L2 := 1;
@@ -83,7 +83,7 @@ procedure FILEHAND.2(args 0 words);  { locals 44 words, lex 1 }
     end;
     L2 := (L2+1);
   end;
-  case GATDPLMT of   { table 66..90 }
+  case G7 of   { table 66..90 }
     76: begin
       FILEHAND.44(0);
     end;
@@ -116,7 +116,7 @@ procedure FILEHAND.2(args 0 words);  { locals 44 words, lex 1 }
       FWRITECHAR(I2,3, 58, 0);
       FWRITELN(I2,3);
       FILEHAND.22('', 1, 20, 0, 0, 108, adjust(1,1));
-      @I2,59^ := @MODPTR  {string};
+      @I2,59^ := @G71  {string};
       CLEARLINE();
       FWRITESTRING(I2,3, 'Prefix is ', 0);
       FWRITESTRING(I2,3, @I2,59, 0);
@@ -165,22 +165,22 @@ function FILEHAND.3(args 1 words) : <1 word result>;  { locals 1 words, lex 1 }
   L1 := @L4[-(1)]^;
 
 procedure FILEHAND.4(args 0 words);  { locals 0 words, lex 1 }
-  @MODPTR^ := ''  {string};
+  @G71^ := ''  {string};
   @G136^ := ''  {string};
   @G107^ := ''  {string};
   @G123^ := ''  {string};
-  @NEXTPROC^ := ''  {string};
+  @G99^ := ''  {string};
   @G191^ := ''  {string};
-  @DATASEG^ := ''  {string};
-  @MARKP^ := ''  {string};
+  @G87^ := ''  {string};
+  @G83^ := ''  {string};
   @G212^ := ''  {string};
   @G75^ := ''  {string};
-  @GLOBTESTP^ := ''  {string};
-  GATVLEV := 0;
-  GATCVAL := 0;
-  ID := 1;
-  INTPTR := 0;
-  SEG := 0;
+  @G79^ := ''  {string};
+  G6 := 0;
+  G5 := 0;
+  G17 := 1;
+  G12 := 0;
+  G13 := 0;
   FILLCHAR(@G20, 0, 12, 0);
 
 procedure FILEHAND.5(args 3 words);  { locals 46 words, lex 1 }
@@ -310,11 +310,11 @@ procedure FILEHAND.6(args 0 words);  { locals 0 words, lex 1 }
   CLEARLINE();
 
 function FILEHAND.7(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
-  GATDPLMT := GETCHAR(L3);
-  if (GATDPLMT = 27) then begin
+  G7 := GETCHAR(L3);
+  if (G7 = 27) then begin
     EXIT(1, 2);
   end;
-  L1 := (GATDPLMT = 89);
+  L1 := (G7 = 89);
   if not (FEOLN(I2,2)) then begin
     FWRITELN(I2,3);
   end;
@@ -325,7 +325,7 @@ procedure FILEHAND.8(args 1 words);  { locals 0 words, lex 1 }
   end;
 
 procedure FILEHAND.9(args 0 words);  { locals 0 words, lex 1 }
-  WRITEDIR(GATVLEV, TOP);
+  WRITEDIR(G6, G8);
   FILEHAND.5(IORESULT(), 0, 1);
 
 procedure FILEHAND.10(args 1 words);  { locals 1 words, lex 1 }
@@ -349,17 +349,17 @@ procedure FILEHAND.11(args 5 words);  { locals 40 words, lex 1 }
   @L19^ := L4  {string};
   @L6^ := L3  {string};
   L45 := 0;
-  if (TOP <> nil) then begin
-    if (TOP[0*13w]^.f7 >= L2) then begin
+  if (G8 <> nil) then begin
+    if (G8[0*13w]^.f7 >= L2) then begin
       CLEARLINE();
       FWRITESTRING(I2,3, @L32, 0);
       FWRITECHAR(I2,3, 32, 0);
-      FWRITEINT(I2,3, TOP[0*13w]^.f7, 0);
+      FWRITEINT(I2,3, G8[0*13w]^.f7, 0);
       FWRITECHAR(I2,3, 32, 0);
       FWRITESTRING(I2,3, @L19, 0);
       FWRITESTRING(I2,3, ' ? (Y/N) ', 0);
       L45 := FILEHAND.7(1);
-      L1^ := TOP[0*13w]^.f7;
+      L1^ := G8[0*13w]^.f7;
     end;
   end;
   if not (L45) then begin
@@ -376,10 +376,10 @@ procedure FILEHAND.11(args 5 words);  { locals 40 words, lex 1 }
   end;
 
 procedure FILEHAND.12(args 0 words);  { locals 0 words, lex 1 }
-  if ((OP = 6) and (TOP <> nil)) then begin
+  if ((G16 = 6) and (G8 <> nil)) then begin
     CLEARLINE();
     FWRITESTRING(I2,3, 'Remove all files on ', 0);
-    FWRITESTRING(I2,3, @MODPTR, 0);
+    FWRITESTRING(I2,3, @G71, 0);
     FWRITESTRING(I2,3, ': ? (Y/N)', 0);
     if not (FILEHAND.7(1)) then begin
       EXIT(1, 2);
@@ -396,9 +396,9 @@ procedure FILEHAND.13(args 3 words);  { locals 13 words, lex 1 }
   FILEHAND.10(@L13);
   L8 := L1;
   if L1 then begin
-    if (VOLSEARCH(@L4, 1, @TOP) <> L3) then begin
+    if (VOLSEARCH(@L4, 1, @G8) <> L3) then begin
       @L9^ := @L13  {string};
-      L8 := (VOLSEARCH(@L9, 1, @TOP) <> 0);
+      L8 := (VOLSEARCH(@L9, 1, @G8) <> 0);
       L8 := (L8 and (@L9 = @L4));
     end;
   end;
@@ -411,7 +411,7 @@ procedure FILEHAND.13(args 3 words);  { locals 13 words, lex 1 }
     FWRITELN(I2,3);
     FILEHAND.8(1);
     if L1 then begin
-      L8 := (VOLSEARCH(@L13, 1, @TOP) <> 0);
+      L8 := (VOLSEARCH(@L13, 1, @G8) <> 0);
       if (not (L8) or (@L13 <> @L4)) then begin
         EXIT(1, 2);
       end;
@@ -421,13 +421,13 @@ procedure FILEHAND.13(args 3 words);  { locals 13 words, lex 1 }
 procedure FILEHAND.14(args 2 words);  { locals 8 words, lex 1 }
   move(@L3, L2, 6 words);
   if (0 > 0) then begin
-    FILEHAND.13(GATVLEV, @G75, 1);
-    if (TOP <> nil) then begin
-      L9 := TOP[0*13w]^.f8;
+    FILEHAND.13(G6, @G75, 1);
+    if (G8 <> nil) then begin
+      L9 := G8[0*13w]^.f8;
       L10 := 1;
       while (L9 >= L10) do begin
         if @L3~[L9]{16per word,1 bits} then begin
-          DELENTRY(L9, TOP);
+          DELENTRY(L9, G8);
         end;
         L9 := (L9-1);
       end;
@@ -488,30 +488,30 @@ procedure FILEHAND.16(args 3 words);  { locals 26 words, lex 1 }
 
 procedure FILEHAND.17(args 5 words);  { locals 23 words, lex 1 }
   @L6^ := L5  {string};
-  GATKIND := 0;
-  if SCANTITLE(@L6, @MODPTR, @STRGCSTIC, @L28, @G19) then begin
+  G4 := 0;
+  if SCANTITLE(@L6, @G71, @G91, @L28, @G19) then begin
     if L1 then begin
       MARK(@L27);
     end;
-    @FWPTR^ := @MODPTR  {string};
-    GATKIND := VOLSEARCH(@MODPTR, 1, @TOP);
-    if (TOP = nil) then begin
-      if (GATKIND = 0) then begin
+    @G67^ := @G71  {string};
+    G4 := VOLSEARCH(@G71, 1, @G8);
+    if (G8 = nil) then begin
+      if (G4 = 0) then begin
         FILEHAND.18(9, 0, 2);
       end;
-      UNITCLEAR(GATKIND);
+      UNITCLEAR(G4);
       if (IORESULT() <> 0) then begin
         FILEHAND.18(2, 0, 1);
       end;
-      if @I2,126[GATKIND*6w]^.f4 then begin
+      if @I2,126[G4*6w]^.f4 then begin
         FILEHAND.18(0, 6, 3);
       end;
       FILEHAND.18(0, 5, 5);
     end;
-    if (@STRGCSTIC = '') then begin
+    if (@G91 = '') then begin
       FILEHAND.18(0, 4, 6);
     end;
-    if (DIRSEARCH(@STRGCSTIC, 1, TOP) <> 0) then begin
+    if (DIRSEARCH(@G91, 1, G8) <> 0) then begin
       FILEHAND.18(0, 2, 7);
     end;
     FILEHAND.18(10, 0, 4);
@@ -519,7 +519,7 @@ procedure FILEHAND.17(args 5 words);  { locals 23 words, lex 1 }
   FILEHAND.18(0, 12, 0);
 
 procedure FILEHAND.18(args 3 words);  { locals 1 words, lex 2 }
-  OP := L1;
+  G16 := L1;
   if ((I1,4 in 1) or (I1,3 = 0)) then begin
     EXIT(1, 17);
   end;
@@ -552,7 +552,7 @@ procedure FILEHAND.18(args 3 words);  { locals 1 words, lex 2 }
       L4 := 1;
     end;
     1, 2, 3: begin
-      L4 := ((I1,3 = 17) and (@STRGCSTIC = ''));
+      L4 := ((I1,3 = 17) and (@G91 = ''));
     end;
     5: begin
       L4 := (I1,3 in {16,17,22});
@@ -589,35 +589,35 @@ function FILEHAND.19(args 5 words) : <1 word result>;  { locals 63 words, lex 1 
   @L8^ := L7  {string};
   L1 := 0;
   if (L6^ = 0) then begin
-    L5 := (L5 and @I2,126[GATCVAL*6w]^.f4);
-    if (L4 and INTPTR) then begin
+    L5 := (L5 and @I2,126[G5*6w]^.f4);
+    if (L4 and G12) then begin
       CLEARSCREEN();
       FWRITELN(I2,3);
     end else begin
       CLEARLINE();
     end;
-    ID := 1;
-    SYMCURSOR := (L5 and (@G75 = @GLOBTESTP));
+    G17 := 1;
+    G14 := (L5 and (@G75 = @G79));
     L29 := 1;
-    L38 := TOP[0*13w]^.f8;
+    L38 := G8[0*13w]^.f8;
     while (L29 <= L38) do begin
-      L39 := TOP[L29*13w];
+      L39 := G8[L29*13w];
       { unmodelled packed store of 0 }
       if ((@G136^[0]+@G107^[0]) <= (L39+3)^[0]) then begin
         if (FILEHAND.21(@G136, 1) and FILEHAND.21(@G107, (((L39+3)^[0]-@G107^[0])+1))) then begin
-          if ((@G136 = (L39+3)) or INTPTR) then begin
-            { unmodelled packed store of SYMCURSOR }
+          if ((@G136 = (L39+3)) or G12) then begin
+            { unmodelled packed store of G14 }
             @G20~[L29]{16per word,1 bits} := 1;
             { unmodelled packed store of (0+1) }
           end;
           { paths disagree on stack depth here }
-          ID := 2;
+          G17 := 2;
         end;
       end;
       { paths disagree on stack depth here }
       L29 := (L29+1);
     end;
-    if SYMCURSOR then begin
+    if G14 then begin
       FILEHAND.9();
     end;
   end else begin
@@ -627,15 +627,15 @@ function FILEHAND.19(args 5 words) : <1 word result>;  { locals 63 words, lex 1 
   end;
   if (0 > 0) then begin
     if L3 then begin
-      FILEHAND.13(GATVLEV, @G75, 1);
+      FILEHAND.13(G6, @G75, 1);
     end;
-    GATDPLMT := 78;
+    G7 := 78;
 L0CEF:
     { paths disagree on stack depth here }
-    if not (((L6^ < TOP[0*13w]^.f8) and (GATDPLMT <> 89))) then goto L0E04;
-    L38 := TOP[(L6^+1)*13w];
+    if not (((L6^ < G8[0*13w]^.f8) and (G7 <> 89))) then goto L0E04;
+    L38 := G8[(L6^+1)*13w];
     L6^ := (L6^+1);
-    if SYMCURSOR then begin
+    if G14 then begin
       { unmodelled packed store of 15 }
       if 15 then begin
         { unmodelled packed store of 0 }
@@ -647,16 +647,16 @@ L0CEF:
       if L5 then begin
         SCOPY((L38+3), @L39, (@G136^[0]+1), (((L38+3)^[0]-@G136^[0])-@G107^[0]));
         @L30^ := @L39  {string};
-        L29 := ((@L30^[0]+SCAN(@G123^[0], 0, 91, @G123, 1, 0))+@NEXTPROC^[0]);
-        if ((L29 <= 15) and ((L29 > 0) or not (INTPTR))) then begin
+        L29 := ((@L30^[0]+SCAN(@G123^[0], 0, 91, @G123, 1, 0))+@G99^[0]);
+        if ((L29 <= 15) and ((L29 > 0) or not (G12))) then begin
           L39 := 0;
-          SCONCAT(@L39, @MARKP, 7);
+          SCONCAT(@L39, @G83, 7);
           SCONCAT(@L39, ':', 8);
           SCONCAT(@L39, @G123, 33);
           SCONCAT(@L39, @L30, 48);
-          SCONCAT(@L39, @NEXTPROC, 63);
+          SCONCAT(@L39, @G99, 63);
           @G191^ := @L39  {string};
-          if ((@G136 = (L38+3)) or INTPTR) then begin
+          if ((@G136 = (L38+3)) or G12) then begin
             FILEHAND.20();
           end;
         end else begin
@@ -673,24 +673,24 @@ L0CEF:
   end;
 L0E04:
   { paths disagree on stack depth here }
-  if (ID = 1) then begin
+  if (G17 = 1) then begin
     FILEHAND.5(10, 0, 0);
   end;
-  if (ID = 2) then begin
+  if (G17 = 2) then begin
     FILEHAND.5(0, 15, 0);
   end;
 
 procedure FILEHAND.20(args 0 words);  { locals 13 words, lex 2 }
-  L1 := TOP[I1,6^*13w];
+  L1 := G8[I1,6^*13w];
   @G115^ := (L1+3)  {string};
   L2 := 0;
-  SCONCAT(@L2, @DATASEG, 7);
+  SCONCAT(@L2, @G87, 7);
   SCONCAT(@L2, ':', 8);
   SCONCAT(@L2, (L1+3), 23);
   @G212^ := @L2  {string};
-  GATDPLMT := 89;
-  ID := 0;
-  if ((@I1,8 <> '') and SEG) then begin
+  G7 := 89;
+  G17 := 0;
+  if ((@I1,8 <> '') and G13) then begin
     CLEARLINE();
     if not (4) then begin
       FWRITESTRING(I3,3, @I1,8, 0);
@@ -698,22 +698,22 @@ procedure FILEHAND.20(args 0 words);  { locals 13 words, lex 2 }
     end;
     FWRITESTRING(I3,3, (L1+3), 0);
     FWRITESTRING(I3,3, ' ? ', 0);
-    GATDPLMT := GETCHAR(0);
+    G7 := GETCHAR(0);
     if not (FEOLN(I3,2)) then begin
       FWRITELN(I3,3);
     end;
-    if (GATDPLMT = 27) then begin
-      ID := 3;
+    if (G7 = 27) then begin
+      G17 := 3;
       EXIT(1, 19);
     end;
   end;
   { paths disagree on stack depth here }
-  I1,1 := (GATDPLMT = 89);
+  I1,1 := (G7 = 89);
 
 function FILEHAND.21(args 2 words) : <1 word result>;  { locals 16 words, lex 2 }
   @L5^ := L4  {string};
   @L13^[0] := @L5^[0];
-  MOVELEFT((TOP[I1,29*13w]+3), L3, @L13, 1, @L5^[0]);
+  MOVELEFT((G8[I1,29*13w]+3), L3, @L13, 1, @L5^[0]);
   L1 := (@L13 = @L5);
 
 procedure FILEHAND.22(args 7 words);  { locals 67 words, lex 1 }
@@ -721,11 +721,11 @@ procedure FILEHAND.22(args 7 words);  { locals 67 words, lex 1 }
   @L8^ := L6  {string};
   FILEHAND.4();
   @L34^ := ''  {string};
-  FILEHAND.23(@L21, 1, @DATASEG, @G136, @G107, @G212);
-  GATVLEV := GATKIND;
-  @G75^ := @MODPTR  {string};
-  if (TOP <> nil) then begin
-    G362 := TOP[0*13w]^.f7;
+  FILEHAND.23(@L21, 1, @G87, @G136, @G107, @G212);
+  G6 := G4;
+  @G75^ := @G71  {string};
+  if (G8 <> nil) then begin
+    G362 := G8[0*13w]^.f7;
   end else begin
     G362 := 0;
   end;
@@ -735,14 +735,14 @@ procedure FILEHAND.22(args 7 words);  { locals 67 words, lex 1 }
   if ((@G233 = '') and (L5 < 0)) then begin
     EXIT(1, 22);
   end;
-  FILEHAND.23(@L8, 0, @MARKP, @G123, @NEXTPROC, @G191);
+  FILEHAND.23(@L8, 0, @G83, @G123, @G99, @G191);
 
 procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
   @L7^ := L6  {string};
   if (@G233 = '') then begin
     CLEARLINE();
     FWRITESTRING(I3,3, @L7, 0);
-    if (L5 and SY) then begin
+    if (L5 and G15) then begin
       if I1,2 then begin
         FWRITESTRING(I3,3, ' what file', 0);
       end else begin
@@ -762,7 +762,7 @@ procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
   @L61^ := @L106  {string};
   SDELETE(@G233, 1, L103);
   SDELETE(@G233, 1, 1);
-  SEG := (SEG or (FILEHAND.26(63) < @L61^[0]));
+  G13 := (G13 or (FILEHAND.26(63) < @L61^[0]));
   L103 := FILEHAND.26(58);
   if ((@L61^[1] = 35) or (L103 < @L61^[0])) then begin
     FILEHAND.24(7, 3, L4);
@@ -798,10 +798,10 @@ procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
   end;
   if (L103 < @L61^[0]) then begin
     if I1,3 then begin
-      if not ((L5 or INTPTR)) then begin
+      if not ((L5 or G12)) then begin
         FILEHAND.5(0, 14, 1);
       end;
-      INTPTR := 1;
+      G12 := 1;
       FILEHAND.24(15, 2, L3);
       L103 := @L61^[0];
       FILEHAND.24(15, 2, L2);
@@ -809,12 +809,12 @@ procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
       FILEHAND.5(0, 7, 1);
     end;
   end else begin
-    if ((not (L5) and INTPTR) and (I1,5 = 0)) then begin
+    if ((not (L5) and G12) and (I1,5 = 0)) then begin
       L106 := 0;
-      SCONCAT(@L106, @MARKP, 7);
+      SCONCAT(@L106, @G83, 7);
       SCONCAT(@L106, ':', 8);
       FILEHAND.17(@L106, adjust(0,1), 0, 2, 0);
-      if (OP <> 5) then begin
+      if (G16 <> 5) then begin
         FILEHAND.5(0, 14, 1);
       end;
     end;
@@ -826,18 +826,18 @@ procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
   end;
   if not (L5) then begin
     FILEHAND.17(L1, adjust(0,1), 0, L102, 1);
-    if (GATKIND = 0) then begin
-      GATCVAL := 4;
+    if (G4 = 0) then begin
+      G5 := 4;
     end else begin
-      GATCVAL := GATKIND;
+      G5 := G4;
     end;
-    @GLOBTESTP^ := @MODPTR  {string};
-    if (TOP <> nil) then begin
-      G361 := TOP[0*13w]^.f7;
+    @G79^ := @G71  {string};
+    if (G8 <> nil) then begin
+      G361 := G8[0*13w]^.f7;
     end else begin
       G361 := 0;
     end;
-    FILEHAND.13(GATVLEV, @G75, 1);
+    FILEHAND.13(G6, @G75, 1);
   end else begin
     if ((@G233 <> '') and (I1,5 <= 0)) then begin
       L102 := 1;
@@ -845,7 +845,7 @@ procedure FILEHAND.23(args 6 words);  { locals 227 words, lex 2 }
       L102 := 2;
     end;
   end;
-  if INTPTR then begin
+  if G12 then begin
     FILEHAND.17(64, adjust(1,1), 16, 0, 1);
   end else begin
     FILEHAND.17(@G212, I1,1, I1,4, 0, 1);
@@ -905,11 +905,11 @@ function FILEHAND.26(args 1 words) : <1 word result>;  { locals 0 words, lex 3 }
 
 function FILEHAND.27(args 1 words) : <1 word result>;  { locals 12 words, lex 1 }
   L1 := 1;
-  if ((OP = 7) and ((L3 or (@G115 <> @STRGCSTIC)) or (@G75 <> @MODPTR))) then begin
+  if ((G16 = 7) and ((L3 or (@G115 <> @G91)) or (@G75 <> @G71))) then begin
     L4 := 0;
-    SCONCAT(@L4, @MODPTR, 7);
+    SCONCAT(@L4, @G71, 7);
     SCONCAT(@L4, ':', 8);
-    SCONCAT(@L4, @STRGCSTIC, 23);
+    SCONCAT(@L4, @G91, 23);
     L1 := FILEHAND.15(@L4, 'Remove old');
   end;
 
@@ -917,13 +917,13 @@ procedure FILEHAND.28(args 0 words);  { locals 76 words, lex 1 }
   FINIT(@L1, @L301, -(1));
   repeat
     FILEHAND.22('Change to what', 0, 22, 1, 1, 192, adjust(1,1));
-    if (((@G136 <> '') and (@G123 <> '')) or INTPTR) then begin
-      @MARKP^ := @DATASEG  {string};
+    if (((@G136 <> '') and (@G123 <> '')) or G12) then begin
+      @G83^ := @G87  {string};
       L44 := 0;
-      SCONCAT(@L44, @DATASEG, 7);
+      SCONCAT(@L44, @G87, 7);
       SCONCAT(@L44, ':', 8);
       @G191^ := @L44  {string};
-      if not (INTPTR) then begin
+      if not (G12) then begin
         L44 := 0;
         SCONCAT(@L44, @G191, 40);
         SCONCAT(@L44, @G123, 65);
@@ -940,8 +940,8 @@ L13B8:
       if FILEHAND.27(0) then begin
         L44 := L41;
         { unmodelled packed store of 100 }
-        FILEHAND.16((L44+8), (L44+19), @STRGCSTIC);
-        (L44+19)^ := @STRGCSTIC  {string};
+        FILEHAND.16((L44+8), (L44+19), @G91);
+        (L44+19)^ := @G91  {string};
       end;
       { paths disagree on stack depth here }
       FCLOSE(@L1, 0);
@@ -951,26 +951,26 @@ L1427:
     end else begin
       if ((@G136^[0]+@G123^[0]) = 0) then begin
         FILEHAND.17(68, adjust(1,1), 16, 1, 1);
-        if (OP = 6) then begin
+        if (G16 = 6) then begin
           FILEHAND.5(0, 1, 1);
         end;
-        NEW(@TOP, 1014);
-        UNITREAD(GATVLEV, TOP, 0, 2028, 2, 0);
+        NEW(@G8, 1014);
+        UNITREAD(G6, G8, 0, 2028, 2, 0);
         FILEHAND.5(IORESULT(), 0, 1);
-        (TOP[0*13w]+3)^ := @MODPTR  {string};
-        UNITWRITE(GATVLEV, TOP, 0, 2028, 2, 0);
+        (G8[0*13w]+3)^ := @G71  {string};
+        UNITWRITE(G6, G8, 0, 2028, 2, 0);
         L43 := IORESULT();
-        RELEASE(@TOP);
+        RELEASE(@G8);
         FILEHAND.5(L43, 0, 1);
-        @I2,126[GATVLEV*6w]^ := @MODPTR  {string};
-        if ((@I2,63 = @G75) and (I2,1^.f2 = GATVLEV)) then begin
-          @I2,63^ := @MODPTR  {string};
+        @I2,126[G6*6w]^ := @G71  {string};
+        if ((@I2,63 = @G75) and (I2,1^.f2 = G6)) then begin
+          @I2,63^ := @G71  {string};
         end;
         if (@I2,59 = @G75) then begin
-          @I2,59^ := @MODPTR  {string};
+          @I2,59^ := @G71  {string};
         end;
         L44 := 0;
-        SCONCAT(@L44, @MODPTR, 7);
+        SCONCAT(@L44, @G71, 7);
         SCONCAT(@L44, ':', 8);
         FILEHAND.16(@G75, '', @L44);
       end else begin
@@ -990,8 +990,8 @@ procedure FILEHAND.29(args 0 words);  { locals 8 words, lex 1 }
 L1527:
     { paths disagree on stack depth here }
     if not (FILEHAND.19('Remove', @L7, 0, 1, 0)) then goto L1580;
-    if not (SEG) then begin
-      FILEHAND.16(@MODPTR, (TOP[L7*13w]+3), 'removed');
+    if not (G13) then begin
+      FILEHAND.16(@G71, (G8[L7*13w]+3), 'removed');
       if (I2,1^.f37 = L8) then begin
         FILEHAND.8(0);
         CLEARSCREEN();
@@ -1011,7 +1011,7 @@ L1580:
       end;
     end;
   until (@G233 = '');
-  { left on stack: ID }
+  { left on stack: G17 }
   { left on stack: (9 in 1) }
   { left on stack: @L6 }
 
@@ -1020,8 +1020,8 @@ procedure FILEHAND.30(args 0 words);  { locals 3 words, lex 1 }
     FILEHAND.22('To where', 0, 18, 1, 1, 232, adjust(1,1));
     L2 := 32767;
     L1 := 0;
-    if ((@G136 = '') and not (INTPTR)) then begin
-      if ((((GATCVAL and (7728 in 1)) and (G362 <> G361)) and (G362 <> 0)) and (G361 <> 0)) then begin
+    if ((@G136 = '') and not (G12)) then begin
+      if ((((G5 and (7728 in 1)) and (G362 <> G361)) and (G362 <> 0)) and (G361 <> 0)) then begin
         CLEARLINE();
         FWRITESTRING(I2,3, 'Number of blocks on the destination volume is not ', 0);
         FWRITESTRING(I2,3, 'the same as the source volume', 0);
@@ -1052,8 +1052,8 @@ procedure FILEHAND.31(args 0 words);  { locals 58 words, lex 2 }
   L5 := 1;
   repeat
     L2 := (I1,2-L3);
-    if (L2 > GATTYPTR) then begin
-      L2 := GATTYPTR;
+    if (L2 > G3) then begin
+      L2 := G3;
     end;
     L1 := FBLOCKIO(@L7, G18, 0, L2, -(1), 1);
     FILEHAND.5(IORESULT(), 0, 1);
@@ -1061,11 +1061,11 @@ procedure FILEHAND.31(args 0 words);  { locals 58 words, lex 2 }
     if L5 then begin
       L5 := 0;
       FILEHAND.17(252, adjust(1,1), 18, 1, 1);
-      if (((((@FWPTR <> '') and (@FWPTR^[1] = 35)) and (GATKIND = GATVLEV)) and @I3,126[GATKIND*6w]^.f4) or (GATKIND = 0)) then begin
+      if (((((@G67 <> '') and (@G67^[1] = 35)) and (G4 = G6)) and @I3,126[G4*6w]^.f4) or (G4 = 0)) then begin
         CLEARSCREEN();
-        if (GATKIND = 0) then begin
+        if (G4 = 0) then begin
           FWRITESTRING(I3,3, 'Put in ', 0);
-          FWRITESTRING(I3,3, @MODPTR, 0);
+          FWRITESTRING(I3,3, @G71, 0);
           FWRITECHAR(I3,3, 58, 0);
           FWRITELN(I3,3);
         end else begin
@@ -1086,30 +1086,30 @@ procedure FILEHAND.31(args 0 words);  { locals 58 words, lex 2 }
       if (L1 > 2) then begin
         FILEHAND.12();
       end;
-      FOPEN(@PUBLICPROCS, @G191, 0, 0);
+      FOPEN(@G27, @G191, 0, 0);
       FILEHAND.5(IORESULT(), 0, 1);
-      IC := FILEHAND.3(@PUBLICPROCS);
+      G9 := FILEHAND.3(@G27);
       if (4 and (0 = 3)) then begin
         L1 := (L1-2);
         MOVELEFT(G18, (512+512), G18, 0, (L1*512));
       end;
-      L4 := (((IC+8) <> (L6+8)) and (IC^.f7 = L6^.f7));
+      L4 := (((G9+8) <> (L6+8)) and (G9^.f7 = L6^.f7));
     end else begin
       if L4 then begin
-        FILEHAND.13(IC^.f7, (IC+8), 0);
+        FILEHAND.13(G9^.f7, (G9+8), 0);
       end;
     end;
     { paths disagree on stack depth here }
-    L2 := FBLOCKIO(@PUBLICPROCS, G18, 0, L1, -(1), 0);
+    L2 := FBLOCKIO(@G27, G18, 0, L1, -(1), 0);
     FILEHAND.5(IORESULT(), 0, 1);
     if (L1 <> L2) then begin
       FILEHAND.5(0, 3, 1);
     end;
     if (L4 and not (FEOF(@L7))) then begin
-      FILEHAND.13(IC^.f7, (L6+8), 0);
+      FILEHAND.13(G9^.f7, (L6+8), 0);
     end;
   until ((L3 = I1,2) or FEOF(@L7));
-  L47 := IC;
+  L47 := G9;
   L48 := (L6+16);
   (L47+27)^ := L48^.f11;
   { unmodelled packed store of 0 }
@@ -1117,12 +1117,12 @@ procedure FILEHAND.31(args 0 words);  { locals 58 words, lex 2 }
   if (4 and (0 > 0)) then begin
     move((L47+28), @I3,67, 1 words);
   end;
-  FCLOSE(@PUBLICPROCS, 1);
+  FCLOSE(@G27, 1);
   FILEHAND.5(IORESULT(), 0, 1);
   L47 := 0;
-  SCONCAT(@L47, (IC+8), 7);
+  SCONCAT(@L47, (G9+8), 7);
   SCONCAT(@L47, ':', 8);
-  SCONCAT(@L47, (IC+19), 23);
+  SCONCAT(@L47, (G9+19), 23);
   FILEHAND.16((L6+8), (L6+19), @L47);
   FCLOSE(@L7, 0);
   FCLOSE(@L7, 0);
@@ -1149,9 +1149,9 @@ procedure FILEHAND.32(args 0 words);  { locals 42 words, lex 1 }
       FCLOSE(@L1, 1);
       FILEHAND.5(IORESULT(), 0, 1);
       CLEARLINE();
-      FWRITESTRING(I2,3, @MODPTR, 0);
+      FWRITESTRING(I2,3, @G71, 0);
       FWRITECHAR(I2,3, 58, 0);
-      FWRITESTRING(I2,3, @STRGCSTIC, 0);
+      FWRITESTRING(I2,3, @G91, 0);
       FWRITESTRING(I2,3, ' made', 0);
       FWRITELN(I2,3);
     end;
@@ -1161,10 +1161,10 @@ procedure FILEHAND.32(args 0 words);  { locals 42 words, lex 1 }
 
 function FILEHAND.33(args 0 words) : <1 word result>;  { locals 25 words, lex 1 }
   L1 := 0;
-  @STRGCSTIC^ := @I2,46  {string};
-  @MODPTR^ := @I2,26  {string};
-  @FWPTR^ := @I2,26  {string};
-  if (TEST and LC) then begin
+  @G91^ := @I2,46  {string};
+  @G71^ := @I2,26  {string};
+  @G67^ := @I2,26  {string};
+  if (G11 and G10) then begin
     FWRITELN(I2,3);
     if (I2,17 or I2,16) then begin
       FILEHAND.5(0, 9, 1);
@@ -1185,23 +1185,23 @@ function FILEHAND.33(args 0 words) : <1 word result>;  { locals 25 words, lex 1 
     FILEHAND.22('', 1, 17, 0, 1, 220, adjust(1,1));
   end;
   { paths disagree on stack depth here }
-  if (@STRGCSTIC^[0] > (15-5)) then begin
+  if (@G91^[0] > (15-5)) then begin
     FILEHAND.5(0, 12, 1);
   end;
-  if (@FWPTR <> @I2,63) then begin
+  if (@G67 <> @I2,63) then begin
     @G233^ := ''  {string};
-    FILEHAND.35('TEXT', TEST);
-    FILEHAND.35('CODE', LC);
+    FILEHAND.35('TEXT', G11);
+    FILEHAND.35('CODE', G10);
     SDELETE(@G233, @G233^[0], 1);
     L1 := 1;
     EXIT(1, 33);
   end;
-  @I2,46^ := @STRGCSTIC  {string};
-  @I2,26^ := @MODPTR  {string};
+  @I2,46^ := @G91  {string};
+  @I2,26^ := @G71  {string};
   CLEARLINE();
-  if not (TEST) then begin
-    if FILEHAND.34('TEXT', 3, @I2,38, @TEST, @I2,17, 10) then begin
-      if LC then begin
+  if not (G11) then begin
+    if FILEHAND.34('TEXT', 3, @I2,38, @G11, @I2,17, 10) then begin
+      if G10 then begin
         L17 := 0;
         SCONCAT(@L17, '*', 1);
         SCONCAT(@L17, @I2,46, 16);
@@ -1212,12 +1212,12 @@ function FILEHAND.33(args 0 words) : <1 word result>;  { locals 25 words, lex 1 
       end;
       FWRITESTRING(I2,3, 'Text file saved ', 0);
     end;
-    if not (LC) then begin
+    if not (G10) then begin
       FWRITESTRING(I2,3, '& ', 0);
     end;
   end;
-  if not (LC) then begin
-    if FILEHAND.34('CODE', 2, @I2,30, @LC, @I2,16, 11) then begin
+  if not (G10) then begin
+    if FILEHAND.34('CODE', 2, @I2,30, @G10, @I2,16, 11) then begin
       FWRITESTRING(I2,3, 'Code file saved', 0);
     end;
   end;
@@ -1258,9 +1258,9 @@ procedure FILEHAND.35(args 2 words);  { locals 131 words, lex 2 }
     SCONCAT(@L6, '*SYSTEM.WRK.', 255);
     SCONCAT(@L6, @L3, 255);
     SCONCAT(@L6, ',', 255);
-    SCONCAT(@L6, @FWPTR, 255);
+    SCONCAT(@L6, @G67, 255);
     SCONCAT(@L6, ':', 255);
-    SCONCAT(@L6, @STRGCSTIC, 255);
+    SCONCAT(@L6, @G91, 255);
     SCONCAT(@L6, '.', 255);
     SCONCAT(@L6, @L3, 255);
     SCONCAT(@L6, ',', 255);
@@ -1278,7 +1278,7 @@ procedure FILEHAND.36(args 0 words);  { locals 0 words, lex 1 }
       FWRITECHAR(I2,3, 58, 0);
       FWRITESTRING(I2,3, @I2,46, 0);
     end;
-    if not ((TEST and LC)) then begin
+    if not ((G11 and G10)) then begin
       FWRITESTRING(I2,3, ' (not saved)', 0);
     end;
   end else begin
@@ -1294,7 +1294,7 @@ procedure FILEHAND.37(args 0 words);  { locals 0 words, lex 1 }
 
 procedure FILEHAND.38(args 1 words);  { locals 51 words, lex 1 }
   FINIT(@L2, @L302, -(1));
-  if not ((TEST and LC)) then begin
+  if not ((G11 and G10)) then begin
     CLEARLINE();
     FWRITESTRING(I2,3, 'Throw away current workfile ? ', 0);
     if not (FILEHAND.7(1)) then begin
@@ -1316,8 +1316,8 @@ procedure FILEHAND.38(args 1 words);  { locals 51 words, lex 1 }
   SCONCAT(@L42, '.BACK', 20);
   if FILEHAND.15(@L42, 'Remove') then begin
   end;
-  TEST := 1;
-  LC := 1;
+  G11 := 1;
+  G10 := 1;
   if L1 then begin
     CLEARLINE();
     FWRITESTRING(I2,3, 'Workfile cleared', 0);
@@ -1329,8 +1329,8 @@ procedure FILEHAND.39(args 0 words);  { locals 19 words, lex 1 }
   FILEHAND.38(0);
   FILEHAND.22('', 1, 17, 0, 1, 144, adjust(1,1));
   FILEHAND.37();
-  @I2,26^ := @MODPTR  {string};
-  @I2,46^ := @STRGCSTIC  {string};
+  @I2,26^ := @G71  {string};
+  @I2,46^ := @G91  {string};
   L3 := @I2,46^[0];
   L1 := (L3 <= (15-5));
   CLEARLINE();
@@ -1366,7 +1366,7 @@ function FILEHAND.40(args 4 words) : <1 word result>;  { locals 21 words, lex 2 
   SCONCAT(@L13, @I3,46, 23);
   SCONCAT(@L13, @L10, 28);
   FILEHAND.17(128, adjust(1,1), 0, 2, 1);
-  if (OP = 7) then begin
+  if (G16 = 7) then begin
     L1 := 1;
     I1,2 := 1;
     L13 := 0;
@@ -1405,13 +1405,13 @@ procedure FILEHAND.41(args 0 words);  { locals 27 words, lex 1 }
   { paths disagree on stack depth here }
   FILEHAND.42();
   if (@G233^[0] > 2) then begin
-    @MODPTR^[0] := 3;
-    MOVELEFT(@G233, 1, @MODPTR, 1, 3);
+    @G71^[0] := 3;
+    MOVELEFT(@G233, 1, @G71, 1, 3);
     L1 := 2;
     L2 := 3;
     while (L1 <= L2) do begin
-      if ((@MODPTR^[L1] >= 65) and (@MODPTR^[L1] <= 90)) then begin
-        @MODPTR^[L1] := ((@MODPTR^[L1]-65)+97);
+      if ((@G71^[L1] >= 65) and (@G71^[L1] <= 90)) then begin
+        @G71^[L1] := ((@G71^[L1]-65)+97);
       end;
       L1 := (L1+1);
     end;
@@ -1419,7 +1419,7 @@ procedure FILEHAND.41(args 0 words);  { locals 27 words, lex 1 }
     L2 := 12;
     while (L1 <= L2) do begin
       SCOPY(@G149, @L3, ((L1*3)+1), 3);
-      if (@L3 = @MODPTR) then begin
+      if (@L3 = @G71) then begin
         { unmodelled packed store of L1 }
       end;
       { paths disagree on stack depth here }
@@ -1435,9 +1435,9 @@ procedure FILEHAND.41(args 0 words);  { locals 27 words, lex 1 }
   SCONCAT(@L2, @I2,63, 7);
   SCONCAT(@L2, ':', 8);
   FILEHAND.17(64, adjust(1,1), 0, 2, 1);
-  if ((OP = 6) and (GATKIND = I2,1^.f2)) then begin
-    move((TOP[0*13w]+10), @I2,67, 1 words);
-    WRITEDIR(GATKIND, TOP);
+  if ((G16 = 6) and (G4 = I2,1^.f2)) then begin
+    move((G8[0*13w]+10), @I2,67, 1 words);
+    WRITEDIR(G4, G8);
   end;
   FWRITESTRING(I2,3, 'The date is ', 0);
   FWRITEINT(5, 4, 0);
@@ -1476,14 +1476,14 @@ procedure FILEHAND.44(args 1 words);  { locals 1351 words, lex 1 }
   FILEHAND.22('', -(1), 22, 1, 0, 192, adjust(1,1));
   L2 := (@G191 <> '');
   if L2 then begin
-    move(@L5, TOP, 1014 words);
+    move(@L5, G8, 1014 words);
   end else begin
     @G191^ := '#1:'  {string};
   end;
   FOPEN(@L1019, @G191, 0, 0);
   FILEHAND.5(IORESULT(), 0, 1);
   if L2 then begin
-    move(TOP, @L5, 1014 words);
+    move(G8, @L5, 1014 words);
   end;
   L1326 := 0;
   L1325 := 0;
@@ -1491,13 +1491,13 @@ procedure FILEHAND.44(args 1 words);  { locals 1351 words, lex 1 }
   L1323 := 0;
   L1322 := 0;
   L1321 := 0;
-  L1320 := TOP[0*13w]^.f1;
+  L1320 := G8[0*13w]^.f1;
   L3 := 0;
   if (@G136 = '') then begin
-    L3 := (not (INTPTR) and (TOP[0*13w]^.f8 = 0));
-    INTPTR := 1;
+    L3 := (not (G12) and (G8[0*13w]^.f8 = 0));
+    G12 := 1;
   end;
-  if INTPTR then begin
+  if G12 then begin
     FILEHAND.45();
   end else begin
     L1324 := (I2,1^.f37+1);
@@ -1506,7 +1506,7 @@ procedure FILEHAND.44(args 1 words);  { locals 1351 words, lex 1 }
 L2530:
     { paths disagree on stack depth here }
     if not (FILEHAND.19('List', @L1325, 0, 0, 0)) then goto L26AF;
-    if (@I2,126[GATCVAL*6w]^.f4 and not (SEG)) then begin
+    if (@I2,126[G5*6w]^.f4 and not (G13)) then begin
       if (L1326 = 0) then begin
         FILEHAND.6();
         FWRITESTRING(I2,3, 'Writing', 0);
@@ -1515,8 +1515,8 @@ L2530:
       end;
     end;
     L1326 := (L1326+1);
-    L1327 := TOP[L1325*13w];
-    FILEHAND.46(TOP[(L1325-1)*13w]^.f1, L1327^);
+    L1327 := G8[L1325*13w];
+    FILEHAND.46(G8[(L1325-1)*13w]^.f1, L1327^);
     L1321 := (L1327^.f1-L1327^);
     L1320 := (L1320+L1321);
     FWRITESTRING(@L1019, (L1327+3), 0);
@@ -1529,7 +1529,7 @@ L2530:
     FWRITECHAR(@L1019, 45, 0);
     FWRITEINT(7, 9, 2);
     if L1 then begin
-      if SY then begin
+      if G15 then begin
         FWRITEINT(@L1019, L1327^, 6);
         FWRITEINT(@L1019, L1327^.f11, 6);
         FWRITESTRING(@L1019, '', 3);
@@ -1550,13 +1550,13 @@ L2530:
 L26AF:
   { paths disagree on stack depth here }
   if ((9 in 1) or L3) then begin
-    if INTPTR then begin
-      FILEHAND.46(TOP[L1325*13w]^.f1, TOP[0*13w]^.f7);
+    if G12 then begin
+      FILEHAND.46(G8[L1325*13w]^.f1, G8[0*13w]^.f7);
       FWRITEINT(@L1019, L1326, 0);
       FWRITECHAR(@L1019, 47, 0);
-      FWRITEINT(@L1019, TOP[0*13w]^.f8, 0);
+      FWRITEINT(@L1019, G8[0*13w]^.f8, 0);
       FWRITESTRING(@L1019, ' files', 0);
-      if SY then begin
+      if G15 then begin
         FWRITESTRING(@L1019, ' <listed/in dir>, ', 0);
         FWRITEINT(@L1019, L1320, 0);
         FWRITESTRING(@L1019, ' blocks used', 0);
@@ -1577,16 +1577,16 @@ L26AF:
     FILEHAND.5(IORESULT(), 0, 1);
   end;
   FCLOSE(@L1019, 0);
-  { left on stack: ID }
+  { left on stack: G17 }
 
 procedure FILEHAND.45(args 0 words);  { locals 0 words, lex 2 }
   if ((I1,1324 = I3,1^.f37) or (I1,1324 = 0)) then begin
     HOMECURSOR();
     CLEARLINE();
-    if not (((I1,1324 = 0) or SEG)) then begin
+    if not (((I1,1324 = 0) or G13)) then begin
       FILEHAND.8(0);
     end;
-    if (not (@I3,126[GATCVAL*6w]^.f4) or SEG) then begin
+    if (not (@I3,126[G5*6w]^.f4) or G13) then begin
       CLEARSCREEN();
     end;
     FWRITELN(@I1,1019);
@@ -1610,7 +1610,7 @@ procedure FILEHAND.46(args 2 words);  { locals 1 words, lex 2 }
     FWRITESTRING(@I1,1019, '< UNUSED >', 0);
     FWRITEINT(@I1,1019, L3, 12);
     FWRITESTRING(@I1,1019, '', 12);
-    if SY then begin
+    if G15 then begin
       FWRITEINT(@I1,1019, L2, 6);
     end else begin
       FWRITEINT(@I1,1019, L2, 5);
@@ -1624,19 +1624,19 @@ procedure FILEHAND.47(args 0 words);  { locals 9 words, lex 1 }
   FWRITESTRING(I2,3, 'Volume # - Volume Name - # Blocks', 0);
   FWRITELN(I2,3);
   FWRITELN(I2,3);
-  GATKIND := 1;
+  G4 := 1;
   L8 := 20;
-  while (GATKIND <= L8) do begin
-    UNITCLEAR(GATKIND);
-    GATKIND := (GATKIND+1);
+  while (G4 <= L8) do begin
+    UNITCLEAR(G4);
+    G4 := (G4+1);
   end;
-  GATKIND := VOLSEARCH(@MODPTR, 1, @TOP);
-  GATKIND := 1;
+  G4 := VOLSEARCH(@G71, 1, @G8);
+  G4 := 1;
   L8 := 20;
-  while (GATKIND <= L8) do begin
-    L9 := @I2,126[GATKIND*6w];
+  while (G4 <= L8) do begin
+    L9 := @I2,126[G4*6w];
     if (L9 <> '') then begin
-      FWRITEINT(I2,3, GATKIND, 5);
+      FWRITEINT(I2,3, G4, 5);
       FWRITESTRING(I2,3, '', 8);
       FWRITESTRING(I2,3, L9, 0);
       FWRITECHAR(I2,3, 58, 0);
@@ -1647,10 +1647,10 @@ procedure FILEHAND.47(args 0 words);  { locals 9 words, lex 1 }
       end;
       FWRITELN(I2,3);
     end else begin
-      if (GATKIND in {4,5,9,10,11,12,13,14,15,16,17,18,19,20}) then begin
-        UNITSTATUS(GATKIND, @L2, 0, 1);
+      if (G4 in {4,5,9,10,11,12,13,14,15,16,17,18,19,20}) then begin
+        UNITSTATUS(G4, @L2, 0, 1);
         if (IORESULT() = 0) then begin
-          FWRITEINT(I2,3, GATKIND, 5);
+          FWRITEINT(I2,3, G4, 5);
           FWRITESTRING(I2,3, '', 8);
           FWRITESTRING(I2,3, '<no dir>', 0);
           FWRITESTRING(I2,3, '', 5);
@@ -1659,7 +1659,7 @@ procedure FILEHAND.47(args 0 words);  { locals 9 words, lex 1 }
         end;
       end;
     end;
-    GATKIND := (GATKIND+1);
+    G4 := (G4+1);
   end;
   L6 := 0;
   L8 := 15;
@@ -1704,7 +1704,7 @@ procedure FILEHAND.48(args 0 words);  { locals 142 words, lex 1 }
         @G233^ := @L15  {string};
       end;
       FILEHAND.17(68, adjust(1,1), 16, 2, 1);
-      FWRITESTRING(I2,3, @MODPTR, 0);
+      FWRITESTRING(I2,3, @G71, 0);
       FWRITESTRING(I2,3, ': correct ? ', 0);
       L14 := FILEHAND.7(1);
     end else begin
@@ -1713,10 +1713,10 @@ procedure FILEHAND.48(args 0 words);  { locals 142 words, lex 1 }
     { paths disagree on stack depth here }
   until L14;
   { unmodelled packed store of 0 }
-  @L4^ := @MODPTR  {string};
+  @L4^ := @G71  {string};
   move(@L11, @I2,67, 1 words);
-  FILEHAND.13(GATVLEV, @G75, 1);
-  UNITWRITE(GATVLEV, @L1, 0, 26, 2, 0);
+  FILEHAND.13(G6, @G75, 1);
+  UNITWRITE(G6, @L1, 0, 26, 2, 0);
   FILEHAND.5(IORESULT(), 0, 1);
   FWRITESTRING(I2,3, @L4, 0);
   FWRITESTRING(I2,3, ': zeroed', 0);
@@ -1731,7 +1731,7 @@ procedure FILEHAND.49(args 0 words);  { locals 3 words, lex 1 }
     L2 := 77;
     while (L1 <= L2) do begin
       if @G20~[L1]{16per word,1 bits} then begin
-        L3 := TOP[L1*13w];
+        L3 := G8[L1*13w];
         if (L1 = 0) then begin
           FWRITESTRING(I2,3, 'Directory', 0);
           FWRITESTRING(I2,3, '', 7);
@@ -1746,19 +1746,19 @@ procedure FILEHAND.49(args 0 words);  { locals 3 words, lex 1 }
       L1 := (L1+1);
     end;
   end;
-  { left on stack: @LCMAX }
+  { left on stack: @G25 }
   { left on stack: 7 }
 
 procedure FILEHAND.50(args 2 words);  { locals 2 words, lex 1 }
-  if (TOP <> nil) then begin
+  if (G8 <> nil) then begin
     L3 := 0;
-    L4 := TOP[0*13w]^.f8;
+    L4 := G8[0*13w]^.f8;
     while (L3 <= L4) do begin
-      if (TOP[L3*13w]^.f1 > L2^) then begin
+      if (G8[L3*13w]^.f1 > L2^) then begin
         if not (L1) then begin
           L2^ := L3;
         end else begin
-          if (TOP[L3*13w]^ <= L2^) then begin
+          if (G8[L3*13w]^ <= L2^) then begin
             { unmodelled packed store of (0+1) }
             @G20~[L3]{16per word,1 bits} := 1;
           end;
@@ -1769,7 +1769,7 @@ procedure FILEHAND.50(args 2 words);  { locals 2 words, lex 1 }
       L3 := (L3+1);
     end;
     if not (L1) then begin
-      L2^ := (TOP[0*13w]^.f8+1);
+      L2^ := (G8[0*13w]^.f8+1);
     end;
   end;
 
@@ -1780,15 +1780,15 @@ procedure FILEHAND.51(args 0 words);  { locals 6 words, lex 1 }
   L5 := 0;
   repeat
     L4 := (L1-L5);
-    if (L4 > GATTYPTR) then begin
-      L4 := GATTYPTR;
+    if (L4 > G3) then begin
+      L4 := G3;
     end;
-    UNITREAD(GATKIND, G18, 0, (512*L4), L5, 0);
+    UNITREAD(G4, G18, 0, (512*L4), L5, 0);
     if (IORESULT() <> 0) then begin
       L3 := L5;
       L6 := ((L5+L4)-1);
       while (L3 <= L6) do begin
-        UNITREAD(GATKIND, G18, 0, 512, L3, 0);
+        UNITREAD(G4, G18, 0, 512, L3, 0);
         if (IORESULT() <> 0) then begin
           L2 := (L2+1);
           FILEHAND.50(@L3, 1);
@@ -1822,9 +1822,9 @@ procedure FILEHAND.52(args 0 words);  { locals 614 words, lex 1 }
     end;
     L82 := abs(L82);
   end;
-  if (TOP <> nil) then begin
-    if (L82 >= TOP[0*13w]^.f7) then begin
-      L82 := (TOP[0*13w]^.f7-1);
+  if (G8 <> nil) then begin
+    if (L82 >= G8[0*13w]^.f7) then begin
+      L82 := (G8[0*13w]^.f7-1);
     end;
   end;
   if ((L83 < 0) or (L83 > L82)) then begin
@@ -1856,8 +1856,8 @@ L2E8C:
   if not ((L86 <= L612)) then goto L2FD6;
   FWRITESTRING(I2,3, 'Block ', 0);
   FWRITEINT(I2,3, L86, 0);
-  UNITREAD(GATKIND, @L356, 0, 512, L86, 0);
-  UNITWRITE(GATKIND, @L356, 0, 512, L86, 0);
+  UNITREAD(G4, @L356, 0, 512, L86, 0);
+  UNITWRITE(G4, @L356, 0, 512, L86, 0);
   if (IORESULT() = 16) then begin
     FWRITELN(I2,3);
     FWRITESTRING(I2,3, 'Disk is write-protected. Cannot examine blocks.', 0);
@@ -1865,7 +1865,7 @@ L2E8C:
     EXIT(1, 52);
   end;
   if (IORESULT() = 0) then begin
-    UNITREAD(GATKIND, @L100, 0, 512, L86, 0);
+    UNITREAD(G4, @L100, 0, 512, L86, 0);
   end;
   if ((IORESULT() = 0) and (@L356 = @L100)) then begin
     FWRITESTRING(I2,3, ' may be ok', 0);
@@ -1874,12 +1874,12 @@ L2E8C:
     FWRITESTRING(I2,3, ' is bad', 0);
     FWRITELN(I2,3);
     FILEHAND.50(@L86, 1);
-    if (TOP <> nil) then begin
-      if (L86 > TOP[0*13w]^.f1) then begin
+    if (G8 <> nil) then begin
+      if (L86 > G8[0*13w]^.f1) then begin
         if ((L85+1) <> L86) then begin
           (@L2[0*2w]+1)^ := (@L2[0*2w]^.f1+1);
           L84 := (L84+1);
-          if (@LCMAX > ((7+0)-TOP[0*13w]^.f8)) then begin
+          if (@G25 > ((7+0)-G8[0*13w]^.f8)) then begin
             FILEHAND.5(8, 0, 1);
           end;
           (@L2[L84*2w]+1)^ := L86;
@@ -1925,11 +1925,11 @@ L3083:
     (L613+1)^ := (L613^.f1 mod @I2,111[L84]^);
     L84 := (L84-1);
   end;
-  L84 := TOP[0*13w]^.f8;
-  while (L87 < TOP[L84*13w]^.f1) do begin
+  L84 := G8[0*13w]^.f8;
+  while (L87 < G8[L84*13w]^.f1) do begin
     L84 := (L84-1);
   end;
-  INSENTRY(@L87, (L84+1), TOP);
+  INSENTRY(@L87, (L84+1), G8);
   L86 := (L86+1);
   goto L3083;
 L310F:
@@ -1938,7 +1938,7 @@ L310F:
 
 procedure FILEHAND.53(args 0 words);  { locals 15 words, lex 1 }
   FILEHAND.22('', 1, 16, 0, 0, 64, adjust(1,1));
-  FILEHAND.11('From end of Volume, block', '', 'Starting at block #', TOP[0*13w]^.f1, @L9);
+  FILEHAND.11('From end of Volume, block', '', 'Starting at block #', G8[0*13w]^.f1, @L9);
   FILEHAND.50(@L9, 0);
   L13 := 0;
   { unmodelled packed store of 1 }
@@ -1949,26 +1949,26 @@ procedure FILEHAND.53(args 0 words);  { locals 15 words, lex 1 }
   L10 := 1;
   L14 := (L9-1);
   while (L10 <= L14) do begin
-    L15 := TOP[L10*13w];
-    if (L15^ > TOP[(L10-1)*13w]^.f1) then begin
-      FILEHAND.54(L15, (L15+1), (TOP[(L10-1)*13w]+1));
+    L15 := G8[L10*13w];
+    if (L15^ > G8[(L10-1)*13w]^.f1) then begin
+      FILEHAND.54(L15, (L15+1), (G8[(L10-1)*13w]+1));
     end;
     L10 := (L10+1);
   end;
-  L8 := TOP[0*13w]^.f7;
+  L8 := G8[0*13w]^.f7;
   L12 := 1;
   @L1^ := 'back '  {string};
-  L10 := TOP[0*13w]^.f8;
+  L10 := G8[0*13w]^.f8;
   L14 := L9;
   while (L10 >= L14) do begin
-    L15 := TOP[L10*13w];
+    L15 := G8[L10*13w];
     if (L15^.f1 < L8) then begin
       FILEHAND.54((L15+1), L15, @L8);
     end;
     L8 := L15^;
     L10 := (L10-1);
   end;
-  FWRITESTRING(I2,3, @MODPTR, 0);
+  FWRITESTRING(I2,3, @G71, 0);
   FWRITESTRING(I2,3, ': crunched', 0);
   FWRITELN(I2,3);
   if L13 then begin
@@ -1985,25 +1985,25 @@ procedure FILEHAND.53(args 0 words);  { locals 15 words, lex 1 }
   { left on stack: 1 }
 
 procedure FILEHAND.54(args 3 words);  { locals 1 words, lex 2 }
-  L4 := TOP[I1,10*13w];
+  L4 := G8[I1,10*13w];
   if (0 <> 1) then begin
     FWRITESTRING(I3,3, 'Moving ', 0);
     FWRITESTRING(I3,3, @I1,1, 0);
     FWRITESTRING(I3,3, (L4+3), 0);
     FWRITELN(I3,3);
     if ((L4+3) = 'SYSTEM.PASCAL') then begin
-      I1,13 := (@MODPTR = @I3,63);
+      I1,13 := (@G71 = @I3,63);
     end;
     I1,11 := (L2^-L3^);
     I1,7 := 0;
     repeat
       I1,6 := (I1,11-I1,7);
-      if (abs(I1,6) > GATTYPTR) then begin
-        I1,6 := (GATTYPTR*(I1,6 div abs(I1,6)));
+      if (abs(I1,6) > G3) then begin
+        I1,6 := (G3*(I1,6 div abs(I1,6)));
       end;
-      UNITREAD(GATKIND, G18, 0, (512*abs(I1,6)), ((L3^+I1,7)+(I1,12*I1,6)), 0);
+      UNITREAD(G4, G18, 0, (512*abs(I1,6)), ((L3^+I1,7)+(I1,12*I1,6)), 0);
       FILEHAND.5(IORESULT(), 0, 1);
-      UNITWRITE(GATKIND, G18, 0, (512*abs(I1,6)), ((L1^+I1,7)+(I1,12*I1,6)), 0);
+      UNITWRITE(G4, G18, 0, (512*abs(I1,6)), ((L1^+I1,7)+(I1,12*I1,6)), 0);
       FILEHAND.5(IORESULT(), 0, 1);
       I1,7 := (I1,7+I1,6);
     until (abs(I1,7) >= abs(I1,11));
@@ -2018,8 +2018,8 @@ procedure FILEHAND.55(args 1 words);  { locals 41 words, lex 2 }
   @L2^ := L1  {string};
   @I3,70^ := @L2  {string};
   PROMPT();
-  GATDPLMT := GETCHAR(not (I1,3));
-  I1,3 := (GATDPLMT in {32,63,66,67,68,69,71,75,76,77,78,80,81,82,83,84,86,87,88,90});
+  G7 := GETCHAR(not (I1,3));
+  I1,3 := (G7 in {32,63,66,67,68,69,71,75,76,77,78,80,81,82,83,84,86,87,88,90});
 
 procedure FILEHAND.56(args 0 words);  { locals 1 words, lex 1 }
   L1 := -(16607);

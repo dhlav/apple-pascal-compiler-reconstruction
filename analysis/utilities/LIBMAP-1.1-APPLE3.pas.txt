@@ -111,7 +111,7 @@ procedure LIBMAP.6(args 0 words);  { locals 3 words, lex 1 }
   L1 := chk(0,0..16);
   L2 := chk(15,0..16);
   while (L1 <= L2) do begin
-    L3 := @GATTYPTR[chk(L1,0..15)*2w];
+    L3 := @G3[chk(L1,0..15)*2w];
     if ((L3^.f1 > 0) or (L3^ > 0)) then begin
       if (0 <> 0) then begin
         FWRITESTRING(@G299, 'Segment #', 0);
@@ -127,9 +127,9 @@ procedure LIBMAP.6(args 0 words);  { locals 3 words, lex 1 }
       { paths disagree on stack depth here }
       if (13 <> 0) then begin
         FWRITESTRING(@G299, 'System version = ', 0);
-        FWRITESTRING(@DISPLAY[chk(L1,0..15)], 3[chk(13,0..7)*4w], 0);
+        FWRITESTRING(@G131[chk(L1,0..15)], 3[chk(13,0..7)*4w], 0);
         FWRITESTRING(@G299, ', code type is ', 0);
-        FWRITESTRING(@DISPLAY[chk(L1,0..15)], 4[chk(8,0..9)*12w], 0);
+        FWRITESTRING(@G131[chk(L1,0..15)], 4[chk(8,0..9)*12w], 0);
         FWRITELN(@G299);
       end else begin
         FWRITESTRING(@G299, 'Pre-II.1 segment', 0);
@@ -146,7 +146,7 @@ procedure LIBMAP.6(args 0 words);  { locals 3 words, lex 1 }
   end;
 
 procedure LIBMAP.7(args 1 words);  { locals 278 words, lex 2 }
-  FWRITEBYTES(@G299, @NOLOAD[chk(L1,0..15)*4w], 8, 8);
+  FWRITEBYTES(@G299, @G35[chk(L1,0..15)*4w], 8, 8);
   L13 := 1;
   case @G99[chk(L1,0..15)]^ of   { table 0..7 }
     0: begin
@@ -195,7 +195,7 @@ procedure LIBMAP.7(args 1 words);  { locals 278 words, lex 2 }
     end;
   end;
   L2 := 0;
-  L279 := @GATTYPTR[chk(L1,0..15)*2w];
+  L279 := @G3[chk(L1,0..15)*2w];
   L3 := (L279^+((L279^.f1+511) div 512));
   if (G602 or L13) then begin
     repeat
@@ -389,20 +389,20 @@ L09E6:
     SINSERT('.CODE', @L44, 80, (@L44^[0]+1));
     FOPEN(@G259, @L44, 1, 0);
   end;
-  if not ((FBLOCKIO(@G259, @GATTYPTR, 0, 1, 0, 1) <> 1)) then goto L0AA9;
+  if not ((FBLOCKIO(@G259, @G3, 0, 1, 0, 1) <> 1)) then goto L0AA9;
   FWRITESTRING(I2,3, 'bad file', 0);
   FWRITELN(I2,3);
   goto L09E6;
 L0AA9:
-  if LIBMAP.3(@GATTYPTR) then begin
-    LIBMAP.4(@GATTYPTR);
+  if LIBMAP.3(@G3) then begin
+    LIBMAP.4(@G3);
     G603 := 1;
   end;
   L1 := chk(0,0..16);
   L86 := chk(15,0..16);
 L0AC5:
   if not ((L1 <= L86)) then goto L0B28;
-  if not (((((@GATTYPTR[chk(L1,0..15)*2w]^.f1 < 0) or (@GATTYPTR[chk(L1,0..15)*2w]^ < 0)) or (@GATTYPTR[chk(L1,0..15)*2w]^ > 300)) or not (LIBMAP.5(@NOLOAD[chk(L1,0..15)*4w])))) then goto L0B21;
+  if not (((((@G3[chk(L1,0..15)*2w]^.f1 < 0) or (@G3[chk(L1,0..15)*2w]^ < 0)) or (@G3[chk(L1,0..15)*2w]^ > 300)) or not (LIBMAP.5(@G35[chk(L1,0..15)*4w])))) then goto L0B21;
   FWRITESTRING(I2,3, 'not a code file', 0);
   FWRITELN(I2,3);
   goto L09E6;

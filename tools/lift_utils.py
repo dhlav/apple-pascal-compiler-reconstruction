@@ -48,8 +48,13 @@ def main() -> int:
                 continue
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             ver = tag.split("-")[0]
+            # "" and not `ver`: the name tables in names.py are
+            # SYSTEM.COMPILER's globals and procedures and nothing else, so
+            # passing a release here labels FORMATTER's storage GATVLEV and
+            # SEGSLOT. The library still has to be the right release, which
+            # is what `ver` is for.
             text, clean, total, structured, gotos, _ = lift_codefile(
-                cf, ver, f"Apple Pascal {tag} {e.name}", libs.setdefault(
+                cf, "", f"Apple Pascal {tag} {e.name}", libs.setdefault(
                     ver, library(ver)))
             stem = e.name.rsplit(".", 1)[0]
             (OUT / f"{stem}-{tag}.pas.txt").write_text(

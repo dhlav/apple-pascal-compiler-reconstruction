@@ -59,8 +59,8 @@ procedure SET40COL.1(args 2 words);  { locals 260 words, lex 0 }
     IOCHECK();
     SET40COL.2();
     SET40COL.3();
-    if (GATTYPTR = 0) then begin
-      @G262^[chk(0,0..0)] := chk(@GATVLEV^[chk(25,0..511)],0..255);
+    if (G3 = 0) then begin
+      @G262^[chk(0,0..0)] := chk(@G6^[chk(25,0..511)],0..255);
       if @G262~[chk(3,0..7)]{16per word,1 bits} then begin
         FWRITESTRING(I1,3, 'Flag is already set for 40-column mode.', 0);
         IOCHECK();
@@ -68,21 +68,21 @@ procedure SET40COL.1(args 2 words);  { locals 260 words, lex 0 }
         IOCHECK();
         FWRITESTRING(I1,3, 'Reset flag for 80-column mode (Y/N) ? ', 0);
         IOCHECK();
-        FREADCHAR(I1,2, @GATCVAL);
+        FREADCHAR(I1,2, @G5);
         IOCHECK();
         FWRITELN(I1,3);
         IOCHECK();
         FWRITELN(I1,3);
         IOCHECK();
-        if ((GATCVAL = 121) or (GATCVAL = 89)) then begin
+        if ((G5 = 121) or (G5 = 89)) then begin
           @G262~[chk(3,0..7)]{16per word,1 bits} := 0;
         end;
       end else begin
         @G262~[chk(3,0..7)]{16per word,1 bits} := 1;
       end;
-      @GATVLEV^[chk(25,0..511)] := chk(@G262^[chk(0,0..0)],0..255);
+      @G6^[chk(25,0..511)] := chk(@G262^[chk(0,0..0)],0..255);
       SET40COL.4();
-      if (GATTYPTR = 0) then begin
+      if (G3 = 0) then begin
         if @G262~[chk(3,0..7)]{16per word,1 bits} then begin
           FWRITESTRING(I1,3, 'Flag is now set for 40-column mode.', 0);
           IOCHECK();
@@ -103,23 +103,23 @@ procedure SET40COL.2(args 0 words);  { locals 4 words, lex 1 }
     FWRITESTRING(I2,3, 'Modify which volume # ?  (4, 5, 9..12, <esc> to exit) ==> ', 0);
     IOCHECK();
     L1 := 0;
-    GATKIND := 0;
+    G4 := 0;
     FREADCHAR(I2,2, @L4);
     IOCHECK();
     L3 := L4;
     L2 := (L3-48);
     while (not (FEOLN(I2,2)) and (L3 <> 27)) do begin
-      if ((GATKIND = 0) and (L4 in {49,52,53,57})) then begin
+      if ((G4 = 0) and (L4 in {49,52,53,57})) then begin
         L1 := (L1+1);
-        GATKIND := L2;
+        G4 := L2;
         FWRITECHAR(I2,3, 8, 0);
         IOCHECK();
         FWRITECHAR(I2,3, L4, 0);
         IOCHECK();
       end else begin
-        if ((GATKIND = 1) and (L4 in {48,49,50})) then begin
+        if ((G4 = 1) and (L4 in {48,49,50})) then begin
           L1 := (L1+1);
-          GATKIND := ((10*GATKIND)+L2);
+          G4 := ((10*G4)+L2);
           FWRITECHAR(I2,3, 8, 0);
           IOCHECK();
           FWRITECHAR(I2,3, L4, 0);
@@ -132,7 +132,7 @@ procedure SET40COL.2(args 0 words);  { locals 4 words, lex 1 }
             IOCHECK();
             FWRITECHAR(I2,3, L4, 0);
             IOCHECK();
-            GATKIND := (GATKIND div 10);
+            G4 := (G4 div 10);
             L1 := (L1-1);
           end else begin
             if (L3 > 31) then begin
@@ -157,17 +157,17 @@ procedure SET40COL.2(args 0 words);  { locals 4 words, lex 1 }
   end;
   FWRITELN(I2,3);
   IOCHECK();
-  { left on stack: GATKIND }
+  { left on stack: G4 }
 
 procedure SET40COL.3(args 0 words);  { locals 0 words, lex 1 }
-  UNITREAD(GATKIND, @GATVLEV, 0, 512, 2, 0);
-  GATTYPTR := IORESULT();
-  if (GATTYPTR <> 0) then begin
+  UNITREAD(G4, @G6, 0, 512, 2, 0);
+  G3 := IORESULT();
+  if (G3 <> 0) then begin
     FWRITECHAR(I2,3, 7, 0);
     IOCHECK();
     FWRITESTRING(I2,3, 'I/O ERROR #', 0);
     IOCHECK();
-    FWRITEINT(I2,3, GATTYPTR, 0);
+    FWRITEINT(I2,3, G3, 0);
     IOCHECK();
     FWRITESTRING(I2,3, ' occurred while trying to read directory.', 0);
     IOCHECK();
@@ -176,14 +176,14 @@ procedure SET40COL.3(args 0 words);  { locals 0 words, lex 1 }
   end;
 
 procedure SET40COL.4(args 0 words);  { locals 0 words, lex 1 }
-  UNITWRITE(GATKIND, @GATVLEV, 0, 512, 2, 0);
-  GATTYPTR := IORESULT();
-  if (GATTYPTR <> 0) then begin
+  UNITWRITE(G4, @G6, 0, 512, 2, 0);
+  G3 := IORESULT();
+  if (G3 <> 0) then begin
     FWRITECHAR(I2,3, 7, 0);
     IOCHECK();
     FWRITESTRING(I2,3, 'I/O ERROR #', 0);
     IOCHECK();
-    FWRITEINT(I2,3, GATTYPTR, 0);
+    FWRITEINT(I2,3, G3, 0);
     IOCHECK();
     FWRITESTRING(I2,3, ' occurred while writing directory.', 0);
     IOCHECK();

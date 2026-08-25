@@ -21,19 +21,19 @@ procedure CALCULAT.1(args 2 words);  { locals 388 words, lex 0 }
   { CLP 14 }
   repeat
     G355 := 0;
-    GATVLEV := 0;
+    G6 := 0;
     FWRITESTRING(I1,3, '->', 0);
     IOCHECK();
-    FREADSTRING(I1,2, @CHARPTR, 80);
+    FREADSTRING(I1,2, @G59, 80);
     IOCHECK();
     FREADLN(I1,2);
     IOCHECK();
-    if (@CHARPTR^[0] = 0) then begin
+    if (@G59^[0] = 0) then begin
       EXIT(1, 1);
     end;
 L0A45:
     CALCULAT.2();
-    if not ((GATTYPTR <> 32)) then goto L0A45;
+    if not ((G3 <> 32)) then goto L0A45;
     CALCULAT.3();
     G356 := (CALCULAT.8(@G353) and (G100 = 1));
     if not (G356) then begin
@@ -57,32 +57,32 @@ L0A45:
       IOCHECK();
       FWRITELN(I1,3);
       IOCHECK();
-      @INTRACTVPTR^ := @G353^<2w>  {2 words};
+      @G55^ := @G353^<2w>  {2 words};
     end;
   until 0;
 
 procedure CALCULAT.2(args 0 words);  { locals 0 words, lex 1 }
-  GATVLEV := (GATVLEV+1);
-  if (GATVLEV <= @CHARPTR^[0]) then begin
-    { check GATVLEV in 1..length(@CHARPTR) }
-    GATTYPTR := @CHARPTR^[GATVLEV];
+  G6 := (G6+1);
+  if (G6 <= @G59^[0]) then begin
+    { check G6 in 1..length(@G59) }
+    G3 := @G59^[G6];
   end else begin
-    GATTYPTR := 35;
+    G3 := 35;
   end;
-  if ((GATTYPTR >= 97) and (GATTYPTR <= 122)) then begin
-    GATTYPTR := (GATTYPTR-32);
+  if ((G3 >= 97) and (G3 <= 122)) then begin
+    G3 := (G3-32);
   end;
 
 procedure CALCULAT.3(args 0 words);  { locals 1 words, lex 1 }
   L1 := 0;
-  if (GATTYPTR in @VAL^<16w>) then begin
+  if (G3 in @G23^<16w>) then begin
     CALCULAT.6();
   end else begin
-    if (GATTYPTR in (@GATDPLMT^<16w> + {46})) then begin
+    if (G3 in (@G7^<16w> + {46})) then begin
       CALCULAT.4();
     end else begin
-      if (GATTYPTR in @VARSTRG^<16w>) then begin
-        case GATTYPTR of   { table 35..94 }
+      if (G3 in @G39^<16w>) then begin
+        case G3 of   { table 35..94 }
           43: begin
             G100 := 6;
           end;
@@ -123,42 +123,42 @@ procedure CALCULAT.3(args 0 words);  { locals 1 words, lex 1 }
   if not (L1) then begin
 L02BF:
     CALCULAT.2();
-    if not ((GATTYPTR <> 32)) then goto L02BF;
+    if not ((G3 <> 32)) then goto L02BF;
   end;
 
 procedure CALCULAT.4(args 0 words);  { locals 3 words, lex 2 }
   G100 := 0;
-  if (GATTYPTR <> 46) then begin
+  if (G3 <> 46) then begin
     @L1^ := CALCULAT.5(0)  {2 words};
-    if (GATTYPTR = 46) then begin
+    if (G3 = 46) then begin
       CALCULAT.2();
     end;
-    L3 := (GATTYPTR in @GATDPLMT^<16w>);
+    L3 := (G3 in @G7^<16w>);
   end else begin
     @L1^ := flt(0)  {2 words};
     CALCULAT.2();
-    L3 := (GATTYPTR in @GATDPLMT^<16w>);
+    L3 := (G3 in @G7^<16w>);
     if not (L3) then begin
       G100 := 11;
     end;
   end;
   if L3 then begin
-    @TEXTPTR^ := (@L1^<2w>+CALCULAT.5(1))  {2 words};
+    @G57^ := (@L1^<2w>+CALCULAT.5(1))  {2 words};
   end else begin
-    @TEXTPTR^ := @L1^<2w>  {2 words};
+    @G57^ := @L1^<2w>  {2 words};
   end;
-  I1,1 := (GATTYPTR <> 32);
+  I1,1 := (G3 <> 32);
 
 function CALCULAT.5(args 1 words) : <2 word result>;  { locals 4 words, lex 3 }
   @L4^ := flt(1)  {2 words};
   @L6^ := flt(0)  {2 words};
   repeat
     if (@L6^<2w> < 8.99999981e+36) then begin
-      @L6^ := (((10*flo(@L6^<2w>))+flt(GATTYPTR))-flt(48))  {2 words};
+      @L6^ := (((10*flo(@L6^<2w>))+flt(G3))-flt(48))  {2 words};
       @L4^ := (10*flo(@L4^<2w>))  {2 words};
     end;
     CALCULAT.2();
-  until not ((GATTYPTR in @GATDPLMT^<16w>));
+  until not ((G3 in @G7^<16w>));
   if L3 then begin
     @L1^ := (@L6^<2w>/@L4^<2w>)  {2 words};
   end else begin
@@ -170,18 +170,18 @@ procedure CALCULAT.6(args 0 words);  { locals 15 words, lex 2 }
   L5 := 0;
   repeat
     if (L5 <= 7) then begin
-      @L1^[chk(L5,0..7)] := GATTYPTR;
+      @L1^[chk(L5,0..7)] := G3;
     end;
     L5 := (L5+1);
     CALCULAT.2();
-  until not ((GATTYPTR in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}));
-  I1,1 := (GATTYPTR <> 32);
+  until not ((G3 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}));
+  I1,1 := (G3 <> 32);
   if (@L1 = @'LASTX   ') then begin
     G100 := 15;
   end else begin
-    GATKIND := CALCULAT.7(@L1);
-    if (GATKIND > 0) then begin
-      if @G101[chk(GATKIND,0..35)*7w]^.f4 then begin
+    G4 := CALCULAT.7(@L1);
+    if (G4 > 0) then begin
+      if @G101[chk(G4,0..35)*7w]^.f4 then begin
         G100 := 13;
       end else begin
         G100 := 2;
@@ -193,7 +193,7 @@ procedure CALCULAT.6(args 0 words);  { locals 15 words, lex 2 }
 
 function CALCULAT.7(args 1 words) : <1 word result>;  { locals 5 words, lex 3 }
   move(@L4, L3, 4 words);
-  L8 := GATCVAL;
+  L8 := G5;
   move(@G101[chk(0,0..35)*7w], @L4, 4 words);
   while (@G101[chk(L8,0..35)*7w] <> @L4) do begin
     L8 := (L8-1);
@@ -320,22 +320,22 @@ function CALCULAT.10(args 1 words) : <1 word result>;  { locals 17 words, lex 3 
 function CALCULAT.11(args 1 words) : <1 word result>;  { locals 26 words, lex 4 }
   L1 := 0;
   if (G100 = 0) then begin
-    L3^ := @TEXTPTR^<2w>  {2 words};
+    L3^ := @G57^<2w>  {2 words};
     L1 := 1;
     CALCULAT.3();
   end else begin
     if (9216 in 1) then begin
       L10 := G100;
       move(@L6, @G101[chk(0,0..35)*7w], 4 words);
-      L4 := GATKIND;
+      L4 := G4;
       CALCULAT.3();
       if (G100 = 14) then begin
         CALCULAT.3();
         if CALCULAT.8(L3) then begin
           if (L10 = 10) then begin
-            if ((GATCVAL+1) <= 35) then begin
-              GATCVAL := (GATCVAL+1);
-              L4 := GATCVAL;
+            if ((G5+1) <= 35) then begin
+              G5 := (G5+1);
+              L4 := G5;
               L11 := @G101[chk(L4,0..35)*7w];
               (L11+4)^ := 1;
               move(L11, @L6, 4 words);
@@ -362,13 +362,13 @@ function CALCULAT.11(args 1 words) : <1 word result>;  { locals 26 words, lex 4 
       end;
     end else begin
       if (G100 = 2) then begin
-        L5 := GATKIND;
+        L5 := G4;
         CALCULAT.3();
         L1 := CALCULAT.13(L3);
       end else begin
         if (G100 = 15) then begin
           CALCULAT.3();
-          L3^ := @INTRACTVPTR^<2w>  {2 words};
+          L3^ := @G55^<2w>  {2 words};
           L1 := 1;
         end else begin
           L1 := CALCULAT.12(L3);
@@ -508,9 +508,9 @@ L03D7:
   end;
 
 procedure CALCULAT.14(args 0 words);  { locals 51 words, lex 1 }
-  @VAL^ := adjust({65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90},16)  {16 words};
-  @GATDPLMT^ := adjust({48,49,50,51,52,53,54,55,56,57},16)  {16 words};
-  @VARSTRG^ := adjust({35,40,41,42,43,45,47,61,92,94},16)  {16 words};
+  @G23^ := adjust({65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90},16)  {16 words};
+  @G7^ := adjust({48,49,50,51,52,53,54,55,56,57},16)  {16 words};
+  @G39^ := adjust({35,40,41,42,43,45,47,61,92,94},16)  {16 words};
   L1 := @G101[chk(1,0..35)*7w];
   move(L1, @'SIN     ', 4 words);
   (L1+4)^ := 0;
@@ -543,7 +543,7 @@ procedure CALCULAT.14(args 0 words);  { locals 51 words, lex 1 }
   L46 := @G101[chk(10,0..35)*7w];
   move(L46, @'FAC     ', 4 words);
   (L46+4)^ := 0;
-  GATCVAL := 10;
+  G5 := 10;
 
 procedure CALCULAT.15(args 5 words);  { locals 22 words, lex 1 }
   if ((L2 < 0) or (L1 < 0)) then begin

@@ -12,5 +12,5 @@ SEGMENT 1 LINEFEED
 ======================================================================
 
 procedure LINEFEED.1(args 2 words);  { locals 1 words, lex 0 }
-  GATTYPTR := -(16625);
-  GATTYPTR^[chk(0,0..1)] := chk(255,0..255);
+  G3 := -(16625);
+  G3^[chk(0,0..1)] := chk(255,0..255);

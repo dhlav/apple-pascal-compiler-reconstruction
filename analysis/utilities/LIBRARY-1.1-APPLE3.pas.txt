@@ -15,32 +15,32 @@ procedure LIBRARIA.1(args 2 words);  { locals 725 words, lex 0 }
   FINIT(@G132, @G432, -(1));
   FINIT(@G172, @G472, -(1));
   FWRITECHAR(I1,3, 12, 0);
-  @SYMBLK^ := 'Apple Pascal Librarian [1.1]'  {string};
+  @G90^ := 'Apple Pascal Librarian [1.1]'  {string};
   LIBRARIA.5(0);
-  @SYMBLK^ := 'Output code file -> '  {string};
+  @G90^ := 'Output code file -> '  {string};
   repeat
     LIBRARIA.5((15-2));
-    FREADSTRING(I1,2, @NOISY, 80);
+    FREADSTRING(I1,2, @G49, 80);
     FREADLN(I1,2);
-    if (@NOISY = 42) then begin
-      @NOISY^ := '*SYSTEM.LIBRARY'  {string};
+    if (@G49 = 42) then begin
+      @G49^ := '*SYSTEM.LIBRARY'  {string};
     end;
-    if (@NOISY^[0] = 0) then begin
+    if (@G49^[0] = 0) then begin
       EXIT(1, 1);
     end else begin
-      FOPEN(@G172, @NOISY, 0, 0);
+      FOPEN(@G172, @G49, 0, 0);
     end;
-  until ((@NOISY^[0] = 0) or LIBRARIA.6());
-  GATKIND := 1;
-  NEW(@DISPLAY, 256);
+  until ((@G49^[0] = 0) or LIBRARIA.6());
+  G4 := 1;
+  NEW(@G131, 256);
   G725 := 1;
   G724 := 0;
   FILLCHAR(@G468, 0, 512, 0);
-  GATDPLMT := 0;
+  G7 := 0;
   G727 := 15;
-  while (GATDPLMT <= G727) do begin
-    move(@G500[GATDPLMT*4w], @'        ', 4 words);
-    GATDPLMT := (GATDPLMT+1);
+  while (G7 <= G727) do begin
+    move(@G500[G7*4w], @'        ', 4 words);
+    G7 := (G7+1);
   end;
 L0BB8:
   LIBRARIA.7();
@@ -49,7 +49,7 @@ L0BB8:
   if (G726 in {65,97}) then begin
     EXIT(1, 1);
   end;
-  @SYMBLK^ := 'Notice? '  {string};
+  @G90^ := 'Notice? '  {string};
   LIBRARIA.5(23);
   FREADSTRING(I1,2, @G684, 79);
   FREADLN(I1,2);
@@ -119,7 +119,7 @@ procedure LIBRARIA.5(args 1 words);  { locals 1 words, lex 1 }
   if (L1 = 23) then begin
     FWRITECHAR(I2,3, 7, 0);
   end;
-  FWRITESTRING(I2,3, @SYMBLK, 0);
+  FWRITESTRING(I2,3, @G90, 0);
   L2 := (I2,1+31);
   FWRITECHAR(8, 0, 0);
   FWRITECHAR(8, 8, 0);
@@ -132,30 +132,30 @@ function LIBRARIA.6(args 0 words) : <1 word result>;  { locals 1 words, lex 1 }
   L1 := (IORESULT() = 0);
   if (IORESULT() <> 0) then begin
     L3 := IORESULT();
-    @SYMBLK^ := 'I/O error # '  {string};
+    @G90^ := 'I/O error # '  {string};
     LIBRARIA.5(23);
     FWRITEINT(I2,3, L3, 0);
   end;
 
 procedure LIBRARIA.7(args 0 words);  { locals 43 words, lex 1 }
   repeat
-    @SYMBLK^ := 'Link code file -> '  {string};
+    @G90^ := 'Link code file -> '  {string};
     LIBRARIA.5((5-1));
-    FREADSTRING(I2,2, @TOP, 80);
+    FREADSTRING(I2,2, @G8, 80);
     FREADLN(I2,2);
-    if (@TOP = 42) then begin
-      @TOP^ := '*SYSTEM.LIBRARY'  {string};
+    if (@G8 = 42) then begin
+      @G8^ := '*SYSTEM.LIBRARY'  {string};
     end;
-    if (@TOP^[0] > 0) then begin
-      FOPEN(@G132, @TOP, 1, 0);
+    if (@G8^[0] > 0) then begin
+      FOPEN(@G132, @G8, 1, 0);
       if (IORESULT() <> 0) then begin
         L1 := 0;
-        SCONCAT(@L1, @TOP, 80);
+        SCONCAT(@L1, @G8, 80);
         SCONCAT(@L1, '.CODE', 85);
         FOPEN(@G132, @L1, 1, 0);
       end;
     end;
-  until (LIBRARIA.6() or (@TOP^[0] = 0));
+  until (LIBRARIA.6() or (@G8^[0] = 0));
 
 procedure LIBRARIA.8(args 2 words);  { locals 4 words, lex 1 }
   FGOTOXY(0, L2);
@@ -185,19 +185,19 @@ procedure LIBRARIA.8(args 2 words);  { locals 4 words, lex 1 }
     end;
     L3 := (L3+1);
   end;
-  @SYMBLK^ := 'Code file length - '  {string};
+  @G90^ := 'Code file length - '  {string};
   LIBRARIA.5((15-1));
-  FWRITEINT(I2,3, GATKIND, 0);
+  FWRITEINT(I2,3, G4, 0);
 
 procedure LIBRARIA.9(args 0 words);  { locals 4 words, lex 1 }
-  if (@TOP^[0] > 0) then begin
+  if (@G8^[0] > 0) then begin
     if (FBLOCKIO(@G132, @G212, 0, 1, 0, 1) = 1) then begin
       LIBRARIA.8(5, @G212);
     end else begin
-      GATTYPTR := IORESULT();
-      @SYMBLK^ := 'Read error # '  {string};
+      G3 := IORESULT();
+      @G90^ := 'Read error # '  {string};
       LIBRARIA.5(23);
-      FWRITEINT(I2,3, GATTYPTR, 0);
+      FWRITEINT(I2,3, G3, 0);
     end;
   end;
   if G725 then begin
@@ -209,7 +209,7 @@ procedure LIBRARIA.9(args 0 words);  { locals 4 words, lex 1 }
 L091B:
   end else begin
     if (G724 <> LIBRARIA.3(@G212)) then begin
-      @SYMBLK^ := 'Incompatible byte sex'  {string};
+      @G90^ := 'Incompatible byte sex'  {string};
       LIBRARIA.5(23);
     end else begin
       if G724 then begin
@@ -217,13 +217,13 @@ L091B:
       end;
     end;
   end;
-  @SYMBLK^ := 'Slot # to link and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort'  {string};
+  @G90^ := 'Slot # to link and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort'  {string};
   LIBRARIA.5(0);
   repeat
     if LIBRARIA.15() then begin
       G725 := 0;
       if (G726 = 61) then begin
-        @SYMBLK^ := 'Copying all slots...'  {string};
+        @G90^ := 'Copying all slots...'  {string};
         LIBRARIA.5(2);
         L2 := 0;
         L4 := 15;
@@ -243,7 +243,7 @@ L09F7:
 L0A06:
           if not ((L2 <= L4)) then goto L0A76;
           if not ((@G212[L2*2w]^.f1 > 0)) then goto L0A6F;
-          @SYMBLK^ := 'Copy slot '  {string};
+          @G90^ := 'Copy slot '  {string};
           LIBRARIA.5(2);
           FWRITEINT(I2,3, L2, 0);
           FWRITESTRING(I2,3, '? ', 0);
@@ -259,7 +259,7 @@ L0A6F:
 L0A76:
           G726 := 120;
         end else begin
-          LIBRARIA.10(GATVLEV, GATDPLMT);
+          LIBRARIA.10(G6, G7);
         end;
       end;
     end;
@@ -271,14 +271,14 @@ procedure LIBRARIA.10(args 2 words);  { locals 5 words, lex 2 }
   I1,3 := 0;
   if (@G244[L2*4w] <> @'        ') then begin
     if (@G468[L1*2w]^.f1 <> 0) then begin
-      @SYMBLK^ := 'WARNING - Slot '  {string};
+      @G90^ := 'WARNING - Slot '  {string};
       LIBRARIA.5(2);
       FWRITEINT(I3,3, L1, 0);
       FWRITESTRING(I3,3, ' already linked.  Please reconfirm (y/n) - ', 0);
       FWRITECHAR(I3,3, 7, 0);
       FREADCHAR(I3,2, @L3);
       FWRITELN(I3,3);
-      @SYMBLK^ := ''  {string};
+      @G90^ := ''  {string};
       LIBRARIA.5(2);
       if not ((L3 in {89,121})) then begin
         EXIT(1, 10);
@@ -291,10 +291,10 @@ procedure LIBRARIA.10(args 2 words);  { locals 5 words, lex 2 }
       I1,1 := ((L6^.f1+511) div 512);
     end;
     if (((MEMAVAIL()+255) div 256) < I1,1) then begin
-      @SYMBLK^ := 'Not enough room to copy slot'  {string};
+      @G90^ := 'Not enough room to copy slot'  {string};
       LIBRARIA.5(23);
     end else begin
-      @OLDSYMBLK[L1]^ := 0;
+      @G580[L1]^ := 0;
       if (@G324[L2]^ <> 0) then begin
         LIBRARIA.13(@G324[L2]^);
       end;
@@ -302,25 +302,25 @@ procedure LIBRARIA.10(args 2 words);  { locals 5 words, lex 2 }
       L5 := 1;
       L7 := I1,1;
       while (L5 <= L7) do begin
-        NEW(@DISPLAY, 256);
+        NEW(@G131, 256);
         L5 := (L5+1);
       end;
       if (FBLOCKIO(@G132, L4, 0, I1,1, L6^, 1) <> I1,1) then begin
-        @SYMBLK^ := 'Error reading slot '  {string};
+        @G90^ := 'Error reading slot '  {string};
         LIBRARIA.5(23);
         FWRITEINT(I3,3, L2, 0);
       end else begin
-        if (FBLOCKIO(@G172, L4, 0, I1,1, GATKIND, 0) <> I1,1) then begin
-          @SYMBLK^ := 'I/O error - no room on disk'  {string};
+        if (FBLOCKIO(@G172, L4, 0, I1,1, G4, 0) <> I1,1) then begin
+          @G90^ := 'I/O error - no room on disk'  {string};
           I1,3 := 1;
           LIBRARIA.5(23);
         end else begin
           move(@G500[L1*4w], @G244[L2*4w], 4 words);
           (@G468[L1*2w]+1)^ := L6^.f1;
           if (L6^ <> 0) then begin
-            @G468[L1*2w]^ := GATKIND;
+            @G468[L1*2w]^ := G4;
           end;
-          GATKIND := (GATKIND+I1,1);
+          G4 := (G4+I1,1);
           if ((@G308[L2]^ < 0) or (@G308[L2]^ > 7)) then begin
             @G308[L2]^ := 0;
           end;
@@ -346,7 +346,7 @@ procedure LIBRARIA.11(args 1 words);  { locals 267 words, lex 3 }
       LIBRARIA.2(@L5[4]);
     end;
     if not ((32767 in 1)) then begin
-      @SYMBLK^ := 'bad link info'  {string};
+      @G90^ := 'bad link info'  {string};
       LIBRARIA.5(23);
       @L5[4]^ := 0;
     end;
@@ -369,16 +369,16 @@ procedure LIBRARIA.11(args 1 words);  { locals 267 words, lex 3 }
 procedure LIBRARIA.12(args 0 words);  { locals 0 words, lex 4 }
   if (I1,2 = 0) then begin
     if (FBLOCKIO(@G132, @I1,13, 0, 1, I1,1, 1) <> 1) then begin
-      @SYMBLK^ := 'Link info read error'  {string};
+      @G90^ := 'Link info read error'  {string};
       LIBRARIA.5(23);
       I1,4 := 1;
     end else begin
-      if (FBLOCKIO(@G172, @I1,13, 0, 1, GATKIND, 0) <> 1) then begin
-        @SYMBLK^ := 'Code file overflow'  {string};
+      if (FBLOCKIO(@G172, @I1,13, 0, 1, G4, 0) <> 1) then begin
+        @G90^ := 'Code file overflow'  {string};
         LIBRARIA.5(23);
         I1,4 := 1;
       end else begin
-        GATKIND := (GATKIND+1);
+        G4 := (G4+1);
         I1,1 := (I1,1+1);
         I1,2 := 32;
       end;
@@ -394,16 +394,16 @@ procedure LIBRARIA.13(args 1 words);  { locals 3 words, lex 3 }
     EXIT(1, 13);
   end;
   L2 := (@G212[I1,2*2w]^-L1);
-  @OLDSYMBLK[I1,1]^ := GATKIND;
+  @G580[I1,1]^ := G4;
   if (L2 < 0) then begin
     L2 := L1;
-    while (FBLOCKIO(@G132, DISPLAY, 0, 1, L1, 1) = 1) do begin
+    while (FBLOCKIO(@G132, G131, 0, 1, L1, 1) = 1) do begin
       L1 := (L1+1);
-      if (FBLOCKIO(@G172, DISPLAY, 0, 1, GATKIND, 0) <> 1) then begin
+      if (FBLOCKIO(@G172, G131, 0, 1, G4, 0) <> 1) then begin
         LIBRARIA.14();
         EXIT(1, 13);
       end;
-      GATKIND := (GATKIND+1);
+      G4 := (G4+1);
     end;
     if (L2 = L1) then begin
       L2 := 0;
@@ -412,7 +412,7 @@ procedure LIBRARIA.13(args 1 words);  { locals 3 words, lex 3 }
     end;
   end;
   if (L2 = 0) then begin
-    @SYMBLK^ := 'Interface error'  {string};
+    @G90^ := 'Interface error'  {string};
     LIBRARIA.5(23);
     EXIT(1, 13);
   end;
@@ -420,29 +420,29 @@ procedure LIBRARIA.13(args 1 words);  { locals 3 words, lex 3 }
   L3 := 1;
   L4 := L2;
   while (L3 <= L4) do begin
-    NEW(@DISPLAY, 256);
+    NEW(@G131, 256);
     L3 := (L3+1);
   end;
   if (FBLOCKIO(@G132, I1,4, 0, L2, L1, 1) <> L2) then begin
-    @SYMBLK^ := 'Interface read error'  {string};
+    @G90^ := 'Interface read error'  {string};
     LIBRARIA.5(23);
   end else begin
-    if (FBLOCKIO(@G172, I1,4, 0, L2, GATKIND, 0) <> L2) then begin
+    if (FBLOCKIO(@G172, I1,4, 0, L2, G4, 0) <> L2) then begin
       LIBRARIA.14();
     end else begin
-      GATKIND := (GATKIND+L2);
+      G4 := (G4+L2);
     end;
   end;
   RELEASE(@I1,4);
 
 procedure LIBRARIA.14(args 0 words);  { locals 0 words, lex 4 }
-  @SYMBLK^ := 'Interface write error'  {string};
+  @G90^ := 'Interface write error'  {string};
   LIBRARIA.5(23);
 
 function LIBRARIA.15(args 0 words) : <1 word result>;  { locals 1 words, lex 2 }
   L1 := 0;
   L3 := 0;
-  @SYMBLK^ := ''  {string};
+  @G90^ := ''  {string};
   LIBRARIA.5(2);
   repeat
     FREADCHAR(I3,2, @G726);
@@ -462,15 +462,15 @@ function LIBRARIA.15(args 0 words) : <1 word result>;  { locals 1 words, lex 2 }
   end;
   if (-(1) in 1) then begin
     if ((@G212[L3*2w]^.f1 > 0) or (@G308[L3]^ = 7)) then begin
-      GATVLEV := L3;
+      G6 := L3;
 L0871:
       { paths disagree on stack depth here }
-      @SYMBLK^ := 'Slot to link into? '  {string};
+      @G90^ := 'Slot to link into? '  {string};
       LIBRARIA.5(2);
-      FREADINT(I3,2, @GATDPLMT);
+      FREADINT(I3,2, @G7);
       if not ((-(1) in 1)) then goto L0871;
       FREADCHAR(I3,2, @G726);
       L1 := 1;
     end;
   end;
-  { left on stack: phi(L3, GATDPLMT) }
+  { left on stack: phi(L3, G7) }

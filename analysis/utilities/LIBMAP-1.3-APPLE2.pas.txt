@@ -16,11 +16,11 @@ procedure LIBMAP.1(args 2 words);  { locals 755 words, lex 0 }
   FINIT(@G259, @G559, -(1));
   FWRITESTRING(I1,3, 'Apple Library Map Utility [1.3]', 0);
   FWRITELN(I1,3);
-  INCLFILE := 0;
+  G756 := 0;
   G757 := 7;
-  while (INCLFILE <= G757) do begin
-    @G604[chk(INCLFILE,0..7)*4w]^ := 'unknown'  {string};
-    INCLFILE := (INCLFILE+1);
+  while (G756 <= G757) do begin
+    @G604[chk(G756,0..7)*4w]^ := 'unknown'  {string};
+    G756 := (G756+1);
   end;
   @G604[chk(1,0..7)*4w]^ := 'A2/1.0'  {string};
   @G604[chk(2,0..7)*4w]^ := 'A2/1.1'  {string};
@@ -115,7 +115,7 @@ procedure LIBMAP.7(args 0 words);  { locals 3 words, lex 1 }
   L1 := chk(0,0..16);
   L2 := chk(15,0..16);
   while (L1 <= L2) do begin
-    L3 := @GATTYPTR[chk(L1,0..15)*2w];
+    L3 := @G3[chk(L1,0..15)*2w];
     if ((L3^.f1 > 0) or (L3^ > 0)) then begin
       if (0 <> 0) then begin
         FWRITESTRING(@G299, 'Segment #', 0);
@@ -150,9 +150,9 @@ procedure LIBMAP.7(args 0 words);  { locals 3 words, lex 1 }
   end;
 
 procedure LIBMAP.8(args 1 words);  { locals 278 words, lex 2 }
-  FWRITEBYTES(@G299, @SWAPPING[chk(L1,0..15)*4w], 8, 8);
+  FWRITEBYTES(@G299, @G35[chk(L1,0..15)*4w], 8, 8);
   L13 := 1;
-  case @NEXTPROC[chk(L1,0..15)]^ of   { table 0..7 }
+  case @G99[chk(L1,0..15)]^ of   { table 0..7 }
     0: begin
       FWRITESTRING(@G299, '  completely linked segment', 0);
       FWRITELN(@G299);
@@ -172,11 +172,11 @@ procedure LIBMAP.8(args 1 words);  { locals 278 words, lex 2 }
     end;
     3, 5, 6: begin
       FWRITESTRING(@G299, '  library unit', 0);
-      if (@NEXTPROC[chk(L1,0..15)]^ = 5) then begin
+      if (@G99[chk(L1,0..15)]^ = 5) then begin
         FWRITESTRING(@G299, ' (UNLINKED INTRINSIC)', 0);
         FWRITELN(@G299);
       end else begin
-        if (@NEXTPROC[chk(L1,0..15)]^ = 6) then begin
+        if (@G99[chk(L1,0..15)]^ = 6) then begin
           FWRITESTRING(@G299, ' (LINKED INTRINSIC)', 0);
           FWRITELN(@G299);
         end else begin
@@ -184,7 +184,7 @@ procedure LIBMAP.8(args 1 words);  { locals 278 words, lex 2 }
         end;
       end;
       L13 := not (LIBMAP.9(@G115[chk(L1,0..15)]^));
-      if (@NEXTPROC[chk(L1,0..15)]^ = 6) then begin
+      if (@G99[chk(L1,0..15)]^ = 6) then begin
         EXIT(1, 8);
       end;
     end;
@@ -199,7 +199,7 @@ procedure LIBMAP.8(args 1 words);  { locals 278 words, lex 2 }
     end;
   end;
   L2 := 0;
-  L279 := @GATTYPTR[chk(L1,0..15)*2w];
+  L279 := @G3[chk(L1,0..15)*2w];
   L3 := (L279^+((L279^.f1+511) div 512));
   if (G602 or L13) then begin
     repeat
@@ -276,7 +276,7 @@ procedure LIBMAP.8(args 1 words);  { locals 278 words, lex 2 }
               LIBMAP.11(' private');
             end;
             0: begin
-              if (@NEXTPROC[chk(L1,0..15)]^ = 5) then begin
+              if (@G99[chk(L1,0..15)]^ = 5) then begin
                 FWRITESTRING(@G299, ' Private dataseg # = ', 0);
                 FWRITEINT(@G299, L10, 0);
                 FWRITELN(@G299);
@@ -396,20 +396,20 @@ L09F2:
     SINSERT('.CODE', @L44, 80, (@L44^[0]+1));
     FOPEN(@G259, @L44, 1, 0);
   end;
-  if not ((FBLOCKIO(@G259, @GATTYPTR, 0, 1, 0, 1) <> 1)) then goto L0AB5;
+  if not ((FBLOCKIO(@G259, @G3, 0, 1, 0, 1) <> 1)) then goto L0AB5;
   FWRITESTRING(I2,3, 'bad file', 0);
   FWRITELN(I2,3);
   goto L09F2;
 L0AB5:
-  if LIBMAP.4(@GATTYPTR) then begin
-    LIBMAP.5(@GATTYPTR);
+  if LIBMAP.4(@G3) then begin
+    LIBMAP.5(@G3);
     G603 := 1;
   end;
   L1 := chk(0,0..16);
   L86 := chk(15,0..16);
 L0AD1:
   if not ((L1 <= L86)) then goto L0B34;
-  if not (((((@GATTYPTR[chk(L1,0..15)*2w]^.f1 < 0) or (@GATTYPTR[chk(L1,0..15)*2w]^ < 0)) or (@GATTYPTR[chk(L1,0..15)*2w]^ > 300)) or not (LIBMAP.6(@SWAPPING[chk(L1,0..15)*4w])))) then goto L0B2D;
+  if not (((((@G3[chk(L1,0..15)*2w]^.f1 < 0) or (@G3[chk(L1,0..15)*2w]^ < 0)) or (@G3[chk(L1,0..15)*2w]^ > 300)) or not (LIBMAP.6(@G35[chk(L1,0..15)*4w])))) then goto L0B2D;
   FWRITESTRING(I2,3, 'not a code file', 0);
   FWRITELN(I2,3);
   goto L09F2;

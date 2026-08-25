@@ -12,11 +12,11 @@ SEGMENT 1 CROSSREF
 ======================================================================
 
 procedure CROSSREF.1(args 2 words);  { locals 652 words, lex 0 }
-  FINIT(@INTPTR, @G312, -(2));
+  FINIT(@G12, @G312, -(2));
   FINIT(@G313, @G613, -(2));
-  GATTYPTR := nil;
-  GATVLEV := 0;
-  GATKIND := 10;
+  G3 := nil;
+  G6 := 0;
+  G4 := 10;
   FWRITESTRING(I1,3, 'INPUT FILE? ', 0);
   IOCHECK();
   FREADSTRING(I1,2, @G631, 20);
@@ -37,67 +37,67 @@ procedure CROSSREF.1(args 2 words);  { locals 652 words, lex 0 }
   IOCHECK();
   FREADLN(I1,2);
   IOCHECK();
-  FOPEN(@INTPTR, @G620, 0, 0);
+  FOPEN(@G12, @G620, 0, 0);
   IOCHECK();
   while not (FEOF(@G313)) do begin
-    if (GATVLEV = 9999) then begin
-      GATVLEV := 0;
+    if (G6 = 9999) then begin
+      G6 := 0;
     end;
-    GATVLEV := (GATVLEV+1);
-    FWRITEINT(@INTPTR, GATVLEV, 6);
+    G6 := (G6+1);
+    FWRITEINT(@G12, G6, 6);
     IOCHECK();
-    FWRITESTRING(@INTPTR, ': ', 0);
+    FWRITESTRING(@G12, ': ', 0);
     IOCHECK();
     while not (FEOLN(@G313)) do begin
       G619 := G313^[0];
       if (G619 in {65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
-        GATCVAL := 0;
+        G5 := 0;
         repeat
-          if (GATCVAL < 10) then begin
-            GATCVAL := (GATCVAL+1);
-            @G614^[(chk(GATCVAL,1..10)-1)] := G619;
+          if (G5 < 10) then begin
+            G5 := (G5+1);
+            @G614^[(chk(G5,1..10)-1)] := G619;
           end;
-          FWRITECHAR(@INTPTR, G619, 0);
+          FWRITECHAR(@G12, G619, 0);
           IOCHECK();
           FGET(@G313);
           IOCHECK();
           G619 := G313^[0];
         until not ((G619 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}));
-        if (GATCVAL >= GATKIND) then begin
-          GATKIND := GATCVAL;
+        if (G5 >= G4) then begin
+          G4 := G5;
         end else begin
 L0291:
-          @G614^[(chk(GATKIND,1..10)-1)] := 32;
-          GATKIND := (GATKIND-1);
-          if not ((GATKIND = GATCVAL)) then goto L0291;
+          @G614^[(chk(G4,1..10)-1)] := 32;
+          G4 := (G4-1);
+          if not ((G4 = G5)) then goto L0291;
         end;
-        move(@GATDPLMT, @G614, 5 words);
-        CROSSREF.2(@GATTYPTR);
+        move(@G7, @G614, 5 words);
+        CROSSREF.2(@G3);
       end else begin
         G619 := G313^[0];
-        FWRITECHAR(@INTPTR, G619, 0);
+        FWRITECHAR(@G12, G619, 0);
         IOCHECK();
         FGET(@G313);
         IOCHECK();
       end;
     end;
-    FWRITELN(@INTPTR);
+    FWRITELN(@G12);
     IOCHECK();
     FGET(@G313);
     IOCHECK();
   end;
-  FWRITECHAR(@INTPTR, 12, 0);
+  FWRITECHAR(@G12, 12, 0);
   IOCHECK();
-  CROSSREF.3(GATTYPTR);
-  FWRITECHAR(@INTPTR, 12, 0);
+  CROSSREF.3(G3);
+  FWRITECHAR(@G12, 12, 0);
   IOCHECK();
-  FWRITECHAR(@INTPTR, 12, 0);
+  FWRITECHAR(@G12, 12, 0);
   IOCHECK();
-  FCLOSE(@INTPTR, 1);
+  FCLOSE(@G12, 1);
   IOCHECK();
   FCLOSE(@G313, 0);
   IOCHECK();
-  FCLOSE(@INTPTR, 0);
+  FCLOSE(@G12, 0);
   FCLOSE(@G313, 0);
 
 procedure CROSSREF.2(args 1 words);  { locals 3 words, lex 1 }
@@ -106,23 +106,23 @@ procedure CROSSREF.2(args 1 words);  { locals 3 words, lex 1 }
     NEW(@L2, 9);
     NEW(@L3, 2);
     L4 := L2;
-    move(L4, @GATDPLMT, 5 words);
+    move(L4, @G7, 5 words);
     (L4+8)^ := nil;
     (L4+7)^ := nil;
     (L4+6)^ := L3;
     (L4+5)^ := L3;
-    L3^ := chk(GATVLEV,0..9999);
+    L3^ := chk(G6,0..9999);
     (L3+1)^ := nil;
     L1^ := L2;
   end else begin
-    if (@GATDPLMT < L2) then begin
+    if (@G7 < L2) then begin
       CROSSREF.2((L2+8));
     end else begin
-      if (@GATDPLMT > L2) then begin
+      if (@G7 > L2) then begin
         CROSSREF.2((L2+7));
       end else begin
         NEW(@L3, 2);
-        L3^ := chk(GATVLEV,0..9999);
+        L3^ := chk(G6,0..9999);
         (L3+1)^ := nil;
         (L2^.f5+1)^ := L3;
         (L2+5)^ := L3;
@@ -139,24 +139,24 @@ procedure CROSSREF.3(args 1 words);  { locals 0 words, lex 1 }
 
 procedure CROSSREF.4(args 1 words);  { locals 11 words, lex 2 }
   move(@L2, L1, 9 words);
-  FWRITECHAR(@INTPTR, 32, 0);
+  FWRITECHAR(@G12, 32, 0);
   IOCHECK();
-  FWRITEBYTES(@INTPTR, @L2, 10, 10);
+  FWRITEBYTES(@G12, @L2, 10, 10);
   IOCHECK();
   L12 := L8;
   L11 := 0;
   repeat
     if (L11 = 10) then begin
-      FWRITELN(@INTPTR);
+      FWRITELN(@G12);
       IOCHECK();
       L11 := 0;
-      FWRITECHAR(@INTPTR, 32, (10+1));
+      FWRITECHAR(@G12, 32, (10+1));
       IOCHECK();
     end;
     L11 := (L11+1);
-    FWRITEINT(@INTPTR, L12^, 6);
+    FWRITEINT(@G12, L12^, 6);
     IOCHECK();
     L12 := L12^.f1;
   until (L12 = nil);
-  FWRITELN(@INTPTR);
+  FWRITELN(@G12);
   IOCHECK();

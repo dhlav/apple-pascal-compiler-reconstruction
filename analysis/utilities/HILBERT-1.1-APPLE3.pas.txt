@@ -26,11 +26,11 @@ L0088:
   repeat
     FWRITESTRING(I1,3, 'ORDER: ', 0);
     IOCHECK();
-    FREADINT(I1,2, @GATVLEV);
+    FREADINT(I1,2, @G6);
     IOCHECK();
     FREADLN(I1,2);
     IOCHECK();
-    if ((GATVLEV < 1) or (GATVLEV > 7)) then begin
+    if ((G6 < 1) or (G6 > 7)) then begin
       FWRITESTRING(I1,3, "THAT'S ALL FOLKS...", 0);
       IOCHECK();
       FWRITELN(I1,3);
@@ -38,20 +38,20 @@ L0088:
       EXIT(1, 1);
     end;
     TURTLEGR.2();
-    GATKIND := 2;
-    GATTYPTR := 2;
-    TOP := GATVLEV;
-    while (GATTYPTR <= TOP) do begin
-      GATKIND := (GATKIND*2);
-      GATTYPTR := (GATTYPTR+1);
+    G4 := 2;
+    G3 := 2;
+    G8 := G6;
+    while (G3 <= G8) do begin
+      G4 := (G4*2);
+      G3 := (G3+1);
     end;
-    GATKIND := (GATKIND-1);
-    GATCVAL := (190 div GATKIND);
-    GATKIND := ((GATKIND*GATCVAL) div 2);
-    TURTLEGR.6((140-GATKIND), (96-GATKIND));
+    G4 := (G4-1);
+    G5 := (190 div G4);
+    G4 := ((G4*G5) div 2);
+    TURTLEGR.6((140-G4), (96-G4));
     TURTLEGR.7(1);
-    HILBERT.2(GATVLEV);
-    FREADCHAR(I1,4, @GATDPLMT);
+    HILBERT.2(G6);
+    FREADCHAR(I1,4, @G7);
     IOCHECK();
     TURTLEGR.8();
   until 0;
@@ -86,10 +86,10 @@ procedure HILBERT.3(args 0 words);  { locals 0 words, lex 2 }
   TURTLEGR.3(I1,3);
 
 procedure HILBERT.4(args 0 words);  { locals 0 words, lex 2 }
-  TURTLEGR.5(GATCVAL);
+  TURTLEGR.5(G5);
   HILBERT.2(I1,2);
   TURTLEGR.3(-(I1,3));
-  TURTLEGR.5(GATCVAL);
+  TURTLEGR.5(G5);
   TURTLEGR.3(-(I1,3));
   HILBERT.2(I1,2);
-  TURTLEGR.5(GATCVAL);
+  TURTLEGR.5(G5);

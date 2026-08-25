@@ -16,22 +16,22 @@ procedure GOXY.1(args 0 words);  { locals 0 words, lex 255 }
   { left on stack: 0 }
 
 procedure GOXY.2(args 2 words);  { locals 2 words, lex 0 }
-  if (CODEP > 79) then begin
-    CODEP := 79;
+  if (G2 > 79) then begin
+    G2 := 79;
   end else begin
-    if (CODEP < 0) then begin
-      CODEP := 0;
+    if (G2 < 0) then begin
+      G2 := 0;
     end;
   end;
-  if (SYMBUFP > 23) then begin
-    SYMBUFP := 23;
+  if (G1 > 23) then begin
+    G1 := 23;
   end else begin
-    if (SYMBUFP < 0) then begin
-      SYMBUFP := 0;
+    if (G1 < 0) then begin
+      G1 := 0;
     end;
   end;
-  @GATTYPTR^[0] := 27;
-  @GATTYPTR^[1] := 61;
-  @GATTYPTR^[2] := (32+SYMBUFP);
-  @GATTYPTR^[3] := (32+CODEP);
-  UNITWRITE(2, @GATTYPTR, 0, 4, 0, 0);
+  @G3^[0] := 27;
+  @G3^[1] := 61;
+  @G3^[2] := (32+G1);
+  @G3^[3] := (32+G2);
+  UNITWRITE(2, @G3, 0, 4, 0, 0);

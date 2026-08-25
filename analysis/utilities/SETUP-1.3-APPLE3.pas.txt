@@ -73,19 +73,19 @@ procedure SETUP.2(args 2 words);  { locals 41 words, lex 1 }
 
 function SETUP.3(args 1 words) : <1 word result>;  { locals 82 words, lex 1 }
   @L4^ := L3  {string};
-  (TOP+6)^ := @L4  {string};
-  GATDPLMT := IC;
+  (G8+6)^ := @L4  {string};
+  G7 := G9;
   @L45^ := ''  {string};
   while (@L45 <> @L4) do begin
-    GATVLEV := GATDPLMT;
+    G6 := G7;
     if (@L45 > @L4) then begin
-      GATDPLMT := GATDPLMT^.f5;
+      G7 := G7^.f5;
     end else begin
-      GATDPLMT := GATDPLMT^.f4;
+      G7 := G7^.f4;
     end;
-    SETUP.4(@L45, (GATDPLMT+6));
+    SETUP.4(@L45, (G7+6));
   end;
-  L1 := (GATDPLMT <> TOP);
+  L1 := (G7 <> G8);
 
 procedure SETUP.4(args 2 words);  { locals 1 words, lex 1 }
   L2^ := L1  {string};
@@ -97,41 +97,41 @@ procedure SETUP.4(args 2 words);  { locals 1 words, lex 1 }
   end;
 
 function SETUP.5(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
-  FREADCHAR(I2,4, @GATTYPTR);
+  FREADCHAR(I2,4, @G3);
   if FEOLN(I2,4) then begin
-    GATTYPTR := 13;
+    G3 := 13;
   end else begin
-    if (GATTYPTR in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
-      GATTYPTR := ((GATTYPTR-97)+65);
+    if (G3 in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
+      G3 := ((G3-97)+65);
     end;
   end;
-  if (GATTYPTR = 33) then begin
-    GATCVAL := 1;
+  if (G3 = 33) then begin
+    G5 := 1;
   end;
-  L1 := GATTYPTR;
+  L1 := G3;
 
 function SETUP.6(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
 L0602:
   FWRITESTRING(I2,3, '              C(ONTINUE)  Q(UIT)', 0);
   FWRITELN(I2,3);
   if not ((SETUP.5() in {67,81})) then goto L0602;
-  L1 := (GATTYPTR = 67);
+  L1 := (G3 = 67);
 
 function SETUP.7(args 1 words) : <1 word result>;  { locals 42 words, lex 1 }
   L1 := 1;
   L4 := 0;
   L3^ := ''  {string};
   while not ((SETUP.5() in ([13] + {33}))) do begin
-    if ((GATTYPTR <> 47) and L4) then begin
+    if ((G3 <> 47) and L4) then begin
       L4 := 0;
       FWRITECHAR(I2,3, 62, 0);
     end;
-    if (GATTYPTR = 60) then begin
+    if (G3 = 60) then begin
       L3^ := ''  {string};
       FWRITESTRING(I2,3, '<<ZAP>>', 0);
       FWRITELN(I2,3);
     end else begin
-      if (GATTYPTR = 47) then begin
+      if (G3 = 47) then begin
         if (L3^[0] > 0) then begin
           if not (L4) then begin
             FWRITECHAR(I2,3, 60, 0);
@@ -145,8 +145,8 @@ function SETUP.7(args 1 words) : <1 word result>;  { locals 42 words, lex 1 }
           SDELETE(L3, L3^[0], 1);
         end;
       end else begin
-        if (GATTYPTR in {32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126}) then begin
-          FWRITECHAR(I2,3, GATTYPTR, 0);
+        if (G3 in {32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126}) then begin
+          FWRITECHAR(I2,3, G3, 0);
         end else begin
           FWRITECHAR(I2,3, 63, 0);
         end;
@@ -154,11 +154,11 @@ function SETUP.7(args 1 words) : <1 word result>;  { locals 42 words, lex 1 }
         SCONCAT(@L5, L3, 80);
         SCONCAT(@L5, '#', 81);
         L3^ := @L5  {string};
-        L3^[L3^[0]] := GATTYPTR;
+        L3^[L3^[0]] := G3;
       end;
     end;
   end;
-  if (GATTYPTR = 33) then begin
+  if (G3 = 33) then begin
     L1 := 0;
   end;
   FWRITELN(I2,3);
@@ -177,7 +177,7 @@ procedure SETUP.8(args 0 words);  { locals 398 words, lex 1 }
     case SETUP.5() of   { table 68..77 }
       68: begin
         FOPEN(@L2, '*NEW.MISCINFO', 0, 0);
-        move(L2, @SY, 96 words);
+        move(L2, @G15, 96 words);
         FPUT(@L2);
         FCLOSE(@L2, 1);
       end;
@@ -185,7 +185,7 @@ procedure SETUP.8(args 0 words);  { locals 398 words, lex 1 }
         L1 := chk(29,0..95);
         L398 := chk(47,0..95);
         while (L1 <= L398) do begin
-          move(I2,1[chk(L1,0..95)], @SY[chk(L1,0..95)], 1 words);
+          move(I2,1[chk(L1,0..95)], @G15[chk(L1,0..95)], 1 words);
           L1 := (L1+1);
         end;
       end;
@@ -215,7 +215,7 @@ procedure SETUP.8(args 0 words);  { locals 398 words, lex 1 }
         EXIT(1, 1);
       end;
     end;
-  until ((GATTYPTR = 82) or GATCVAL);
+  until ((G3 = 82) or G5);
   FCLOSE(@L2, 0);
 
 procedure SETUP.9(args 2 words);  { locals 4 words, lex 1 }
@@ -309,7 +309,7 @@ function SETUP.10(args 4 words) : <1 word result>;  { locals 64 words, lex 1 }
       end else begin
         { check 1 in 1..length(@L29) }
         if not ((@L29^[1] in {68,72,79})) then begin
-          L12 := chk(GATKIND,8..16);
+          L12 := chk(G4,8..16);
         end else begin
           { check 1 in 1..length(@L29) }
           case @L29^[1] of   { table 68..79 }
@@ -430,7 +430,7 @@ L0D46:
 
 procedure SETUP.12(args 0 words);  { locals 0 words, lex 1 }
   repeat
-    GATCVAL := 0;
+    G5 := 0;
     FWRITELN(I2,3);
     FWRITESTRING(I2,3, 'CHANGE: S(INGLE) P(ROMPTED) R(ADIX)', 0);
     FWRITELN(I2,3);
@@ -441,7 +441,7 @@ procedure SETUP.12(args 0 words);  { locals 0 words, lex 1 }
         SETUP.25();
       end;
       80: begin
-        SETUP.26(IC^.f4);
+        SETUP.26(G9^.f4);
       end;
       82: begin
         SETUP.14();
@@ -458,7 +458,7 @@ procedure SETUP.12(args 0 words);  { locals 0 words, lex 1 }
         FWRITELN(I2,3);
         FWRITESTRING(I2,3, '    RADIX FROM ', 0);
         FWRITELN(I2,3);
-        case GATKIND of   { table 8..16 }
+        case G4 of   { table 8..16 }
           8: begin
             FWRITESTRING(I2,3, 'OCTAL', 0);
           end;
@@ -472,7 +472,7 @@ procedure SETUP.12(args 0 words);  { locals 0 words, lex 1 }
         FWRITESTRING(I2,3, ' TO EITHER', 0);
         FWRITELN(I2,3);
         FWRITESTRING(I2,3, '     ', 0);
-        case GATKIND of   { table 8..16 }
+        case G4 of   { table 8..16 }
           8: begin
             FWRITESTRING(I2,3, 'DECIMAL OR HEXADECIMAL', 0);
           end;
@@ -486,10 +486,10 @@ procedure SETUP.12(args 0 words);  { locals 0 words, lex 1 }
         FWRITELN(I2,3);
       end;
     end;
-  until (GATTYPTR = 81);
+  until (G3 = 81);
 
 function SETUP.13(args 0 words) : <1 word result>;  { locals 0 words, lex 2 }
-  if not (GATCVAL) then begin
+  if not (G5) then begin
 L0D62:
     FWRITESTRING(I3,3, 'WANT TO CHANGE THIS VALUE?', 0);
     FWRITESTRING(I3,3, ' (Y,N,', 0);
@@ -497,7 +497,7 @@ L0D62:
     FWRITECHAR(I3,3, 41, 0);
     FWRITELN(I3,3);
     L1 := (SETUP.5() = 89);
-    if not (((GATTYPTR in {78,89}) or GATCVAL)) then goto L0D62;
+    if not (((G3 in {78,89}) or G5)) then goto L0D62;
   end else begin
     L1 := 0;
   end;
@@ -509,21 +509,21 @@ procedure SETUP.14(args 0 words);  { locals 0 words, lex 2 }
     FWRITELN(I3,3);
     case SETUP.5() of   { table 68..79 }
       79: begin
-        GATKIND := chk(8,8..16);
+        G4 := chk(8,8..16);
       end;
       68: begin
-        GATKIND := chk(10,8..16);
+        G4 := chk(10,8..16);
       end;
       72: begin
-        GATKIND := chk(16,8..16);
+        G4 := chk(16,8..16);
       end;
     end;
-  until ((GATTYPTR in {68,72,79,81}) or GATCVAL);
+  until ((G3 in {68,72,79,81}) or G5);
   SETUP.15();
   FWRITELN(I3,3);
 
 procedure SETUP.15(args 0 words);  { locals 0 words, lex 3 }
-  case GATKIND of   { table 8..16 }
+  case G4 of   { table 8..16 }
     8: begin
       FWRITESTRING(I4,3, 'NOW OCTAL', 0);
     end;
@@ -537,10 +537,10 @@ procedure SETUP.15(args 0 words);  { locals 0 words, lex 3 }
 
 procedure SETUP.16(args 1 words);  { locals 1 words, lex 2 }
   L2 := L1;
-  if (L2^.f3 = LC) then begin
+  if (L2^.f3 = G10) then begin
     SETUP.19(1);
   end else begin
-    if (L2^.f3 = TEST) then begin
+    if (L2^.f3 = G11) then begin
       SETUP.19(0);
     end else begin
       SETUP.21();
@@ -553,20 +553,20 @@ procedure SETUP.17(args 1 words);  { locals 3 words, lex 3 }
   L2 := ((L3^.f1+L3^.f2)-1);
   L4 := L3^.f1;
   while (L2 >= L4) do begin
-    L1^ := ((L1^+L1^)+@SY[chk(L3^,0..95)]~[chk(L2,0..15)]{16per word,1 bits});
+    L1^ := ((L1^+L1^)+@G15[chk(L3^,0..95)]~[chk(L2,0..15)]{16per word,1 bits});
     L2 := (L2-1);
   end;
 
 procedure SETUP.18(args 1 words);  { locals 3 words, lex 3 }
   L3 := I1,1;
   if (L1 < 0) then begin
-    @SY[chk(L3^,0..95)]~[chk(((L3^.f1+L3^.f2)-1),0..15)]{16per word,1 bits} := chk(1,0..1);
+    @G15[chk(L3^,0..95)]~[chk(((L3^.f1+L3^.f2)-1),0..15)]{16per word,1 bits} := chk(1,0..1);
     L1 := -(L1);
   end;
   L2 := L3^.f1;
   L4 := ((L3^.f1+L3^.f2)-1);
   while (L2 <= L4) do begin
-    @SY[chk(L3^,0..95)]~[chk(L2,0..15)]{16per word,1 bits} := chk((L1 mod 2),0..1);
+    @G15[chk(L3^,0..95)]~[chk(L2,0..15)]{16per word,1 bits} := chk((L1 mod 2),0..1);
     L1 := (L1 div 2);
     L2 := (L2+1);
   end;
@@ -585,17 +585,17 @@ procedure SETUP.19(args 1 words);  { locals 44 words, lex 3 }
 L0FF8:
     repeat
 L0FF8:
-      if not ((not (SETUP.10(@L4, L1, L3, L2)) and not (GATCVAL))) then goto L100E;
+      if not ((not (SETUP.10(@L4, L1, L3, L2)) and not (G5))) then goto L100E;
       SETUP.11(L1, L3, L2);
       goto L0FF8;
 L100E:
-      if not (GATCVAL) then begin
+      if not (G5) then begin
         SETUP.9(L4, L1);
         if SETUP.13() then begin
         end;
       end;
-    until ((GATTYPTR = 78) or GATCVAL);
-    if not (GATCVAL) then begin
+    until ((G3 = 78) or G5);
+    if not (G5) then begin
       SETUP.18(L4);
     end;
   end;
@@ -617,25 +617,25 @@ procedure SETUP.21(args 0 words);  { locals 42 words, lex 3 }
     repeat
       FWRITESTRING(I4,3, 'NEW VALUE: ', 0);
       if SETUP.7(@L2) then begin
-        while not ((SETUP.24(@L1, @L2) or GATCVAL)) do begin
+        while not ((SETUP.24(@L1, @L2) or G5)) do begin
           SETUP.23();
           FWRITESTRING(I4,3, 'NEW VALUE: ', 0);
           if SETUP.7(@L2) then begin
           end;
         end;
       end;
-    until (not (SETUP.13()) or GATCVAL);
+    until (not (SETUP.13()) or G5);
   end;
-  if (not (GATCVAL) and (@L2 <> '')) then begin
+  if (not (G5) and (@L2 <> '')) then begin
     SETUP.18(L1);
   end;
 
 procedure SETUP.22(args 1 words);  { locals 1 words, lex 4 }
   L2 := I2,1^.f3;
-  SETUP.2((L2 <> INTPTR), 'SHOWSCALAR');
+  SETUP.2((L2 <> G12), 'SHOWSCALAR');
   while (L1 <> L2^.f1) do begin
     L2 := L2^;
-    SETUP.2((L2 <> INTPTR), 'SHOWSCALAR');
+    SETUP.2((L2 <> G12), 'SHOWSCALAR');
   end;
   FWRITESTRING(I5,3, 'CURRENT VALUE IS ', 0);
   FWRITESTRING(I5,3, (L2+2), 0);
@@ -646,26 +646,26 @@ procedure SETUP.23(args 0 words);  { locals 1 words, lex 4 }
   FWRITESTRING(I5,3, 'ALLOWED VALUES ARE:', 0);
   FWRITELN(I5,3);
 L10D3:
-  SETUP.2((L1 <> INTPTR), 'SHOWALL');
+  SETUP.2((L1 <> G12), 'SHOWALL');
   FWRITESTRING(I5,3, (L1+2), 0);
   FWRITELN(I5,3);
   L1 := L1^;
-  if not ((L1 = INTPTR)) then goto L10D3;
+  if not ((L1 = G12)) then goto L10D3;
 
 function SETUP.24(args 2 words) : <1 word result>;  { locals 42 words, lex 4 }
   @L5^ := L3  {string};
   L46 := I2,1^.f3;
-  (INTPTR+2)^ := @L5  {string};
+  (G12+2)^ := @L5  {string};
   while ((L46+2) <> @L5) do begin
     L46 := L46^;
   end;
   I1,1 := L46^.f1;
-  L1 := (L46 <> INTPTR);
+  L1 := (L46 <> G12);
 
 procedure SETUP.25(args 0 words);  { locals 41 words, lex 2 }
   FWRITESTRING(I3,3, 'NAME OF FIELD: ', 0);
   if SETUP.7(@L1) then begin
-    while (not (SETUP.3(@L1)) and not (GATCVAL)) do begin
+    while (not (SETUP.3(@L1)) and not (G5)) do begin
       FWRITESTRING(I3,3, "DIDN'T FIND ", 0);
       FWRITESTRING(I3,3, @L1, 0);
       FWRITELN(I3,3);
@@ -673,15 +673,15 @@ procedure SETUP.25(args 0 words);  { locals 41 words, lex 2 }
       if SETUP.7(@L1) then begin
       end;
     end;
-    if not (GATCVAL) then begin
-      SETUP.16(GATDPLMT);
+    if not (G5) then begin
+      SETUP.16(G7);
     end;
   end;
 
 procedure SETUP.26(args 1 words);  { locals 0 words, lex 2 }
-  if ((L1 <> TOP) and not (GATCVAL)) then begin
+  if ((L1 <> G8) and not (G5)) then begin
     SETUP.26(L1^.f5);
-    if not (GATCVAL) then begin
+    if not (G5) then begin
       FWRITELN(I3,3);
       FWRITESTRING(I3,3, 'FIELD NAME = ', 0);
       FWRITESTRING(I3,3, (L1+6), 0);
@@ -746,23 +746,23 @@ SEGMENT 0 INITS
 procedure INITS.1(args 0 words);  { locals 3 words, lex 1 }
   SETUP.2((16 = (15+1)), 'INITS');
   MARK(@L1);
-  SYMCURSOR := L1;
+  G14 := L1;
   NEW(@L1, 1);
   MARK(@L1);
-  SYMCURSOR := (L1-SYMCURSOR);
+  G14 := (L1-G14);
   L2 := 29;
   L3 := 47;
   while (L2 <= L3) do begin
-    move(@SY[L2], I2,1[L2], 1 words);
+    move(@G15[L2], I2,1[L2], 1 words);
     L2 := (L2+1);
   end;
-  GATCVAL := 0;
+  G5 := 0;
   INITS.2();
   FWRITESTRING(I2,3, 'INITIALIZING', 0);
-  SEG := 12;
+  G13 := 12;
   INITS.4();
   FWRITELN(I2,3);
-  GATKIND := 10;
+  G4 := 10;
 
 procedure INITS.2(args 0 words);  { locals 1 words, lex 2 }
   L1 := -(1);
@@ -806,15 +806,15 @@ procedure INITS.3(args 1 words);  { locals 2 words, lex 3 }
   @G111[I1,1*2w]^ := @L2  {string};
 
 procedure INITS.4(args 0 words);  { locals 3 words, lex 2 }
-  NEW(@IC, 47);
-  L3 := IC;
+  NEW(@G9, 47);
+  L3 := G9;
   (L3+6)^ := ''  {string};
   NEW((L3+4), 47);
-  TOP := IC^.f4;
-  NEW(@INTPTR, 43);
-  NEW(@TEST, 43);
+  G8 := G9^.f4;
+  NEW(@G12, 43);
+  NEW(@G11, 43);
   INITS.5('');
-  NEW(@LC, 43);
+  NEW(@G10, 43);
   INITS.5('');
   INITS.8();
   INITS.9();
@@ -822,16 +822,16 @@ procedure INITS.4(args 0 words);  { locals 3 words, lex 2 }
 procedure INITS.5(args 1 words);  { locals 42 words, lex 3 }
   @L2^ := L1  {string};
   MARK(@L43);
-  L43 := (L43+((((@L2^[0]+1) div 2)-40)*SYMCURSOR));
+  L43 := (L43+((((@L2^[0]+1) div 2)-40)*G14));
   RELEASE(@L43);
 
 procedure INITS.6(args 3 words);  { locals 168 words, lex 3 }
   @L4^ := L3  {string};
   FWRITECHAR(I4,3, 46, 0);
-  SEG := (SEG+1);
-  if (SEG = 40) then begin
+  G13 := (G13+1);
+  if (G13 = 40) then begin
     FWRITELN(I4,3);
-    SEG := 0;
+    G13 := 0;
   end;
   SETUP.4(@L87, @L4);
   L45 := SETUP.3(@L87);
@@ -839,22 +839,22 @@ procedure INITS.6(args 3 words);  { locals 168 words, lex 3 }
   SCONCAT(@L128, 'ENTER ', 6);
   SCONCAT(@L128, @L4, 86);
   SETUP.2(not (L45), @L128);
-  NEW(@GATDPLMT, 47);
-  L128 := GATDPLMT;
+  NEW(@G7, 47);
+  L128 := G7;
   (L128+6)^ := @L4  {string};
   INITS.5((L128+6));
   L128^ := L2;
   (L128+1)^ := L1;
   (L128+2)^ := I1,2;
   (L128+3)^ := I1,1;
-  (L128+5)^ := TOP;
-  (L128+4)^ := TOP;
-  SETUP.4(@L87, (GATVLEV+6));
+  (L128+5)^ := G8;
+  (L128+4)^ := G8;
+  SETUP.4(@L87, (G6+6));
   SETUP.4(@L46, @L4);
   if (@L87 > @L46) then begin
-    (GATVLEV+5)^ := GATDPLMT;
+    (G6+5)^ := G7;
   end else begin
-    (GATVLEV+4)^ := GATDPLMT;
+    (G6+4)^ := G7;
   end;
 
 procedure INITS.7(args 2 words);  { locals 43 words, lex 3 }
@@ -868,7 +868,7 @@ procedure INITS.7(args 2 words);  { locals 43 words, lex 3 }
   I1,1 := L44;
 
 procedure INITS.8(args 0 words);  { locals 0 words, lex 3 }
-  I1,1 := INTPTR;
+  I1,1 := G12;
   INITS.7(1, 84);
   INITS.7(0, 70);
   INITS.7(1, 'TRUE');
@@ -904,11 +904,11 @@ procedure INITS.8(args 0 words);  { locals 0 words, lex 3 }
 
 procedure INITS.9(args 0 words);  { locals 0 words, lex 3 }
   I1,2 := 16;
-  I1,1 := TEST;
+  I1,1 := G11;
   INITS.6('SCREEN HEIGHT', 37, 0);
   INITS.6('SCREEN WIDTH', 38, 0);
   I1,2 := 8;
-  I1,1 := LC;
+  I1,1 := G10;
   INITS.6('LEAD-IN TO SCREEN', 31, 0);
   INITS.6('MOVE CURSOR HOME', 31, 8);
   INITS.6('ERASE TO END OF SCREEN', 32, 0);
@@ -932,7 +932,7 @@ procedure INITS.9(args 0 words);  { locals 0 words, lex 3 }
   INITS.6('LEAD-IN CHAR FROM KEYBOARD', 45, 0);
   INITS.6('EDITOR "ACCEPT" KEY', 45, 8);
   INITS.6('KEY TO DELETE CHARACTER', 43, 0);
-  I1,1 := TEST;
+  I1,1 := G11;
   INITS.6('VERTICAL MOVE DELAY', 34, 8);
 
 ======================================================================

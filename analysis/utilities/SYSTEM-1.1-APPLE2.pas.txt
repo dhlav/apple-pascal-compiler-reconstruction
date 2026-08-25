@@ -249,21 +249,21 @@ SEGMENT 1 TLA
 procedure TLA.1(args 2 words);  { locals 2175 words, lex 0 }
   FINIT(@G1135, @G1435, 8);
   FINIT(@G1095, @G1395, -(1));
-  FINIT(@UVARPTR, @G373, 0);
+  FINIT(@G73, @G373, 0);
   INITIALI.1();
   repeat
     ASSEMBLE.1();
-    if ((USING > 0) and FWPTR) then begin
+    if ((G36 > 0) and G64) then begin
       SYMTBLDU.1();
     end;
     PROCEND.1();
-  until (GATKIND = 61);
+  until (G4 = 61);
   FCLOSE(@G1135, 0);
   FCLOSE(@G1095, 0);
-  FCLOSE(@UVARPTR, 0);
+  FCLOSE(@G73, 0);
 
 procedure TLA.2(args 1 words);  { locals 1 words, lex 1 }
-  ININTERFACE := (ININTERFACE+1);
+  G31 := (G31+1);
   if (MEMAVAIL() > 1800) then begin
     PRINTERR.1(L1);
   end else begin
@@ -282,12 +282,12 @@ procedure TLA.2(args 1 words);  { locals 1 words, lex 1 }
       EXIT(1, 1);
     end;
     if ((L2 = 69) or (L2 = 101)) then begin
-      if LONGINTPTR then begin
-        I2,12 := INCLUDING;
-        I2,11 := (DP-2);
+      if G60 then begin
+        I2,12 := G37;
+        I2,11 := (G38-2);
       end else begin
-        I2,12 := INTRINSIC;
-        I2,11 := (VARSTRG-2);
+        I2,12 := G41;
+        I2,11 := (G39-2);
       end;
       I2,10 := 500;
       FOPEN(@G1135, @G590, 1, 0);
@@ -296,7 +296,7 @@ procedure TLA.2(args 1 words);  { locals 1 words, lex 1 }
     end;
   until (L2 = 32);
   TLA.8();
-  if (INTPTR and ((INMODULE mod 55) < 4)) then begin
+  if (G12 and ((G32 mod 55) < 4)) then begin
     TLA.9();
   end;
 
@@ -335,7 +335,7 @@ procedure TLA.4(args 2 words);  { locals 8 words, lex 1 }
       TLA.2(2);
     end else begin
       @L8^[8] := 0;
-      if (INTPTR and NILPTR) then begin
+      if (G12 and G56) then begin
         TLA.21(1);
       end;
     end;
@@ -346,7 +346,7 @@ procedure TLA.4(args 2 words);  { locals 8 words, lex 1 }
     end;
     @L8^[8] := 0;
     @L8^[8] := 8;
-    if (INTPTR and NILPTR) then begin
+    if (G12 and G56) then begin
       TLA.21(0);
     end;
   end;
@@ -369,19 +369,19 @@ procedure TLA.5(args 1 words);  { locals 0 words, lex 1 }
   end;
 
 procedure TLA.6(args 0 words);  { locals 2 words, lex 1 }
-  L1 := TINY;
-  L2 := (LINKINFO-1);
+  L1 := G42;
+  L2 := (G44-1);
   while (L1 <= L2) do begin
     if (@G691[L1*7w]^.f5 <> nil) then begin
-      if INTPTR then begin
-        FWRITELN(@UVARPTR);
+      if G12 then begin
+        FWRITELN(@G73);
         IOCHECK();
-        FWRITESTRING(@UVARPTR, '>>>>>', 0);
+        FWRITESTRING(@G73, '>>>>>', 0);
         IOCHECK();
-        FWRITEBYTES(@UVARPTR, @G691[L1*7w], 8, 8);
+        FWRITEBYTES(@G73, @G691[L1*7w], 8, 8);
         IOCHECK();
       end;
-      if not ((MODPTR and INTPTR)) then begin
+      if not ((G68 and G12)) then begin
         FWRITELN(I2,3);
         IOCHECK();
         FWRITESTRING(I2,3, '>>>>>', 0);
@@ -394,33 +394,33 @@ procedure TLA.6(args 0 words);  { locals 2 words, lex 1 }
     end;
     L1 := (L1+1);
   end;
-  LINKINFO := TINY;
-  TINY := @G673[PUBLICPROCS]^;
+  G44 := G42;
+  G42 := @G673[G27]^;
 
 procedure TLA.7(args 0 words);  { locals 0 words, lex 1 }
   if (G659 = 2) then begin
-    if (INTRINSIC < 1023) then begin
-      TOP := (1023-TOP);
-      if RESIDENT then begin
-        TOP := SCAN((TOP-1), 0, 13, @G1608, (INTRINSIC+1), 0);
-        if (TOP < 102) then begin
-          MOVELEFT(@G1608, (INTRINSIC+1), @G539, 0, TOP);
+    if (G41 < 1023) then begin
+      G8 := (1023-G8);
+      if G62 then begin
+        G8 := SCAN((G8-1), 0, 13, @G1608, (G41+1), 0);
+        if (G8 < 102) then begin
+          MOVELEFT(@G1608, (G41+1), @G539, 0, G8);
         end else begin
-          MOVELEFT(@G1608, (INTRINSIC+1), @G539, 0, 102);
+          MOVELEFT(@G1608, (G41+1), @G539, 0, 102);
         end;
       end else begin
-        TOP := SCAN(TOP, 0, 13, @G1608, INTRINSIC, 0);
-        if (TOP < 102) then begin
-          MOVELEFT(@G1608, INTRINSIC, @G539, 0, TOP);
+        G8 := SCAN(G8, 0, 13, @G1608, G41, 0);
+        if (G8 < 102) then begin
+          MOVELEFT(@G1608, G41, @G539, 0, G8);
         end else begin
-          MOVELEFT(@G1608, INTRINSIC, @G539, 0, 102);
+          MOVELEFT(@G1608, G41, @G539, 0, 102);
         end;
       end;
     end;
   end;
 
 procedure TLA.8(args 0 words);  { locals 0 words, lex 1 }
-  if not ((INTPTR and MODPTR)) then begin
+  if not ((G12 and G68)) then begin
     FWRITELN(I2,3);
     IOCHECK();
     FWRITECHAR(I2,3, 91, 0);
@@ -429,112 +429,112 @@ procedure TLA.8(args 0 words);  { locals 0 words, lex 1 }
     IOCHECK();
     FWRITESTRING(I2,3, ']<', 0);
     IOCHECK();
-    FWRITEINT(I2,3, SWAPMORE, 4);
+    FWRITEINT(I2,3, G33, 4);
     IOCHECK();
     FWRITECHAR(I2,3, 62, 0);
     IOCHECK();
   end;
 
 procedure TLA.9(args 0 words);  { locals 0 words, lex 1 }
-  if MODPTR then begin
-    FWRITELN(@UVARPTR);
+  if G68 then begin
+    FWRITELN(@G73);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
   end else begin
-    FWRITECHAR(@UVARPTR, 12, 0);
+    FWRITECHAR(@G73, 12, 0);
     IOCHECK();
   end;
-  FWRITESTRING(@UVARPTR, 'PAGE - ', 0);
+  FWRITESTRING(@G73, 'PAGE - ', 0);
   IOCHECK();
-  FWRITEINT(@UVARPTR, SWAPPING, 3);
+  FWRITEINT(@G73, G34, 3);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, '  ', 0);
+  FWRITESTRING(@G73, '  ', 0);
   IOCHECK();
-  FWRITEBYTES(@UVARPTR, @G2159, 8, 8);
+  FWRITEBYTES(@G73, @G2159, 8, 8);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, '  FILE:', 0);
+  FWRITESTRING(@G73, '  FILE:', 0);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, @G390, 0);
+  FWRITESTRING(@G73, @G390, 0);
   IOCHECK();
-  if (INTPTR and MODPTR) then begin
-    FWRITELN(@UVARPTR);
+  if (G12 and G68) then begin
+    FWRITELN(@G73);
     IOCHECK();
   end;
-  FWRITESTRING(@UVARPTR, '  ', 0);
+  FWRITESTRING(@G73, '  ', 0);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, @G447, 0);
+  FWRITESTRING(@G73, @G447, 0);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  INMODULE := 0;
-  SWAPPING := (SWAPPING+1);
+  G32 := 0;
+  G34 := (G34+1);
 
 procedure TLA.10(args 0 words);  { locals 53 words, lex 1 }
-  SWAPMORE := (SWAPMORE+1);
-  if not ((INTPTR and MODPTR)) then begin
+  G33 := (G33+1);
+  if not ((G12 and G68)) then begin
     FWRITECHAR(I2,3, 46, 0);
     IOCHECK();
-    if ((SWAPMORE mod 50) = 0) then begin
+    if ((G33 mod 50) = 0) then begin
       TLA.8();
     end;
   end;
-  if (INTPTR and (INTRACTVPTR or (G659 <> 0))) then begin
-    INMODULE := (INMODULE+1);
-    if ((INMODULE mod 55) = 0) then begin
+  if (G12 and (G55 or (G659 <> 0))) then begin
+    G32 := (G32+1);
+    if ((G32 mod 55) = 0) then begin
       TLA.9();
     end;
     TLA.11(G20, 0);
-    if (GATCVAL < (20-2)) then begin
-      L1 := ((20-GATCVAL)+1);
-      @G2147^[GATCVAL] := 16;
-      @G2147^[(GATCVAL+1)] := (L1+32);
-      MOVELEFT(@G2147, 0, @L2, 1, (GATCVAL+2));
-      @L2^[0] := (GATCVAL+2);
-      FWRITESTRING(@UVARPTR, '| ', 0);
+    if (G5 < (20-2)) then begin
+      L1 := ((20-G5)+1);
+      @G2147^[G5] := 16;
+      @G2147^[(G5+1)] := (L1+32);
+      MOVELEFT(@G2147, 0, @L2, 1, (G5+2));
+      @L2^[0] := (G5+2);
+      FWRITESTRING(@G73, '| ', 0);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, @L2, 0);
+      FWRITESTRING(@G73, @L2, 0);
       IOCHECK();
     end else begin
-      FWRITESTRING(@UVARPTR, '| ', 0);
+      FWRITESTRING(@G73, '| ', 0);
       IOCHECK();
-      FWRITEBYTES(@UVARPTR, @G2147, 21, 21);
+      FWRITEBYTES(@G73, @G2147, 21, 21);
       IOCHECK();
     end;
-    if (TOP > 101) then begin
-      TOP := 101;
+    if (G8 > 101) then begin
+      G8 := 101;
     end;
-    MOVELEFT(@G539, 0, @L2, 1, (TOP+1));
-    @L2^[0] := (TOP+1);
+    MOVELEFT(@G539, 0, @L2, 1, (G8+1));
+    @L2^[0] := (G8+1);
     if (G659 = 0) then begin
-      FWRITECHAR(@UVARPTR, 35, 0);
+      FWRITECHAR(@G73, 35, 0);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, @L2, 0);
+      FWRITESTRING(@G73, @L2, 0);
       IOCHECK();
-      FWRITELN(@UVARPTR);
+      FWRITELN(@G73);
       IOCHECK();
     end else begin
-      FWRITECHAR(@UVARPTR, 32, 0);
+      FWRITECHAR(@G73, 32, 0);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, @L2, 0);
+      FWRITESTRING(@G73, @L2, 0);
       IOCHECK();
-      FWRITELN(@UVARPTR);
+      FWRITELN(@G73);
       IOCHECK();
     end;
   end;
   if (G660 = 0) then begin
-    G20 := SEGSLOT;
+    G20 := G21;
   end else begin
-    G20 := LGTH;
+    G20 := G22;
   end;
   move(@G2147, @G2136, 11 words);
-  GATCVAL := 0;
-  move(@G539, @SYSTEMLIB, 51 words);
-  TOP := -(1);
+  G5 := 0;
+  move(@G539, @G488, 51 words);
+  G8 := -(1);
 
 procedure TLA.11(args 2 words);  { locals 2 words, lex 1 }
   L3 := L2;
@@ -585,46 +585,46 @@ procedure TLA.11(args 2 words);  { locals 2 words, lex 1 }
   { paths disagree on stack depth here }
 
 procedure TLA.12(args 1 words);  { locals 2 words, lex 1 }
-  if (PRTERR > 1023) then begin
-    if (FBLOCKIO(I2,8, G72, 0, 1, IC, 0) = 0) then begin
+  if (G53 > 1023) then begin
+    if (FBLOCKIO(I2,8, G72, 0, 1, G9, 0) = 0) then begin
       TLA.2(54);
     end;
     TLA.5(1);
-    IC := (IC+1);
-    if (IC > DEBUGGING) then begin
-      DEBUGGING := IC;
+    G9 := (G9+1);
+    if (G9 > G50) then begin
+      G50 := G9;
     end;
     MOVELEFT(G72, 512, G72, 0, ((2-1)*512));
-    PRTERR := (PRTERR-512);
-    STRGPTR := (STRGPTR+512);
+    G53 := (G53-512);
+    G54 := (G54+512);
   end;
-  G72^[PRTERR] := L1;
-  PRTERR := (PRTERR+1);
-  GOTOOK := (STRGPTR+PRTERR);
-  if (GOTOOK > RANGECHECK) then begin
-    RANGECHECK := GOTOOK;
+  G72^[G53] := L1;
+  G53 := (G53+1);
+  G52 := (G54+G53);
+  if (G52 > G51) then begin
+    G51 := G52;
   end;
   if -(1) then begin
-    LGTH := (LGTH+1);
+    G22 := (G22+1);
   end;
-  if (INTPTR and not (OUTPUTPTR)) then begin
+  if (G12 and not (G66)) then begin
     L2 := L1;
     if (16 = 16) then begin
-      if ((GATCVAL+2) <= 20) then begin
+      if ((G5+2) <= 20) then begin
         @G2120^[@L2] := 4^[4];
         @G2120^[@L2] := 4^[0];
-        @G2147^[(GATCVAL+2)] := 32;
-        GATCVAL := (GATCVAL+3);
+        @G2147^[(G5+2)] := 32;
+        G5 := (G5+3);
       end;
     end;
     { paths disagree on stack depth here }
     if (16 = 8) then begin
-      if ((GATCVAL+3) <= 20) then begin
+      if ((G5+3) <= 20) then begin
         @L2^[3] := (9+48);
         @L2^[3] := (6+48);
         @L2^[3] := (3+48);
-        @G2147^[(GATCVAL+3)] := 32;
-        GATCVAL := (GATCVAL+4);
+        @G2147^[(G5+3)] := 32;
+        G5 := (G5+4);
       end;
     end;
   end;
@@ -636,7 +636,7 @@ procedure TLA.13(args 3 words);  { locals 6 words, lex 1 }
   if -(1) then begin
     L4 := TLA.3(L4);
   end;
-  if INTPTR then begin
+  if G12 then begin
     if (0 or L1) then begin
       move(@L6, @L8, 2 words);
     end else begin
@@ -644,8 +644,8 @@ procedure TLA.13(args 3 words);  { locals 6 words, lex 1 }
       L2 := ((L2 div 2)+((L2 mod 2)*2));
     end;
     if (16 = 16) then begin
-      if ((GATCVAL+4) <= 20) then begin
-        FILLCHAR(@G2147, GATCVAL, 4, 42);
+      if ((G5+4) <= 20) then begin
+        FILLCHAR(@G2147, G5, 4, 42);
         if (L2 < 2) then begin
           @G2120^[@L6] := 4^[12];
           @G2120^[@L6] := 4^[8];
@@ -656,13 +656,13 @@ procedure TLA.13(args 3 words);  { locals 6 words, lex 1 }
           @G2120^[@L6] := 4^[0];
         end;
         { paths disagree on stack depth here }
-        @G2147^[(GATCVAL+4)] := 32;
-        GATCVAL := (GATCVAL+5);
+        @G2147^[(G5+4)] := 32;
+        G5 := (G5+5);
       end;
     end;
     if (16 = 8) then begin
-      if ((GATCVAL+6) <= 20) then begin
-        FILLCHAR(@G2147, GATCVAL, 6, 42);
+      if ((G5+6) <= 20) then begin
+        FILLCHAR(@G2147, G5, 6, 42);
         if (L2 < 2) then begin
           @L7^[1] := (3+48);
           @L7^[3] := (0+48);
@@ -675,19 +675,19 @@ procedure TLA.13(args 3 words);  { locals 6 words, lex 1 }
           @L6^[3] := (3+48);
         end;
         { paths disagree on stack depth here }
-        @G2147^[(GATCVAL+6)] := 32;
-        GATCVAL := (GATCVAL+7);
+        @G2147^[(G5+6)] := 32;
+        G5 := (G5+7);
       end;
     end;
   end;
   if not (L1) then begin
     if 0 then begin
-      LGTH := (LGTH+1);
+      G22 := (G22+1);
     end;
-    OUTPUTPTR := 1;
+    G66 := 1;
     TLA.12(8);
     TLA.12(0);
-    OUTPUTPTR := 0;
+    G66 := 0;
   end;
   { paths disagree on stack depth here }
 
@@ -707,13 +707,13 @@ procedure TLA.14(args 3 words);  { locals 5 words, lex 1 }
     0: begin
       if G623 then begin
         TLA.24();
-        (SEG+4)^ := @G691[G624*7w]^.f5;
-        (@G691[G624*7w]+5)^ := SEG;
+        (G13+4)^ := @G691[G624*7w]^.f5;
+        (@G691[G624*7w]+5)^ := G13;
         if (G657 <> nil) then begin
-          SEG := G657;
+          G13 := G657;
           G657 := G657^.f4;
         end else begin
-          NEW(@SEG, 5);
+          NEW(@G13, 5);
         end;
       end else begin
         TLA.26();
@@ -726,25 +726,25 @@ procedure TLA.14(args 3 words);  { locals 5 words, lex 1 }
         end;
         26, 36: begin
           TLA.24();
-          (SEG+4)^ := G627^.f7;
-          (G627+7)^ := SEG;
+          (G13+4)^ := G627^.f7;
+          (G627+7)^ := G13;
           if (G657 <> nil) then begin
-            SEG := G657;
+            G13 := G657;
             G657 := G657^.f4;
           end else begin
-            NEW(@SEG, 5);
+            NEW(@G13, 5);
           end;
         end;
       end;
     end;
     2: begin
-      if INTPTR then begin
-        FWRITELN(@UVARPTR);
+      if G12 then begin
+        FWRITELN(@G73);
         IOCHECK();
-        FWRITEBYTES(@UVARPTR, G627, 8, 8);
+        FWRITEBYTES(@G73, G627, 8, 8);
         IOCHECK();
       end;
-      if not ((MODPTR and INTPTR)) then begin
+      if not ((G68 and G12)) then begin
         FWRITELN(I2,3);
         IOCHECK();
         FWRITEBYTES(I2,3, G627, 8, 8);
@@ -763,38 +763,38 @@ procedure TLA.15(args 1 words);  { locals 3 words, lex 1 }
     4: begin
     end;
     3: begin
-      TLA.23(@CODEINSEG, @G650, 1);
+      TLA.23(@G48, @G650, 1);
     end;
     0: begin
       if G623 then begin
         TLA.22();
-        (SEG+4)^ := @G691[G624*7w]^.f5;
-        (@G691[G624*7w]+5)^ := SEG;
+        (G13+4)^ := @G691[G624*7w]^.f5;
+        (@G691[G624*7w]+5)^ := G13;
         if (G657 <> nil) then begin
-          SEG := G657;
+          G13 := G657;
           G657 := G657^.f4;
         end else begin
-          NEW(@SEG, 5);
+          NEW(@G13, 5);
         end;
       end;
-      TLA.23(@CODEINSEG, @G650, 1);
+      TLA.23(@G48, @G650, 1);
     end;
     1: begin
       case G627^.f5 of   { table 1..36 }
         1, 32, 33, 35: begin
-          TLA.23(@CODEINSEG, @G650, 1);
+          TLA.23(@G48, @G650, 1);
         end;
         26, 36: begin
           TLA.22();
-          (SEG+4)^ := G627^.f7;
-          (G627+7)^ := SEG;
+          (G13+4)^ := G627^.f7;
+          (G627+7)^ := G13;
           if (G657 <> nil) then begin
-            SEG := G657;
+            G13 := G657;
             G657 := G657^.f4;
           end else begin
-            NEW(@SEG, 5);
+            NEW(@G13, 5);
           end;
-          TLA.23(@CODEINSEG, @G650, 1);
+          TLA.23(@G48, @G650, 1);
         end;
       end;
     end;
@@ -802,19 +802,19 @@ procedure TLA.15(args 1 words);  { locals 3 words, lex 1 }
       if (G627^.f5 <> 27) then begin
         (G627+7)^ := (G627^.f7+1);
         NEW(@G628, 2);
-        G628^ := (GOTOOK-512);
+        G628^ := (G52-512);
         (G628+1)^ := G627^.f8;
         (G627+8)^ := G628;
       end;
       case G627^.f5 of   { table 27..31 }
         28, 30: begin
-          TLA.23(@BPTONLINE, @G636, 3);
+          TLA.23(@G46, @G636, 3);
         end;
         31: begin
-          TLA.23(@IOCHECK, @G643, 2);
+          TLA.23(@G47, @G643, 2);
         end;
         27: begin
-          TLA.23(@OPT_E, @G629, 4);
+          TLA.23(@G45, @G629, 4);
         end;
       end;
     end;
@@ -824,160 +824,160 @@ procedure TLA.15(args 1 words);  { locals 3 words, lex 1 }
 
 procedure TLA.16(args 0 words);  { locals 1 words, lex 1 }
   if 0 then begin
-    FWRITESTRING(@UVARPTR, 'Getchar ', 0);
+    FWRITESTRING(@G73, 'Getchar ', 0);
     IOCHECK();
   end;
   case G659 of   { table 0..2 }
     0: begin
-      if RESIDENT then begin
-        GATDPLMT := (GATDPLMT+1);
-        TOP := (TOP+1);
+      if G62 then begin
+        G7 := (G7+1);
+        G8 := (G8+1);
       end else begin
-        RESIDENT := 1;
+        G62 := 1;
       end;
-      if (UFLDPTR^[GATDPLMT] = 16) then begin
-        TEST := UFLDPTR^[(GATDPLMT+1)];
-        INPUTPTR := ((TEST-32) = 0);
-        if (TOP < 101) then begin
-          @G539^[TOP] := 16;
-          @G539^[(TOP+1)] := TEST;
-          TOP := (TOP+2);
+      if (G71^[G7] = 16) then begin
+        G11 := G71^[(G7+1)];
+        G67 := ((G11-32) = 0);
+        if (G8 < 101) then begin
+          @G539^[G8] := 16;
+          @G539^[(G8+1)] := G11;
+          G8 := (G8+2);
         end;
-        GATDPLMT := (GATDPLMT+2);
+        G7 := (G7+2);
       end;
-      TEST := UFLDPTR^[GATDPLMT];
-      if (TEST = 37) then begin
-        GETSTMTLEV := PUBLICPROCS;
-        TLA.28(@GATDPLMT);
+      G11 := G71^[G7];
+      if (G11 = 37) then begin
+        G26 := G27;
+        TLA.28(@G7);
       end else begin
-        if ((TEST = 32) and OUTERBLOCK) then begin
-          L1 := SCAN(102, 1, 32, UFLDPTR, GATDPLMT, 0);
-          if ((TOP+L1) < 102) then begin
-            FILLCHAR(@G539, TOP, L1, 32);
-            TOP := ((TOP+L1)-1);
+        if ((G11 = 32) and G65) then begin
+          L1 := SCAN(102, 1, 32, G71, G7, 0);
+          if ((G8+L1) < 102) then begin
+            FILLCHAR(@G539, G8, L1, 32);
+            G8 := ((G8+L1)-1);
           end;
-          GATDPLMT := ((GATDPLMT+L1)-1);
+          G7 := ((G7+L1)-1);
         end else begin
-          if (TEST <> 13) then begin
-            if (TOP < 102) then begin
-              @G539^[TOP] := TEST;
+          if (G11 <> 13) then begin
+            if (G8 < 102) then begin
+              @G539^[G8] := G11;
             end;
-            if (TEST = 9) then begin
-              TEST := 32;
+            if (G11 = 9) then begin
+              G11 := 32;
             end;
           end;
         end;
       end;
     end;
     1: begin
-      if RESIDENT then begin
-        SYSCOMP := (SYSCOMP+1);
-        TOP := (TOP+1);
+      if G62 then begin
+        G28 := (G28+1);
+        G8 := (G8+1);
       end else begin
-        RESIDENT := 1;
+        G62 := 1;
       end;
-      if (PUBLICPROCS > 0) then begin
-        TEST := UFLDPTR^[SYSCOMP];
+      if (G27 > 0) then begin
+        G11 := G71^[G28];
       end else begin
-        TEST := @G1608^[SYSCOMP];
+        G11 := @G1608^[G28];
       end;
-      if ((TEST = 37) and (PUBLICPROCS > 0)) then begin
-        TLA.28(@SYSCOMP);
+      if ((G11 = 37) and (G27 > 0)) then begin
+        TLA.28(@G28);
       end else begin
-        if (((TEST = 44) or (TEST = 13)) or (TEST = 59)) then begin
-          PUBLICPROCS := (PUBLICPROCS+1);
-          if (PUBLICPROCS > 1) then begin
-            L1 := SCAN(-(70), 1, 32, UFLDPTR, (SYSCOMP-1), 0);
+        if (((G11 = 44) or (G11 = 13)) or (G11 = 59)) then begin
+          G27 := (G27+1);
+          if (G27 > 1) then begin
+            L1 := SCAN(-(70), 1, 32, G71, (G28-1), 0);
           end else begin
-            L1 := SCAN(-(70), 1, 32, @G1608, (SYSCOMP-1), 0);
+            L1 := SCAN(-(70), 1, 32, @G1608, (G28-1), 0);
           end;
-          TOP := (TOP+L1);
-          UFLDPTR := @G661[PUBLICPROCS]^;
-          if (PUBLICPROCS = GETSTMTLEV) then begin
+          G8 := (G8+L1);
+          G71 := @G661[G27]^;
+          if (G27 = G26) then begin
             G659 := 0;
           end else begin
-            SYSCOMP := @G679[PUBLICPROCS]^;
+            G28 := @G679[G27]^;
           end;
-          RESIDENT := 0;
+          G62 := 0;
           TLA.16();
         end else begin
-          if ((TEST = 32) and OUTERBLOCK) then begin
+          if ((G11 = 32) and G65) then begin
             repeat
-              if (TOP < 102) then begin
-                @G539^[TOP] := 32;
+              if (G8 < 102) then begin
+                @G539^[G8] := 32;
               end;
-              TOP := (TOP+1);
-              SYSCOMP := (SYSCOMP+1);
-              if (PUBLICPROCS > 0) then begin
-                TEST := UFLDPTR^[SYSCOMP];
+              G8 := (G8+1);
+              G28 := (G28+1);
+              if (G27 > 0) then begin
+                G11 := G71^[G28];
               end else begin
-                TEST := @G1608^[SYSCOMP];
+                G11 := @G1608^[G28];
               end;
-            until (TEST <> 32);
-            TEST := 32;
-            SYSCOMP := (SYSCOMP-1);
-            TOP := (TOP-1);
+            until (G11 <> 32);
+            G11 := 32;
+            G28 := (G28-1);
+            G8 := (G8-1);
           end else begin
-            if (TOP < 102) then begin
-              @G539^[TOP] := TEST;
+            if (G8 < 102) then begin
+              @G539^[G8] := G11;
             end;
-            if (TEST = 9) then begin
-              TEST := 32;
+            if (G11 = 9) then begin
+              G11 := 32;
             end;
           end;
         end;
       end;
     end;
     2: begin
-      if RESIDENT then begin
-        INTRINSIC := (INTRINSIC+1);
+      if G62 then begin
+        G41 := (G41+1);
       end else begin
-        RESIDENT := 1;
+        G62 := 1;
       end;
-      if (INTRINSIC >= OP) then begin
+      if (G41 >= G16) then begin
         TLA.27();
       end;
-      if ((@G1608^[INTRINSIC] = 16) and not (BOOLPTR)) then begin
-        TEST := @G1608^[(INTRINSIC+1)];
-        INPUTPTR := ((TEST-32) = 0);
-        INTRINSIC := (INTRINSIC+2);
+      if ((@G1608^[G41] = 16) and not (G58)) then begin
+        G11 := @G1608^[(G41+1)];
+        G67 := ((G11-32) = 0);
+        G41 := (G41+2);
       end;
-      TEST := @G1608^[INTRINSIC];
-      if ((TEST = 59) and OUTERBLOCK) then begin
-        L1 := SCAN(102, 0, 13, @G1608, INTRINSIC, 0);
-        INTRINSIC := (INTRINSIC+L1);
-        TEST := 13;
+      G11 := @G1608^[G41];
+      if ((G11 = 59) and G65) then begin
+        L1 := SCAN(102, 0, 13, @G1608, G41, 0);
+        G41 := (G41+L1);
+        G11 := 13;
       end else begin
-        if (((TEST = 32) and OUTERBLOCK) and not (BOOLPTR)) then begin
-          L1 := SCAN(102, 1, 32, @G1608, INTRINSIC, 0);
-          INTRINSIC := ((INTRINSIC+L1)-1);
+        if (((G11 = 32) and G65) and not (G58)) then begin
+          L1 := SCAN(102, 1, 32, @G1608, G41, 0);
+          G41 := ((G41+L1)-1);
         end else begin
-          if (TEST <> 13) then begin
-            if (TEST = 9) then begin
-              TEST := 32;
+          if (G11 <> 13) then begin
+            if (G11 = 9) then begin
+              G11 := 32;
             end;
           end;
         end;
       end;
     end;
   end;
-  if ((TEST in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) and OUTERBLOCK) then begin
-    TEST := (TEST-32);
+  if ((G11 in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) and G65) then begin
+    G11 := (G11-32);
   end;
   if 0 then begin
-    FWRITESTRING(@UVARPTR, 'CH=', 0);
+    FWRITESTRING(@G73, 'CH=', 0);
     IOCHECK();
-    FWRITECHAR(@UVARPTR, TEST, 0);
+    FWRITECHAR(@G73, G11, 0);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, '|ORD:', 0);
+    FWRITESTRING(@G73, '|ORD:', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, TEST, 0);
+    FWRITEINT(@G73, G11, 0);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, ' FROM:', 0);
+    FWRITESTRING(@G73, ' FROM:', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, G659, 0);
+    FWRITEINT(@G73, G659, 0);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
   end;
 
@@ -988,16 +988,16 @@ procedure TLA.17(args 0 words);  { locals 0 words, lex 1 }
     FWRITELN(I2,3);
     IOCHECK();
   end;
-  INPUTPTR := (GATKIND = 38);
+  G67 := (G4 = 38);
   TLA.16();
-  while (TEST = 32) do begin
+  while (G11 = 32) do begin
     TLA.16();
-    INPUTPTR := 0;
+    G67 := 0;
   end;
-  if (TEST = 13) then begin
-    GATKIND := 38;
+  if (G11 = 13) then begin
+    G4 := 38;
   end else begin
-    case TEST of   { table 33..126 }
+    case G11 of   { table 33..126 }
       48, 49, 50, 51, 52, 53, 54, 55, 56, 57: begin
         TLA.32();
       end;
@@ -1008,47 +1008,47 @@ procedure TLA.17(args 0 words);  { locals 0 words, lex 1 }
         TLA.33();
       end;
       35: begin
-        GATKIND := 24;
+        G4 := 24;
       end;
       40: begin
-        GATKIND := 8;
+        G4 := 8;
       end;
       91: begin
-        GATKIND := 10;
+        G4 := 10;
       end;
       123: begin
-        GATKIND := 10;
+        G4 := 10;
       end;
       44: begin
-        GATKIND := 14;
+        G4 := 14;
       end;
       126: begin
-        GATKIND := 6;
+        G4 := 6;
       end;
       63: begin
-        GATKIND := 17;
+        G4 := 17;
       end;
       93: begin
-        GATKIND := 11;
+        G4 := 11;
       end;
       41: begin
-        GATKIND := 9;
+        G4 := 9;
       end;
       125: begin
-        GATKIND := 13;
+        G4 := 13;
       end;
       59: begin
-        GATKIND := 38;
+        G4 := 38;
       end;
       64: begin
-        GATKIND := 22;
+        G4 := 22;
       end;
       36: begin
         if (42 = 36) then begin
           TLA.16();
-          if ((TEST < 48) or (TEST > 57)) then begin
-            GATKIND := 27;
-            RESIDENT := 0;
+          if ((G11 < 48) or (G11 > 57)) then begin
+            G4 := 27;
+            G62 := 0;
           end else begin
             TLA.35();
           end;
@@ -1061,68 +1061,68 @@ procedure TLA.17(args 0 words);  { locals 0 words, lex 1 }
         TLA.36();
       end;
       47: begin
-        GATKIND := 4;
+        G4 := 4;
       end;
       33: begin
-        GATKIND := 7;
+        G4 := 7;
       end;
       43: begin
         TLA.16();
-        if (TEST = 32) then begin
-          GATKIND := 25;
+        if (G11 = 32) then begin
+          G4 := 25;
         end else begin
-          GATKIND := 18;
+          G4 := 18;
         end;
-        RESIDENT := 0;
+        G62 := 0;
       end;
       45: begin
         TLA.16();
-        if (TEST = 32) then begin
-          GATKIND := 26;
+        if (G11 = 32) then begin
+          G4 := 26;
         end else begin
-          GATKIND := 19;
+          G4 := 19;
         end;
-        RESIDENT := 0;
+        G62 := 0;
       end;
       58: begin
-        GATKIND := 23;
+        G4 := 23;
       end;
       124: begin
-        GATKIND := 2;
+        G4 := 2;
       end;
       94: begin
-        GATKIND := 3;
+        G4 := 3;
       end;
       38: begin
-        GATKIND := 21;
+        G4 := 21;
       end;
       42: begin
-        GATKIND := 20;
+        G4 := 20;
       end;
       37: begin
-        GATKIND := 5;
+        G4 := 5;
       end;
       60: begin
         TLA.16();
-        if (TEST = 62) then begin
-          GATKIND := 1;
+        if (G11 = 62) then begin
+          G4 := 1;
         end else begin
-          GATKIND := 15;
-          RESIDENT := 0;
+          G4 := 15;
+          G62 := 0;
         end;
       end;
       62: begin
-        GATKIND := 16;
+        G4 := 16;
       end;
       61: begin
-        GATKIND := 0;
+        G4 := 0;
       end;
     end;
   end;
   if 0 then begin
     FWRITESTRING(I2,3, 'LEXTOKEN IS:', 0);
     IOCHECK();
-    FWRITEINT(I2,3, GATKIND, 0);
+    FWRITEINT(I2,3, G4, 0);
     IOCHECK();
     FWRITELN(I2,3);
     IOCHECK();
@@ -1132,26 +1132,26 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
   move(@G622, @G598, 6 words);
   L5 := -(1);
   repeat
-    if CHARPTR then begin
+    if G59 then begin
       TLA.17();
     end else begin
-      CHARPTR := 1;
+      G59 := 1;
     end;
-    if not ((GATKIND in {0,1,2,3,4,5,6,7,8,9,14,15,16,18,19,20,21,22,24,25,26,27,38,46,65,66,67,68})) then begin
+    if not ((G4 in {0,1,2,3,4,5,6,7,8,9,14,15,16,18,19,20,21,22,24,25,26,27,38,46,65,66,67,68})) then begin
       TLA.29();
     end else begin
       L28 := @L6[(L5+1)*2w];
-      case GATKIND of   { table 0..68 }
+      case G4 of   { table 0..68 }
         2, 3, 4, 5, 6, 15, 18, 19, 21: begin
           L5 := (L5+1);
-          { unmodelled packed store of GATKIND }
+          { unmodelled packed store of G4 }
         end;
         20: begin
           if (L5 = -(1)) then begin
             if (42 = 42) then begin
               L5 := (L5+1);
               if (G660 = 0) then begin
-                (L28+1)^ := SEGSLOT;
+                (L28+1)^ := G21;
               end else begin
                 (L28+1)^ := G20;
               end;
@@ -1162,20 +1162,20 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
                 TLA.31();
               end;
             end else begin
-              GATVLEV := (GATVLEV+1);
-              @G685[GATVLEV]^ := GATKIND;
+              G6 := (G6+1);
+              @G685[G6]^ := G4;
             end;
             { paths disagree on stack depth here }
           end else begin
             L5 := (L5+1);
-            { unmodelled packed store of GATKIND }
+            { unmodelled packed store of G4 }
           end;
           { paths disagree on stack depth here }
         end;
         27: begin
           L5 := (L5+1);
           if (G660 = 0) then begin
-            (L28+1)^ := SEGSLOT;
+            (L28+1)^ := G21;
           end else begin
             (L28+1)^ := G20;
           end;
@@ -1195,8 +1195,8 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
         66, 67: begin
           L5 := (L5+1);
           (L28+1)^ := 0;
-          if (GATKIND = 67) then begin
-            (L28+1)^ := LIBNOTOPEN;
+          if (G4 = 67) then begin
+            (L28+1)^ := G29;
           end else begin
             if (@G406^[0] <= 2) then begin
               L4 := 1;
@@ -1217,18 +1217,18 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
         end;
         65: begin
           if G623 then begin
-            if (@G691[LIST*7w]^.f6 = 36) then begin
+            if (@G691[G43*7w]^.f6 = 36) then begin
               TLA.2(28);
             end;
           end else begin
-            if (@G691[LIST*7w]^.f6 = 36) then begin
+            if (@G691[G43*7w]^.f6 = 36) then begin
               G623 := 1;
             end;
             G622 := 0;
-            G624 := LIST;
+            G624 := G43;
           end;
           L5 := (L5+1);
-          (L28+1)^ := @G691[LIST*7w]^.f4;
+          (L28+1)^ := @G691[G43*7w]^.f4;
           { unmodelled packed store of 35 }
           { unmodelled packed store of 70 }
           if (L5 > 0) then begin
@@ -1247,10 +1247,10 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
         end;
         68: begin
           L5 := (L5+1);
-          case GATTYPTR^.f5 of   { table 0..36 }
+          case G3^.f5 of   { table 0..36 }
             0, 22, 23, 24, 25, 34: begin
-              (L28+1)^ := GATTYPTR^.f6;
-              { unmodelled packed store of GATTYPTR^.f5 }
+              (L28+1)^ := G3^.f6;
+              { unmodelled packed store of G3^.f5 }
             end;
             26, 36: begin
               (L28+1)^ := 0;
@@ -1260,15 +1260,15 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
               end else begin
                 G623 := 1;
                 G622 := 1;
-                G627 := GATTYPTR;
+                G627 := G3;
               end;
             end;
             32, 35: begin
-              (L28+1)^ := GATTYPTR^.f6;
+              (L28+1)^ := G3^.f6;
               { unmodelled packed store of 35 }
               if not (G623) then begin
                 G622 := 1;
-                G627 := GATTYPTR;
+                G627 := G3;
               end;
             end;
             1, 33: begin
@@ -1276,15 +1276,15 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
               { unmodelled packed store of 35 }
               if not (G623) then begin
                 G622 := 1;
-                G627 := GATTYPTR;
+                G627 := G3;
               end;
             end;
             27, 28, 29, 30, 31: begin
               (L28+1)^ := 0;
-              { unmodelled packed store of GATTYPTR^.f5 }
+              { unmodelled packed store of G3^.f5 }
               if not (G623) then begin
                 G622 := 2;
-                G627 := GATTYPTR;
+                G627 := G3;
               end;
             end;
           end;
@@ -1298,8 +1298,8 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
           TLA.30();
         end;
         7, 9, 22, 24, 25, 26: begin
-          GATVLEV := (GATVLEV+1);
-          @G685[GATVLEV]^ := GATKIND;
+          G6 := (G6+1);
+          @G685[G6]^ := G4;
         end;
         16: begin
           if (L5 = 0) then begin
@@ -1325,17 +1325,17 @@ function TLA.18(args 1 words) : <1 word result>;  { locals 26 words, lex 1 }
   until 0;
 
 function TLA.19(args 5 words) : <1 word result>;  { locals 0 words, lex 1 }
-  if (L6 and not ((SYMCURSOR in {0,22,23,24,25,34}))) then begin
+  if (L6 and not ((G14 in {0,22,23,24,25,34}))) then begin
     TLA.2(24);
     L1 := 0;
   end else begin
-    if (L5 and ((SY < L4) or (SY > L3))) then begin
+    if (L5 and ((G15 < L4) or (G15 > L3))) then begin
       TLA.2(2);
       L1 := 0;
     end else begin
-      if (L7 and (GATVLEV <> -(1))) then begin
+      if (L7 and (G6 <> -(1))) then begin
         TLA.2(25);
-        GATVLEV := -(1);
+        G6 := -(1);
         L1 := 1;
       end else begin
         L1 := 1;
@@ -1344,35 +1344,35 @@ function TLA.19(args 5 words) : <1 word result>;  { locals 0 words, lex 1 }
   end;
 
 procedure TLA.20(args 2 words);  { locals 1 words, lex 1 }
-  if INTPTR then begin
-    FWRITELN(@UVARPTR);
+  if G12 then begin
+    FWRITELN(@G73);
     IOCHECK();
-    FWRITEBYTES(@UVARPTR, @G539, 102, 102);
+    FWRITEBYTES(@G73, @G539, 102, 102);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, 'ERROR #', 0);
+    FWRITESTRING(@G73, 'ERROR #', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, L2, 4);
+    FWRITEINT(@G73, L2, 4);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
     if L1 then begin
-      FWRITECHAR(@UVARPTR, 34, 0);
+      FWRITECHAR(@G73, 34, 0);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, '6500', 0);
+      FWRITESTRING(@G73, '6500', 0);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, '.ERRORS" file not around', 0);
+      FWRITESTRING(@G73, '.ERRORS" file not around', 0);
       IOCHECK();
-      FWRITELN(@UVARPTR);
+      FWRITELN(@G73);
       IOCHECK();
       L3 := 4;
     end else begin
       L3 := 3;
     end;
-    INMODULE := (INMODULE+L3);
+    G32 := (G32+L3);
   end;
-  if not ((MODPTR and INTPTR)) then begin
+  if not ((G68 and G12)) then begin
     FWRITELN(I2,3);
     IOCHECK();
     FWRITEBYTES(I2,3, @G539, 102, 102);
@@ -1399,7 +1399,7 @@ procedure TLA.20(args 2 words);  { locals 1 words, lex 1 }
 
 procedure TLA.21(args 1 words);  { locals 0 words, lex 2 }
   TLA.11(I1,5, 0);
-  FWRITESTRING(@UVARPTR, '* ', 0);
+  FWRITESTRING(@G73, '* ', 0);
   IOCHECK();
   if 0 then begin
     TLA.11(I1,4, L1);
@@ -1410,43 +1410,43 @@ procedure TLA.21(args 1 words);  { locals 0 words, lex 2 }
       TLA.11(TLA.3(I1,4), L1);
     end;
   end;
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  INMODULE := (INMODULE+1);
-  if ((INMODULE mod 55) = 0) then begin
+  G32 := (G32+1);
+  if ((G32 mod 55) = 0) then begin
     TLA.9();
   end;
 
 procedure TLA.22(args 0 words);  { locals 0 words, lex 2 }
-  (SEG+3)^ := GOTOOK;
-  (SEG+2)^ := LGTH;
+  (G13+3)^ := G52;
+  (G13+2)^ := G22;
   { unmodelled packed store of 0 }
   { unmodelled packed store of 0 }
-  (SEG+1)^ := I1,1;
+  (G13+1)^ := I1,1;
   I1,4 := 3;
-  { left on stack: SEG }
+  { left on stack: G13 }
   { left on stack: 1 }
-  { left on stack: SEG }
+  { left on stack: G13 }
   { left on stack: 8 }
 
 procedure TLA.23(args 3 words);  { locals 0 words, lex 2 }
-  if (USINGLIST and (INCLFILE <> 34)) then begin
+  if (G63 and (G626 <> 34)) then begin
     if (L3^ = 7) then begin
       G1135^ := L1;
       move((G1135+1), L2, 7 words);
       FPUT(@G1135);
       IOCHECK();
-      DISX := (DISX+1);
+      G24 := (G24+1);
       FILLCHAR(L2, 0, 14, 0);
       L3^ := 0;
     end;
-    L2[L3^]^ := GOTOOK;
+    L2[L3^]^ := G52;
     L3^ := (L3^+1);
   end;
 
 procedure TLA.24(args 0 words);  { locals 0 words, lex 2 }
-  (SEG+3)^ := GOTOOK;
-  (SEG+2)^ := LGTH;
+  (G13+3)^ := G52;
+  (G13+2)^ := G22;
   { unmodelled packed store of I1,1 }
   if I1,2 then begin
     if 1 then begin
@@ -1455,22 +1455,22 @@ procedure TLA.24(args 0 words);  { locals 0 words, lex 2 }
       I1,8 := 1;
     end;
     if ((1 and -(1)) or (-(2) and 0)) then begin
-      (SEG+3)^ := (GOTOOK+1);
+      (G13+3)^ := (G52+1);
     end;
     { unmodelled packed store of 1 }
-    if (INCLFILE = 35) then begin
-      (SEG+1)^ := (G625-G20);
+    if (G626 = 35) then begin
+      (G13+1)^ := (G625-G20);
     end;
   end else begin
     I1,8 := 3;
     { unmodelled packed store of 0 }
-    if (INCLFILE = 35) then begin
-      (SEG+1)^ := (I1,3-G20);
+    if (G626 = 35) then begin
+      (G13+1)^ := (I1,3-G20);
     end;
   end;
-  { left on stack: SEG }
+  { left on stack: G13 }
   { left on stack: 8 }
-  { left on stack: SEG }
+  { left on stack: G13 }
   { left on stack: 1 }
 
 procedure TLA.25(args 0 words);  { locals 0 words, lex 2 }
@@ -1490,39 +1490,39 @@ procedure TLA.25(args 0 words);  { locals 0 words, lex 2 }
 
 procedure TLA.26(args 0 words);  { locals 0 words, lex 2 }
   if I1,2 then begin
-    if (INCLFILE = 35) then begin
+    if (G626 = 35) then begin
       I1,4 := (G625-G20);
     end else begin
       I1,4 := G625;
     end;
     TLA.25();
   end else begin
-    if (INCLFILE = 35) then begin
+    if (G626 = 35) then begin
       I1,6 := (I1,3-G20);
     end;
   end;
 
 procedure TLA.27(args 0 words);  { locals 0 words, lex 1 }
-  move(@G539, @SYSTEMLIB, 51 words);
-  TOP := 0;
-  if LONGINTPTR then begin
-    LSEPPROC := FBLOCKIO(@G1095, @G1608, 0, 2, VARSTRG, 1);
+  move(@G539, @G488, 51 words);
+  G8 := 0;
+  if G60 then begin
+    G40 := FBLOCKIO(@G1095, @G1608, 0, 2, G39, 1);
   end else begin
-    LSEPPROC := FBLOCKIO(I2,9, @G1608, 0, 2, VARSTRG, 1);
+    G40 := FBLOCKIO(I2,9, @G1608, 0, 2, G39, 1);
   end;
-  INTRINSIC := 0;
-  VARSTRG := (VARSTRG+LSEPPROC);
+  G41 := 0;
+  G39 := (G39+G40);
   if 0 then begin
     FWRITESTRING(I2,3, 'BLOCKREAD=', 0);
-    FWRITEINT(I2,3, VARSTRG, 0);
+    FWRITEINT(I2,3, G39, 0);
     FWRITELN(I2,3);
   end;
-  if (LSEPPROC = 0) then begin
-    if LONGINTPTR then begin
-      VARSTRG := DP;
-      INTRINSIC := INCLUDING;
-      LSEPPROC := FBLOCKIO(I2,9, @G1608, 0, 2, (VARSTRG-2), 1);
-      LONGINTPTR := 0;
+  if (G40 = 0) then begin
+    if G60 then begin
+      G39 := G38;
+      G41 := G37;
+      G40 := FBLOCKIO(I2,9, @G1608, 0, 2, (G39-2), 1);
+      G60 := 0;
       FCLOSE(@G1095, 0);
       @G390^ := @G374  {string};
     end else begin
@@ -1532,35 +1532,35 @@ procedure TLA.27(args 0 words);  { locals 0 words, lex 1 }
     end;
   end;
   TLA.5(1);
-  TOP := SCAN(102, 0, 13, @G1608, INTRINSIC, 0);
-  OP := SCAN(1024, 0, 0, @G1608, 0, 0);
-  if (TOP < 102) then begin
-    MOVELEFT(@G1608, INTRINSIC, @G539, 0, TOP);
+  G8 := SCAN(102, 0, 13, @G1608, G41, 0);
+  G16 := SCAN(1024, 0, 0, @G1608, 0, 0);
+  if (G8 < 102) then begin
+    MOVELEFT(@G1608, G41, @G539, 0, G8);
   end else begin
-    MOVELEFT(@G1608, INTRINSIC, @G539, 0, 102);
+    MOVELEFT(@G1608, G41, @G539, 0, 102);
   end;
 
 procedure TLA.28(args 1 words);  { locals 2 words, lex 2 }
-  TEST := UFLDPTR^[(L1^+1)];
+  G11 := G71^[(L1^+1)];
   L1^ := (L1^+2);
-  if ((TEST < 49) or (TEST > 57)) then begin
+  if ((G11 < 49) or (G11 > 57)) then begin
     TLA.2(22);
   end else begin
-    L3 := (TEST-49);
-    L2 := @G667[(PUBLICPROCS-1)]^;
-    if (PUBLICPROCS > 1) then begin
-      UFLDPTR := @G661[(PUBLICPROCS-1)]^;
-      while ((L3 <> 0) and (UFLDPTR^[L2] <> 13)) do begin
-        if (UFLDPTR^[L2] = 44) then begin
+    L3 := (G11-49);
+    L2 := @G667[(G27-1)]^;
+    if (G27 > 1) then begin
+      G71 := @G661[(G27-1)]^;
+      while ((L3 <> 0) and (G71^[L2] <> 13)) do begin
+        if (G71^[L2] = 44) then begin
           L3 := (L3-1);
         end;
         L2 := (L2+1);
       end;
-      L3 := SCAN(102, 1, 32, UFLDPTR, L2, 0);
+      L3 := SCAN(102, 1, 32, G71, L2, 0);
       L2 := (L2+L3);
-      TEST := UFLDPTR^[L2];
-      if ((TEST = 13) or (TEST = 59)) then begin
-        UFLDPTR := @G661[PUBLICPROCS]^;
+      G11 := G71^[L2];
+      if ((G11 = 13) or (G11 = 59)) then begin
+        G71 := @G661[G27]^;
       end;
     end else begin
       while ((L3 <> 0) and (@G1608^[L2] <> 13)) do begin
@@ -1571,21 +1571,21 @@ procedure TLA.28(args 1 words);  { locals 2 words, lex 2 }
       end;
       L3 := SCAN(102, 1, 32, @G1608, L2, 0);
       L2 := (L2+L3);
-      TEST := @G1608^[L2];
+      G11 := @G1608^[L2];
     end;
-    if ((TEST <> 13) and (TEST <> 59)) then begin
+    if ((G11 <> 13) and (G11 <> 59)) then begin
       G659 := 1;
-      @G679[PUBLICPROCS]^ := L1^;
-      PUBLICPROCS := (PUBLICPROCS-1);
-      SYSCOMP := L2;
+      @G679[G27]^ := L1^;
+      G27 := (G27-1);
+      G28 := L2;
     end;
-    RESIDENT := 0;
+    G62 := 0;
     TLA.16();
   end;
 
 procedure TLA.29(args 0 words);  { locals 0 words, lex 2 }
   TLA.2(26);
-  while (GATKIND <> 38) do begin
+  while (G4 <> 38) do begin
     TLA.17();
   end;
   I1,1 := 0;
@@ -1593,11 +1593,11 @@ procedure TLA.29(args 0 words);  { locals 0 words, lex 2 }
 
 procedure TLA.30(args 0 words);  { locals 0 words, lex 2 }
   if (259 in 1) then begin
-    GATVLEV := (GATVLEV+1);
-    @G685[GATVLEV]^ := GATKIND;
+    G6 := (G6+1);
+    @G685[G6]^ := G4;
   end;
   if (I1,5 = -(1)) then begin
-    if (GATKIND = 8) then begin
+    if (G4 = 8) then begin
       I1,1 := 0;
       EXIT(1, 18);
     end else begin
@@ -1610,29 +1610,29 @@ procedure TLA.30(args 0 words);  { locals 0 words, lex 2 }
     end;
   end else begin
     if (7 and (0 = 70)) then begin
-      SY := @I1,6[I1,5*2w]^.f1;
-      SYMCURSOR := 8;
-      INCLFILE := SYMCURSOR;
-      G625 := SY;
+      G15 := @I1,6[I1,5*2w]^.f1;
+      G14 := 8;
+      G626 := G14;
+      G625 := G15;
       I1,1 := 1;
     end else begin
       if (7 and (0 in {18,19,20})) then begin
-        GATVLEV := (GATVLEV+1);
+        G6 := (G6+1);
         case 0 of   { table 18..20 }
           18: begin
-            @G685[GATVLEV]^ := 25;
+            @G685[G6]^ := 25;
           end;
           19: begin
-            @G685[GATVLEV]^ := 26;
+            @G685[G6]^ := 26;
           end;
           20: begin
-            @G685[GATVLEV]^ := GATKIND;
+            @G685[G6]^ := G4;
           end;
         end;
-        SY := @I1,6[0*2w]^.f1;
-        SYMCURSOR := 8;
-        INCLFILE := SYMCURSOR;
-        G625 := SY;
+        G15 := @I1,6[0*2w]^.f1;
+        G14 := 8;
+        G626 := G14;
+        G625 := G15;
         I1,1 := 1;
       end else begin
         I1,1 := 0;
@@ -1660,7 +1660,7 @@ procedure TLA.31(args 0 words);  { locals 7 words, lex 2 }
         if (L1 in {0,22,23,24,25}) then begin
           L1 := 34;
         end;
-        L5 := (((L2 = 34) and (L1 = 34)) or not ((USINGLIST or G623)));
+        L5 := (((L2 = 34) and (L1 = 34)) or not ((G63 or G623)));
         L4 := @I1,6[I1,5*2w]^.f1;
         L3 := 0;
         L7 := @I1,6[(I1,5-2)*2w];
@@ -1775,32 +1775,32 @@ procedure TLA.32(args 0 words);  { locals 169 words, lex 2 }
   end;
   @L46^ := 32  {string};
   @L5^ := 32  {string};
-  while (TEST in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70}) do begin
-    if (TEST >= 65) then begin
-      @L46^[1] := (TEST-55);
+  while (G11 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70}) do begin
+    if (G11 >= 65) then begin
+      @L46^[1] := (G11-55);
     end else begin
-      @L46^[1] := (TEST-48);
+      @L46^[1] := (G11-48);
     end;
     L89 := 0;
     SCONCAT(@L89, @L5, 80);
     SCONCAT(@L89, @L46, 160);
     @L5^ := @L89  {string};
-    L4 := TEST;
+    L4 := G11;
     TLA.16();
   end;
 L1C0F:
   SDELETE(@L5, 1, 1);
   if not (((@L5^[1] <> 0) or (@L5^[0] = 1))) then goto L1C0F;
-  if (TEST = 72) then begin
+  if (G11 = 72) then begin
     L3 := 16;
   end else begin
-    if (TEST = 46) then begin
+    if (G11 = 46) then begin
       L3 := 10;
     end else begin
-      if (TEST = 79) then begin
+      if (G11 = 79) then begin
         L3 := 8;
       end else begin
-        if (TEST = 84) then begin
+        if (G11 = 84) then begin
           L3 := 2;
         end else begin
           if (L4 = 84) then begin
@@ -1808,15 +1808,15 @@ L1C0F:
             SDELETE(@L5, @L5^[0], 1);
           end else begin
             L3 := 16;
-            RESIDENT := 0;
+            G62 := 0;
           end;
         end;
       end;
     end;
   end;
-  GATKIND := 67;
+  G4 := 67;
   @L46^[1] := 0;
-  LIBNOTOPEN := 0;
+  G29 := 0;
   case L3 of   { table 2..16 }
     16: begin
       if (@L5^[0] > 4) then begin
@@ -1832,7 +1832,7 @@ L1C0F:
         { unmodelled packed store of @L5^[2] }
         { unmodelled packed store of @L5^[3] }
         { unmodelled packed store of @L5^[4] }
-        LIBNOTOPEN := L87;
+        G29 := L87;
       end;
       { paths disagree on stack depth here }
     end;
@@ -1861,7 +1861,7 @@ L1C0F:
         if ((L1 > 3276) or ((L1 = 3276) and (@L5^[5] > 7))) then begin
           TLA.2(29);
         end else begin
-          LIBNOTOPEN := ((L1*10)+@L5^[5]);
+          G29 := ((L1*10)+@L5^[5]);
         end;
       end;
     end;
@@ -1890,7 +1890,7 @@ L1C0F:
         { unmodelled packed store of @L5^[4] }
         { unmodelled packed store of @L5^[5] }
         { unmodelled packed store of @L5^[6] }
-        LIBNOTOPEN := L87;
+        G29 := L87;
       end;
       { paths disagree on stack depth here }
     end;
@@ -1915,7 +1915,7 @@ L1C0F:
           end;
           L2 := (L2+1);
         end;
-        LIBNOTOPEN := L87;
+        G29 := L87;
       end;
     end;
   end;
@@ -1930,9 +1930,9 @@ procedure TLA.33(args 0 words);  { locals 169 words, lex 2 }
   TLA.16();
   move(@L3, @'        ', 4 words);
   L1 := 0;
-  while (TEST in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) do begin
+  while (G11 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) do begin
     if (L1 < 8) then begin
-      @L3^[L1] := TEST;
+      @L3^[L1] := G11;
     end;
     L1 := (L1+1);
     TLA.16();
@@ -1941,12 +1941,12 @@ procedure TLA.33(args 0 words);  { locals 169 words, lex 2 }
     TLA.2(45);
   end;
   L1 := -(1);
-  UFCTPTR := 0;
-  while (not (UFCTPTR) and (L1 < 32)) do begin
+  G69 := 0;
+  while (not (G69) and (L1 < 32)) do begin
     L1 := (L1+1);
-    UFCTPTR := (@G1443[L1*4w] = @L3);
+    G69 := (@G1443[L1*4w] = @L3);
   end;
-  if not (UFCTPTR) then begin
+  if not (G69) then begin
     FWRITECHAR(I3,3, 62, 0);
     IOCHECK();
     FWRITEBYTES(I3,3, @L3, 8, 8);
@@ -1957,71 +1957,71 @@ procedure TLA.33(args 0 words);  { locals 169 words, lex 2 }
     IOCHECK();
     TLA.2(33);
   end else begin
-    GATKIND := @G1575[L1]^;
+    G4 := @G1575[L1]^;
   end;
-  RESIDENT := 0;
-  if (GATKIND = 69) then begin
-    PUBLICPROCS := (PUBLICPROCS-1);
+  G62 := 0;
+  if (G4 = 69) then begin
+    G27 := (G27-1);
     TLA.6();
-    if (PUBLICPROCS > 0) then begin
-      UFLDPTR := @G661[PUBLICPROCS]^;
-      GATDPLMT := @G667[PUBLICPROCS]^;
-      while (UFLDPTR^[GATDPLMT] <> 13) do begin
-        GATDPLMT := (GATDPLMT+1);
+    if (G27 > 0) then begin
+      G71 := @G661[G27]^;
+      G7 := @G667[G27]^;
+      while (G71^[G7] <> 13) do begin
+        G7 := (G7+1);
       end;
     end else begin
       G659 := 2;
-      while (@G1608^[INTRINSIC] <> 13) do begin
-        INTRINSIC := (INTRINSIC+1);
+      while (@G1608^[G41] <> 13) do begin
+        G41 := (G41+1);
       end;
     end;
 L1FB7:
     TLA.17();
-    if not ((GATKIND = 38)) then goto L1FB7;
-    move(@G539, @SYSTEMLIB, 51 words);
-    TOP := -(1);
+    if not ((G4 = 38)) then goto L1FB7;
+    move(@G539, @G488, 51 words);
+    G8 := -(1);
     TLA.7();
-    if ((FWPTR and not (INTPTR)) and (ID = PUBLICPROCS)) then begin
-      ID := (ID-1);
-      INTPTR := 1;
-      if MODPTR then begin
+    if ((G64 and not (G12)) and (G17 = G27)) then begin
+      G17 := (G17-1);
+      G12 := 1;
+      if G68 then begin
         FWRITELN(I3,3);
         IOCHECK();
       end;
     end;
     TLA.17();
   end else begin
-    if (GATKIND = 63) then begin
-      if LONGINTPTR then begin
+    if (G4 = 63) then begin
+      if G60 then begin
         TLA.2(35);
       end else begin
         if (G659 <> 2) then begin
           TLA.2(37);
         end else begin
-          LONGINTPTR := 1;
+          G60 := 1;
           @L48^ := 32  {string};
           @L7^ := 32  {string};
           repeat
             TLA.16();
-            if ((TEST <> 32) and (TEST <> 13)) then begin
-              @L48^[1] := TEST;
+            if ((G11 <> 32) and (G11 <> 13)) then begin
+              @L48^[1] := G11;
               L89 := 0;
               SCONCAT(@L89, @L7, 80);
               SCONCAT(@L89, @L48, 160);
               @L7^ := @L89  {string};
             end;
-          until (TEST = 13);
-          DP := VARSTRG;
-          INCLUDING := INTRINSIC;
+          until (G11 = 13);
+          G38 := G39;
+          G37 := G41;
           OS.43(@L7, 1, 80);
           FOPEN(@G1095, @L7, 1, 0);
           TLA.5(1);
           MARK(@L2);
           @G390^ := @L7  {string};
-          VARSTRG := 2;
-          INTRINSIC := 1024;
-          GATKIND := 38;
-          if not ((MODPTR and INTPTR)) then begin
+          G39 := 2;
+          G41 := 1024;
+          G4 := 38;
+          if not ((G68 and G12)) then begin
             FWRITELN(I3,3);
             IOCHECK();
             FWRITEBYTES(I3,3, @G539, 102, 102);
@@ -2042,17 +2042,17 @@ procedure TLA.34(args 0 words);  { locals 8 words, lex 2 }
   end;
   move(@L4, @'        ', 4 words);
   L1 := 0;
-  while (TEST in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95}) do begin
-    if (TEST <> 95) then begin
+  while (G11 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95}) do begin
+    if (G11 <> 95) then begin
       if (L1 < 8) then begin
-        @L4^[L1] := TEST;
+        @L4^[L1] := G11;
       end;
       L1 := (L1+1);
     end;
     TLA.16();
   end;
   L3 := 0;
-  UFCTPTR := 0;
+  G69 := 0;
   L1 := 0;
   L8 := 7;
   while (L1 <= L8) do begin
@@ -2065,15 +2065,15 @@ procedure TLA.34(args 0 words);  { locals 8 words, lex 2 }
   L3 := (L3 div 128);
   L3 := ((not (L3) and L2) or (L3 and not (L2)));
   L3 := (L3 and 127);
-  GATTYPTR := @G966[L3]^;
-  while (not (UFCTPTR) and (GATTYPTR <> nil)) do begin
-    if (GATTYPTR = @L4) then begin
-      UFCTPTR := 1;
+  G3 := @G966[L3]^;
+  while (not (G69) and (G3 <> nil)) do begin
+    if (G3 = @L4) then begin
+      G69 := 1;
     end else begin
-      GATTYPTR := GATTYPTR^.f4;
+      G3 := G3^.f4;
     end;
   end;
-  if not (UFCTPTR) then begin
+  if not (G69) then begin
     if 0 then begin
       FWRITESTRING(I3,3, 'not found', 0);
       IOCHECK();
@@ -2084,113 +2084,113 @@ procedure TLA.34(args 0 words);  { locals 8 words, lex 2 }
     end;
     case G658 of   { table 1..37 }
       37: begin
-        NEW(@GATTYPTR, 7);
+        NEW(@G3, 7);
       end;
       28, 29, 30, 31: begin
         case G658 of   { table 28..31 }
           28: begin
-            NEW(@GATTYPTR, 9);
+            NEW(@G3, 9);
           end;
           30: begin
-            NEW(@GATTYPTR, 9);
+            NEW(@G3, 9);
           end;
           31: begin
-            NEW(@GATTYPTR, 9);
+            NEW(@G3, 9);
           end;
           29: begin
-            NEW(@GATTYPTR, 9);
+            NEW(@G3, 9);
           end;
         end;
-        (GATTYPTR+7)^ := 0;
-        (GATTYPTR+6)^ := 1;
-        (GATTYPTR+8)^ := nil;
+        (G3+7)^ := 0;
+        (G3+6)^ := 1;
+        (G3+8)^ := nil;
       end;
       1: begin
-        NEW(@GATTYPTR, 8);
+        NEW(@G3, 8);
       end;
       33: begin
-        NEW(@GATTYPTR, 8);
+        NEW(@G3, 8);
       end;
       26, 36: begin
-        NEW(@GATTYPTR, 8);
-        (GATTYPTR+6)^ := 0;
-        (GATTYPTR+7)^ := nil;
+        NEW(@G3, 8);
+        (G3+6)^ := 0;
+        (G3+7)^ := nil;
       end;
     end;
-    move(GATTYPTR, @L4, 4 words);
-    (GATTYPTR+5)^ := G658;
-    (GATTYPTR+4)^ := @G966[L3]^;
-    @G966[L3]^ := GATTYPTR;
+    move(G3, @L4, 4 words);
+    (G3+5)^ := G658;
+    (G3+4)^ := @G966[L3]^;
+    @G966[L3]^ := G3;
   end else begin
-    if (GATTYPTR^.f5 = 37) then begin
-      if (PUBLICPROCS = 5) then begin
+    if (G3^.f5 = 37) then begin
+      if (G27 = 5) then begin
         TLA.2(34);
       end else begin
-        if (PUBLICPROCS > 0) then begin
-          @G667[PUBLICPROCS]^ := GATDPLMT;
+        if (G27 > 0) then begin
+          @G667[G27]^ := G7;
         end else begin
-          @G667[PUBLICPROCS]^ := INTRINSIC;
+          @G667[G27]^ := G41;
         end;
-        while (TEST <> 13) do begin
+        while (G11 <> 13) do begin
           TLA.16();
         end;
         TLA.10();
         G659 := 0;
-        @G673[PUBLICPROCS]^ := TINY;
-        TINY := LINKINFO;
-        PUBLICPROCS := (PUBLICPROCS+1);
-        @G661[PUBLICPROCS]^ := GATTYPTR^.f6;
-        UFLDPTR := GATTYPTR^.f6;
-        if (ID = (PUBLICPROCS-1)) then begin
-          if UFLDPTR^[0] then begin
-            ID := PUBLICPROCS;
+        @G673[G27]^ := G42;
+        G42 := G44;
+        G27 := (G27+1);
+        @G661[G27]^ := G3^.f6;
+        G71 := G3^.f6;
+        if (G17 = (G27-1)) then begin
+          if G71^[0] then begin
+            G17 := G27;
           end else begin
-            INTPTR := 0;
-            if MODPTR then begin
+            G12 := 0;
+            if G68 then begin
               TLA.8();
             end;
           end;
         end;
-        GATDPLMT := 1;
-        GATKIND := 38;
+        G7 := 1;
+        G4 := 38;
         TLA.17();
         EXIT(1, 17);
       end;
     end;
   end;
-  if INPUTPTR then begin
+  if G67 then begin
     if 0 then begin
       FWRITESTRING(I3,3, 'STARTLINE true', 0);
       IOCHECK();
       FWRITELN(I3,3);
       IOCHECK();
     end;
-    if (TEST = 58) then begin
+    if (G11 = 58) then begin
       TLA.16();
     end;
-    GATKIND := 64;
+    G4 := 64;
   end else begin
-    if ((GATTYPTR^.f5 >= 2) and (GATTYPTR^.f5 <= 21)) then begin
-      GATKIND := 33;
+    if ((G3^.f5 >= 2) and (G3^.f5 <= 21)) then begin
+      G4 := 33;
     end else begin
-      GATKIND := 68;
+      G4 := 68;
     end;
   end;
   if 0 then begin
     FWRITESTRING(I3,3, 'PASSED=', 0);
     IOCHECK();
-    FWRITEBYTES(I3,3, GATTYPTR, 8, 8);
+    FWRITEBYTES(I3,3, G3, 8, 8);
     IOCHECK();
     FWRITESTRING(I3,3, ' VALUE=', 0);
     IOCHECK();
-    FWRITEINT(I3,3, GATTYPTR^.f5, 5);
+    FWRITEINT(I3,3, G3^.f5, 5);
     IOCHECK();
     FWRITEINT(I3,3, L3, 10);
     IOCHECK();
     FWRITELN(I3,3);
     IOCHECK();
   end;
-  RESIDENT := 0;
+  G62 := 0;
 
 procedure TLA.35(args 0 words);  { locals 9 words, lex 2 }
   if 0 then begin
@@ -2201,22 +2201,22 @@ procedure TLA.35(args 0 words);  { locals 9 words, lex 2 }
   end;
   move(@L5, @'        ', 4 words);
   L2 := 0;
-  L4 := PUBLICPROCS;
+  L4 := G27;
   L1 := (G659 = 1);
   if L1 then begin
-    LIST := @G673[L4]^;
-    if ((L4+1) = GETSTMTLEV) then begin
-      L3 := TINY;
+    G43 := @G673[L4]^;
+    if ((L4+1) = G26) then begin
+      L3 := G42;
     end else begin
       L3 := @G673[(L4+1)]^;
     end;
   end else begin
-    LIST := TINY;
-    L3 := LINKINFO;
+    G43 := G42;
+    L3 := G44;
   end;
-  while (TEST in {48,49,50,51,52,53,54,55,56,57}) do begin
+  while (G11 in {48,49,50,51,52,53,54,55,56,57}) do begin
     if (L2 < 8) then begin
-      @L5^[L2] := TEST;
+      @L5^[L2] := G11;
     end;
     L2 := (L2+1);
     TLA.16();
@@ -2224,42 +2224,42 @@ procedure TLA.35(args 0 words);  { locals 9 words, lex 2 }
   if (L2 = 0) then begin
     TLA.2(39);
   end;
-  UFCTPTR := 0;
-  while (not (UFCTPTR) and (LIST < L3)) do begin
-    if (@G691[LIST*7w] = @L5) then begin
-      UFCTPTR := 1;
+  G69 := 0;
+  while (not (G69) and (G43 < L3)) do begin
+    if (@G691[G43*7w] = @L5) then begin
+      G69 := 1;
     end else begin
-      LIST := (LIST+1);
+      G43 := (G43+1);
     end;
   end;
-  if not (UFCTPTR) then begin
-    if (LINKINFO = 21) then begin
+  if not (G69) then begin
+    if (G44 = 21) then begin
       TLA.2(40);
       EXIT(1, 1);
     end else begin
       if L1 then begin
-        MOVERIGHT(@G691[LIST*7w], 0, @G691[(LIST+1)*7w], 0, (14*(LINKINFO-LIST)));
-        TINY := (TINY+1);
+        MOVERIGHT(@G691[G43*7w], 0, @G691[(G43+1)*7w], 0, (14*(G44-G43)));
+        G42 := (G42+1);
         L2 := (L4+1);
-        L9 := (GETSTMTLEV-1);
+        L9 := (G26-1);
         while (L2 <= L9) do begin
           @G673[L2]^ := (@G673[L2]^+1);
           L2 := (L2+1);
         end;
       end;
-      L9 := @G691[LIST*7w];
+      L9 := @G691[G43*7w];
       move(L9, @L5, 4 words);
       (L9+6)^ := 36;
       (L9+4)^ := 0;
       (L9+5)^ := nil;
-      LINKINFO := (LINKINFO+1);
+      G44 := (G44+1);
     end;
   end;
-  GATKIND := 65;
-  if (INPUTPTR and (TEST = 58)) then begin
+  G4 := 65;
+  if (G67 and (G11 = 58)) then begin
     TLA.16();
   end;
-  RESIDENT := 0;
+  G62 := 0;
 
 procedure TLA.36(args 0 words);  { locals 124 words, lex 2 }
   if 0 then begin
@@ -2268,15 +2268,15 @@ procedure TLA.36(args 0 words);  { locals 124 words, lex 2 }
     FWRITELN(I3,3);
     IOCHECK();
   end;
-  GATKIND := 66;
-  OUTERBLOCK := 0;
+  G4 := 66;
+  G65 := 0;
   L2 := 0;
   @L3^ := 32  {string};
   @G406^ := ''  {string};
   TLA.16();
   L1 := 0;
-  while (((TEST <> 34) and (L1 < 80)) and (TEST <> 13)) do begin
-    @L3^[1] := TEST;
+  while (((G11 <> 34) and (L1 < 80)) and (G11 <> 13)) do begin
+    @L3^[1] := G11;
     L44 := 0;
     SCONCAT(@L44, @G406, 80);
     SCONCAT(@L44, @L3, 160);
@@ -2287,13 +2287,13 @@ procedure TLA.36(args 0 words);  { locals 124 words, lex 2 }
     TLA.16();
     L1 := (L1+1);
   end;
-  OUTERBLOCK := 1;
+  G65 := 1;
   if L2 then begin
     L1 := SCAN(-(L1), 1, 32, @G406, L1, 0);
     @G406^[0] := (@G406^[0]+L1);
   end;
-  if (TEST = 13) then begin
-    GATKIND := 38;
+  if (G11 = 13) then begin
+    G4 := 38;
     TLA.2(41);
   end;
   if (L1 > 80) then begin
@@ -2307,8 +2307,8 @@ SEGMENT 7 INITIALI
 procedure INITIALI.1(args 0 words);  { locals 392 words, lex 1 }
   FINIT(@L86, @L386, 6);
   INITIALI.5();
-  FILLCHAR(@SYSTEMLIB, 0, 102, 0);
-  move(@G539, @SYSTEMLIB, 51 words);
+  FILLCHAR(@G488, 0, 102, 0);
+  move(@G539, @G488, 51 words);
   INITIALI.3();
   FWRITESTRING(I2,3, '6500', 0);
   FWRITESTRING(I2,3, '   Assembler  ', 0);
@@ -2321,23 +2321,23 @@ procedure INITIALI.1(args 0 words);  { locals 392 words, lex 1 }
     L2 := (L2+1);
   end;
   move(@G2147, @G2136, 11 words);
-  GATCVAL := 0;
+  G5 := 0;
   move(@G2120, @'0123456789ABCDEF', 8 words);
-  PRTERR := 0;
-  ININTERFACE := 0;
+  G53 := 0;
+  G31 := 0;
   G18 := 32767;
-  SWAPMORE := 0;
-  GATVLEV := -(1);
-  USING := 0;
-  INMODULE := 0;
+  G33 := 0;
+  G6 := -(1);
+  G36 := 0;
+  G32 := 0;
   if (@I2,46^[0] = 0) then begin
     @G374^ := @I2,38  {string};
   end else begin
     @G374^ := @I2,46  {string};
   end;
   @G390^ := @G374  {string};
-  INTPTR := 0;
-  FWPTR := 0;
+  G12 := 0;
+  G64 := 0;
   repeat
     FWRITESTRING(I2,3, 'Output file for assembled listing: (<CR> for none)', 0);
     FREADSTRING(I2,2, @L4, 80);
@@ -2348,23 +2348,23 @@ procedure INITIALI.1(args 0 words);  { locals 392 words, lex 1 }
       end;
     end;
     OS.43(@L4, 1, 80);
-    MODPTR := ((@L4 = 'CONSOLE:') or (@L4 = '#1:'));
+    G68 := ((@L4 = 'CONSOLE:') or (@L4 = '#1:'));
     if (@L4 <> '') then begin
-      FOPEN(@UVARPTR, @L4, 0, 0);
+      FOPEN(@G73, @L4, 0, 0);
     end;
     L1 := (IORESULT() = 0);
     TLA.5(0);
   until L1;
-  INTPTR := (@L4 <> '');
-  FWPTR := INTPTR;
-  if INTPTR then begin
-    ID := 0;
+  G12 := (@L4 <> '');
+  G64 := G12;
+  if G12 then begin
+    G17 := 0;
   end else begin
-    ID := -(1);
+    G17 := -(1);
   end;
-  NILPTR := 1;
-  INTRACTVPTR := 1;
-  USINGLIST := 1;
+  G56 := 1;
+  G55 := 1;
+  G63 := 1;
   L2 := 1;
   L392 := 9;
   while (L2 <= L392) do begin
@@ -2380,33 +2380,33 @@ procedure INITIALI.1(args 0 words);  { locals 392 words, lex 1 }
   move(@G622, @G598, 6 words);
   G599 := 0;
   MARK(@G2158);
-  CHARPTR := 1;
-  OUTERBLOCK := 1;
-  BOOLPTR := 0;
-  LONGINTPTR := 0;
-  UPRCPTR := 0;
-  OUTPUTPTR := 0;
-  LGTH := 0;
+  G59 := 1;
+  G65 := 1;
+  G58 := 0;
+  G60 := 0;
+  G70 := 0;
+  G66 := 0;
+  G22 := 0;
   G20 := 0;
   G19 := 0;
-  SEGSLOT := 0;
-  VAL := -(1);
+  G21 := 0;
+  G23 := -(1);
   move(@G2159, @'        ', 4 words);
-  SWAPPING := 0;
+  G34 := 0;
   @G447^ := 32  {string};
-  if INTPTR then begin
-    FWRITESTRING(@UVARPTR, 'PAGE - ', 0);
+  if G12 then begin
+    FWRITESTRING(@G73, 'PAGE - ', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, SWAPPING, 3);
+    FWRITEINT(@G73, G34, 3);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
-    SWAPPING := (SWAPPING+1);
+    G34 := (G34+1);
   end;
   FOPEN(@G1135, @G590, 0, 0);
-  LCMAX := 0;
+  G25 := 0;
   TLA.5(1);
-  NEW(@GATTYPTR, 8);
+  NEW(@G3, 8);
   INITIALI.4();
   TLA.8();
   G660 := 1;
@@ -2482,7 +2482,7 @@ procedure INITIALI.2(args 0 words);  { locals 0 words, lex 2 }
 
 procedure INITIALI.3(args 0 words);  { locals 1 words, lex 2 }
   L1 := 1;
-  TEXTPTR := (@L1^[1] = 1);
+  G57 := (@L1^[1] = 1);
 
 procedure INITIALI.4(args 0 words);  { locals 9 words, lex 2 }
   I1,2 := 0;
@@ -2497,7 +2497,7 @@ procedure INITIALI.4(args 0 words);  { locals 9 words, lex 2 }
   repeat
     move(@L5, I1,86, 4 words);
     L2 := 0;
-    UFCTPTR := 0;
+    G69 := 0;
     I1,2 := 0;
     L9 := 7;
     while (I1,2 <= L9) do begin
@@ -2510,31 +2510,31 @@ procedure INITIALI.4(args 0 words);  { locals 9 words, lex 2 }
     L2 := (L2 div 128);
     L2 := ((not (L2) and L1) or (L2 and not (L1)));
     L2 := (L2 and 127);
-    GATTYPTR := @G966[L2]^;
-    while (not (UFCTPTR) and (GATTYPTR <> nil)) do begin
-      if (GATTYPTR = @L5) then begin
-        UFCTPTR := 1;
+    G3 := @G966[L2]^;
+    while (not (G69) and (G3 <> nil)) do begin
+      if (G3 = @L5) then begin
+        G69 := 1;
       end else begin
-        GATTYPTR := GATTYPTR^.f4;
+        G3 := G3^.f4;
       end;
     end;
-    if UFCTPTR then begin
+    if G69 then begin
       FWRITESTRING(I3,3, 'Opcode declared twice=', 0);
       FWRITEBYTES(I3,3, @L5, 8, 8);
       FWRITELN(I3,3);
     end else begin
-      NEW(@GATTYPTR, 7);
-      move(GATTYPTR, @L5, 4 words);
+      NEW(@G3, 7);
+      move(G3, @L5, 4 words);
       if L3 then begin
-        (GATTYPTR+6)^ := TLA.3(I1,86^.f4);
+        (G3+6)^ := TLA.3(I1,86^.f4);
         L4 := TLA.3(I1,86^.f5);
-        (GATTYPTR+5)^ := L4;
+        (G3+5)^ := L4;
       end else begin
-        (GATTYPTR+5)^ := I1,86^.f5;
-        (GATTYPTR+6)^ := I1,86^.f4;
+        (G3+5)^ := I1,86^.f5;
+        (G3+6)^ := I1,86^.f4;
       end;
-      (GATTYPTR+4)^ := @G966[L2]^;
-      @G966[L2]^ := GATTYPTR;
+      (G3+4)^ := @G966[L2]^;
+      @G966[L2]^ := G3;
       if 0 then begin
         FWRITEBYTES(I3,3, @L5, 8, 8);
         FWRITEINT(I3,3, L2, 10);
@@ -2544,17 +2544,17 @@ procedure INITIALI.4(args 0 words);  { locals 9 words, lex 2 }
     FGET(@I1,86);
   until (FEOF(@I1,86) or (I1,86^[1] = 0));
   FCLOSE(@I1,86, 0);
-  REALPTR := 0;
+  G61 := 0;
   G658 := 36;
-  VARSTRG := 2;
-  RESIDENT := 1;
-  PUBLICPROCS := 0;
+  G39 := 2;
+  G62 := 1;
+  G27 := 0;
   G659 := 2;
-  INTRINSIC := 1024;
-  OP := 0;
-  GATKIND := 38;
-  LINKINFO := 0;
-  TINY := 0;
+  G41 := 1024;
+  G16 := 0;
+  G4 := 38;
+  G44 := 0;
+  G42 := 0;
   FILLCHAR(@G673, 0, 12, 0);
 
 procedure INITIALI.5(args 0 words);  { locals 43 words, lex 2 }
@@ -2617,50 +2617,50 @@ SEGMENT 8 SYMTBLDU
 
 procedure SYMTBLDU.1(args 0 words);  { locals 95 words, lex 1 }
   MARK(@L1);
-  if (GATKIND = 61) then begin
+  if (G4 = 61) then begin
     TLA.10();
-    move(@G539, @SYSTEMLIB, 51 words);
+    move(@G539, @G488, 51 words);
   end;
-  NEW(@GATTYPTR, 9);
-  move(GATTYPTR, @'        ', 4 words);
+  NEW(@G3, 9);
+  move(G3, @'        ', 4 words);
   NEW(@L6, 3);
-  L6^ := GATTYPTR;
+  L6^ := G3;
   (L6+2)^ := nil;
   (L6+1)^ := nil;
   L5 := 0;
   L95 := 127;
   while (L5 <= L95) do begin
-    GATTYPTR := @G966[L5]^;
-    while (GATTYPTR <> nil) do begin
-      case GATTYPTR^.f5 of   { table 1..37 }
+    G3 := @G966[L5]^;
+    while (G3 <> nil) do begin
+      case G3^.f5 of   { table 1..37 }
         1, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37: begin
-          SYMTBLDU.2(GATTYPTR);
+          SYMTBLDU.2(G3);
         end;
       end;
-      GATTYPTR := GATTYPTR^.f4;
+      G3 := G3^.f4;
     end;
     L5 := (L5+1);
   end;
   @L54^ := @G447  {string};
   @G447^ := 'SYMBOLTABLE DUMP'  {string};
   TLA.9();
-  FWRITESTRING(@UVARPTR, 'AB - Absolute     LB - Label     UD - Undefined     MC - Macro', 0);
+  FWRITESTRING(@G73, 'AB - Absolute     LB - Label     UD - Undefined     MC - Macro', 0);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, 'RF - Ref          DF - Def       PR - Proc          FC - Func', 0);
+  FWRITESTRING(@G73, 'RF - Ref          DF - Def       PR - Proc          FC - Func', 0);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITESTRING(@UVARPTR, 'PB - Public       PV - Private   CS - Consts', 0);
+  FWRITESTRING(@G73, 'PB - Public       PV - Private   CS - Consts', 0);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  INMODULE := (INMODULE+5);
+  G32 := (G32+5);
   L4 := 0;
   if (16 = 8) then begin
     @L7^ := '------'  {string};
@@ -2674,9 +2674,9 @@ procedure SYMTBLDU.1(args 0 words);  { locals 95 words, lex 1 }
   end;
   SYMTBLDU.3(L6^.f1);
   @G447^ := @L54  {string};
-  FWRITELN(@UVARPTR);
+  FWRITELN(@G73);
   IOCHECK();
-  INMODULE := (INMODULE+1);
+  G32 := (G32+1);
   TLA.9();
   RELEASE(@L1);
 
@@ -2692,7 +2692,7 @@ procedure SYMTBLDU.2(args 1 words);  { locals 7 words, lex 2 }
         L7 := 1;
         (L8^.f1+1)^ := nil;
         (L8^.f1+2)^ := nil;
-        L8^.f1^ := GATTYPTR;
+        L8^.f1^ := G3;
       end else begin
         L6 := L8^.f1;
       end;
@@ -2702,7 +2702,7 @@ procedure SYMTBLDU.2(args 1 words);  { locals 7 words, lex 2 }
         L7 := 1;
         (L8^.f2+1)^ := nil;
         (L8^.f2+2)^ := nil;
-        L8^.f2^ := GATTYPTR;
+        L8^.f2^ := G3;
       end else begin
         L6 := L8^.f2;
       end;
@@ -2713,10 +2713,10 @@ procedure SYMTBLDU.3(args 1 words);  { locals 0 words, lex 2 }
   if (L1^.f2 <> nil) then begin
     SYMTBLDU.3(L1^.f2);
   end;
-  GATTYPTR := L1^;
-  FWRITEBYTES(@UVARPTR, GATTYPTR, 8, 8);
+  G3 := L1^;
+  FWRITEBYTES(@G73, G3, 8, 8);
   IOCHECK();
-  case GATTYPTR^.f5 of   { table 1..37 }
+  case G3^.f5 of   { table 1..37 }
     34: begin
       @I1,13^ := ' AB '  {string};
     end;
@@ -2748,24 +2748,24 @@ procedure SYMTBLDU.3(args 1 words);  { locals 0 words, lex 2 }
       @I1,13^ := ' MC '  {string};
     end;
   end;
-  FWRITESTRING(@UVARPTR, @I1,13, 0);
+  FWRITESTRING(@G73, @I1,13, 0);
   IOCHECK();
-  if (GATTYPTR^.f5 in {32,34,35}) then begin
-    TLA.11(GATTYPTR^.f6, 0);
+  if (G3^.f5 in {32,34,35}) then begin
+    TLA.11(G3^.f6, 0);
   end else begin
-    FWRITESTRING(@UVARPTR, @I1,7, 0);
+    FWRITESTRING(@G73, @I1,7, 0);
     IOCHECK();
   end;
   I1,4 := (I1,4+1);
-  if ((((I1,4 mod I1,2) = 0) and not (MODPTR)) or (((I1,4 mod I1,3) = 0) and MODPTR)) then begin
-    FWRITELN(@UVARPTR);
+  if ((((I1,4 mod I1,2) = 0) and not (G68)) or (((I1,4 mod I1,3) = 0) and G68)) then begin
+    FWRITELN(@G73);
     IOCHECK();
-    INMODULE := (INMODULE+1);
-    if ((INMODULE mod 55) = 0) then begin
+    G32 := (G32+1);
+    if ((G32 mod 55) = 0) then begin
       TLA.9();
     end;
   end else begin
-    FWRITESTRING(@UVARPTR, '|  ', 0);
+    FWRITESTRING(@G73, '|  ', 0);
     IOCHECK();
   end;
   if (L1^.f1 <> nil) then begin
@@ -2788,14 +2788,14 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
     FWRITELN(I2,3);
     IOCHECK();
   end;
-  if (USING > 0) then begin
+  if (G36 > 0) then begin
     PROCEND.3();
   end else begin
     PROCEND.9();
   end;
-  if (GATKIND = 61) then begin
+  if (G4 = 61) then begin
     L2 := 2;
-    L3 := USING;
+    L3 := G36;
     L652 := 1;
     while (L3 >= L652) do begin
       TLA.15(L2);
@@ -2803,34 +2803,34 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
       L3 := (L3-1);
     end;
     TLA.12(1);
-    TLA.12(USING);
-    NOLOAD := L2;
-    L3 := ((PRTERR+511) div 512);
-    if (FBLOCKIO(I2,8, G72, 0, L3, IC, 0) < L3) then begin
+    TLA.12(G36);
+    G35 := L2;
+    L3 := ((G53+511) div 512);
+    if (FBLOCKIO(I2,8, G72, 0, L3, G9, 0) < L3) then begin
       TLA.2(54);
     end;
-    IC := (IC+L3);
+    G9 := (G9+L3);
     FILLCHAR(L343, 0, 16, 0);
     move(L343, @'        ', 4 words);
     PROCEND.2(L343, 4);
     FCLOSE(@L343, 1);
     FOPEN(@L303, @G590, 1, 0);
-    L3 := (((LCMAX*16)+511) div 512);
+    L3 := (((G25*16)+511) div 512);
     if (IORESULT() = 0) then begin
       if (FBLOCKIO(@L303, G72, 0, L3, -(1), 1) = 0) then begin
       end;
     end;
-    FILLCHAR(G72, (LCMAX*16), 512, 0);
+    FILLCHAR(G72, (G25*16), 512, 0);
     if (IORESULT() = 0) then begin
-      if (FBLOCKIO(I2,8, G72, 0, L3, IC, 0) < L3) then begin
+      if (FBLOCKIO(I2,8, G72, 0, L3, G9, 0) < L3) then begin
         TLA.2(54);
       end;
     end;
     FILLCHAR(@L6, 0, 512, 0);
     if 0 then begin
-      L4 := TLA.3(NOLOAD);
+      L4 := TLA.3(G35);
     end else begin
-      L4 := NOLOAD;
+      L4 := G35;
     end;
     @L4^[8] := 0;
     @L4^[8] := 8;
@@ -2859,17 +2859,17 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
         TLA.2(54);
       end;
     end;
-    if (FWPTR and not (MODPTR)) then begin
-      FWRITELN(@UVARPTR);
-      FWRITESTRING(@UVARPTR, 'Assembly complete:', 0);
-      FWRITEINT(@UVARPTR, SWAPMORE, 10);
-      FWRITESTRING(@UVARPTR, ' lines', 0);
-      FWRITELN(@UVARPTR);
-      FWRITEINT(@UVARPTR, ININTERFACE, 6);
-      FWRITESTRING(@UVARPTR, '   Errors flagged on this Assembly', 0);
-      FWRITELN(@UVARPTR);
-      FWRITECHAR(@UVARPTR, 12, 0);
-      FCLOSE(@UVARPTR, 1);
+    if (G64 and not (G68)) then begin
+      FWRITELN(@G73);
+      FWRITESTRING(@G73, 'Assembly complete:', 0);
+      FWRITEINT(@G73, G33, 10);
+      FWRITESTRING(@G73, ' lines', 0);
+      FWRITELN(@G73);
+      FWRITEINT(@G73, G31, 6);
+      FWRITESTRING(@G73, '   Errors flagged on this Assembly', 0);
+      FWRITELN(@G73);
+      FWRITECHAR(@G73, 12, 0);
+      FCLOSE(@G73, 1);
     end;
     FCLOSE(@L303, 2);
     TLA.5(1);
@@ -2878,13 +2878,13 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
     IOCHECK();
     FWRITESTRING(I2,3, 'Assembly complete:', 0);
     IOCHECK();
-    FWRITEINT(I2,3, SWAPMORE, 10);
+    FWRITEINT(I2,3, G33, 10);
     IOCHECK();
     FWRITESTRING(I2,3, ' lines', 0);
     IOCHECK();
     FWRITELN(I2,3);
     IOCHECK();
-    FWRITEINT(I2,3, ININTERFACE, 6);
+    FWRITEINT(I2,3, G31, 6);
     IOCHECK();
     FWRITESTRING(I2,3, '   Errors flagged on this Assembly', 0);
     IOCHECK();
@@ -2892,72 +2892,72 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
     IOCHECK();
   end else begin
     MARK(@G2158);
-    USING := (USING+1);
-    LGTH := 0;
+    G36 := (G36+1);
+    G22 := 0;
     G20 := 0;
     G19 := 0;
     FILLCHAR(@G650, 0, 14, 0);
-    CODEINSEG := 0;
+    G48 := 0;
     FILLCHAR(@G643, 0, 14, 0);
-    IOCHECK := 0;
+    G47 := 0;
     FILLCHAR(@G636, 0, 14, 0);
-    BPTONLINE := 0;
+    G46 := 0;
     FILLCHAR(@G629, 0, 14, 0);
-    OPT_E := 0;
-    DISX := LCMAX;
-    if (USING > 1) then begin
+    G45 := 0;
+    G24 := G25;
+    if (G36 > 1) then begin
       FCLOSE(@L343, 1);
       IOCHECK();
       FOPEN(@G1135, @G590, 1, 0);
       IOCHECK();
-      PASCALIO.2(@G1135, LCMAX);
+      PASCALIO.2(@G1135, G25);
       IOCHECK();
     end;
-    NEW(@SEG, 5);
-    (SEG+4)^ := nil;
+    NEW(@G13, 5);
+    (G13+4)^ := nil;
     G657 := nil;
-    NOISY := GOTOOK;
-    if (GATKIND = 59) then begin
+    G49 := G52;
+    if (G4 = 59) then begin
       G658 := 1;
     end else begin
       G658 := 33;
     end;
     TLA.17();
-    if (GATKIND <> 68) then begin
+    if (G4 <> 68) then begin
       TLA.2(3);
     end else begin
-      if (USING = 1) then begin
-        move(@G2163, GATTYPTR, 4 words);
+      if (G36 = 1) then begin
+        move(@G2163, G3, 4 words);
       end;
-      move(@G2159, GATTYPTR, 4 words);
-      (GATTYPTR+7)^ := USING;
+      move(@G2159, G3, 4 words);
+      (G3+7)^ := G36;
       TLA.17();
-      if (GATKIND = 14) then begin
+      if (G4 = 14) then begin
         TLA.17();
-        if (GATKIND <> 67) then begin
+        if (G4 <> 67) then begin
           TLA.2(4);
         end else begin
-          (GATTYPTR+6)^ := LIBNOTOPEN;
+          (G3+6)^ := G29;
         end;
         TLA.17();
       end else begin
-        (GATTYPTR+6)^ := 0;
+        (G3+6)^ := 0;
       end;
     end;
     move(@G2147, @G2136, 11 words);
-    GATCVAL := 0;
-    if INTPTR then begin
+    G5 := 0;
+    if G12 then begin
       TLA.9();
     end;
-    if (GATKIND <> 38) then begin
+    if (G4 <> 38) then begin
       TLA.2(5);
-      while (GATKIND <> 38) do begin
+      while (G4 <> 38) do begin
         TLA.17();
       end;
     end;
     TLA.10();
-    move(@G539, @SYSTEMLIB, 51 words);
-    TOP := -(1);
+    move(@G539, @G488, 51 words);
+    G8 := -(1);
     G658 := 36;
   end;
   { paths disagree on stack depth here }
@@ -2965,7 +2965,7 @@ procedure PROCEND.1(args 0 words);  { locals 652 words, lex 1 }
   FCLOSE(@L303, 0);
 
 procedure PROCEND.2(args 2 words);  { locals 2 words, lex 2 }
-  if (TEXTPTR <> 0) then begin
+  if (G57 <> 0) then begin
     L3 := L1;
     L4 := 7;
     while (L3 <= L4) do begin
@@ -2975,7 +2975,7 @@ procedure PROCEND.2(args 2 words);  { locals 2 words, lex 2 }
   end;
   FPUT(@I1,343);
   IOCHECK();
-  LCMAX := (LCMAX+1);
+  G25 := (G25+1);
 
 procedure PROCEND.3(args 0 words);  { locals 0 words, lex 2 }
   if 0 then begin
@@ -2987,17 +2987,17 @@ procedure PROCEND.3(args 0 words);  { locals 0 words, lex 2 }
   if (G18 > MEMAVAIL()) then begin
     G18 := MEMAVAIL();
   end;
-  if FWPTR then begin
-    FWRITESTRING(@UVARPTR, 'Current minimum space is ', 0);
+  if G64 then begin
+    FWRITESTRING(@G73, 'Current minimum space is ', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, G18, 0);
+    FWRITEINT(@G73, G18, 0);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, ' words', 0);
+    FWRITESTRING(@G73, ' words', 0);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
   end;
-  if not ((FWPTR and MODPTR)) then begin
+  if not ((G64 and G68)) then begin
     FWRITELN(I3,3);
     IOCHECK();
     FWRITESTRING(I3,3, 'Current minimum space is ', 0);
@@ -3012,18 +3012,18 @@ procedure PROCEND.3(args 0 words);  { locals 0 words, lex 2 }
   FCLOSE(@G1135, 1);
   IOCHECK();
   PROCEND.8();
-  PROCEND.4(RANGECHECK);
-  GOTOOK := (STRGPTR+PRTERR);
-  if PRTERR then begin
+  PROCEND.4(G51);
+  G52 := (G54+G53);
+  if G53 then begin
     TLA.12(0);
   end;
   move(@G622, @G598, 6 words);
   PROCEND.5();
-  TLA.15((GOTOOK-NOISY));
+  TLA.15((G52-G49));
   TLA.15(0);
   PROCEND.7();
-  @G2167[USING]^ := (GOTOOK-NOISY);
-  NOLOAD := ((NOLOAD+GOTOOK)-NOISY);
+  @G2167[G36]^ := (G52-G49);
+  G35 := ((G35+G52)-G49);
   move(@G966, @G838, 128 words);
   RELEASE(@G2158);
 
@@ -3032,54 +3032,54 @@ procedure PROCEND.4(args 1 words);  { locals 1 words, lex 3 }
     FWRITESTRING(I4,3, 'Bufreset', 0);
     FWRITELN(I4,3);
   end;
-  if (L1 < STRGPTR) then begin
-    L2 := (((GOTOOK div 512)-IC)+1);
+  if (L1 < G54) then begin
+    L2 := (((G52 div 512)-G9)+1);
     if (L2 > 2) then begin
       L2 := 2;
     end;
-    if (FBLOCKIO(I4,8, G72, 0, L2, IC, 0) < L2) then begin
+    if (FBLOCKIO(I4,8, G72, 0, L2, G9, 0) < L2) then begin
       TLA.2(54);
     end;
-    if ((IC+L2) > DEBUGGING) then begin
-      DEBUGGING := (IC+L2);
+    if ((G9+L2) > G50) then begin
+      G50 := (G9+L2);
     end;
-    IC := (L1 div 512);
+    G9 := (L1 div 512);
     if (IORESULT() = 0) then begin
-      if (FBLOCKIO(I4,8, G72, 0, 2, IC, 1) = 0) then begin
+      if (FBLOCKIO(I4,8, G72, 0, 2, G9, 1) = 0) then begin
       end;
     end;
-    STRGPTR := (IC*512);
-    PRTERR := (L1 mod 512);
+    G54 := (G9*512);
+    G53 := (L1 mod 512);
   end else begin
-    if (L1 > (STRGPTR+1023)) then begin
-      L2 := (((GOTOOK div 512)-IC)+1);
+    if (L1 > (G54+1023)) then begin
+      L2 := (((G52 div 512)-G9)+1);
       if (L2 > 2) then begin
         L2 := 2;
       end;
-      if (FBLOCKIO(I4,8, G72, 0, L2, IC, 0) < L2) then begin
+      if (FBLOCKIO(I4,8, G72, 0, L2, G9, 0) < L2) then begin
         TLA.2(54);
       end;
-      if ((IC+L2) > DEBUGGING) then begin
-        DEBUGGING := (IC+L2);
+      if ((G9+L2) > G50) then begin
+        G50 := (G9+L2);
       end;
-      IC := (L1 div 512);
-      if (IC >= DEBUGGING) then begin
+      G9 := (L1 div 512);
+      if (G9 >= G50) then begin
         if (IORESULT() = 0) then begin
-          if (FBLOCKIO(I4,8, G72, 0, (IC-DEBUGGING), DEBUGGING, 0) < (IC-DEBUGGING)) then begin
+          if (FBLOCKIO(I4,8, G72, 0, (G9-G50), G50, 0) < (G9-G50)) then begin
             TLA.2(54);
           end;
         end;
-        DEBUGGING := IC;
+        G50 := G9;
       end else begin
         if (IORESULT() = 0) then begin
-          if (FBLOCKIO(I4,8, G72, 0, 2, IC, 1) = 0) then begin
+          if (FBLOCKIO(I4,8, G72, 0, 2, G9, 1) = 0) then begin
           end;
         end;
       end;
-      STRGPTR := (IC*512);
-      PRTERR := (L1 mod 512);
+      G54 := (G9*512);
+      G53 := (L1 mod 512);
     end else begin
-      PRTERR := (L1-STRGPTR);
+      G53 := (L1-G54);
     end;
   end;
   TLA.5(1);
@@ -3092,12 +3092,12 @@ procedure PROCEND.5(args 0 words);  { locals 0 words, lex 3 }
 
 procedure PROCEND.6(args 2 words);  { locals 5 words, lex 4 }
   L4 := 0;
-  if USINGLIST then begin
-    if (LCMAX <> DISX) then begin
-      PASCALIO.2(@I3,343, LCMAX);
+  if G63 then begin
+    if (G25 <> G24) then begin
+      PASCALIO.2(@I3,343, G25);
       IOCHECK();
-      L3 := (LCMAX+1);
-      L6 := DISX;
+      L3 := (G25+1);
+      L6 := G24;
       while (L3 <= L6) do begin
         FGET(@I3,343);
         IOCHECK();
@@ -3106,7 +3106,7 @@ procedure PROCEND.6(args 2 words);  { locals 5 words, lex 4 }
           L7 := 6;
           while (L5 <= L7) do begin
             if ((I3,343+1)[L5]^ <> 0) then begin
-              TLA.15((GOTOOK-(I3,343+1)[L5]^));
+              TLA.15((G52-(I3,343+1)[L5]^));
               L4 := (L4+1);
             end;
             L5 := (L5+1);
@@ -3119,7 +3119,7 @@ procedure PROCEND.6(args 2 words);  { locals 5 words, lex 4 }
     L6 := 6;
     while (L5 <= L6) do begin
       if (L1[L5]^ <> 0) then begin
-        TLA.15((GOTOOK-L1[L5]^));
+        TLA.15((G52-L1[L5]^));
         L4 := (L4+1);
       end;
       L5 := (L5+1);
@@ -3134,39 +3134,39 @@ procedure PROCEND.7(args 0 words);  { locals 2 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  if (DISX <> 0) then begin
-    PASCALIO.2(@I2,343, LCMAX);
+  if (G24 <> 0) then begin
+    PASCALIO.2(@I2,343, G25);
     IOCHECK();
   end;
   L1 := 0;
   L2 := 127;
   while (L1 <= L2) do begin
-    GATTYPTR := @G966[L1]^;
-    while (GATTYPTR <> nil) do begin
-      case GATTYPTR^.f5 of   { table 1..36 }
+    G3 := @G966[L1]^;
+    while (G3 <> nil) do begin
+      case G3^.f5 of   { table 1..36 }
         26, 36: begin
-          if INTPTR then begin
-            FWRITELN(@UVARPTR);
+          if G12 then begin
+            FWRITELN(@G73);
             IOCHECK();
-            FWRITESTRING(@UVARPTR, '>>>>>', 0);
+            FWRITESTRING(@G73, '>>>>>', 0);
             IOCHECK();
-            FWRITEBYTES(@UVARPTR, GATTYPTR, 8, 8);
+            FWRITEBYTES(@G73, G3, 8, 8);
             IOCHECK();
-            INMODULE := (INMODULE+1);
+            G32 := (G32+1);
           end;
-          if not ((MODPTR and INTPTR)) then begin
+          if not ((G68 and G12)) then begin
             FWRITELN(I4,3);
             IOCHECK();
             FWRITESTRING(I4,3, '>>>>>', 0);
             IOCHECK();
-            FWRITEBYTES(I4,3, GATTYPTR, 8, 8);
+            FWRITEBYTES(I4,3, G3, 8, 8);
             IOCHECK();
           end;
           TLA.2(1);
         end;
         1, 28, 29, 30, 31, 32, 33: begin
           FILLCHAR(I2,343, 0, 16, 0);
-          case GATTYPTR^.f5 of   { table 1..33 }
+          case G3^.f5 of   { table 1..33 }
             28: begin
               (I2,343+4)^ := 3;
             end;
@@ -3189,47 +3189,47 @@ procedure PROCEND.7(args 0 words);  { locals 2 words, lex 3 }
               (I2,343+4)^ := 12;
             end;
           end;
-          move(I2,343, GATTYPTR, 4 words);
-          case GATTYPTR^.f5 of   { table 1..33 }
+          move(I2,343, G3, 4 words);
+          case G3^.f5 of   { table 1..33 }
             28, 29, 30, 31: begin
               (I2,343+5)^ := 0;
-              (I2,343+6)^ := GATTYPTR^.f7;
-              (I2,343+7)^ := GATTYPTR^.f6;
+              (I2,343+6)^ := G3^.f7;
+              (I2,343+7)^ := G3^.f6;
               PROCEND.2(I2,343, 4);
               I2,3 := 0;
-              while (GATTYPTR^.f8 <> nil) do begin
-                I2,343[I2,3]^ := GATTYPTR^.f8^;
+              while (G3^.f8 <> nil) do begin
+                I2,343[I2,3]^ := G3^.f8^;
                 I2,3 := (I2,3+1);
                 if (I2,3 = 8) then begin
                   PROCEND.2(I2,343, 0);
                   FILLCHAR(I2,343, 0, 16, 0);
                   I2,3 := 0;
                 end;
-                (GATTYPTR+8)^ := GATTYPTR^.f8^.f1;
+                (G3+8)^ := G3^.f8^.f1;
               end;
               if (I2,3 <> 0) then begin
                 PROCEND.2(I2,343, 0);
               end;
-              (GATTYPTR+7)^ := 0;
-              (GATTYPTR+8)^ := nil;
+              (G3+7)^ := 0;
+              (G3+8)^ := nil;
             end;
             32: begin
               (I2,343+4)^ := 6;
-              (I2,343+5)^ := USING;
-              (I2,343+6)^ := GATTYPTR^.f6;
+              (I2,343+5)^ := G36;
+              (I2,343+6)^ := G3^.f6;
               PROCEND.2(I2,343, 4);
             end;
             1, 33: begin
-              if (GATTYPTR^.f5 = 1) then begin
+              if (G3^.f5 = 1) then begin
                 (I2,343+4)^ := 11;
               end else begin
                 (I2,343+4)^ := 12;
               end;
-              (I2,343+5)^ := GATTYPTR^.f7;
-              (I2,343+6)^ := GATTYPTR^.f6;
+              (I2,343+5)^ := G3^.f7;
+              (I2,343+6)^ := G3^.f6;
               PROCEND.2(I2,343, 4);
               (I2,343+4)^ := 6;
-              (I2,343+5)^ := GATTYPTR^.f7;
+              (I2,343+5)^ := G3^.f7;
               (I2,343+6)^ := 0;
               PROCEND.2(I2,343, 4);
             end;
@@ -3237,14 +3237,14 @@ procedure PROCEND.7(args 0 words);  { locals 2 words, lex 3 }
           if 0 then begin
             FWRITESTRING(I4,3, 'link entry:', 0);
             IOCHECK();
-            FWRITEBYTES(I4,3, GATTYPTR, 8, 8);
+            FWRITEBYTES(I4,3, G3, 8, 8);
             IOCHECK();
             FWRITELN(I4,3);
             IOCHECK();
           end;
         end;
       end;
-      GATTYPTR := GATTYPTR^.f4;
+      G3 := G3^.f4;
     end;
     L1 := (L1+1);
   end;
@@ -3253,19 +3253,19 @@ procedure PROCEND.8(args 0 words);  { locals 10 words, lex 3 }
   FOPEN(@I2,343, @G590, 1, 0);
   IOCHECK();
   MARK(@L9);
-  if (DISX <> LCMAX) then begin
-    PASCALIO.2(@I2,343, LCMAX);
+  if (G24 <> G25) then begin
+    PASCALIO.2(@I2,343, G25);
     IOCHECK();
   end;
-  L8 := (LCMAX+1);
-  L10 := DISX;
+  L8 := (G25+1);
+  L10 := G24;
   while (L8 <= L10) do begin
     FGET(@I2,343);
     IOCHECK();
     if (I2,343^ = 0) then begin
       move(@L3, (I2,343+1), 5 words);
       PROCEND.4(L6);
-      TLA.4(@L3, (L6-STRGPTR));
+      TLA.4(@L3, (L6-G54));
     end;
     L8 := (L8+1);
   end;
@@ -3287,19 +3287,19 @@ procedure PROCEND.9(args 0 words);  { locals 2 words, lex 2 }
     I1,3 := (I1,3+1);
   end;
   FILLCHAR(G72, 0, 1023, 0);
-  if INTPTR then begin
-    FWRITEINT(@UVARPTR, 2, 0);
+  if G12 then begin
+    FWRITEINT(@G73, 2, 0);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, ' blocks for procedure code  ', 0);
+    FWRITESTRING(@G73, ' blocks for procedure code  ', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, MEMAVAIL(), 0);
+    FWRITEINT(@G73, MEMAVAIL(), 0);
     IOCHECK();
-    FWRITESTRING(@UVARPTR, ' words left', 0);
+    FWRITESTRING(@G73, ' words left', 0);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
   end;
-  if not ((INTPTR and MODPTR)) then begin
+  if not ((G12 and G68)) then begin
     FWRITELN(I3,3);
     IOCHECK();
     FWRITEINT(I3,3, 2, 0);
@@ -3312,13 +3312,13 @@ procedure PROCEND.9(args 0 words);  { locals 2 words, lex 2 }
     IOCHECK();
     TLA.8();
   end;
-  STRGPTR := 512;
-  GOTOOK := 512;
-  RANGECHECK := 512;
-  IC := 1;
-  DEBUGGING := 1;
-  PRTERR := 0;
-  NOLOAD := 0;
+  G54 := 512;
+  G52 := 512;
+  G51 := 512;
+  G9 := 1;
+  G50 := 1;
+  G53 := 0;
+  G35 := 0;
   FILLCHAR(@G2167, 0, 22, 0);
   if (FBLOCKIO(I3,8, G72, 0, 1, -(1), 0) = 0) then begin
     TLA.2(54);
@@ -3333,28 +3333,28 @@ procedure ASSEMBLE.1(args 0 words);  { locals 1 words, lex 1 }
   if 1 then begin
     UNITWRITE(3, @L1[-(1600)], 0, 35, 0, 0);
   end;
-  if INTPTR then begin
-    FWRITESTRING(@UVARPTR, 'Current memory available:', 0);
+  if G12 then begin
+    FWRITESTRING(@G73, 'Current memory available:', 0);
     IOCHECK();
-    FWRITEINT(@UVARPTR, MEMAVAIL(), 8);
+    FWRITEINT(@G73, MEMAVAIL(), 8);
     IOCHECK();
-    FWRITELN(@UVARPTR);
+    FWRITELN(@G73);
     IOCHECK();
   end;
   repeat
     TLA.7();
     TLA.17();
-    if ((GATKIND = 64) or (GATKIND = 65)) then begin
+    if ((G4 = 64) or (G4 = 65)) then begin
       ASSEMBLE.6();
     end;
-    if (((((G660 = 0) and not ((GATKIND in {31,32,35,36,37,41,42,43,44,45,49,55,56}))) or (GATKIND <= 28)) or (GATKIND >= 62)) or ((USING = 0) and (GATKIND < 38))) then begin
+    if (((((G660 = 0) and not ((G4 in {31,32,35,36,37,41,42,43,44,45,49,55,56}))) or (G4 <= 28)) or (G4 >= 62)) or ((G36 = 0) and (G4 < 38))) then begin
       TLA.2(18);
-      while (GATKIND <> 38) do begin
+      while (G4 <> 38) do begin
         TLA.17();
       end;
       TLA.10();
     end else begin
-      case GATKIND of   { table 29..61 }
+      case G4 of   { table 29..61 }
         56: begin
           ASSEMBLE.32();
         end;
@@ -3362,26 +3362,26 @@ procedure ASSEMBLE.1(args 0 words);  { locals 1 words, lex 1 }
           ASSEMBLE.33();
         end;
         41: begin
-          INTRACTVPTR := 1;
+          G55 := 1;
           TLA.17();
         end;
         42: begin
-          INTRACTVPTR := 0;
+          G55 := 0;
           TLA.17();
         end;
         43: begin
-          NILPTR := 1;
+          G56 := 1;
           TLA.17();
         end;
         44: begin
-          NILPTR := 0;
+          G56 := 0;
           TLA.17();
         end;
         45: begin
-          if (USING > 0) then begin
+          if (G36 > 0) then begin
             TLA.2(64);
           end else begin
-            USINGLIST := 0;
+            G63 := 0;
           end;
           TLA.17();
         end;
@@ -3418,7 +3418,7 @@ procedure ASSEMBLE.1(args 0 words);  { locals 1 words, lex 1 }
           ASSEMBLE.14();
         end;
         57: begin
-          if INTPTR then begin
+          if G12 then begin
             TLA.9();
           end;
           TLA.17();
@@ -3442,10 +3442,10 @@ procedure ASSEMBLE.1(args 0 words);  { locals 1 words, lex 1 }
           ASSEMBLE.4();
         end;
         39: begin
-          if (VAL < 0) then begin
+          if (G23 < 0) then begin
             TLA.2(7);
           end else begin
-            VAL := (VAL-1);
+            G23 := (G23-1);
           end;
           TLA.17();
         end;
@@ -3453,28 +3453,28 @@ procedure ASSEMBLE.1(args 0 words);  { locals 1 words, lex 1 }
           ASSEMBLE.17();
         end;
       end;
-      if (GATVLEV <> -(1)) then begin
-        GATVLEV := -(1);
+      if (G6 <> -(1)) then begin
+        G6 := -(1);
         TLA.2(19);
       end;
-      if (GATKIND <> 38) then begin
+      if (G4 <> 38) then begin
         TLA.2(5);
-        while (GATKIND <> 38) do begin
+        while (G4 <> 38) do begin
           TLA.17();
         end;
       end;
       TLA.10();
-      UPRCPTR := 0;
+      G70 := 0;
     end;
   until 0;
 
 procedure ASSEMBLE.2(args 0 words);  { locals 7 words, lex 2 }
-  VAL := (VAL+1);
-  L1 := VAL;
+  G23 := (G23+1);
+  L1 := G23;
   if not (ASSEMBLE.3()) then begin
-    if (GATKIND <> 38) then begin
+    if (G4 <> 38) then begin
       TLA.2(5);
-      while (GATKIND <> 38) do begin
+      while (G4 <> 38) do begin
         TLA.17();
       end;
     end;
@@ -3482,57 +3482,57 @@ procedure ASSEMBLE.2(args 0 words);  { locals 7 words, lex 2 }
     L3 := 0;
     repeat
       TLA.16();
-      if (TOP > 101) then begin
+      if (G8 > 101) then begin
         TLA.2(6);
       end;
-      if (TEST = 13) then begin
-        move(@G539, @SYSTEMLIB, 51 words);
-        TOP := -(1);
+      if (G11 = 13) then begin
+        move(@G539, @G488, 51 words);
+        G8 := -(1);
         TLA.7();
       end else begin
-        if (TEST = 46) then begin
+        if (G11 = 46) then begin
           move(@L4, @'        ', 4 words);
           L2 := 0;
           TLA.16();
-          while ((TEST in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) and (L2 < 8)) do begin
-            @L4^[L2] := TEST;
+          while ((G11 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) and (L2 < 8)) do begin
+            @L4^[L2] := G11;
             L2 := (L2+1);
             TLA.16();
           end;
-          RESIDENT := 0;
+          G62 := 0;
           if (@L4 = @'IF      ') then begin
-            VAL := (VAL+1);
+            G23 := (G23+1);
           end else begin
             if (@L4 = @'ENDC    ') then begin
-              if (VAL < 0) then begin
+              if (G23 < 0) then begin
                 TLA.2(7);
                 EXIT(10, 2);
               end else begin
-                VAL := (VAL-1);
+                G23 := (G23-1);
               end;
             end;
           end;
-          L3 := (((L1 = VAL) and (@L4 = @'ELSE    ')) or ((L1 = (VAL+1)) and (@L4 = @'ENDC    ')));
+          L3 := (((L1 = G23) and (@L4 = @'ELSE    ')) or ((L1 = (G23+1)) and (@L4 = @'ENDC    ')));
         end;
       end;
     until L3;
-    GATKIND := 70;
+    G4 := 70;
     TLA.17();
   end;
 
 function ASSEMBLE.3(args 0 words) : <1 word result>;  { locals 44 words, lex 3 }
   TLA.17();
-  if (GATKIND = 66) then begin
+  if (G4 = 66) then begin
     @L6^ := @G406  {string};
     TLA.17();
-    L3 := (GATKIND = 0);
+    L3 := (G4 = 0);
     if not (L3) then begin
-      if (GATKIND <> 1) then begin
+      if (G4 <> 1) then begin
         TLA.2(62);
       end;
     end;
     TLA.17();
-    if (GATKIND = 66) then begin
+    if (G4 = 66) then begin
       L4 := (@G406 = @L6);
       L1 := (L3 = L4);
     end else begin
@@ -3541,19 +3541,19 @@ function ASSEMBLE.3(args 0 words) : <1 word result>;  { locals 44 words, lex 3 }
     end;
     TLA.17();
   end else begin
-    CHARPTR := 0;
+    G59 := 0;
     if TLA.18(1) then begin
       if G623 then begin
         TLA.2(1);
       end else begin
-        if (GATVLEV = -(1)) then begin
-          L1 := (SY <> 0);
+        if (G6 = -(1)) then begin
+          L1 := (G15 <> 0);
         end else begin
-          L5 := SY;
-          L3 := (@G685[GATVLEV]^ = 0);
-          GATVLEV := (GATVLEV-1);
+          L5 := G15;
+          L3 := (@G685[G6]^ = 0);
+          G6 := (G6-1);
           if TLA.18(1) then begin
-            L4 := (SY = L5);
+            L4 := (G15 = L5);
             L1 := (L3 = L4);
           end else begin
             L1 := 1;
@@ -3566,42 +3566,42 @@ function ASSEMBLE.3(args 0 words) : <1 word result>;  { locals 44 words, lex 3 }
   end;
 
 procedure ASSEMBLE.4(args 0 words);  { locals 7 words, lex 2 }
-  L1 := VAL;
+  L1 := G23;
   TLA.10();
   L3 := 0;
   repeat
     TLA.16();
-    if (TOP > 101) then begin
+    if (G8 > 101) then begin
       TLA.2(6);
     end;
-    if (TEST = 13) then begin
-      move(@G539, @SYSTEMLIB, 51 words);
-      TOP := -(1);
+    if (G11 = 13) then begin
+      move(@G539, @G488, 51 words);
+      G8 := -(1);
       TLA.7();
     end else begin
-      if (TEST = 46) then begin
+      if (G11 = 46) then begin
         L2 := 0;
         move(@L4, @'        ', 4 words);
         TLA.16();
-        while ((TEST in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) and (L2 < 8)) do begin
-          @L4^[L2] := TEST;
+        while ((G11 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) and (L2 < 8)) do begin
+          @L4^[L2] := G11;
           L2 := (L2+1);
           TLA.16();
         end;
-        RESIDENT := 0;
+        G62 := 0;
         if (@L4 = @'IF      ') then begin
-          VAL := (VAL+1);
+          G23 := (G23+1);
         end else begin
           if (@L4 = @'ENDC    ') then begin
-            if (VAL < 0) then begin
+            if (G23 < 0) then begin
               TLA.2(7);
               EXIT(10, 4);
             end else begin
-              VAL := (VAL-1);
+              G23 := (G23-1);
             end;
           end;
         end;
-        L3 := ((L1 = (VAL+1)) and (@L4 = @'ENDC    '));
+        L3 := ((L1 = (G23+1)) and (@L4 = @'ENDC    '));
       end;
     end;
   until L3;
@@ -3610,7 +3610,7 @@ procedure ASSEMBLE.4(args 0 words);  { locals 7 words, lex 2 }
 procedure ASSEMBLE.5(args 2 words);  { locals 4 words, lex 2 }
   while (L2 <> nil) do begin
     L4 := L2^.f4;
-    L3 := (L2^.f3-STRGPTR);
+    L3 := (L2^.f3-G54);
     (L2+1)^ := (L2^.f1+L1);
     if (8 and 8) then begin
       (L2+1)^ := (L2^.f1 div 2);
@@ -3622,7 +3622,7 @@ procedure ASSEMBLE.5(args 2 words);  { locals 4 words, lex 2 }
       move((G1135+1), L2, 5 words);
       FPUT(@G1135);
       IOCHECK();
-      DISX := (DISX+1);
+      G24 := (G24+1);
     end;
     (L2+4)^ := G657;
     G657 := L2;
@@ -3631,63 +3631,63 @@ procedure ASSEMBLE.5(args 2 words);  { locals 4 words, lex 2 }
 
 procedure ASSEMBLE.6(args 0 words);  { locals 3 words, lex 2 }
   L2 := nil;
-  if (GATKIND = 64) then begin
-    L2 := GATTYPTR^.f7;
-    UPRCPTR := 1;
-    G1094 := GATTYPTR;
-    (GATTYPTR+6)^ := LGTH;
+  if (G4 = 64) then begin
+    L2 := G3^.f7;
+    G70 := 1;
+    G1094 := G3;
+    (G3+6)^ := G22;
     if ((G660 = 0) and (L2 <> nil)) then begin
       TLA.2(8);
     end;
-    if (GATTYPTR^.f5 = 26) then begin
-      (GATTYPTR+5)^ := 32;
+    if (G3^.f5 = 26) then begin
+      (G3+5)^ := 32;
     end else begin
-      if (GATTYPTR^.f5 = 36) then begin
+      if (G3^.f5 = 36) then begin
         if (G660 = 0) then begin
-          (GATTYPTR+5)^ := 34;
-          (GATTYPTR+6)^ := SEGSLOT;
+          (G3+5)^ := 34;
+          (G3+6)^ := G21;
         end else begin
-          (GATTYPTR+5)^ := 35;
+          (G3+5)^ := 35;
         end;
       end else begin
         TLA.2(9);
-        UPRCPTR := 0;
+        G70 := 0;
         L2 := nil;
       end;
     end;
   end else begin
-    UPRCPTR := 0;
+    G70 := 0;
     if (G660 = 0) then begin
       TLA.2(44);
     end else begin
-      if (@G691[LIST*7w]^.f6 <> 36) then begin
+      if (@G691[G43*7w]^.f6 <> 36) then begin
         TLA.2(9);
       end else begin
-        (@G691[LIST*7w]+6)^ := 35;
-        (@G691[LIST*7w]+4)^ := LGTH;
-        L2 := @G691[LIST*7w]^.f5;
-        (@G691[LIST*7w]+5)^ := nil;
+        (@G691[G43*7w]+6)^ := 35;
+        (@G691[G43*7w]+4)^ := G22;
+        L2 := @G691[G43*7w]^.f5;
+        (@G691[G43*7w]+5)^ := nil;
       end;
     end;
   end;
-  if (GATKIND = 64) then begin
+  if (G4 = 64) then begin
     TLA.6();
   end;
   TLA.17();
-  if (GATKIND <> 49) then begin
-    ASSEMBLE.5(L2, LGTH);
+  if (G4 <> 49) then begin
+    ASSEMBLE.5(L2, G22);
   end;
 
 procedure ASSEMBLE.7(args 0 words);  { locals 3 words, lex 2 }
   if TLA.18(1) then begin
     if TLA.19(1, 1, 1, 0, 32767) then begin
-      if (SY > 0) then begin
-        L2 := (LGTH mod SY);
+      if (G15 > 0) then begin
+        L2 := (G22 mod G15);
       end else begin
         L2 := 0;
       end;
       if (L2 > 0) then begin
-        L2 := (SY-L2);
+        L2 := (G15-L2);
         if 0 then begin
           L1 := 1;
           L3 := L2;
@@ -3709,22 +3709,22 @@ procedure ASSEMBLE.7(args 0 words);  { locals 3 words, lex 2 }
 
 procedure ASSEMBLE.8(args 0 words);  { locals 3 words, lex 2 }
   TLA.17();
-  if (GATKIND = 66) then begin
+  if (G4 = 66) then begin
     L2 := @G406^[0];
     L1 := 1;
     L3 := L2;
     while (L1 <= L3) do begin
-      if INTPTR then begin
+      if G12 then begin
         if (((L1 mod 7) = 1) and (L1 <> 1)) then begin
           TLA.10();
-          move(@G539, @SYSTEMLIB, 51 words);
+          move(@G539, @G488, 51 words);
         end;
       end;
       TLA.12(@G406^[L1]);
       L1 := (L1+1);
     end;
     if 0 then begin
-      LGTH := (((L2+1) div 2)+LGTH);
+      G22 := (((L2+1) div 2)+G22);
       if L2 then begin
         TLA.12(0);
       end;
@@ -3735,7 +3735,7 @@ procedure ASSEMBLE.8(args 0 words);  { locals 3 words, lex 2 }
   TLA.17();
 
 procedure ASSEMBLE.9(args 0 words);  { locals 2 words, lex 2 }
-  if not (UPRCPTR) then begin
+  if not (G70) then begin
     TLA.2(9);
   end else begin
     if TLA.18(1) then begin
@@ -3747,15 +3747,15 @@ procedure ASSEMBLE.9(args 0 words);  { locals 2 words, lex 2 }
             (G1094+5)^ := 34;
           end else begin
             if (G1094^.f5 in {0,22,23,24,25,34,35}) then begin
-              (G1094+5)^ := SYMCURSOR;
+              (G1094+5)^ := G14;
             end else begin
               TLA.2(21);
             end;
           end;
         end;
       end;
-      (G1094+6)^ := SY;
-      L1 := SY;
+      (G1094+6)^ := G15;
+      L1 := G15;
       TLA.13(@L1, 0, 1);
       if (G1094^.f7 <> nil) then begin
         if ((G1094^.f5 = 35) or (G1094^.f5 = 32)) then begin
@@ -3766,7 +3766,7 @@ procedure ASSEMBLE.9(args 0 words);  { locals 2 words, lex 2 }
       end;
     end;
   end;
-  UPRCPTR := 0;
+  G70 := 0;
 
 procedure ASSEMBLE.10(args 0 words);  { locals 5 words, lex 2 }
   G658 := 37;
@@ -3774,55 +3774,55 @@ procedure ASSEMBLE.10(args 0 words);  { locals 5 words, lex 2 }
     TLA.2(61);
   end else begin
     TLA.17();
-    if not ((GATKIND in {33,68})) then begin
+    if not ((G4 in {33,68})) then begin
       TLA.2(13);
     end;
-    (GATTYPTR+5)^ := 37;
-    NEW(@UFLDPTR, 5);
-    (GATTYPTR+6)^ := UFLDPTR;
+    (G3+5)^ := 37;
+    NEW(@G71, 5);
+    (G3+6)^ := G71;
 L05AF:
     TLA.16();
-    if not ((TEST = 13)) then goto L05AF;
-    RESIDENT := 0;
-    UFLDPTR^[0] := INTRACTVPTR;
-    GATDPLMT := 1;
+    if not ((G11 = 13)) then goto L05AF;
+    G62 := 0;
+    G71^[0] := G55;
+    G7 := 1;
     L1 := 0;
     move(@L2, @'        ', 4 words);
-    BOOLPTR := 1;
+    G58 := 1;
     repeat
-      if (GATDPLMT > 9) then begin
-        NEW(@UFLDPTR, 5);
-        GATDPLMT := 0;
+      if (G7 > 9) then begin
+        NEW(@G71, 5);
+        G7 := 0;
       end;
       TLA.16();
-      if (TOP > 101) then begin
+      if (G8 > 101) then begin
         TLA.2(6);
       end;
-      UFLDPTR^[GATDPLMT] := TEST;
-      if (TEST = 13) then begin
+      G71^[G7] := G11;
+      if (G11 = 13) then begin
         TLA.10();
         TLA.7();
       end else begin
-        if (TEST = 46) then begin
+        if (G11 = 46) then begin
           L1 := 0;
           move(@L2, @'        ', 4 words);
         end else begin
           if (L1 < 5) then begin
-            @L2^[L1] := TEST;
+            @L2^[L1] := G11;
             L1 := (L1+1);
           end;
         end;
       end;
-      GATDPLMT := (GATDPLMT+1);
+      G7 := (G7+1);
     until (@L2 = @'ENDM    ');
-    if (GATDPLMT <= 9) then begin
-      UFLDPTR^[GATDPLMT] := 13;
+    if (G7 <= 9) then begin
+      G71^[G7] := 13;
     end else begin
-      NEW(@UFLDPTR, 5);
-      UFLDPTR^[0] := 13;
+      NEW(@G71, 5);
+      G71^[0] := 13;
     end;
     G658 := 36;
-    BOOLPTR := 0;
+    G58 := 0;
   end;
   TLA.17();
 
@@ -3830,15 +3830,15 @@ procedure ASSEMBLE.11(args 0 words);  { locals 5 words, lex 2 }
   if TLA.18(1) then begin
     if TLA.19(1, 1, 1, 0, 1023) then begin
       if (G660 = 0) then begin
-        SEGSLOT := (SEGSLOT+SY);
+        G21 := (G21+G15);
         TLA.17();
       end else begin
-        L1 := SY;
+        L1 := G15;
         L3 := 0;
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           if TLA.18(0) then begin
             if TLA.19(1, 1, 1, -(128), 255) then begin
-              L3 := SY;
+              L3 := G15;
             end;
           end;
         end;
@@ -3869,26 +3869,26 @@ procedure ASSEMBLE.12(args 0 words);  { locals 2 words, lex 2 }
   L2 := 0;
   if (G660 = 0) then begin
     if 0 then begin
-      SEGSLOT := (SEGSLOT+1);
+      G21 := (G21+1);
     end else begin
-      SEGSLOT := (SEGSLOT+2);
+      G21 := (G21+2);
     end;
     TLA.17();
   end else begin
     repeat
       if TLA.18(0) then begin
         if TLA.19(1, 0, 0, 0, 0) then begin
-          L1 := SY;
+          L1 := G15;
         end;
       end;
       TLA.15(L1);
-      if INTPTR then begin
+      if G12 then begin
         L2 := (L2+1);
-        if (((L2 mod 4) = 0) and (GATKIND = 14)) then begin
+        if (((L2 mod 4) = 0) and (G4 = 14)) then begin
           TLA.10();
         end;
       end;
-    until (GATKIND <> 14);
+    until (G4 <> 14);
   end;
 
 procedure ASSEMBLE.13(args 0 words);  { locals 3 words, lex 2 }
@@ -3896,7 +3896,7 @@ procedure ASSEMBLE.13(args 0 words);  { locals 3 words, lex 2 }
     TLA.2(14);
   end else begin
     if (G660 = 0) then begin
-      SEGSLOT := (SEGSLOT+1);
+      G21 := (G21+1);
       TLA.17();
     end else begin
       L3 := 0;
@@ -3905,17 +3905,17 @@ procedure ASSEMBLE.13(args 0 words);  { locals 3 words, lex 2 }
         L1 := 0;
         if TLA.18(0) then begin
           if TLA.19(1, 1, 1, -(128), 255) then begin
-            L1 := SY;
+            L1 := G15;
           end;
         end;
         TLA.12(0);
-        if INTPTR then begin
+        if G12 then begin
           L3 := (L3+1);
-          if (((L3 mod 7) = 0) and (GATKIND = 14)) then begin
+          if (((L3 mod 7) = 0) and (G4 = 14)) then begin
             TLA.10();
           end;
         end;
-      until (GATKIND <> 14);
+      until (G4 <> 14);
     end;
   end;
   { paths disagree on stack depth here }
@@ -3924,18 +3924,18 @@ procedure ASSEMBLE.14(args 0 words);  { locals 3 words, lex 2 }
   if TLA.18(1) then begin
     if TLA.19(1, 1, 0, 0, 32767) then begin
       if (G660 = 0) then begin
-        SEGSLOT := SY;
+        G21 := G15;
       end else begin
-        if ((LGTH = 0) and not (USINGLIST)) then begin
-          LGTH := SY;
-          G19 := LGTH;
+        if ((G22 = 0) and not (G63)) then begin
+          G22 := G15;
+          G19 := G22;
         end else begin
-          if (SY < LGTH) then begin
+          if (G15 < G22) then begin
             TLA.2(15);
           end else begin
-            L1 := (SY-LGTH);
+            L1 := (G15-G22);
             if 0 then begin
-              LGTH := (LGTH+L1);
+              G22 := (G22+L1);
               L1 := (L1+L1);
             end;
             L2 := 1;
@@ -3951,7 +3951,7 @@ procedure ASSEMBLE.14(args 0 words);  { locals 3 words, lex 2 }
   end;
 
 procedure ASSEMBLE.15(args 0 words);  { locals 1 words, lex 2 }
-  case GATKIND of   { table 50..54 }
+  case G4 of   { table 50..54 }
     54: begin
       G658 := 29;
     end;
@@ -3970,19 +3970,19 @@ procedure ASSEMBLE.15(args 0 words);  { locals 1 words, lex 2 }
   end;
   repeat
     TLA.17();
-    if (GATKIND <> 68) then begin
+    if (G4 <> 68) then begin
       TLA.2(16);
     end else begin
-      if (GATTYPTR^.f5 <> G658) then begin
+      if (G3^.f5 <> G658) then begin
         TLA.2(9);
       end else begin
         if (G658 = 30) then begin
-          L1 := GATTYPTR;
+          L1 := G3;
           TLA.17();
-          if (GATKIND = 23) then begin
+          if (G4 = 23) then begin
             TLA.17();
-            if (GATKIND = 67) then begin
-              (L1+6)^ := LIBNOTOPEN;
+            if (G4 = 67) then begin
+              (L1+6)^ := G29;
             end else begin
               TLA.2(17);
             end;
@@ -3995,12 +3995,12 @@ procedure ASSEMBLE.15(args 0 words);  { locals 1 words, lex 2 }
         end;
       end;
     end;
-  until (GATKIND <> 14);
+  until (G4 <> 14);
   G658 := 36;
 
 procedure ASSEMBLE.16(args 0 words);  { locals 0 words, lex 2 }
   TLA.17();
-  if (GATKIND = 66) then begin
+  if (G4 = 66) then begin
     @G447^ := @G406  {string};
   end else begin
     TLA.2(46);
@@ -4008,7 +4008,7 @@ procedure ASSEMBLE.16(args 0 words);  { locals 0 words, lex 2 }
   TLA.17();
 
 procedure ASSEMBLE.17(args 0 words);  { locals 0 words, lex 2 }
-  case GATTYPTR^.f5 of   { table 2..11 }
+  case G3^.f5 of   { table 2..11 }
     2: begin
       ASSEMBLE.21();
     end;
@@ -4042,24 +4042,24 @@ procedure ASSEMBLE.17(args 0 words);  { locals 0 words, lex 2 }
   end;
 
 function ASSEMBLE.18(args 0 words) : <1 word result>;  { locals 0 words, lex 3 }
-  L1 := (((SY >= 0) and (SY < 256)) and (SYMCURSOR = 34));
+  L1 := (((G15 >= 0) and (G15 < 256)) and (G14 = 34));
 
 procedure ASSEMBLE.19(args 1 words);  { locals 0 words, lex 3 }
   { unmodelled packed store of L1 }
   TLA.12(0);
-  TLA.12(SY);
-  { left on stack: @LC }
+  TLA.12(G15);
+  { left on stack: @G10 }
   { left on stack: 3 }
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.20(args 1 words);  { locals 0 words, lex 3 }
   { unmodelled packed store of L1 }
   TLA.12(0);
-  TLA.15(SY);
-  { left on stack: @LC }
+  TLA.15(G15);
+  { left on stack: @G10 }
   { left on stack: 3 }
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.21(args 0 words);  { locals 0 words, lex 3 }
@@ -4069,7 +4069,7 @@ procedure ASSEMBLE.21(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  TLA.12(GATTYPTR^.f6);
+  TLA.12(G3^.f6);
   TLA.17();
 
 procedure ASSEMBLE.22(args 0 words);  { locals 0 words, lex 3 }
@@ -4079,12 +4079,12 @@ procedure ASSEMBLE.22(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
     G625 := (G625-2);
-    TLA.14(LC, 1, 0);
+    TLA.14(G10, 1, 0);
   end;
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
@@ -4094,14 +4094,14 @@ procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(0) then begin
-    if (SYMCURSOR = 0) then begin
+    if (G14 = 0) then begin
       TLA.2(79);
     end else begin
-      if (GATVLEV <> -(1)) then begin
-        if (@G685[GATVLEV]^ <> 24) then begin
-          if (@G685[GATVLEV]^ <> 22) then begin
+      if (G6 <> -(1)) then begin
+        if (@G685[G6]^ <> 24) then begin
+          if (@G685[G6]^ <> 22) then begin
             TLA.2(25);
           end else begin
             ASSEMBLE.24();
@@ -4113,21 +4113,21 @@ procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
             { unmodelled packed store of 2 }
             TLA.12(0);
             if TLA.19(0, 1, 1, 0, 255) then begin
-              TLA.12(SY);
+              TLA.12(G15);
             end;
           end;
         end;
         { paths disagree on stack depth here }
-        GATVLEV := -(1);
+        G6 := -(1);
       end else begin
         if ASSEMBLE.18() then begin
-          if (GATKIND = 14) then begin
+          if (G4 = 14) then begin
             TLA.17();
-            if (GATTYPTR = @'X       ') then begin
+            if (G3 = @'X       ') then begin
               ASSEMBLE.19(5);
               TLA.17();
             end else begin
-              if (GATTYPTR = @'Y       ') then begin
+              if (G3 = @'Y       ') then begin
                 ASSEMBLE.19(6);
                 TLA.12(0);
                 TLA.17();
@@ -4139,13 +4139,13 @@ procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
             ASSEMBLE.19(1);
           end;
         end else begin
-          if (GATKIND = 14) then begin
+          if (G4 = 14) then begin
             TLA.17();
-            if (GATTYPTR = @'X       ') then begin
+            if (G3 = @'X       ') then begin
               TLA.17();
               ASSEMBLE.20(7);
             end else begin
-              if (GATTYPTR = @'Y       ') then begin
+              if (G3 = @'Y       ') then begin
                 TLA.17();
                 ASSEMBLE.20(6);
               end else begin
@@ -4160,15 +4160,15 @@ procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
     end;
     { paths disagree on stack depth here }
   end else begin
-    if (GATKIND = 8) then begin
+    if (G4 = 8) then begin
       if TLA.18(1) then begin
-        if (SYMCURSOR = 0) then begin
+        if (G14 = 0) then begin
           TLA.2(81);
         end else begin
           ASSEMBLE.24();
         end;
       end;
-      GATVLEV := -(1);
+      G6 := -(1);
     end else begin
       TLA.2(81);
     end;
@@ -4176,18 +4176,18 @@ procedure ASSEMBLE.23(args 0 words);  { locals 0 words, lex 3 }
   { paths disagree on stack depth here }
 
 procedure ASSEMBLE.24(args 0 words);  { locals 0 words, lex 4 }
-  if (GATKIND <> 14) then begin
+  if (G4 <> 14) then begin
     TLA.2(76);
   end else begin
     TLA.17();
-    if (GATTYPTR = @'X       ') then begin
+    if (G3 = @'X       ') then begin
       TLA.17();
-      if (GATKIND <> 38) then begin
+      if (G4 <> 38) then begin
         TLA.17();
       end;
       { unmodelled packed store of 0 }
     end else begin
-      if (GATTYPTR = @'Y       ') then begin
+      if (G3 = @'Y       ') then begin
         TLA.17();
         { unmodelled packed store of 4 }
       end else begin
@@ -4197,7 +4197,7 @@ procedure ASSEMBLE.24(args 0 words);  { locals 0 words, lex 4 }
     { paths disagree on stack depth here }
     TLA.12(0);
     if ASSEMBLE.18() then begin
-      TLA.12(SY);
+      TLA.12(G15);
     end else begin
       TLA.2(78);
     end;
@@ -4211,17 +4211,17 @@ procedure ASSEMBLE.25(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (GATTYPTR = @'A       ') then begin
+    if (G3 = @'A       ') then begin
       { unmodelled packed store of 2 }
       TLA.12(0);
     end else begin
       if ASSEMBLE.18() then begin
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           ASSEMBLE.19(5);
           TLA.17();
-          if (GATTYPTR = @'X       ') then begin
+          if (G3 = @'X       ') then begin
             TLA.17();
           end else begin
             TLA.2(82);
@@ -4230,9 +4230,9 @@ procedure ASSEMBLE.25(args 0 words);  { locals 0 words, lex 3 }
           ASSEMBLE.19(1);
         end;
       end else begin
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           TLA.17();
-          if (GATTYPTR = @'X       ') then begin
+          if (G3 = @'X       ') then begin
             TLA.17();
             ASSEMBLE.20(7);
           end else begin
@@ -4253,19 +4253,19 @@ procedure ASSEMBLE.26(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (GATVLEV <> -(1)) then begin
-      if (@G685[GATVLEV]^ = 22) then begin
+    if (G6 <> -(1)) then begin
+      if (@G685[G6]^ = 22) then begin
         TLA.12(108);
-        TLA.15(SY);
+        TLA.15(G15);
       end else begin
         TLA.2(25);
       end;
-      GATVLEV := -(1);
+      G6 := -(1);
     end else begin
       TLA.12(0);
-      TLA.15(SY);
+      TLA.15(G15);
     end;
   end;
   { paths disagree on stack depth here }
@@ -4277,17 +4277,17 @@ procedure ASSEMBLE.27(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (GATVLEV <> -(1)) then begin
-      if (@G685[GATVLEV]^ = 24) then begin
+    if (G6 <> -(1)) then begin
+      if (@G685[G6]^ = 24) then begin
         if TLA.19(0, 1, 1, 0, 255) then begin
           ASSEMBLE.19(0);
         end;
       end else begin
         TLA.2(25);
       end;
-      GATVLEV := -(1);
+      G6 := -(1);
     end else begin
       if ASSEMBLE.18() then begin
         ASSEMBLE.19(1);
@@ -4296,7 +4296,7 @@ procedure ASSEMBLE.27(args 0 words);  { locals 0 words, lex 3 }
       end;
     end;
   end;
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.28(args 0 words);  { locals 0 words, lex 3 }
@@ -4306,17 +4306,17 @@ procedure ASSEMBLE.28(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (GATTYPTR^.f5 = 0) then begin
+    if (G3^.f5 = 0) then begin
       TLA.2(79);
       TLA.12(250);
     end else begin
       if ASSEMBLE.18() then begin
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           ASSEMBLE.19(5);
           TLA.17();
-          if (GATTYPTR = @'X       ') then begin
+          if (G3 = @'X       ') then begin
             TLA.17();
           end else begin
             TLA.2(82);
@@ -4325,9 +4325,9 @@ procedure ASSEMBLE.28(args 0 words);  { locals 0 words, lex 3 }
           ASSEMBLE.19(1);
         end;
       end else begin
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           TLA.17();
-          if (GATTYPTR = @'X       ') then begin
+          if (G3 = @'X       ') then begin
             TLA.17();
             ASSEMBLE.20(7);
           end else begin
@@ -4339,7 +4339,7 @@ procedure ASSEMBLE.28(args 0 words);  { locals 0 words, lex 3 }
       end;
     end;
   end;
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.29(args 0 words);  { locals 0 words, lex 3 }
@@ -4349,7 +4349,7 @@ procedure ASSEMBLE.29(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
     if ASSEMBLE.18() then begin
       ASSEMBLE.19(1);
@@ -4357,7 +4357,7 @@ procedure ASSEMBLE.29(args 0 words);  { locals 0 words, lex 3 }
       ASSEMBLE.20(3);
     end;
   end;
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.30(args 0 words);  { locals 0 words, lex 3 }
@@ -4367,29 +4367,29 @@ procedure ASSEMBLE.30(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (SYMCURSOR = 0) then begin
+    if (G14 = 0) then begin
       TLA.2(79);
     end else begin
-      if (GATVLEV <> -(1)) then begin
-        if (@G685[GATVLEV]^ <> 24) then begin
+      if (G6 <> -(1)) then begin
+        if (@G685[G6]^ <> 24) then begin
           TLA.2(25);
         end else begin
           { unmodelled packed store of 0 }
           TLA.12(0);
           if TLA.19(0, 1, 1, 0, 255) then begin
-            TLA.12(SY);
+            TLA.12(G15);
           end;
         end;
         { paths disagree on stack depth here }
-        GATVLEV := -(1);
+        G6 := -(1);
       end else begin
         if ASSEMBLE.18() then begin
-          if (GATKIND = 14) then begin
+          if (G4 = 14) then begin
             ASSEMBLE.19(5);
             TLA.17();
-            if ((GATTYPTR = @'X       ') or (GATTYPTR = @'Y       ')) then begin
+            if ((G3 = @'X       ') or (G3 = @'Y       ')) then begin
               TLA.17();
             end else begin
               TLA.2(80);
@@ -4398,10 +4398,10 @@ procedure ASSEMBLE.30(args 0 words);  { locals 0 words, lex 3 }
             ASSEMBLE.19(1);
           end;
         end else begin
-          if (GATKIND = 14) then begin
+          if (G4 = 14) then begin
             ASSEMBLE.20(7);
             TLA.17();
-            if ((GATTYPTR = @'X       ') or (GATTYPTR = @'Y       ')) then begin
+            if ((G3 = @'X       ') or (G3 = @'Y       ')) then begin
               TLA.17();
             end else begin
               TLA.2(80);
@@ -4422,17 +4422,17 @@ procedure ASSEMBLE.31(args 0 words);  { locals 0 words, lex 3 }
     FWRITELN(I4,3);
     IOCHECK();
   end;
-  { unmodelled packed store of GATTYPTR^.f6 }
+  { unmodelled packed store of G3^.f6 }
   if TLA.18(1) then begin
-    if (GATTYPTR^.f5 = 0) then begin
+    if (G3^.f5 = 0) then begin
       TLA.2(79);
       TLA.12(250);
     end else begin
       if ASSEMBLE.18() then begin
-        if (GATKIND = 14) then begin
+        if (G4 = 14) then begin
           ASSEMBLE.19(5);
           TLA.17();
-          if ((GATTYPTR = @'X       ') or (GATTYPTR = @'Y       ')) then begin
+          if ((G3 = @'X       ') or (G3 = @'Y       ')) then begin
             TLA.17();
           end else begin
             TLA.2(80);
@@ -4445,35 +4445,35 @@ procedure ASSEMBLE.31(args 0 words);  { locals 0 words, lex 3 }
       end;
     end;
   end;
-  { left on stack: @LC }
+  { left on stack: @G10 }
   { left on stack: 8 }
 
 procedure ASSEMBLE.32(args 0 words);  { locals 0 words, lex 2 }
-  ID := -(1);
-  if INTPTR then begin
+  G17 := -(1);
+  if G12 then begin
     TLA.10();
-    INTPTR := 0;
-    if MODPTR then begin
+    G12 := 0;
+    if G68 then begin
       TLA.8();
     end;
   end;
   TLA.17();
 
 procedure ASSEMBLE.33(args 0 words);  { locals 2 words, lex 2 }
-  if FWPTR then begin
+  if G64 then begin
     L2 := 1;
     L1 := 1;
-    while ((L2 <= PUBLICPROCS) and L1) do begin
+    while ((L2 <= G27) and L1) do begin
       L1 := @G661[L2]^^[0];
       if L1 then begin
         L2 := (L2+1);
       end;
     end;
-    ID := (L2-1);
-    if not (INTPTR) then begin
+    G17 := (L2-1);
+    if not (G12) then begin
       TLA.9();
     end;
-    INTPTR := 1;
+    G12 := 1;
   end;
   TLA.17();
 
@@ -4531,20 +4531,20 @@ procedure PRINTERR.1(args 1 words);  { locals 371 words, lex 1 }
     IOCHECK();
     FGET(@L2);
     IOCHECK();
-    if INTPTR then begin
-      FWRITELN(@UVARPTR);
+    if G12 then begin
+      FWRITELN(@G73);
       IOCHECK();
-      FWRITEBYTES(@UVARPTR, @G539, 102, 102);
+      FWRITEBYTES(@G73, @G539, 102, 102);
       IOCHECK();
-      FWRITELN(@UVARPTR);
+      FWRITELN(@G73);
       IOCHECK();
-      FWRITESTRING(@UVARPTR, L2, 0);
+      FWRITESTRING(@G73, L2, 0);
       IOCHECK();
-      FWRITELN(@UVARPTR);
+      FWRITELN(@G73);
       IOCHECK();
-      INMODULE := (INMODULE+3);
+      G32 := (G32+3);
     end;
-    if not ((MODPTR and INTPTR)) then begin
+    if not ((G68 and G12)) then begin
       FWRITELN(I2,3);
       IOCHECK();
       FWRITEBYTES(I2,3, @G539, 102, 102);

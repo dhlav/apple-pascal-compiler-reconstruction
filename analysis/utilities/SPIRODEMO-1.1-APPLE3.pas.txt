@@ -16,7 +16,7 @@ procedure SPIRODEM.1(args 2 words);  { locals 5 words, lex 0 }
 L0088:
   APPLESTU.1();
   TURTLEGR.1();
-  GATDPLMT := 1;
+  G7 := 1;
   FWRITESTRING(I1,3, 'WELCOME TO WHILEPLOT', 0);
   IOCHECK();
   FWRITELN(I1,3);
@@ -32,33 +32,33 @@ L0088:
     IOCHECK();
     FWRITESTRING(I1,3, 'ANGLE: ', 0);
     IOCHECK();
-    FREADINT(I1,2, @GATKIND);
+    FREADINT(I1,2, @G4);
     IOCHECK();
     FREADLN(I1,2);
     IOCHECK();
-    if (GATKIND = 0) then begin
+    if (G4 = 0) then begin
       SPIRODEM.3();
     end;
 L011F:
     FWRITESTRING(I1,3, 'CHANGE: ', 0);
     IOCHECK();
-    FREADINT(I1,2, @GATTYPTR);
+    FREADINT(I1,2, @G3);
     IOCHECK();
     FREADLN(I1,2);
     IOCHECK();
-    if not ((GATTYPTR > 0)) then goto L011F;
+    if not ((G3 > 0)) then goto L011F;
     repeat
-      GATCVAL := 10;
+      G5 := 10;
       TURTLEGR.2();
       TURTLEGR.7(1);
-      while (GATCVAL < 250) do begin
+      while (G5 < 250) do begin
         SPIRODEM.2();
       end;
       TURTLEGR.10(3);
       TURTLEGR.10(3);
-      GATKIND := (GATKIND+15);
+      G4 := (G4+15);
     until APPLESTU.5 KEYPRESS();
-    FREADCHAR(I1,4, @GATVLEV);
+    FREADCHAR(I1,4, @G6);
     IOCHECK();
     TURTLEGR.8();
   until 0;
@@ -74,24 +74,24 @@ L018E:
 L0199:
 
 procedure SPIRODEM.2(args 0 words);  { locals 0 words, lex 1 }
-  TURTLEGR.5(GATCVAL);
-  TURTLEGR.3(GATKIND);
-  GATCVAL := (GATCVAL+GATTYPTR);
-  if ((GATCVAL mod 40) = 0) then begin
-    if (GATDPLMT = 12) then begin
-      GATDPLMT := 1;
+  TURTLEGR.5(G5);
+  TURTLEGR.3(G4);
+  G5 := (G5+G3);
+  if ((G5 mod 40) = 0) then begin
+    if (G7 = 12) then begin
+      G7 := 1;
     end else begin
-      GATDPLMT := (GATDPLMT+1);
+      G7 := (G7+1);
     end;
 L0023:
     { paths disagree on stack depth here }
     if not ((564 in 1)) then goto L0032;
-    GATDPLMT := (GATDPLMT+1);
+    G7 := (G7+1);
     goto L0023;
   end;
 L0032:
   { paths disagree on stack depth here }
-  TURTLEGR.7(GATDPLMT);
+  TURTLEGR.7(G7);
 
 procedure SPIRODEM.3(args 0 words);  { locals 0 words, lex 1 }
   TURTLEGR.8();
