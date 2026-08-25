@@ -109,7 +109,7 @@ L03AA:
           G7 := 2;
         end;
       end;
-      G3 := FORMATTE.2 the disk formatter(G7);
+      G3 := FORMATTE.2 FORMATDISK(G7);
       if G3 then begin
         FWRITECHAR(I1,3, 7, 0);
         FWRITESTRING(I1,3, 'ERROR: UNABLE TO FORMAT DISK.', 0);

@@ -42,6 +42,9 @@ STEPS = [
     # Same test for the library's fourteen native procedures.
     ("library native source reassembly",
      "probes/probe_lib_native_asm.py"),
+    # And for the native halves of the utilities on the 1.3 disks.
+    ("program native source reassembly",
+     "probes/probe_prog_native_asm.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),

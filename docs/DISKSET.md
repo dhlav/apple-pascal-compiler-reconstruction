@@ -49,7 +49,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 | file | what it is | status |
 |---|---|---|
 | SETUP.CODE | Changes hardware settings like your screen size. | not started; 54 procedures in 12 segments, nine of them 16-byte stubs. Byte-identical between 1.1 and 1.3 |
-| FORMATTER.CODE | Utility used to format blank floppy disks. | in progress; 5 procedures and 1 native, the smallest version-6 file |
+| FORMATTER.CODE | Utility used to format blank floppy disks. | in progress; the native procedure is byte-identical (finding 103) and 3 of the 4 p-code procedures are, with 15 bytes outstanding in the outer block (finding 102) |
 | FORMATTER.DATA | Support data used by the disk formatter. | not started; data file |
 
 ## Assembly Reference Files

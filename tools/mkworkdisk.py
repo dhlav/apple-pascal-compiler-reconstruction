@@ -52,6 +52,11 @@ FILES = [
     # collided would overwrite the evidence copy's name on the volume.
     ("FORMATTR.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "FORMATTER.text"),
+    # Its native half, which the Assembler takes and the Linker joins to the
+    # compiled Pascal. It cannot go on as FORMATTR too, so it is FMTNATIV --
+    # the repo file is `src/native/FORMATTR.TEXT`, named for the segment it
+    # belongs to, and only the volume name differs.
+    ("FMTNATIV.TEXT", ROOT / "src" / "native" / "FORMATTR.TEXT"),
 ]
 
 

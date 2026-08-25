@@ -106,11 +106,15 @@ NATIVE_SIG = {
     # operation number decides how many -- so there is no one arity to give
     # it, and a wrong one would be worse than none.
     #
-    # No reconstructed source yet; read off the call sites, which is weaker
-    # evidence but not a guess. FORMATTER's is handed one word and its
-    # result goes straight into `SRO 3`, the error code the code then
-    # prints; LIBMAP's is handed two `LLA`s and nothing consumes a result.
-    ("FORMATTE", 2): (3, True, "the disk formatter"),
+    # FORMATTER's was read off its call site first -- handed one word, and
+    # the result going straight into `SRO 3`, the error code the code then
+    # prints. `src/native/FORMATTR.TEXT` now declares `.FUNC FORMATDISK,1`
+    # and reassembles to Apple's bytes, so the two agree and this is source
+    # rather than inference (finding 103).
+    ("FORMATTE", 2): (3, True, "FORMATDISK"),
+    # No reconstructed source yet; read off the call site, which is weaker
+    # evidence but not a guess: LIBMAP's is handed two `LLA`s and nothing
+    # consumes a result.
     ("LIBMAP", 2): (2, False, "LIBMAP's native helper"),
 }
 

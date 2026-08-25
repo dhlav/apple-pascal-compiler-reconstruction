@@ -10128,3 +10128,72 @@ allocates a slot at first use, so one extra early entry renumbers six later
 Nesting the third `IF OK` inside the second was tried and is wrong -- it
 moves the first difference earlier and raises the count to seventeen. What
 produces a false-branch straight to the loop top is not yet known.
+
+## 103. FORMATTER's native half reassembles to Apple's bytes
+
+`src/native/FORMATTR.TEXT` is the 6502 source for `FORMATTE.2`, the
+`EXTERNAL` function the Pascal of finding 102 declares as
+
+```pascal
+FUNCTION FORMATDISK(DRIVE: INTEGER): INTEGER; EXTERNAL;
+```
+
+**VERIFIED BINARY FACT.** `tools/asm6502.py` assembles it to **354 bytes,
+identical to the disk's**, with **35 procedure-relative relocation entries
+and no base-, segment- or Interpreter-relative entries at all** -- the same
+counts, at the same offsets, as `FORMATTER.CODE` carries. The procedure runs
+`$0902`-`$0A62` in the shipped segment (`$0902`-`$09F2` code, 122
+instructions; `$09F2`-`$0A12` its own storage), `PROCEDURE NUMBER` is 0,
+which is what marks it native, and `RELOCSEG` is 0.
+
+`tools/probes/probe_prog_native_asm.py` is the check, twelve assertions
+covering the declaration, the two attribute bytes, every byte of the image
+and each relocation kind separately. It is the fast tier only;
+`SYSTEM.ASSMBLER` under the emulator remains the acceptance test (finding
+44e).
+
+### 103a. Why every relocation is procedure-relative
+
+The procedure's variables sit *inside its own image*, past the last
+instruction: the saved return address, the driver vector, the slot and unit
+bytes, the error code, and 22 bytes of the driver's zero page. Nothing it
+touches is a segment global or an Interpreter entry point, so there is no
+kind of relocation left for the Linker to do but move it as a block. That is
+the whole explanation of a 35/0/0/0 table, and it is a property the byte
+compare alone would not have shown.
+
+### 103b. RELOCSEG is 0 because a program has no data segment
+
+The library's natives relocate through a named data segment -- 21 for
+TURTLEGRAPHICS, 1 for the two Intrinsic Units that have none (finding 96).
+A program does not: base-relative references go through the BASE register,
+which the manual (IV-36) writes as 0. The disk agrees. The probe checks the
+rule rather than reading the byte back and handing it over.
+
+### 103c. The two paths, and where error 39 is raised
+
+The device type byte in SYSCOM's table at `$BF27` decides:
+
+* **type 2, a Disk II** -- the tables the Pascal half read to `$3D00` are
+  `JSR`ed directly with the unit byte in A, interrupts off.
+* **anything else** -- the slot's own driver is called through `$Cn00`,
+  after `$CnFE` bit 3 is tested for whether it can format at all. If it
+  cannot, command 0 is issued as a status call and the carry reports the
+  trouble.
+
+`39` (`LDA #$27`) is raised here, by this procedure, when the unit table has
+no entry for the drive; the other four codes the Pascal prints -- 43, 47,
+51, 52 -- come back from the driver.
+
+The save/restore of the driver's zero page is asymmetric and the asymmetry is
+Apple's: the save loop ends on `BNE` and copies 21 bytes, the restore loop
+ends on `BPL` and copies 22, so `$3A` is restored without ever having been
+saved. It is reproduced because the bytes require it.
+
+### 103d. What this settles about NATIVE_SIG
+
+`("FORMATTE", 2)` was the last entry in `lift.py`'s signature table read off
+a *call site* rather than a declaration -- one word in, a result into
+`SRO 3`. `.FUNC FORMATDISK,1` says the same thing from the other side, and
+`probe_native_sig.py` now holds the two together. `("LIBMAP", 2)` is the only
+inferred entry left.

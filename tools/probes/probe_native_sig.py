@@ -41,6 +41,7 @@ SOURCE = {
                                    "MOVEABS": 20, "MOVEREL": 21,
                                    "FILLIT": 22, "HIRES": 30, "CLIP": 31}),
     "LONGINTS.TEXT": ("LONGINTI", {"LONGOPS": 4}),
+    "FORMATTR.TEXT": ("FORMATTE", {"FORMATDISK": 2}),
 }
 # Private to their own assembly, never reached by a CXP, so no entry is
 # wanted; and the long-integer engine pops a variable number of words.
@@ -110,12 +111,13 @@ def main() -> int:
           f"declares {p5.param_size // 2}")
     seen.add(("APPLESTU", 5))
 
-    # Anything left is an entry with no source behind it. Two are expected
-    # -- they were read off call sites and say so.
+    # Anything left is an entry with no source behind it. One is expected
+    # -- it was read off its call site and says so. FORMATTER's used to be
+    # the second; it is now backed by FORMATTR.TEXT, and the two agree.
     rest = set(NATIVE_SIG) - seen
-    check(rest == {("FORMATTE", 2), ("LIBMAP", 2)},
+    check(rest == {("LIBMAP", 2)},
           f"NATIVE_SIG entries with no source behind them: {sorted(rest)}, "
-          f"expected only FORMATTER's and LIBMAP's")
+          f"expected only LIBMAP's")
 
     if bad:
         print("\n".join(bad))

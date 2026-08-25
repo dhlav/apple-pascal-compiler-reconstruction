@@ -1,0 +1,226 @@
+;---------------------------------------------------
+; FORMATTER's one native procedure: the thing that
+; actually formats the disk. APPLE3:FORMATTER.CODE,
+; segment FORMATTE, procedure 2.
+;
+; The other four procedures are Pascal and are in
+; src/pascal/programs/1.3/FORMATTER.text, where this
+; one is declared
+;
+;   FUNCTION FORMATDISK(DRIVE: INTEGER): INTEGER;
+;                                        EXTERNAL;
+;
+; so it takes one word and returns one, and the value
+; it returns is the error code the Pascal half prints:
+; 39 unable to format, 43 write-protected, 47 no disk,
+; 51 too slow, 52 too fast. 39 is raised here; the
+; rest come back from the driver.
+;
+; Reconstructed from the 1.3 binary. Assemble with
+; Apple's own SYSTEM.ASSMBLER and link the result into
+; the compiled Pascal: the assembler emits the
+; relocation table (finding 44) and that is part of
+; what has to match -- 35 procedure-relative entries,
+; and no others at all.
+;
+; Two paths. Which one is taken is decided by the
+; device type byte in SYSCOM's table at 0BF27:
+;
+;   type 2, a Disk II   the format tables the Pascal
+;                       half read to 03D00 are called
+;                       directly, with the unit byte
+;                       in A
+;   anything else       the slot's own driver is
+;                       called through 0Cn00, after
+;                       asking 0CnFE whether it can
+;                       format at all
+;
+; Everything from RTN down is this procedure's own
+; storage, sitting past the last instruction inside
+; its own image -- which is why all 35 relocation
+; entries are procedure-relative and why none of them
+; is a reference to anything outside.
+;
+; What is ours: every label and every comment.
+;---------------------------------------------------
+
+UNITTBL .EQU 0FEAE      ; SYSCOM's unit table, a word per unit
+DEVTBL  .EQU 0BF27      ; SYSCOM's device types, a byte per slot
+TABLES  .EQU 03D00      ; where FORMATTER.DATA was read to
+PTR     .EQU 002        ; 002,003 point at the slot's 0Cn00
+CMD     .EQU 042        ; the driver's command byte
+UNIT    .EQU 043        ; the driver's unit byte
+ZPLO    .EQU 03A        ; the driver's zero page, saved over the call
+
+        .FUNC FORMATDISK,1
+
+; Pop the return address, then the four bytes of
+; function result space the caller left, then the low
+; byte of DRIVE -- which is all of it that matters.
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        PLA
+        PLA
+        PLA
+        PLA
+        PLA
+; Index the unit table by DRIVE and pull out the
+; driver address. Bit 0 of its low byte selects the
+; second drive on the slot.
+        ASL  A
+        TAX
+        LDA  UNITTBL+001,X
+        TAY
+        LDA  UNITTBL,X
+        TAX
+        LSR  A
+        LDA  #000
+        ADC  #000
+        STA  DRIVE2
+        PLA             ; the high byte of DRIVE, unused
+        TYA
+        BEQ  PRESENT
+        LDA  #027       ; 39. -- there is no such unit
+        STA  ERR
+        JMP  RETURN
+
+; Turn the driver address into a slot number, and the
+; slot number into the 0Cn0 the driver lives at and
+; the unit byte it wants.
+PRESENT TXA
+        LSR  A
+        EOR  #003
+        CLC
+        ADC  #003
+        STA  SLOT
+        TAX
+        LDA  DEVTBL,X
+        STA  DEVTYPE
+        TXA
+        ASL  A
+        ASL  A
+        ASL  A
+        ASL  A
+        AND  #070
+        STA  UNITBYT
+        LDA  DRIVE2
+        BEQ  ONEDRIV
+        LDA  UNITBYT
+        ORA  #080       ; the second drive on this slot
+        STA  UNITBYT
+ONEDRIV LDA  DEVTYPE
+        CMP  #002
+        BEQ  DISKII
+        BNE  OTHER
+
+; A Disk II. The tables the Pascal half read to 03D00
+; do the whole job; all this does is hand them the
+; unit byte with interrupts off.
+DISKII  PHP
+        PLA
+        STA  SAVEP
+        SEI
+        LDA  UNITBYT
+        JSR  TABLES
+        STA  ERR
+        LDA  SAVEP
+        PHA
+        PLP
+
+; The common exit. Push the result high byte first,
+; then the low, then the return address back, and go.
+RETURN  LDA  #000
+        PHA
+        LDA  ERR
+        PHA
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+        RTS
+
+; Anything else: call the slot's own driver. Its zero
+; page is in use by whatever called us, so it is saved
+; first -- 21 bytes going out and 22 coming back, and
+; that asymmetry is Apple's, not a slip here: the save
+; loop ends on BNE and the restore loop on BPL, so
+; ZPLO itself is restored without ever being saved.
+OTHER   LDY  #015
+SAVELP  LDA  ZPLO,Y
+        STA  SAVEZP,Y
+        DEY
+        BNE  SAVELP
+        LDA  #000
+        STA  ERR
+; 0Cn00 for this slot, and the entry point 0CnFF names.
+        LDA  SLOT
+        ORA  #0C0
+        STA  PTR+1
+        STA  DRIVER+1
+        LDA  #000
+        STA  PTR
+        LDY  #0FF
+        LDA  @PTR,Y
+        STA  DRIVER
+        PHP
+        PLA
+        STA  SAVEP
+        SEI
+        LDA  UNITBYT
+        STA  UNIT
+; 0CnFE bit 3 says whether this driver can format. If
+; it can, command 3 does it; if it cannot, command 0
+; is a status call and the carry reports the trouble.
+        LDY  #0FE
+        LDA  @PTR,Y
+        AND  #008
+        BNE  DOFORMA
+        LDA  #000
+        STA  CMD
+        JSR  CALLDRV
+        BCS  KEEPERR
+        BCC  RESTORE
+DOFORMA LDA  #003
+        STA  CMD
+        JSR  CALLDRV
+KEEPERR STA  ERR
+RESTORE LDA  SAVEP
+        PHA
+        PLP
+        LDY  #015
+RESTLP  LDA  SAVEZP,Y
+        STA  ZPLO,Y
+        DEY
+        BPL  RESTLP
+        LDA  #000
+        PHA
+        LDA  ERR
+        PHA
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+        RTS
+
+; The driver call itself. It has to be an indirect
+; jump through a vector this procedure owns, which is
+; why DRIVER is two bytes of storage here and not an
+; address.
+CALLDRV JMP  @DRIVER
+
+;       ---- this procedure's own storage
+RTN     .BYTE 000,000   ; the return address, saved on entry
+DRIVER  .BYTE 000,000   ; the slot driver's entry point
+DRIVE2  .BYTE 000       ; nonzero for the second drive
+SLOT    .BYTE 000
+DEVTYPE .BYTE 000       ; from DEVTBL: 2 is a Disk II
+UNITBYT .BYTE 000       ; slot<<4, plus 080 for drive 2
+ERR     .BYTE 000       ; what FORMATDISK returns
+SAVEP   .BYTE 000       ; the status register over the call
+SAVEZP  .BYTE 000,000,000,000,000,000,000,000
+        .BYTE 000,000,000,000,000,000,000,000
+        .BYTE 000,000,000,000,000,000
+
+        .END

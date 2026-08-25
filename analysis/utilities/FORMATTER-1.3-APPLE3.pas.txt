@@ -84,7 +84,7 @@ L0648:
     end;
     FWRITESTRING(I1,3, 'Now formatting disk ...', 0);
     FWRITELN(I1,3);
-    G3 := FORMATTE.2 the disk formatter(G6);
+    G3 := FORMATTE.2 FORMATDISK(G6);
     if (G3 <> 0) then begin
       FWRITECHAR(I1,3, 7, 0);
       FWRITESTRING(I1,3, 'ERROR: ', 0);
