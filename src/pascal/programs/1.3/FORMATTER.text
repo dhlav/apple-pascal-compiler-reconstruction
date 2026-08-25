@@ -1,0 +1,263 @@
+{ FORMATTER -- the Apple Pascal disk formatter, APPLE3:FORMATTER.CODE.
+
+  Reconstructed from the 1.3 binary. Four p-code procedures and one native
+  6502 function; the 6502 half is not yet written, which is why FORMATDISK
+  is declared EXTERNAL here and the codefile this produces still has to be
+  linked before it will run.
+
+  Procedure numbers are fixed by declaration order and the binary fixes the
+  order: FORMATDISK is 2, QUITIT 3, GETVOLNAME 4, GETUNIT 5, and the outer
+  block is 1. The EXTERNAL has to be declared first or everything after it
+  is numbered one too low.
+
+  Globals. Every name here is ours; the offsets are Apple's, read off the
+  LAO/LDO/SRO/SLDO operands, and the declaration order is what reproduces
+  them -- a declaration group is placed above the group declared before it,
+  and identifiers within one group descend (finding 93a). One name per
+  group keeps that straightforward: ERR lands at 3, NAMELEN at 4, and so on
+  up to FORMATDATA at 1303.
+
+  The three words that looked like a gap between NAME and ANSWER are not a
+  gap: NAME is indexed with IXA 1 and stored with STO, a word at a time, so
+  it is an *unpacked* ARRAY[1..7] OF CHAR and occupies 12 through 18 on its
+  own. A packed one would have been four words and left three unexplained. }
+
+{ $I- : the program tests IORESULT itself, so the compiler must not plant
+  an IOCHECK after every call. Without this every I/O statement carries a
+  CSP 0 the shipped codefile does not have, which is the whole of the
+  difference it makes -- 50 bytes in the outer block alone. }
+(*$I-*)
+
+PROGRAM FORMATTER;
+
+  CONST
+    BLOCKSIZE  = 512;
+    DIRBLOCKS  = 4;
+    NAMEMAX    = 7;
+    FLOPPY     = 280;      { blocks on a Disk II, the one special case }
+    HARDDISK   = 9000;     { above this, warn before formatting }
+    BUFADDR    = 15616;    { $3D00, where the format tables are read }
+    ESC        = 27;
+    BS         = 8;
+    BELL       = 7;
+
+  TYPE
+    BYTE       = 0..255;
+    DIRIMAGE   = PACKED ARRAY[0..2047] OF BYTE;
+    BLOCK      = PACKED ARRAY[0..511] OF BYTE;
+    NAMEARRAY  = ARRAY[1..NAMEMAX] OF CHAR;
+    TWOBYTES   = PACKED ARRAY[0..1] OF BYTE;
+    BUFPTR     = RECORD CASE BOOLEAN OF
+                   TRUE:  (A: INTEGER);
+                   FALSE: (P: ^BLOCK)
+                 END;
+    WORDBYTES  = RECORD CASE BOOLEAN OF
+                   TRUE:  (W: INTEGER);
+                   FALSE: (B: TWOBYTES)
+                 END;
+
+  VAR
+    ERR:      INTEGER;     { 3    what FORMATDISK returned }
+    NAMELEN:  INTEGER;     { 4    length of the name already on the disk }
+    NEWLEN:   INTEGER;     { 5    length of the name just typed }
+    VOL:      INTEGER;     { 6    the unit being formatted }
+    NBLOCKS:  INTEGER;     { 7    UNITSTATUS's block count for that unit }
+    IOR:      INTEGER;     { 8 }
+    IC:       INTEGER;     { 9    BLOCKREAD's count, tested nowhere }
+    I:        INTEGER;     { 10 }
+    N:        INTEGER;     { 11   characters typed so far }
+    NAME:     NAMEARRAY;   { 12..18, one word per character }
+    ANSWER:   CHAR;        { 19 }
+    OK:       BOOLEAN;     { 20 }
+    DIR:      DIRIMAGE;    { 21   the directory being built }
+    DIRBUF:   BLOCK;       { 1045 block 2, read back to be shown }
+    TABLES:   BUFPTR;      { 1301 BUFADDR, the buffer BLOCKREAD fills }
+    SIZE:     WORDBYTES;   { 1302 the block count, split into two bytes }
+    FORMATDATA: FILE;      { 1303 }
+
+  FUNCTION FORMATDISK(DRIVE: INTEGER): INTEGER; EXTERNAL;
+
+  PROCEDURE QUITIT;
+  BEGIN
+    IF VOL = 4 THEN
+      BEGIN
+        WRITELN;
+        WRITE('Put system disk in #4 and press RETURN ');
+        IF EOLN THEN READLN;
+        READLN
+      END;
+    EXIT(PROGRAM)
+  END;
+
+  PROCEDURE GETVOLNAME;
+    VAR DEFAULT: STRING;
+        C: CHAR;
+  BEGIN
+    WRITELN;
+    WRITELN('Enter new volume name for this disk.');
+    WRITE('(<ret> for default name of BLANK:, <esc> to exit) ==>');
+    DEFAULT := 'BLANK';
+    FOR N := 1 TO NAMEMAX DO NAME[N] := CHR(0);
+    N := 0;
+    NEWLEN := 0;
+    READ(ANSWER);
+    C := ANSWER;
+    WHILE NOT EOLN AND (C <> CHR(ESC)) DO
+      BEGIN
+        IF ANSWER IN ['a'..'z'] THEN ANSWER := CHR(ORD(C) - 32);
+        IF (ANSWER IN ['0'..'9', 'A'..'Z']) AND (N < NAMEMAX) THEN
+          BEGIN
+            N := N + 1;
+            NAME[N] := ANSWER;
+            WRITE(CHR(BS), ANSWER)
+          END
+        ELSE IF (C = CHR(BS)) AND (N > 0) THEN
+          BEGIN
+            WRITE(ANSWER, ' ', ANSWER);
+            NAME[N] := CHR(0);
+            N := N - 1
+          END
+        ELSE IF C > CHR(31) THEN
+          WRITE(CHR(BS), ' ', CHR(BS));
+        READ(ANSWER);
+        C := ANSWER
+      END;
+    NEWLEN := N;
+    IF EOLN AND (NEWLEN = 0) THEN
+      BEGIN
+        FOR N := 1 TO 5 DO NAME[N] := DEFAULT[N];
+        FOR N := 6 TO NAMEMAX DO NAME[N] := CHR(0);
+        NEWLEN := 5
+      END
+    ELSE IF C = CHR(ESC) THEN QUITIT;
+    WRITELN
+  END;
+
+  PROCEDURE GETUNIT;
+    VAR C, DIGIT: CHAR;
+  BEGIN
+    REPEAT
+      WRITELN;
+      WRITE('Format which volume # ?  (4, 5, 9..12, <esc> to exit) ==> ');
+      N := 0;
+      VOL := 0;
+      READ(ANSWER);
+      C := ANSWER;
+      DIGIT := CHR(ORD(C) - 48);
+      WHILE NOT EOLN AND (C <> CHR(ESC)) DO
+        BEGIN
+          IF (VOL = 0) AND (ANSWER IN ['1', '4', '5', '9']) THEN
+            BEGIN
+              N := N + 1;
+              VOL := ORD(DIGIT);
+              WRITE(CHR(BS), ANSWER)
+            END
+          ELSE IF (VOL = 1) AND (ANSWER IN ['0', '1', '2']) THEN
+            BEGIN
+              N := N + 1;
+              VOL := 10 * VOL + ORD(DIGIT);
+              WRITE(CHR(BS), ANSWER)
+            END
+          ELSE IF (C = CHR(BS)) AND (N > 0) THEN
+            BEGIN
+              WRITE(ANSWER, ' ', ANSWER);
+              VOL := VOL DIV 10;
+              N := N - 1
+            END
+          ELSE IF C > CHR(31) THEN
+            WRITE(CHR(BS), ' ', CHR(BS));
+          READ(ANSWER);
+          C := ANSWER;
+          DIGIT := CHR(ORD(C) - 48)
+        END
+    UNTIL (VOL IN [4, 5, 9..12]) OR (C = CHR(ESC));
+    IF C = CHR(ESC) THEN QUITIT;
+    WRITELN
+  END;
+
+BEGIN
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN('Apple Pascal Disk Formatter Program [1.3]');
+  TABLES.A := BUFADDR;
+  RESET(FORMATDATA, '%formatter.data');
+  IF IORESULT <> 0 THEN
+    BEGIN
+      WRITELN;
+      WRITELN('ERROR: Cannot find file FORMATTER.DATA');
+      QUITIT
+    END;
+  IC := BLOCKREAD(FORMATDATA, TABLES.P^, 3);
+  IC := BLOCKREAD(FORMATDATA, DIR, DIRBLOCKS, 3);
+  REPEAT
+    GETUNIT;
+    UNITREAD(VOL, DIRBUF, BLOCKSIZE, 2, 0);
+    IOR := IORESULT;
+    OK := IOR <> 9;
+    IF NOT OK THEN
+      BEGIN
+        WRITE('Volume #', VOL, ' is not on-line.');
+        WRITELN
+      END;
+    NAMELEN := DIRBUF[6];
+    IF (IOR = 0) AND (NAMELEN > 0) AND (NAMELEN <= NAMEMAX) THEN
+      BEGIN
+        WRITE('Destroy directory of ');
+        FOR I := 7 TO 7 - 1 + NAMELEN DO WRITE(CHR(DIRBUF[I]));
+        WRITE(' ? (Y/N) ');
+        REPEAT READ(KEYBOARD, ANSWER) UNTIL ANSWER IN ['N', 'Y', 'n', 'y'];
+        WRITELN(ANSWER);
+        OK := ANSWER IN ['Y', 'y']
+      END;
+    IF OK THEN
+      BEGIN
+        UNITSTATUS(VOL, NBLOCKS, 1);
+        IF (IORESULT = 0) AND (NBLOCKS > HARDDISK) THEN
+          BEGIN
+            WRITELN;
+            WRITELN('** WARNING: You are about to format a hard disk. **');
+            WRITE('Do you really want to do this ? (Y/N) ');
+            REPEAT READ(KEYBOARD, ANSWER) UNTIL ANSWER IN ['N', 'Y', 'n', 'y'];
+            WRITELN(ANSWER);
+            OK := ANSWER IN ['Y', 'y']
+          END
+      END;
+    IF OK THEN
+      BEGIN
+        GETVOLNAME;
+        DIR[1030] := NEWLEN;
+        FOR N := 1 TO NEWLEN DO DIR[1030 + N] := ORD(NAME[N]);
+        WRITELN('Now formatting disk ...');
+        ERR := FORMATDISK(VOL);
+        IF ERR <> 0 THEN
+          BEGIN
+            WRITE(CHR(BELL), 'ERROR: ');
+            CASE ERR OF
+              39: WRITELN('Unable to format disk');
+              43: WRITELN('Disk is write-protected');
+              47: WRITELN('No disk in drive');
+              51: WRITELN('Drive speed is too slow');
+              52: WRITELN('Drive speed is too fast');
+              OTHERWISE WRITELN('Unable to format disk')
+              END
+          END
+        ELSE
+          BEGIN
+            UNITSTATUS(VOL, NBLOCKS, 1);
+            SIZE.W := NBLOCKS;
+            DIR[1038] := SIZE.B[0];
+            DIR[1039] := SIZE.B[1];
+            IF NBLOCKS = FLOPPY THEN
+              UNITWRITE(VOL, DIR, 1536, 0, 0)
+            ELSE
+              BEGIN
+                UNITWRITE(VOL, DIR[1536], BLOCKSIZE, 0, 0);
+                UNITWRITE(VOL, DIR[1024], BLOCKSIZE, 2, 0)
+              END;
+            WRITELN('Formatting successful.')
+          END
+      END
+  UNTIL FALSE;
+  QUITIT
+END.

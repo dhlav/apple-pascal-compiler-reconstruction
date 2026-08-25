@@ -47,6 +47,11 @@ FILES = [
     # 1.3 -- the two releases ship byte-identical codefiles for it.
     ("LINEFEED.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "LINEFEED.text"),
+    # FORMATTR, not FORMATTER: eight significant characters (finding 97c),
+    # and the compiler writes its output beside the source, so a name that
+    # collided would overwrite the evidence copy's name on the volume.
+    ("FORMATTR.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "FORMATTER.text"),
 ]
 
 

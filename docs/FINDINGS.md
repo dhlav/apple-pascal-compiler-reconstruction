@@ -10059,3 +10059,72 @@ reconstruct these programs: declare the same variables in the same order and
 Apple's compiler allocates them the same way, which is what the recompile
 checks. It does have to be settled before any claim is made about *where* a
 particular global lives in a program that opens a file.
+
+## 102. FORMATTER's Pascal, and two things the manual does not say
+
+`src/pascal/programs/1.3/FORMATTER.text`, compiled by Apple's own 1.3
+compiler under the emulator on the 128K system: **three of the four p-code
+procedures byte-identical**, and the fourth the right length with fifteen
+bytes outstanding.
+
+```
+  proc 1  1342/1342 B   15 bytes differ
+  proc 3    96/  96 B   IDENTICAL      QUITIT
+  proc 4   510/ 510 B   IDENTICAL      GETVOLNAME
+  proc 5   350/ 350 B   IDENTICAL      GETUNIT
+```
+
+Procedure 2 is the native 6502 function and is `EXTERNAL` here; it is not
+written yet, and until it is the codefile has to be linked before it runs.
+
+**Every `data_size` matched on the first compile** -- 2682, 0, 86, 4 -- which
+is what says the global frame and all three local frames are right before a
+single instruction is compared.
+
+### 102a. What the successive differences were
+
+Each round of the compare named one thing, and none of them was guesswork:
+
+* **`{$I-}`.** The first compile put a `CSP 0` (IOCHECK) after every I/O
+  call and Apple's has none: the program tests `IORESULT` itself. 50 bytes
+  in the outer block alone.
+* **The volume name is an *unpacked* array.** Apple indexes it with `IXA 1`
+  and stores with `STO` -- a word at a time -- so `ARRAY[1..7] OF CHAR`
+  occupies globals 12 through 18 on its own. A packed one is four words and
+  leaves three unexplained, and those three were exactly the "gap" that had
+  been provisionally declared as filler. There is no filler.
+* **`READ(KEYBOARD, ...)`.** The Y/N prompts in the outer block read
+  `LOD 1,4`, not `LOD 1,2`.
+* **The buffer address is a variant record.** `TABLES` is stored as a number
+  (`SRO 1301`) and passed as a pointer (`LDO 1301`, not `LAO 1301`).
+* **Declaration order inside one group.** `VAR C, DIGIT: CHAR` and not
+  `VAR DIGIT, C: CHAR`: identifiers within a group descend, so the *last*
+  named gets the lower offset. That was the whole of `GETUNIT`'s remaining
+  difference -- thirteen bytes, all of them `L1` and `L2` swapped.
+
+### 102b. Apple Pascal 1.3 accepts OTHERWISE, and the manual never says so
+
+**VERIFIED BINARY FACT.** The shipped `XJP` reads `XJP 39..52 else $0810`,
+and `$0810` holds a real statement -- a second copy of `'Unable to format
+disk'` -- which every matched arm jumps *past*. That is not a statement
+following the `CASE`, which all paths would reach; it is a default arm.
+
+`OTHERWISE` appears nowhere in the 1.3 manual or the language reference.
+The compiler takes it anyway, and adding it brought procedure 1 from 1306
+bytes to exactly Apple's 1342. So the reserved word exists and is
+undocumented, which puts it with the undocumented compiler options of
+finding 24a.
+
+### 102c. What is left
+
+**Fifteen bytes in procedure 1, and they are one difference.** Apple's
+`FJP` for the last `IF OK THEN` jumps to the *top* of the `REPEAT` at
+`$04A4`; the reconstruction jumps to the end of the body at `$08D0`. Since
+the loop is `UNTIL FALSE` the two are equivalent at run time, and every one
+of the other fourteen differing bytes is a consequence: the jump table
+allocates a slot at first use, so one extra early entry renumbers six later
+`UJP`s that are otherwise identical in target.
+
+Nesting the third `IF OK` inside the second was tried and is wrong -- it
+moves the first difference earlier and raises the count to seventeen. What
+produces a false-branch straight to the loop top is not yet known.
