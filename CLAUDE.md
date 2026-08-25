@@ -1,0 +1,208 @@
+# PascalRecon
+
+Reconstruct source for every file on the **Apple Pascal 1.3 disk set**, such
+that Apple's own tools turn that source back into the shipped bytes.
+Readable pseudocode is not the target — byte-identical output is.
+
+Target is **1.3 on the 128K system** (`128K.APPLE` + `128K.PASCAL`), not the
+64K `SYSTEM.PASCAL`. 1.1 stays in use: it ships *source* for utilities 1.3
+ships only as codefiles, and comparing releases says which files Apple
+actually rebuilt.
+
+Reconstructed so far: `SYSTEM.COMPILER`, `SYSTEM.LIBRARY`, `LINEFEED.CODE`,
+`FORMATTER.CODE`. Plan in `docs/PLAN.md`, evidence ledger in
+`docs/FINDINGS.md`, per-file scoreboard in `docs/DISKSET.md`.
+
+## Hard rules
+
+1. **Nothing in `evidence/` is ever modified.** It is Apple's shipped media.
+2. **`build/`, `analysis/`, `reference_source/` are generated.** Never
+   hand-edit them — change the tool and rerun `python tools/build_all.py`.
+   That script is the single entry point and must exit 0 before any commit.
+3. **Label every claim**: VERIFIED BINARY FACT / VERIFIED SOURCE FACT /
+   STRONG INFERENCE / SPECULATION.
+4. **A total that does not balance is evidence**, not slack. Require sums to
+   come out exactly or say why they cannot.
+5. **Prefer a check the binary can fail** — and check it can fail *for the
+   property you care about*. A passing check that cannot discriminate is
+   worth nothing.
+
+## Layout
+
+```
+evidence/disks/      six .dsk images, read-only
+src/native/          6502 assembly (Apple Assembler syntax)
+src/pascal/1.1|1.3/  the compiler, PASCALCO.text + phases/
+src/pascal/units/    SYSTEM.LIBRARY units
+src/pascal/programs/ standalone utilities
+tools/               generators; a2pascal/ is the library
+tools/probes/        checks, not artifacts — wired into build_all.py
+acceptance/          what Apple's own tools produced, kept verbatim
+docs/                PLAN, FINDINGS, DISKSET
+```
+
+`tools/a2pascal/`: `disk.py` `diskwrite.py` (Pascal volumes), `codefile.py`
+(segments, procedures, relocation), `pcode.py` (decoder), `m6502.py`,
+`lift.py` + `structure.py` (p-code → pseudo-Pascal), `srcfmt.py`,
+`globals.py`, `names.py`.
+
+Probes print a trailing `<name>-ok` line and return non-zero on failure.
+Adding one means adding it to `STEPS` in `tools/build_all.py`.
+
+## Two validation tiers
+
+**Fast tier** — `tools/asm6502.py` and `ucsdpsys_compile` (WSL). These are
+reimplementations: *they can only falsify, never accept.* The host compiler
+is also more permissive than Apple's (it accepts a trailing `;` in a field
+list that Apple rejects with error 19).
+
+**Acceptance tier** — Apple's own tools under AppleWin. This is the only
+authority. Interactive by nature, so it cannot be a probe; instead its
+output is kept in `acceptance/` and `probe_acceptance.py` re-checks it on
+every build.
+
+```
+python tools/mkworkdisk.py                      # ALWAYS first — stale disks lie
+powershell -File tools/emucompile.ps1  -Name X -Work2 -Compile 40
+powershell -File tools/emuassemble.ps1 -Name X
+powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z
+```
+
+Then read `build/disks/WORK2.dsk` with `a2pascal.disk` and diff.
+
+### Emulator pitfalls (all hit for real)
+
+- **AppleWin does not flush a written image until eject or exit.** The
+  scripts close it before you read the disk. Do not read `WORK2.dsk` while
+  it is running.
+- **SendKeys goes to whatever holds focus.** `emukeys.ps1` refuses to type
+  unless AppleWin is foreground, and that guard is correct — do not defeat
+  it.
+- **60ms between characters.** Batch the whole command in one SendKeys call
+  (Pascal has type-ahead), but slower per-key or characters are dropped.
+- **The assembler needs `P(refix` set to `APPLE2:` first.** It opens
+  `%6502.ERRORS` on its own volume but `6502.OPCODES` with *no* volume, so
+  that one resolves against the prefix volume, which after boot is the boot
+  disk — and `BOOT128` does not carry it.
+- **Run on 128K.** The 64K system cannot compile Apple's own `HILBERT.TEXT`
+  (runtime stack overflow). `mkbootdisk.py` builds `BOOT128.dsk`.
+- **Check the version banner** if a compile behaves oddly: mounting 1.1's
+  APPLE2 gives `SYSTEM.COMPILER is not version 1.3` and drops you in the
+  Editor.
+- AppleWin registry settings are **version-specific in value and type**
+  (`Emulation Speed` is REG_SZ). See finding 57d.
+
+## Apple Pascal 1.3, things that bite
+
+- **Identifiers are significant to 8 characters.** `ONEDRIVE`/`ONEDRIV`
+  collide. Volume filenames are 15 chars but the compiler writes output
+  beside the source, so pick names that do not collide at 8 either.
+- **`UNIT` is a reserved word.** So are the usual ones; a parameter named
+  `UNIT` gives error 7.
+- **`(*$I-*)` if the program tests `IORESULT` itself** — otherwise every I/O
+  statement carries a `CSP 0` the shipped codefile does not have.
+- **Allocation order: declaration groups ascend, identifiers within one
+  group descend.** `VAR C, DIGIT: CHAR` and `VAR DIGIT, C: CHAR` give
+  different offsets (finding 93a).
+- **`OTHERWISE` in `CASE` is accepted and undocumented** — the manual never
+  mentions it (finding 102b).
+- An array indexed with `IXA 1` and stored with `STO` is **unpacked**; a
+  packed one uses different code and a different size.
+- `{$R-}` (no `CHK`) is established; `{$G+}` all but certain; `{$U-}` ruled
+  out.
+- Global frame bound is `(param_size + data_size) / 2` **words** — parameters
+  and locals share one offset space (finding 46).
+- Source files: **LF line endings, ≤80 columns**, plain ASCII.
+  `mkworkdisk.py` enforces the width.
+
+## Codefile facts
+
+- Segment dictionary at offset 0: code addr/len `$00`, names `$40`,
+  **SEGINFO `$100`**, textaddr `$120`, seginfo `$140`.
+- **SEGINFO version** = the release that *wrote* the file (1.1 writes 2, 1.3
+  writes 6), enforced by the OS. It is how you tell a rebuilt file from a
+  binary carried over unchanged.
+- `mtype == 6502` exactly when a segment holds native procedures.
+- Native procedure: `enter_ic` → `jtab+2`; four relocation tables (base,
+  segment, procedure, interp) read from `jtab-4` downward; `PROCEDURE NUMBER
+  == 0` marks it native. **Parameter count is not recorded** — hence
+  `NATIVE_SIG` in `lift.py`, guarded by `probe_native_sig.py`.
+- **Native procedures are stored UNRELOCATED.** Address words hold offsets
+  from the procedure's own start; relocation is the loader's work. Do not
+  add a base before comparing (finding 103f).
+- `RELOCSEG` (high byte of the attribute word): 0 = through the BASE
+  register, which is what a program uses; non-zero names a data segment; 1
+  for an Intrinsic Unit with none.
+- **A compile alone leaves a segment with an `EXTERNAL` marked `HOSTSEG`.**
+  Only `SYSTEM.LINKER` resolves it and produces the `LINKED` segkind Apple
+  shipped (finding 91). A file with a native half needs all three tools.
+- The tail of the last block is **uninitialised slack**, not content. Apple's
+  holds leftover 6502; yours will hold whatever the tool had in memory.
+  Compare up to the end of the segment and say so.
+
+## 6502 source
+
+Apple Assembler syntax: default **hex** (constants must start with a digit —
+`0FEAE`, not `$FEAE`), `.PROC`/`.FUNC name,words`, `.BYTE`, `.EQU`,
+`.DEF`/`.REF`, `.INTERP`, `@` for indirect, `.END`.
+
+Write **symbolic operands and let the assembler emit the relocation tables**
+— never hand-build one, never substitute a modern assembler. A reference
+written as a constant where Apple wrote a label assembles fine and fails the
+byte compare, which is the point.
+
+`.FUNC` declares only its parameters; `NATIVE_SIG`'s `words` counts
+parameters **plus two** for the function result.
+
+## Reading the binary
+
+- **A backward branch is a loop condition before it is anything else.** An
+  `FJP` to the top of a `REPEAT` is an `UNTIL`, not a misplaced `IF`. Two
+  loops can start at the same statement, so the jump table holds one address
+  twice (finding 104a).
+- The lifter's output is usually right when the prose around it is wrong —
+  it had been printing `goto <loop top>` correctly for a round while the
+  reconstruction chased a different shape.
+- The compiler **does not short-circuit**: `and`/`or` compile to `LAND`/`LOR`
+  on values, and `FJP` chains that look like short-circuiting are nested
+  `if`s in the source.
+- UCSD puts a `CASE` jump table **after** the arms.
+- Error numbers name a routine's purpose (manual II-3E) — but **1.3
+  renumbered at least one** (`JTAB` overflow 253 → 254), so do not carry a
+  name across releases by error number.
+
+## Sources of truth, in order
+
+1. The binary.
+2. The Apple Pascal 1.3 manual and language reference —
+   `evidence/reference/manuals/`, OCR flattened to `analysis/reference/*.txt`
+   by `reference_text.py`. **OCR is unreliable for dense pages**; re-read as
+   an image with `tools/pdfpage.py` before quoting.
+3. Hyde's *P-Source* for p-machine questions.
+4. Published Pascal-P / UCSD source — legitimate for **names only**. The
+   compiler is a direct P2 descendant (its `operator` enum survives
+   verbatim), but re-derive every structure from the binary.
+5. Neil Parker's *Undocumented Secrets of Apple Pascal* — a lead, not an
+   authority. It got `SYSTEM.COMPILER`'s own `{$U-}` status wrong.
+6. `evidence/reference/tribby-idsearch-treesearch-1.2.asm` is **1.2** —
+   corroboration and a source of label names, not evidence.
+
+`ii0src.sdk` is the UCSD II.0 **operating system**, not the compiler — it is
+relevant to `SYSTEM.PASCAL` and useless for `SYSTEM.COMPILER` (finding 8).
+
+## Naming and correspondence
+
+A recovered name can be wrong, and it shows up as a *second* routine
+behaving more like the name than the one holding it. Write the evidence down
+and leave the name alone until the answer is known — renaming twice is worse
+than renaming late.
+
+When a 1.1 fact is established, push it through the correspondence table
+(finding 11) and confirm it in 1.3. Divergences are findings, not noise.
+
+## Git
+
+Commit messages explain *why* and record what was wrong, not just what
+changed. Push only when asked. Files carry CRLF in the working copy and LF
+in the repo — the `warning: LF will be replaced by CRLF` noise on every
+`git add` is expected.
