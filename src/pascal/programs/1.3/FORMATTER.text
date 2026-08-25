@@ -1,9 +1,10 @@
 { FORMATTER -- the Apple Pascal disk formatter, APPLE3:FORMATTER.CODE.
 
   Reconstructed from the 1.3 binary. Four p-code procedures and one native
-  6502 function; the 6502 half is not yet written, which is why FORMATDISK
-  is declared EXTERNAL here and the codefile this produces still has to be
-  linked before it will run.
+  6502 function. The 6502 half is src/native/FORMATTR.TEXT; FORMATDISK is
+  declared EXTERNAL here and SYSTEM.LINKER puts the assembled procedure in
+  its place. Compiled, assembled and linked by Apple's own 1.3 tools, the
+  result is identical to APPLE3:FORMATTER.CODE (finding 104).
 
   Procedure numbers are fixed by declaration order and the binary fixes the
   order: FORMATDISK is 2, QUITIT 3, GETVOLNAME 4, GETUNIT 5, and the outer
