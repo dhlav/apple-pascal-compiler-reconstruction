@@ -45,6 +45,11 @@ STEPS = [
     # And for the native halves of the utilities on the 1.3 disks.
     ("program native source reassembly",
      "probes/probe_prog_native_asm.py"),
+    # Not an artifact, and the only one of the four with no reimplementation
+    # in it: what SYSTEM.ASSMBLER itself wrote under the emulator, against
+    # what Apple shipped.
+    ("acceptance runs vs the shipped binaries",
+     "probes/probe_acceptance_asm.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),

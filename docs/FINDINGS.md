@@ -10197,3 +10197,53 @@ a *call site* rather than a declaration -- one word in, a result into
 `SRO 3`. `.FUNC FORMATDISK,1` says the same thing from the other side, and
 `probe_native_sig.py` now holds the two together. `("LIBMAP", 2)` is the only
 inferred entry left.
+
+### 103e. The acceptance run: Apple's own assembler, 0 errors, identical bytes
+
+**VERIFIED BINARY FACT.** `SYSTEM.ASSMBLER` 1.3, run under AppleWin on
+`src/native/FORMATTR.TEXT` (as `FMTNATIV.TEXT` on `WORK:`), reports
+
+```
+6502 Assembler [1.3]
+Assembly complete:     225 lines
+     0  Errors flagged on this Assembly
+```
+
+and the codefile it writes carries one segment, `FORMATDI`, holding one
+native procedure of **354 bytes that are identical to `FORMATTER.CODE`'s
+procedure 2**, with the same 35 procedure-relative relocation entries at the
+same offsets and no entries of any other kind.
+
+This is the acceptance tier of finding 44e, and it is the first time it has
+been run for anything other than `SEARCH.TEXT`. `tools/emuassemble.ps1`
+drives it, the twin of `emucompile.ps1`; the run's output and its final
+screen are kept under `acceptance/`, and
+`tools/probes/probe_acceptance_asm.py` re-checks them against the disk on
+every build. That probe is the only one of the four native checks with none
+of this project's own code on either side of the comparison.
+
+**One thing the assembler needs that the compiler does not.** It opens
+`%6502.ERRORS`, found on the volume it was itself loaded from, and
+`6502.OPCODES` written with *no volume at all* -- which is looked up on the
+prefix volume, and after a boot that is the boot volume. `BOOT128` does not
+carry it and `APPLE2` does, so the Filer's `P(refix` has to be set to
+`APPLE2:` before `A(ssem` will get past its own opcode table.
+
+### 103f. A codefile stores native procedures unrelocated
+
+**VERIFIED BINARY FACT**, and the reason 103e needed no adjustment on either
+side. The assembler's fresh output has its procedure at offset 0; the Linker
+placed the shipped copy at `$0902` inside a segment holding four p-code
+procedures as well. The two are byte-identical anyway, and the words the
+relocation table names are the same in both:
+
+```
+  +$002   $00F0      +$006   $00F1      +$01D   $00F4
+```
+
+Those are offsets from the start of the procedure, not addresses in the
+segment. So relocation is not something the Linker performs when it places a
+procedure -- it is left to the loader, and the table travels with the code
+precisely so that it can be. Adding the procedure's base to each named word
+before comparing, which is the obvious thing to try, makes all 35 words
+differ and nothing else.
