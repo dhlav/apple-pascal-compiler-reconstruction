@@ -32,13 +32,38 @@ SKIP = {"SYSTEM.COMPILER", "SYSTEM.LIBRARY"}
 OUT = ROOT / "analysis" / "utilities"
 
 
+def targets() -> set[str]:
+    """Codefiles that ship on a 1.3 disk.
+
+    1.3 is what is being reproduced, so a codefile that exists only on a 1.1
+    disk is not a target and is not swept -- CALC.CODE and the demo programs'
+    .CODE files are the whole of that set. A 1.1 copy of a file 1.3 also
+    ships is still swept: comparing the two releases is what says which
+    files Apple rebuilt (finding 99c).
+
+    Note what this gives up. Eleven of those demos ship as .TEXT on the 1.3
+    APPLE3 disk and as .TEXT *and* .CODE on 1.1's, which made them the only
+    corpus of Apple's source beside Apple's own output. `probe_calibrate.py`
+    still uses two of them and is unaffected by this.
+    """
+    from a2pascal.disk import PascalDisk as _D
+    out = set()
+    for tag, fname in DISKS.items():
+        if not tag.startswith("1.3"):
+            continue
+        d = _D.from_file(ROOT / "evidence" / "disks" / fname)
+        out |= {e.name for e in d.directory() if e.kind == "codefile"}
+    return out
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
+    want = targets()
     n = 0
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
         for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP:
+            if e.kind != "codefile" or e.name in SKIP or e.name not in want:
                 continue
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             stem = e.name.rsplit(".", 1)[0]

@@ -83,6 +83,11 @@ The list above is the interesting half. The disks carry more:
 ## What is left, by size
 
 Counting procedures rather than bytes, and 1.3 only: 216 done of roughly
-861. The lifter reads 1228 of 1231 across both releases (finding 100), so
-every remaining target can be read before it is written -- the listings are
-in `analysis/utilities/`, p-code and pseudo-Pascal side by side.
+861. Every remaining target can be read before it is written: the sweep
+covers the codefiles a 1.3 disk carries, plus the 1.1 copies of those same
+files, and **it lifts 1147 of 1147 with the stack fully tracked**
+(finding 100). The listings are in `analysis/utilities/`, p-code and
+pseudo-Pascal side by side.
+
+Files that ship only on a 1.1 disk are out of scope and are not swept:
+`CALC.CODE` and the demo programs' codefiles.

@@ -9961,3 +9961,48 @@ into `APPLESTUFF`, plus `CALC.CODE`'s handful of unmodelled CSPs and one
 **`APPLESTUFF.5` is native in 1.1 and p-code in 1.3.** 1.1's APPLESTUFF has
 seven native procedures where 1.3's has six, because Apple rewrote that one
 in Pascal.
+
+### 100f. Sized, scoped, and complete
+
+Two changes closed the fifteen of 100e.
+
+**The arities.** `NATIVE_SIG` in `lift.py` now carries every native
+procedure a `CXP` or `CLP` can reach, and most of it is not an inference:
+those are the `.PROC` and `.FUNC` declarations in `src/native/`, which
+reassemble to Apple's exact bytes. `probe_native_sig.py` reads them back and
+requires the two to agree, so the table cannot go on claiming a provenance
+it has lost. The convention is the caller's rather than the assembler's --
+`words` counts a function's two result words as well, so `.FUNC TREESEARCH,3`
+is 5 here.
+
+Three entries have no assembly behind them and say so in place:
+
+* **`APPLESTUFF.5` is KEYPRESS**, native in 1.1 and p-code in 1.3, so 1.3's
+  own copy of the same interface procedure supplies the parameter size from
+  its attribute table -- the binary, not a guess.
+* **`FORMATTE.2`** is handed one word and two zero words, and its result
+  goes straight into `SRO 3`, which the code then tests against
+  `'Disk is write-protected'` and the rest. A function of one integer
+  returning one: the unit number in, an error code out. Its own variables
+  live in the last 32 bytes of its code, which is why every relocation in it
+  points back into itself.
+* **`LIBMAP.2`** is handed two `LLA`s and nothing consumes a result.
+
+**LONGINTIO's engine is deliberately absent.** It is `.PROC LONGOPS,0`
+because the operation number decides how many words it pops, so there is no
+single arity to give it and a wrong one would be worse than none.
+
+**The scope.** 1.3 is what is being reproduced, so a codefile that ships
+only on a 1.1 disk is not a target. `disasm_utils.targets()` restricts the
+sweep to the codefiles a 1.3 disk carries; a 1.1 copy of a file 1.3 also
+ships stays in, because comparing the releases is what finding 99c rests on.
+That drops `CALC.CODE` -- whose unmodelled CSPs and one `BPT` were the last
+three -- and the demo programs' codefiles.
+
+**1147 of 1147, everything in scope, fully tracked.**
+
+What it gives up is worth writing down. Eleven demo programs ship as `.TEXT`
+on the 1.3 APPLE3 disk and as `.TEXT` *and* `.CODE` on 1.1's, and that pair
+is the only corpus anywhere of Apple's source beside Apple's own output.
+`probe_calibrate.py` still uses two of them and is unaffected; the other
+nine are no longer swept.

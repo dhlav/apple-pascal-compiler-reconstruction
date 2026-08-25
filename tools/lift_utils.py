@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from liftall import lift_codefile
-from disasm_utils import DISKS, SKIP, OUT
+from disasm_utils import DISKS, SKIP, OUT, targets
 
 # The boot disk of each release, for the Intrinsic Units a program calls but
 # does not contain.
@@ -40,10 +40,11 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     tot_c = tot_n = tot_s = tot_g = 0
     libs = {}
+    want = targets()
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
         for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP:
+            if e.kind != "codefile" or e.name in SKIP or e.name not in want:
                 continue
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             ver = tag.split("-")[0]
