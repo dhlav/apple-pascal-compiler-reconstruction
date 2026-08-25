@@ -1,4 +1,4 @@
-"""What Apple's own assembler produced, against what Apple shipped.
+"""What Apple's own tools produced, against what Apple shipped.
 
 `probe_prog_native_asm.py` and its two siblings run `tools/asm6502.py`, which
 is this project's reimplementation and can only ever falsify a source. The
@@ -10,7 +10,12 @@ run produced exactly as it came off the emulator, and this compares it
 against the binary Apple shipped. The reimplementation is not involved at
 any point here: both sides are Apple's.
 
-The comparison needs no relocation applied to either side. A native procedure
+Two kinds of run are covered. An assembler run is compared procedure to
+procedure; a Linker run is compared as a whole codefile, dictionary
+included, stopping only at the slack past the end of the last segment
+(finding 104b).
+
+The assembler comparison needs no relocation applied to either side. A native procedure
 is stored in a codefile with its address words still holding offsets from the
 start of the procedure -- relocation is the loader's work, not the Linker's --
 so the assembler's fresh output and a procedure the Linker placed at $0902
@@ -33,6 +38,16 @@ RUNS = [
     ("2026-08-24-formatter-native", "FMTNATIV.CODE", "FORMATDI", 1,
      "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "FORMATTER.CODE",
      "FORMATTE", 2),
+]
+
+# Whole-codefile runs: what the Linker wrote, against what Apple shipped.
+# `slack` is how many bytes at the END are NOT compared and why -- see
+# finding 104b. Everything before that has to be equal byte for byte,
+# segment dictionary included.
+LINKED = [
+    ("2026-08-24-formatter-linked", "LINKED.CODE",
+     "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "FORMATTER.CODE",
+     "FORMATTE"),
 ]
 
 
@@ -91,11 +106,43 @@ def main() -> int:
                   f"{code} carries "
                   f"{sorted(t - bp.enter_ic for t in bp.reloc[k])}")
 
+    for run, out, dsk, code, segname in LINKED:
+        d = ACC / run
+        check(d.is_dir(), f"{run}: the run directory is gone")
+        if not d.is_dir():
+            continue
+        check((d / "screen.png").exists(),
+              f"{run}: the screen at the end of the run is not kept")
+
+        mine = (d / out).read_bytes()
+        shipped = PascalDisk.from_file(DISKS / dsk).read_file(code)
+        check(len(mine) == len(shipped),
+              f"{run}: the Linker wrote {len(mine)} bytes, {code} is "
+              f"{len(shipped)}")
+        seg = next((s for s in CodeFile(shipped).segments
+                    if s.name.strip() == segname), None)
+        if seg is None:
+            bad.append(f"{code}: no segment {segname}")
+            continue
+        # The segment dictionary is one block; the segment follows it.
+        end = 512 + len(seg.data)
+        check(mine[:end] == shipped[:end],
+              f"{run}: differs inside the codefile proper -- first at "
+              f"${next(i for i in range(end) if mine[i] != shipped[i]):04X}"
+              if mine[:end] != shipped[:end] else "")
+        # Not a formality: this is what says the compared region is nearly
+        # all of the file, so the slack claim cannot be covering for a short
+        # comparison.
+        check(end >= len(shipped) - 512,
+              f"{run}: only {end} of {len(shipped)} bytes are compared, "
+              f"which is more than one block of slack")
+
+
     if bad:
         print("\n".join(bad))
         return 1
     print(f"{checked} checks, all passed")
-    print("acceptance-asm-ok")
+    print("acceptance-ok")
     return 0
 
 

@@ -10247,3 +10247,76 @@ procedure -- it is left to the loader, and the table travels with the code
 precisely so that it can be. Adding the procedure's base to each named word
 before comparing, which is the obvious thing to try, makes all 35 words
 differ and nothing else.
+
+## 104. FORMATTER is reconstructed
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/FORMATTER.text` compiled
+by Apple's 1.3 compiler, `src/native/FORMATTR.TEXT` assembled by Apple's 1.3
+assembler, and the two joined by Apple's 1.3 Linker, produce a codefile whose
+segment dictionary and whose entire 2672-byte segment `FORMATTE` are
+**identical to `APPLE3:FORMATTER.CODE`**:
+
+```
+  proc 1  1342/1342 B   data 2682/2682   IDENTICAL
+  proc 2   354/ 354 B   native 6502      IDENTICAL
+  proc 3    96/  96 B   data    0/   0   IDENTICAL   QUITIT
+  proc 4   510/ 510 B   data   86/  86   IDENTICAL   GETVOLNAME
+  proc 5   350/ 350 B   data    4/   4   IDENTICAL   GETUNIT
+```
+
+The Linker's own report names what it did: `Linking FORMATTE # 1`, then
+`Copying func FORMATDI`.
+
+This is the first program on the disk set reconstructed *whole* -- the
+compiler and the library were each one kind of thing, and this is both kinds
+in one file, joined the way Apple joined them.
+
+### 104a. The last fifteen bytes: an inner REPEAT that starts where the outer one does
+
+Finding 102c left procedure 1 with fifteen bytes outstanding, all of them
+consequences of one `FJP` at `$0692` that jumps to `$04A4`, the top of the
+loop, where the reconstruction jumped to `$08D0`, the end of the body.
+
+`$04A4` is the top of the loop, and a false branch that goes there is not an
+`IF` -- **it is an `UNTIL`**. The two loops simply begin at the same
+statement:
+
+```pascal
+  REPEAT
+    REPEAT
+      GETUNIT;
+      ...
+      IF OK THEN
+        BEGIN UNITSTATUS(VOL, NBLOCKS, 1); ... END
+    UNTIL OK;
+    GETVOLNAME;
+    ...
+  UNTIL FALSE;
+```
+
+so the inner `UNTIL OK` and the outer `UNTIL FALSE` both compile to a jump
+back to `$04A4`, which is why the jump table holds that address twice
+(`jtab-22` and `jtab-34`). The lifter had been printing it as
+`if not (G20) then goto L04A4` all along and printing `L04A4:` twice, one
+above the `repeat` and one at its top; both were the reading, not an
+artefact.
+
+**This is a case where the disassembly was right and the prose around it was
+wrong.** Nothing about the binary changed; what changed was reading a
+backward `FJP` as a loop condition rather than as a strangely-placed `IF`.
+With that one change procedure 1 went from fifteen bytes out to identical,
+and the jump-table renumbering that made up the other fourteen went with it.
+
+### 104b. 394 bytes still differ, and all of them are past the end of the file
+
+The codefile is 3584 bytes: 512 of segment dictionary, 2672 of segment, and
+**400 bytes of slack** rounding the last block up. Every difference is in
+that slack, and the two are not even the same *kind* of leftover -- Apple's
+holds fragments of 6502, this run's holds fragments of the Linker's own
+prompts (`illegal host file`, `...up host seg`).
+
+That is uninitialised buffer written out to fill a block, not content: the
+segment dictionary gives the segment's length, and nothing reads past it. It
+cannot be reproduced and does not need to be, but it is recorded here rather
+than quietly excluded, and `probe_acceptance.py` requires the compared region
+to be all but one block of the file so the exclusion cannot grow.

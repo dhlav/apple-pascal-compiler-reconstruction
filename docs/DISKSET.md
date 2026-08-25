@@ -49,7 +49,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 | file | what it is | status |
 |---|---|---|
 | SETUP.CODE | Changes hardware settings like your screen size. | not started; 54 procedures in 12 segments, nine of them 16-byte stubs. Byte-identical between 1.1 and 1.3 |
-| FORMATTER.CODE | Utility used to format blank floppy disks. | in progress; the native procedure is byte-identical (finding 103) and 3 of the 4 p-code procedures are, with 15 bytes outstanding in the outer block (finding 102) |
+| FORMATTER.CODE | Utility used to format blank floppy disks. | **reconstructed**, Pascal and 6502 both, compiled/assembled/linked by Apple's own tools to an identical codefile (finding 104) |
 | FORMATTER.DATA | Support data used by the disk formatter. | not started; data file |
 
 ## Assembly Reference Files

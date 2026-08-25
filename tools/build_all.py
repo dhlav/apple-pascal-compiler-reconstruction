@@ -49,7 +49,7 @@ STEPS = [
     # in it: what SYSTEM.ASSMBLER itself wrote under the emulator, against
     # what Apple shipped.
     ("acceptance runs vs the shipped binaries",
-     "probes/probe_acceptance_asm.py"),
+     "probes/probe_acceptance.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
