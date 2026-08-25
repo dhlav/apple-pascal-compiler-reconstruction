@@ -84,61 +84,54 @@ L0648:
     end;
     FWRITESTRING(I1,3, 'Now formatting disk ...', 0);
     FWRITELN(I1,3);
-    { stack tracking stopped: 'FORMATTE.2' }
-    { CLP 2 }
-    { SRO 3 }
-    { SLDO 3 }
-    { SLDC 0 }
-    { NEQI }
-    { FJP $0837 (jtab-30) }
-    goto L0837;
-    FWRITECHAR(I1,3, 7, 0);
-    FWRITESTRING(I1,3, 'ERROR: ', 0);
-    case GATTYPTR of   { table 39..52 }
-      39: begin
-        FWRITESTRING(I1,3, 'Unable to format disk', 0);
-        FWRITELN(I1,3);
-        goto L0835;
+    GATTYPTR := FORMATTE.2 the disk formatter(GATVLEV);
+    if (GATTYPTR <> 0) then begin
+      FWRITECHAR(I1,3, 7, 0);
+      FWRITESTRING(I1,3, 'ERROR: ', 0);
+      case GATTYPTR of   { table 39..52 }
+        39: begin
+          FWRITESTRING(I1,3, 'Unable to format disk', 0);
+          FWRITELN(I1,3);
+          goto L0835;
+        end;
+        43: begin
+          FWRITESTRING(I1,3, 'Disk is write-protected', 0);
+          FWRITELN(I1,3);
+          goto L0835;
+        end;
+        47: begin
+          FWRITESTRING(I1,3, 'No disk in drive', 0);
+          FWRITELN(I1,3);
+          goto L0835;
+        end;
+        51: begin
+          FWRITESTRING(I1,3, 'Drive speed is too slow', 0);
+          FWRITELN(I1,3);
+          goto L0835;
+        end;
+        52: begin
+          FWRITESTRING(I1,3, 'Drive speed is too fast', 0);
+          FWRITELN(I1,3);
+          goto L0835;
+        end;
       end;
-      43: begin
-        FWRITESTRING(I1,3, 'Disk is write-protected', 0);
-        FWRITELN(I1,3);
-        goto L0835;
-      end;
-      47: begin
-        FWRITESTRING(I1,3, 'No disk in drive', 0);
-        FWRITELN(I1,3);
-        goto L0835;
-      end;
-      51: begin
-        FWRITESTRING(I1,3, 'Drive speed is too slow', 0);
-        FWRITELN(I1,3);
-        goto L0835;
-      end;
-      52: begin
-        FWRITESTRING(I1,3, 'Drive speed is too fast', 0);
-        FWRITELN(I1,3);
-        goto L0835;
-      end;
-    end;
-    FWRITESTRING(I1,3, 'Unable to format disk', 0);
-    FWRITELN(I1,3);
+      FWRITESTRING(I1,3, 'Unable to format disk', 0);
+      FWRITELN(I1,3);
 L0835:
-    goto L08D0;
-L0837:
-    UNITSTATUS(GATVLEV, @GATDPLMT, 0, 1);
-    G1302 := GATDPLMT;
-    @SEGSLOT^[chk(1038,0..2047)] := chk(@G1302^[chk(0,0..1)],0..255);
-    @SEGSLOT^[chk(1039,0..2047)] := chk(@G1302^[chk(1,0..1)],0..255);
-    if (GATDPLMT = 280) then begin
-      UNITWRITE(GATVLEV, @SEGSLOT, 0, 1536, 0, 0);
     end else begin
-      UNITWRITE(GATVLEV, @SEGSLOT, chk(1536,0..2047), 512, 0, 0);
-      UNITWRITE(GATVLEV, @SEGSLOT, chk(1024,0..2047), 512, 2, 0);
+      UNITSTATUS(GATVLEV, @GATDPLMT, 0, 1);
+      G1302 := GATDPLMT;
+      @SEGSLOT^[chk(1038,0..2047)] := chk(@G1302^[chk(0,0..1)],0..255);
+      @SEGSLOT^[chk(1039,0..2047)] := chk(@G1302^[chk(1,0..1)],0..255);
+      if (GATDPLMT = 280) then begin
+        UNITWRITE(GATVLEV, @SEGSLOT, 0, 1536, 0, 0);
+      end else begin
+        UNITWRITE(GATVLEV, @SEGSLOT, chk(1536,0..2047), 512, 0, 0);
+        UNITWRITE(GATVLEV, @SEGSLOT, chk(1024,0..2047), 512, 2, 0);
+      end;
+      FWRITESTRING(I1,3, 'Formatting successful.', 0);
+      FWRITELN(I1,3);
     end;
-    FWRITESTRING(I1,3, 'Formatting successful.', 0);
-    FWRITELN(I1,3);
-L08D0:
   until 0;
   FORMATTE.3();
   FCLOSE(@G1303, 0);

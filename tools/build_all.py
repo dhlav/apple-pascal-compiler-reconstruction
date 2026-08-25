@@ -29,6 +29,9 @@ STEPS = [
     ("SYSTEM.LIBRARY unit map and interfaces", "libmap.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
+    # Not an artifact: the native signatures lift.py has to be told have to
+    # keep matching the .PROC/.FUNC declarations they claim to come from.
+    ("native signatures vs src/native", "probes/probe_native_sig.py"),
     ("disk set p-code listings", "disasm_utils.py"),
     ("disk set lifted to pseudo-Pascal", "lift_utils.py"),
     ("native 6502 listings", "disasm6502.py"),

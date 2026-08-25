@@ -47,20 +47,17 @@ L011F:
     FREADLN(I1,2);
     IOCHECK();
     if not ((GATTYPTR > 0)) then goto L011F;
-L014A:
-    GATCVAL := 10;
-    TURTLEGR.2();
-    TURTLEGR.7(1);
-    while (GATCVAL < 250) do begin
-      SPIRODEM.2();
-    end;
-    TURTLEGR.10(3);
-    TURTLEGR.10(3);
-    GATKIND := (GATKIND+15);
-    { stack tracking stopped: 'APPLESTU.5' }
-    { CXP 22,5 }
-    { FJP $014A (jtab-14) }
-    goto L014A;
+    repeat
+      GATCVAL := 10;
+      TURTLEGR.2();
+      TURTLEGR.7(1);
+      while (GATCVAL < 250) do begin
+        SPIRODEM.2();
+      end;
+      TURTLEGR.10(3);
+      TURTLEGR.10(3);
+      GATKIND := (GATKIND+15);
+    until APPLESTU.5 KEYPRESS();
     FREADCHAR(I1,4, @GATVLEV);
     IOCHECK();
     TURTLEGR.8();

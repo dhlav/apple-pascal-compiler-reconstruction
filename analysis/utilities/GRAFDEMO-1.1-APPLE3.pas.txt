@@ -27,56 +27,13 @@ L13EE:
   GRAFDEMO.20();
   TURTLEGR.2();
   GRAFDEMO.3(1);
-  { stack tracking stopped: 'APPLESTU.7' }
-  { CXP 22,7 }
-  { LAO 9 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 1 }
-  { STO }
-  { LAO 9 }
-  { SLDC 1 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 3 }
-  { STO }
-  { LAO 9 }
-  { SLDC 2 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 6 }
-  { STO }
-  { LAO 9 }
-  { SLDC 3 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 7 }
-  { STO }
-  { LAO 9 }
-  { SLDC 4 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 10 }
-  { STO }
-  { LAO 9 }
-  { SLDC 5 }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SLDC 11 }
-  { STO }
+  APPLESTU.7 RANDOMIZE();
+  @IC[chk(0,0..5)]^ := 1;
+  @IC[chk(1,0..5)]^ := 3;
+  @IC[chk(2,0..5)]^ := 6;
+  @IC[chk(3,0..5)]^ := 7;
+  @IC[chk(4,0..5)]^ := 10;
+  @IC[chk(5,0..5)]^ := 11;
 L149D:
   GRAFDEMO.7();
   GRAFDEMO.8();
@@ -86,10 +43,7 @@ L149D:
   GRAFDEMO.12();
   GRAFDEMO.14();
   GRAFDEMO.21();
-  { stack tracking stopped: 'APPLESTU.5' }
-  { CXP 22,5 }
-  { FJP $149D (jtab-10) }
-  goto L149D;
+  if not (APPLESTU.5 KEYPRESS()) then goto L149D;
   GRAFDEMO.4();
   UNLOADSEGMENT(22);
   UNLOADSEGMENT(20);
@@ -132,29 +86,16 @@ procedure GRAFDEMO.4(args 0 words);  { locals 0 words, lex 1 }
   EXIT(1, 1);
 
 procedure GRAFDEMO.5(args 0 words);  { locals 0 words, lex 1 }
-  { stack tracking stopped: 'APPLESTU.5' }
-  { CXP 22,5 }
-  { FJP $00AF }
-  goto L00AF;
-  GRAFDEMO.4();
-L00AF:
+  if APPLESTU.5 KEYPRESS() then begin
+    GRAFDEMO.4();
+  end;
   TURTLEGR.11(0, 279, 0, 191);
   GRAFDEMO.3(1);
   TURTLEGR.11(1, (279-1), 1, (191-1));
   TURTLEGR.10(2);
 
 function GRAFDEMO.6(args 0 words) : <1 word result>;  { locals 0 words, lex 1 }
-  { stack tracking stopped: 'APPLESTU.6' }
-  { CXP 22,6 }
-  { SLDC 6 }
-  { MODI }
-  { SLDC 0 }
-  { SLDC 5 }
-  { CHK }
-  { IXA 1 }
-  { SIND 0 }
-  { STL 1 }
-  { RNP 1 }
+  L1 := @IC[chk((APPLESTU.6 RANDOM() mod 6),0..5)]^;
 
 procedure GRAFDEMO.7(args 0 words);  { locals 2 words, lex 1 }
   GATVLEV := 1;
@@ -173,12 +114,9 @@ procedure GRAFDEMO.7(args 0 words);  { locals 2 words, lex 1 }
     GATVLEV := (GATVLEV+1);
   end;
   GRAFDEMO.2(2000);
-  { stack tracking stopped: 'APPLESTU.5' }
-  { CXP 22,5 }
-  { FJP $0145 }
-  goto L0145;
-  GRAFDEMO.4();
-L0145:
+  if APPLESTU.5 KEYPRESS() then begin
+    GRAFDEMO.4();
+  end;
   TURTLEGR.10(3);
   TURTLEGR.10(3);
   GATDPLMT := 0;
@@ -263,40 +201,9 @@ procedure GRAFDEMO.11(args 0 words);  { locals 0 words, lex 1 }
   TURTLEGR.6(140, 96);
   TURTLEGR.7(1);
 L02F5:
-  { stack tracking stopped: 'APPLESTU.6' }
-  { CXP 22,6 }
-  { SLDC 90 }
-  { MODI }
-  { SLDC 60 }
-  { SBI }
-  { CXP 20,3 }
-  { SLDC 3 }
-  { CXP 20,5 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { CXP 20,12 }
-  { LDCI 279 }
-  { GRTI }
-  { SLDC 0 }
-  { SLDC 0 }
-  { CXP 20,12 }
-  { SLDC 0 }
-  { LESI }
-  { LOR }
-  { SLDC 0 }
-  { SLDC 0 }
-  { CXP 20,13 }
-  { SLDC 0 }
-  { LESI }
-  { LOR }
-  { SLDC 0 }
-  { SLDC 0 }
-  { CXP 20,13 }
-  { LDCI 191 }
-  { GRTI }
-  { LOR }
-  { FJP $02F5 (jtab-10) }
-  goto L02F5;
+  TURTLEGR.3(((APPLESTU.6 RANDOM() mod 90)-60));
+  TURTLEGR.5(3);
+  if not (((((TURTLEGR.12() > 279) or (TURTLEGR.12() < 0)) or (TURTLEGR.13() < 0)) or (TURTLEGR.13() > 191))) then goto L02F5;
   GRAFDEMO.5();
 
 procedure GRAFDEMO.12(args 0 words);  { locals 0 words, lex 1 }
@@ -310,13 +217,7 @@ procedure GRAFDEMO.12(args 0 words);  { locals 0 words, lex 1 }
       TURTLEGR.7(GRAFDEMO.6());
       GATDPLMT := (GATDPLMT+1);
     end else begin
-      { stack tracking stopped: 'APPLESTU.6' }
-      { CXP 22,6 }
-      { SLDC 45 }
-      { MODI }
-      { SLDC 22 }
-      { SBI }
-      { CXP 20,3 }
+      TURTLEGR.3(((APPLESTU.6 RANDOM() mod 45)-22));
     end;
     TURTLEGR.5(10);
   end;
@@ -342,42 +243,10 @@ procedure GRAFDEMO.14(args 0 words);  { locals 1 words, lex 1 }
   GATDPLMT := 1;
   L1 := 40;
   while (GATDPLMT <= L1) do begin
-    { stack tracking stopped: 'APPLESTU.6' }
-    { CXP 22,6 }
-    { LDCI 400 }
-    { MODI }
-    { SLDC 50 }
-    { SBI }
-    { SLDC 0 }
-    { SLDC 0 }
-    { CXP 22,6 }
-    { LDCI 300 }
-    { MODI }
-    { SLDC 50 }
-    { SBI }
-    { CXP 20,6 }
-    { SLDC 0 }
-    { CXP 20,4 }
-    { SLDC 0 }
-    { SLDC 0 }
-    { CXP 22,6 }
-    { SLDC 9 }
-    { MODI }
-    { SLDC 3 }
-    { ADI }
-    { SLDC 0 }
-    { SLDC 0 }
-    { CXP 22,6 }
-    { SLDC 40 }
-    { MODI }
-    { SLDC 5 }
-    { ADI }
-    { CGP 13 }
-    { SLDO 7 }
-    { SLDC 1 }
-    { ADI }
-    { SRO 7 }
-    { UJP $03FC (jtab-10) }
+    TURTLEGR.6(((APPLESTU.6 RANDOM() mod 400)-50), ((APPLESTU.6 RANDOM() mod 300)-50));
+    TURTLEGR.4(0);
+    GRAFDEMO.13(((APPLESTU.6 RANDOM() mod 9)+3), ((APPLESTU.6 RANDOM() mod 40)+5));
+    GATDPLMT := (GATDPLMT+1);
   end;
   GRAFDEMO.2(4000);
   GRAFDEMO.5();
@@ -465,124 +334,19 @@ procedure GRAFDEMO.20(args 0 words);  { locals 0 words, lex 1 }
   GRAFDEMO.19();
 
 procedure GRAFDEMO.21(args 0 words);  { locals 0 words, lex 1 }
-  { stack tracking stopped: 'TURTLEGR.16' }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { SLDC 64 }
-  { SLDC 14 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { SLDC 10 }
-  { LDCI 128 }
-  { SLDC 14 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { LDCI 128 }
-  { SLDC 14 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { SLDC 10 }
-  { SLDC 64 }
-  { SLDC 14 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { SLDC 0 }
-  { SLDC 14 }
-  { CXP 20,16 }
-  { LDCI 8000 }
-  { CGP 2 }
-  { SLDC 3 }
-  { CXP 20,10 }
-  { LDCI 3000 }
-  { CGP 2 }
-  { SLDC 3 }
-  { CXP 20,10 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { SLDC 10 }
-  { SLDC 0 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { SLDC 64 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { SLDC 10 }
-  { LDCI 128 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { LDCI 128 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { SLDC 10 }
-  { SLDC 64 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { LAO 15 }
-  { SLDC 16 }
-  { SLDC 0 }
-  { SLDC 0 }
-  { SLDC 120 }
-  { SLDC 54 }
-  { LDCI 150 }
-  { SLDC 0 }
-  { SLDC 6 }
-  { CXP 20,16 }
-  { RNP 0 }
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 0, 14);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 64, 14);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 128, 14);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 128, 14);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 64, 14);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 0, 14);
+  GRAFDEMO.2(8000);
+  TURTLEGR.10(3);
+  GRAFDEMO.2(3000);
+  TURTLEGR.10(3);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 0, 6);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 64, 6);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 128, 6);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 128, 6);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 10, 64, 6);
+  TURTLEGR.16 DRAWBLOCK(@SY, 16, 0, 0, 120, 54, 150, 0, 6);

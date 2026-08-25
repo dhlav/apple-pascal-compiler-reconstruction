@@ -69,9 +69,49 @@ except OSError:
 # function includes the two-word result area the caller reserves
 # (tools/probes/probe_funcresult.py): TREESEARCH takes three arguments --
 # the same three 1.1 passes to CSP 8 -- plus that area, so five.
+# A native procedure's parameter count is not in the codefile at all. The
+# attribute word says `procnum = 0` and nothing else (finding 44), and the
+# fields a p-code procedure keeps its parameter and data sizes in hold the
+# relocation tables instead -- so a call into one cannot be sized from the
+# binary, and every such call stops the stack model (finding 100e).
+#
+# `words` is what the caller pushes: the parameter words, plus two more for
+# a function's result. Where the source exists these are its `.PROC`/`.FUNC`
+# declarations, and `src/native/` reassembles to Apple's exact bytes.
 NATIVE_SIG = {
     ("PASCALCO", 2): (2, False, "IDSEARCH"),
     ("PASCALCO", 3): (5, True, "TREESEARCH"),
+    # SYSTEM.LIBRARY, from src/native/APPLESTF.TEXT and TURTLEGR.TEXT.
+    ("APPLESTU", 2): (3, True, "PADDLE"),
+    ("APPLESTU", 3): (3, True, "BUTTON"),
+    ("APPLESTU", 4): (2, False, "TTLOUT"),
+    # KEYPRESS is native in 1.1 and p-code in 1.3, so there is no
+    # reconstructed source for it -- but it is the same interface procedure
+    # in both, and 1.3's p-code copy declares four bytes of parameters,
+    # which is no arguments and the two result words.
+    ("APPLESTU", 5): (2, True, "KEYPRESS"),
+    ("APPLESTU", 6): (2, True, "RANDOM"),
+    ("APPLESTU", 7): (0, False, "RANDOMIZE"),
+    ("APPLESTU", 8): (2, False, "NOTE"),
+    ("TURTLEGR", 15): (4, True, "SCREENBIT"),
+    ("TURTLEGR", 16): (9, False, "DRAWBLOCK"),
+    ("TURTLEGR", 20): (2, False, "MOVEABS"),
+    ("TURTLEGR", 21): (2, False, "MOVEREL"),
+    ("TURTLEGR", 22): (0, False, "FILLIT"),
+    # TURTLEGRAPHICS 30 and 31 are private and are called only from the
+    # unit's own assembly, never by a CXP, so nothing here needs them.
+    #
+    # LONGINTIO's engine is deliberately absent. It is declared
+    # `.PROC LONGOPS,0` because it pops a variable number of words -- the
+    # operation number decides how many -- so there is no one arity to give
+    # it, and a wrong one would be worse than none.
+    #
+    # No reconstructed source yet; read off the call sites, which is weaker
+    # evidence but not a guess. FORMATTER's is handed one word and its
+    # result goes straight into `SRO 3`, the error code the code then
+    # prints; LIBMAP's is handed two `LLA`s and nothing consumes a result.
+    ("FORMATTE", 2): (3, True, "the disk formatter"),
+    ("LIBMAP", 2): (2, False, "LIBMAP's native helper"),
 }
 
 CSP_EFFECT = {

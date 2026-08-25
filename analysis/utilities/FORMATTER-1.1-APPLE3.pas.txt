@@ -109,24 +109,19 @@ L03AA:
           GATDPLMT := 2;
         end;
       end;
-      { stack tracking stopped: 'FORMATTE.2' }
-      { CLP 2 }
-      { SRO 3 }
-      { SLDO 3 }
-      { FJP $0529 (jtab-20) }
-      goto L0529;
-      FWRITECHAR(I1,3, 7, 0);
-      FWRITESTRING(I1,3, 'ERROR: UNABLE TO FORMAT DISK.', 0);
-      FWRITELN(I1,3);
-      FWRITESTRING(I1,3, '       DISKETTE WRITE PROTECTED,', 0);
-      FWRITELN(I1,3);
-      FWRITESTRING(I1,3, '       BAD MEDIA, OR BAD DRIVE.', 0);
-      FWRITELN(I1,3);
-      goto L0534;
-L0529:
-      UNITWRITE(GATVLEV, @IC, 0, 1536, 0, 0);
+      GATTYPTR := FORMATTE.2 the disk formatter(GATDPLMT);
+      if GATTYPTR then begin
+        FWRITECHAR(I1,3, 7, 0);
+        FWRITESTRING(I1,3, 'ERROR: UNABLE TO FORMAT DISK.', 0);
+        FWRITELN(I1,3);
+        FWRITESTRING(I1,3, '       DISKETTE WRITE PROTECTED,', 0);
+        FWRITELN(I1,3);
+        FWRITESTRING(I1,3, '       BAD MEDIA, OR BAD DRIVE.', 0);
+        FWRITELN(I1,3);
+      end else begin
+        UNITWRITE(GATVLEV, @IC, 0, 1536, 0, 0);
+      end;
     end;
-L0534:
     { paths disagree on stack depth here }
   until 0;
   FORMATTE.3();
