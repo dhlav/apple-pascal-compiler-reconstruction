@@ -91,6 +91,22 @@ Then read `build/disks/WORK2.dsk` with `a2pascal.disk` and diff.
   Editor.
 - AppleWin registry settings are **version-specific in value and type**
   (`Emulation Speed` is REG_SZ). See finding 57d.
+- **AppleWin opens `-d1`/`-d2` read-write and will write to evidence.** A
+  boot alone updates a volume's date stamp; no error, no prompt. `git
+  status` after every session, and `runemu.py` now sets the read-only
+  attribute on every evidence disk before each launch (finding 106) — but
+  that is a second check, not a reason to skip the first.
+- **A Disk II volume's free space is a shared, shrinking budget.** Adding a
+  file to `mkworkdisk.py`'s `FILES` list eats into what `procbuild.py
+  --emu`'s splice needs, and re-running `mkworkdisk.py` wipes `WORK2.dsk`
+  along with `WORK.dsk` — including a codefile an earlier step in the same
+  session just produced. Add files to an existing disk with
+  `PascalWriter.from_file(...).add_file(...)` instead when something else
+  on it must survive, and back up a `.dsk` before touching it if it holds a
+  result nothing has verified yet.
+- **A failed `L(ink` still writes an output file** — sized to whatever was
+  free, same as a failed compile (findings 91's table). `remove_file` it
+  before retrying, not just the source of the failure.
 
 ## Apple Pascal 1.3, things that bite
 

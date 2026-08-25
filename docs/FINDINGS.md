@@ -10320,3 +10320,128 @@ segment dictionary gives the segment's length, and nothing reads past it. It
 cannot be reproduced and does not need to be, but it is recorded here rather
 than quietly excluded, and `probe_acceptance.py` requires the compared region
 to be all but one block of the file so the exclusion cannot grow.
+
+## 105. `SYSTEM.COMPILER` linked -- and two new gaps the linking uncovers
+
+**VERIFIED BINARY FACT.** Finding 91 predicted that compiling the fifteen
+segments, assembling `src/native/SEARCH.TEXT`, and `L(ink`ing the two would
+leave "nothing else missing." The three steps were run for the first time
+today. Two of the fifteen segments are not what that finding expected, and
+both are new, not previously visible, because nothing had compared PASCALCO
+as a whole image against a *linked* file before -- finding 90e's whole-segment
+check ran before linking existed, and finding 91 stopped at "the linker's
+output is untested."
+
+The run itself: `procbuild.py --emu --ver=1.3` spliced `BODY13.TEXT`,
+Apple's 1.3 compiler built it clean (6599 lines, 0 errors, matching finding
+60d), `SYSTEM.ASSMBLER` assembled `SEARCH.TEXT` clean (519 lines, 0 errors),
+and `SYSTEM.LINKER` joined them -- `Linking PASCALCO # 1`, `Copying proc
+IDSEARCH`, `Copying func TREESEAR` -- with no errors. Fourteen of the
+fifteen segments (`COMPINIT` through `FINISHUP`) came out **byte-identical
+end to end**, same as finding 90e found pre-linking; the linker does not
+touch what it does not need to.
+
+`PASCALCO` itself is the interesting one. Its **native halves are exactly
+right**: `IDSEARCH` and `TREESEARCH` sit at the same `enter_ic`/`exit_ic`/
+`jtab` as Apple's shipped copy (4594/5388/5392 and 5394/5536/5540), and every
+byte in that range matches. That is finding 103f confirmed a second time, at
+scale, inside a real linked file rather than a standalone assembly.
+
+Two things do not match, and both are new findings rather than corrections
+of anything already on record.
+
+### 105a. An extra, empty host segment -- 512 bytes
+
+Apple's shipped `SYSTEM.COMPILER` has **no segment 0**. The dictionary's
+code addr/len word for slot 0 is `0000`, and the name table holds eight
+spaces where a name would go. Our linked file has a real segment there,
+`PASCALSY` -- the `(*$U-*) PROGRAM PASCALSYSTEM` host that finding 60
+established wraps `PASCALCO` as a segment procedure. Its only executable
+content is a single `XIT` byte; the other ~99 bytes are the attribute table
+for its many forward-declared segment procedures (finding 60a's "block of
+dummy segment procedures"). That is still one block on disk, so the linked
+file comes out exactly 512 bytes longer than Apple's -- 40448 against
+39936.
+
+`BEGIN END.` is the entire outer block (`analysis/reconstruction/
+skeleton-1.3.text:596-600`), and a segment that short cannot be trimmed
+further from the Pascal side. Two explanations remain open and neither is
+tested yet: Apple's real compile may not go through an equivalent host
+program at all for a `(*$U-*)` **system**-level file (as opposed to an
+ordinary program), or the *linker* may be what drops an all-forward,
+no-code host segment from its output and ours simply was not asked to.
+Nothing here says which; it is recorded as open rather than guessed at.
+
+### 105b. `PASCALCO`'s procedure numbering is right; its physical layout is not
+
+Every procedure's **content** was already confirmed against Apple's (finding
+90e, 147 of 147, disassembly-based). Comparing the raw segment bytes for the
+first time -- which only linking makes possible, since compiling alone
+leaves the segment short -- shows the two files place those same procedures
+at different **offsets** inside the segment. `ERROR`(4) through `ENTERID`(7)
+sit at the same four offsets in both. From there they diverge:
+
+| physical order | Apple | this reconstruction |
+|---|---|---|
+| 5th body | `CHECKEND` (14) | `SEARCHSECTION` (9) |
+| 6th body | `HOLDMOST` (28) | `SEARCHID` (10) |
+| 7th body | `INSYMBOL` (8) | `GETBOUNDS` (11) |
+| ... | 9,10,11,12,13,16-21,**15**,22-25,**29**,26,27,31,30,1 | 9,10,11,12,13,14,15,16-25,27,8,26,28,... |
+
+Every number matches finding 61's table; only the *order the bodies are
+compiled in* differs. UCSD emits code in the order procedure bodies are
+parsed, not in declaration order (finding 61 already established that
+distinction for numbering; this is the same distinction applied to
+placement). `BUMPSEG`/`NEWSEG`/`CHECKEND`/`SEGINFO`(12-15) were already
+known to be **inserted by Apple** relative to the UCSD II.0 forward block;
+this is evidence that Apple's source also *defines* several of them, and
+`HOLDMOST`, earlier than the reconstruction currently does -- specifically,
+before `INSYMBOL`'s own body, which the reconstruction places after
+`COMPILE`.
+
+3304 of `PASCALCO`'s 5606 bytes differ as a result, all of them inside
+procedure bodies 9 through 30's territory (never inside procedure 1, the
+outer block, or either native routine). This is a physical reordering of
+`PASCALCO.text`'s procedure *definitions*, preserving every forward
+declaration and every procedure number, and it is not done here -- it is
+recorded as the one specific thing standing between this reconstruction and
+a byte-identical `SYSTEM.COMPILER`.
+
+### 105c. What this does and does not change
+
+Findings 90 and 91's claims stand: every p-code procedure's *content* is
+right, both native routines are right and sit at the right offset, and
+fourteen of fifteen segments are exactly Apple's bytes. What finding 91's
+"nothing else is missing" gets wrong is scope -- it was written before a
+linked comparison was possible and described the compile-time gap
+completely. The two gaps above only exist once the file is whole enough to
+compare as Apple shipped it, which is what the two hard rules this finding
+leans on say to expect: *"a total that does not balance is evidence"* and
+*"prefer a check the binary can fail."* Both checks did.
+
+The run's outputs are kept in `acceptance/2026-08-25-compiler-search-asm/`
+and `acceptance/2026-08-25-compiler-linked/`, same as finding 104's. Neither
+is wired into `probe_acceptance.py` yet -- that probe requires an exact
+match, and this run does not have one.
+
+## 106. `runemu.py` was writing to evidence, silently
+
+**VERIFIED BINARY FACT.** During the run behind finding 105,
+`evidence/disks/Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk` came back from
+a `--boot128` session with a changed hash. AppleWin opens `-d1`/`-d2` for
+read-write with no prompt and no error either way; a boot alone is enough
+to update the volume's date stamp, and every emulator run this project has
+ever made mounted `evidence/` disks the same way. `git status` catching it
+is what this rule (`docs/PLAN.md`: *"nothing in evidence/ is ever
+modified"*) is checked *against* -- it had not been checked *for* until now.
+
+`git checkout` recovered the file; `evidence/` is git-tracked and every run
+so far has been followed by a commit, so nothing upstream saw a modified
+copy. The fix is filesystem-level, not procedural: `tools/runemu.py` now
+sets the read-only attribute on every evidence disk it is about to hand
+AppleWin, on every launch, rather than relying on it having been set once
+by hand and staying that way (`enforce_readonly`, called right after the
+existence check, before the command line is built). AppleWin mounts and
+boots a read-only image exactly as before -- checked by re-running the same
+`--boot128 --work2` session and confirming the hash held -- it simply
+cannot write to it, which is the point.

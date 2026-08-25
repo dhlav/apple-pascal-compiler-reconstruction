@@ -76,6 +76,24 @@ RELEASES = {
 }
 
 
+def enforce_readonly(paths) -> None:
+    """AppleWin opens `-d1`/`-d2` for read-write and will write to them --
+    a boot alone updates the volume's date stamp. That happened for real:
+    `evidence/disks/Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk` came back
+    from a `--boot128` run with a changed hash and no error from AppleWin at
+    all (finding 105's session). The read-only bit is what stops it --
+    AppleWin still mounts and boots a read-only image fine, it just cannot
+    write -- so every evidence disk this script is about to hand AppleWin
+    gets the bit set first, every launch, rather than trusting it was set
+    by hand and stays that way.
+    """
+    import os
+    import stat
+    for p in paths:
+        if p.exists() and (os.stat(p).st_mode & stat.S_IWRITE):
+            os.chmod(p, os.stat(p).st_mode & ~stat.S_IWRITE)
+
+
 def apply_settings(dry_run: bool = False) -> None:
     """Write the two configuration values AppleWin has no switch for."""
     for name, (regtype, value) in SETTINGS.items():
@@ -114,6 +132,7 @@ def main() -> int:
     for key in ("d1", "d2", "s5d2"):
         if not (DISKS / r[key]).exists():
             raise SystemExit(f"missing evidence disk: {r[key]}")
+    enforce_readonly(DISKS / r[key] for key in ("d1", "d2", "s5d2"))
 
     d1 = DISKS / r["d1"]
     if args.boot128:

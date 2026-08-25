@@ -18,15 +18,22 @@ regenerated on every build.
 
 ## Where this stands
 
-Four files are reconstructed -- source in `src/`, and Apple's own tools
+Three files are reconstructed -- source in `src/`, and Apple's own tools
 turn it back into Apple's bytes:
 
 | file | what it took |
 |---|---|
-| `SYSTEM.COMPILER` | 147 of 147 procedures, 15 segments (finding 90) |
 | `SYSTEM.LIBRARY` | 55 p-code and 14 native procedures (finding 98) |
 | `LINEFEED.CODE` | 1.1's own source, unaltered, under the 1.3 compiler (finding 99a) |
 | `FORMATTER.CODE` | the first whole program: Pascal *and* 6502, linked (finding 104) |
+
+`SYSTEM.COMPILER` is not on that list yet. 147 of 147 procedures are
+verified against Apple's p-code (finding 90), and now that it has been
+linked, both native routines and 14 of its 15 segments are byte-identical
+to what Apple shipped -- but `PASCALCO`, the fifteenth, is not: an extra
+empty host segment and a different physical body order inside the segment
+(finding 105) are the two things standing between here and a byte-identical
+codefile.
 
 Counting procedures rather than bytes, and 1.3 only: **216 done of roughly
 861.** Every remaining target can be read before it is written -- the sweep
@@ -61,13 +68,20 @@ The order below is by what the evidence supports, not by size. A file whose
 1.1 release ships source is nearly free; a file with a native half now has
 a route end to end; everything else is a straight read-and-rebuild.
 
-1. **Close `SYSTEM.COMPILER`'s 948-byte gap.** Finding 91 says exactly what
-   it is: Apple shipped the *linker's* output, and a compile alone leaves
-   `PASCALCO` marked `HOSTSEG` with procedures 2 and 3 unresolved. The tool
-   that was missing then exists now. Compile the fifteen segments, assemble
-   `src/native/SEARCH.TEXT`, and `L(ink` the two -- the same three steps
-   that closed `FORMATTER` -- and the last reconstruction that stops short
-   of a whole shipped file stops short no longer.
+1. **Close what finding 105 found, not the 948-byte gap -- that part is
+   done.** The three steps ran: compile the fifteen segments, assemble
+   `src/native/SEARCH.TEXT`, `L(ink` the two. Both native routines land at
+   Apple's exact offset and match byte for byte, and 14 of 15 segments are
+   byte-identical end to end -- finding 91 was right about all of that.
+   Linking uncovered two things finding 91 could not have seen because
+   nothing had compared a linked `PASCALCO` before: an extra, empty
+   `PASCALSY` host segment (512 bytes, finding 105a) and a `PASCALCO` whose
+   procedure *numbering* is right but whose physical body order inside the
+   segment is not (finding 105b, 3304 of 5606 bytes). Two concrete next
+   moves: work out whether the host segment should exist at all in a linked
+   system file, and reorder `PASCALCO.text`'s procedure *definitions* --
+   not their forward declarations -- to Apple's order in the table finding
+   105b gives.
 
 2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. The reason to
    take it next is `("LIBMAP", 2)`: it is the **last entry in `lift.py`'s
