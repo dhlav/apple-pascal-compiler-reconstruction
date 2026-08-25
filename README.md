@@ -149,7 +149,8 @@ analysis/          procedure_maps/  pcode_disassembly/  native/  callgraph/
 legacy/            the inherited ChatGPT phase archive, unaltered
 
 
-docs/              FINDINGS.md, PLAN.md
+docs/              FINDINGS.md, PLAN.md, DISKSET.md (every file on the
+                   1.3 disks, what it does and how much is reconstructed)
 
 
 ```
