@@ -42,6 +42,11 @@ FILES = [
     ("SEARCH.TEXT", ROOT / "src" / "native" / "SEARCH.TEXT"),
     ("SKEL13.TEXT", ROOT / "analysis" / "reconstruction" / "skeleton-1.3.text"),
     ("SKEL11.TEXT", ROOT / "analysis" / "reconstruction" / "skeleton-1.1.text"),
+    # The APPLE3 utilities, smallest first. LINEFEED is Apple's own source,
+    # off the 1.1 APPLE3 disk, carried over unaltered as the hypothesis for
+    # 1.3 -- the two releases ship byte-identical codefiles for it.
+    ("LINEFEED.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "LINEFEED.text"),
 ]
 
 

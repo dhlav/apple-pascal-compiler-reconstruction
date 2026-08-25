@@ -17,6 +17,14 @@ STEPS = [
     # and this requires the reader's join to reproduce both exactly and to
     # refuse a damaged one (finding 50).
     ("split segment 0", "probes/probe_split_segment.py"),
+    ("disk set inventory", "diskmap.py"),
+    # Not an artifact: mtype has to agree with where the native code
+    # actually is, and a 1.3 disk has to be stamped version 6 except where
+    # finding 99 says otherwise.
+    ("SEGINFO version and mtype", "probes/probe_seginfo.py"),
+    # Not an artifact: the three APPLE3 utilities 1.3 shipped without
+    # rebuilding differ from their 1.1 copies only inside SEGINFO.
+    ("utilities 1.3 did not rebuild", "probes/probe_stale_utils.py"),
     ("segment/procedure maps", "map_compiler.py"),
     ("SYSTEM.LIBRARY unit map and interfaces", "libmap.py"),
     ("p-code decoder self-check", "validate_pcode.py"),

@@ -1,0 +1,236 @@
+Every file on every evidence disk.
+
+v = SEGINFO version: 1.1's system writes 2, 1.3's writes 6, and a 0
+is a codefile older than the field. The system enforces it -- 1.3
+refuses a version-2 SYSTEM.COMPILER outright (finding 99).
+mtype is 6502 exactly when the segment holds native procedures.
+
+=== Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk   volume APPLE2
+  SYSTEM.COMPILER    75 blk   38400 B  codefile
+      slot 1 seg1   PASCALCO  v2 pcode-lsb    4486 B   29 p-code   0 native
+      slot 2 seg7   COMPINIT  v2 pcode-lsb    3226 B   10 p-code   0 native
+      slot 3 seg8   DECLARAT  v2 pcode-lsb    7574 B   20 p-code   0 native
+      slot 4 seg9   BODYPART  v2 pcode-lsb    7208 B   37 p-code   0 native
+      slot 5 seg10  ROUTINE   v2 pcode-lsb    2902 B   17 p-code   0 native
+      slot 6 seg11  STATEMEN  v2 pcode-lsb    1598 B    8 p-code   0 native
+      slot 7 seg12  CASESTAT  v2 pcode-lsb     436 B    1 p-code   0 native
+      slot 8 seg13  FORSTATE  v2 pcode-lsb     512 B    1 p-code   0 native
+      slot 9 seg14  BODY1     v2 pcode-lsb     326 B    1 p-code   0 native
+      slot10 seg15  BODY3     v2 pcode-lsb     858 B    2 p-code   0 native
+      slot11 seg16  WRITELIN  v2 pcode-lsb     818 B    4 p-code   0 native
+      slot12 seg17  UNITPART  v2 pcode-lsb    1600 B    4 p-code   0 native
+      slot13 seg18  COMPOPTI  v2 pcode-lsb    1060 B    4 p-code   0 native
+      slot14 seg19  NUMSTRIN  v2 pcode-lsb     864 B    3 p-code   0 native
+      slot15 seg20  FINISHUP  v2 pcode-lsb     672 B    1 p-code   0 native
+  SYSTEM.LINKER      24 blk   12288 B  codefile
+      slot 1 seg1   LINKER    v2 pcode-lsb   11330 B   48 p-code   0 native
+  SYSTEM.ASSMBLER    54 blk   27648 B  codefile
+      slot 0 seg31  PASCALIO  v1 unknown      1238 B    4 p-code   0 native
+      slot 1 seg1   TLA       v2 pcode-lsb   10412 B   36 p-code   0 native
+      slot 2 seg7   INITIALI  v2 pcode-lsb    2428 B    5 p-code   0 native
+      slot 3 seg8   SYMTBLDU  v2 pcode-lsb    1082 B    3 p-code   0 native
+      slot 4 seg9   PROCEND   v2 pcode-lsb    3360 B    9 p-code   0 native
+      slot 5 seg10  ASSEMBLE  v2 pcode-lsb    4752 B   33 p-code   0 native
+      slot 6 seg11  PRINTERR  v2 pcode-lsb     550 B    1 p-code   0 native
+  6500.OPCODES        2 blk     720 B  datafile
+  6500.ERRORS         7 blk    3570 B  datafile
+
+=== Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk   volume APPLE1
+  SYSTEM.APPLE       32 blk   16384 B  datafile
+  SYSTEM.PASCAL      44 blk   22528 B  codefile
+      slot 0 seg0   PASCALSY  v6 pcode-lsb   20096 B   58 p-code   0 native
+      slot 1 seg1   USERPROG  v6 pcode-lsb      56 B    1 p-code   0 native
+      slot 2 seg2   FIOPRIMS  v6 pcode-lsb     796 B    5 p-code   0 native
+      slot 3 seg3   PRINTERR  v6 pcode-lsb    1156 B    1 p-code   0 native
+      slot 4 seg4   INITIALI  v6 pcode-lsb    3146 B   11 p-code   0 native
+      slot 5 seg5   GETCMD    v6 pcode-lsb    5366 B   21 p-code   0 native
+      slot 6 seg6   FILEPROC  v6 pcode-lsb    2258 B    8 p-code   0 native
+  SYSTEM.EDITOR      50 blk   25600 B  codefile
+      slot 1 seg1   EDITOR    v6 pcode-lsb    3320 B   35 p-code   0 native
+      slot 2 seg7   INITIALI  v6 pcode-lsb    2776 B    7 p-code   0 native
+      slot 3 seg8   OUT       v6 pcode-lsb    2236 B    4 p-code   0 native
+      slot 4 seg9   COPYFILE  v6 pcode-lsb    1560 B   11 p-code   0 native
+      slot 5 seg10  ENVIRONM  v6 pcode-lsb    1760 B    5 p-code   0 native
+      slot 6 seg11  PUTSYNTA  v6 pcode-lsb     494 B    2 p-code   0 native
+      slot 7 seg12  EDITCORE  v6 pcode-lsb   11252 B   65 p-code   0 native
+  SYSTEM.FILER       30 blk   15360 B  codefile
+      slot 1 seg1   FILEHAND  v6 pcode-lsb   14646 B   56 p-code   0 native
+  SYSTEM.LIBRARY     38 blk   19456 B  codefile
+      slot 0 seg30  LONGINTI  v6 6502         2546 B    3 p-code   1 native
+      slot 1 seg31  PASCALIO  v6 pcode-lsb    2070 B    9 p-code   0 native
+      slot 2 seg28  CHAINSTU  v6 pcode-lsb     410 B    8 p-code   0 native
+      slot 3 seg29  TRANSCEN  v6 pcode-lsb    1268 B    9 p-code   0 native
+      slot 4 seg20  TURTLEGR  v6 6502         5230 B   24 p-code   7 native
+      slot 5 seg21  TURTLEGR  v6 pcode-lsb     386 B    0 p-code   0 native
+      slot 6 seg22  APPLESTU  v6 6502          652 B    2 p-code   6 native
+  SYSTEM.MISCINFO     1 blk     192 B  datafile
+  SYSTEM.CHARSET      2 blk    1024 B  datafile
+  SYSTEM.SYNTAX      12 blk    6144 B  textfile
+
+=== Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk   volume APPLE2
+  SYSTEM.ASSMBLER    50 blk   25600 B  codefile
+      slot 0 seg31  PASCALIO  v2 pcode-lsb     572 B    5 p-code   0 native
+      slot 1 seg1   TLA       v6 pcode-lsb   10176 B   38 p-code   0 native
+      slot 2 seg7   INITIALI  v6 pcode-lsb    2568 B    6 p-code   0 native
+      slot 3 seg8   SYMTBLDU  v6 pcode-lsb    1088 B    3 p-code   0 native
+      slot 4 seg9   PROCEND   v6 pcode-lsb    3224 B    9 p-code   0 native
+      slot 5 seg10  ASSEMBLE  v6 pcode-lsb    4554 B   33 p-code   0 native
+      slot 6 seg11  PRINTERR  v6 pcode-lsb     192 B    1 p-code   0 native
+  SYSTEM.COMPILER    78 blk   39936 B  codefile
+      slot 1 seg1   PASCALCO  v6 6502         5606 B   29 p-code   2 native
+      slot 2 seg7   COMPINIT  v6 pcode-lsb    4032 B   11 p-code   0 native
+      slot 3 seg8   DECLARAT  v6 pcode-lsb    7600 B   20 p-code   0 native
+      slot 4 seg9   BODYPART  v6 pcode-lsb    7454 B   38 p-code   0 native
+      slot 5 seg10  ROUTINE   v6 pcode-lsb    2892 B   17 p-code   0 native
+      slot 6 seg11  STATEMEN  v6 pcode-lsb    1690 B    8 p-code   0 native
+      slot 7 seg12  CASESTAT  v6 pcode-lsb     512 B    1 p-code   0 native
+      slot 8 seg13  FORSTATE  v6 pcode-lsb     498 B    1 p-code   0 native
+      slot 9 seg14  BODY1     v6 pcode-lsb     326 B    1 p-code   0 native
+      slot10 seg15  BODY3     v6 pcode-lsb     902 B    2 p-code   0 native
+      slot11 seg16  WRITELIN  v6 pcode-lsb     826 B    4 p-code   0 native
+      slot12 seg17  UNITPART  v6 pcode-lsb    1664 B    4 p-code   0 native
+      slot13 seg18  COMPOPTI  v6 pcode-lsb    1098 B    5 p-code   0 native
+      slot14 seg19  NUMSTRIN  v6 pcode-lsb     898 B    3 p-code   0 native
+      slot15 seg20  FINISHUP  v6 pcode-lsb     650 B    1 p-code   0 native
+  SYSTEM.LINKER      25 blk   12800 B  codefile
+      slot 1 seg1   LINKER    v6 pcode-lsb   11804 B   51 p-code   0 native
+  LIBRARY.CODE        8 blk    4096 B  codefile
+      slot 1 seg1   LIBRARIA  v6 pcode-lsb    3518 B   16 p-code   0 native
+  LIBMAP.CODE        11 blk    5632 B  codefile
+      slot 0 seg1   LIBMAP    v6 6502         4788 B   11 p-code   1 native
+  6502.OPCODES        2 blk     720 B  datafile
+  6502.ERRORS         7 blk    3570 B  datafile
+
+=== Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk   volume APPLE3
+  SYSTEM.APPLE       32 blk   16384 B  datafile
+  FORMATTER.CODE      7 blk    3584 B  codefile
+      slot 0 seg1   FORMATTE  v6 6502         2672 B    4 p-code   1 native
+  FORMATTER.DATA      7 blk    3584 B  datafile
+  BINDER.CODE         5 blk    2560 B  codefile
+      slot 0 seg1   APPLEBIN  v2 pcode-lsb    1606 B    6 p-code   0 native
+  LINEFEED.CODE       2 blk    1024 B  codefile
+      slot 0 seg1   LINEFEED  v2 pcode-lsb      38 B    1 p-code   0 native
+  SET40COLS.CODE      5 blk    2560 B  codefile
+      slot 0 seg1   SET40COL  v2 pcode-lsb    1674 B    4 p-code   0 native
+  II40.MISCINFO       1 blk     192 B  datafile
+  II80.MISCINFO       1 blk     192 B  datafile
+  BALANCED.TEXT      12 blk    6144 B  textfile
+  CROSSREF.TEXT       8 blk    4096 B  textfile
+  DISKIO.TEXT        22 blk   11264 B  textfile
+  GRAFCHARS.TEXT      6 blk    3072 B  textfile
+  GRAFDEMO.TEXT      28 blk   14336 B  textfile
+  HAZEL.MISCINFO      1 blk     192 B  datafile
+  HAZELGOTO.TEXT      4 blk    2048 B  textfile
+  HILBERT.TEXT        6 blk    3072 B  textfile
+  SETUP.CODE         33 blk   16896 B  codefile
+      slot 0 seg0   PASCALSY  v0 unknown        16 B    1 p-code   0 native
+      slot 1 seg0   SETUP     v0 unknown      6038 B   26 p-code   0 native
+      slot 2 seg0   NUMBER2   v0 unknown        16 B    1 p-code   0 native
+      slot 3 seg0   NUMBER3   v0 unknown        16 B    1 p-code   0 native
+      slot 4 seg0   NUMBER4   v0 unknown        16 B    1 p-code   0 native
+      slot 5 seg0   NUMBER5   v0 unknown        16 B    1 p-code   0 native
+      slot 6 seg0   NUMBER6   v0 unknown        16 B    1 p-code   0 native
+      slot 7 seg0   NUMBER7   v0 unknown        16 B    1 p-code   0 native
+      slot 8 seg0   NUMBER8   v0 unknown        16 B    1 p-code   0 native
+      slot 9 seg0   NUMBER9   v0 unknown        16 B    1 p-code   0 native
+      slot10 seg0   INITS     v0 unknown      2398 B    9 p-code   0 native
+      slot11 seg0   TEACHSET  v0 unknown      2986 B   10 p-code   0 native
+  SPIRODEMO.TEXT      6 blk    3072 B  textfile
+  TREE.TEXT           8 blk    4096 B  textfile
+  128K.APPLE         32 blk   16384 B  datafile
+  128K.PASCAL        45 blk   23040 B  codefile
+      slot 0 seg0   PASCALSY  v6 pcode-lsb   20948 B   58 p-code   0 native
+      slot 1 seg1   USERPROG  v6 pcode-lsb      56 B    1 p-code   0 native
+      slot 2 seg2   FIOPRIMS  v6 pcode-lsb     796 B    5 p-code   0 native
+      slot 3 seg3   PRINTERR  v6 pcode-lsb    1156 B    1 p-code   0 native
+      slot 4 seg4   INITIALI  v6 pcode-lsb    3148 B   11 p-code   0 native
+      slot 5 seg5   GETCMD    v6 pcode-lsb    6302 B   27 p-code   0 native
+      slot 6 seg6   FILEPROC  v6 pcode-lsb    2258 B    8 p-code   0 native
+
+=== UCSD Pascal 1.1_1.dsk   volume APPLE1
+  SYSTEM.APPLE       32 blk   16384 B  datafile
+  SYSTEM.PASCAL      41 blk   20992 B  codefile
+      slot 0 seg0   PASCALSY  v0 unknown     20962 B   57 p-code   0 native
+      slot 1 seg1   USERPROG  v2 pcode-lsb      56 B    1 p-code   0 native
+      slot 2 seg2   DEBUGGER  v2 pcode-lsb      62 B    1 p-code   0 native
+      slot 3 seg3   PRINTERR  v2 pcode-lsb    1004 B    1 p-code   0 native
+      slot 4 seg4   INITIALI  v2 pcode-lsb    2612 B   11 p-code   0 native
+      slot 5 seg5   GETCMD    v2 pcode-lsb    4214 B   18 p-code   0 native
+      slot 6 seg6   FILEPROC  v2 pcode-lsb    2218 B    8 p-code   0 native
+  SYSTEM.MISCINFO     1 blk     512 B  datafile
+  SYSTEM.EDITOR      47 blk   24064 B  codefile
+      slot 1 seg1   EDITOR    v2 pcode-lsb    3246 B   35 p-code   0 native
+      slot 2 seg7   INITIALI  v2 pcode-lsb    2642 B    6 p-code   0 native
+      slot 3 seg8   OUT       v2 pcode-lsb    1634 B    4 p-code   0 native
+      slot 4 seg9   COPYFILE  v2 pcode-lsb    1556 B   11 p-code   0 native
+      slot 5 seg10  ENVIRONM  v2 pcode-lsb    1606 B    5 p-code   0 native
+      slot 6 seg11  PUTSYNTA  v2 pcode-lsb     486 B    2 p-code   0 native
+      slot 7 seg12  EDITCORE  v2 pcode-lsb   10234 B   60 p-code   0 native
+  SYSTEM.FILER       28 blk   14336 B  codefile
+      slot 1 seg0   FILEHAND  v0 unknown     13676 B   55 p-code   0 native
+  SYSTEM.LIBRARY     34 blk   17408 B  datafile
+  SYSTEM.CHARSET      2 blk    1024 B  datafile
+  SYSTEM.SYNTAX      14 blk    7168 B  datafile
+
+=== UCSD Pascal 1.1_3.dsk   volume APPLE3
+  SYSTEM.APPLE       32 blk   16384 B  datafile
+  FORMATTER.CODE      4 blk    2048 B  codefile
+      slot 0 seg1   FORMATTE  v2 6502         1506 B    3 p-code   1 native
+  FORMATTER.DATA      6 blk    3072 B  datafile
+  LIBRARY.CODE        8 blk    4096 B  codefile
+      slot 1 seg1   LIBRARIA  v2 pcode-lsb    3226 B   15 p-code   0 native
+  LIBMAP.CODE         9 blk    4608 B  codefile
+      slot 0 seg1   LIBMAP    v2 pcode-lsb    3928 B   11 p-code   0 native
+  SETUP.CODE         33 blk   16896 B  codefile
+      slot 0 seg0   PASCALSY  v0 unknown        16 B    1 p-code   0 native
+      slot 1 seg0   SETUP     v0 unknown      6038 B   26 p-code   0 native
+      slot 2 seg0   NUMBER2   v0 unknown        16 B    1 p-code   0 native
+      slot 3 seg0   NUMBER3   v0 unknown        16 B    1 p-code   0 native
+      slot 4 seg0   NUMBER4   v0 unknown        16 B    1 p-code   0 native
+      slot 5 seg0   NUMBER5   v0 unknown        16 B    1 p-code   0 native
+      slot 6 seg0   NUMBER6   v0 unknown        16 B    1 p-code   0 native
+      slot 7 seg0   NUMBER7   v0 unknown        16 B    1 p-code   0 native
+      slot 8 seg0   NUMBER8   v0 unknown        16 B    1 p-code   0 native
+      slot 9 seg0   NUMBER9   v0 unknown        16 B    1 p-code   0 native
+      slot10 seg0   INITS     v0 unknown      2398 B    9 p-code   0 native
+      slot11 seg0   TEACHSET  v0 unknown      2986 B   10 p-code   0 native
+  BINDER.CODE         5 blk    2560 B  codefile
+      slot 0 seg1   APPLEBIN  v2 pcode-lsb    1606 B    6 p-code   0 native
+  CALC.CODE           8 blk    4096 B  codefile
+      slot 1 seg0   CALCULAT  v0 unknown      3380 B   15 p-code   0 native
+  LINEFEED.TEXT       4 blk    2048 B  textfile
+  LINEFEED.CODE       2 blk    1024 B  codefile
+      slot 0 seg1   LINEFEED  v2 pcode-lsb      38 B    1 p-code   0 native
+  SOROCGOTO.TEXT      4 blk    2048 B  textfile
+  SOROCGOTO.CODE      2 blk    1024 B  codefile
+      slot 0 seg0   GOXY      v0 unknown       100 B    2 p-code   0 native
+  SOROC.MISCINFO      1 blk     192 B  datafile
+  HAZELGOTO.TEXT      4 blk    2048 B  textfile
+  HAZELGOTO.CODE      2 blk    1024 B  codefile
+      slot 0 seg0   GOXY      v0 unknown       112 B    2 p-code   0 native
+  HAZEL.MISCINFO      1 blk     192 B  datafile
+  CROSSREF.TEXT       8 blk    4096 B  textfile
+  CROSSREF.CODE       3 blk    1536 B  codefile
+      slot 0 seg1   CROSSREF  v2 pcode-lsb     832 B    4 p-code   0 native
+  SPIRODEMO.TEXT      6 blk    3072 B  textfile
+  SPIRODEMO.CODE      2 blk    1024 B  codefile
+      slot 0 seg1   SPIRODEM  v2 pcode-lsb     442 B    3 p-code   0 native
+  HILBERT.TEXT        6 blk    3072 B  textfile
+  HILBERT.CODE        2 blk    1024 B  codefile
+      slot 0 seg1   HILBERT   v2 pcode-lsb     436 B    4 p-code   0 native
+  GRAFDEMO.TEXT      28 blk   14336 B  textfile
+  GRAFDEMO.CODE      12 blk    6144 B  codefile
+      slot 0 seg1   GRAFDEMO  v2 pcode-lsb    5386 B   21 p-code   0 native
+  GRAFCHARS.CODE      3 blk    1536 B  codefile
+      slot 0 seg1   GRAFCHAR  v2 pcode-lsb     612 B    5 p-code   0 native
+  GRAFCHARS.TEXT      6 blk    3072 B  textfile
+  TREE.TEXT           8 blk    4096 B  textfile
+  TREE.CODE           3 blk    1536 B  codefile
+      slot 0 seg1   TREE      v2 pcode-lsb     742 B    6 p-code   0 native
+  BALANCED.TEXT      12 blk    6144 B  textfile
+  BALANCED.CODE       4 blk    2048 B  codefile
+      slot 0 seg1   BALANCED  v2 pcode-lsb    1230 B    6 p-code   0 native
+  DISKIO.TEXT        22 blk   11264 B  textfile
+  DISKIO.CODE         7 blk    3584 B  codefile
+      slot 0 seg1   DISKIO    v2 pcode-lsb    2950 B   16 p-code   0 native
+

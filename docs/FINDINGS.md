@@ -9796,3 +9796,87 @@ authority: **`SYSTEM.ASSMBLER`** is, and running these three files through it
 under AppleWin is what would finally settle the native half, exactly as
 recompiling under Apple's compiler settles the Pascal half. What the probe
 rules out is the whole class of errors that would fail there too.
+
+## 99. LINEFEED, and what the SEGINFO version stamp settles
+
+The first APPLE3 utility is reconstructed, and getting there turned up the
+field that says which of the others can be.
+
+### 99a. LINEFEED reproduces, from Apple's own source
+
+**VERIFIED BINARY FACT.** `LINEFEED.CODE` is one procedure and 38 bytes, and
+the 1.1 and 1.3 disks ship the same 38. The 1.1 APPLE3 disk also ships
+`LINEFEED.TEXT` -- Apple's source, seventeen lines -- and the 1.3 disk does
+not. Compiled by Apple's own 1.3 compiler under AppleWin on the 128K system,
+that source produces those 38 bytes exactly, and the segment dictionary with
+them: the name, the code address and length, and every word of the tail.
+The source is carried in `src/pascal/programs/1.3/LINEFEED.text` unaltered,
+and `tools/mkworkdisk.py` puts it on the work volume.
+
+That makes it the first file outside `SYSTEM.COMPILER` and `SYSTEM.LIBRARY`
+closed end to end, and it is worth more than its size as calibration,
+because it exercises two things nothing reconstructed so far does:
+
+* **`CHK` is emitted.** The compiler and every library unit are `{$R-}`
+  (finding 23c), so no reconstruction has yet produced a range check.
+  `CHEAT.PTR^[0]:=255` emits two: the index against `0..1`, then the value
+  against `0..255`, in that order, before `STB`.
+* **A negative literal is not folded.** `CHEAT.INT:=-16625` compiles to
+  `LDCI 16625 ; NGI`. The compiler emits the positive word and negates it
+  at run time.
+
+### 99b. SEGINFO's version field is the writing system, and it is enforced
+
+**VERIFIED BINARY FACT.** SEGINFO is one word per dictionary slot at $100:
+segnum in bits 0-7, mtype in 8-11, version in 13-15. The version is **the
+release of the system that wrote the file, not of the source**. 1.1's system
+writes 2 and 1.3's writes 6, and the compile above is the proof in one
+direction: the code came out identical to Apple's shipped copy and the
+stamp did not, because Apple's copy was written by a 1.1 system.
+
+It is enforced, not decorative. Booted on the 128K 1.3 system with 1.1's
+APPLE2 in drive 2, `C(ompile` answers
+
+    APPLE2:SYSTEM.COMPILER is not version 1.3
+
+and does nothing at all. So 1.1's compiler cannot be run under 1.3, and
+under the 128K target there is no 1.1 system to run it on instead.
+
+**STRONG INFERENCE.** The Linker copies a segment's SEGINFO through
+unchanged. 1.3's `SYSTEM.ASSMBLER` is version 6 in six of its seven segments
+and version **2** in `PASCALIO`, the unit linked into it; 1.1's is version 2
+in six and version **1** in the same slot. A stamp that tracked the file
+would not survive that.
+
+### 99c. Three of the APPLE3 utilities are 1.1 binaries
+
+**VERIFIED BINARY FACT.** `BINDER.CODE`, `LINEFEED.CODE` and
+`SET40COLS.CODE` on the 1.3 APPLE3 disk are all stamped version 2. Apple
+never rebuilt them. `BINDER.CODE` puts it beyond doubt: its 1.3 copy differs
+from its 1.1 copy in exactly **fifteen bytes**, every one of them the high
+byte of an *unused* SEGINFO slot, 1 through 15, set from 0 to $42.
+`SETUP.CODE` is stamped version 0 -- older than the field -- and the two
+releases' copies are byte-for-byte identical. `tools/probes/probe_stale_utils.py`
+checks all of this from the bytes.
+
+**SPECULATION, and an open question.** Nothing yet identifies what filled
+those fifteen slots. A 1.1 compile writes slot 0 only; a 1.3 compile writes
+all sixteen but stamps them 6. The shipped 1.3 file has all sixteen at the
+1.1 version, which is neither, so some 1.3-era tool rewrote the dictionary
+without touching the version. Until that is known, these three files cannot
+be reproduced byte for byte by compiling anything.
+
+### 99d. mtype says where the native code is
+
+**VERIFIED BINARY FACT.** A segment is stamped mtype `6502` exactly when it
+holds at least one native procedure, and `pcode-lsb` otherwise. Across
+every segment of every codefile on all six evidence disks that is **136
+segments and no exceptions** -- `tools/probes/probe_seginfo.py`. It is a
+real check rather than a restatement, and it is one a reconstruction can
+fail: a segment whose native procedures were missed would be stamped wrong.
+
+`tools/diskmap.py` writes `analysis/diskset-inventory.txt`, every file on
+every disk of both releases with the per-segment breakdown. The 1.1 disks
+stay in evidence and stay useful even though 1.3 and the 128K system are
+the target -- 1.1 ships source for utilities that 1.3 ships only as
+codefiles, which is how `LINEFEED` was reconstructed at all.
