@@ -10005,3 +10005,57 @@ eleven demo programs ship as `.TEXT` on the 1.3 APPLE3 disk and as `.TEXT`
 *and* `.CODE` on 1.1's, and that pair is the only corpus anywhere of Apple's
 source beside Apple's own output. `probe_calibrate.py` is built on two of
 them. Out of scope, they lift 81 of 84.
+
+## 101. The global frame bound, and its one exception
+
+Finding 46 fixed the highest valid global offset at `(param_size +
+data_size) / 2` words, measured over all 287 of the compiler's procedures.
+Reading FORMATTER meant reading its globals, and its outer block declares
+1343 words while the code addresses `G1603`. A total that does not balance
+is evidence, so this is what it turned out to be.
+
+### 101a. The rule holds, and is usually reached exactly
+
+**VERIFIED BINARY FACT.** Across the thirteen 1.3 codefiles with p-code, the
+bound is never loose where it applies and is hit precisely: `SYSTEM.EDITOR`
+1666 of 1666, `SYSTEM.FILER` 362 of 362, `LIBRARY.CODE` 767 of 767,
+`LIBMAP.CODE` 757 of 757, `SET40COLS` 262 of 262, `LINEFEED` 3 of 3. The
+compiler allocates to the top of the frame and the top word is generally a
+temporary -- FORMATTER's `G1343` is its `FOR` limit, sitting exactly on its
+own bound.
+
+### 101b. The operating system has no outer block
+
+**VERIFIED BINARY FACT.** `SYSTEM.PASCAL` and `128K.PASCAL` appear to exceed
+the bound by 287 words, and do not. `PASCALSY` has **fifty-two** procedures
+at lexical level 0, plus one in each of five other segments: the operating
+system is not a Pascal program with an outer block, so "the lex-0 procedure"
+does not name one and whichever the walk happens to end on is arbitrary.
+`globals.collect()` takes the last it finds, which is why the figure came
+out as 7. The rule is not violated there; it does not apply. This costs
+nothing today -- `globalmap.py` only ever runs on `SYSTEM.COMPILER` -- but
+it would silently mis-size the frame the moment the OS is a target, which
+it now is.
+
+### 101c. A file's title is allocated above the frame
+
+**VERIFIED BINARY FACT.** Three 1.3 programs have exactly one outer block
+and still address above their bound: `SYSTEM.LINKER` (91, touches `G350`),
+`BINDER` (1121, touches `G1340` and `G1380`) and `FORMATTER` (1343, touches
+`G1603`). In every one of them, **every single access above the bound is a
+`LAO` followed by `LDCI 1 ; NGI ; CXP 0,3`** -- which is
+`FINIT(file, title, -1)`, and nothing else in any of the three reaches up
+there at all.
+
+So it is the *title* argument. `BINDER` opens two files and has two such
+addresses, `G1340` and `G1380`, which are **40 words apart** -- 80 bytes, the
+size of a UCSD file title. FORMATTER's file variable is at `G1303` and its
+title at `G1603`, 300 words above it.
+
+**STRONG INFERENCE.** A `FILE` variable's storage is larger than what
+`data_size` counts, and the title lives in the uncounted part. What decides
+the layout precisely is not settled, and it does not have to be to
+reconstruct these programs: declare the same variables in the same order and
+Apple's compiler allocates them the same way, which is what the recompile
+checks. It does have to be settled before any claim is made about *where* a
+particular global lives in a program that opens a file.
