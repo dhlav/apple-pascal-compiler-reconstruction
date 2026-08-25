@@ -89,5 +89,7 @@ files, and **it lifts 1147 of 1147 with the stack fully tracked**
 (finding 100). The listings are in `analysis/utilities/`, p-code and
 pseudo-Pascal side by side.
 
-Files that ship only on a 1.1 disk are out of scope and are not swept:
-`CALC.CODE` and the demo programs' codefiles.
+Files that ship only on a 1.1 disk -- `CALC.CODE` and the demo programs'
+codefiles -- are out of *scope*, but they are still swept and still listed
+in `analysis/utilities/`. Nothing is discarded: the demos' 1.1 `.CODE`
+beside their `.TEXT` is the only source-and-output pair Apple left behind.

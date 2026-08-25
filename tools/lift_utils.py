@@ -38,13 +38,13 @@ def library(ver):
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    tot_c = tot_n = tot_s = tot_g = 0
+    tot = {True: [0, 0, 0, 0], False: [0, 0, 0, 0]}
     libs = {}
     want = targets()
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
         for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP or e.name not in want:
+            if e.kind != "codefile" or e.name in SKIP:
                 continue
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             ver = tag.split("-")[0]
@@ -54,14 +54,20 @@ def main() -> int:
             stem = e.name.rsplit(".", 1)[0]
             (OUT / f"{stem}-{tag}.pas.txt").write_text(
                 text, encoding="ascii", errors="replace")
-            tot_c += clean
-            tot_n += total
-            tot_s += structured
-            tot_g += gotos
+            row = tot[e.name in want]
+            for i, v in enumerate((clean, total, structured, gotos)):
+                row[i] += v
+            mark = "" if e.name in want else "   (1.1 only)"
             print(f"  {tag} {e.name:16s} {clean:3d}/{total:3d} tracked  "
-                  f"{structured:3d}/{total:3d} structured  {gotos:3d} gotos")
-    print(f"total {tot_c}/{tot_n} lifted with the stack fully tracked; "
-          f"{tot_s}/{tot_n} fully structured ({tot_g} gotos left)")
+                  f"{structured:3d}/{total:3d} structured  {gotos:3d} gotos"
+                  f"{mark}")
+    c, n, st, g = tot[True]
+    print(f"in scope (ships on a 1.3 disk): {c}/{n} lifted with the stack "
+          f"fully tracked; {st}/{n} fully structured ({g} gotos left)")
+    c2, n2, st2, g2 = tot[False]
+    if n2:
+        print(f"also swept, 1.1 only: {c2}/{n2} tracked, {st2}/{n2} "
+              f"structured ({g2} gotos left)")
     return 0
 
 

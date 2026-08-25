@@ -9992,17 +9992,16 @@ Three entries have no assembly behind them and say so in place:
 because the operation number decides how many words it pops, so there is no
 single arity to give it and a wrong one would be worse than none.
 
-**The scope.** 1.3 is what is being reproduced, so a codefile that ships
-only on a 1.1 disk is not a target. `disasm_utils.targets()` restricts the
-sweep to the codefiles a 1.3 disk carries; a 1.1 copy of a file 1.3 also
-ships stays in, because comparing the releases is what finding 99c rests on.
-That drops `CALC.CODE` -- whose unmodelled CSPs and one `BPT` were the last
-three -- and the demo programs' codefiles.
+**The scope.** 1.3 is what is being reproduced, so `disasm_utils.targets()`
+names the codefiles a 1.3 disk carries and the coverage figure is counted
+over those. **1147 of 1147, everything in scope, fully tracked.** The last
+three were `CALC.CODE`'s unmodelled CSPs and one `BPT`, and `CALC.CODE`
+ships only on 1.1.
 
-**1147 of 1147, everything in scope, fully tracked.**
-
-What it gives up is worth writing down. Eleven demo programs ship as `.TEXT`
-on the 1.3 APPLE3 disk and as `.TEXT` *and* `.CODE` on 1.1's, and that pair
-is the only corpus anywhere of Apple's source beside Apple's own output.
-`probe_calibrate.py` still uses two of them and is unaffected; the other
-nine are no longer swept.
+The scope is on the *figure*, not on the sweep. Everything on all six disks
+is still disassembled and lifted into `analysis/utilities/`, because the
+1.1-only files cost nothing to keep and one group of them is irreplaceable:
+eleven demo programs ship as `.TEXT` on the 1.3 APPLE3 disk and as `.TEXT`
+*and* `.CODE` on 1.1's, and that pair is the only corpus anywhere of Apple's
+source beside Apple's own output. `probe_calibrate.py` is built on two of
+them. Out of scope, they lift 81 of 84.

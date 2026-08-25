@@ -1,0 +1,104 @@
+Apple Pascal 1.1-APPLE3 SPIRODEMO.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 SPIRODEM
+======================================================================
+
+procedure SPIRODEM.1(args 2 words);  { locals 5 words, lex 0 }
+  goto L018E;
+L0088:
+  APPLESTU.1();
+  TURTLEGR.1();
+  GATDPLMT := 1;
+  FWRITESTRING(I1,3, 'WELCOME TO WHILEPLOT', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'ENTER ANGLE 0 TO QUIT.', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  repeat
+    FWRITELN(I1,3);
+    IOCHECK();
+    FWRITESTRING(I1,3, 'ANGLE: ', 0);
+    IOCHECK();
+    FREADINT(I1,2, @GATKIND);
+    IOCHECK();
+    FREADLN(I1,2);
+    IOCHECK();
+    if (GATKIND = 0) then begin
+      SPIRODEM.3();
+    end;
+L011F:
+    FWRITESTRING(I1,3, 'CHANGE: ', 0);
+    IOCHECK();
+    FREADINT(I1,2, @GATTYPTR);
+    IOCHECK();
+    FREADLN(I1,2);
+    IOCHECK();
+    if not ((GATTYPTR > 0)) then goto L011F;
+    repeat
+      GATCVAL := 10;
+      TURTLEGR.2();
+      TURTLEGR.7(1);
+      while (GATCVAL < 250) do begin
+        SPIRODEM.2();
+      end;
+      TURTLEGR.10(3);
+      TURTLEGR.10(3);
+      GATKIND := (GATKIND+15);
+    until APPLESTU.5 KEYPRESS();
+    FREADCHAR(I1,4, @GATVLEV);
+    IOCHECK();
+    TURTLEGR.8();
+  until 0;
+  UNLOADSEGMENT(22);
+  UNLOADSEGMENT(20);
+  UNLOADSEGMENT(21);
+  goto L0199;
+L018E:
+  LOADSEGMENT(21);
+  LOADSEGMENT(20);
+  LOADSEGMENT(22);
+  goto L0088;
+L0199:
+
+procedure SPIRODEM.2(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.5(GATCVAL);
+  TURTLEGR.3(GATKIND);
+  GATCVAL := (GATCVAL+GATTYPTR);
+  if ((GATCVAL mod 40) = 0) then begin
+    if (GATDPLMT = 12) then begin
+      GATDPLMT := 1;
+    end else begin
+      GATDPLMT := (GATDPLMT+1);
+    end;
+L0023:
+    { paths disagree on stack depth here }
+    if not ((564 in 1)) then goto L0032;
+    GATDPLMT := (GATDPLMT+1);
+    goto L0023;
+  end;
+L0032:
+  { paths disagree on stack depth here }
+  TURTLEGR.7(GATDPLMT);
+
+procedure SPIRODEM.3(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.8();
+  FWRITELN(I2,3);
+  IOCHECK();
+  FWRITESTRING(I2,3, "THAT'S ALL FOLKS...", 0);
+  IOCHECK();
+  FWRITELN(I2,3);
+  IOCHECK();
+  EXIT(1, 1);

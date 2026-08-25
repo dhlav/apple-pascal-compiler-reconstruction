@@ -35,16 +35,15 @@ OUT = ROOT / "analysis" / "utilities"
 def targets() -> set[str]:
     """Codefiles that ship on a 1.3 disk.
 
-    1.3 is what is being reproduced, so a codefile that exists only on a 1.1
-    disk is not a target and is not swept -- CALC.CODE and the demo programs'
-    .CODE files are the whole of that set. A 1.1 copy of a file 1.3 also
-    ships is still swept: comparing the two releases is what says which
-    files Apple rebuilt (finding 99c).
+    1.3 is what is being reproduced, so this is the set that has to be
+    reconstructed, and it is what the coverage figure is counted over.
 
-    Note what this gives up. Eleven of those demos ship as .TEXT on the 1.3
-    APPLE3 disk and as .TEXT *and* .CODE on 1.1's, which made them the only
-    corpus of Apple's source beside Apple's own output. `probe_calibrate.py`
-    still uses two of them and is unaffected by this.
+    It is *not* a filter on what gets disassembled and lifted. Everything on
+    all six disks still does, because the 1.1-only files cost nothing to
+    keep and one group of them is irreplaceable: eleven demo programs ship
+    as .TEXT on the 1.3 APPLE3 disk and as .TEXT *and* .CODE on 1.1's, and
+    that pair is the only corpus anywhere of Apple's source beside Apple's
+    own output. `probe_calibrate.py` is built on two of them.
     """
     from a2pascal.disk import PascalDisk as _D
     out = set()
@@ -58,12 +57,11 @@ def targets() -> set[str]:
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    want = targets()
     n = 0
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
         for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP or e.name not in want:
+            if e.kind != "codefile" or e.name in SKIP:
                 continue
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             stem = e.name.rsplit(".", 1)[0]

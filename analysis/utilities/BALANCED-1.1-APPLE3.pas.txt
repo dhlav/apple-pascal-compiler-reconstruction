@@ -1,0 +1,229 @@
+Apple Pascal 1.1-APPLE3 BALANCED.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 BALANCED
+======================================================================
+
+procedure BALANCED.1(args 2 words);  { locals 93 words, lex 0 }
+  goto L04A5;
+L0374:
+  TURTLEGR.1();
+  GATTYPTR := nil;
+  @NOISY[chk(0,0..4)]^ := 48;
+  @NOISY[chk(1,0..4)]^ := 24;
+  @NOISY[chk(2,0..4)]^ := 12;
+  @NOISY[chk(3,0..4)]^ := 6;
+  @NOISY[chk(4,0..4)]^ := 3;
+  repeat
+    FWRITESTRING(I1,3, 'ENTER WORD: ', 0);
+    IOCHECK();
+    UNITCLEAR(1);
+    FREADSTRING(I1,2, @GATKIND, 80);
+    IOCHECK();
+    FREADLN(I1,2);
+    IOCHECK();
+    if (@GATKIND^[0] = 0) then begin
+      BALANCED.6();
+    end;
+    if (@GATKIND^[0] <= 6) then begin
+      @OPT_E^ := @GATKIND  {string};
+    end else begin
+      SCOPY(@GATKIND, @INTRACTVPTR, 1, 6);
+      @OPT_E^ := @INTRACTVPTR  {string};
+    end;
+    BALANCED.2(@OPT_E, @GATTYPTR, @STRGPTR);
+    FWRITELN(I1,3);
+    IOCHECK();
+    FWRITESTRING(I1,3, 'THE WORDS IN ORDER ARE:', 0);
+    IOCHECK();
+    FWRITELN(I1,3);
+    IOCHECK();
+    BALANCED.3(GATTYPTR);
+    FWRITELN(I1,3);
+    IOCHECK();
+    FREADLN(I1,2);
+    IOCHECK();
+    TURTLEGR.2();
+    TURTLEGR.6(0, 182);
+    TURTLEGR.18('AVL-BALANCED');
+    TURTLEGR.6(0, 170);
+    TURTLEGR.18('BINARY TREE:');
+    TURTLEGR.6(0, 96);
+    BALANCED.5(GATTYPTR, 0);
+    FREADLN(I1,2);
+    IOCHECK();
+    TURTLEGR.8();
+  until 0;
+  UNLOADSEGMENT(20);
+  UNLOADSEGMENT(21);
+  goto L04AD;
+L04A5:
+  LOADSEGMENT(21);
+  LOADSEGMENT(20);
+  goto L0374;
+L04AD:
+
+procedure BALANCED.2(args 3 words);  { locals 7 words, lex 1 }
+  @L4^ := L3  {string};
+  if (L2^ = nil) then begin
+    NEW(L2, 7);
+    L1^ := 1;
+    L10 := L2^;
+    (L10+5)^ := nil;
+    (L10+4)^ := nil;
+    L10^ := @L4  {string};
+    (L10+6)^ := chk(0,-(1)..1);
+  end else begin
+    if (@L4 < L2^) then begin
+      BALANCED.2(@L4, (L2^+5), L1);
+      if L1^ then begin
+        case L2^^.f6 of   { table -1..1 }
+          1: begin
+            (L2^+6)^ := chk(0,-(1)..1);
+            L1^ := 0;
+          end;
+          0: begin
+            (L2^+6)^ := chk(-(1),-(1)..1);
+          end;
+          -1: begin
+            L9 := L2^^.f5;
+            if (L9^.f6 = -(1)) then begin
+              (L2^+5)^ := L9^.f4;
+              (L9+4)^ := L2^;
+              (L2^+6)^ := chk(0,-(1)..1);
+              L2^ := L9;
+            end else begin
+              L8 := L9^.f4;
+              (L9+4)^ := L8^.f5;
+              (L8+5)^ := L9;
+              (L2^+5)^ := L8^.f4;
+              (L8+4)^ := L2^;
+              if (L8^.f6 = -(1)) then begin
+                (L2^+6)^ := chk(1,-(1)..1);
+              end else begin
+                (L2^+6)^ := chk(0,-(1)..1);
+              end;
+              if (L8^.f6 = 1) then begin
+                (L9+6)^ := chk(-(1),-(1)..1);
+              end else begin
+                (L9+6)^ := chk(0,-(1)..1);
+              end;
+              L2^ := L8;
+            end;
+            (L2^+6)^ := chk(0,-(1)..1);
+            L1^ := 0;
+          end;
+        end;
+      end;
+    end else begin
+      if (@L4 > L2^) then begin
+        BALANCED.2(@L4, (L2^+4), L1);
+        if L1^ then begin
+          case L2^^.f6 of   { table -1..1 }
+            -1: begin
+              (L2^+6)^ := chk(0,-(1)..1);
+              L1^ := 0;
+            end;
+            0: begin
+              (L2^+6)^ := chk(1,-(1)..1);
+            end;
+            1: begin
+              L9 := L2^^.f4;
+              if (L9^.f6 = 1) then begin
+                (L2^+4)^ := L9^.f5;
+                (L9+5)^ := L2^;
+                (L2^+6)^ := chk(0,-(1)..1);
+                L2^ := L9;
+              end else begin
+                L8 := L9^.f5;
+                (L9+5)^ := L8^.f4;
+                (L8+4)^ := L9;
+                (L2^+4)^ := L8^.f5;
+                (L8+5)^ := L2^;
+                if (L8^.f6 = 1) then begin
+                  (L2^+6)^ := chk(-(1),-(1)..1);
+                end else begin
+                  (L2^+6)^ := chk(0,-(1)..1);
+                end;
+                if (L8^.f6 = -(1)) then begin
+                  (L9+6)^ := chk(1,-(1)..1);
+                end else begin
+                  (L9+6)^ := chk(0,-(1)..1);
+                end;
+                L2^ := L8;
+              end;
+              (L2^+6)^ := chk(0,-(1)..1);
+              L1^ := 0;
+            end;
+          end;
+        end;
+      end else begin
+        L1^ := 0;
+      end;
+    end;
+  end;
+
+procedure BALANCED.3(args 1 words);  { locals 0 words, lex 1 }
+  if (L1 <> nil) then begin
+    BALANCED.3(L1^.f5);
+    FWRITESTRING(I2,3, L1, 0);
+    IOCHECK();
+    FWRITELN(I2,3);
+    IOCHECK();
+    BALANCED.3(L1^.f4);
+  end;
+
+procedure BALANCED.4(args 1 words);  { locals 6 words, lex 1 }
+  @L2^ := L1  {string};
+  L7 := TURTLEGR.12();
+  L6 := TURTLEGR.13();
+  TURTLEGR.7(1);
+  TURTLEGR.6(L7, (L6+5));
+  TURTLEGR.6((L7+44), (L6+5));
+  TURTLEGR.6((L7+44), (L6-5));
+  TURTLEGR.6(L7, (L6-5));
+  TURTLEGR.6(L7, L6);
+  TURTLEGR.7(0);
+  TURTLEGR.6((L7+2), (L6-4));
+  TURTLEGR.18(@L2);
+  TURTLEGR.6(L7, L6);
+
+procedure BALANCED.5(args 2 words);  { locals 2 words, lex 1 }
+  if (L2 <> nil) then begin
+    L4 := TURTLEGR.12();
+    L3 := TURTLEGR.13();
+    BALANCED.4(L2);
+    if (L1 > 4) then begin
+      FWRITECHAR(I2,3, 7, 0);
+      IOCHECK();
+    end;
+    if (L1 <= 4) then begin
+      TURTLEGR.7(0);
+      TURTLEGR.6((L4+44), (L3+3));
+      TURTLEGR.7(1);
+      TURTLEGR.6((L4+56), (L3+@NOISY[chk(L1,0..4)]^));
+      BALANCED.5(L2^.f5, (L1+1));
+      TURTLEGR.7(0);
+      TURTLEGR.6((L4+44), (L3-3));
+      TURTLEGR.7(1);
+      TURTLEGR.6((L4+56), (L3-@NOISY[chk(L1,0..4)]^));
+      BALANCED.5(L2^.f4, (L1+1));
+    end;
+  end;
+
+procedure BALANCED.6(args 0 words);  { locals 0 words, lex 1 }
+  TURTLEGR.8();
+  FWRITELN(I2,3);
+  IOCHECK();
+  FWRITESTRING(I2,3, "THAT'S ALL FOLKS...", 0);
+  IOCHECK();
+  FWRITELN(I2,3);
+  IOCHECK();
+  EXIT(1, 1);
