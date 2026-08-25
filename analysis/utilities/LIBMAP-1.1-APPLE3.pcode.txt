@@ -1,0 +1,1625 @@
+Apple Pascal 1.1-APPLE3 LIBMAP.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 1 LIBMAP  block=1 len=3928 mtype=pcode-lsb nproc=11
+========================================================================
+
+--- procedure 1  lex=0 params=4 data=1510 enter=$0D92 exit=$0F22 jtab=$0F3E
+  0D92 d7                           NOP
+  0D93 d7                           NOP
+  0D94 a5 81 2b                     LAO 299
+  0D97 a5 82 57                     LAO 599
+  0D9A 00                           SLDC 0
+  0D9B cd 00 03                     CXP 0,3  ; OS.3 FINIT
+  0D9E a5 81 03                     LAO 259
+  0DA1 a5 82 2f                     LAO 559
+  0DA4 c7 01 00                     LDCI 1
+  0DA7 91                           NGI
+  0DA8 cd 00 03                     CXP 0,3  ; OS.3 FINIT
+  0DAB b6 01 03                     LOD 1,3
+  0DAE d7                           NOP
+  0DAF a6 1e 4c 69 62 72 61 72 79 20 6d 61 70 20 75 74 69 6c 69 74 79 20 20 49 49 2e 31 20 5b 61 32 5d         LSA 'Library map utility  II.1 [a2]'
+  0DCF 00                           SLDC 0
+  0DD0 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0DD3 b6 01 03                     LOD 1,3
+  0DD6 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0DD9 00                           SLDC 0
+  0DDA ab 82 f4                     SRO 756
+  0DDD 07                           SLDC 7
+  0DDE ab 82 f5                     SRO 757
+  0DE1 a9 82 f4             L0DE1:  LDO 756
+  0DE4 a9 82 f5                     LDO 757
+  0DE7 c8                           LEQI
+  0DE8 a1 21                        FJP $0E0B
+  0DEA a5 82 5c                     LAO 604
+  0DED a9 82 f4                     LDO 756
+  0DF0 00                           SLDC 0
+  0DF1 07                           SLDC 7
+  0DF2 88                           CHK
+  0DF3 a4 04                        IXA 4
+  0DF5 a6 07 75 6e 6b 6e 6f 77 6e         LSA 'unknown'
+  0DFE d7                           NOP
+  0DFF aa 07                        SAS 7
+  0E01 a9 82 f4                     LDO 756
+  0E04 01                           SLDC 1
+  0E05 82                           ADI
+  0E06 ab 82 f4                     SRO 756
+  0E09 b9 f6                        UJP $0DE1 (jtab-10)
+  0E0B a5 82 5c             L0E0B:  LAO 604
+  0E0E 01                           SLDC 1
+  0E0F 00                           SLDC 0
+  0E10 07                           SLDC 7
+  0E11 88                           CHK
+  0E12 a4 04                        IXA 4
+  0E14 d7                           NOP
+  0E15 a6 04 49 49 2e 31            LSA 'II.1'
+  0E1B aa 07                        SAS 7
+  0E1D a5 82 5c                     LAO 604
+  0E20 02                           SLDC 2
+  0E21 00                           SLDC 0
+  0E22 07                           SLDC 7
+  0E23 88                           CHK
+  0E24 a4 04                        IXA 4
+  0E26 d7                           NOP
+  0E27 a6 03 33 2e 30               LSA '3.0'
+  0E2C aa 07                        SAS 7
+  0E2E a5 82 7c                     LAO 636
+  0E31 00                           SLDC 0
+  0E32 00                           SLDC 0
+  0E33 09                           SLDC 9
+  0E34 88                           CHK
+  0E35 a4 0c                        IXA 12
+  0E37 a6 09 55 6e 64 65 66 69 6e 65 64         LSA 'Undefined'
+  0E42 d7                           NOP
+  0E43 aa 17                        SAS 23
+  0E45 a5 82 7c                     LAO 636
+  0E48 01                           SLDC 1
+  0E49 00                           SLDC 0
+  0E4A 09                           SLDC 9
+  0E4B 88                           CHK
+  0E4C a4 0c                        IXA 12
+  0E4E d7                           NOP
+  0E4F a6 16 50 2d 43 6f 64 65 20 28 6d 6f 73 74 20 73 69 67 2e 20 31 73 74 29         LSA 'P-Code (most sig. 1st)'
+  0E67 aa 17                        SAS 23
+  0E69 a5 82 7c                     LAO 636
+  0E6C 02                           SLDC 2
+  0E6D 00                           SLDC 0
+  0E6E 09                           SLDC 9
+  0E6F 88                           CHK
+  0E70 a4 0c                        IXA 12
+  0E72 d7                           NOP
+  0E73 a6 17 50 2d 43 6f 64 65 20 28 6c 65 61 73 74 20 73 69 67 2e 20 31 73 74 29         LSA 'P-Code (least sig. 1st)'
+  0E8C aa 17                        SAS 23
+  0E8E a5 82 7c                     LAO 636
+  0E91 03                           SLDC 3
+  0E92 00                           SLDC 0
+  0E93 09                           SLDC 9
+  0E94 88                           CHK
+  0E95 a4 0c                        IXA 12
+  0E97 a6 06 50 44 50 2d 31 31         LSA 'PDP-11'
+  0E9F d7                           NOP
+  0EA0 aa 17                        SAS 23
+  0EA2 a5 82 7c                     LAO 636
+  0EA5 04                           SLDC 4
+  0EA6 00                           SLDC 0
+  0EA7 09                           SLDC 9
+  0EA8 88                           CHK
+  0EA9 a4 0c                        IXA 12
+  0EAB a6 04 38 30 38 30            LSA '8080'
+  0EB1 d7                           NOP
+  0EB2 aa 17                        SAS 23
+  0EB4 a5 82 7c                     LAO 636
+  0EB7 05                           SLDC 5
+  0EB8 00                           SLDC 0
+  0EB9 09                           SLDC 9
+  0EBA 88                           CHK
+  0EBB a4 0c                        IXA 12
+  0EBD a6 04 5a 2d 38 30            LSA 'Z-80'
+  0EC3 d7                           NOP
+  0EC4 aa 17                        SAS 23
+  0EC6 a5 82 7c                     LAO 636
+  0EC9 06                           SLDC 6
+  0ECA 00                           SLDC 0
+  0ECB 09                           SLDC 9
+  0ECC 88                           CHK
+  0ECD a4 0c                        IXA 12
+  0ECF a6 06 47 41 20 34 34 30         LSA 'GA 440'
+  0ED7 d7                           NOP
+  0ED8 aa 17                        SAS 23
+  0EDA a5 82 7c                     LAO 636
+  0EDD 07                           SLDC 7
+  0EDE 00                           SLDC 0
+  0EDF 09                           SLDC 9
+  0EE0 88                           CHK
+  0EE1 a4 0c                        IXA 12
+  0EE3 a6 04 36 35 30 32            LSA '6502'
+  0EE9 d7                           NOP
+  0EEA aa 17                        SAS 23
+  0EEC a5 82 7c                     LAO 636
+  0EEF 08                           SLDC 8
+  0EF0 00                           SLDC 0
+  0EF1 09                           SLDC 9
+  0EF2 88                           CHK
+  0EF3 a4 0c                        IXA 12
+  0EF5 a6 04 36 38 30 30            LSA '6800'
+  0EFB d7                           NOP
+  0EFC aa 17                        SAS 23
+  0EFE a5 82 7c                     LAO 636
+  0F01 09                           SLDC 9
+  0F02 00                           SLDC 0
+  0F03 09                           SLDC 9
+  0F04 88                           CHK
+  0F05 a4 0c                        IXA 12
+  0F07 a6 07 54 49 20 39 39 30 30         LSA 'TI 9900'
+  0F10 d7                           NOP
+  0F11 aa 17                        SAS 23
+  0F13 01                           SLDC 1
+  0F14 ab 82 58                     SRO 600
+  0F17 ce 0b                L0F17:  CLP 11  ; local proc 11
+  0F19 00                           SLDC 0
+  0F1A ab 82 58                     SRO 600
+  0F1D ce 06                        CLP 6  ; local proc 6
+  0F1F 00                           SLDC 0
+  0F20 a1 f4                        FJP $0F17 (jtab-12)
+  ---- exit code (EXIT target) ----
+  0F22 a5 81 2b                     LAO 299
+  0F25 00                           SLDC 0
+  0F26 cd 00 06                     CXP 0,6  ; OS.6 FCLOSE
+  0F29 a5 81 03                     LAO 259
+  0F2C 00                           SLDC 0
+  0F2D cd 00 06                     CXP 0,6  ; OS.6 FCLOSE
+  0F30 c1 00                        RBP 0
+  ---- jump table: 2 entries ----
+       jtab-10  -> $0DE1
+       jtab-12  -> $0F17
+
+--- procedure 2  lex=1 params=2 data=4 enter=$0000 exit=$0025 jtab=$0030
+  0000 d8                           SLDL 1
+  0001 f8                           SIND 0
+  0002 cc 03                        STL 3
+  0004 c6 02                        LLA 2
+  0006 08                           SLDC 8
+  0007 00                           SLDC 0
+  0008 c6 03                        LLA 3
+  000A 08                           SLDC 8
+  000B 08                           SLDC 8
+  000C ba                           LDP
+  000D 00                           SLDC 0
+  000E c7 ff 00                     LDCI 255
+  0011 88                           CHK
+  0012 bb                           STP
+  0013 c6 02                        LLA 2
+  0015 08                           SLDC 8
+  0016 08                           SLDC 8
+  0017 c6 03                        LLA 3
+  0019 08                           SLDC 8
+  001A 00                           SLDC 0
+  001B ba                           LDP
+  001C 00                           SLDC 0
+  001D c7 ff 00                     LDCI 255
+  0020 88                           CHK
+  0021 bb                           STP
+  0022 d8                           SLDL 1
+  0023 d9                           SLDL 2
+  0024 9a                           STO
+  ---- exit code (EXIT target) ----
+  0025 ad 00                        RNP 0
+
+--- procedure 3  lex=1 params=6 data=10 enter=$0032 exit=$007B jtab=$0088
+  0032 00                           SLDC 0
+  0033 cc 01                        STL 1
+  0035 01                           SLDC 1
+  0036 cc 06                        STL 6
+  0038 c6 06                        LLA 6
+  003A 00                           SLDC 0
+  003B 00                           SLDC 0
+  003C 01                           SLDC 1
+  003D 88                           CHK
+  003E be                           LDB
+  003F 01                           SLDC 1
+  0040 c3                           EQUI
+  0041 00                           SLDC 0
+  0042 01                           SLDC 1
+  0043 88                           CHK
+  0044 cc 05                        STL 5
+  0046 00                           SLDC 0
+  0047 00                           SLDC 0
+  0048 0f                           SLDC 15
+  0049 88                           CHK
+  004A cc 04                        STL 4
+  004C 0f                           SLDC 15
+  004D 00                           SLDC 0
+  004E 0f                           SLDC 15
+  004F 88                           CHK
+  0050 cc 07                        STL 7
+  0052 db                   L0052:  SLDL 4
+  0053 de                           SLDL 7
+  0054 c8                           LEQI
+  0055 a1 24                        FJP $007B
+  0057 da                           SLDL 3
+  0058 db                           SLDL 4
+  0059 00                           SLDC 0
+  005A 0f                           SLDC 15
+  005B 88                           CHK
+  005C a4 02                        IXA 2
+  005E cc 08                        STL 8
+  0060 df                           SLDL 8
+  0061 f8                           SIND 0
+  0062 cc 06                        STL 6
+  0064 c6 06                        LLA 6
+  0066 dc                           SLDL 5
+  0067 00                           SLDC 0
+  0068 01                           SLDC 1
+  0069 88                           CHK
+  006A be                           LDB
+  006B 00                           SLDC 0
+  006C cb                           NEQI
+  006D a1 05                        FJP $0074
+  006F 01                           SLDC 1
+  0070 cc 01                        STL 1
+  0072 b9 07                        UJP $007B
+  0074 db                   L0074:  SLDL 4
+  0075 01                           SLDC 1
+  0076 82                           ADI
+  0077 cc 04                        STL 4
+  0079 b9 f6                        UJP $0052 (jtab-10)
+  ---- exit code (EXIT target) ----
+  007B ad 01                L007B:  RNP 1
+  ---- jump table: 1 entry ----
+       jtab-10  -> $0052
+
+--- procedure 4  lex=1 params=2 data=10 enter=$008A exit=$00FC jtab=$0108
+  008A 00                           SLDC 0
+  008B 00                           SLDC 0
+  008C 0f                           SLDC 15
+  008D 88                           CHK
+  008E cc 02                        STL 2
+  0090 0f                           SLDC 15
+  0091 00                           SLDC 0
+  0092 0f                           SLDC 15
+  0093 88                           CHK
+  0094 cc 04                        STL 4
+  0096 d9                   L0096:  SLDL 2
+  0097 db                           SLDL 4
+  0098 c8                           LEQI
+  0099 a1 61                        FJP $00FC
+  009B d8                           SLDL 1
+  009C cc 05                        STL 5
+  009E dc                           SLDL 5
+  009F d9                           SLDL 2
+  00A0 00                           SLDC 0
+  00A1 0f                           SLDC 15
+  00A2 88                           CHK
+  00A3 a4 02                        IXA 2
+  00A5 cc 06                        STL 6
+  00A7 dd                           SLDL 6
+  00A8 cf 02                        CGP 2  ; local proc 2
+  00AA dd                           SLDL 6
+  00AB a2 01                        INC 1
+  00AD cf 02                        CGP 2  ; local proc 2
+  00AF dc                           SLDL 5
+  00B0 a2 60                        INC 96
+  00B2 d9                           SLDL 2
+  00B3 00                           SLDC 0
+  00B4 0f                           SLDC 15
+  00B5 88                           CHK
+  00B6 a4 01                        IXA 1
+  00B8 f8                           SIND 0
+  00B9 cc 03                        STL 3
+  00BB c6 03                        LLA 3
+  00BD cf 02                        CGP 2  ; local proc 2
+  00BF dc                           SLDL 5
+  00C0 a2 60                        INC 96
+  00C2 d9                           SLDL 2
+  00C3 00                           SLDC 0
+  00C4 0f                           SLDC 15
+  00C5 88                           CHK
+  00C6 a4 01                        IXA 1
+  00C8 da                           SLDL 3
+  00C9 9a                           STO
+  00CA dc                           SLDL 5
+  00CB a2 70                        INC 112
+  00CD d9                           SLDL 2
+  00CE 00                           SLDC 0
+  00CF 0f                           SLDC 15
+  00D0 88                           CHK
+  00D1 a4 01                        IXA 1
+  00D3 cf 02                        CGP 2  ; local proc 2
+  00D5 c6 03                        LLA 3
+  00D7 dc                           SLDL 5
+  00D8 a2 80 80                     INC 128
+  00DB d9                           SLDL 2
+  00DC 00                           SLDC 0
+  00DD 0f                           SLDC 15
+  00DE 88                           CHK
+  00DF a4 01                        IXA 1
+  00E1 a8 01                        MOV 1
+  00E3 c6 03                        LLA 3
+  00E5 cf 02                        CGP 2  ; local proc 2
+  00E7 dc                           SLDL 5
+  00E8 a2 80 80                     INC 128
+  00EB d9                           SLDL 2
+  00EC 00                           SLDC 0
+  00ED 0f                           SLDC 15
+  00EE 88                           CHK
+  00EF a4 01                        IXA 1
+  00F1 c6 03                        LLA 3
+  00F3 a8 01                        MOV 1
+  00F5 d9                           SLDL 2
+  00F6 01                           SLDC 1
+  00F7 82                           ADI
+  00F8 cc 02                        STL 2
+  00FA b9 f6                        UJP $0096 (jtab-10)
+  ---- exit code (EXIT target) ----
+  00FC ad 00                L00FC:  RNP 0
+  ---- jump table: 1 entry ----
+       jtab-10  -> $0096
+
+--- procedure 5  lex=1 params=6 data=4 enter=$010A exit=$013D jtab=$014A
+  010A 00                           SLDC 0
+  010B cc 01                        STL 1
+  010D 00                           SLDC 0
+  010E cc 04                        STL 4
+  0110 07                           SLDC 7
+  0111 cc 05                        STL 5
+  0113 db                   L0113:  SLDL 4
+  0114 dc                           SLDL 5
+  0115 c8                           LEQI
+  0116 a1 22                        FJP $013A
+  0118 da                           SLDL 3
+  0119 db                           SLDL 4
+  011A 00                           SLDC 0
+  011B 07                           SLDC 7
+  011C 88                           CHK
+  011D be                           LDB
+  011E b3 06 ff 87 fe ff ff 03 01 00 00 00 00 00         LDC 6w [$0000 $0000 $0001 $03FF $FFFE $87FF]
+  012C 06                           SLDC 6
+  012D 8b                           INN
+  012E 93                           LNOT
+  012F a1 02                        FJP $0133
+  0131 b9 0a                        UJP $013D
+  0133 db                   L0133:  SLDL 4
+  0134 01                           SLDC 1
+  0135 82                           ADI
+  0136 cc 04                        STL 4
+  0138 b9 f6                        UJP $0113 (jtab-10)
+  013A 01                   L013A:  SLDC 1
+  013B cc 01                        STL 1
+  ---- exit code (EXIT target) ----
+  013D ad 01                L013D:  RNP 1
+  ---- jump table: 1 entry ----
+       jtab-10  -> $0113
+
+--- procedure 6  lex=1 params=0 data=6 enter=$0824 exit=$09D4 jtab=$09E4
+  0824 00                           SLDC 0
+  0825 00                           SLDC 0
+  0826 10                           SLDC 16
+  0827 88                           CHK
+  0828 cc 01                        STL 1
+  082A 0f                           SLDC 15
+  082B 00                           SLDC 0
+  082C 10                           SLDC 16
+  082D 88                           CHK
+  082E cc 02                        STL 2
+  0830 d8                   L0830:  SLDL 1
+  0831 d9                           SLDL 2
+  0832 c8                           LEQI
+  0833 a1 f2                        FJP $09D4 (jtab-14)
+  0835 a5 03                        LAO 3
+  0837 d8                           SLDL 1
+  0838 00                           SLDC 0
+  0839 0f                           SLDC 15
+  083A 88                           CHK
+  083B a4 02                        IXA 2
+  083D cc 03                        STL 3
+  083F da                           SLDL 3
+  0840 f9                           SIND 1
+  0841 00                           SLDC 0
+  0842 c5                           GRTI
+  0843 da                           SLDL 3
+  0844 f8                           SIND 0
+  0845 00                           SLDC 0
+  0846 c5                           GRTI
+  0847 8d                           LOR
+  0848 a1 f6                        FJP $09CD (jtab-10)
+  084A a5 80 83                     LAO 131
+  084D d8                           SLDL 1
+  084E 00                           SLDC 0
+  084F 0f                           SLDC 15
+  0850 88                           CHK
+  0851 a4 01                        IXA 1
+  0853 08                           SLDC 8
+  0854 00                           SLDC 0
+  0855 ba                           LDP
+  0856 00                           SLDC 0
+  0857 cb                           NEQI
+  0858 a1 3b                        FJP $0895
+  085A a5 81 2b                     LAO 299
+  085D a6 09 53 65 67 6d 65 6e 74 20 23         LSA 'Segment #'
+  0868 d7                           NOP
+  0869 00                           SLDC 0
+  086A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  086D a5 81 2b                     LAO 299
+  0870 a5 80 83                     LAO 131
+  0873 d8                           SLDL 1
+  0874 00                           SLDC 0
+  0875 0f                           SLDC 15
+  0876 88                           CHK
+  0877 a4 01                        IXA 1
+  0879 08                           SLDC 8
+  087A 00                           SLDC 0
+  087B ba                           LDP
+  087C 02                           SLDC 2
+  087D cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0880 a5 81 2b                     LAO 299
+  0883 a6 03 3a 20 20               LSA ':  '
+  0888 d7                           NOP
+  0889 00                           SLDC 0
+  088A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  088D a5 81 2b                     LAO 299
+  0890 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0893 b9 2e                        UJP $08C3
+  0895 a5 81 2b             L0895:  LAO 299
+  0898 d7                           NOP
+  0899 a6 09 53 65 67 6d 65 6e 74 20 23         LSA 'Segment #'
+  08A4 00                           SLDC 0
+  08A5 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  08A8 a5 81 2b                     LAO 299
+  08AB d8                           SLDL 1
+  08AC 00                           SLDC 0
+  08AD cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  08B0 a5 81 2b                     LAO 299
+  08B3 a6 03 3a 20 20               LSA ':  '
+  08B8 d7                           NOP
+  08B9 00                           SLDC 0
+  08BA cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  08BD a5 81 2b                     LAO 299
+  08C0 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  08C3 a5 80 83             L08C3:  LAO 131
+  08C6 d8                           SLDL 1
+  08C7 00                           SLDC 0
+  08C8 0f                           SLDC 15
+  08C9 88                           CHK
+  08CA a4 01                        IXA 1
+  08CC 03                           SLDC 3
+  08CD 0d                           SLDC 13
+  08CE ba                           LDP
+  08CF 00                           SLDC 0
+  08D0 cb                           NEQI
+  08D1 a1 72                        FJP $0945
+  08D3 a5 81 2b                     LAO 299
+  08D6 d7                           NOP
+  08D7 a6 11 53 79 73 74 65 6d 20 76 65 72 73 69 6f 6e 20 3d 20         LSA 'System version = '
+  08EA 00                           SLDC 0
+  08EB cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  08EE a5 81 2b                     LAO 299
+  08F1 a5 82 5c                     LAO 604
+  08F4 a5 80 83                     LAO 131
+  08F7 d8                           SLDL 1
+  08F8 00                           SLDC 0
+  08F9 0f                           SLDC 15
+  08FA 88                           CHK
+  08FB a4 01                        IXA 1
+  08FD 03                           SLDC 3
+  08FE 0d                           SLDC 13
+  08FF ba                           LDP
+  0900 00                           SLDC 0
+  0901 07                           SLDC 7
+  0902 88                           CHK
+  0903 a4 04                        IXA 4
+  0905 00                           SLDC 0
+  0906 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0909 a5 81 2b                     LAO 299
+  090C d7                           NOP
+  090D a6 0f 2c 20 63 6f 64 65 20 74 79 70 65 20 69 73 20         LSA ', code type is '
+  091E 00                           SLDC 0
+  091F cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0922 a5 81 2b                     LAO 299
+  0925 a5 82 7c                     LAO 636
+  0928 a5 80 83                     LAO 131
+  092B d8                           SLDL 1
+  092C 00                           SLDC 0
+  092D 0f                           SLDC 15
+  092E 88                           CHK
+  092F a4 01                        IXA 1
+  0931 04                           SLDC 4
+  0932 08                           SLDC 8
+  0933 ba                           LDP
+  0934 00                           SLDC 0
+  0935 09                           SLDC 9
+  0936 88                           CHK
+  0937 a4 0c                        IXA 12
+  0939 00                           SLDC 0
+  093A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  093D a5 81 2b                     LAO 299
+  0940 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0943 b9 20                        UJP $0965
+  0945 a5 81 2b             L0945:  LAO 299
+  0948 d7                           NOP
+  0949 a6 10 50 72 65 2d 49 49 2e 31 20 73 65 67 6d 65 6e 74         LSA 'Pre-II.1 segment'
+  095B 00                           SLDC 0
+  095C cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  095F a5 81 2b                     LAO 299
+  0962 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0965 d8                   L0965:  SLDL 1
+  0966 00                           SLDC 0
+  0967 0f                           SLDC 15
+  0968 88                           CHK
+  0969 ce 07                        CLP 7  ; local proc 7
+  096B a5 81 2b                     LAO 299
+  096E cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0971 a5 81 2b                     LAO 299
+  0974 d7                           NOP
+  0975 a6 46 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d 2d         LSA '----------------------------------------------------------------------'
+  09BD 4b                           SLDC 75
+  09BE cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  09C1 a5 81 2b                     LAO 299
+  09C4 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  09C7 a5 81 2b                     LAO 299
+  09CA cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  09CD d8                   L09CD:  SLDL 1
+  09CE 01                           SLDC 1
+  09CF 82                           ADI
+  09D0 cc 01                        STL 1
+  09D2 b9 f4                        UJP $0830 (jtab-12)
+  ---- exit code (EXIT target) ----
+  09D4 ad 00                L09D4:  RNP 0
+  ---- jump table: 3 entries ----
+       jtab-10  -> $09CD
+       jtab-12  -> $0830
+       jtab-14  -> $09D4
+
+--- procedure 7  lex=2 params=2 data=556 enter=$03B0 exit=$0805 jtab=$0822
+  03B0 a5 81 2b                     LAO 299
+  03B3 a5 23                        LAO 35
+  03B5 d8                           SLDL 1
+  03B6 00                           SLDC 0
+  03B7 0f                           SLDC 15
+  03B8 88                           CHK
+  03B9 a4 04                        IXA 4
+  03BB 08                           SLDC 8
+  03BC 08                           SLDC 8
+  03BD cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  03C0 01                           SLDC 1
+  03C1 cc 0d                        STL 13
+  03C3 a5 63                        LAO 99
+  03C5 d8                           SLDL 1
+  03C6 00                           SLDC 0
+  03C7 0f                           SLDC 15
+  03C8 88                           CHK
+  03C9 a4 01                        IXA 1
+  03CB f8                           SIND 0
+  03CC b9 f6                        UJP $0572 (jtab-10)
+  03CE a5 81 2b             L03CE:  LAO 299
+  03D1 a6 1b 20 20 63 6f 6d 70 6c 65 74 65 6c 79 20 6c 69 6e 6b 65 64 20 73 65 67 6d 65 6e 74         LSA '  completely linked segment'
+  03EE d7                           NOP
+  03EF 00                           SLDC 0
+  03F0 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  03F3 a5 81 2b                     LAO 299
+  03F6 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  03F9 a5 73                        LAO 115
+  03FB d8                           SLDL 1
+  03FC 00                           SLDC 0
+  03FD 0f                           SLDC 15
+  03FE 88                           CHK
+  03FF a4 01                        IXA 1
+  0401 f8                           SIND 0
+  0402 00                           SLDC 0
+  0403 cb                           NEQI
+  0404 a1 10                        FJP $0416
+  0406 a5 73                        LAO 115
+  0408 d8                           SLDL 1
+  0409 00                           SLDC 0
+  040A 0f                           SLDC 15
+  040B 88                           CHK
+  040C a4 01                        IXA 1
+  040E f8                           SIND 0
+  040F 00                           SLDC 0
+  0410 00                           SLDC 0
+  0411 ce 08                        CLP 8  ; local proc 8
+  0413 93                           LNOT
+  0414 cc 0d                        STL 13
+  0416 01                   L0416:  SLDC 1
+  0417 07                           SLDC 7
+  0418 9e 04                        CSP 4  ; CSP EXIT
+  041A b9 f4                        UJP $058A (jtab-12)
+  041C a5 81 2b             L041C:  LAO 299
+  041F a6 19 20 20 50 61 73 63 61 6c 20 68 6f 73 74 20 6f 75 74 65 72 20 62 6c 6f 63 6b         LSA '  Pascal host outer block'
+  043A d7                           NOP
+  043B 00                           SLDC 0
+  043C cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  043F a5 81 2b                     LAO 299
+  0442 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0445 b9 f4                        UJP $058A (jtab-12)
+  0447 a5 81 2b             L0447:  LAO 299
+  044A d7                           NOP
+  044B a6 10 20 20 50 61 73 63 61 6c 20 73 65 67 6d 65 6e 74         LSA '  Pascal segment'
+  045D 00                           SLDC 0
+  045E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0461 a5 81 2b                     LAO 299
+  0464 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0467 a5 73                        LAO 115
+  0469 d8                           SLDL 1
+  046A 00                           SLDC 0
+  046B 0f                           SLDC 15
+  046C 88                           CHK
+  046D a4 01                        IXA 1
+  046F f8                           SIND 0
+  0470 00                           SLDC 0
+  0471 00                           SLDC 0
+  0472 ce 08                        CLP 8  ; local proc 8
+  0474 93                           LNOT
+  0475 cc 0d                        STL 13
+  0477 b9 f4                        UJP $058A (jtab-12)
+  0479 a5 81 2b             L0479:  LAO 299
+  047C d7                           NOP
+  047D a6 0e 20 20 6c 69 62 72 61 72 79 20 75 6e 69 74         LSA '  library unit'
+  048D 00                           SLDC 0
+  048E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0491 a5 63                        LAO 99
+  0493 d8                           SLDL 1
+  0494 00                           SLDC 0
+  0495 0f                           SLDC 15
+  0496 88                           CHK
+  0497 a4 01                        IXA 1
+  0499 f8                           SIND 0
+  049A 05                           SLDC 5
+  049B c3                           EQUI
+  049C a1 27                        FJP $04C5
+  049E a5 81 2b                     LAO 299
+  04A1 a6 15 20 28 55 4e 4c 49 4e 4b 45 44 20 49 4e 54 52 49 4e 53 49 43 29         LSA ' (UNLINKED INTRINSIC)'
+  04B8 d7                           NOP
+  04B9 00                           SLDC 0
+  04BA cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  04BD a5 81 2b                     LAO 299
+  04C0 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04C3 b9 38                        UJP $04FD
+  04C5 a5 63                L04C5:  LAO 99
+  04C7 d8                           SLDL 1
+  04C8 00                           SLDC 0
+  04C9 0f                           SLDC 15
+  04CA 88                           CHK
+  04CB a4 01                        IXA 1
+  04CD f8                           SIND 0
+  04CE 06                           SLDC 6
+  04CF c3                           EQUI
+  04D0 a1 25                        FJP $04F7
+  04D2 a5 81 2b                     LAO 299
+  04D5 a6 13 20 28 4c 49 4e 4b 45 44 20 49 4e 54 52 49 4e 53 49 43 29         LSA ' (LINKED INTRINSIC)'
+  04EA d7                           NOP
+  04EB 00                           SLDC 0
+  04EC cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  04EF a5 81 2b                     LAO 299
+  04F2 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04F5 b9 06                        UJP $04FD
+  04F7 a5 81 2b             L04F7:  LAO 299
+  04FA cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04FD a5 73                L04FD:  LAO 115
+  04FF d8                           SLDL 1
+  0500 00                           SLDC 0
+  0501 0f                           SLDC 15
+  0502 88                           CHK
+  0503 a4 01                        IXA 1
+  0505 f8                           SIND 0
+  0506 00                           SLDC 0
+  0507 00                           SLDC 0
+  0508 ce 08                        CLP 8  ; local proc 8
+  050A 93                           LNOT
+  050B cc 0d                        STL 13
+  050D a5 63                        LAO 99
+  050F d8                           SLDL 1
+  0510 00                           SLDC 0
+  0511 0f                           SLDC 15
+  0512 88                           CHK
+  0513 a4 01                        IXA 1
+  0515 f8                           SIND 0
+  0516 06                           SLDC 6
+  0517 c3                           EQUI
+  0518 a1 04                        FJP $051E
+  051A 01                           SLDC 1
+  051B 07                           SLDC 7
+  051C 9e 04                        CSP 4  ; CSP EXIT
+  051E b9 6a                L051E:  UJP $058A
+  0520 a5 81 2b             L0520:  LAO 299
+  0523 a6 1c 20 20 73 65 70 61 72 61 74 65 20 70 72 6f 63 65 64 75 72 65 20 73 65 67 6d 65 6e 74         LSA '  separate procedure segment'
+  0541 d7                           NOP
+  0542 00                           SLDC 0
+  0543 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0546 a5 81 2b                     LAO 299
+  0549 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  054C b9 3c                        UJP $058A
+  054E a5 81 2b             L054E:  LAO 299
+  0551 a6 0e 20 20 64 61 74 61 20 73 65 67 6d 65 6e 74         LSA '  data segment'
+  0561 d7                           NOP
+  0562 00                           SLDC 0
+  0563 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0566 a5 81 2b                     LAO 299
+  0569 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  056C 01                           SLDC 1
+  056D 07                           SLDC 7
+  056E 9e 04                        CSP 4  ; CSP EXIT
+  0570 b9 18                        UJP $058A
+  0572 ac 64 00 00 07 00 b9 10 ac 01 60 01 37 01 07 01 62 00 0b 01 0d 01 3a 00 L0572:  XJP 0..7 else $058A [$03CE $041C $0447 $0479 $0520 $0479 $0479 $054E]
+  058A 00                   L058A:  SLDC 0
+  058B cc 02                        STL 2
+  058D a5 03                        LAO 3
+  058F d8                           SLDL 1
+  0590 00                           SLDC 0
+  0591 0f                           SLDC 15
+  0592 88                           CHK
+  0593 a4 02                        IXA 2
+  0595 cc 81 17                     STL 279
+  0598 ca 81 17                     LDL 279
+  059B f8                           SIND 0
+  059C ca 81 17                     LDL 279
+  059F f9                           SIND 1
+  05A0 c7 ff 01                     LDCI 511
+  05A3 82                           ADI
+  05A4 c7 00 02                     LDCI 512
+  05A7 86                           DVI
+  05A8 82                           ADI
+  05A9 cc 03                        STL 3
+  05AB a9 82 5a                     LDO 602
+  05AE e4                           SLDL 13
+  05AF 8d                           LOR
+  05B0 a1 e6                        FJP $0805 (jtab-26)
+  05B2 c6 04                L05B2:  LLA 4
+  05B4 ce 09                        CLP 9  ; local proc 9
+  05B6 a9 82 5b                     LDO 603
+  05B9 a1 3c                        FJP $05F7
+  05BB c6 04                        LLA 4
+  05BD 00                           SLDC 0
+  05BE c6 81 0e                     LLA 270
+  05C1 00                           SLDC 0
+  05C2 10                           SLDC 16
+  05C3 9e 02                        CSP 2  ; CSP MOVELEFT
+  05C5 04                           SLDC 4
+  05C6 cc 81 16                     STL 278
+  05C9 07                           SLDC 7
+  05CA cc 81 17                     STL 279
+  05CD ca 81 16             L05CD:  LDL 278
+  05D0 ca 81 17                     LDL 279
+  05D3 c8                           LEQI
+  05D4 a1 17                        FJP $05ED
+  05D6 c6 81 0e                     LLA 270
+  05D9 ca 81 16                     LDL 278
+  05DC 00                           SLDC 0
+  05DD 07                           SLDC 7
+  05DE 88                           CHK
+  05DF a4 01                        IXA 1
+  05E1 cf 02                        CGP 2  ; local proc 2
+  05E3 ca 81 16                     LDL 278
+  05E6 01                           SLDC 1
+  05E7 82                           ADI
+  05E8 cc 81 16                     STL 278
+  05EB b9 f2                        UJP $05CD (jtab-14)
+  05ED c6 81 0e             L05ED:  LLA 270
+  05F0 00                           SLDC 0
+  05F1 c6 04                        LLA 4
+  05F3 00                           SLDC 0
+  05F4 10                           SLDC 16
+  05F5 9e 02                        CSP 2  ; CSP MOVELEFT
+  05F7 df                   L05F7:  SLDL 8
+  05F8 00                           SLDC 0
+  05F9 cb                           NEQI
+  05FA a1 ea                        FJP $0800 (jtab-22)
+  05FC c6 04                        LLA 4
+  05FE 00                           SLDC 0
+  05FF 00                           SLDC 0
+  0600 cf 05                        CGP 5  ; local proc 5
+  0602 a1 ec                        FJP $0800 (jtab-20)
+  0604 df                           SLDL 8
+  0605 b9 f0                        UJP $07DA (jtab-16)
+  0607 a9 82 5a             L0607:  LDO 602
+  060A a1 4d                        FJP $0659
+  060C a5 81 2b                     LAO 299
+  060F c6 04                        LLA 4
+  0611 0c                           SLDC 12
+  0612 08                           SLDC 8
+  0613 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  0616 a5 81 2b                     LAO 299
+  0619 a6 13 20 67 6c 6f 62 61 6c 20 61 64 64 72 20 20 20 20 50 20 23         LSA ' global addr    P #'
+  062E d7                           NOP
+  062F 00                           SLDC 0
+  0630 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0633 a5 81 2b                     LAO 299
+  0636 e0                           SLDL 9
+  0637 00                           SLDC 0
+  0638 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  063B a5 81 2b                     LAO 299
+  063E d7                           NOP
+  063F a6 06 2c 20 20 49 20 23         LSA ',  I #'
+  0647 00                           SLDC 0
+  0648 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  064B a5 81 2b                     LAO 299
+  064E e1                           SLDL 10
+  064F 00                           SLDC 0
+  0650 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0653 a5 81 2b                     LAO 299
+  0656 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0659 b9 ee                L0659:  UJP $0800 (jtab-18)
+  065B a9 82 5a             L065B:  LDO 602
+  065E a1 36                        FJP $0696
+  0660 a5 81 2b                     LAO 299
+  0663 c6 04                        LLA 4
+  0665 0c                           SLDC 12
+  0666 08                           SLDC 8
+  0667 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  066A a5 81 2b                     LAO 299
+  066D a6 14 20 70 75 62 6c 69 63 20 76 61 72 20 20 62 61 73 65 20 3d 20         LSA ' public var  base = '
+  0683 d7                           NOP
+  0684 00                           SLDC 0
+  0685 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0688 a5 81 2b                     LAO 299
+  068B e0                           SLDL 9
+  068C 00                           SLDC 0
+  068D cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0690 a5 81 2b                     LAO 299
+  0693 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0696 b9 ee                L0696:  UJP $0800 (jtab-18)
+  0698 a9 82 5a             L0698:  LDO 602
+  069B a1 35                        FJP $06D2
+  069D a5 81 2b                     LAO 299
+  06A0 c6 04                        LLA 4
+  06A2 0c                           SLDC 12
+  06A3 08                           SLDC 8
+  06A4 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  06A7 a5 81 2b                     LAO 299
+  06AA d7                           NOP
+  06AB a6 13 20 63 6f 6e 73 74 61 6e 74 20 76 61 6c 75 65 20 6f 66 20         LSA ' constant value of '
+  06C0 00                           SLDC 0
+  06C1 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  06C4 a5 81 2b                     LAO 299
+  06C7 e0                           SLDL 9
+  06C8 00                           SLDC 0
+  06C9 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  06CC a5 81 2b                     LAO 299
+  06CF cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  06D2 b9 ee                L06D2:  UJP $0800 (jtab-18)
+  06D4 a9 82 59             L06D4:  LDO 601
+  06D7 a1 35                        FJP $070E
+  06D9 a5 81 2b                     LAO 299
+  06DC c6 04                        LLA 4
+  06DE 0c                           SLDC 12
+  06DF 08                           SLDC 8
+  06E0 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  06E3 a5 81 2b                     LAO 299
+  06E6 d7                           NOP
+  06E7 a6 13 20 65 78 74 65 72 6e 61 6c 20 70 72 6f 63 20 20 50 20 23         LSA ' external proc  P #'
+  06FC 00                           SLDC 0
+  06FD cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0700 a5 81 2b                     LAO 299
+  0703 e0                           SLDL 9
+  0704 00                           SLDC 0
+  0705 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0708 a5 81 2b                     LAO 299
+  070B cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  070E b9 ee                L070E:  UJP $0800 (jtab-18)
+  0710 a5 81 2b             L0710:  LAO 299
+  0713 c6 04                        LLA 4
+  0715 0c                           SLDC 12
+  0716 08                           SLDC 8
+  0717 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  071A a5 81 2b                     LAO 299
+  071D a6 13 20 73 65 70 61 72 61 74 65 20 70 72 6f 63 20 20 50 20 23         LSA ' separate proc  P #'
+  0732 d7                           NOP
+  0733 00                           SLDC 0
+  0734 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0737 a5 81 2b                     LAO 299
+  073A e0                           SLDL 9
+  073B 00                           SLDC 0
+  073C cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  073F a5 81 2b                     LAO 299
+  0742 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0745 b9 ee                        UJP $0800 (jtab-18)
+  0747 a6 07 20 67 6c 6f 62 61 6c L0747:  LSA ' global'
+  0750 d7                           NOP
+  0751 ce 0a                        CLP 10  ; local proc 10
+  0753 b9 ee                        UJP $0800 (jtab-18)
+  0755 a6 07 20 70 75 62 6c 69 63 L0755:  LSA ' public'
+  075E d7                           NOP
+  075F ce 0a                        CLP 10  ; local proc 10
+  0761 b9 ee                        UJP $0800 (jtab-18)
+  0763 a6 09 20 63 6f 6e 73 74 61 6e 74 L0763:  LSA ' constant'
+  076E d7                           NOP
+  076F ce 0a                        CLP 10  ; local proc 10
+  0771 b9 ee                        UJP $0800 (jtab-18)
+  0773 a6 09 20 73 65 70 61 72 61 74 65 L0773:  LSA ' separate'
+  077E d7                           NOP
+  077F ce 0a                        CLP 10  ; local proc 10
+  0781 b9 7d                        UJP $0800
+  0783 a6 05 20 75 6e 69 74 L0783:  LSA ' unit'
+  078A d7                           NOP
+  078B ce 0a                        CLP 10  ; local proc 10
+  078D b9 71                        UJP $0800
+  078F a6 08 20 70 72 69 76 61 74 65 L078F:  LSA ' private'
+  0799 d7                           NOP
+  079A ce 0a                        CLP 10  ; local proc 10
+  079C b9 62                        UJP $0800
+  079E a5 63                L079E:  LAO 99
+  07A0 d8                           SLDL 1
+  07A1 00                           SLDC 0
+  07A2 0f                           SLDC 15
+  07A3 88                           CHK
+  07A4 a4 01                        IXA 1
+  07A6 f8                           SIND 0
+  07A7 05                           SLDC 5
+  07A8 c3                           EQUI
+  07A9 a1 2d                        FJP $07D8
+  07AB a5 81 2b                     LAO 299
+  07AE d7                           NOP
+  07AF a6 15 20 50 72 69 76 61 74 65 20 64 61 74 61 73 65 67 20 23 20 3d 20         LSA ' Private dataseg # = '
+  07C6 00                           SLDC 0
+  07C7 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  07CA a5 81 2b                     LAO 299
+  07CD e1                           SLDL 10
+  07CE 00                           SLDC 0
+  07CF cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  07D2 a5 81 2b                     LAO 299
+  07D5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  07D8 b9 26                L07D8:  UJP $0800
+  07DA ac 20 00 00 0e 00 b9 1e 44 00 61 00 9f 00 93 00 5b 00 89 00 e7 01 95 01 5a 01 20 01 22 01 e8 00 ea 00 89 00 8b 00 L07DA:  XJP 0..14 else $0800 [$079E $0783 $0747 $0755 $078F $0763 $0607 $065B $0698 $06D4 $06D4 $0710 $0710 $0773 $0773]
+  0800 df                   L0800:  SLDL 8
+  0801 00                           SLDC 0
+  0802 c3                           EQUI
+  0803 a1 e8                        FJP $05B2 (jtab-24)
+  ---- exit code (EXIT target) ----
+  0805 ad 00                L0805:  RNP 0
+  ---- jump table: 9 entries ----
+       jtab-10  -> $0572
+       jtab-12  -> $058A
+       jtab-14  -> $05CD
+       jtab-16  -> $07DA
+       jtab-18  -> $0800
+       jtab-20  -> $0800
+       jtab-22  -> $0800
+       jtab-24  -> $05B2
+       jtab-26  -> $0805
+
+--- procedure 8  lex=3 params=6 data=1042 enter=$014C exit=$0227 jtab=$0236
+  014C 01                           SLDC 1
+  014D cc 01                        STL 1
+  014F da                           SLDL 3
+  0150 00                           SLDC 0
+  0151 c8                           LEQI
+  0152 da                           SLDL 3
+  0153 c7 c8 00                     LDCI 200
+  0156 c5                           GRTI
+  0157 8d                           LOR
+  0158 a1 07                        FJP $0161
+  015A 00                           SLDC 0
+  015B cc 01                        STL 1
+  015D 01                           SLDC 1
+  015E 08                           SLDC 8
+  015F 9e 04                        CSP 4  ; CSP EXIT
+  0161 00                   L0161:  SLDC 0
+  0162 cc 0c                        STL 12
+  0164 a5 81 03             L0164:  LAO 259
+  0167 c6 0d                        LLA 13
+  0169 00                           SLDC 0
+  016A 02                           SLDC 2
+  016B da                           SLDL 3
+  016C 01                           SLDC 1
+  016D 00                           SLDC 0
+  016E 00                           SLDC 0
+  016F cd 00 1c                     CXP 0,28  ; OS.28 FBLOCKIO
+  0172 02                           SLDC 2
+  0173 cb                           NEQI
+  0174 a1 2c                        FJP $01A2
+  0176 a5 81 2b                     LAO 299
+  0179 a6 14 49 6e 74 65 72 66 61 63 65 20 72 65 61 64 20 65 72 72 6f 72         LSA 'Interface read error'
+  018F d7                           NOP
+  0190 00                           SLDC 0
+  0191 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0194 a5 81 2b                     LAO 299
+  0197 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  019A 00                           SLDC 0
+  019B cc 01                        STL 1
+  019D 01                           SLDC 1
+  019E cc 0c                        STL 12
+  01A0 b9 7c                        UJP $021E
+  01A2 da                   L01A2:  SLDL 3
+  01A3 02                           SLDC 2
+  01A4 82                           ADI
+  01A5 cc 03                        STL 3
+  01A7 00                           SLDC 0
+  01A8 cc 04                        STL 4
+  01AA c6 0d                L01AA:  LLA 13
+  01AC db                           SLDL 4
+  01AD 00                           SLDC 0
+  01AE c7 ff 03                     LDCI 1023
+  01B1 88                           CHK
+  01B2 be                           LDB
+  01B3 b3 08 a8 ff 07 fe ff ff 07 fe ff 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $FFFE $07FF $FFFE $07FF]
+  01C6 08                           SLDC 8
+  01C7 8b                           INN
+  01C8 a1 0e                        FJP $01D8
+  01CA db                           SLDL 4
+  01CB cc 0b                        STL 11
+  01CD c6 04                        LLA 4
+  01CF c6 0d                        LLA 13
+  01D1 9e 07                        CSP 7  ; CSP IDSEARCH
+  01D3 dc                           SLDL 5
+  01D4 34                           SLDC 52
+  01D5 c3                           EQUI
+  01D6 cc 0c                        STL 12
+  01D8 c6 0d                L01D8:  LLA 13
+  01DA db                           SLDL 4
+  01DB 00                           SLDC 0
+  01DC c7 ff 03                     LDCI 1023
+  01DF 88                           CHK
+  01E0 be                           LDB
+  01E1 0d                           SLDC 13
+  01E2 c3                           EQUI
+  01E3 a1 19                        FJP $01FE
+  01E5 c6 0d                        LLA 13
+  01E7 db                           SLDL 4
+  01E8 01                           SLDC 1
+  01E9 82                           ADI
+  01EA 00                           SLDC 0
+  01EB c7 ff 03                     LDCI 1023
+  01EE 88                           CHK
+  01EF be                           LDB
+  01F0 00                           SLDC 0
+  01F1 c3                           EQUI
+  01F2 a1 0a                        FJP $01FE
+  01F4 db                           SLDL 4
+  01F5 01                           SLDC 1
+  01F6 95                           SBI
+  01F7 cc 0b                        STL 11
+  01F9 c7 ff 03                     LDCI 1023
+  01FC cc 04                        STL 4
+  01FE db                   L01FE:  SLDL 4
+  01FF 01                           SLDC 1
+  0200 82                           ADI
+  0201 cc 04                        STL 4
+  0203 e3                           SLDL 12
+  0204 db                           SLDL 4
+  0205 c7 ff 03                     LDCI 1023
+  0208 c5                           GRTI
+  0209 8d                           LOR
+  020A a1 f6                        FJP $01AA (jtab-10)
+  020C a5 81 2b                     LAO 299
+  020F c6 0d                        LLA 13
+  0211 e2                           SLDL 11
+  0212 c7 00 04                     LDCI 1024
+  0215 cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  0218 a5 81 2b                     LAO 299
+  021B cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  021E e3                   L021E:  SLDL 12
+  021F a1 f4                        FJP $0164 (jtab-12)
+  0221 a5 81 2b                     LAO 299
+  0224 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  ---- exit code (EXIT target) ----
+  0227 ad 01                        RNP 1
+  ---- jump table: 2 entries ----
+       jtab-10  -> $01AA
+       jtab-12  -> $0164
+
+--- procedure 9  lex=3 params=2 data=2 enter=$0238 exit=$02AE jtab=$02B8
+  0238 00                           SLDC 0
+  0239 cc 02                        STL 2
+  023B b6 01 02                     LOD 1,2
+  023E 00                           SLDC 0
+  023F c3                           EQUI
+  0240 a1 49                        FJP $028B
+  0242 20                           SLDC 32
+  0243 b8 01 02                     STR 1,2
+  0246 a5 81 03                     LAO 259
+  0249 b2 01 0e                     LDA 1,14
+  024C 00                           SLDC 0
+  024D 01                           SLDC 1
+  024E b6 01 03                     LOD 1,3
+  0251 01                           SLDC 1
+  0252 00                           SLDC 0
+  0253 00                           SLDC 0
+  0254 cd 00 1c                     CXP 0,28  ; OS.28 FBLOCKIO
+  0257 01                           SLDC 1
+  0258 cb                           NEQI
+  0259 cc 02                        STL 2
+  025B d9                           SLDL 2
+  025C a1 25                        FJP $0283
+  025E a5 81 2b                     LAO 299
+  0261 a6 13 6c 69 62 72 61 72 79 20 72 65 61 64 20 65 72 72 6f 72 21         LSA 'library read error!'
+  0276 d7                           NOP
+  0277 00                           SLDC 0
+  0278 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  027B a5 81 2b                     LAO 299
+  027E cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0281 b9 08                        UJP $028B
+  0283 b6 01 03             L0283:  LOD 1,3
+  0286 01                           SLDC 1
+  0287 82                           ADI
+  0288 b8 01 03                     STR 1,3
+  028B b2 01 0e             L028B:  LDA 1,14
+  028E 20                           SLDC 32
+  028F b6 01 02                     LOD 1,2
+  0292 95                           SBI
+  0293 00                           SLDC 0
+  0294 1f                           SLDC 31
+  0295 88                           CHK
+  0296 a4 08                        IXA 8
+  0298 00                           SLDC 0
+  0299 d8                           SLDL 1
+  029A 00                           SLDC 0
+  029B 10                           SLDC 16
+  029C 9e 02                        CSP 2  ; CSP MOVELEFT
+  029E d9                           SLDL 2
+  029F a1 05                        FJP $02A6
+  02A1 d8                           SLDL 1
+  02A2 a2 04                        INC 4
+  02A4 00                           SLDC 0
+  02A5 9a                           STO
+  02A6 b6 01 02             L02A6:  LOD 1,2
+  02A9 01                           SLDC 1
+  02AA 95                           SBI
+  02AB b8 01 02                     STR 1,2
+  ---- exit code (EXIT target) ----
+  02AE ad 00                        RNP 0
+
+--- procedure 10  lex=3 params=2 data=104 enter=$02BA exit=$03A0 jtab=$03AE
+  02BA c6 02                        LLA 2
+  02BC d8                           SLDL 1
+  02BD aa 50                        SAS 80
+  02BF a9 82 59                     LDO 601
+  02C2 a1 f6                        FJP $0381 (jtab-10)
+  02C4 a5 81 2b                     LAO 299
+  02C7 b2 01 04                     LDA 1,4
+  02CA 0c                           SLDC 12
+  02CB 08                           SLDC 8
+  02CC cd 00 14                     CXP 0,20  ; OS.20 FWRITEBYTES
+  02CF a5 81 2b                     LAO 299
+  02D2 c6 02                        LLA 2
+  02D4 00                           SLDC 0
+  02D5 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  02D8 b6 01 09                     LOD 1,9
+  02DB b9 50                        UJP $032D
+  02DD a5 81 2b             L02DD:  LAO 299
+  02E0 d7                           NOP
+  02E1 a6 0f 20 77 6f 72 64 20 72 65 66 65 72 65 6e 63 65         LSA ' word reference'
+  02F2 00                           SLDC 0
+  02F3 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  02F6 b9 42                        UJP $033A
+  02F8 a5 81 2b             L02F8:  LAO 299
+  02FB a6 0f 20 62 79 74 65 20 72 65 66 65 72 65 6e 63 65         LSA ' byte reference'
+  030C d7                           NOP
+  030D 00                           SLDC 0
+  030E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0311 b9 27                        UJP $033A
+  0313 a5 81 2b             L0313:  LAO 299
+  0316 d7                           NOP
+  0317 a6 0e 20 62 69 67 20 72 65 66 65 72 65 6e 63 65         LSA ' big reference'
+  0327 00                           SLDC 0
+  0328 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  032B b9 0d                        UJP $033A
+  032D ac 00 00 02 00 b9 06 57 00 3e 00 25 00 L032D:  XJP 0..2 else $033A [$02DD $02F8 $0313]
+  033A b6 01 0a             L033A:  LOD 1,10
+  033D 01                           SLDC 1
+  033E cb                           NEQI
+  033F a1 29                        FJP $036A
+  0341 a5 81 2b                     LAO 299
+  0344 d7                           NOP
+  0345 a6 02 20 28                  LSA ' ('
+  0349 00                           SLDC 0
+  034A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  034D a5 81 2b                     LAO 299
+  0350 b6 01 0a                     LOD 1,10
+  0353 00                           SLDC 0
+  0354 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0357 a5 81 2b                     LAO 299
+  035A d7                           NOP
+  035B a6 07 20 74 69 6d 65 73 29         LSA ' times)'
+  0364 00                           SLDC 0
+  0365 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0368 b9 11                        UJP $037B
+  036A a5 81 2b             L036A:  LAO 299
+  036D a6 07 20 28 6f 6e 63 65 29         LSA ' (once)'
+  0376 d7                           NOP
+  0377 00                           SLDC 0
+  0378 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  037B a5 81 2b             L037B:  LAO 299
+  037E cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0381 01                   L0381:  SLDC 1
+  0382 cc 2b                        STL 43
+  0384 b6 01 0a                     LOD 1,10
+  0387 07                           SLDC 7
+  0388 82                           ADI
+  0389 08                           SLDC 8
+  038A 86                           DVI
+  038B cc 35                        STL 53
+  038D ca 2b                L038D:  LDL 43
+  038F ca 35                        LDL 53
+  0391 c8                           LEQI
+  0392 a1 0c                        FJP $03A0
+  0394 c6 2c                        LLA 44
+  0396 ae 09                        CIP 9  ; local proc 9
+  0398 ca 2b                        LDL 43
+  039A 01                           SLDC 1
+  039B 82                           ADI
+  039C cc 2b                        STL 43
+  039E b9 f4                        UJP $038D (jtab-12)
+  ---- exit code (EXIT target) ----
+  03A0 ad 00                L03A0:  RNP 0
+  ---- jump table: 2 entries ----
+       jtab-10  -> $0381
+       jtab-12  -> $038D
+
+--- procedure 11  lex=1 params=0 data=172 enter=$09E6 exit=$0D74 jtab=$0D90
+  09E6 00                   L09E6:  SLDC 0
+  09E7 ab 82 5b                     SRO 603
+  09EA a5 81 03                     LAO 259
+  09ED 00                           SLDC 0
+  09EE cd 00 06                     CXP 0,6  ; OS.6 FCLOSE
+  09F1 b6 02 03                     LOD 2,3
+  09F4 d7                           NOP
+  09F5 a6 14 65 6e 74 65 72 20 6c 69 62 72 61 72 79 20 6e 61 6d 65 3a 20         LSA 'enter library name: '
+  0A0B 00                           SLDC 0
+  0A0C cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0A0F b6 02 02                     LOD 2,2
+  0A12 c6 2c                        LLA 44
+  0A14 50                           SLDC 80
+  0A15 cd 00 12                     CXP 0,18  ; OS.18 FREADSTRING
+  0A18 b6 02 02                     LOD 2,2
+  0A1B cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  0A1E c6 2c                        LLA 44
+  0A20 d7                           NOP
+  0A21 a6 00                        LSA ''
+  0A23 af 04                        EQU STR
+  0A25 a1 0b                        FJP $0A32
+  0A27 a5 81 2b                     LAO 299
+  0A2A 01                           SLDC 1
+  0A2B cd 00 06                     CXP 0,6  ; OS.6 FCLOSE
+  0A2E 01                           SLDC 1
+  0A2F 01                           SLDC 1
+  0A30 9e 04                        CSP 4  ; CSP EXIT
+  0A32 c6 2c                L0A32:  LLA 44
+  0A34 2a                           SLDC 42
+  0A35 af 04                        EQU STR
+  0A37 a1 16                        FJP $0A4F
+  0A39 c6 2c                        LLA 44
+  0A3B a6 0f 2a 53 59 53 54 45 4d 2e 4c 49 42 52 41 52 59         LSA '*SYSTEM.LIBRARY'
+  0A4C d7                           NOP
+  0A4D aa 50                        SAS 80
+  0A4F a5 81 03             L0A4F:  LAO 259
+  0A52 c6 2c                        LLA 44
+  0A54 01                           SLDC 1
+  0A55 00                           SLDC 0
+  0A56 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0A59 9e 22                        CSP 34  ; CSP IORESULT
+  0A5B 00                           SLDC 0
+  0A5C cb                           NEQI
+  0A5D a1 1e                        FJP $0A7D
+  0A5F a6 05 2e 43 4f 44 45         LSA '.CODE'
+  0A66 d7                           NOP
+  0A67 c6 2c                        LLA 44
+  0A69 50                           SLDC 80
+  0A6A c6 2c                        LLA 44
+  0A6C 00                           SLDC 0
+  0A6D be                           LDB
+  0A6E 01                           SLDC 1
+  0A6F 82                           ADI
+  0A70 cd 00 18                     CXP 0,24  ; OS.24 SINSERT
+  0A73 a5 81 03                     LAO 259
+  0A76 c6 2c                        LLA 44
+  0A78 01                           SLDC 1
+  0A79 00                           SLDC 0
+  0A7A cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0A7D a5 81 03             L0A7D:  LAO 259
+  0A80 a5 03                        LAO 3
+  0A82 00                           SLDC 0
+  0A83 01                           SLDC 1
+  0A84 00                           SLDC 0
+  0A85 01                           SLDC 1
+  0A86 00                           SLDC 0
+  0A87 00                           SLDC 0
+  0A88 cd 00 1c                     CXP 0,28  ; OS.28 FBLOCKIO
+  0A8B 01                           SLDC 1
+  0A8C cb                           NEQI
+  0A8D a1 1a                        FJP $0AA9
+  0A8F b6 02 03                     LOD 2,3
+  0A92 d7                           NOP
+  0A93 a6 08 62 61 64 20 66 69 6c 65         LSA 'bad file'
+  0A9D 00                           SLDC 0
+  0A9E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0AA1 b6 02 03                     LOD 2,3
+  0AA4 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0AA7 b9 f6                        UJP $09E6 (jtab-10)
+  0AA9 a5 03                L0AA9:  LAO 3
+  0AAB 00                           SLDC 0
+  0AAC 00                           SLDC 0
+  0AAD cf 03                        CGP 3  ; local proc 3
+  0AAF a1 08                        FJP $0AB9
+  0AB1 a5 03                        LAO 3
+  0AB3 cf 04                        CGP 4  ; local proc 4
+  0AB5 01                           SLDC 1
+  0AB6 ab 82 5b                     SRO 603
+  0AB9 00                   L0AB9:  SLDC 0
+  0ABA 00                           SLDC 0
+  0ABB 10                           SLDC 16
+  0ABC 88                           CHK
+  0ABD cc 01                        STL 1
+  0ABF 0f                           SLDC 15
+  0AC0 00                           SLDC 0
+  0AC1 10                           SLDC 16
+  0AC2 88                           CHK
+  0AC3 cc 56                        STL 86
+  0AC5 d8                   L0AC5:  SLDL 1
+  0AC6 ca 56                        LDL 86
+  0AC8 c8                           LEQI
+  0AC9 a1 5d                        FJP $0B28
+  0ACB a5 03                        LAO 3
+  0ACD d8                           SLDL 1
+  0ACE 00                           SLDC 0
+  0ACF 0f                           SLDC 15
+  0AD0 88                           CHK
+  0AD1 a4 02                        IXA 2
+  0AD3 f9                           SIND 1
+  0AD4 00                           SLDC 0
+  0AD5 c9                           LESI
+  0AD6 a5 03                        LAO 3
+  0AD8 d8                           SLDL 1
+  0AD9 00                           SLDC 0
+  0ADA 0f                           SLDC 15
+  0ADB 88                           CHK
+  0ADC a4 02                        IXA 2
+  0ADE f8                           SIND 0
+  0ADF 00                           SLDC 0
+  0AE0 c9                           LESI
+  0AE1 8d                           LOR
+  0AE2 a5 03                        LAO 3
+  0AE4 d8                           SLDL 1
+  0AE5 00                           SLDC 0
+  0AE6 0f                           SLDC 15
+  0AE7 88                           CHK
+  0AE8 a4 02                        IXA 2
+  0AEA f8                           SIND 0
+  0AEB c7 2c 01                     LDCI 300
+  0AEE c5                           GRTI
+  0AEF 8d                           LOR
+  0AF0 a5 23                        LAO 35
+  0AF2 d8                           SLDL 1
+  0AF3 00                           SLDC 0
+  0AF4 0f                           SLDC 15
+  0AF5 88                           CHK
+  0AF6 a4 04                        IXA 4
+  0AF8 00                           SLDC 0
+  0AF9 00                           SLDC 0
+  0AFA cf 05                        CGP 5  ; local proc 5
+  0AFC 93                           LNOT
+  0AFD 8d                           LOR
+  0AFE a1 21                        FJP $0B21
+  0B00 b6 02 03                     LOD 2,3
+  0B03 a6 0f 6e 6f 74 20 61 20 63 6f 64 65 20 66 69 6c 65         LSA 'not a code file'
+  0B14 d7                           NOP
+  0B15 00                           SLDC 0
+  0B16 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0B19 b6 02 03                     LOD 2,3
+  0B1C cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0B1F b9 f6                        UJP $09E6 (jtab-10)
+  0B21 d8                   L0B21:  SLDL 1
+  0B22 01                           SLDC 1
+  0B23 82                           ADI
+  0B24 cc 01                        STL 1
+  0B26 b9 f4                        UJP $0AC5 (jtab-12)
+  0B28 b6 02 03             L0B28:  LOD 2,3
+  0B2B a6 1e 6c 69 73 74 20 6c 69 6e 6b 65 72 20 69 6e 66 6f 20 74 61 62 6c 65 20 28 59 2f 4e 29 3f 20         LSA 'list linker info table (Y/N)? '
+  0B4B d7                           NOP
+  0B4C 00                           SLDC 0
+  0B4D cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0B50 b6 02 04             L0B50:  LOD 2,4
+  0B53 c6 02                        LLA 2
+  0B55 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  0B58 d9                           SLDL 2
+  0B59 b3 08 2d 00 02 00 40 00 02 00 40 00 00 01 00 00 00 00 00         LDC 8w [$0000 $0000 $0001 $0000 $4000 $0200 $4000 $0200]
+  0B6C 08                           SLDC 8
+  0B6D 8b                           INN
+  0B6E a1 f2                        FJP $0B50 (jtab-14)
+  0B70 b6 02 03                     LOD 2,3
+  0B73 d9                           SLDL 2
+  0B74 00                           SLDC 0
+  0B75 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0B78 b6 02 03                     LOD 2,3
+  0B7B cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0B7E d9                           SLDL 2
+  0B7F b3 08 00 00 02 00 00 00 02 00 00 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $0000 $0200 $0000 $0200]
+  0B92 08                           SLDC 8
+  0B93 8b                           INN
+  0B94 ab 82 5a                     SRO 602
+  0B97 a9 82 5a                     LDO 602
+  0B9A a1 6f                        FJP $0C0B
+  0B9C b6 02 03                     LOD 2,3
+  0B9F a6 1d 6c 69 73 74 20 72 65 66 65 72 65 6e 63 65 64 20 69 74 65 6d 73 20 28 59 2f 4e 29 3f 20         LSA 'list referenced items (Y/N)? '
+  0BBE d7                           NOP
+  0BBF 00                           SLDC 0
+  0BC0 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0BC3 b6 02 04             L0BC3:  LOD 2,4
+  0BC6 c6 02                        LLA 2
+  0BC8 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  0BCB d9                           SLDL 2
+  0BCC b3 08 00 02 00 40 00 02 00 40 00 00 01 00 00 00 00 00         LDC 8w [$0000 $0000 $0001 $0000 $4000 $0200 $4000 $0200]
+  0BDE 08                           SLDC 8
+  0BDF 8b                           INN
+  0BE0 a1 f0                        FJP $0BC3 (jtab-16)
+  0BE2 b6 02 03                     LOD 2,3
+  0BE5 d9                           SLDL 2
+  0BE6 00                           SLDC 0
+  0BE7 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0BEA b6 02 03                     LOD 2,3
+  0BED cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0BF0 d9                           SLDL 2
+  0BF1 b3 08 00 00 02 00 00 00 02 00 00 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $0000 $0200 $0000 $0200]
+  0C04 08                           SLDC 8
+  0C05 8b                           INN
+  0C06 ab 82 59                     SRO 601
+  0C09 b9 04                        UJP $0C0F
+  0C0B 00                   L0C0B:  SLDC 0
+  0C0C ab 82 59                     SRO 601
+  0C0F a9 82 58             L0C0F:  LDO 600
+  0C12 a1 e6                        FJP $0D10 (jtab-26)
+  0C14 b6 02 03             L0C14:  LOD 2,3
+  0C17 a6 16 6d 61 70 20 6f 75 74 70 75 74 20 66 69 6c 65 20 6e 61 6d 65 3a 20         LSA 'map output file name: '
+  0C2F d7                           NOP
+  0C30 00                           SLDC 0
+  0C31 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0C34 b6 02 02                     LOD 2,2
+  0C37 c6 03                        LLA 3
+  0C39 50                           SLDC 80
+  0C3A cd 00 12                     CXP 0,18  ; OS.18 FREADSTRING
+  0C3D b6 02 02                     LOD 2,2
+  0C40 cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  0C43 c6 03                        LLA 3
+  0C45 a6 00                        LSA ''
+  0C47 d7                           NOP
+  0C48 af 04                        EQU STR
+  0C4A a1 0f                        FJP $0C5B
+  0C4C c6 03                        LLA 3
+  0C4E d7                           NOP
+  0C4F a6 08 43 4f 4e 53 4f 4c 45 3a         LSA 'CONSOLE:'
+  0C59 aa 50                        SAS 80
+  0C5B c6 03                L0C5B:  LLA 3
+  0C5D c6 03                        LLA 3
+  0C5F 00                           SLDC 0
+  0C60 be                           LDB
+  0C61 9b                           IXS
+  0C62 be                           LDB
+  0C63 2e                           SLDC 46
+  0C64 c3                           EQUI
+  0C65 a1 0c                        FJP $0C73
+  0C67 c6 03                        LLA 3
+  0C69 c6 03                        LLA 3
+  0C6B 00                           SLDC 0
+  0C6C be                           LDB
+  0C6D 01                           SLDC 1
+  0C6E cd 00 1a                     CXP 0,26  ; OS.26 SDELETE
+  0C71 b9 ea                        UJP $0D00 (jtab-22)
+  0C73 c6 03                L0C73:  LLA 3
+  0C75 c6 03                        LLA 3
+  0C77 00                           SLDC 0
+  0C78 be                           LDB
+  0C79 9b                           IXS
+  0C7A be                           LDB
+  0C7B 3a                           SLDC 58
+  0C7C cb                           NEQI
+  0C7D a1 ec                        FJP $0D00 (jtab-20)
+  0C7F 01                           SLDC 1
+  0C80 cc 55                        STL 85
+  0C82 c6 03                        LLA 3
+  0C84 00                           SLDC 0
+  0C85 be                           LDB
+  0C86 cc 56                        STL 86
+  0C88 ca 55                L0C88:  LDL 85
+  0C8A ca 56                        LDL 86
+  0C8C c8                           LEQI
+  0C8D a1 33                        FJP $0CC2
+  0C8F c6 03                        LLA 3
+  0C91 ca 55                        LDL 85
+  0C93 9b                           IXS
+  0C94 be                           LDB
+  0C95 b3 08 81 ff 07 fe ff 00 00 00 00 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $0000 $0000 $FFFE $07FF]
+  0CA8 08                           SLDC 8
+  0CA9 8b                           INN
+  0CAA a1 0e                        FJP $0CBA
+  0CAC c6 03                        LLA 3
+  0CAE ca 55                        LDL 85
+  0CB0 9b                           IXS
+  0CB1 c6 03                        LLA 3
+  0CB3 ca 55                        LDL 85
+  0CB5 9b                           IXS
+  0CB6 be                           LDB
+  0CB7 20                           SLDC 32
+  0CB8 95                           SBI
+  0CB9 bf                           STB
+  0CBA ca 55                L0CBA:  LDL 85
+  0CBC 01                           SLDC 1
+  0CBD 82                           ADI
+  0CBE cc 55                        STL 85
+  0CC0 b9 ee                        UJP $0C88 (jtab-18)
+  0CC2 d7                   L0CC2:  NOP
+  0CC3 a6 05 2e 54 45 58 54         LSA '.TEXT'
+  0CCA c6 03                        LLA 3
+  0CCC 00                           SLDC 0
+  0CCD 00                           SLDC 0
+  0CCE cd 00 1b                     CXP 0,27  ; OS.27 SPOS
+  0CD1 c6 03                        LLA 3
+  0CD3 00                           SLDC 0
+  0CD4 be                           LDB
+  0CD5 04                           SLDC 4
+  0CD6 95                           SBI
+  0CD7 cb                           NEQI
+  0CD8 d7                           NOP
+  0CD9 a6 05 2e 54 45 58 54         LSA '.TEXT'
+  0CE0 c6 03                        LLA 3
+  0CE2 00                           SLDC 0
+  0CE3 00                           SLDC 0
+  0CE4 cd 00 1b                     CXP 0,27  ; OS.27 SPOS
+  0CE7 00                           SLDC 0
+  0CE8 c3                           EQUI
+  0CE9 8d                           LOR
+  0CEA a1 14                        FJP $0D00
+  0CEC d7                           NOP
+  0CED a6 05 2e 54 45 58 54         LSA '.TEXT'
+  0CF4 c6 03                        LLA 3
+  0CF6 50                           SLDC 80
+  0CF7 c6 03                        LLA 3
+  0CF9 00                           SLDC 0
+  0CFA be                           LDB
+  0CFB 01                           SLDC 1
+  0CFC 82                           ADI
+  0CFD cd 00 18                     CXP 0,24  ; OS.24 SINSERT
+  0D00 a5 81 2b             L0D00:  LAO 299
+  0D03 c6 03                        LLA 3
+  0D05 00                           SLDC 0
+  0D06 00                           SLDC 0
+  0D07 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0D0A 9e 22                        CSP 34  ; CSP IORESULT
+  0D0C 00                           SLDC 0
+  0D0D c3                           EQUI
+  0D0E a1 e8                        FJP $0C14 (jtab-24)
+  0D10 a5 81 2b             L0D10:  LAO 299
+  0D13 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0D16 a5 81 2b                     LAO 299
+  0D19 a6 12 20 20 4c 49 42 52 41 52 59 20 4d 41 50 20 46 4f 52 20         LSA '  LIBRARY MAP FOR '
+  0D2D d7                           NOP
+  0D2E 00                           SLDC 0
+  0D2F cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0D32 a5 81 2b                     LAO 299
+  0D35 c6 2c                        LLA 44
+  0D37 00                           SLDC 0
+  0D38 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0D3B a5 81 2b                     LAO 299
+  0D3E cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0D41 a5 81 2b                     LAO 299
+  0D44 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0D47 a5 80 db                     LAO 219
+  0D4A 00                           SLDC 0
+  0D4B be                           LDB
+  0D4C 00                           SLDC 0
+  0D4D c5                           GRTI
+  0D4E a1 1e                        FJP $0D6E
+  0D50 a5 81 2b                     LAO 299
+  0D53 20                           SLDC 32
+  0D54 05                           SLDC 5
+  0D55 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0D58 a5 81 2b                     LAO 299
+  0D5B a5 80 db                     LAO 219
+  0D5E 00                           SLDC 0
+  0D5F cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0D62 a5 81 2b                     LAO 299
+  0D65 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0D68 a5 81 2b                     LAO 299
+  0D6B cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0D6E a5 81 2b             L0D6E:  LAO 299
+  0D71 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  ---- exit code (EXIT target) ----
+  0D74 ad 00                        RNP 0
+  ---- jump table: 9 entries ----
+       jtab-10  -> $09E6
+       jtab-12  -> $0AC5
+       jtab-14  -> $0B50
+       jtab-16  -> $0BC3
+       jtab-18  -> $0C88
+       jtab-20  -> $0D00
+       jtab-22  -> $0D00
+       jtab-24  -> $0C14
+       jtab-26  -> $0D10

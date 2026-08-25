@@ -25,11 +25,10 @@ procedure PASCALSY.1(args 0 words);  { locals 449 words, lex 255, slot 0 }
     end;
   until (L54 = nil);
   PASCALSY.6:FCLOSE(@L396, 0);
-  { stack tracking stopped: 'XIT' }
-  { XIT }
-  { SLDC 0 }
-  { SLDC 26 }
-  { SLDC 0 }
+  XIT;  { exit the interpreter }
+  { left on stack: 0 }
+  { left on stack: 26 }
+  { left on stack: 0 }
 
 procedure PASCALSY.2(args 0 words);  { locals 3 words, lex 0, slot 0 }
   G2 := I1,1;

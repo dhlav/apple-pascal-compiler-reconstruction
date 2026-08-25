@@ -32,7 +32,7 @@ GLOBAL_OPS = {"LDO": "r", "SLDO": "r", "SRO": "w", "LAO": "&"}
 
 
 def build(cf):
-    segmap = {s.seg_num: s.name for s in cf.segments}
+    segmap = {s.number: s.name for s in cf.segments}
     streams, procs = {}, {}
     for seg in cf.segments:
         for p in seg.pcode_procedures:

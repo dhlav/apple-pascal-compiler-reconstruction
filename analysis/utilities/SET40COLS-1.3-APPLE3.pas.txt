@@ -1,0 +1,192 @@
+Apple Pascal 1.3-APPLE3 SET40COLS.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 SET40COL
+======================================================================
+
+procedure SET40COL.1(args 2 words);  { locals 260 words, lex 0 }
+  FWRITECHAR(I1,3, 12, 0);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'SET40COLS', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'Copyright 1985 Apple Computer, Inc.', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'This program will set a flag in the directory of a Pascal disk so', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'that when Pascal is booted off the disk, it will run in 40-column', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'mode regardless of whether there is an 80-column card in the Apple.', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'If the flag has already been set for 40-column mode, the program', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'will give you the option of reseting it so that when Pascal is', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  FWRITESTRING(I1,3, 'booted off the disk, it will use an installed 80-column card.', 0);
+  IOCHECK();
+  FWRITELN(I1,3);
+  IOCHECK();
+  repeat
+    FWRITELN(I1,3);
+    IOCHECK();
+    FWRITELN(I1,3);
+    IOCHECK();
+    SET40COL.2();
+    SET40COL.3();
+    if (GATTYPTR = 0) then begin
+      @G262^[chk(0,0..0)] := chk(@GATVLEV^[chk(25,0..511)],0..255);
+      if @G262~[chk(3,0..7)]{16per word,1 bits} then begin
+        FWRITESTRING(I1,3, 'Flag is already set for 40-column mode.', 0);
+        IOCHECK();
+        FWRITELN(I1,3);
+        IOCHECK();
+        FWRITESTRING(I1,3, 'Reset flag for 80-column mode (Y/N) ? ', 0);
+        IOCHECK();
+        FREADCHAR(I1,2, @GATCVAL);
+        IOCHECK();
+        FWRITELN(I1,3);
+        IOCHECK();
+        FWRITELN(I1,3);
+        IOCHECK();
+        if ((GATCVAL = 121) or (GATCVAL = 89)) then begin
+          @G262~[chk(3,0..7)]{16per word,1 bits} := 0;
+        end;
+      end else begin
+        @G262~[chk(3,0..7)]{16per word,1 bits} := 1;
+      end;
+      @GATVLEV^[chk(25,0..511)] := chk(@G262^[chk(0,0..0)],0..255);
+      SET40COL.4();
+      if (GATTYPTR = 0) then begin
+        if @G262~[chk(3,0..7)]{16per word,1 bits} then begin
+          FWRITESTRING(I1,3, 'Flag is now set for 40-column mode.', 0);
+          IOCHECK();
+          FWRITELN(I1,3);
+          IOCHECK();
+        end else begin
+          FWRITESTRING(I1,3, 'Flag is now set for 80-column mode.', 0);
+          IOCHECK();
+          FWRITELN(I1,3);
+          IOCHECK();
+        end;
+      end;
+    end;
+  until 0;
+
+procedure SET40COL.2(args 0 words);  { locals 4 words, lex 1 }
+  repeat
+    FWRITESTRING(I2,3, 'Modify which volume # ?  (4, 5, 9..12, <esc> to exit) ==> ', 0);
+    IOCHECK();
+    L1 := 0;
+    GATKIND := 0;
+    FREADCHAR(I2,2, @L4);
+    IOCHECK();
+    L3 := L4;
+    L2 := (L3-48);
+    while (not (FEOLN(I2,2)) and (L3 <> 27)) do begin
+      if ((GATKIND = 0) and (L4 in {49,52,53,57})) then begin
+        L1 := (L1+1);
+        GATKIND := L2;
+        FWRITECHAR(I2,3, 8, 0);
+        IOCHECK();
+        FWRITECHAR(I2,3, L4, 0);
+        IOCHECK();
+      end else begin
+        if ((GATKIND = 1) and (L4 in {48,49,50})) then begin
+          L1 := (L1+1);
+          GATKIND := ((10*GATKIND)+L2);
+          FWRITECHAR(I2,3, 8, 0);
+          IOCHECK();
+          FWRITECHAR(I2,3, L4, 0);
+          IOCHECK();
+        end else begin
+          if ((L3 = 8) and (L1 > 0)) then begin
+            FWRITECHAR(I2,3, L4, 0);
+            IOCHECK();
+            FWRITECHAR(I2,3, 32, 0);
+            IOCHECK();
+            FWRITECHAR(I2,3, L4, 0);
+            IOCHECK();
+            GATKIND := (GATKIND div 10);
+            L1 := (L1-1);
+          end else begin
+            if (L3 > 31) then begin
+              FWRITECHAR(I2,3, 8, 0);
+              IOCHECK();
+              FWRITECHAR(I2,3, 32, 0);
+              IOCHECK();
+              FWRITECHAR(I2,3, 8, 0);
+              IOCHECK();
+            end;
+          end;
+        end;
+      end;
+      FREADCHAR(I2,2, @L4);
+      IOCHECK();
+      L3 := L4;
+      L2 := (L3-48);
+    end;
+  until ((7728 in 1) or (L3 = 27));
+  if (L3 = 27) then begin
+    EXIT(1, 1);
+  end;
+  FWRITELN(I2,3);
+  IOCHECK();
+  { left on stack: GATKIND }
+
+procedure SET40COL.3(args 0 words);  { locals 0 words, lex 1 }
+  UNITREAD(GATKIND, @GATVLEV, 0, 512, 2, 0);
+  GATTYPTR := IORESULT();
+  if (GATTYPTR <> 0) then begin
+    FWRITECHAR(I2,3, 7, 0);
+    IOCHECK();
+    FWRITESTRING(I2,3, 'I/O ERROR #', 0);
+    IOCHECK();
+    FWRITEINT(I2,3, GATTYPTR, 0);
+    IOCHECK();
+    FWRITESTRING(I2,3, ' occurred while trying to read directory.', 0);
+    IOCHECK();
+    FWRITELN(I2,3);
+    IOCHECK();
+  end;
+
+procedure SET40COL.4(args 0 words);  { locals 0 words, lex 1 }
+  UNITWRITE(GATKIND, @GATVLEV, 0, 512, 2, 0);
+  GATTYPTR := IORESULT();
+  if (GATTYPTR <> 0) then begin
+    FWRITECHAR(I2,3, 7, 0);
+    IOCHECK();
+    FWRITESTRING(I2,3, 'I/O ERROR #', 0);
+    IOCHECK();
+    FWRITEINT(I2,3, GATTYPTR, 0);
+    IOCHECK();
+    FWRITESTRING(I2,3, ' occurred while writing directory.', 0);
+    IOCHECK();
+    FWRITELN(I2,3);
+    IOCHECK();
+  end;

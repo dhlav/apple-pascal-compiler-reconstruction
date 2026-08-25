@@ -29,6 +29,8 @@ STEPS = [
     ("SYSTEM.LIBRARY unit map and interfaces", "libmap.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
     ("p-code listings", "disasm.py"),
+    ("disk set p-code listings", "disasm_utils.py"),
+    ("disk set lifted to pseudo-Pascal", "lift_utils.py"),
     ("native 6502 listings", "disasm6502.py"),
     ("SYSTEM.LIBRARY native 6502 listings", "disasm6502_lib.py"),
     # Not an artifact: it re-assembles src/native/SEARCH.TEXT and requires the

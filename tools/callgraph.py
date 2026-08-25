@@ -25,7 +25,7 @@ CONTEXT = 6      # instructions of argument setup to show before each call
 
 
 def analyse(cf):
-    segmap = {s.seg_num: s.name for s in cf.segments}
+    segmap = {s.number: s.name for s in cf.segments}
     # (segname, procnum) -> list of (caller_segname, caller_proc, addr, context)
     callers = defaultdict(list)
     callees = defaultdict(list)

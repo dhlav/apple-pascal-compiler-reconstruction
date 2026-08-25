@@ -1,0 +1,25 @@
+Apple Pascal 1.3-APPLE3 LINEFEED.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 1 LINEFEED  block=1 len=38 mtype=pcode-lsb nproc=1
+========================================================================
+
+--- procedure 1  lex=0 params=4 data=2 enter=$0000 exit=$0016 jtab=$0020
+  0000 d7                           NOP
+  0001 d7                           NOP
+  0002 c7 f1 40                     LDCI 16625
+  0005 91                           NGI
+  0006 ab 03                        SRO 3
+  0008 ea                           SLDO 3
+  0009 00                           SLDC 0
+  000A 00                           SLDC 0
+  000B 01                           SLDC 1
+  000C 88                           CHK
+  000D c7 ff 00                     LDCI 255
+  0010 00                           SLDC 0
+  0011 c7 ff 00                     LDCI 255
+  0014 88                           CHK
+  0015 bf                           STB
+  ---- exit code (EXIT target) ----
+  0016 c1 00                        RBP 0

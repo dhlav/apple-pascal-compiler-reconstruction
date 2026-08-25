@@ -1,0 +1,475 @@
+Apple Pascal 1.1-APPLE3 LIBMAP.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 LIBMAP
+======================================================================
+
+procedure LIBMAP.1(args 2 words);  { locals 755 words, lex 0 }
+  FINIT(@G299, @G599, 0);
+  FINIT(@G259, @G559, -(1));
+  FWRITESTRING(I1,3, 'Library map utility  II.1 [a2]', 0);
+  FWRITELN(I1,3);
+  G756 := 0;
+  G757 := 7;
+  while (G756 <= G757) do begin
+    @G604[chk(G756,0..7)*4w]^ := 'unknown'  {string};
+    G756 := (G756+1);
+  end;
+  @G604[chk(1,0..7)*4w]^ := 'II.1'  {string};
+  @G604[chk(2,0..7)*4w]^ := '3.0'  {string};
+  @G636[chk(0,0..9)*12w]^ := 'Undefined'  {string};
+  @G636[chk(1,0..9)*12w]^ := 'P-Code (most sig. 1st)'  {string};
+  @G636[chk(2,0..9)*12w]^ := 'P-Code (least sig. 1st)'  {string};
+  @G636[chk(3,0..9)*12w]^ := 'PDP-11'  {string};
+  @G636[chk(4,0..9)*12w]^ := '8080'  {string};
+  @G636[chk(5,0..9)*12w]^ := 'Z-80'  {string};
+  @G636[chk(6,0..9)*12w]^ := 'GA 440'  {string};
+  @G636[chk(7,0..9)*12w]^ := '6502'  {string};
+  @G636[chk(8,0..9)*12w]^ := '6800'  {string};
+  @G636[chk(9,0..9)*12w]^ := 'TI 9900'  {string};
+  G600 := 1;
+L0F17:
+  LIBMAP.11();
+  G600 := 0;
+  LIBMAP.6();
+  if not (0) then goto L0F17;
+  FCLOSE(@G299, 0);
+  FCLOSE(@G259, 0);
+
+procedure LIBMAP.2(args 1 words);  { locals 2 words, lex 1 }
+  L3 := L1^;
+  { unmodelled packed store of chk(8,0..255) }
+  { unmodelled packed store of chk(0,0..255) }
+  L1^ := L2;
+  { left on stack: @L2 }
+  { left on stack: 8 }
+  { left on stack: 0 }
+  { left on stack: @L3 }
+  { left on stack: @L2 }
+  { left on stack: 8 }
+  { left on stack: 8 }
+  { left on stack: @L3 }
+
+function LIBMAP.3(args 1 words) : <1 word result>;  { locals 5 words, lex 1 }
+  L1 := 0;
+  L6 := 1;
+  L5 := chk((@L6^[chk(0,0..1)] = 1),0..1);
+  L4 := chk(0,0..15);
+  L7 := chk(15,0..15);
+  while (L4 <= L7) do begin
+    L8 := L3[chk(L4,0..15)*2w];
+    L6 := L8^;
+    if not ((@L6^[chk(L5,0..1)] <> 0)) then goto L0074;
+    L1 := 1;
+    goto L007B;
+L0074:
+    L4 := (L4+1);
+  end;
+L007B:
+
+procedure LIBMAP.4(args 1 words);  { locals 5 words, lex 1 }
+  L2 := chk(0,0..15);
+  L4 := chk(15,0..15);
+  while (L2 <= L4) do begin
+    L5 := L1;
+    L6 := L5[chk(L2,0..15)*2w];
+    LIBMAP.2(L6);
+    LIBMAP.2((L6+1));
+    L3 := (L5+96)[chk(L2,0..15)]^;
+    LIBMAP.2(@L3);
+    (L5+96)[chk(L2,0..15)]^ := L3;
+    LIBMAP.2((L5+112)[chk(L2,0..15)]);
+    move(@L3, (L5+128)[chk(L2,0..15)], 1 words);
+    LIBMAP.2(@L3);
+    move((L5+128)[chk(L2,0..15)], @L3, 1 words);
+    L2 := (L2+1);
+  end;
+
+function LIBMAP.5(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
+  L1 := 0;
+  L4 := 0;
+  L5 := 7;
+L0113:
+  if not ((L4 <= L5)) then goto L013A;
+  if not (not ((L3^[chk(L4,0..7)] in {32,48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95}))) then goto L0133;
+  goto L013D;
+L0133:
+  L4 := (L4+1);
+  goto L0113;
+L013A:
+  L1 := 1;
+L013D:
+
+procedure LIBMAP.6(args 0 words);  { locals 3 words, lex 1 }
+  L1 := chk(0,0..16);
+  L2 := chk(15,0..16);
+  while (L1 <= L2) do begin
+    L3 := @GATTYPTR[chk(L1,0..15)*2w];
+    if ((L3^.f1 > 0) or (L3^ > 0)) then begin
+      if (0 <> 0) then begin
+        FWRITESTRING(@G299, 'Segment #', 0);
+        FWRITEINT(8, 0, 2);
+        FWRITESTRING(@G299, ':  ', 0);
+        FWRITELN(@G299);
+      end else begin
+        FWRITESTRING(@G299, 'Segment #', 0);
+        FWRITEINT(@G299, L1, 0);
+        FWRITESTRING(@G299, ':  ', 0);
+        FWRITELN(@G299);
+      end;
+      { paths disagree on stack depth here }
+      if (13 <> 0) then begin
+        FWRITESTRING(@G299, 'System version = ', 0);
+        FWRITESTRING(@DISPLAY[chk(L1,0..15)], 3[chk(13,0..7)*4w], 0);
+        FWRITESTRING(@G299, ', code type is ', 0);
+        FWRITESTRING(@DISPLAY[chk(L1,0..15)], 4[chk(8,0..9)*12w], 0);
+        FWRITELN(@G299);
+      end else begin
+        FWRITESTRING(@G299, 'Pre-II.1 segment', 0);
+        FWRITELN(@G299);
+      end;
+      { paths disagree on stack depth here }
+      LIBMAP.7(chk(L1,0..15));
+      FWRITELN(@G299);
+      FWRITESTRING(@G299, '----------------------------------------------------------------------', 75);
+      FWRITELN(@G299);
+      FWRITELN(@G299);
+    end;
+    L1 := (L1+1);
+  end;
+
+procedure LIBMAP.7(args 1 words);  { locals 278 words, lex 2 }
+  FWRITEBYTES(@G299, @NOLOAD[chk(L1,0..15)*4w], 8, 8);
+  L13 := 1;
+  case @G99[chk(L1,0..15)]^ of   { table 0..7 }
+    0: begin
+      FWRITESTRING(@G299, '  completely linked segment', 0);
+      FWRITELN(@G299);
+      if (@G115[chk(L1,0..15)]^ <> 0) then begin
+        L13 := not (LIBMAP.8(@G115[chk(L1,0..15)]^));
+      end;
+      EXIT(1, 7);
+    end;
+    1: begin
+      FWRITESTRING(@G299, '  Pascal host outer block', 0);
+      FWRITELN(@G299);
+    end;
+    2: begin
+      FWRITESTRING(@G299, '  Pascal segment', 0);
+      FWRITELN(@G299);
+      L13 := not (LIBMAP.8(@G115[chk(L1,0..15)]^));
+    end;
+    3, 5, 6: begin
+      FWRITESTRING(@G299, '  library unit', 0);
+      if (@G99[chk(L1,0..15)]^ = 5) then begin
+        FWRITESTRING(@G299, ' (UNLINKED INTRINSIC)', 0);
+        FWRITELN(@G299);
+      end else begin
+        if (@G99[chk(L1,0..15)]^ = 6) then begin
+          FWRITESTRING(@G299, ' (LINKED INTRINSIC)', 0);
+          FWRITELN(@G299);
+        end else begin
+          FWRITELN(@G299);
+        end;
+      end;
+      L13 := not (LIBMAP.8(@G115[chk(L1,0..15)]^));
+      if (@G99[chk(L1,0..15)]^ = 6) then begin
+        EXIT(1, 7);
+      end;
+    end;
+    4: begin
+      FWRITESTRING(@G299, '  separate procedure segment', 0);
+      FWRITELN(@G299);
+    end;
+    7: begin
+      FWRITESTRING(@G299, '  data segment', 0);
+      FWRITELN(@G299);
+      EXIT(1, 7);
+    end;
+  end;
+  L2 := 0;
+  L279 := @GATTYPTR[chk(L1,0..15)*2w];
+  L3 := (L279^+((L279^.f1+511) div 512));
+  if (G602 or L13) then begin
+    repeat
+      LIBMAP.9(@L4);
+      if G603 then begin
+        MOVELEFT(@L4, 0, @L270, 0, 16);
+        L278 := 4;
+        L279 := 7;
+        while (L278 <= L279) do begin
+          LIBMAP.2(@L270[chk(L278,0..7)]);
+          L278 := (L278+1);
+        end;
+        MOVELEFT(@L270, 0, @L4, 0, 16);
+      end;
+      if (L8 <> 0) then begin
+        if LIBMAP.5(@L4) then begin
+          case L8 of   { table 0..14 }
+            6: begin
+              if G602 then begin
+                FWRITEBYTES(@G299, @L4, 12, 8);
+                FWRITESTRING(@G299, ' global addr    P #', 0);
+                FWRITEINT(@G299, L9, 0);
+                FWRITESTRING(@G299, ',  I #', 0);
+                FWRITEINT(@G299, L10, 0);
+                FWRITELN(@G299);
+              end;
+            end;
+            7: begin
+              if G602 then begin
+                FWRITEBYTES(@G299, @L4, 12, 8);
+                FWRITESTRING(@G299, ' public var  base = ', 0);
+                FWRITEINT(@G299, L9, 0);
+                FWRITELN(@G299);
+              end;
+            end;
+            8: begin
+              if G602 then begin
+                FWRITEBYTES(@G299, @L4, 12, 8);
+                FWRITESTRING(@G299, ' constant value of ', 0);
+                FWRITEINT(@G299, L9, 0);
+                FWRITELN(@G299);
+              end;
+            end;
+            9, 10: begin
+              if G601 then begin
+                FWRITEBYTES(@G299, @L4, 12, 8);
+                FWRITESTRING(@G299, ' external proc  P #', 0);
+                FWRITEINT(@G299, L9, 0);
+                FWRITELN(@G299);
+              end;
+            end;
+            11, 12: begin
+              FWRITEBYTES(@G299, @L4, 12, 8);
+              FWRITESTRING(@G299, ' separate proc  P #', 0);
+              FWRITEINT(@G299, L9, 0);
+              FWRITELN(@G299);
+            end;
+            2: begin
+              LIBMAP.10(' global');
+            end;
+            3: begin
+              LIBMAP.10(' public');
+            end;
+            5: begin
+              LIBMAP.10(' constant');
+            end;
+            13, 14: begin
+              LIBMAP.10(' separate');
+            end;
+            1: begin
+              LIBMAP.10(' unit');
+            end;
+            4: begin
+              LIBMAP.10(' private');
+            end;
+            0: begin
+              if (@G99[chk(L1,0..15)]^ = 5) then begin
+                FWRITESTRING(@G299, ' Private dataseg # = ', 0);
+                FWRITEINT(@G299, L10, 0);
+                FWRITELN(@G299);
+              end;
+            end;
+          end;
+        end;
+      end;
+    until (L8 = 0);
+  end;
+
+function LIBMAP.8(args 1 words) : <1 word result>;  { locals 521 words, lex 3 }
+  L1 := 1;
+  if ((L3 <= 0) or (L3 > 200)) then begin
+    L1 := 0;
+    EXIT(1, 8);
+  end;
+  L12 := 0;
+  repeat
+    if (FBLOCKIO(@G259, @L13, 0, 2, L3, 1) <> 2) then begin
+      FWRITESTRING(@G299, 'Interface read error', 0);
+      FWRITELN(@G299);
+      L1 := 0;
+      L12 := 1;
+    end else begin
+      L3 := (L3+2);
+      L4 := 0;
+      repeat
+        if (@L13^[chk(L4,0..1023)] in {65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
+          L11 := L4;
+          IDSEARCH(@L4, @L13);
+          L12 := (L5 = 52);
+        end;
+        if (@L13^[chk(L4,0..1023)] = 13) then begin
+          if (@L13^[chk((L4+1),0..1023)] = 0) then begin
+            L11 := (L4-1);
+            L4 := 1023;
+          end;
+        end;
+        L4 := (L4+1);
+      until (L12 or (L4 > 1023));
+      FWRITEBYTES(@G299, @L13, L11, 1024);
+      FWRITELN(@G299);
+    end;
+  until L12;
+  FWRITELN(@G299);
+
+procedure LIBMAP.9(args 1 words);  { locals 1 words, lex 3 }
+  L2 := 0;
+  if (I1,2 = 0) then begin
+    I1,2 := 32;
+    L2 := (FBLOCKIO(@G259, @I1,14, 0, 1, I1,3, 1) <> 1);
+    if L2 then begin
+      FWRITESTRING(@G299, 'library read error!', 0);
+      FWRITELN(@G299);
+    end else begin
+      I1,3 := (I1,3+1);
+    end;
+  end;
+  MOVELEFT(@I1,14[chk((32-I1,2),0..31)*8w], 0, L1, 0, 16);
+  if L2 then begin
+    (L1+4)^ := 0;
+  end;
+  I1,2 := (I1,2-1);
+
+procedure LIBMAP.10(args 1 words);  { locals 52 words, lex 3 }
+  @L2^ := L1  {string};
+  if G601 then begin
+    FWRITEBYTES(@G299, @I1,4, 12, 8);
+    FWRITESTRING(@G299, @L2, 0);
+    case I1,9 of   { table 0..2 }
+      0: begin
+        FWRITESTRING(@G299, ' word reference', 0);
+      end;
+      1: begin
+        FWRITESTRING(@G299, ' byte reference', 0);
+      end;
+      2: begin
+        FWRITESTRING(@G299, ' big reference', 0);
+      end;
+    end;
+    if (I1,10 <> 1) then begin
+      FWRITESTRING(@G299, ' (', 0);
+      FWRITEINT(@G299, I1,10, 0);
+      FWRITESTRING(@G299, ' times)', 0);
+    end else begin
+      FWRITESTRING(@G299, ' (once)', 0);
+    end;
+    FWRITELN(@G299);
+  end;
+  L43 := 1;
+  L53 := ((I1,10+7) div 8);
+  while (L43 <= L53) do begin
+    LIBMAP.9(@L44);
+    L43 := (L43+1);
+  end;
+
+procedure LIBMAP.11(args 0 words);  { locals 86 words, lex 1 }
+L09E6:
+  G603 := 0;
+  FCLOSE(@G259, 0);
+  FWRITESTRING(I2,3, 'enter library name: ', 0);
+  FREADSTRING(I2,2, @L44, 80);
+  FREADLN(I2,2);
+  if (@L44 = '') then begin
+    FCLOSE(@G299, 1);
+    EXIT(1, 1);
+  end;
+  if (@L44 = 42) then begin
+    @L44^ := '*SYSTEM.LIBRARY'  {string};
+  end;
+  FOPEN(@G259, @L44, 1, 0);
+  if (IORESULT() <> 0) then begin
+    SINSERT('.CODE', @L44, 80, (@L44^[0]+1));
+    FOPEN(@G259, @L44, 1, 0);
+  end;
+  if not ((FBLOCKIO(@G259, @GATTYPTR, 0, 1, 0, 1) <> 1)) then goto L0AA9;
+  FWRITESTRING(I2,3, 'bad file', 0);
+  FWRITELN(I2,3);
+  goto L09E6;
+L0AA9:
+  if LIBMAP.3(@GATTYPTR) then begin
+    LIBMAP.4(@GATTYPTR);
+    G603 := 1;
+  end;
+  L1 := chk(0,0..16);
+  L86 := chk(15,0..16);
+L0AC5:
+  if not ((L1 <= L86)) then goto L0B28;
+  if not (((((@GATTYPTR[chk(L1,0..15)*2w]^.f1 < 0) or (@GATTYPTR[chk(L1,0..15)*2w]^ < 0)) or (@GATTYPTR[chk(L1,0..15)*2w]^ > 300)) or not (LIBMAP.5(@NOLOAD[chk(L1,0..15)*4w])))) then goto L0B21;
+  FWRITESTRING(I2,3, 'not a code file', 0);
+  FWRITELN(I2,3);
+  goto L09E6;
+L0B21:
+  L1 := (L1+1);
+  goto L0AC5;
+L0B28:
+  FWRITESTRING(I2,3, 'list linker info table (Y/N)? ', 0);
+L0B50:
+  FREADCHAR(I2,4, @L2);
+  if not ((L2 in {32,78,89,110,121})) then goto L0B50;
+  FWRITECHAR(I2,3, L2, 0);
+  FWRITELN(I2,3);
+  G602 := (L2 in {89,121});
+  if G602 then begin
+    FWRITESTRING(I2,3, 'list referenced items (Y/N)? ', 0);
+L0BC3:
+    FREADCHAR(I2,4, @L2);
+    if not ((L2 in {32,78,89,110,121})) then goto L0BC3;
+    FWRITECHAR(I2,3, L2, 0);
+    FWRITELN(I2,3);
+    G601 := (L2 in {89,121});
+  end else begin
+    G601 := 0;
+  end;
+  if G600 then begin
+    repeat
+      FWRITESTRING(I2,3, 'map output file name: ', 0);
+      FREADSTRING(I2,2, @L3, 80);
+      FREADLN(I2,2);
+      if (@L3 = '') then begin
+        @L3^ := 'CONSOLE:'  {string};
+      end;
+      { check @L3^[0] in 1..length(@L3) }
+      if (@L3^[@L3^[0]] = 46) then begin
+        SDELETE(@L3, @L3^[0], 1);
+      end else begin
+        { check @L3^[0] in 1..length(@L3) }
+        if (@L3^[@L3^[0]] <> 58) then begin
+          L85 := 1;
+          L86 := @L3^[0];
+          while (L85 <= L86) do begin
+            { check L85 in 1..length(@L3) }
+            if (@L3^[L85] in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
+              { check L85 in 1..length(@L3) }
+              { check L85 in 1..length(@L3) }
+              @L3^[L85] := (@L3^[L85]-32);
+            end;
+            L85 := (L85+1);
+          end;
+          if ((SPOS('.TEXT', @L3) <> (@L3^[0]-4)) or (SPOS('.TEXT', @L3) = 0)) then begin
+            SINSERT('.TEXT', @L3, 80, (@L3^[0]+1));
+          end;
+        end;
+      end;
+      FOPEN(@G299, @L3, 0, 0);
+    until (IORESULT() = 0);
+  end;
+  FWRITELN(@G299);
+  FWRITESTRING(@G299, '  LIBRARY MAP FOR ', 0);
+  FWRITESTRING(@G299, @L44, 0);
+  FWRITELN(@G299);
+  FWRITELN(@G299);
+  if (@G219^[0] > 0) then begin
+    FWRITECHAR(@G299, 32, 5);
+    FWRITESTRING(@G299, @G219, 0);
+    FWRITELN(@G299);
+    FWRITELN(@G299);
+  end;
+  FWRITELN(@G299);

@@ -365,6 +365,16 @@ class _Lifter:
                 elif m == "IXA":
                     idx, a = pop(), pop()
                     st.append(f"{a}[{idx}]" if o[0] == 1 else f"{a}[{idx}*{o[0]}w]")
+                elif m == "IXS":
+                    # Index string array. The manual (IV-4) is explicit that
+                    # it only checks -- "if so, continue execution" -- so
+                    # both the pointer and the index stay where they are for
+                    # the LDB or STB that follows. Modelling it as an index
+                    # like IXA would unbalance every string subscript.
+                    if len(st) >= 2:
+                        out.append(f"{{ check {st[-1]} in 1..length({st[-2]}) }}")
+                elif m == "XIT":
+                    out.append("XIT;  { exit the interpreter }")
                 elif m == "INC":
                     st.append(f"({pop()}+{o[0]})")
                 elif m in BINOP:
@@ -464,7 +474,8 @@ class _Lifter:
         return st
 
 
-def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
+def lift(seg, proc, cf, release: str = "1.1",
+         extern=None) -> list[Block]:
     """Lift one procedure to blocks of pseudo-Pascal.
 
     `release` selects the recovered name tables in `names.py`, which are
@@ -478,7 +489,16 @@ def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
     stream = body + ex
     blocks = split_blocks(stream)
 
-    segbynum = {s.seg_num: s for s in cf.segments}
+    segbynum = {s.number: s for s in cf.segments}
+    # Segments this codefile calls but does not contain: the Intrinsic Units
+    # in SYSTEM.LIBRARY. A program that uses TURTLEGRAPHICS calls CXP 20,n
+    # and carries nothing at all about segment 20, so without the library
+    # the callee's parameter size is unknown and the stack model stops --
+    # which is what it did for every graphics demo on the APPLE3 disks.
+    # The library on the boot disk supplies it, and the arity comes from the
+    # callee's own attribute table, not from a guess.
+    for num, sg in (extern or {}).items():
+        segbynum.setdefault(num, sg)
 
     def named(segname, num):
         nm = procname(segname, num, release)
@@ -487,10 +507,20 @@ def lift(seg, proc, cf, release: str = "1.1") -> list[Block]:
     def callee_words(mnem, ops):
         if mnem == "CXP":
             s, n = ops
-            if s == 0 and 0 not in segbynum:
+            zero = segbynum.get(0)
+            if s == 0 and not (zero and any(x.number == n
+                                            for x in zero.procedures)):
                 # Calling out of a user program into the operating system,
                 # which is not in this codefile: the signature has to come
                 # from OS_SIG, which was read off call sites.
+                #
+                # "Not in this codefile" is not the same as "no segment 0".
+                # A separately compiled program carries a stub segment 0 --
+                # SETUP.CODE's is named PASCALSY and holds one 16-byte
+                # placeholder -- and taking that for the operating system
+                # made every CXP 0,n in it unsizeable, which stopped the
+                # stack model dead. What settles it is whether segment 0
+                # actually holds the procedure being called.
                 if n in OS_SIG:
                     name, words, is_fn = OS_SIG[n]
                     return words, name, is_fn

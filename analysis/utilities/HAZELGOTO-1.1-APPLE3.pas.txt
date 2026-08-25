@@ -1,0 +1,41 @@
+Apple Pascal 1.1-APPLE3 HAZELGOTO.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 0 GOXY
+======================================================================
+
+procedure GOXY.1(args 0 words);  { locals 0 words, lex 255 }
+  XIT;  { exit the interpreter }
+  { left on stack: 0 }
+
+procedure GOXY.2(args 2 words);  { locals 2 words, lex 0 }
+  if (CODEP > 79) then begin
+    CODEP := 79;
+  end else begin
+    if (CODEP < 0) then begin
+      CODEP := 0;
+    end;
+  end;
+  if (SYMBUFP > 23) then begin
+    SYMBUFP := 23;
+  end else begin
+    if (SYMBUFP < 0) then begin
+      SYMBUFP := 0;
+    end;
+  end;
+  @GATTYPTR^[0] := 126;
+  @GATTYPTR^[1] := 17;
+  if (CODEP < 30) then begin
+    @GATTYPTR^[2] := (CODEP+96);
+  end else begin
+    @GATTYPTR^[2] := CODEP;
+  end;
+  @GATTYPTR^[3] := (SYMBUFP+96);
+  UNITWRITE(2, @GATTYPTR, 0, 4, 0, 0);

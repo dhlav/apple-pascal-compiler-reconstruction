@@ -1,0 +1,271 @@
+Apple Pascal 1.3-APPLE3 FORMATTER.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 FORMATTE
+======================================================================
+
+procedure FORMATTE.1(args 2 words);  { locals 1341 words, lex 0 }
+  FINIT(@G1303, @G1603, -(1));
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITESTRING(I1,3, 'Apple Pascal Disk Formatter Program [1.3]', 0);
+  FWRITELN(I1,3);
+  G1301 := 15616;
+  FOPEN(@G1303, '%formatter.data', 1, 0);
+  if (IORESULT() <> 0) then begin
+    FWRITELN(I1,3);
+    FWRITESTRING(I1,3, 'ERROR: Cannot find file FORMATTER.DATA', 0);
+    FWRITELN(I1,3);
+    FORMATTE.3();
+  end;
+  IC := FBLOCKIO(@G1303, G1301, 0, 3, -(1), 1);
+  IC := FBLOCKIO(@G1303, @SEGSLOT, 0, 4, 3, 1);
+L04A4:
+  repeat
+L04A4:
+    FORMATTE.5();
+    UNITREAD(GATVLEV, @G1045, 0, 512, 2, 0);
+    TOP := IORESULT();
+    G20 := (TOP <> 9);
+    if not (G20) then begin
+      FWRITESTRING(I1,3, 'Volume #', 0);
+      FWRITEINT(I1,3, GATVLEV, 0);
+      FWRITESTRING(I1,3, ' is not on-line.', 0);
+      FWRITELN(I1,3);
+    end;
+    GATKIND := @G1045^[chk(6,0..511)];
+    if (((TOP = 0) and (GATKIND > 0)) and (GATKIND <= 7)) then begin
+      FWRITESTRING(I1,3, 'Destroy directory of ', 0);
+      LC := 7;
+      G1343 := ((7-1)+GATKIND);
+      while (LC <= G1343) do begin
+        FWRITECHAR(I1,3, @G1045^[chk(LC,0..511)], 0);
+        LC := (LC+1);
+      end;
+      FWRITESTRING(I1,3, ' ? (Y/N) ', 0);
+L056F:
+      FREADCHAR(I1,4, @G19);
+      if not ((G19 in {78,89,110,121})) then goto L056F;
+      FWRITECHAR(I1,3, G19, 0);
+      FWRITELN(I1,3);
+      G20 := (G19 in {89,121});
+    end;
+    if G20 then begin
+      UNITSTATUS(GATVLEV, @GATDPLMT, 0, 1);
+      if ((IORESULT() = 0) and (GATDPLMT > 9000)) then begin
+        FWRITELN(I1,3);
+        FWRITESTRING(I1,3, '** WARNING: You are about to format a hard disk. **', 0);
+        FWRITELN(I1,3);
+        FWRITESTRING(I1,3, 'Do you really want to do this ? (Y/N) ', 0);
+L0648:
+        FREADCHAR(I1,4, @G19);
+        if not ((G19 in {78,89,110,121})) then goto L0648;
+        FWRITECHAR(I1,3, G19, 0);
+        FWRITELN(I1,3);
+        G20 := (G19 in {89,121});
+      end;
+    end;
+    if not (G20) then goto L04A4;
+    FORMATTE.4();
+    @SEGSLOT^[chk(1030,0..2047)] := chk(GATCVAL,0..255);
+    TEST := 1;
+    G1343 := GATCVAL;
+    while (TEST <= G1343) do begin
+      @SEGSLOT^[chk((1030+TEST),0..2047)] := chk(@INTPTR[(chk(TEST,1..7)-1)]^,0..255);
+      TEST := (TEST+1);
+    end;
+    FWRITESTRING(I1,3, 'Now formatting disk ...', 0);
+    FWRITELN(I1,3);
+    { stack tracking stopped: 'FORMATTE.2' }
+    { CLP 2 }
+    { SRO 3 }
+    { SLDO 3 }
+    { SLDC 0 }
+    { NEQI }
+    { FJP $0837 (jtab-30) }
+    goto L0837;
+    FWRITECHAR(I1,3, 7, 0);
+    FWRITESTRING(I1,3, 'ERROR: ', 0);
+    case GATTYPTR of   { table 39..52 }
+      39: begin
+        FWRITESTRING(I1,3, 'Unable to format disk', 0);
+        FWRITELN(I1,3);
+        goto L0835;
+      end;
+      43: begin
+        FWRITESTRING(I1,3, 'Disk is write-protected', 0);
+        FWRITELN(I1,3);
+        goto L0835;
+      end;
+      47: begin
+        FWRITESTRING(I1,3, 'No disk in drive', 0);
+        FWRITELN(I1,3);
+        goto L0835;
+      end;
+      51: begin
+        FWRITESTRING(I1,3, 'Drive speed is too slow', 0);
+        FWRITELN(I1,3);
+        goto L0835;
+      end;
+      52: begin
+        FWRITESTRING(I1,3, 'Drive speed is too fast', 0);
+        FWRITELN(I1,3);
+        goto L0835;
+      end;
+    end;
+    FWRITESTRING(I1,3, 'Unable to format disk', 0);
+    FWRITELN(I1,3);
+L0835:
+    goto L08D0;
+L0837:
+    UNITSTATUS(GATVLEV, @GATDPLMT, 0, 1);
+    G1302 := GATDPLMT;
+    @SEGSLOT^[chk(1038,0..2047)] := chk(@G1302^[chk(0,0..1)],0..255);
+    @SEGSLOT^[chk(1039,0..2047)] := chk(@G1302^[chk(1,0..1)],0..255);
+    if (GATDPLMT = 280) then begin
+      UNITWRITE(GATVLEV, @SEGSLOT, 0, 1536, 0, 0);
+    end else begin
+      UNITWRITE(GATVLEV, @SEGSLOT, chk(1536,0..2047), 512, 0, 0);
+      UNITWRITE(GATVLEV, @SEGSLOT, chk(1024,0..2047), 512, 2, 0);
+    end;
+    FWRITESTRING(I1,3, 'Formatting successful.', 0);
+    FWRITELN(I1,3);
+L08D0:
+  until 0;
+  FORMATTE.3();
+  FCLOSE(@G1303, 0);
+
+procedure FORMATTE.2;  { native 6502, not lifted }
+
+procedure FORMATTE.3(args 0 words);  { locals 0 words, lex 1 }
+  if (GATVLEV = 4) then begin
+    FWRITELN(I2,3);
+    FWRITESTRING(I2,3, 'Put system disk in #4 and press RETURN ', 0);
+    if FEOLN(I2,2) then begin
+      FREADLN(I2,2);
+    end;
+    FREADLN(I2,2);
+  end;
+  EXIT(1, 1);
+
+procedure FORMATTE.4(args 0 words);  { locals 43 words, lex 1 }
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, 'Enter new volume name for this disk.', 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '(<ret> for default name of BLANK:, <esc> to exit) ==>', 0);
+  @L1^ := 'BLANK'  {string};
+  TEST := 1;
+  L43 := 7;
+  while (TEST <= L43) do begin
+    @INTPTR[(chk(TEST,1..7)-1)]^ := 0;
+    TEST := (TEST+1);
+  end;
+  TEST := 0;
+  GATCVAL := 0;
+  FREADCHAR(I2,2, @G19);
+  L42 := G19;
+  while (not (FEOLN(I2,2)) and (L42 <> 27)) do begin
+    if (G19 in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
+      G19 := (L42-32);
+    end;
+    if ((G19 in {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) and (TEST < 7)) then begin
+      TEST := (TEST+1);
+      @INTPTR[(chk(TEST,1..7)-1)]^ := G19;
+      FWRITECHAR(I2,3, 8, 0);
+      FWRITECHAR(I2,3, G19, 0);
+    end else begin
+      if ((L42 = 8) and (TEST > 0)) then begin
+        FWRITECHAR(I2,3, G19, 0);
+        FWRITECHAR(I2,3, 32, 0);
+        FWRITECHAR(I2,3, G19, 0);
+        @INTPTR[(chk(TEST,1..7)-1)]^ := 0;
+        TEST := (TEST-1);
+      end else begin
+        if (L42 > 31) then begin
+          FWRITECHAR(I2,3, 8, 0);
+          FWRITECHAR(I2,3, 32, 0);
+          FWRITECHAR(I2,3, 8, 0);
+        end;
+      end;
+    end;
+    FREADCHAR(I2,2, @G19);
+    L42 := G19;
+  end;
+  GATCVAL := TEST;
+  if (FEOLN(I2,2) and (GATCVAL = 0)) then begin
+    TEST := 1;
+    L43 := 5;
+    while (TEST <= L43) do begin
+      { check TEST in 1..length(@L1) }
+      @INTPTR[(chk(TEST,1..7)-1)]^ := @L1^[TEST];
+      TEST := (TEST+1);
+    end;
+    TEST := 6;
+    L43 := 7;
+    while (TEST <= L43) do begin
+      @INTPTR[(chk(TEST,1..7)-1)]^ := 0;
+      TEST := (TEST+1);
+    end;
+    GATCVAL := 5;
+  end else begin
+    if (L42 = 27) then begin
+      FORMATTE.3();
+    end;
+  end;
+  FWRITELN(I2,3);
+
+procedure FORMATTE.5(args 0 words);  { locals 2 words, lex 1 }
+  repeat
+    FWRITELN(I2,3);
+    FWRITESTRING(I2,3, 'Format which volume # ?  (4, 5, 9..12, <esc> to exit) ==> ', 0);
+    TEST := 0;
+    GATVLEV := 0;
+    FREADCHAR(I2,2, @G19);
+    L2 := G19;
+    L1 := (L2-48);
+    while (not (FEOLN(I2,2)) and (L2 <> 27)) do begin
+      if ((GATVLEV = 0) and (G19 in {49,52,53,57})) then begin
+        TEST := (TEST+1);
+        GATVLEV := L1;
+        FWRITECHAR(I2,3, 8, 0);
+        FWRITECHAR(I2,3, G19, 0);
+      end else begin
+        if ((GATVLEV = 1) and (G19 in {48,49,50})) then begin
+          TEST := (TEST+1);
+          GATVLEV := ((10*GATVLEV)+L1);
+          FWRITECHAR(I2,3, 8, 0);
+          FWRITECHAR(I2,3, G19, 0);
+        end else begin
+          if ((L2 = 8) and (TEST > 0)) then begin
+            FWRITECHAR(I2,3, G19, 0);
+            FWRITECHAR(I2,3, 32, 0);
+            FWRITECHAR(I2,3, G19, 0);
+            GATVLEV := (GATVLEV div 10);
+            TEST := (TEST-1);
+          end else begin
+            if (L2 > 31) then begin
+              FWRITECHAR(I2,3, 8, 0);
+              FWRITECHAR(I2,3, 32, 0);
+              FWRITECHAR(I2,3, 8, 0);
+            end;
+          end;
+        end;
+      end;
+      FREADCHAR(I2,2, @G19);
+      L2 := G19;
+      L1 := (L2-48);
+    end;
+  until ((7728 in 1) or (L2 = 27));
+  if (L2 = 27) then begin
+    FORMATTE.3();
+  end;
+  FWRITELN(I2,3);
+  { left on stack: GATVLEV }

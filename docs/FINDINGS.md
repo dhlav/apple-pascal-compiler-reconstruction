@@ -9880,3 +9880,84 @@ every disk of both releases with the per-segment breakdown. The 1.1 disks
 stay in evidence and stay useful even though 1.3 and the 128K system are
 the target -- 1.1 ships source for utilities that 1.3 ships only as
 codefiles, which is how `LINEFEED` was reconstructed at all.
+
+## 100. The lifter, held against the whole disk set
+
+`SYSTEM.COMPILER` lifts 145 of 145 procedures with the stack fully tracked,
+and it has done for a long time. That number is worth exactly as much as the
+variety of the code behind it, so the next thing after `LINEFEED` was to
+point the same machinery at every other codefile on the six disks --
+`tools/disasm_utils.py` and `tools/lift_utils.py`, writing
+`analysis/utilities/`. **1231 procedures. The first run tracked 1120.**
+
+The 111 failures were not spread evenly, and that is what made them useful:
+the graphics demos on the APPLE3 disks were the worst of them --
+`SPIRODEMO` 0 of 3, `GRAFCHARS` 0 of 5, `HILBERT` 0 of 4 -- and those are
+programs Apple shipped the source for. Four causes, all now fixed, none of
+them reachable from the compiler alone.
+
+### 100a. A version-0 codefile has no segment numbers in SEGINFO
+
+**VERIFIED BINARY FACT.** `SETUP.CODE` is version 0, older than the SEGINFO
+field (finding 99), so all twelve of its segments report segment number 0.
+Every name map keyed on that number therefore collapsed onto whichever
+segment came last, and every call into the operating system in that file
+read as a call into `TEACHSET`, whose arity is unknowable -- so the stack
+model stopped. The segment's own trailing word has carried the number all
+along (finding 27). `Segment.number` now falls back to it; where both exist
+they agree, and `map_compiler.py` flags it if they ever stop agreeing.
+
+### 100b. Segment 0 present is not the operating system present
+
+**VERIFIED BINARY FACT, and the sharpest of the four.** The lifter took
+`CXP 0,n` to be an operating-system call only when the codefile had no
+segment 0 at all. But a separately compiled program carries a *stub*
+segment 0 -- `SETUP.CODE`'s is named `PASCALSY` and holds a single 16-byte
+placeholder -- so the test passed, the stub was searched for procedure 19,
+and nothing was found. What settles it is not whether segment 0 exists but
+whether it holds the procedure being called. That one change was worth 44
+procedures.
+
+Note what the earlier fix did here: 100a did not raise the count much on its
+own (four procedures), it *renamed the failure* from `TEACHSET.19` to
+`PASCALSY.19` -- and that name is what made 100b visible. A wrong name had
+been hiding a wrong lookup.
+
+### 100c. IXS does not touch the stack
+
+**VERIFIED SOURCE FACT**, 1.3 manual IV-4: "Index string array, tos-1 is a
+byte pointer to a string, tos is an index into the string. Check to see that
+the index is in the range 1..current string length. If so, **continue
+execution**; if not, give an execution error." It is a check and nothing
+else -- both operands stay for the `LDB` or `STB` that follows. Modelling it
+as an index like `IXA` would unbalance every string subscript in the system.
+45 occurrences, and the manual settled it without an inference.
+
+### 100d. A program does not carry the units it calls
+
+**VERIFIED BINARY FACT.** A program that uses TURTLEGRAPHICS emits `CXP 20,n`
+and carries nothing whatever about segment 20: the Intrinsic Unit lives in
+`SYSTEM.LIBRARY` and is bound at run time. So the callee's parameter size is
+not in the file being lifted, and every such call stopped the stack model.
+`lift()` now takes an `extern` map built from the release's own
+`SYSTEM.LIBRARY`, and the arity comes from the callee's own attribute table
+rather than from a guess. `TREE`, `BALANCED` and `DISKIO` went from 2 of 6,
+2 of 6 and 12 of 16 to all of them.
+
+### 100e. Where it stands, and the one thing left
+
+**1216 of 1231**, with `SYSTEM.COMPILER` unchanged at 145 of 145 and
+`SYSTEM.PASCAL` improved to 105 of 105. Every one of the fifteen that
+remain is the same thing: **a call into a native 6502 procedure**. The
+codefile records a native procedure's entry point and its relocation tables
+but not its parameter count -- `procnum = 0` is all the attribute word says
+(finding 44) -- so the arity simply is not in the binary. It is in the
+*source*, which for the library this repo now has, and supplying it from
+there would close the last of them.
+
+That accounts for `FORMATTE.2`, `LIBMAP.2`, `TURTLEGR.16` and four calls
+into `APPLESTUFF`, plus `CALC.CODE`'s handful of unmodelled CSPs and one
+`BPT`. It also turned up a release difference worth recording on its own:
+**`APPLESTUFF.5` is native in 1.1 and p-code in 1.3.** 1.1's APPLESTUFF has
+seven native procedures where 1.3's has six, because Apple rewrote that one
+in Pascal.

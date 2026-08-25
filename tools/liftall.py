@@ -1,4 +1,9 @@
-"""Lift every procedure to pseudo-Pascal and report coverage."""
+"""Lift procedures to pseudo-Pascal and report coverage.
+
+Run directly, this does SYSTEM.COMPILER. `lift_codefile` is the body of it
+and takes any CodeFile, which is what `lift_utils.py` points at the rest of
+the disk set.
+"""
 import sys
 from collections import Counter
 from pathlib import Path
@@ -13,18 +18,18 @@ from a2pascal.names import procname
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "lifted"
-OUT.mkdir(parents=True, exist_ok=True)
 DISKS = {
     "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 
-for ver, fname in DISKS.items():
-    disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
-    e = disk.find("SYSTEM.COMPILER")
-    cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
 
-    lines = [f"Apple Pascal {ver} SYSTEM.COMPILER -- lifted to pseudo-Pascal",
+def lift_codefile(cf, ver, title, extern=None):
+    """Lift every procedure of `cf`.
+
+    Returns (text, clean, total, structured, gotos, reasons).
+    """
+    lines = [f"{title} -- lifted to pseudo-Pascal",
              "",
              "Storage is named as it is addressed, not invented: G<n> is global",
              "word n, L<n> local word n, I<lex>,<n> intermediate. See",
@@ -46,10 +51,13 @@ for ver, fname in DISKS.items():
                 continue
             total += 1
             fn = ""
-            for i in reversed(disassemble(seg.data, p.enter_ic, p.exit_ic, p.jtab)[0]
-                              + sweep_exit(seg.data, p.exit_ic, p.jtab - 8, p.jtab)[0]):
+            for i in reversed(disassemble(seg.data, p.enter_ic, p.exit_ic,
+                                          p.jtab)[0]
+                              + sweep_exit(seg.data, p.exit_ic, p.jtab - 8,
+                                           p.jtab)[0]):
                 if i.mnemonic in ("RNP", "RBP"):
-                    fn = f" : <{i.operands[0]} word result>" if i.operands[0] else ""
+                    fn = (f" : <{i.operands[0]} word result>"
+                          if i.operands[0] else "")
                     break
             nm = procname(seg.name, p.number, ver)
             # A function's parameter area includes the two-word result
@@ -60,7 +68,7 @@ for ver, fname in DISKS.items():
                    f"{p.number}{':' + nm if nm else ''}"
                    f"(args {argw} words){fn};  "
                    f"{{ locals {p.data_size // 2} words, lex {p.lex_level} }}")
-            blocks = lift(seg, p, cf, ver)
+            blocks = lift(seg, p, cf, ver, extern)
             if any(b.incomplete for b in blocks):
                 for b in blocks:
                     for s in b.stmts:
@@ -75,12 +83,26 @@ for ver, fname in DISKS.items():
                 structured += 1
             lines.append(text)
         lines.append("")
+    return "\n".join(lines), clean, total, structured, gotos, reasons
 
-    path = OUT / f"SYSTEM.COMPILER-{ver}.pas.txt"
-    path.write_text("\n".join(lines), encoding="ascii", errors="replace")
-    print(f"[{ver}] {clean}/{total} lifted with the stack fully tracked; "
-          f"{structured}/{total} fully structured "
-          f"({gotos} gotos left) -> {path.name}")
-    if reasons:
-        print("      blocked by:", ", ".join(f"{k} x{v}"
-                                             for k, v in reasons.most_common(12)))
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    for ver, fname in DISKS.items():
+        disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
+        e = disk.find("SYSTEM.COMPILER")
+        cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
+        text, clean, total, structured, gotos, reasons = lift_codefile(
+            cf, ver, f"Apple Pascal {ver} SYSTEM.COMPILER")
+        path = OUT / f"SYSTEM.COMPILER-{ver}.pas.txt"
+        path.write_text(text, encoding="ascii", errors="replace")
+        print(f"[{ver}] {clean}/{total} lifted with the stack fully tracked; "
+              f"{structured}/{total} fully structured "
+              f"({gotos} gotos left) -> {path.name}")
+        if reasons:
+            print("      blocked by:",
+                  ", ".join(f"{k} x{v}" for k, v in reasons.most_common(12)))
+
+
+if __name__ == "__main__":
+    main()

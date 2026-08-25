@@ -1,0 +1,166 @@
+Apple Pascal 1.1-APPLE3 FORMATTER.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 FORMATTE
+======================================================================
+
+procedure FORMATTE.1(args 2 words);  { locals 1080 words, lex 0 }
+  FINIT(@G1038, @G1338, -(1));
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITESTRING(I1,3, 'APPLE DISK FORMATTER PROGRAM', 0);
+  FWRITELN(I1,3);
+  GATKIND := 15616;
+  FOPEN(@G1038, '#4:formatter.data', 1, 0);
+  if (IORESULT() <> 0) then begin
+    FOPEN(@G1038, '#5:formatter.data', 1, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    FOPEN(@G1038, '#9:formatter.data', 1, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    FOPEN(@G1038, '#10:formatter.data', 1, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    FOPEN(@G1038, '#11:formatter.data', 1, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    FOPEN(@G1038, '#12:formatter.data', 1, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    FWRITELN(I1,3);
+    FWRITESTRING(I1,3, "I CAN'T FIND FILE FORMATTER.DATA", 0);
+    FWRITELN(I1,3);
+    FORMATTE.3();
+  end;
+  G1036 := FBLOCKIO(@G1038, GATKIND, 0, 3, -(1), 1);
+  G1036 := FBLOCKIO(@G1038, @IC, 0, 3, 3, 1);
+L0285:
+  repeat
+L0285:
+    { paths disagree on stack depth here }
+    FWRITELN(I1,3);
+    FWRITESTRING(I1,3, 'FORMAT WHICH DISK (4, 5, 9..12) ? ', 0);
+    G1080 := FORMATTE.4();
+    if not ((7728 in 1)) then goto L0285;
+    GATVLEV := G1080;
+    UNITREAD(GATVLEV, @G777, 0, 512, 2, 0);
+    G1037 := IORESULT();
+    G1078 := (G1037 <> 9);
+    if (G1037 = 9) then begin
+      FWRITESTRING(I1,3, 'DISK NUMBER ', 0);
+      FWRITEINT(I1,3, GATVLEV, 0);
+      FWRITESTRING(I1,3, ' IS NOT ONLINE.', 0);
+      FWRITELN(I1,3);
+    end;
+    G1035 := @G777^[chk(6,0..511)];
+    if (((G1037 = 0) and (G1035 > 0)) and (G1035 <= 7)) then begin
+      FWRITESTRING(I1,3, 'DESTROY DIRECTORY OF ', 0);
+      G1034 := 7;
+      G1082 := ((7-1)+G1035);
+      while (G1034 <= G1082) do begin
+        FWRITECHAR(I1,3, @G777^[chk(G1034,0..511)], 0);
+        G1034 := (G1034+1);
+      end;
+      FWRITESTRING(I1,3, ' ? ', 0);
+L03AA:
+      FREADCHAR(I1,4, @G1081);
+      if not ((G1081 in {78,89,110,121})) then goto L03AA;
+      FWRITECHAR(I1,3, G1081, 0);
+      FWRITELN(I1,3);
+      G1078 := (G1081 in {89,121});
+    end;
+    if not (G1078) then goto L0285;
+    FWRITESTRING(I1,3, 'NOW FORMATTING DISKETTE IN DRIVE ', 0);
+    FWRITEINT(I1,3, GATVLEV, 0);
+    FWRITELN(I1,3);
+    if -(1) then begin
+      case GATVLEV of   { table 4..12 }
+        4: begin
+          TOP := 6;
+          GATDPLMT := 1;
+        end;
+        5: begin
+          TOP := 6;
+          GATDPLMT := 2;
+        end;
+        9: begin
+          TOP := 4;
+          GATDPLMT := 1;
+        end;
+        10: begin
+          TOP := 4;
+          GATDPLMT := 2;
+        end;
+        11: begin
+          TOP := 5;
+          GATDPLMT := 1;
+        end;
+        12: begin
+          TOP := 5;
+          GATDPLMT := 2;
+        end;
+      end;
+      { stack tracking stopped: 'FORMATTE.2' }
+      { CLP 2 }
+      { SRO 3 }
+      { SLDO 3 }
+      { FJP $0529 (jtab-20) }
+      goto L0529;
+      FWRITECHAR(I1,3, 7, 0);
+      FWRITESTRING(I1,3, 'ERROR: UNABLE TO FORMAT DISK.', 0);
+      FWRITELN(I1,3);
+      FWRITESTRING(I1,3, '       DISKETTE WRITE PROTECTED,', 0);
+      FWRITELN(I1,3);
+      FWRITESTRING(I1,3, '       BAD MEDIA, OR BAD DRIVE.', 0);
+      FWRITELN(I1,3);
+      goto L0534;
+L0529:
+      UNITWRITE(GATVLEV, @IC, 0, 1536, 0, 0);
+    end;
+L0534:
+    { paths disagree on stack depth here }
+  until 0;
+  FORMATTE.3();
+  FCLOSE(@G1038, 0);
+
+procedure FORMATTE.2;  { native 6502, not lifted }
+
+procedure FORMATTE.3(args 0 words);  { locals 0 words, lex 1 }
+  if (GATVLEV = 4) then begin
+    FWRITELN(I2,3);
+    FWRITESTRING(I2,3, 'PUT SYSTEM DISK IN #4 AND PRESS RETURN ', 0);
+    if FEOLN(I2,2) then begin
+      FREADLN(I2,2);
+    end;
+    FREADLN(I2,2);
+  end;
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, "THAT'S ALL FOLKS...", 0);
+  FWRITELN(I2,3);
+  EXIT(1, 1);
+
+function FORMATTE.4(args 0 words) : <1 word result>;  { locals 3 words, lex 1 }
+L008C:
+  FREADCHAR(I2,2, @L3);
+  if not ((FEOLN(I2,2) or (L3 in {48,49,50,51,52,53,54,55,56,57}))) then goto L008C;
+  if FEOLN(I2,2) then begin
+    FORMATTE.3();
+  end;
+  L4 := (L3-48);
+  repeat
+    FREADCHAR(I2,2, @L3);
+    if (L3 in {48,49,50,51,52,53,54,55,56,57}) then begin
+      L4 := (((10*L4)+L3)-48);
+    end;
+  until not ((L3 in {48,49,50,51,52,53,54,55,56,57}));
+  L1 := L4;
+  FREADLN(I2,2);

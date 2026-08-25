@@ -1419,15 +1419,9 @@ procedure TURTLEGR.18(args 1 words);  { locals 43 words, lex 1 }
   L43 := 1;
   L44 := @L2^[0];
   while (L43 <= L44) do begin
-    { stack tracking stopped: 'IXS' }
-    { IXS }
-    { LDB }
-    { CGP 17 }
-    { LDL 43 }
-    { SLDC 1 }
-    { ADI }
-    { STL 43 }
-    { UJP $021E (jtab-10) }
+    { check L43 in 1..length(@L2) }
+    TURTLEGR.17(@L2^[L43]);
+    L43 := (L43+1);
   end;
 
 procedure TURTLEGR.19(args 1 words);  { locals 0 words, lex 1 }

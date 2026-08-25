@@ -127,6 +127,20 @@ class Segment:
     chunks: list[tuple[int, int, int]] = field(default_factory=list)
 
     @property
+    def number(self) -> int:
+        """The segment's number, from wherever this codefile records it.
+
+        SEGINFO carries it in bits 0-7, but a codefile older than that field
+        -- version 0, which is what SETUP.CODE and the 1.1 demo programs are
+        -- has no SEGINFO at all, so every segment reports 0 and a name map
+        keyed on it collapses onto whichever segment came last. The segment's
+        own trailing word has held the number all along (finding 27), so fall
+        back to that. Where both exist they agree, which `map_compiler.py`
+        flags if they ever stop agreeing.
+        """
+        return self.seg_num or self.seg_num_tail
+
+    @property
     def is_split(self) -> bool:
         return len(self.chunks) > 1
 

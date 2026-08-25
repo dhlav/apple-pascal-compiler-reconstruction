@@ -1,0 +1,496 @@
+Apple Pascal 1.3-APPLE3 SET40COLS.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 1 SET40COL  block=1 len=1674 mtype=pcode-lsb nproc=4
+========================================================================
+
+--- procedure 1  lex=0 params=4 data=520 enter=$027A exit=$066D jtab=$067E
+  027A d7                           NOP
+  027B d7                           NOP
+  027C b6 01 03                     LOD 1,3
+  027F 0c                           SLDC 12
+  0280 00                           SLDC 0
+  0281 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0284 9e 00                        CSP 0  ; CSP IOCHECK
+  0286 b6 01 03                     LOD 1,3
+  0289 a6 09 53 45 54 34 30 43 4f 4c 53         LSA 'SET40COLS'
+  0294 d7                           NOP
+  0295 00                           SLDC 0
+  0296 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0299 9e 00                        CSP 0  ; CSP IOCHECK
+  029B b6 01 03                     LOD 1,3
+  029E cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  02A1 9e 00                        CSP 0  ; CSP IOCHECK
+  02A3 b6 01 03                     LOD 1,3
+  02A6 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  02A9 9e 00                        CSP 0  ; CSP IOCHECK
+  02AB b6 01 03                     LOD 1,3
+  02AE d7                           NOP
+  02AF a6 23 43 6f 70 79 72 69 67 68 74 20 31 39 38 35 20 41 70 70 6c 65 20 43 6f 6d 70 75 74 65 72 2c 20 49 6e 63 2e         LSA 'Copyright 1985 Apple Computer, Inc.'
+  02D4 00                           SLDC 0
+  02D5 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  02D8 9e 00                        CSP 0  ; CSP IOCHECK
+  02DA b6 01 03                     LOD 1,3
+  02DD cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  02E0 9e 00                        CSP 0  ; CSP IOCHECK
+  02E2 b6 01 03                     LOD 1,3
+  02E5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  02E8 9e 00                        CSP 0  ; CSP IOCHECK
+  02EA b6 01 03                     LOD 1,3
+  02ED cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  02F0 9e 00                        CSP 0  ; CSP IOCHECK
+  02F2 b6 01 03                     LOD 1,3
+  02F5 a6 41 54 68 69 73 20 70 72 6f 67 72 61 6d 20 77 69 6c 6c 20 73 65 74 20 61 20 66 6c 61 67 20 69 6e 20 74 68 65 20 64 69 72 65 63 74 6f 72 79 20 6f 66 20 61 20 50 61 73 63 61 6c 20 64 69 73 6b 20 73 6f         LSA 'This program will set a flag in the directory of a Pascal disk so'
+  0338 d7                           NOP
+  0339 00                           SLDC 0
+  033A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  033D 9e 00                        CSP 0  ; CSP IOCHECK
+  033F b6 01 03                     LOD 1,3
+  0342 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0345 9e 00                        CSP 0  ; CSP IOCHECK
+  0347 b6 01 03                     LOD 1,3
+  034A d7                           NOP
+  034B a6 41 74 68 61 74 20 77 68 65 6e 20 50 61 73 63 61 6c 20 69 73 20 62 6f 6f 74 65 64 20 6f 66 66 20 74 68 65 20 64 69 73 6b 2c 20 69 74 20 77 69 6c 6c 20 72 75 6e 20 69 6e 20 34 30 2d 63 6f 6c 75 6d 6e         LSA 'that when Pascal is booted off the disk, it will run in 40-column'
+  038E 00                           SLDC 0
+  038F cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0392 9e 00                        CSP 0  ; CSP IOCHECK
+  0394 b6 01 03                     LOD 1,3
+  0397 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  039A 9e 00                        CSP 0  ; CSP IOCHECK
+  039C b6 01 03                     LOD 1,3
+  039F a6 43 6d 6f 64 65 20 72 65 67 61 72 64 6c 65 73 73 20 6f 66 20 77 68 65 74 68 65 72 20 74 68 65 72 65 20 69 73 20 61 6e 20 38 30 2d 63 6f 6c 75 6d 6e 20 63 61 72 64 20 69 6e 20 74 68 65 20 41 70 70 6c 65 2e         LSA 'mode regardless of whether there is an 80-column card in the Apple.'
+  03E4 d7                           NOP
+  03E5 00                           SLDC 0
+  03E6 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  03E9 9e 00                        CSP 0  ; CSP IOCHECK
+  03EB b6 01 03                     LOD 1,3
+  03EE cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  03F1 9e 00                        CSP 0  ; CSP IOCHECK
+  03F3 b6 01 03                     LOD 1,3
+  03F6 d7                           NOP
+  03F7 a6 40 49 66 20 74 68 65 20 66 6c 61 67 20 68 61 73 20 61 6c 72 65 61 64 79 20 62 65 65 6e 20 73 65 74 20 66 6f 72 20 34 30 2d 63 6f 6c 75 6d 6e 20 6d 6f 64 65 2c 20 74 68 65 20 70 72 6f 67 72 61 6d         LSA 'If the flag has already been set for 40-column mode, the program'
+  0439 00                           SLDC 0
+  043A cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  043D 9e 00                        CSP 0  ; CSP IOCHECK
+  043F b6 01 03                     LOD 1,3
+  0442 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0445 9e 00                        CSP 0  ; CSP IOCHECK
+  0447 b6 01 03                     LOD 1,3
+  044A d7                           NOP
+  044B a6 3e 77 69 6c 6c 20 67 69 76 65 20 79 6f 75 20 74 68 65 20 6f 70 74 69 6f 6e 20 6f 66 20 72 65 73 65 74 69 6e 67 20 69 74 20 73 6f 20 74 68 61 74 20 77 68 65 6e 20 50 61 73 63 61 6c 20 69 73         LSA 'will give you the option of reseting it so that when Pascal is'
+  048B 00                           SLDC 0
+  048C cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  048F 9e 00                        CSP 0  ; CSP IOCHECK
+  0491 b6 01 03                     LOD 1,3
+  0494 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0497 9e 00                        CSP 0  ; CSP IOCHECK
+  0499 b6 01 03                     LOD 1,3
+  049C d7                           NOP
+  049D a6 3d 62 6f 6f 74 65 64 20 6f 66 66 20 74 68 65 20 64 69 73 6b 2c 20 69 74 20 77 69 6c 6c 20 75 73 65 20 61 6e 20 69 6e 73 74 61 6c 6c 65 64 20 38 30 2d 63 6f 6c 75 6d 6e 20 63 61 72 64 2e         LSA 'booted off the disk, it will use an installed 80-column card.'
+  04DC 00                           SLDC 0
+  04DD cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  04E0 9e 00                        CSP 0  ; CSP IOCHECK
+  04E2 b6 01 03                     LOD 1,3
+  04E5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04E8 9e 00                        CSP 0  ; CSP IOCHECK
+  04EA b6 01 03             L04EA:  LOD 1,3
+  04ED cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04F0 9e 00                        CSP 0  ; CSP IOCHECK
+  04F2 b6 01 03                     LOD 1,3
+  04F5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04F8 9e 00                        CSP 0  ; CSP IOCHECK
+  04FA ce 02                        CLP 2  ; local proc 2
+  04FC ce 03                        CLP 3  ; local proc 3
+  04FE ea                           SLDO 3
+  04FF 00                           SLDC 0
+  0500 c3                           EQUI
+  0501 a1 f4                        FJP $066A (jtab-12)
+  0503 a5 81 06                     LAO 262
+  0506 00                           SLDC 0
+  0507 00                           SLDC 0
+  0508 00                           SLDC 0
+  0509 88                           CHK
+  050A a5 06                        LAO 6
+  050C 19                           SLDC 25
+  050D 00                           SLDC 0
+  050E c7 ff 01                     LDCI 511
+  0511 88                           CHK
+  0512 be                           LDB
+  0513 00                           SLDC 0
+  0514 c7 ff 00                     LDCI 255
+  0517 88                           CHK
+  0518 bf                           STB
+  0519 a5 81 06                     LAO 262
+  051C 03                           SLDC 3
+  051D 00                           SLDC 0
+  051E 07                           SLDC 7
+  051F 88                           CHK
+  0520 c0 10 01                     IXP 16,1
+  0523 ba                           LDP
+  0524 a1 f6                        FJP $05C4 (jtab-10)
+  0526 b6 01 03                     LOD 1,3
+  0529 a6 27 46 6c 61 67 20 69 73 20 61 6c 72 65 61 64 79 20 73 65 74 20 66 6f 72 20 34 30 2d 63 6f 6c 75 6d 6e 20 6d 6f 64 65 2e         LSA 'Flag is already set for 40-column mode.'
+  0552 d7                           NOP
+  0553 00                           SLDC 0
+  0554 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0557 9e 00                        CSP 0  ; CSP IOCHECK
+  0559 b6 01 03                     LOD 1,3
+  055C cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  055F 9e 00                        CSP 0  ; CSP IOCHECK
+  0561 b6 01 03                     LOD 1,3
+  0564 d7                           NOP
+  0565 a6 26 52 65 73 65 74 20 66 6c 61 67 20 66 6f 72 20 38 30 2d 63 6f 6c 75 6d 6e 20 6d 6f 64 65 20 28 59 2f 4e 29 20 3f 20         LSA 'Reset flag for 80-column mode (Y/N) ? '
+  058D 00                           SLDC 0
+  058E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0591 9e 00                        CSP 0  ; CSP IOCHECK
+  0593 b6 01 02                     LOD 1,2
+  0596 a5 05                        LAO 5
+  0598 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  059B 9e 00                        CSP 0  ; CSP IOCHECK
+  059D b6 01 03                     LOD 1,3
+  05A0 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  05A3 9e 00                        CSP 0  ; CSP IOCHECK
+  05A5 b6 01 03                     LOD 1,3
+  05A8 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  05AB 9e 00                        CSP 0  ; CSP IOCHECK
+  05AD ec                           SLDO 5
+  05AE 79                           SLDC 121
+  05AF c3                           EQUI
+  05B0 ec                           SLDO 5
+  05B1 59                           SLDC 89
+  05B2 c3                           EQUI
+  05B3 8d                           LOR
+  05B4 a1 0c                        FJP $05C2
+  05B6 a5 81 06                     LAO 262
+  05B9 03                           SLDC 3
+  05BA 00                           SLDC 0
+  05BB 07                           SLDC 7
+  05BC 88                           CHK
+  05BD c0 10 01                     IXP 16,1
+  05C0 00                           SLDC 0
+  05C1 bb                           STP
+  05C2 b9 0c                L05C2:  UJP $05D0
+  05C4 a5 81 06             L05C4:  LAO 262
+  05C7 03                           SLDC 3
+  05C8 00                           SLDC 0
+  05C9 07                           SLDC 7
+  05CA 88                           CHK
+  05CB c0 10 01                     IXP 16,1
+  05CE 01                           SLDC 1
+  05CF bb                           STP
+  05D0 a5 06                L05D0:  LAO 6
+  05D2 19                           SLDC 25
+  05D3 00                           SLDC 0
+  05D4 c7 ff 01                     LDCI 511
+  05D7 88                           CHK
+  05D8 a5 81 06                     LAO 262
+  05DB 00                           SLDC 0
+  05DC 00                           SLDC 0
+  05DD 00                           SLDC 0
+  05DE 88                           CHK
+  05DF be                           LDB
+  05E0 00                           SLDC 0
+  05E1 c7 ff 00                     LDCI 255
+  05E4 88                           CHK
+  05E5 bf                           STB
+  05E6 ce 04                        CLP 4  ; local proc 4
+  05E8 ea                           SLDO 3
+  05E9 00                           SLDC 0
+  05EA c3                           EQUI
+  05EB a1 7d                        FJP $066A
+  05ED a5 81 06                     LAO 262
+  05F0 03                           SLDC 3
+  05F1 00                           SLDC 0
+  05F2 07                           SLDC 7
+  05F3 88                           CHK
+  05F4 c0 10 01                     IXP 16,1
+  05F7 ba                           LDP
+  05F8 a1 39                        FJP $0633
+  05FA b6 01 03                     LOD 1,3
+  05FD a6 23 46 6c 61 67 20 69 73 20 6e 6f 77 20 73 65 74 20 66 6f 72 20 34 30 2d 63 6f 6c 75 6d 6e 20 6d 6f 64 65 2e         LSA 'Flag is now set for 40-column mode.'
+  0622 d7                           NOP
+  0623 00                           SLDC 0
+  0624 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0627 9e 00                        CSP 0  ; CSP IOCHECK
+  0629 b6 01 03                     LOD 1,3
+  062C cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  062F 9e 00                        CSP 0  ; CSP IOCHECK
+  0631 b9 37                        UJP $066A
+  0633 b6 01 03             L0633:  LOD 1,3
+  0636 d7                           NOP
+  0637 a6 23 46 6c 61 67 20 69 73 20 6e 6f 77 20 73 65 74 20 66 6f 72 20 38 30 2d 63 6f 6c 75 6d 6e 20 6d 6f 64 65 2e         LSA 'Flag is now set for 80-column mode.'
+  065C 00                           SLDC 0
+  065D cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0660 9e 00                        CSP 0  ; CSP IOCHECK
+  0662 b6 01 03                     LOD 1,3
+  0665 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0668 9e 00                        CSP 0  ; CSP IOCHECK
+  066A 00                   L066A:  SLDC 0
+  066B a1 f2                        FJP $04EA (jtab-14)
+  ---- exit code (EXIT target) ----
+  066D c1 00                        RBP 0
+  ---- jump table: 3 entries ----
+       jtab-10  -> $05C4
+       jtab-12  -> $066A
+       jtab-14  -> $04EA
+
+--- procedure 2  lex=1 params=0 data=8 enter=$0000 exit=$015C jtab=$016E
+  0000 b6 02 03             L0000:  LOD 2,3
+  0003 a6 3a 4d 6f 64 69 66 79 20 77 68 69 63 68 20 76 6f 6c 75 6d 65 20 23 20 3f 20 20 28 34 2c 20 35 2c 20 39 2e 2e 31 32 2c 20 3c 65 73 63 3e 20 74 6f 20 65 78 69 74 29 20 3d 3d 3e 20         LSA 'Modify which volume # ?  (4, 5, 9..12, <esc> to exit) ==> '
+  003F d7                           NOP
+  0040 00                           SLDC 0
+  0041 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0044 9e 00                        CSP 0  ; CSP IOCHECK
+  0046 00                           SLDC 0
+  0047 cc 01                        STL 1
+  0049 00                           SLDC 0
+  004A ab 04                        SRO 4
+  004C b6 02 02                     LOD 2,2
+  004F c6 04                        LLA 4
+  0051 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  0054 9e 00                        CSP 0  ; CSP IOCHECK
+  0056 db                           SLDL 4
+  0057 cc 03                        STL 3
+  0059 da                           SLDL 3
+  005A 30                           SLDC 48
+  005B 95                           SBI
+  005C cc 02                        STL 2
+  005E b6 02 02             L005E:  LOD 2,2
+  0061 00                           SLDC 0
+  0062 00                           SLDC 0
+  0063 cd 00 0b                     CXP 0,11  ; OS.11 FEOLN
+  0066 93                           LNOT
+  0067 da                           SLDL 3
+  0068 1b                           SLDC 27
+  0069 cb                           NEQI
+  006A 84                           LAND
+  006B a1 f2                        FJP $013F (jtab-14)
+  006D eb                           SLDO 4
+  006E 00                           SLDC 0
+  006F c3                           EQUI
+  0070 db                           SLDL 4
+  0071 b3 04 00 32 02 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $0232]
+  007C 04                           SLDC 4
+  007D 8b                           INN
+  007E 84                           LAND
+  007F a1 1e                        FJP $009F
+  0081 d8                           SLDL 1
+  0082 01                           SLDC 1
+  0083 82                           ADI
+  0084 cc 01                        STL 1
+  0086 d9                           SLDL 2
+  0087 ab 04                        SRO 4
+  0089 b6 02 03                     LOD 2,3
+  008C 08                           SLDC 8
+  008D 00                           SLDC 0
+  008E cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0091 9e 00                        CSP 0  ; CSP IOCHECK
+  0093 b6 02 03                     LOD 2,3
+  0096 db                           SLDL 4
+  0097 00                           SLDC 0
+  0098 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  009B 9e 00                        CSP 0  ; CSP IOCHECK
+  009D b9 f6                        UJP $012B (jtab-10)
+  009F eb                   L009F:  SLDO 4
+  00A0 01                           SLDC 1
+  00A1 c3                           EQUI
+  00A2 db                           SLDL 4
+  00A3 b3 04 00 07 00 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $0007]
+  00AE 04                           SLDC 4
+  00AF 8b                           INN
+  00B0 84                           LAND
+  00B1 a1 22                        FJP $00D5
+  00B3 d8                           SLDL 1
+  00B4 01                           SLDC 1
+  00B5 82                           ADI
+  00B6 cc 01                        STL 1
+  00B8 0a                           SLDC 10
+  00B9 eb                           SLDO 4
+  00BA 8f                           MPI
+  00BB d9                           SLDL 2
+  00BC 82                           ADI
+  00BD ab 04                        SRO 4
+  00BF b6 02 03                     LOD 2,3
+  00C2 08                           SLDC 8
+  00C3 00                           SLDC 0
+  00C4 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  00C7 9e 00                        CSP 0  ; CSP IOCHECK
+  00C9 b6 02 03                     LOD 2,3
+  00CC db                           SLDL 4
+  00CD 00                           SLDC 0
+  00CE cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  00D1 9e 00                        CSP 0  ; CSP IOCHECK
+  00D3 b9 56                        UJP $012B
+  00D5 da                   L00D5:  SLDL 3
+  00D6 08                           SLDC 8
+  00D7 c3                           EQUI
+  00D8 d8                           SLDL 1
+  00D9 00                           SLDC 0
+  00DA c5                           GRTI
+  00DB 84                           LAND
+  00DC a1 2a                        FJP $0108
+  00DE b6 02 03                     LOD 2,3
+  00E1 db                           SLDL 4
+  00E2 00                           SLDC 0
+  00E3 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  00E6 9e 00                        CSP 0  ; CSP IOCHECK
+  00E8 b6 02 03                     LOD 2,3
+  00EB 20                           SLDC 32
+  00EC 00                           SLDC 0
+  00ED cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  00F0 9e 00                        CSP 0  ; CSP IOCHECK
+  00F2 b6 02 03                     LOD 2,3
+  00F5 db                           SLDL 4
+  00F6 00                           SLDC 0
+  00F7 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  00FA 9e 00                        CSP 0  ; CSP IOCHECK
+  00FC eb                           SLDO 4
+  00FD 0a                           SLDC 10
+  00FE 86                           DVI
+  00FF ab 04                        SRO 4
+  0101 d8                           SLDL 1
+  0102 01                           SLDC 1
+  0103 95                           SBI
+  0104 cc 01                        STL 1
+  0106 b9 23                        UJP $012B
+  0108 da                   L0108:  SLDL 3
+  0109 1f                           SLDC 31
+  010A c5                           GRTI
+  010B a1 1e                        FJP $012B
+  010D b6 02 03                     LOD 2,3
+  0110 08                           SLDC 8
+  0111 00                           SLDC 0
+  0112 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0115 9e 00                        CSP 0  ; CSP IOCHECK
+  0117 b6 02 03                     LOD 2,3
+  011A 20                           SLDC 32
+  011B 00                           SLDC 0
+  011C cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  011F 9e 00                        CSP 0  ; CSP IOCHECK
+  0121 b6 02 03                     LOD 2,3
+  0124 08                           SLDC 8
+  0125 00                           SLDC 0
+  0126 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0129 9e 00                        CSP 0  ; CSP IOCHECK
+  012B b6 02 02             L012B:  LOD 2,2
+  012E c6 04                        LLA 4
+  0130 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  0133 9e 00                        CSP 0  ; CSP IOCHECK
+  0135 db                           SLDL 4
+  0136 cc 03                        STL 3
+  0138 da                           SLDL 3
+  0139 30                           SLDC 48
+  013A 95                           SBI
+  013B cc 02                        STL 2
+  013D b9 f4                        UJP $005E (jtab-12)
+  013F eb                   L013F:  SLDO 4
+  0140 c7 30 1e                     LDCI 7728
+  0143 01                           SLDC 1
+  0144 8b                           INN
+  0145 da                           SLDL 3
+  0146 1b                           SLDC 27
+  0147 c3                           EQUI
+  0148 8d                           LOR
+  0149 a1 f0                        FJP $0000 (jtab-16)
+  014B da                           SLDL 3
+  014C 1b                           SLDC 27
+  014D c3                           EQUI
+  014E a1 04                        FJP $0154
+  0150 01                           SLDC 1
+  0151 01                           SLDC 1
+  0152 9e 04                        CSP 4  ; CSP EXIT
+  0154 b6 02 03             L0154:  LOD 2,3
+  0157 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  015A 9e 00                        CSP 0  ; CSP IOCHECK
+  ---- exit code (EXIT target) ----
+  015C ad 00                        RNP 0
+  ---- jump table: 4 entries ----
+       jtab-10  -> $012B
+       jtab-12  -> $005E
+       jtab-14  -> $013F
+       jtab-16  -> $0000
+
+--- procedure 3  lex=1 params=0 data=0 enter=$0170 exit=$01EC jtab=$01F6
+  0170 eb                           SLDO 4
+  0171 a5 06                        LAO 6
+  0173 00                           SLDC 0
+  0174 c7 00 02                     LDCI 512
+  0177 02                           SLDC 2
+  0178 00                           SLDC 0
+  0179 9e 05                        CSP 5  ; CSP UNITREAD
+  017B 9e 22                        CSP 34  ; CSP IORESULT
+  017D ab 03                        SRO 3
+  017F ea                           SLDO 3
+  0180 00                           SLDC 0
+  0181 cb                           NEQI
+  0182 a1 68                        FJP $01EC
+  0184 b6 02 03                     LOD 2,3
+  0187 07                           SLDC 7
+  0188 00                           SLDC 0
+  0189 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  018C 9e 00                        CSP 0  ; CSP IOCHECK
+  018E b6 02 03                     LOD 2,3
+  0191 a6 0b 49 2f 4f 20 45 52 52 4f 52 20 23         LSA 'I/O ERROR #'
+  019E d7                           NOP
+  019F 00                           SLDC 0
+  01A0 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  01A3 9e 00                        CSP 0  ; CSP IOCHECK
+  01A5 b6 02 03                     LOD 2,3
+  01A8 ea                           SLDO 3
+  01A9 00                           SLDC 0
+  01AA cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  01AD 9e 00                        CSP 0  ; CSP IOCHECK
+  01AF b6 02 03                     LOD 2,3
+  01B2 d7                           NOP
+  01B3 a6 29 20 6f 63 63 75 72 72 65 64 20 77 68 69 6c 65 20 74 72 79 69 6e 67 20 74 6f 20 72 65 61 64 20 64 69 72 65 63 74 6f 72 79 2e         LSA ' occurred while trying to read directory.'
+  01DE 00                           SLDC 0
+  01DF cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  01E2 9e 00                        CSP 0  ; CSP IOCHECK
+  01E4 b6 02 03                     LOD 2,3
+  01E7 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  01EA 9e 00                        CSP 0  ; CSP IOCHECK
+  ---- exit code (EXIT target) ----
+  01EC ad 00                L01EC:  RNP 0
+
+--- procedure 4  lex=1 params=0 data=0 enter=$01F8 exit=$026D jtab=$0278
+  01F8 eb                           SLDO 4
+  01F9 a5 06                        LAO 6
+  01FB 00                           SLDC 0
+  01FC c7 00 02                     LDCI 512
+  01FF 02                           SLDC 2
+  0200 00                           SLDC 0
+  0201 9e 06                        CSP 6  ; CSP UNITWRITE
+  0203 9e 22                        CSP 34  ; CSP IORESULT
+  0205 ab 03                        SRO 3
+  0207 ea                           SLDO 3
+  0208 00                           SLDC 0
+  0209 cb                           NEQI
+  020A a1 61                        FJP $026D
+  020C b6 02 03                     LOD 2,3
+  020F 07                           SLDC 7
+  0210 00                           SLDC 0
+  0211 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0214 9e 00                        CSP 0  ; CSP IOCHECK
+  0216 b6 02 03                     LOD 2,3
+  0219 a6 0b 49 2f 4f 20 45 52 52 4f 52 20 23         LSA 'I/O ERROR #'
+  0226 d7                           NOP
+  0227 00                           SLDC 0
+  0228 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  022B 9e 00                        CSP 0  ; CSP IOCHECK
+  022D b6 02 03                     LOD 2,3
+  0230 ea                           SLDO 3
+  0231 00                           SLDC 0
+  0232 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  0235 9e 00                        CSP 0  ; CSP IOCHECK
+  0237 b6 02 03                     LOD 2,3
+  023A d7                           NOP
+  023B a6 22 20 6f 63 63 75 72 72 65 64 20 77 68 69 6c 65 20 77 72 69 74 69 6e 67 20 64 69 72 65 63 74 6f 72 79 2e         LSA ' occurred while writing directory.'
+  025F 00                           SLDC 0
+  0260 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0263 9e 00                        CSP 0  ; CSP IOCHECK
+  0265 b6 02 03                     LOD 2,3
+  0268 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  026B 9e 00                        CSP 0  ; CSP IOCHECK
+  ---- exit code (EXIT target) ----
+  026D ad 00                L026D:  RNP 0

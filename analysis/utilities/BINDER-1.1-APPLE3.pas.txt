@@ -1,0 +1,161 @@
+Apple Pascal 1.1-APPLE3 BINDER.CODE -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 APPLEBIN
+======================================================================
+
+procedure APPLEBIN.1(args 2 words);  { locals 1119 words, lex 0 }
+  FINIT(@G1040, @G1340, -(1));
+  FINIT(@G1080, @G1380, -(1));
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITESTRING(I1,3, '', 12);
+  FWRITESTRING(I1,3, 'APPLE GOTOXY BINDER', 0);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FWRITELN(I1,3);
+  FOPEN(@G1080, 'SYSTEM.PASCAL', 1, 0);
+  APPLEBIN.2((IORESULT() <> 0), 'NO FILE SYSTEM.PASCAL');
+  APPLEBIN.2((FBLOCKIO(@G1080, @G518, 0, 1, 0, 1) <> 1), 'READING SEG DICT OF O.S.');
+  NEW(@GATKIND, 256);
+  GATCVAL := GATKIND;
+  while (FBLOCKIO(@G1080, GATKIND, 0, 1, -(1), 1) = 1) do begin
+    NEW(@GATKIND, 256);
+  end;
+  G1039 := 1;
+  while (MEMAVAIL() > 2500) do begin
+    NEW(@GATTYPTR, 256);
+    G1039 := (G1039+1);
+  end;
+  APPLEBIN.4();
+  G1035 := 1;
+  FOPEN(@G1040, 'NEW.PASCAL', 0, 0);
+  G1120 := @G518[15*2w];
+  G1030 := G1120^.f1;
+  G1033 := ((G1120^.f1+511) div 512);
+  G1031 := ((G1120^.f1+G1034)+2);
+  G1032 := ((G1031+511) div 512);
+  APPLEBIN.2((G1032 > G1039), 'NOT ENOUGH ROOM TO READ SEGMENT');
+  APPLEBIN.2((FBLOCKIO(@G1080, GATKIND, (G1034+2), G1033, G1120^, 1) <> G1033), 'READING O.S. SEG #15');
+  G1037 := GATKIND^[(G1031-2)];
+  GATKIND^[G1034] := 29;
+  GATKIND^[(G1034+1)] := 0;
+  APPLEBIN.5(G1031, 15);
+  FCLOSE(@G1080, 0);
+  G1120 := @G518[0*2w];
+  APPLEBIN.6(0);
+  G1038 := ((G1120^.f1-2)-(2*G1037));
+  G1030 := (G1030+APPLEBIN.3(G1038));
+  G1030 := (G1030+(2*(G1037-29)));
+  GATKIND^[((G1120^.f1-2)-(2*29))] := @G1030^[0];
+  GATKIND^[(((G1120^.f1-2)-(2*29))+1)] := @G1030^[1];
+  APPLEBIN.5(G1120^.f1, 0);
+  G1036 := 1;
+  G1120 := 14;
+  while (G1036 <= G1120) do begin
+    G1121 := @G518[G1036*2w];
+    APPLEBIN.6(G1036);
+    APPLEBIN.5(G1121^.f1, G1036);
+    G1036 := (G1036+1);
+  end;
+  APPLEBIN.2((FBLOCKIO(@G1040, @G518, 0, 1, 0, 0) <> 1), 'WRITING SEG DICT OF NEW O.S.');
+  FCLOSE(@G1040, 1);
+  FCLOSE(@G1040, 0);
+  FCLOSE(@G1080, 0);
+
+procedure APPLEBIN.2(args 2 words);  { locals 42 words, lex 1 }
+  @L3^ := L1  {string};
+  if L2 then begin
+    FWRITELN(I2,3);
+    FWRITELN(I2,3);
+    FWRITESTRING(I2,3, 'ERROR: ', 0);
+    FWRITECHAR(I2,3, 7, 0);
+    FWRITESTRING(I2,3, @L3, 0);
+    FWRITELN(I2,3);
+    FWRITELN(I2,3);
+    FWRITESTRING(I2,3, 'Press space to continue', 0);
+    L44 := 63;
+    while (L44 <> 32) do begin
+      FREADCHAR(I2,4, @L44);
+    end;
+    EXIT(1, 1);
+  end;
+
+function APPLEBIN.3(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := (GATKIND^[L3]+(256*GATKIND^[(L3+1)]));
+
+procedure APPLEBIN.4(args 0 words);  { locals 128 words, lex 1 }
+  FINIT(@L5, @L305, -(1));
+  repeat
+    if (IORESULT() <> 0) then begin
+      FWRITECHAR(I2,3, 7, 0);
+      FWRITECHAR(I2,3, 7, 0);
+      FWRITECHAR(I2,3, 7, 0);
+    end;
+    FWRITESTRING(I2,3, 'FILE WHICH CONTAINS GOTOXY? ', 0);
+    FREADSTRING(I2,2, @L45, 80);
+    FREADLN(I2,2);
+    if (@L45^[0] = 0) then begin
+      EXIT(1, 1);
+    end;
+    FOPEN(@L5, @L45, 1, 0);
+    if (IORESULT() <> 0) then begin
+      L86 := 0;
+      SCONCAT(@L86, @L45, 80);
+      SCONCAT(@L86, '.CODE', 85);
+      FOPEN(@L5, @L86, 1, 0);
+    end;
+  until (IORESULT() = 0);
+  APPLEBIN.2((FBLOCKIO(@L5, @GATVLEV, 0, 1, 0, 1) <> 1), 'READING SEG DICT OF GOTOXY FILE');
+  if (@GATVLEV[0*2w]^.f1 <> 0) then begin
+    L1 := 0;
+  end else begin
+    if (@GATVLEV[1*2w]^.f1 <> 0) then begin
+      L1 := 1;
+    end else begin
+      APPLEBIN.2(1, 'GOTOXY MUST BE IN SEG #0 OR #1');
+    end;
+  end;
+  L86 := @GATVLEV[L1*2w];
+  L2 := ((L86^.f1+511) div 512);
+  APPLEBIN.2((FBLOCKIO(@L5, GATKIND, 0, L2, L86^, 1) <> L2), 'READING GOTOXY');
+  L4 := (L86^.f1-6);
+  APPLEBIN.2((GATKIND^[(L4-1)] <= 1), 'GOTOXY MUST BE PROCEDURE #2');
+  APPLEBIN.2((APPLEBIN.3(L4) <= 0), 'NO PROCEDURE #2 IN CODE FILE');
+  L4 := (L4-APPLEBIN.3(L4));
+  L3 := ((L4-2)-APPLEBIN.3((L4-2)));
+  G1034 := (L4-L3);
+  MOVELEFT(GATKIND, L3, GATKIND, 0, (G1034+2));
+  FCLOSE(@L5, 0);
+  FCLOSE(@L5, 0);
+
+procedure APPLEBIN.5(args 2 words);  { locals 2 words, lex 1 }
+  if (L2 <> 0) then begin
+    FWRITESTRING(I2,3, '  COPYING SEGMENT ', 0);
+    FWRITEINT(I2,3, L1, 0);
+    FWRITELN(I2,3);
+    L3 := ((L2+511) div 512);
+    APPLEBIN.2((FBLOCKIO(@G1040, GATKIND, 0, L3, G1035, 0) <> L3), 'WRITING OUT SEGMENT');
+    L4 := @G518[L1*2w];
+    L4^ := G1035;
+    (L4+1)^ := L2;
+    G1035 := (G1035+L3);
+  end;
+
+procedure APPLEBIN.6(args 1 words);  { locals 2 words, lex 1 }
+  L3 := @G518[L1*2w];
+  L2 := ((L3^.f1+511) div 512);
+  MOVERIGHT(GATCVAL, (512*(L3^-1)), GATKIND, 0, L3^.f1);

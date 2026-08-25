@@ -1,0 +1,188 @@
+Apple Pascal 1.1-APPLE3 SPIRODEMO.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 1 SPIRODEM  block=1 len=442 mtype=pcode-lsb nproc=3
+========================================================================
+
+--- procedure 1  lex=0 params=4 data=10 enter=$0086 exit=$0183 jtab=$01B0
+  0086 b9 ee                        UJP $018E (jtab-18)
+  0088 cd 16 01             L0088:  CXP 22,1  ; seg22.1
+  008B cd 14 01                     CXP 20,1  ; seg20.1
+  008E 01                           SLDC 1
+  008F ab 07                        SRO 7
+  0091 b6 01 03                     LOD 1,3
+  0094 d7                           NOP
+  0095 a6 14 57 45 4c 43 4f 4d 45 20 54 4f 20 57 48 49 4c 45 50 4c 4f 54         LSA 'WELCOME TO WHILEPLOT'
+  00AB 00                           SLDC 0
+  00AC cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  00AF 9e 00                        CSP 0  ; CSP IOCHECK
+  00B1 b6 01 03                     LOD 1,3
+  00B4 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  00B7 9e 00                        CSP 0  ; CSP IOCHECK
+  00B9 b6 01 03                     LOD 1,3
+  00BC d7                           NOP
+  00BD a6 16 45 4e 54 45 52 20 41 4e 47 4c 45 20 30 20 54 4f 20 51 55 49 54 2e         LSA 'ENTER ANGLE 0 TO QUIT.'
+  00D5 00                           SLDC 0
+  00D6 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  00D9 9e 00                        CSP 0  ; CSP IOCHECK
+  00DB b6 01 03                     LOD 1,3
+  00DE cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  00E1 9e 00                        CSP 0  ; CSP IOCHECK
+  00E3 b6 01 03                     LOD 1,3
+  00E6 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  00E9 9e 00                        CSP 0  ; CSP IOCHECK
+  00EB b6 01 03             L00EB:  LOD 1,3
+  00EE cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  00F1 9e 00                        CSP 0  ; CSP IOCHECK
+  00F3 b6 01 03                     LOD 1,3
+  00F6 d7                           NOP
+  00F7 a6 07 41 4e 47 4c 45 3a 20         LSA 'ANGLE: '
+  0100 00                           SLDC 0
+  0101 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0104 9e 00                        CSP 0  ; CSP IOCHECK
+  0106 b6 01 02                     LOD 1,2
+  0109 a5 04                        LAO 4
+  010B cd 00 0c                     CXP 0,12  ; OS.12 FREADINT
+  010E 9e 00                        CSP 0  ; CSP IOCHECK
+  0110 b6 01 02                     LOD 1,2
+  0113 cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  0116 9e 00                        CSP 0  ; CSP IOCHECK
+  0118 eb                           SLDO 4
+  0119 00                           SLDC 0
+  011A c3                           EQUI
+  011B a1 02                        FJP $011F
+  011D ce 03                        CLP 3  ; local proc 3
+  011F b6 01 03             L011F:  LOD 1,3
+  0122 d7                           NOP
+  0123 a6 08 43 48 41 4e 47 45 3a 20         LSA 'CHANGE: '
+  012D 00                           SLDC 0
+  012E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0131 9e 00                        CSP 0  ; CSP IOCHECK
+  0133 b6 01 02                     LOD 1,2
+  0136 a5 03                        LAO 3
+  0138 cd 00 0c                     CXP 0,12  ; OS.12 FREADINT
+  013B 9e 00                        CSP 0  ; CSP IOCHECK
+  013D b6 01 02                     LOD 1,2
+  0140 cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  0143 9e 00                        CSP 0  ; CSP IOCHECK
+  0145 ea                           SLDO 3
+  0146 00                           SLDC 0
+  0147 c5                           GRTI
+  0148 a1 f6                        FJP $011F (jtab-10)
+  014A 0a                   L014A:  SLDC 10
+  014B ab 05                        SRO 5
+  014D cd 14 02                     CXP 20,2  ; seg20.2
+  0150 01                           SLDC 1
+  0151 cd 14 07                     CXP 20,7  ; seg20.7
+  0154 ec                   L0154:  SLDO 5
+  0155 c7 fa 00                     LDCI 250
+  0158 c9                           LESI
+  0159 a1 04                        FJP $015F
+  015B ce 02                        CLP 2  ; local proc 2
+  015D b9 f4                        UJP $0154 (jtab-12)
+  015F 03                   L015F:  SLDC 3
+  0160 cd 14 0a                     CXP 20,10  ; seg20.10
+  0163 03                           SLDC 3
+  0164 cd 14 0a                     CXP 20,10  ; seg20.10
+  0167 eb                           SLDO 4
+  0168 0f                           SLDC 15
+  0169 82                           ADI
+  016A ab 04                        SRO 4
+  016C 00                           SLDC 0
+  016D 00                           SLDC 0
+  016E cd 16 05                     CXP 22,5  ; seg22.5
+  0171 a1 f2                        FJP $014A (jtab-14)
+  0173 b6 01 04                     LOD 1,4
+  0176 a5 06                        LAO 6
+  0178 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  017B 9e 00                        CSP 0  ; CSP IOCHECK
+  017D cd 14 08                     CXP 20,8  ; seg20.8
+  0180 00                           SLDC 0
+  0181 a1 f0                        FJP $00EB (jtab-16)
+  ---- exit code (EXIT target) ----
+  0183 16                           SLDC 22
+  0184 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
+  0186 14                           SLDC 20
+  0187 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
+  0189 15                           SLDC 21
+  018A 9e 16                        CSP 22  ; CSP UNLOADSEGMENT
+  018C b9 0b                        UJP $0199
+  018E 15                   L018E:  SLDC 21
+  018F 9e 15                        CSP 21  ; CSP LOADSEGMENT
+  0191 14                           SLDC 20
+  0192 9e 15                        CSP 21  ; CSP LOADSEGMENT
+  0194 16                           SLDC 22
+  0195 9e 15                        CSP 21  ; CSP LOADSEGMENT
+  0197 b9 ec                        UJP $0088 (jtab-20)
+  0199 c1 00                L0199:  RBP 0
+  ---- jump table: 6 entries ----
+       jtab-10  -> $011F
+       jtab-12  -> $0154
+       jtab-14  -> $014A
+       jtab-16  -> $00EB
+       jtab-18  -> $018E
+       jtab-20  -> $0088
+
+--- procedure 2  lex=1 params=0 data=0 enter=$0000 exit=$0036 jtab=$0042
+  0000 ec                           SLDO 5
+  0001 cd 14 05                     CXP 20,5  ; seg20.5
+  0004 eb                           SLDO 4
+  0005 cd 14 03                     CXP 20,3  ; seg20.3
+  0008 ec                           SLDO 5
+  0009 ea                           SLDO 3
+  000A 82                           ADI
+  000B ab 05                        SRO 5
+  000D ec                           SLDO 5
+  000E 28                           SLDC 40
+  000F 8e                           MODI
+  0010 00                           SLDC 0
+  0011 c3                           EQUI
+  0012 a1 1e                        FJP $0032
+  0014 ee                           SLDO 7
+  0015 0c                           SLDC 12
+  0016 c3                           EQUI
+  0017 a1 05                        FJP $001E
+  0019 01                           SLDC 1
+  001A ab 07                        SRO 7
+  001C b9 05                        UJP $0023
+  001E ee                   L001E:  SLDO 7
+  001F 01                           SLDC 1
+  0020 82                           ADI
+  0021 ab 07                        SRO 7
+  0023 ee                   L0023:  SLDO 7
+  0024 c7 34 02                     LDCI 564
+  0027 01                           SLDC 1
+  0028 8b                           INN
+  0029 a1 07                        FJP $0032
+  002B ee                           SLDO 7
+  002C 01                           SLDC 1
+  002D 82                           ADI
+  002E ab 07                        SRO 7
+  0030 b9 f6                        UJP $0023 (jtab-10)
+  0032 ee                   L0032:  SLDO 7
+  0033 cd 14 07                     CXP 20,7  ; seg20.7
+  ---- exit code (EXIT target) ----
+  0036 ad 00                        RNP 0
+  ---- jump table: 1 entry ----
+       jtab-10  -> $0023
+
+--- procedure 3  lex=1 params=0 data=0 enter=$0044 exit=$007A jtab=$0084
+  0044 cd 14 08                     CXP 20,8  ; seg20.8
+  0047 b6 02 03                     LOD 2,3
+  004A cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  004D 9e 00                        CSP 0  ; CSP IOCHECK
+  004F b6 02 03                     LOD 2,3
+  0052 d7                           NOP
+  0053 a6 13 54 48 41 54 27 53 20 41 4c 4c 20 46 4f 4c 4b 53 2e 2e 2e         LSA "THAT'S ALL FOLKS..."
+  0068 00                           SLDC 0
+  0069 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  006C 9e 00                        CSP 0  ; CSP IOCHECK
+  006E b6 02 03                     LOD 2,3
+  0071 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0074 9e 00                        CSP 0  ; CSP IOCHECK
+  0076 01                           SLDC 1
+  0077 01                           SLDC 1
+  0078 9e 04                        CSP 4  ; CSP EXIT
+  ---- exit code (EXIT target) ----
+  007A ad 00                        RNP 0

@@ -1,0 +1,77 @@
+Apple Pascal 1.1-APPLE3 HAZELGOTO.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 0 GOXY  block=1 len=112 mtype=unknown nproc=2
+========================================================================
+
+--- procedure 1  lex=255 params=0 data=0 enter=$005E exit=$005E jtab=$0068
+  ---- exit code (EXIT target) ----
+  005E d6                           XIT
+  005F 00                           SLDC 0
+
+--- procedure 2  lex=0 params=4 data=4 enter=$0000 exit=$0051 jtab=$005C
+  0000 e9                           SLDO 2
+  0001 4f                           SLDC 79
+  0002 c5                           GRTI
+  0003 a1 05                        FJP $000A
+  0005 4f                           SLDC 79
+  0006 ab 02                        SRO 2
+  0008 b9 08                        UJP $0012
+  000A e9                   L000A:  SLDO 2
+  000B 00                           SLDC 0
+  000C c9                           LESI
+  000D a1 03                        FJP $0012
+  000F 00                           SLDC 0
+  0010 ab 02                        SRO 2
+  0012 e8                   L0012:  SLDO 1
+  0013 17                           SLDC 23
+  0014 c5                           GRTI
+  0015 a1 05                        FJP $001C
+  0017 17                           SLDC 23
+  0018 ab 01                        SRO 1
+  001A b9 08                        UJP $0024
+  001C e8                   L001C:  SLDO 1
+  001D 00                           SLDC 0
+  001E c9                           LESI
+  001F a1 03                        FJP $0024
+  0021 00                           SLDC 0
+  0022 ab 01                        SRO 1
+  0024 a5 03                L0024:  LAO 3
+  0026 00                           SLDC 0
+  0027 7e                           SLDC 126
+  0028 bf                           STB
+  0029 a5 03                        LAO 3
+  002B 01                           SLDC 1
+  002C 11                           SLDC 17
+  002D bf                           STB
+  002E e9                           SLDO 2
+  002F 1e                           SLDC 30
+  0030 c9                           LESI
+  0031 a1 09                        FJP $003C
+  0033 a5 03                        LAO 3
+  0035 02                           SLDC 2
+  0036 e9                           SLDO 2
+  0037 60                           SLDC 96
+  0038 82                           ADI
+  0039 bf                           STB
+  003A b9 05                        UJP $0041
+  003C a5 03                L003C:  LAO 3
+  003E 02                           SLDC 2
+  003F e9                           SLDO 2
+  0040 bf                           STB
+  0041 a5 03                L0041:  LAO 3
+  0043 03                           SLDC 3
+  0044 e8                           SLDO 1
+  0045 60                           SLDC 96
+  0046 82                           ADI
+  0047 bf                           STB
+  0048 02                           SLDC 2
+  0049 a5 03                        LAO 3
+  004B 00                           SLDC 0
+  004C 04                           SLDC 4
+  004D 00                           SLDC 0
+  004E 00                           SLDC 0
+  004F 9e 06                        CSP 6  ; CSP UNITWRITE
+  ---- exit code (EXIT target) ----
+  0051 c1 00                        RBP 0

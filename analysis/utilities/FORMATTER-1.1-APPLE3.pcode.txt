@@ -1,0 +1,447 @@
+Apple Pascal 1.1-APPLE3 FORMATTER.CODE -- p-code listing
+copyright: 
+
+========================================================================
+SEGMENT 1 FORMATTE  block=1 len=1506 mtype=6502 nproc=4
+========================================================================
+
+--- procedure 1  lex=0 params=4 data=2160 enter=$0108 exit=$0539 jtab=$055A
+  0108 d7                           NOP
+  0109 d7                           NOP
+  010A a5 84 0e                     LAO 1038
+  010D a5 85 3a                     LAO 1338
+  0110 c7 01 00                     LDCI 1
+  0113 91                           NGI
+  0114 cd 00 03                     CXP 0,3  ; OS.3 FINIT
+  0117 b6 01 03                     LOD 1,3
+  011A cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  011D b6 01 03                     LOD 1,3
+  0120 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0123 b6 01 03                     LOD 1,3
+  0126 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0129 b6 01 03                     LOD 1,3
+  012C d7                           NOP
+  012D a6 1c 41 50 50 4c 45 20 44 49 53 4b 20 46 4f 52 4d 41 54 54 45 52 20 50 52 4f 47 52 41 4d         LSA 'APPLE DISK FORMATTER PROGRAM'
+  014B 00                           SLDC 0
+  014C cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  014F b6 01 03                     LOD 1,3
+  0152 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0155 c7 00 3d                     LDCI 15616
+  0158 ab 04                        SRO 4
+  015A a5 84 0e                     LAO 1038
+  015D a6 11 23 34 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#4:formatter.data'
+  0170 d7                           NOP
+  0171 01                           SLDC 1
+  0172 00                           SLDC 0
+  0173 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0176 9e 22                        CSP 34  ; CSP IORESULT
+  0178 00                           SLDC 0
+  0179 cb                           NEQI
+  017A a1 1c                        FJP $0198
+  017C a5 84 0e                     LAO 1038
+  017F a6 11 23 35 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#5:formatter.data'
+  0192 d7                           NOP
+  0193 01                           SLDC 1
+  0194 00                           SLDC 0
+  0195 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0198 9e 22                L0198:  CSP 34  ; CSP IORESULT
+  019A 00                           SLDC 0
+  019B cb                           NEQI
+  019C a1 1c                        FJP $01BA
+  019E a5 84 0e                     LAO 1038
+  01A1 a6 11 23 39 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#9:formatter.data'
+  01B4 d7                           NOP
+  01B5 01                           SLDC 1
+  01B6 00                           SLDC 0
+  01B7 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  01BA 9e 22                L01BA:  CSP 34  ; CSP IORESULT
+  01BC 00                           SLDC 0
+  01BD cb                           NEQI
+  01BE a1 1d                        FJP $01DD
+  01C0 a5 84 0e                     LAO 1038
+  01C3 a6 12 23 31 30 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#10:formatter.data'
+  01D7 d7                           NOP
+  01D8 01                           SLDC 1
+  01D9 00                           SLDC 0
+  01DA cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  01DD 9e 22                L01DD:  CSP 34  ; CSP IORESULT
+  01DF 00                           SLDC 0
+  01E0 cb                           NEQI
+  01E1 a1 1d                        FJP $0200
+  01E3 a5 84 0e                     LAO 1038
+  01E6 d7                           NOP
+  01E7 a6 12 23 31 31 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#11:formatter.data'
+  01FB 01                           SLDC 1
+  01FC 00                           SLDC 0
+  01FD cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0200 9e 22                L0200:  CSP 34  ; CSP IORESULT
+  0202 00                           SLDC 0
+  0203 cb                           NEQI
+  0204 a1 1d                        FJP $0223
+  0206 a5 84 0e                     LAO 1038
+  0209 a6 12 23 31 32 3a 66 6f 72 6d 61 74 74 65 72 2e 64 61 74 61         LSA '#12:formatter.data'
+  021D d7                           NOP
+  021E 01                           SLDC 1
+  021F 00                           SLDC 0
+  0220 cd 00 05                     CXP 0,5  ; OS.5 FOPEN
+  0223 9e 22                L0223:  CSP 34  ; CSP IORESULT
+  0225 00                           SLDC 0
+  0226 cb                           NEQI
+  0227 a1 38                        FJP $0261
+  0229 b6 01 03                     LOD 1,3
+  022C cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  022F b6 01 03                     LOD 1,3
+  0232 d7                           NOP
+  0233 a6 20 49 20 43 41 4e 27 54 20 46 49 4e 44 20 46 49 4c 45 20 46 4f 52 4d 41 54 54 45 52 2e 44 41 54 41         LSA "I CAN'T FIND FILE FORMATTER.DATA"
+  0255 00                           SLDC 0
+  0256 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0259 b6 01 03                     LOD 1,3
+  025C cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  025F ce 03                        CLP 3  ; local proc 3
+  0261 a5 84 0e             L0261:  LAO 1038
+  0264 eb                           SLDO 4
+  0265 00                           SLDC 0
+  0266 03                           SLDC 3
+  0267 c7 01 00                     LDCI 1
+  026A 91                           NGI
+  026B 01                           SLDC 1
+  026C 00                           SLDC 0
+  026D 00                           SLDC 0
+  026E cd 00 1c                     CXP 0,28  ; OS.28 FBLOCKIO
+  0271 ab 84 0c                     SRO 1036
+  0274 a5 84 0e                     LAO 1038
+  0277 a5 09                        LAO 9
+  0279 00                           SLDC 0
+  027A 03                           SLDC 3
+  027B 03                           SLDC 3
+  027C 01                           SLDC 1
+  027D 00                           SLDC 0
+  027E 00                           SLDC 0
+  027F cd 00 1c                     CXP 0,28  ; OS.28 FBLOCKIO
+  0282 ab 84 0c                     SRO 1036
+  0285 b6 01 03             L0285:  LOD 1,3
+  0288 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  028B b6 01 03                     LOD 1,3
+  028E d7                           NOP
+  028F a6 22 46 4f 52 4d 41 54 20 57 48 49 43 48 20 44 49 53 4b 20 28 34 2c 20 35 2c 20 39 2e 2e 31 32 29 20 3f 20         LSA 'FORMAT WHICH DISK (4, 5, 9..12) ? '
+  02B3 00                           SLDC 0
+  02B4 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  02B7 00                           SLDC 0
+  02B8 00                           SLDC 0
+  02B9 ce 04                        CLP 4  ; local proc 4
+  02BB ab 84 38                     SRO 1080
+  02BE a9 84 38                     LDO 1080
+  02C1 c7 30 1e                     LDCI 7728
+  02C4 01                           SLDC 1
+  02C5 8b                           INN
+  02C6 a1 f6                        FJP $0285 (jtab-10)
+  02C8 a9 84 38                     LDO 1080
+  02CB ab 06                        SRO 6
+  02CD ed                           SLDO 6
+  02CE a5 83 09                     LAO 777
+  02D1 00                           SLDC 0
+  02D2 c7 00 02                     LDCI 512
+  02D5 02                           SLDC 2
+  02D6 00                           SLDC 0
+  02D7 9e 05                        CSP 5  ; CSP UNITREAD
+  02D9 9e 22                        CSP 34  ; CSP IORESULT
+  02DB ab 84 0d                     SRO 1037
+  02DE a9 84 0d                     LDO 1037
+  02E1 09                           SLDC 9
+  02E2 cb                           NEQI
+  02E3 ab 84 36                     SRO 1078
+  02E6 a9 84 0d                     LDO 1037
+  02E9 09                           SLDC 9
+  02EA c3                           EQUI
+  02EB a1 3d                        FJP $032A
+  02ED b6 01 03                     LOD 1,3
+  02F0 d7                           NOP
+  02F1 a6 0c 44 49 53 4b 20 4e 55 4d 42 45 52 20         LSA 'DISK NUMBER '
+  02FF 00                           SLDC 0
+  0300 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0303 b6 01 03                     LOD 1,3
+  0306 ed                           SLDO 6
+  0307 00                           SLDC 0
+  0308 cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  030B b6 01 03                     LOD 1,3
+  030E d7                           NOP
+  030F a6 0f 20 49 53 20 4e 4f 54 20 4f 4e 4c 49 4e 45 2e         LSA ' IS NOT ONLINE.'
+  0320 00                           SLDC 0
+  0321 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0324 b6 01 03                     LOD 1,3
+  0327 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  032A a5 83 09             L032A:  LAO 777
+  032D 06                           SLDC 6
+  032E 00                           SLDC 0
+  032F c7 ff 01                     LDCI 511
+  0332 88                           CHK
+  0333 be                           LDB
+  0334 ab 84 0b                     SRO 1035
+  0337 a9 84 0d                     LDO 1037
+  033A 00                           SLDC 0
+  033B c3                           EQUI
+  033C a9 84 0b                     LDO 1035
+  033F 00                           SLDC 0
+  0340 c5                           GRTI
+  0341 84                           LAND
+  0342 a9 84 0b                     LDO 1035
+  0345 07                           SLDC 7
+  0346 c8                           LEQI
+  0347 84                           LAND
+  0348 a1 f0                        FJP $03F7 (jtab-16)
+  034A b6 01 03                     LOD 1,3
+  034D a6 15 44 45 53 54 52 4f 59 20 44 49 52 45 43 54 4f 52 59 20 4f 46 20         LSA 'DESTROY DIRECTORY OF '
+  0364 d7                           NOP
+  0365 00                           SLDC 0
+  0366 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0369 07                           SLDC 7
+  036A ab 84 0a                     SRO 1034
+  036D 07                           SLDC 7
+  036E 01                           SLDC 1
+  036F 95                           SBI
+  0370 a9 84 0b                     LDO 1035
+  0373 82                           ADI
+  0374 ab 84 3a                     SRO 1082
+  0377 a9 84 0a             L0377:  LDO 1034
+  037A a9 84 3a                     LDO 1082
+  037D c8                           LEQI
+  037E a1 1d                        FJP $039D
+  0380 b6 01 03                     LOD 1,3
+  0383 a5 83 09                     LAO 777
+  0386 a9 84 0a                     LDO 1034
+  0389 00                           SLDC 0
+  038A c7 ff 01                     LDCI 511
+  038D 88                           CHK
+  038E be                           LDB
+  038F 00                           SLDC 0
+  0390 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  0393 a9 84 0a                     LDO 1034
+  0396 01                           SLDC 1
+  0397 82                           ADI
+  0398 ab 84 0a                     SRO 1034
+  039B b9 f4                        UJP $0377 (jtab-12)
+  039D b6 01 03             L039D:  LOD 1,3
+  03A0 d7                           NOP
+  03A1 a6 03 20 3f 20               LSA ' ? '
+  03A6 00                           SLDC 0
+  03A7 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  03AA b6 01 04             L03AA:  LOD 1,4
+  03AD a5 84 39                     LAO 1081
+  03B0 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  03B3 a9 84 39                     LDO 1081
+  03B6 b3 08 00 02 00 40 00 02 00 40 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $4000 $0200 $4000 $0200]
+  03C8 08                           SLDC 8
+  03C9 8b                           INN
+  03CA a1 f2                        FJP $03AA (jtab-14)
+  03CC b6 01 03                     LOD 1,3
+  03CF a9 84 39                     LDO 1081
+  03D2 00                           SLDC 0
+  03D3 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  03D6 b6 01 03                     LOD 1,3
+  03D9 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  03DC a9 84 39                     LDO 1081
+  03DF b3 08 10 00 02 00 00 00 02 00 00 00 00 00 00 00 00 00 00         LDC 8w [$0000 $0000 $0000 $0000 $0000 $0200 $0000 $0200]
+  03F2 08                           SLDC 8
+  03F3 8b                           INN
+  03F4 ab 84 36                     SRO 1078
+  03F7 a9 84 36             L03F7:  LDO 1078
+  03FA a1 ee                        FJP $0285 (jtab-18)
+  03FC b6 01 03                     LOD 1,3
+  03FF a6 21 4e 4f 57 20 46 4f 52 4d 41 54 54 49 4e 47 20 44 49 53 4b 45 54 54 45 20 49 4e 20 44 52 49 56 45 20         LSA 'NOW FORMATTING DISKETTE IN DRIVE '
+  0422 d7                           NOP
+  0423 00                           SLDC 0
+  0424 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0427 b6 01 03                     LOD 1,3
+  042A ed                           SLDO 6
+  042B 00                           SLDC 0
+  042C cd 00 0d                     CXP 0,13  ; OS.13 FWRITEINT
+  042F b6 01 03                     LOD 1,3
+  0432 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0435 c7 01 00                     LDCI 1
+  0438 91                           NGI
+  0439 a1 ea                        FJP $0534 (jtab-22)
+  043B ed                           SLDO 6
+  043C b9 30                        UJP $046E
+  043E 06                   L043E:  SLDC 6
+  043F ab 08                        SRO 8
+  0441 01                           SLDC 1
+  0442 ab 07                        SRO 7
+  0444 b9 42                        UJP $0488
+  0446 06                   L0446:  SLDC 6
+  0447 ab 08                        SRO 8
+  0449 02                           SLDC 2
+  044A ab 07                        SRO 7
+  044C b9 3a                        UJP $0488
+  044E 04                   L044E:  SLDC 4
+  044F ab 08                        SRO 8
+  0451 01                           SLDC 1
+  0452 ab 07                        SRO 7
+  0454 b9 32                        UJP $0488
+  0456 04                   L0456:  SLDC 4
+  0457 ab 08                        SRO 8
+  0459 02                           SLDC 2
+  045A ab 07                        SRO 7
+  045C b9 2a                        UJP $0488
+  045E 05                   L045E:  SLDC 5
+  045F ab 08                        SRO 8
+  0461 01                           SLDC 1
+  0462 ab 07                        SRO 7
+  0464 b9 22                        UJP $0488
+  0466 05                   L0466:  SLDC 5
+  0467 ab 08                        SRO 8
+  0469 02                           SLDC 2
+  046A ab 07                        SRO 7
+  046C b9 1a                        UJP $0488
+  046E ac 30 04 00 0c 00 b9 12 38 00 32 00 06 00 08 00 0a 00 32 00 2c 00 26 00 20 00 L046E:  XJP 4..12 else $0488 [$043E $0446 $0488 $0488 $0488 $044E $0456 $045E $0466]
+  0488 ef                   L0488:  SLDO 8
+  0489 ee                           SLDO 7
+  048A 00                           SLDC 0
+  048B 00                           SLDC 0
+  048C ce 02                        CLP 2  ; local proc 2
+  048E ab 03                        SRO 3
+  0490 ea                           SLDO 3
+  0491 a1 ec                        FJP $0529 (jtab-20)
+  0493 b6 01 03                     LOD 1,3
+  0496 07                           SLDC 7
+  0497 00                           SLDC 0
+  0498 cd 00 11                     CXP 0,17  ; OS.17 FWRITECHAR
+  049B b6 01 03                     LOD 1,3
+  049E d7                           NOP
+  049F a6 1d 45 52 52 4f 52 3a 20 55 4e 41 42 4c 45 20 54 4f 20 46 4f 52 4d 41 54 20 44 49 53 4b 2e         LSA 'ERROR: UNABLE TO FORMAT DISK.'
+  04BE 00                           SLDC 0
+  04BF cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  04C2 b6 01 03                     LOD 1,3
+  04C5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04C8 b6 01 03                     LOD 1,3
+  04CB a6 20 20 20 20 20 20 20 20 44 49 53 4b 45 54 54 45 20 57 52 49 54 45 20 50 52 4f 54 45 43 54 45 44 2c         LSA '       DISKETTE WRITE PROTECTED,'
+  04ED d7                           NOP
+  04EE 00                           SLDC 0
+  04EF cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  04F2 b6 01 03                     LOD 1,3
+  04F5 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  04F8 b6 01 03                     LOD 1,3
+  04FB a6 1f 20 20 20 20 20 20 20 42 41 44 20 4d 45 44 49 41 2c 20 4f 52 20 42 41 44 20 44 52 49 56 45 2e         LSA '       BAD MEDIA, OR BAD DRIVE.'
+  051C d7                           NOP
+  051D 00                           SLDC 0
+  051E cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0521 b6 01 03                     LOD 1,3
+  0524 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0527 b9 0b                        UJP $0534
+  0529 ed                   L0529:  SLDO 6
+  052A a5 09                        LAO 9
+  052C 00                           SLDC 0
+  052D c7 00 06                     LDCI 1536
+  0530 00                           SLDC 0
+  0531 00                           SLDC 0
+  0532 9e 06                        CSP 6  ; CSP UNITWRITE
+  0534 00                   L0534:  SLDC 0
+  0535 a1 e8                        FJP $0285 (jtab-24)
+  0537 ce 03                        CLP 3  ; local proc 3
+  ---- exit code (EXIT target) ----
+  0539 a5 84 0e                     LAO 1038
+  053C 00                           SLDC 0
+  053D cd 00 06                     CXP 0,6  ; OS.6 FCLOSE
+  0540 c1 00                        RBP 0
+  ---- jump table: 8 entries ----
+       jtab-10  -> $0285
+       jtab-12  -> $0377
+       jtab-14  -> $03AA
+       jtab-16  -> $03F7
+       jtab-18  -> $0285
+       jtab-20  -> $0529
+       jtab-22  -> $0534
+       jtab-24  -> $0285
+
+--- procedure 2  NATIVE 6502  enter=$055C jtab=$05D6 data=13 (not disassembled)
+
+--- procedure 3  lex=1 params=0 data=0 enter=$0000 exit=$007F jtab=$008A
+  0000 ed                           SLDO 6
+  0001 04                           SLDC 4
+  0002 c3                           EQUI
+  0003 a1 4d                        FJP $0052
+  0005 b6 02 03                     LOD 2,3
+  0008 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  000B b6 02 03                     LOD 2,3
+  000E d7                           NOP
+  000F a6 27 50 55 54 20 53 59 53 54 45 4d 20 44 49 53 4b 20 49 4e 20 23 34 20 41 4e 44 20 50 52 45 53 53 20 52 45 54 55 52 4e 20         LSA 'PUT SYSTEM DISK IN #4 AND PRESS RETURN '
+  0038 00                           SLDC 0
+  0039 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  003C b6 02 02                     LOD 2,2
+  003F 00                           SLDC 0
+  0040 00                           SLDC 0
+  0041 cd 00 0b                     CXP 0,11  ; OS.11 FEOLN
+  0044 a1 06                        FJP $004C
+  0046 b6 02 02                     LOD 2,2
+  0049 cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  004C b6 02 02             L004C:  LOD 2,2
+  004F cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  0052 b6 02 03             L0052:  LOD 2,3
+  0055 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  0058 b6 02 03                     LOD 2,3
+  005B a6 13 54 48 41 54 27 53 20 41 4c 4c 20 46 4f 4c 4b 53 2e 2e 2e         LSA "THAT'S ALL FOLKS..."
+  0070 d7                           NOP
+  0071 00                           SLDC 0
+  0072 cd 00 13                     CXP 0,19  ; OS.19 FWRITESTRING
+  0075 b6 02 03                     LOD 2,3
+  0078 cd 00 16                     CXP 0,22  ; OS.22 FWRITELN
+  007B 01                           SLDC 1
+  007C 01                           SLDC 1
+  007D 9e 04                        CSP 4  ; CSP EXIT
+  ---- exit code (EXIT target) ----
+  007F ad 00                        RNP 0
+
+--- procedure 4  lex=1 params=4 data=6 enter=$008C exit=$00F8 jtab=$0106
+  008C b6 02 02             L008C:  LOD 2,2
+  008F c6 03                        LLA 3
+  0091 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  0094 b6 02 02                     LOD 2,2
+  0097 00                           SLDC 0
+  0098 00                           SLDC 0
+  0099 cd 00 0b                     CXP 0,11  ; OS.11 FEOLN
+  009C da                           SLDL 3
+  009D b3 04 54 ff 03 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $03FF]
+  00A8 04                           SLDC 4
+  00A9 8b                           INN
+  00AA 8d                           LOR
+  00AB a1 f6                        FJP $008C (jtab-10)
+  00AD b6 02 02                     LOD 2,2
+  00B0 00                           SLDC 0
+  00B1 00                           SLDC 0
+  00B2 cd 00 0b                     CXP 0,11  ; OS.11 FEOLN
+  00B5 a1 02                        FJP $00B9
+  00B7 cf 03                        CGP 3  ; local proc 3
+  00B9 da                   L00B9:  SLDL 3
+  00BA 30                           SLDC 48
+  00BB 95                           SBI
+  00BC cc 04                        STL 4
+  00BE b6 02 02             L00BE:  LOD 2,2
+  00C1 c6 03                        LLA 3
+  00C3 cd 00 10                     CXP 0,16  ; OS.16 FREADCHAR
+  00C6 da                           SLDL 3
+  00C7 b3 04 02 ff 03 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $03FF]
+  00D2 04                           SLDC 4
+  00D3 8b                           INN
+  00D4 a1 09                        FJP $00DF
+  00D6 0a                           SLDC 10
+  00D7 db                           SLDL 4
+  00D8 8f                           MPI
+  00D9 da                           SLDL 3
+  00DA 82                           ADI
+  00DB 30                           SLDC 48
+  00DC 95                           SBI
+  00DD cc 04                        STL 4
+  00DF da                   L00DF:  SLDL 3
+  00E0 b3 04 ff 03 00 00 00 00 00 00         LDC 4w [$0000 $0000 $0000 $03FF]
+  00EA 04                           SLDC 4
+  00EB 8b                           INN
+  00EC 93                           LNOT
+  00ED a1 f4                        FJP $00BE (jtab-12)
+  00EF db                           SLDL 4
+  00F0 cc 01                        STL 1
+  00F2 b6 02 02                     LOD 2,2
+  00F5 cd 00 15                     CXP 0,21  ; OS.21 FREADLN
+  ---- exit code (EXIT target) ----
+  00F8 ad 01                        RNP 1
+  ---- jump table: 2 entries ----
+       jtab-10  -> $008C
+       jtab-12  -> $00BE

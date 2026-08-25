@@ -1,4 +1,9 @@
-"""Produce annotated p-code listings for every segment of SYSTEM.COMPILER."""
+"""Annotated p-code listings.
+
+Run directly, this writes SYSTEM.COMPILER's. `listing_for` is the renderer
+and takes any CodeFile, which is what `disasm_utils.py` points at the rest
+of the disk set.
+"""
 import sys
 from pathlib import Path
 
@@ -19,7 +24,7 @@ DISKS = {
 
 # Segment number -> name, for annotating CXP.
 def seg_names(cf):
-    return {s.seg_num: s.name for s in cf.segments}
+    return {s.number: s.name for s in cf.segments}
 
 
 def annotate(ins, segmap):
@@ -36,9 +41,9 @@ def annotate(ins, segmap):
     return ""
 
 
-def listing_for(cf, ver):
+def listing_for(cf, title):
     segmap = seg_names(cf)
-    out = [f"Apple Pascal {ver} SYSTEM.COMPILER -- p-code listing",
+    out = [f"{title} -- p-code listing",
            f"copyright: {cf.copyright}", ""]
     for seg in cf.segments:
         out.append("=" * 72)
@@ -88,12 +93,19 @@ def listing_for(cf, ver):
 
 
 OUT = ROOT / "analysis" / "pcode_disassembly"
-OUT.mkdir(parents=True, exist_ok=True)
 
-for ver, fname in DISKS.items():
-    disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
-    e = disk.find("SYSTEM.COMPILER")
-    cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
-    path = OUT / f"SYSTEM.COMPILER-{ver}.pcode.txt"
-    path.write_text(listing_for(cf, ver), encoding="ascii")
-    print(f"wrote {path}  ({path.stat().st_size} bytes)")
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    for ver, fname in DISKS.items():
+        disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
+        e = disk.find("SYSTEM.COMPILER")
+        cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
+        path = OUT / f"SYSTEM.COMPILER-{ver}.pcode.txt"
+        path.write_text(listing_for(cf, f"Apple Pascal {ver} SYSTEM.COMPILER"),
+                        encoding="ascii")
+        print(f"wrote {path}  ({path.stat().st_size} bytes)")
+
+
+if __name__ == "__main__":
+    main()
