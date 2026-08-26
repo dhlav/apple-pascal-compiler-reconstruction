@@ -10615,3 +10615,33 @@ cannot write to no longer touches the question. Reassembling `SEARCH.TEXT`
 after the change gave the same clean run as before finding 106 (519 lines,
 0 errors) -- the fix restores the working behavior rather than trading one
 failure for another.
+
+## 109. `LIBMAP.2` is `IDSEARCH` -- the same 800 bytes, not a similar routine
+
+**VERIFIED BINARY FACT.** `LIBMAP.CODE`'s one native procedure and
+`SYSTEM.COMPILER`'s `IDSEARCH` (`PASCALCO` procedure 2) are byte-for-byte
+identical: assembling `src/native/SEARCH.TEXT`'s `IDSEARCH` and diffing the
+result against `LIBMAP.2`'s own `enter_ic..jtab+2` gives **zero differences
+over all 800 bytes**. Every zero-page location matches (`RTN=$7E`,
+`VAL1=$86`, `VAL2=$87`, `CHARS=$88`, `NUM4CH=$90`, `ENTAD=$92`,
+`PARAM1=$94`, `PNT=$96`), the case-folding and underscore-stripping scan is
+identical instruction for instruction, and the entire reserved-word table
+-- all thirty-some words, `AND` through `WITH`, with the same SY and OP
+values, in the same per-letter order, down to the shared three-byte
+empty-letter slot at the same relative offset -- is the same table.
+
+Apple linked one routine into two codefiles rather than write a second
+copy: `LIBMAP.CODE`'s job of displaying a unit's interface text needs the
+same "is this identifier a reserved word" answer the compiler's own
+lexer needs, so it reused the compiler's own `IDSEARCH`, whole. This also
+answers `LIBMAP.9`'s otherwise-unexplained `L5 = 52` check (SY 52 is
+`IMPLEMENTATION` in this table): `LIBMAP.9` is scanning the copied
+interface text for the `IMPLEMENTATION` keyword to know where to stop.
+
+This closes the native half of `LIBMAP.CODE` before it was ever written:
+declaring `PROCEDURE IDSEARCH(VAR IDREC, ID); EXTERNAL;` and linking
+against the existing, already-verified `src/native/SEARCH.TEXT` is the
+whole of it, with no new 6502 to reconstruct. `lift.py`'s `NATIVE_SIG`
+entry for `("LIBMAP", 2)` now names it `"IDSEARCH"` rather than carrying a
+placeholder description, retiring the last entry in that table that was
+not backed by reconstructed source (finding 100f).

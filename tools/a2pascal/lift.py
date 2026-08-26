@@ -112,10 +112,12 @@ NATIVE_SIG = {
     # and reassembles to Apple's bytes, so the two agree and this is source
     # rather than inference (finding 103).
     ("FORMATTE", 2): (3, True, "FORMATDISK"),
-    # No reconstructed source yet; read off the call site, which is weaker
-    # evidence but not a guess: LIBMAP's is handed two `LLA`s and nothing
-    # consumes a result.
-    ("LIBMAP", 2): (2, False, "LIBMAP's native helper"),
+    # It is IDSEARCH. Not a similar routine -- the same 800 bytes, byte
+    # for byte, table and all: assembling src/native/SEARCH.TEXT's IDSEARCH
+    # and diffing it against LIBMAP.2's own enter_ic..jtab+2 gives zero
+    # differences over all 800 (finding 109). Apple linked one routine into
+    # two codefiles rather than writing it twice.
+    ("LIBMAP", 2): (2, False, "IDSEARCH"),
 }
 
 CSP_EFFECT = {
