@@ -10350,27 +10350,69 @@ scale, inside a real linked file rather than a standalone assembly.
 Two things do not match, and both are new findings rather than corrections
 of anything already on record.
 
-### 105a. An extra, empty host segment -- 512 bytes
+### 105a. An extra, empty host segment -- 512 bytes, and what is and is not understood about it
 
 Apple's shipped `SYSTEM.COMPILER` has **no segment 0**. The dictionary's
-code addr/len word for slot 0 is `0000`, and the name table holds eight
-spaces where a name would go. Our linked file has a real segment there,
-`PASCALSY` -- the `(*$U-*) PROGRAM PASCALSYSTEM` host that finding 60
-established wraps `PASCALCO` as a segment procedure. Its only executable
-content is a single `XIT` byte; the other ~99 bytes are the attribute table
-for its many forward-declared segment procedures (finding 60a's "block of
-dummy segment procedures"). That is still one block on disk, so the linked
-file comes out exactly 512 bytes longer than Apple's -- 40448 against
-39936.
+code addr/len word for slot 0 is `0000` and the name table holds eight
+spaces -- and this is not 1.3-specific or a Linker artifact: 1.1's shipped
+`SYSTEM.COMPILER`, which never goes near `SYSTEM.LINKER` at all (1.1's
+`IDSEARCH`/`TREESEARCH` are p-code, no native half to link in), shows the
+identical zero entry. Whatever produces this happens in the **compile**,
+in both releases.
 
-`BEGIN END.` is the entire outer block (`analysis/reconstruction/
-skeleton-1.3.text:596-600`), and a segment that short cannot be trimmed
-further from the Pascal side. Two explanations remain open and neither is
-tested yet: Apple's real compile may not go through an equivalent host
-program at all for a `(*$U-*)` **system**-level file (as opposed to an
-ordinary program), or the *linker* may be what drops an all-forward,
-no-code host segment from its output and ours simply was not asked to.
-Nothing here says which; it is recorded as open rather than guessed at.
+Our linked file has a real segment there, `PASCALSY` -- the `(*$U-*)
+PROGRAM PASCALSYSTEM` host finding 60 established wraps `PASCALCO` as a
+segment procedure. `BEGIN END.` is the entire outer block, and running the
+fast tier (`ucsdpsys_compile`) on isolated model programs shaped like it
+settles what its bytes actually are:
+
+* **The zero-length code is right.** Every model program's outermost
+  block, however it is nested, compiles to genuinely nothing when its body
+  is `BEGIN END` -- `enter_ic = exit_ic`. That part of `PASCALSY` was never
+  in question.
+* **The 43-procedure attribute table is not garbage, and not a bug.**
+  `NEXTPROC` is scoped per segment, saved and restored correctly across
+  every level of nesting this project's own source uses -- verified
+  directly: a model program nesting a `SEGMENT PROCEDURE` two and three
+  levels deep, with `FORWARD` declarations, `EXTERNAL` declarations and
+  multiple sibling segment procedures all present at once, restores its
+  outer segment's count to exactly 1 (itself) every time. `PASCALSY`'s
+  count of 43 is not that counter leaking -- it is the roughly forty-two
+  operating-system routines (`FOPEN`, `FCLOSE`, `FGET`, ... `OSPROC43`)
+  that the `(*$U-*)` skeleton names with a bare `FORWARD` and never
+  defines, because a `(*$U-*)` program borrows the OS's own procedures by
+  number rather than declaring them (finding 63, finding 79b). A `FORWARD`
+  claims a procedure number the moment it is parsed, whether or not a body
+  ever follows, and each of those ~42 is one more than `PASCALCOMPILER`
+  itself. Removing them and substituting a single stub -- exactly what
+  `procbuild.defang_forwards` does for the fast tier, since
+  `ucsdpsys_compile` refuses an undefined forward the way Apple's compiler
+  does not -- drops the count from 43 to 2 (the stub, plus
+  `PASCALCOMPILER`), confirming the arithmetic exactly.
+* **`SYSTEM.LINKER` does not drop it.** `2026-08-25-compiler-linked-v2`
+  is Apple's own Linker, not a reimplementation, and it carried `PASCALSY`
+  through untouched. Whatever removes it in Apple's real build happens
+  before the Linker ever sees the file.
+
+So the segment's *content*, given this source shape, is exactly what a
+correct compiler produces -- the reconstruction is not miscounting
+anything. What remains genuinely open is why Apple's real compile never
+reaches this state at all. `BLOCK`'s own tail (`PASCALCO.text`, the
+procedure of that name) calls `FINISHSEG` unconditionally once its
+declaration-processing loop exhausts (`UNTIL TOS = NIL; FINISHSEG`) --
+there is no guard on it, and that code is itself part of the segment
+verified byte-identical against Apple's binary (finding 107), so it is
+not a candidate for being wrong. The one alternative exit `BLOCK` has --
+`IF (SY = UNITSY) AND NOT INMODULE THEN ... UNITPART(...); IF SY = PERIOD
+THEN EXIT(BLOCK)`, skipping `FINISHSEG` entirely -- was checked and ruled
+out: a real Pascal `UNIT`'s own init body is niladic (`UNITPART.text`'s
+`UNITBODY`: `LOCALLC := 1`), where `PASCALCO`'s verified `PARAM SIZE` is 4;
+and a unit's interface text leaves a nonzero `textaddr` in the dictionary,
+where Apple's shipped file has `textaddr = 0` for every one of its sixteen
+slots, PASCALCO included. Neither of those is compatible with `PASCALCO`
+having come from a `UNIT`. What construct Apple's compiler actually used
+to avoid calling `FINISHSEG` for the host is not established; it is the
+one open question left in this file.
 
 ### 105b. `PASCALCO`'s procedure numbering is right; its physical layout is not
 
