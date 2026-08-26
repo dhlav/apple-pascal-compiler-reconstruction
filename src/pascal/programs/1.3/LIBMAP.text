@@ -26,19 +26,31 @@
   integers the outer block's loop uses. Every name is ours; the offsets
   are Apple's. }
 
+{ $I- : ordinary WRITE/WRITELN/RESET on OUTFILE and INFILE compile to the
+  same CXP 0,n the binary calls directly (verified: WRITE(OUTFILE,S) and
+  FWRITESTRING(@OUTFILE,S,0) are the same instructions), so this does not
+  need (*$U-*) or a single OS FORWARD -- only IDSEARCH is EXTERNAL. Without
+  $I- every one of those calls carries an extra IOCHECK CSP the binary
+  does not have. }
+(*$I-*)
 PROGRAM LIBMAP;
 
   TYPE
     DIRENTRY = RECORD
                  ADDR, LENG: INTEGER
                END;
+    SEGINFOREC = PACKED RECORD CASE INTEGER OF
+                   0: (ASWORD: INTEGER);
+                   1: (SEGNUM: 0..255; MTYPE: 0..15;
+                       UNUSED: 0..1; VERSION: 0..7)
+                 END;
     SEGDICTREC = RECORD
                    ADDRLEN:  ARRAY [0..15] OF DIRENTRY;      {   3 }
                    SEGNAME:  ARRAY [0..15] OF
                                PACKED ARRAY [1..8] OF CHAR;  {  35 }
                    SEGKIND:  ARRAY [0..15] OF INTEGER;       {  99 }
                    TEXTADR:  ARRAY [0..15] OF INTEGER;       { 115 }
-                   SEGINFO:  ARRAY [0..15] OF INTEGER;       { 131 }
+                   SEGINFO:  ARRAY [0..15] OF SEGINFOREC;    { 131 }
                    SPARE:    ARRAY [1..72] OF INTEGER;       { 147, unread }
                    COMMENT:  STRING[79]                     { 219 }
                  END;
@@ -123,6 +135,7 @@ PROGRAM LIBMAP;
     VAR
       I, LAST: 0..15;
       TEMP: INTEGER;
+      INFOTEMP: SEGINFOREC;
   BEGIN
     I := 0;
     LAST := 15;
@@ -134,9 +147,9 @@ PROGRAM LIBMAP;
       SWAPBYTES(TEMP);
       D.SEGKIND[I] := TEMP;
       SWAPBYTES(D.TEXTADR[I]);
-      TEMP := D.SEGINFO[I];
-      SWAPBYTES(TEMP);
-      D.SEGINFO[I] := TEMP;
+      INFOTEMP := D.SEGINFO[I];
+      SWAPBYTES(INFOTEMP.ASWORD);
+      D.SEGINFO[I] := INFOTEMP;
       I := I + 1
     END
   END;
@@ -167,8 +180,17 @@ PROGRAM LIBMAP;
   1:
   END;
 
+  { Walk all sixteen dictionary slots and print the ones actually in use
+    (nonzero code address or length). Each gets a header -- SEGINFO's own
+    segment number if it has one, the slot position if not (an older,
+    pre-II.1 file has no SEGINFO at all) -- then the version/machine-type
+    line or "Pre-II.1 segment", then SHOWONE's own detail, then a rule.
+    Reconstructed from the shape of the binary; not yet checked
+    instruction for instruction. }
   PROCEDURE SHOWSEGS;
-    (*STUB*)
+    VAR
+      SEGNUM, LASTSEG: 0..16;
+      ENTRY: ^DIRENTRY;
 
     PROCEDURE SHOWONE(SEGNUM: INTEGER);
       (*STUB*)
@@ -192,6 +214,48 @@ PROGRAM LIBMAP;
     END;
 
   BEGIN
+    SEGNUM := 0;
+    LASTSEG := 15;
+    WHILE SEGNUM <= LASTSEG DO
+    BEGIN
+      ENTRY := @SEGDICT.ADDRLEN[SEGNUM];
+      IF (ENTRY^.LENG > 0) OR (ENTRY^.ADDR > 0) THEN
+      BEGIN
+        IF SEGDICT.SEGINFO[SEGNUM].SEGNUM <> 0 THEN
+        BEGIN
+          WRITE(OUTFILE, 'Segment #');
+          WRITE(OUTFILE, SEGDICT.SEGINFO[SEGNUM].SEGNUM:2);
+          WRITE(OUTFILE, ':  ');
+          WRITELN(OUTFILE)
+        END
+        ELSE
+        BEGIN
+          WRITE(OUTFILE, 'Segment #');
+          WRITE(OUTFILE, SEGNUM);
+          WRITE(OUTFILE, ':  ');
+          WRITELN(OUTFILE)
+        END;
+        IF SEGDICT.SEGINFO[SEGNUM].VERSION <> 0 THEN
+        BEGIN
+          WRITE(OUTFILE, 'System version = ');
+          WRITE(OUTFILE, VERSTRS[SEGDICT.SEGINFO[SEGNUM].VERSION]);
+          WRITE(OUTFILE, ', code type is ');
+          WRITE(OUTFILE, TYPESTRS[SEGDICT.SEGINFO[SEGNUM].MTYPE]);
+          WRITELN(OUTFILE)
+        END
+        ELSE
+        BEGIN
+          WRITE(OUTFILE, 'Pre-II.1 segment');
+          WRITELN(OUTFILE)
+        END;
+        SHOWONE(SEGNUM);
+        WRITELN(OUTFILE);
+        WRITE(OUTFILE, '----------------------------------------------------------------------':75);
+        WRITELN(OUTFILE);
+        WRITELN(OUTFILE)
+      END;
+      SEGNUM := SEGNUM + 1
+    END
   END;
 
   PROCEDURE MAPLIBRARY;
