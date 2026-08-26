@@ -58,14 +58,57 @@ PROGRAM LIBMAP;
   PROCEDURE IDSEARCH(VAR IDREC, ID);
     EXTERNAL;
 
-  PROCEDURE UPCASE1(VAR C: CHAR);
-    (*STUB*)
+  { Byte-swap a word in place -- read from a library the current machine
+    did not write, whose words come the other way round (the type table
+    at G636 spells out both: "P-Code (most sig. 1st)" and "(least sig.
+    1st)"). Verified instruction for instruction against the binary,
+    LDP/STP field offsets included. }
+  PROCEDURE SWAPBYTES(VAR W: INTEGER);
+    VAR
+      OLDVAL, NEWVAL: PACKED RECORD CASE BOOLEAN OF
+                        TRUE:  (ASWORD: INTEGER);
+                        FALSE: (LO, HI: 0..255)
+                      END;
   BEGIN
+    OLDVAL.ASWORD := W;
+    NEWVAL.HI := OLDVAL.LO;
+    NEWVAL.LO := OLDVAL.HI;
+    W := NEWVAL.ASWORD
   END;
 
-  FUNCTION HASMARKED(P: INTEGER): BOOLEAN;
-    (*STUB*)
+  { TRUE if any of the sixteen words at P has a nonzero byte on the side
+    a word's high byte would be if this machine mis-swapped it -- the
+    test for "this library's dictionary was written on a machine with
+    the other byte order". The endianness probe (set a word to 1, ask
+    which byte holds it) is generic UCSD, not an Apple-specific trick;
+    on the 6502 it always answers "byte 0". Not yet checked against the
+    binary's own CHK placement on the constant index -- (*STUB*) in
+    spirit, real in shape. }
+  FUNCTION NEEDSSWAP(VAR P: ARRAY [0..15] OF INTEGER): BOOLEAN;
+    TYPE
+      WORDBYTES = PACKED RECORD CASE BOOLEAN OF
+                    TRUE:  (ASWORD: INTEGER);
+                    FALSE: (ASBYTES: PACKED ARRAY [0..1] OF 0..255)
+                  END;
+    VAR
+      HIBYTE: 0..1;
+      I, LAST: 0..15;
+      W: WORDBYTES;
   BEGIN
+    NEEDSSWAP := FALSE;
+    W.ASWORD := 1;
+    HIBYTE := ORD(W.ASBYTES[0] = 1);
+    I := 0;
+    LAST := 15;
+    WHILE I <= LAST DO
+    BEGIN
+      W.ASWORD := P[I];
+      IF W.ASBYTES[HIBYTE] <> 0 THEN
+      BEGIN
+        NEEDSSWAP := TRUE
+      END;
+      I := I + 1
+    END
   END;
 
   PROCEDURE MARKALL(P: INTEGER);
