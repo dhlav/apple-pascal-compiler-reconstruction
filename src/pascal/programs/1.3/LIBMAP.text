@@ -1,0 +1,114 @@
+{ LIBMAP -- the Apple Pascal Library Map utility, APPLE2:LIBMAP.CODE.
+
+  Reconstructed from the 1.3 binary. Eleven p-code procedures and one
+  native routine -- and the native routine needs no new source at all: it
+  is IDSEARCH, the compiler's own reserved-word lookup, linked in whole
+  (finding 109). `PROCEDURE IDSEARCH(VAR IDREC, ID); EXTERNAL;` declared
+  first, exactly as PASCALCO.text declares it, and SYSTEM.LINKER puts the
+  same assembled procedure from src/native/SEARCH.TEXT in its place.
+
+  Procedure numbers are fixed by declaration order and the binary fixes
+  the order: IDSEARCH is 2, then 3 through 7 and 12 at the outer level,
+  with 8 nested inside 7's own declaration part (lex 2), and 9, 10, 11
+  nested inside 8 (lex 3) -- the lex levels in the p-code listing are the
+  nesting, not a guess.
+
+  The one segment dictionary LIBMAP reads is Apple's own on-disk format
+  (block 0 of a library or codefile): addr/len per slot, then names, then
+  segkind, then a table read but never named elsewhere in this file, then
+  SEGINFO, seventy-two words this program never references at all, and a
+  length-prefixed comment -- 256 words exactly, one disk block. Every
+  field offset below is the LAO/LDO operand the binary uses, not a guess.
+
+  Globals. SEGDICT is the whole dictionary block, INFILE the library being
+  mapped, OUTFILE the map's destination. Four booleans and two integer
+  tables (version strings, machine-type strings) follow, then two more
+  integers the outer block's loop uses. Every name is ours; the offsets
+  are Apple's. }
+
+PROGRAM LIBMAP;
+
+  TYPE
+    DIRENTRY = RECORD
+                 ADDR, LENG: INTEGER
+               END;
+    SEGDICTREC = RECORD
+                   ADDRLEN:  ARRAY [0..15] OF DIRENTRY;      {   3 }
+                   SEGNAME:  ARRAY [0..15] OF
+                               PACKED ARRAY [1..8] OF CHAR;  {  35 }
+                   SEGKIND:  ARRAY [0..15] OF INTEGER;       {  99 }
+                   TEXTADR:  ARRAY [0..15] OF INTEGER;       { 115 }
+                   SEGINFO:  ARRAY [0..15] OF INTEGER;       { 131 }
+                   SPARE:    ARRAY [1..72] OF INTEGER;       { 147, unread }
+                   COMMENT:  STRING[79]                     { 219 }
+                 END;
+
+  VAR
+    SEGDICT:  SEGDICTREC;              {   3, one disk block }
+    INFILE:   FILE;                    { 259, the library being mapped }
+    OUTFILE:  TEXT;                    { 299, the map's destination }
+    LISTMAP,                           { 600 }
+    LISTREFS,                          { 601 }
+    USINGLIB,                          { 602 }
+    DONEFLAG: BOOLEAN;            { 603 }
+    VERSTRS:  ARRAY [0..7] OF STRING[7];    { 604, 'unknown'/'A2/1.n' }
+    TYPESTRS: ARRAY [0..9] OF STRING[23];   { 636, machine-type names }
+    TEMP2, TEMP1: INTEGER;             { 756, 757 }
+
+  PROCEDURE IDSEARCH(VAR IDREC, ID);
+    EXTERNAL;
+
+  PROCEDURE UPCASE1(VAR C: CHAR);
+    (*STUB*)
+  BEGIN
+  END;
+
+  FUNCTION HASMARKED(P: INTEGER): BOOLEAN;
+    (*STUB*)
+  BEGIN
+  END;
+
+  PROCEDURE MARKALL(P: INTEGER);
+    (*STUB*)
+  BEGIN
+  END;
+
+  FUNCTION ISIDENT(P: INTEGER): BOOLEAN;
+    (*STUB*)
+  BEGIN
+  END;
+
+  PROCEDURE SHOWSEGS;
+    (*STUB*)
+
+    PROCEDURE SHOWONE(SEGNUM: INTEGER);
+      (*STUB*)
+
+      FUNCTION SHOWINFO(BLK: INTEGER): BOOLEAN;
+        (*STUB*)
+      BEGIN
+      END;
+
+      PROCEDURE GETWORD(VAR W: INTEGER);
+        (*STUB*)
+      BEGIN
+      END;
+
+      PROCEDURE SHOWREF(VAR NAME: STRING);
+        (*STUB*)
+      BEGIN
+      END;
+
+    BEGIN
+    END;
+
+  BEGIN
+  END;
+
+  PROCEDURE MAPLIBRARY;
+    (*STUB*)
+  BEGIN
+  END;
+
+BEGIN
+END.
