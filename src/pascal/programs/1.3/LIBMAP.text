@@ -111,14 +111,60 @@ PROGRAM LIBMAP;
     END
   END;
 
-  PROCEDURE MARKALL(P: INTEGER);
-    (*STUB*)
+  { Byte-swap every word in one dictionary block that came from a
+    different-endian machine: both words of each ADDRLEN entry, then
+    SEGKIND, TEXTADR and SEGINFO entry by entry. SEGKIND and SEGINFO go
+    through a temporary and are written back; ADDRLEN and TEXTADR are
+    swapped in place directly. Reconstructed from the shape of the
+    binary's own loop; its own two extra words of locals (an address
+    computed into its own temporary before SWAPBYTES dereferences it,
+    same as NEEDSSWAP) are not yet accounted for here. }
+  PROCEDURE SWAPALL(VAR D: SEGDICTREC);
+    VAR
+      I, LAST: 0..15;
+      TEMP: INTEGER;
   BEGIN
+    I := 0;
+    LAST := 15;
+    WHILE I <= LAST DO
+    BEGIN
+      SWAPBYTES(D.ADDRLEN[I].ADDR);
+      SWAPBYTES(D.ADDRLEN[I].LENG);
+      TEMP := D.SEGKIND[I];
+      SWAPBYTES(TEMP);
+      D.SEGKIND[I] := TEMP;
+      SWAPBYTES(D.TEXTADR[I]);
+      TEMP := D.SEGINFO[I];
+      SWAPBYTES(TEMP);
+      D.SEGINFO[I] := TEMP;
+      I := I + 1
+    END
   END;
 
-  FUNCTION ISIDENT(P: INTEGER): BOOLEAN;
-    (*STUB*)
+  { TRUE iff all eight characters of a segment name are valid identifier
+    characters (letter, digit, underscore or the blank padding) --
+    checked before trusting a segment name at all. Verified instruction
+    for instruction, including the early exit: the source leaves the
+    result FALSE from the top and jumps straight past the loop rather
+    than reassigning it. }
+  FUNCTION VALIDNAME(VAR NAME: PACKED ARRAY [0..7] OF CHAR): BOOLEAN;
+    LABEL 1;
+    VAR
+      LAST, I: 0..7;
   BEGIN
+    VALIDNAME := FALSE;
+    I := 0;
+    LAST := 7;
+    WHILE I <= LAST DO
+    BEGIN
+      IF NOT (NAME[I] IN [' ', '0'..'9', 'A'..'Z', '_']) THEN
+      BEGIN
+        GOTO 1
+      END;
+      I := I + 1
+    END;
+    VALIDNAME := TRUE;
+  1:
   END;
 
   PROCEDURE SHOWSEGS;
