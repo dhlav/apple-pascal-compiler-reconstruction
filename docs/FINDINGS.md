@@ -10414,6 +10414,69 @@ having come from a `UNIT`. What construct Apple's compiler actually used
 to avoid calling `FINISHSEG` for the host is not established; it is the
 one open question left in this file.
 
+### 105a-i. The gap tested against Apple's own compiler, twice, and narrowed further
+
+**VERIFIED BINARY FACT**, from two minimal programs compiled by the real
+1.3 `SYSTEM.COMPILER` under the emulator, not the fast tier
+(`acceptance/2026-08-25-hostseg-experiments/`):
+
+```
+(*$U-*)                            (*$U-*)
+PROGRAM TESTHOST;                  VAR X: INTEGER;
+VAR X: INTEGER;
+                                    SEGMENT PROCEDURE INNER(A,B: INTEGER);
+SEGMENT PROCEDURE INNER(A,B: INTEGER);  PROCEDURE FOO;
+  PROCEDURE FOO;                   BEGIN
+  BEGIN                            END;
+  END;                             BEGIN
+BEGIN                                FOO
+  FOO                              END;
+END;
+                                    BEGIN
+BEGIN                               END.
+END.
+```
+
+Both compile clean, and both give the *exact same shape* this
+reconstruction produces for `SYSTEM.COMPILER`: a real, non-empty segment 0
+(16 bytes: `SEG=0`, `NEXTPROC-1=1` -- just the outer block's own attribute
+record), then `INNER` as segment 1. **Apple's own compiler, given a bare
+`(*$U-*) PROGRAM; VAR ...; SEGMENT PROCEDURE ...; BEGIN END.` shape,
+produces a nonzero segment 0 every time.** This was checked, not assumed --
+the second program drops the `PROGRAM` heading entirely (legal here,
+because `COMPINIT.text`'s own code only parses one `IF SY = PROGSY`,
+never requires it), and the result is identical except the segment name is
+blank instead of named, which is itself one more match for what Apple's
+shipped file shows at slot 0 -- just not the zero length that goes with
+it.
+
+This rules out any theory resting on some subtlety of *this* reconstruction's
+`PASCALCO.text` or its splice: the mechanism that empties segment 0 in
+Apple's shipped file cannot be a fast-tier-only quirk or a bug in the
+verified-correct `BLOCK`/`FINISHSEG` source, because the same shape, run
+through Apple's own 1.3 compiler, behaves exactly as this reconstruction's
+does. Whatever Apple's real top-level source looked like, it was not this
+shape.
+
+The `UNIT`-intrinsic variant of 105a's ruled-out theory is now closed too,
+on the same evidence that closed the plain one: every one of
+`SYSTEM.LIBRARY`'s six real intrinsic units -- `TRANSCEND`, `CHAINSTUFF`,
+`PASCALIO`, `LONGINTIO`, `TURTLEGRAPHICS`, `APPLESTUFF`, checked directly
+off the shipped binary -- has `PARAM SIZE 0` for its own procedure 1, no
+exception. `UNITBODY`'s niladic convention (`LOCALLC := 1`) is not
+something one intrinsic unit might have escaped; it is universal across
+every one Apple actually shipped. `PASCALCO`'s verified `PARAM SIZE 4`
+rules out an intrinsic unit exactly as it ruled out a plain one.
+
+What remains is narrower than before but still open: some construct
+avoids `BLOCK` ever reaching its own unconditional tail `FINISHSEG` for
+the host, and it is neither of `BLOCK`'s two known early exits (both
+gated on `UNIT`, both ruled out) nor a difference in program-heading
+syntax (tested, no effect) nor anything about `SYSTEM.LINKER` (tested
+directly on this project's own linked file, finding 105a). If there is a
+third path through the verified source that has not been read yet, it has
+not been found by tracing the source or by testing the shape experimentally.
+
 ### 105b. `PASCALCO`'s procedure numbering is right; its physical layout is not
 
 Every procedure's **content** was already confirmed against Apple's (finding
