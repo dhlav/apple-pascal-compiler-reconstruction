@@ -76,6 +76,32 @@ RELEASES = {
 }
 
 
+SCRATCH = ROOT / "build" / "disks" / "emu-scratch"
+
+
+def scratch_copy(path: Path) -> Path:
+    """A writable copy of an evidence disk, fresh every launch.
+
+    Read-only stops AppleWin from corrupting `evidence/` (finding 106), but
+    it does not stop AppleWin from *needing* to write there: `SYSTEM.ASSMBLER`
+    writes a `%LINKER.INFO` scratch file to whatever volume is the Filer's
+    P(refix -- APPLE2: for an assemble (finding 44e's recipe) -- and a
+    read-only APPLE2: fails that with `I/O Error #16`, not a graceful
+    fallback. The fix is not to relax read-only; it is to never hand AppleWin
+    the evidence file at all. Every disk this script mounts is a copy under
+    `build/`, remade from evidence at the start of every launch, so nothing
+    mounted is ever the file `git status` would notice.
+    """
+    SCRATCH.mkdir(parents=True, exist_ok=True)
+    import shutil
+    dest = SCRATCH / path.name
+    shutil.copyfile(path, dest)
+    import os
+    import stat
+    os.chmod(dest, os.stat(dest).st_mode | stat.S_IWRITE)
+    return dest
+
+
 def enforce_readonly(paths) -> None:
     """AppleWin opens `-d1`/`-d2` for read-write and will write to them --
     a boot alone updates the volume's date stamp. That happened for real:
@@ -134,12 +160,17 @@ def main() -> int:
             raise SystemExit(f"missing evidence disk: {r[key]}")
     enforce_readonly(DISKS / r[key] for key in ("d1", "d2", "s5d2"))
 
-    d1 = DISKS / r["d1"]
-    if args.boot128:
-        d1 = ROOT / "build" / "disks" / "BOOT128.dsk"
-        if not d1.exists():
-            raise SystemExit("BOOT128.dsk has not been built "
-                             "(python tools/mkbootdisk.py)")
+    # Every evidence disk AppleWin will touch is mounted as a fresh scratch
+    # copy, not the file under evidence/ -- see scratch_copy's note. d1 is
+    # skipped when --boot128 substitutes BOOT128.dsk, and s5d2 when --work2
+    # substitutes WORK2.dsk: both are already build/ artifacts.
+    d1 = ROOT / "build" / "disks" / "BOOT128.dsk" if args.boot128 else \
+        scratch_copy(DISKS / r["d1"])
+    if args.boot128 and not d1.exists():
+        raise SystemExit("BOOT128.dsk has not been built "
+                         "(python tools/mkbootdisk.py)")
+    d2 = scratch_copy(DISKS / r["d2"])
+    s5d2 = WORK2 if args.work2 else scratch_copy(DISKS / r["s5d2"])
 
     # No `-conf`: it would make AppleWin read an INI instead of the registry,
     # and SETTINGS would have no effect. No `-clock-multiplier` either -- it
@@ -147,10 +178,10 @@ def main() -> int:
     cmd = [str(EXE),
            "-model", "apple2e",
            "-d1", str(d1),
-           "-d2", str(DISKS / r["d2"]),
+           "-d2", str(d2),
            "-s5", "diskii",
            "-s5d1", str(WORK),
-           "-s5d2", str(WORK2 if args.work2 else DISKS / r["s5d2"]),
+           "-s5d2", str(s5d2),
            "-power-on"]
 
     print("AppleWin settings (registry; no switch exists for these):")

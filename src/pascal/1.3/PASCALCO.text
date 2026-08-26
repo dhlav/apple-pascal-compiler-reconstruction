@@ -14,7 +14,19 @@
   Procedures still to be reconstructed carry (*STUB*) on their header and
   have an empty body. They are here to hold their number, nothing more.
   The marker disappears from a procedure when its body is written and
-  verified. }
+  verified.
+
+  The bodies below are placed in Apple's own PHYSICAL order too, not just
+  declared in it -- a whole-segment byte compare can see body placement
+  and declaration order separately, and they are not the same thing
+  (finding 105b). `COMPILE` is FORWARD-declared here, alongside the rest,
+  for exactly that reason: its body sits physically after `BLOCK`, but its
+  number (27) has to be claimed before `INSYMBOL`'s nested `COMMENTER` is
+  parsed, or `COMMENTER`/`FINDFORW`/`HOLDMOST`/`HOLDROUT` all shift down by
+  one. A forward declaration is the only thing that separates where a
+  number is assigned from where the code is written; every other
+  non-forward procedure here has its number and its body in the same
+  place, which is why only `COMPILE` needed one. }
 
 PROCEDURE IDSEARCH(VAR IDREC, ID);
   EXTERNAL;
@@ -69,6 +81,8 @@ PROCEDURE WRITECODE(FORCEBUF: BOOLEAN);
 PROCEDURE FINISHSEG;
   FORWARD;
 PROCEDURE BLOCK(FSYS: SETOFSYS);
+  FORWARD;
+PROCEDURE COMPILE;
   FORWARD;
 
 { The compiler's phases. They are nested SEGMENT PROCEDUREs, declared here
@@ -212,6 +226,171 @@ BEGIN LCP := DISPLAY[TOP].FNAME;
   FCP^.LLINK := NIL; FCP^.RLINK := NIL
 END;
 
+PROCEDURE CHECKEND;
+BEGIN (* CHECKS FOR THE END OF THE PAGE *)
+  SCREENDOTS := SCREENDOTS+1;
+  SYMCURSOR := SYMCURSOR + 1;
+  IF NOISY THEN
+    BEGIN WRITE(OUTPUT,'.');
+      IF (SCREENDOTS-STARTDOTS) MOD 50 = 0 THEN
+        BEGIN WRITELN(OUTPUT);
+          WRITE(OUTPUT,'<',SCREENDOTS:4,'>')
+        END
+    END;
+  IF LIST THEN PRINTLINE;
+  BPTONLINE := FALSE;
+  IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN
+    BEGIN
+      IF NOT USING THEN
+        BEGIN
+          SYMCURSOR := SCAN(1024-SYMCURSOR,<>CHR(0),
+                            SYMBUFP^[SYMCURSOR]) + SYMCURSOR;
+          IF SYMCURSOR <> 1024 THEN ERROR(400)
+        END;
+      GETNEXTPAGE
+    END
+  ELSE LINESTART := SYMCURSOR;
+  IF SYMBUFP^[SYMCURSOR] = CHR(12(*FF*)) THEN SYMCURSOR:=SYMCURSOR+1;
+  IF SYMBUFP^[SYMCURSOR] = CHR(16(*DLE*)) THEN
+    SYMCURSOR := SYMCURSOR+2
+  ELSE
+    BEGIN
+      SYMCURSOR := SYMCURSOR+SCAN(80,<>CHR(9),SYMBUFP^[SYMCURSOR]);
+      SYMCURSOR := SYMCURSOR+SCAN(80,<>' ',SYMBUFP^[SYMCURSOR])
+    END;
+  IF DP THEN LINEINFO := LC ELSE LINEINFO := IC
+END;
+
+PROCEDURE INSYMBOL; (* COMPILER VERSION 3.4 06-NOV-76 *)
+  LABEL 1;
+  VAR LVP: CSP; X: INTEGER;
+      LVAL: INTEGER;
+      LI: INTEGER;
+      LCH: CHAR;
+
+  PROCEDURE COMMENTER(STOPPER: CHAR);
+    VAR CH: CHAR; { declared and never referenced: Apple's DATA SIZE is 2
+                    and no instruction in the procedure touches it, the
+                    same as GETNEXTPAGE. II.0's COMMENTER declares CH
+                    first, so it is the likeliest survivor of the rewrite }
+  BEGIN
+    SYMCURSOR := SYMCURSOR+1;
+    IF SYMBUFP^[SYMCURSOR] = '$' THEN
+      IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
+    SYMCURSOR := SYMCURSOR-1;
+    REPEAT
+      REPEAT
+        SYMCURSOR := SYMCURSOR+1;
+        WHILE SYMBUFP^[SYMCURSOR] = CHR(EOL) DO CHECKEND
+      UNTIL SYMBUFP^[SYMCURSOR] = STOPPER
+    UNTIL (SYMBUFP^[SYMCURSOR+1] = ')') OR (STOPPER = '}');
+    SYMCURSOR := SYMCURSOR+1
+  END;
+
+BEGIN (* INSYMBOL *)
+  IF GETSTMTLEV THEN BEGIN BEGSTMTLEV := STMTLEV; GETSTMTLEV := FALSE END;
+  OP := NOOP;
+1:  SY := OTHERSY; (* IF NO CASES EXERCISED BLOW UP *)
+  CASE SYMBUFP^[SYMCURSOR] OF
+  '''':NUMSTRING(FALSE,LVP);
+  '0','1','2','3','4','5','6','7','8','9':
+       BEGIN
+         LCH := SYMBUFP^[SYMCURSOR];
+         LI := 0; LVAL := 0;
+         WHILE (LCH IN ['0'..'9']) AND (LI < 4) DO
+           BEGIN
+             LVAL := LVAL*10 + (ORD(LCH) - ORD('0'));
+             LI := LI+1;
+             LCH := SYMBUFP^[SYMCURSOR+LI]
+           END;
+         IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(TRUE,LVP)
+         ELSE
+           BEGIN
+             SYMCURSOR := SYMCURSOR+LI-1;
+             SY := INTCONST; OP := NOOP;
+             VAL.IVAL := LVAL
+           END
+       END;
+  'A','B','C','D','E','F','G','H','I','J','K','L','M',
+  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+  'n','o','p','q','r','s','t','u','v','w','x','y','z':
+       IDSEARCH(SYMCURSOR,SYMBUFP^); (* MAGIC PROC *)
+  '{': BEGIN COMMENTER('}'); GOTO 1 END;
+  '(': BEGIN
+         IF SYMBUFP^[SYMCURSOR+1]='*' THEN
+             BEGIN
+                SYMCURSOR := SYMCURSOR+1;
+                COMMENTER('*');
+                SYMCURSOR := SYMCURSOR+1;
+                GOTO 1; (* GET ANOTHER TOKEN *)
+             END
+           ELSE
+             SY := LPARENT;
+       END;
+  ')': SY := RPARENT;
+  ',': SY := COMMA;
+  '	',' ': BEGIN SYMCURSOR := SYMCURSOR+1; GOTO 1; END;
+  '.': BEGIN
+         IF SYMBUFP^[SYMCURSOR+1]='.'
+           THEN
+             BEGIN
+               SYMCURSOR := SYMCURSOR+1;
+               SY := COLON
+             END
+           ELSE
+             SY := PERIOD;
+       END;
+  ':': IF SYMBUFP^[SYMCURSOR+1]='='
+         THEN
+           BEGIN
+             SYMCURSOR := SYMCURSOR+1;
+             SY := BECOMES;
+          END
+        ELSE
+           SY := COLON;
+  ';': SY := SEMICOLON;
+  '^': SY := ARROW;
+  '[': SY := LBRACK;
+  ']': SY := RBRACK;
+  '*': BEGIN SY := MULOP; OP := MUL END;
+  '+': BEGIN SY := ADDOP; OP := PLUS END;
+  '-': BEGIN SY := ADDOP; OP := MINUS END;
+  '/': BEGIN SY := MULOP; OP := RDIV END;
+  '<': BEGIN
+         SY := RELOP;
+         OP := LTOP;
+         CASE SYMBUFP^[SYMCURSOR+1] OF
+           '>': BEGIN
+                  OP := NEOP;
+                  SYMCURSOR := SYMCURSOR+1
+                END;
+           '=': BEGIN
+                  OP := LEOP;
+                  SYMCURSOR := SYMCURSOR+1
+                END
+         END;
+       END;
+  '=': BEGIN SY := RELOP; OP := EQOP END;
+  '>': BEGIN
+         SY := RELOP;
+         IF SYMBUFP^[SYMCURSOR+1]='='
+           THEN
+             BEGIN
+               OP := GEOP;
+               SYMCURSOR := SYMCURSOR+1;
+             END
+           ELSE
+             OP := GTOP;
+       END
+END (* CASE SYMBUFP^[SYMCURSOR] OF *);
+  IF SY=OTHERSY THEN
+    IF SYMBUFP^[SYMCURSOR] = CHR(EOL) THEN
+      BEGIN CHECKEND; GETSTMTLEV := TRUE; GOTO 1 END
+    ELSE ERROR(400);
+  SYMCURSOR := SYMCURSOR+1 (* NEXT CALL TALKS ABOUT NEXT TOKEN *)
+END;
+
 PROCEDURE SEARCHSECTION(*FCP: CTP; VAR FCP1: CTP*);
 BEGIN
   IF FCP <> NIL THEN
@@ -282,65 +461,6 @@ BEGIN
   IF FNEWSEG THEN BUMPSEG(NEXTSEG,63,354);
   BUMPSEG(SEGSLOT,15,354);
   SEGMAP[SEG] := SEGSLOT
-END;
-
-PROCEDURE CHECKEND;
-BEGIN (* CHECKS FOR THE END OF THE PAGE *)
-  SCREENDOTS := SCREENDOTS+1;
-  SYMCURSOR := SYMCURSOR + 1;
-  IF NOISY THEN
-    BEGIN WRITE(OUTPUT,'.');
-      IF (SCREENDOTS-STARTDOTS) MOD 50 = 0 THEN
-        BEGIN WRITELN(OUTPUT);
-          WRITE(OUTPUT,'<',SCREENDOTS:4,'>')
-        END
-    END;
-  IF LIST THEN PRINTLINE;
-  BPTONLINE := FALSE;
-  IF SYMBUFP^[SYMCURSOR]=CHR(0) THEN
-    BEGIN
-      IF NOT USING THEN
-        BEGIN
-          SYMCURSOR := SCAN(1024-SYMCURSOR,<>CHR(0),
-                            SYMBUFP^[SYMCURSOR]) + SYMCURSOR;
-          IF SYMCURSOR <> 1024 THEN ERROR(400)
-        END;
-      GETNEXTPAGE
-    END
-  ELSE LINESTART := SYMCURSOR;
-  IF SYMBUFP^[SYMCURSOR] = CHR(12(*FF*)) THEN SYMCURSOR:=SYMCURSOR+1;
-  IF SYMBUFP^[SYMCURSOR] = CHR(16(*DLE*)) THEN
-    SYMCURSOR := SYMCURSOR+2
-  ELSE
-    BEGIN
-      SYMCURSOR := SYMCURSOR+SCAN(80,<>CHR(9),SYMBUFP^[SYMCURSOR]);
-      SYMCURSOR := SYMCURSOR+SCAN(80,<>' ',SYMBUFP^[SYMCURSOR])
-    END;
-  IF DP THEN LINEINFO := LC ELSE LINEINFO := IC
-END;
-
-FUNCTION SEGINFO(*FSEG: INTEGER): INTEGER*);
-{ The word Apple 1.3 added to the codefile's segment dictionary: segment
-  number in bits 0..7, machine type in 8..11, one unused bit, version in
-  13..15. `codefile.py` reads the same layout out of the file, from the
-  other side. }
-  TYPE SEGINFOREC = PACKED RECORD CASE INTEGER OF
-                      0: (WORDVAL: INTEGER);
-                      1: (SEGNUM: 0..255; MTYPE: 0..15;
-                          UNUSED: 0..1; VERSION: 0..7);
-                      2: (BYTES: PACKED ARRAY [0..1] OF 0..255)
-                    END;
-  VAR LMSB: BOOLEAN; LINFO: SEGINFOREC;
-BEGIN
-  LINFO.WORDVAL := 0;
-  LINFO.MTYPE := 2;
-  LMSB := LINFO.BYTES[0] <> 0;
-  IF FLIPBYTES THEN LMSB := LMSB = FALSE;
-  IF LMSB THEN LINFO.MTYPE := 1;
-  LINFO.SEGNUM := SEGTABLE[FSEG].SEGNUM;
-  LINFO.UNUSED := 0;
-  LINFO.VERSION := 6;
-  SEGINFO := LINFO.WORDVAL
 END;
 
 PROCEDURE SKIP(*FSYS: SETOFSYS*);
@@ -537,6 +657,30 @@ BEGIN
           ELSE COMPTYPES := FALSE
 END;
 
+FUNCTION SEGINFO(*FSEG: INTEGER): INTEGER*);
+{ The word Apple 1.3 added to the codefile's segment dictionary: segment
+  number in bits 0..7, machine type in 8..11, one unused bit, version in
+  13..15. `codefile.py` reads the same layout out of the file, from the
+  other side. }
+  TYPE SEGINFOREC = PACKED RECORD CASE INTEGER OF
+                      0: (WORDVAL: INTEGER);
+                      1: (SEGNUM: 0..255; MTYPE: 0..15;
+                          UNUSED: 0..1; VERSION: 0..7);
+                      2: (BYTES: PACKED ARRAY [0..1] OF 0..255)
+                    END;
+  VAR LMSB: BOOLEAN; LINFO: SEGINFOREC;
+BEGIN
+  LINFO.WORDVAL := 0;
+  LINFO.MTYPE := 2;
+  LMSB := LINFO.BYTES[0] <> 0;
+  IF FLIPBYTES THEN LMSB := LMSB = FALSE;
+  IF LMSB THEN LINFO.MTYPE := 1;
+  LINFO.SEGNUM := SEGTABLE[FSEG].SEGNUM;
+  LINFO.UNUSED := 0;
+  LINFO.VERSION := 6;
+  SEGINFO := LINFO.WORDVAL
+END;
+
 PROCEDURE GENBYTE(*FBYTE: INTEGER*);
 BEGIN
   CODEP^[IC] := CHR(FBYTE); IC := IC+1
@@ -587,142 +731,6 @@ BEGIN IC := 0;
   GENBYTE(SEG); GENBYTE(NEXTPROC-1);
   SEGTABLE[SEGMAP[SEG]].CODELENG := SEGINX+IC;
   WRITECODE(TRUE); SEGINX := 0; CODEINSEG := FALSE
-END;
-
-PROCEDURE COMPILE;
-BEGIN
-  TIME(LGTH,LOWTIME);
-  BLOCK(BLOCKBEGSYS+STATBEGSYS-[CASESY])
-END;
-
-PROCEDURE INSYMBOL; (* COMPILER VERSION 3.4 06-NOV-76 *)
-  LABEL 1;
-  VAR LVP: CSP; X: INTEGER;
-      LVAL: INTEGER;
-      LI: INTEGER;
-      LCH: CHAR;
-
-  PROCEDURE COMMENTER(STOPPER: CHAR);
-    VAR CH: CHAR; { declared and never referenced: Apple's DATA SIZE is 2
-                    and no instruction in the procedure touches it, the
-                    same as GETNEXTPAGE. II.0's COMMENTER declares CH
-                    first, so it is the likeliest survivor of the rewrite }
-  BEGIN
-    SYMCURSOR := SYMCURSOR+1;
-    IF SYMBUFP^[SYMCURSOR] = '$' THEN
-      IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
-    SYMCURSOR := SYMCURSOR-1;
-    REPEAT
-      REPEAT
-        SYMCURSOR := SYMCURSOR+1;
-        WHILE SYMBUFP^[SYMCURSOR] = CHR(EOL) DO CHECKEND
-      UNTIL SYMBUFP^[SYMCURSOR] = STOPPER
-    UNTIL (SYMBUFP^[SYMCURSOR+1] = ')') OR (STOPPER = '}');
-    SYMCURSOR := SYMCURSOR+1
-  END;
-
-BEGIN (* INSYMBOL *)
-  IF GETSTMTLEV THEN BEGIN BEGSTMTLEV := STMTLEV; GETSTMTLEV := FALSE END;
-  OP := NOOP;
-1:  SY := OTHERSY; (* IF NO CASES EXERCISED BLOW UP *)
-  CASE SYMBUFP^[SYMCURSOR] OF
-  '''':NUMSTRING(FALSE,LVP);
-  '0','1','2','3','4','5','6','7','8','9':
-       BEGIN
-         LCH := SYMBUFP^[SYMCURSOR];
-         LI := 0; LVAL := 0;
-         WHILE (LCH IN ['0'..'9']) AND (LI < 4) DO
-           BEGIN
-             LVAL := LVAL*10 + (ORD(LCH) - ORD('0'));
-             LI := LI+1;
-             LCH := SYMBUFP^[SYMCURSOR+LI]
-           END;
-         IF LCH IN ['.','0'..'9','E'] THEN NUMSTRING(TRUE,LVP)
-         ELSE
-           BEGIN
-             SYMCURSOR := SYMCURSOR+LI-1;
-             SY := INTCONST; OP := NOOP;
-             VAL.IVAL := LVAL
-           END
-       END;
-  'A','B','C','D','E','F','G','H','I','J','K','L','M',
-  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-  'a','b','c','d','e','f','g','h','i','j','k','l','m',
-  'n','o','p','q','r','s','t','u','v','w','x','y','z':
-       IDSEARCH(SYMCURSOR,SYMBUFP^); (* MAGIC PROC *)
-  '{': BEGIN COMMENTER('}'); GOTO 1 END;
-  '(': BEGIN
-         IF SYMBUFP^[SYMCURSOR+1]='*' THEN
-             BEGIN
-                SYMCURSOR := SYMCURSOR+1;
-                COMMENTER('*');
-                SYMCURSOR := SYMCURSOR+1;
-                GOTO 1; (* GET ANOTHER TOKEN *)
-             END
-           ELSE
-             SY := LPARENT;
-       END;
-  ')': SY := RPARENT;
-  ',': SY := COMMA;
-  '	',' ': BEGIN SYMCURSOR := SYMCURSOR+1; GOTO 1; END;
-  '.': BEGIN
-         IF SYMBUFP^[SYMCURSOR+1]='.'
-           THEN
-             BEGIN
-               SYMCURSOR := SYMCURSOR+1;
-               SY := COLON
-             END
-           ELSE
-             SY := PERIOD;
-       END;
-  ':': IF SYMBUFP^[SYMCURSOR+1]='='
-         THEN
-           BEGIN
-             SYMCURSOR := SYMCURSOR+1;
-             SY := BECOMES;
-          END
-        ELSE
-           SY := COLON;
-  ';': SY := SEMICOLON;
-  '^': SY := ARROW;
-  '[': SY := LBRACK;
-  ']': SY := RBRACK;
-  '*': BEGIN SY := MULOP; OP := MUL END;
-  '+': BEGIN SY := ADDOP; OP := PLUS END;
-  '-': BEGIN SY := ADDOP; OP := MINUS END;
-  '/': BEGIN SY := MULOP; OP := RDIV END;
-  '<': BEGIN
-         SY := RELOP;
-         OP := LTOP;
-         CASE SYMBUFP^[SYMCURSOR+1] OF
-           '>': BEGIN
-                  OP := NEOP;
-                  SYMCURSOR := SYMCURSOR+1
-                END;
-           '=': BEGIN
-                  OP := LEOP;
-                  SYMCURSOR := SYMCURSOR+1
-                END
-         END;
-       END;
-  '=': BEGIN SY := RELOP; OP := EQOP END;
-  '>': BEGIN
-         SY := RELOP;
-         IF SYMBUFP^[SYMCURSOR+1]='='
-           THEN
-             BEGIN
-               OP := GEOP;
-               SYMCURSOR := SYMCURSOR+1;
-             END
-           ELSE
-             OP := GTOP;
-       END
-END (* CASE SYMBUFP^[SYMCURSOR] OF *);
-  IF SY=OTHERSY THEN
-    IF SYMBUFP^[SYMCURSOR] = CHR(EOL) THEN
-      BEGIN CHECKEND; GETSTMTLEV := TRUE; GOTO 1 END
-    ELSE ERROR(400);
-  SYMCURSOR := SYMCURSOR+1 (* NEXT CALL TALKS ABOUT NEXT TOKEN *)
 END;
 
 PROCEDURE BLOCK(*FSYS: SETOFSYS*);
@@ -835,6 +843,12 @@ BEGIN (*BLOCK*)
       END;
   UNTIL TOS = NIL;
   FINISHSEG
+END;
+
+PROCEDURE COMPILE;
+BEGIN
+  TIME(LGTH,LOWTIME);
+  BLOCK(BLOCKBEGSYS+STATBEGSYS-[CASESY])
 END;
 
 PROCEDURE HOLDMOST;

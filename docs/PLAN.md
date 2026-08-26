@@ -27,13 +27,11 @@ turn it back into Apple's bytes:
 | `LINEFEED.CODE` | 1.1's own source, unaltered, under the 1.3 compiler (finding 99a) |
 | `FORMATTER.CODE` | the first whole program: Pascal *and* 6502, linked (finding 104) |
 
-`SYSTEM.COMPILER` is not on that list yet. 147 of 147 procedures are
-verified against Apple's p-code (finding 90), and now that it has been
-linked, both native routines and 14 of its 15 segments are byte-identical
-to what Apple shipped -- but `PASCALCO`, the fifteenth, is not: an extra
-empty host segment and a different physical body order inside the segment
-(finding 105) are the two things standing between here and a byte-identical
-codefile.
+`SYSTEM.COMPILER` is not on that list yet, but only one thing keeps it off:
+all 15 real segments -- `PASCALCO` included, body order and procedure
+numbering both fixed (finding 107) -- are byte-identical to what Apple
+shipped. What remains is finding 105a alone: an extra, empty `PASCALSY` host
+segment, 512 bytes, that Apple's shipped file does not have at all.
 
 Counting procedures rather than bytes, and 1.3 only: **216 done of roughly
 861.** Every remaining target can be read before it is written -- the sweep
@@ -68,20 +66,20 @@ The order below is by what the evidence supports, not by size. A file whose
 1.1 release ships source is nearly free; a file with a native half now has
 a route end to end; everything else is a straight read-and-rebuild.
 
-1. **Close what finding 105 found, not the 948-byte gap -- that part is
-   done.** The three steps ran: compile the fifteen segments, assemble
-   `src/native/SEARCH.TEXT`, `L(ink` the two. Both native routines land at
-   Apple's exact offset and match byte for byte, and 14 of 15 segments are
-   byte-identical end to end -- finding 91 was right about all of that.
-   Linking uncovered two things finding 91 could not have seen because
-   nothing had compared a linked `PASCALCO` before: an extra, empty
-   `PASCALSY` host segment (512 bytes, finding 105a) and a `PASCALCO` whose
-   procedure *numbering* is right but whose physical body order inside the
-   segment is not (finding 105b, 3304 of 5606 bytes). Two concrete next
-   moves: work out whether the host segment should exist at all in a linked
-   system file, and reorder `PASCALCO.text`'s procedure *definitions* --
-   not their forward declarations -- to Apple's order in the table finding
-   105b gives.
+1. **One gap left in `SYSTEM.COMPILER`: the empty `PASCALSY` host segment
+   (finding 105a), 512 bytes.** The three steps -- compile the fifteen
+   segments, assemble `src/native/SEARCH.TEXT`, `L(ink` the two -- now
+   produce all 15 real segments byte-identical to Apple's, `PASCALCO`
+   included (finding 107 closed the body-order and numbering mismatch
+   finding 105b found). What is left is a segment 0 that should not exist
+   at all: Apple's shipped file has no code there -- addr and length both
+   zero in the dictionary -- and every compile of `BODY13.TEXT` produces a
+   real one, one `XIT` byte and an attribute table for the 15 forward-
+   declared segment procedures. Two things worth trying: whether a `(*$U-*)`
+   **system**-level program is supposed to have no codefile segment for its
+   own outer block at all (as opposed to an ordinary program), and whether
+   that is something the compiler alone decides or something `SYSTEM.LINKER`
+   is meant to drop.
 
 2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. The reason to
    take it next is `("LIBMAP", 2)`: it is the **last entry in `lift.py`'s

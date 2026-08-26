@@ -10445,3 +10445,68 @@ existence check, before the command line is built). AppleWin mounts and
 boots a read-only image exactly as before -- checked by re-running the same
 `--boot128 --work2` session and confirming the hash held -- it simply
 cannot write to it, which is the point.
+
+## 107. Finding 105b closed: `PASCALCO` is byte-identical
+
+**VERIFIED BINARY FACT.** Finding 105b's table said what was needed:
+reorder `PASCALCO.text`'s procedure *bodies* to Apple's physical placement,
+without touching declaration order or numbering. Done, verified against a
+fresh emulator run: `PASCALCO`, all 5606 bytes, is now byte-identical to
+Apple's shipped copy -- the whole segment, not just the disassembly. All 15
+real segments of `SYSTEM.COMPILER` are byte-identical.
+
+Reordering the bodies was not quite enough on its own, and the reason is
+worth keeping. Three of the 31 procedures are **not** forward-declared --
+`COMMENTER` (nested in `INSYMBOL`), `FINDFORW` (nested in `BLOCK`), and
+`HOLDROUT` (nested in `HOLDMOST`) -- and `COMPILE`, the fourth in that
+number range, was not forward-declared here either. For a procedure with no
+forward declaration, UCSD assigns its number *at the same textual point* its
+code is emitted: parse order, number order, and code-placement order are
+one and the same thing. Moving `INSYMBOL`'s body earlier in the file (to
+match Apple's physical layout) also moved *when `COMMENTER`'s header gets
+parsed* -- and since `COMPILE` had no forward declaration, moving `INSYMBOL`
+ahead of it let `COMMENTER` claim 27 before `COMPILE` could, cascading
+`FINDFORW`, `HOLDMOST` and `HOLDROUT` down by one each. Eighteen bytes came
+out wrong as a result, every one of them a procedure-number operand in the
+27-31 range, in exactly the three nested bodies and nowhere else.
+
+The fix is a single `PROCEDURE COMPILE; FORWARD;`, placed in the initial
+forward block alongside the other 23 (after `BLOCK`), so `COMPILE` claims
+27 at the point the forward block is parsed -- textually early -- while its
+own body stays physically where it already was, after `BLOCK`, before
+`HOLDMOST`. Declaration-time numbering and code-placement order are
+decoupled for exactly the one procedure that needed it, which is why only
+one FORWARD had to be added: every other non-forward procedure here already
+has its number and its body at the same point in the file.
+
+`acceptance/2026-08-25-compiler-linked-v2/` holds the run: `SYSTEM.COMPILER`
+1.3 compiling `BODY13.TEXT` (6601 lines, 0 errors), `SYSTEM.ASSMBLER`
+assembling `SEARCH.TEXT` (519 lines, 0 errors, unchanged from before), and
+`SYSTEM.LINKER` joining them -- with the resulting `PASCALCO` segment
+byte-identical to Apple's.
+
+What is left is finding 105a alone: the extra, empty `PASCALSY` host
+segment, 512 bytes, present in every compile of this splice and absent from
+Apple's shipped file. It is not affected by anything in this finding --
+segment 0's own bytes were unchanged throughout.
+
+## 108. `runemu.py` mounted evidence for the assembler to write to -- fixed properly
+
+**VERIFIED BINARY FACT.** Finding 106's read-only fix was necessary but
+insufficient: `SYSTEM.ASSMBLER` writes a `%LINKER.INFO` scratch file to the
+Filer's P(refix volume when a source references cross-segment procedures
+(what `SEARCH.TEXT`'s `IDSEARCH`/`TREESEARCH` are, from the Linker's side),
+and the recipe for an assemble sets that prefix to `APPLE2:` (finding 44e).
+A read-only `APPLE2:` fails that write with `I/O Error #16` and stops the
+assembly cold -- read-only stopped the corruption finding 106 found, and
+then stopped a legitimate assemble from working at all.
+
+The fix in `runemu.py` is `scratch_copy`: every evidence disk any drive
+would have received is copied to `build/disks/emu-scratch/` fresh on every
+launch and *that* copy is what AppleWin mounts, at `-d1`, `-d2` and `-s5d2`
+alike. Read-only stays on the originals as defense in depth, but nothing
+under `evidence/` is handed to AppleWin at all any more, so what it can or
+cannot write to no longer touches the question. Reassembling `SEARCH.TEXT`
+after the change gave the same clean run as before finding 106 (519 lines,
+0 errors) -- the fix restores the working behavior rather than trading one
+failure for another.

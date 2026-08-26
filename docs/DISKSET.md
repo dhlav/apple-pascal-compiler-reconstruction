@@ -31,7 +31,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 |---|---|---|
 | SYSTEM.EDITOR | The text editor used to write code. | not started; 129 procedures, the largest single target |
 | SYSTEM.FILER | The file manager used to copy, list, and delete files. | not started; 56 procedures, one segment |
-| SYSTEM.COMPILER | Translates your Pascal code into machine-readable code. | 147 of 147 procedures verified (finding 90); linked, 14 of 15 segments and both native routines byte-identical, `PASCALCO` short by an extra host segment and a body-order mismatch (finding 105) |
+| SYSTEM.COMPILER | Translates your Pascal code into machine-readable code. | 147 of 147 procedures verified (finding 90); linked, all 15 real segments byte-identical including `PASCALCO` (finding 107); short only an extra, empty host segment Apple's shipped file does not have (finding 105a) |
 | SYSTEM.LINKER | Combines different compiled code pieces into one program. | not started; 51 procedures |
 | SYSTEM.ASSMBLER | Low-level assembly language translator. | not started; 95 procedures. Also the acceptance tier for `src/native/` (finding 44e) |
 
