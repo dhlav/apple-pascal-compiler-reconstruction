@@ -270,6 +270,10 @@ PROGRAM LIBMAP;
         NEEDINFO: BOOLEAN;             { local13 }
         SWAPTEMP: SEGDICTREC;          { role and exact offset not yet known }
         SWAPBUF:  ARRAY [0..7] OF INTEGER;  { local270, the swap scratch }
+        PAD:      PACKED ARRAY [0..7] OF CHAR;  { closes params=2/data=556
+                                                   exactly against Apple's
+                                                   own compiler; role and
+                                                   offset not yet known }
 
       { TRUE if SHOWINFO already gave a full account of this segment, so
         SHOWONE should not also print the raw reference stream unless
