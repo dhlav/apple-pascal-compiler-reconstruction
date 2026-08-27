@@ -1,13 +1,39 @@
 """Launch AppleWin with the acceptance-tier drive layout.
 
-The Apple Pascal compiler wants more than two drives (finding 15), and the
-two acceptance tests need four volumes online at once:
+**Default (as of finding: HD acceptance session, 2026-08-26): two 2MB Pascal
+hard-disk volumes on a slot-5 HDC**, built by `mkharddisks.py`:
+
+    slot 5 HDC h1   SYSHD    boots the machine, carries every system tool
+                             Apple shipped -- APPLE/PASCAL (128K), EDITOR,
+                             FILER, LIBRARY, MISCINFO, CHARSET, SYNTAX,
+                             ASSMBLER, COMPILER, LINKER, LIBRARY.CODE,
+                             LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS
+    slot 5 HDC h2   WORKHD   ours -- the reconstructed source, and where
+                             compiler/assembler/linker output lands
+    slots 6, 7      empty
+
+Name volumes by their Pascal volume name (`SYSHD:`, `WORKHD:`), not by which
+.hdv holds them -- and both volumes must have *distinct* names. `cp2
+create-disk-image ... pascal` always names a fresh volume `NEWDISK`; two
+same-named volumes online at once left the Filer unable to tell them apart
+(`A(ssem` searching `NEWDISK:` for `SYSTEM.ASSMBLER` silently found the
+*other*, empty, one instead). `-model apple2ee` matters too, not just
+cosmetically: AppleWin only defaults the HDC to SmartPort firmware for the
+*enhanced* //e -- `apple2e` boots the older v2 HDC firmware and never gets
+past the `Apple //e` splash. And slot 6 needs `empty` stated explicitly, or
+AppleWin's factory-default Disk][ card sits there with no media and the
+autostart ROM's boot scan hangs on it before ever reaching slot 5.
+
+**`--floppy` goes back to the older four-floppy layout** (finding 15: the
+Apple Pascal compiler wants more than two drives), still available in full:
 
     S6D1  APPLE1   the boot disk
     S6D2  APPLE2   SYSTEM.COMPILER and SYSTEM.ASSMBLER
     S5D1  WORK     ours -- the reconstructed source, and where output lands
     S5D2  APPLE3   utilities, or WORK2 with --work2 -- a volume for the
                    codefile, which no longer fits beside the source
+
+`--boot128`, `--release` and `--work2` apply only with `--floppy`.
 
 `-conf` points AppleWin at an INI under `build/`, so running this does not
 touch whatever configuration is already in the registry.
@@ -16,14 +42,15 @@ touch whatever configuration is already in the registry.
 no switch that injects keystrokes, and `-screenshot-and-exit` is documented
 for use with `-load-state`, so it fires before a cold boot has finished and
 cannot even confirm one. Driving `X(ecute` is manual. What to type once it is
-up:
+up (hard-disk layout; swap `WORKHD:` for `WORK:` on `--floppy`):
 
-    X  *SYSTEM.ASSMBLER     then  WORK:SEARCH      -> WORK:SEARCH.CODE
-    X  *SYSTEM.COMPILER     then  WORK:SKEL13      -> WORK:SKEL13.CODE
+    X  *SYSTEM.ASSMBLER     then  WORKHD:SEARCH      -> WORKHD:SEARCH.CODE
+    X  *SYSTEM.COMPILER     then  WORKHD:SKEL13      -> WORKHD:SKEL13.CODE
 
 and then bring the disk back here and diff it against the binary.
 
-Usage: python tools/runemu.py [--release 1.3] [--dry-run]
+Usage: python tools/runemu.py [--dry-run]
+       python tools/runemu.py --floppy [--release 1.3] [--dry-run]
 """
 import argparse
 import subprocess
@@ -35,6 +62,8 @@ EXE = Path(r"C:\AppleWin\AppleWin.exe")
 DISKS = ROOT / "evidence" / "disks"
 WORK = ROOT / "build" / "disks" / "WORK.dsk"
 WORK2 = ROOT / "build" / "disks" / "WORK2.dsk"
+HD1 = ROOT / "build" / "disks" / "HD1.hdv"     # SYSHD: boot + every tool
+HD2 = ROOT / "build" / "disks" / "HD2.hdv"     # WORKHD: ours
 
 # Applied before every launch. AppleWin reads these from the registry at
 # startup and there is no command-line switch for any of them.
@@ -134,6 +163,48 @@ def apply_settings(dry_run: bool = False) -> None:
                              f"{(r.stdout + r.stderr).strip()}")
 
 
+def main_hd(dry_run: bool = False) -> int:
+    """The hard-disk layout: SYSHD + WORKHD on the slot-5 HDC, nothing else.
+
+    `-model apple2ee` is not cosmetic here -- AppleWin only defaults the HDC
+    to SmartPort firmware for the *enhanced* //e. `apple2e` boots the older
+    v2 HDC firmware, which never gets past the `Apple //e` splash screen at
+    all (findings: HD acceptance session, 2026-08-26). Slot 6 must be
+    `empty` explicitly too: AppleWin's factory default puts a Disk][ card
+    there with no media, and the autostart ROM's boot scan hangs waiting on
+    it (spinning drive light, screen stuck on the splash) before ever
+    reaching slot 5.
+    """
+    for img, builder in ((HD1, "mkharddisks.py"), (HD2, "mkharddisks.py")):
+        if not img.exists():
+            raise SystemExit(f"{img.relative_to(ROOT)} has not been built "
+                             f"(python tools/{builder})")
+
+    cmd = [str(EXE),
+           "-model", "apple2ee",
+           "-s5", "hdc",
+           "-s5h1", str(HD1),
+           "-s5h2", str(HD2),
+           "-s6", "empty",
+           "-s7", "empty",
+           "-power-on"]
+
+    print("AppleWin settings (registry; no switch exists for these):")
+    apply_settings(dry_run)
+    print()
+
+    print("Slot 5 HDC h1", HD1.name, " <- SYSHD: boot + every system tool")
+    print("Slot 5 HDC h2", HD2.name, " <- WORKHD: ours")
+    print("Slots 6, 7    empty")
+    print()
+    print(" ".join(f'"{c}"' if " " in c else c for c in cmd))
+    if dry_run:
+        return 0
+    subprocess.Popen(cmd, cwd=str(ROOT))
+    print("\nlaunched. Nothing here can type into it -- see the module note.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--release", default="1.3", choices=sorted(RELEASES))
@@ -147,10 +218,24 @@ def main() -> int:
     ap.add_argument("--work2", action="store_true",
                     help="mount build/disks/WORK2.dsk at S5D2 instead of "
                          "APPLE3, so the codefile has a volume of its own")
+    ap.add_argument("--hd", action="store_true",
+                    help="boot the hard-disk layout (SYSHD, WORKHD on the "
+                         "slot-5 HDC). This is now the default -- the flag "
+                         "is accepted for explicitness/scripts written "
+                         "against it, but does nothing --floppy doesn't "
+                         "already undo.")
+    ap.add_argument("--floppy", action="store_true",
+                    help="boot the old four-floppy layout (BOOT128, APPLE2, "
+                         "WORK, WORK2/APPLE3) instead of the hard-disk one. "
+                         "--boot128, --release and --work2 apply only here.")
     args = ap.parse_args()
 
     if not EXE.exists():
         raise SystemExit(f"{EXE} not found")
+
+    if not args.floppy:
+        return main_hd(args.dry_run)
+
     if not WORK.exists():
         raise SystemExit("build/disks/WORK.dsk has not been built "
                          "(python tools/mkworkdisk.py)")

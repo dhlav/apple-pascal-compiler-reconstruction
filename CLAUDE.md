@@ -62,13 +62,33 @@ output is kept in `acceptance/` and `probe_acceptance.py` re-checks it on
 every build.
 
 ```
-python tools/mkworkdisk.py                      # ALWAYS first — stale disks lie
-powershell -File tools/emucompile.ps1  -Name X -Work2 -Compile 40
+python tools/mkharddisks.py                     # ALWAYS first — stale disks lie
+powershell -File tools/emucompile.ps1  -Name X -Compile 40
 powershell -File tools/emuassemble.ps1 -Name X
 powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z
 ```
 
-Then read `build/disks/WORK2.dsk` with `a2pascal.disk` and diff.
+Two 2MB Pascal hard-disk volumes on a slot-5 HDC (`SYSHD` boots and carries
+every tool, `WORKHD` is ours) are now the **default** for all four
+`emu*`/`runemu.py` scripts — `mkharddisks.py` builds them, and `cp2.exe`
+(CiderPress II, `C:\CiderPress2\cp2.exe`) is required since a2pascal's
+disk/diskwrite only read/write 5.25" floppy geometry. Name files by Pascal
+volume name (`SYSHD:`, `WORKHD:`), not by which `.hdv` holds them, and give
+any new volume a distinct name — two disks both named `NEWDISK` (cp2's
+default) left the Filer unable to tell them apart.
+
+**The old four-floppy layout is still there behind `-Floppy`** (`runemu.py
+--floppy`), unchanged:
+
+```
+python tools/mkworkdisk.py                      # ALWAYS first — stale disks lie
+powershell -File tools/emucompile.ps1  -Name X -Floppy -Work2 -Compile 40
+powershell -File tools/emuassemble.ps1 -Name X -Floppy
+powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z -Floppy
+```
+
+Then read `build/disks/WORK2.dsk` (or `HD2.hdv` with `cp2.exe`, since
+a2pascal can't) and diff.
 
 ### Emulator pitfalls (all hit for real)
 
