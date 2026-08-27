@@ -41,7 +41,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 |---|---|---|
 | SYSTEM.LIBRARY | Default code library for running basic graphics and tools. | **reconstructed**, 55 p-code and 14 native procedures (tag `system-library-1.3-complete`) |
 | LIBRARY.CODE | Utility to add or remove tools from library files. | not started; 16 procedures |
-| LIBMAP.CODE | Shows you what is inside a library file. | not started; 12 procedures, one of them native |
+| LIBMAP.CODE | Shows you what is inside a library file. | **in progress**; 12 procedures. Native half free (finding 109 -- `LIBMAP.2` is Apple's own `IDSEARCH`, reused whole from `SYSTEM.COMPILER`); `SWAPBYTES`/`VALIDNAME` verified byte-for-byte, `SHOWSEGS` exact on param/data size, `NEEDSSWAP`/`SWAPALL` close (one word of locals short each, documented not forced), procs 8-12 and the outer block still stubs |
 | BINDER | Joins assembly language parts into Pascal programs. | not started; 6 procedures. A 1.1 binary Apple never rebuilt (finding 99c) |
 
 ## Configuration and Setup

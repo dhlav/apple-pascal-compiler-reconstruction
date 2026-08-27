@@ -24,7 +24,16 @@
   mapped, OUTFILE the map's destination. Four booleans and two integer
   tables (version strings, machine-type strings) follow, then two more
   integers the outer block's loop uses. Every name is ours; the offsets
-  are Apple's. }
+  are Apple's.
+
+  G603 was named DONEFLAG on no better evidence than "the fourth boolean
+  after three that made sense" -- MAPLIBRARY's own body (proc 12) settles
+  it: `IF NEEDSSWAP(SEGDICT) THEN BEGIN SWAPALL(SEGDICT); G603 := TRUE END`,
+  read and unconditionally reset to FALSE at MAPLIBRARY's top. It is TRUE
+  exactly when this library's dictionary needed correcting for the other
+  machine's byte order, and SHOWONE reads it later to decide whether the
+  reference stream it reads word-by-word off disk -- which SWAPALL never
+  touches -- also needs swapping one entry at a time. Renamed SWAPPED. }
 
 { $I- : ordinary WRITE/WRITELN/RESET on OUTFILE and INFILE compile to the
   same CXP 0,n the binary calls directly (verified: WRITE(OUTFILE,S) and
@@ -62,7 +71,7 @@ PROGRAM LIBMAP;
     LISTMAP,                           { 600 }
     LISTREFS,                          { 601 }
     USINGLIB,                          { 602 }
-    DONEFLAG: BOOLEAN;            { 603 }
+    SWAPPED:  BOOLEAN;                 { 603, was DONEFLAG -- see above }
     VERSTRS:  ARRAY [0..7] OF STRING[7];    { 604, 'unknown'/'A2/1.n' }
     TYPESTRS: ARRAY [0..9] OF STRING[23];   { 636, machine-type names }
     TEMP2, TEMP1: INTEGER;             { 756, 757 }
@@ -192,25 +201,136 @@ PROGRAM LIBMAP;
       SEGNUM, LASTSEG: 0..16;
       ENTRY: ^DIRENTRY;
 
-    PROCEDURE SHOWONE(SEGNUM: INTEGER);
-      (*STUB*)
+    { Detail for one dictionary slot: a one-line header naming what kind
+      of segment it is (SEGDICT.SEGKIND, 0..7, case-dispatched -- the
+      part below this comment is verified against the disassembly
+      instruction group by instruction group), the interface text for a
+      library unit if there is one (SHOWINFO, (*STUB*) below), then --
+      unless SHOWINFO already handled it and USINGLIB is off -- the
+      segment's own cross-reference stream: one 16-byte entry per
+      external reference, read word at a time from the block right
+      after the segment's own code (ADDR + CEIL(LENG/512)), each entry
+      an 8-char name, a kind (0..14, dispatched the same way as the
+      header), and up to two more values whose meaning depends on the
+      kind.
 
+      The header dispatch and the block-number arithmetic that follows
+      it are solid. The entry-reading loop past that point is not: it
+      reads a first word to decide whether there is anything to show,
+      then -- only when SWAPPED -- copies what looks like a 16-byte
+      buffer through a second scratch array and back for a per-word
+      SWAPBYTES pass, and the exact order in which the rest of one
+      16-byte entry (name, kind, up to two values) gets read relative to
+      that swap step is not yet pinned down closely enough to write as
+      Pascal. Left as (*STUB*) rather than guessed at -- USINGLIB, not
+      LISTREFS, is confirmed as what gates it (LISTREFS only shows up
+      inside SHOWREF itself), and every named local below this point is
+      real (matched to a specific LDL/STL offset in the disassembly),
+      but the control flow connecting them is not. }
+    PROCEDURE SHOWONE(SEGNUM: INTEGER);
+      VAR
+        BYTEPOS:  0..32;               { local2: which half of RBUF is owed }
+        RBLOCK:   INTEGER;             { local3: next block to read }
+        REFNAME:  PACKED ARRAY [0..7] OF CHAR;  { locals 4-7 }
+        KIND:     0..14;               { local8 }
+        VAL1, VAL2: INTEGER;           { locals 9, 10 }
+        NEEDINFO: BOOLEAN;             { local13 }
+
+      { TRUE if SHOWINFO already gave a full account of this segment, so
+        SHOWONE should not also print the raw reference stream unless
+        USINGLIB asked for it explicitly. Called with (BLK, 0, 0) at
+        every site in SHOWONE; the two zero arguments are identical
+        every time, so whatever they are for is not exercised here.
+        (*STUB*) -- this is also the single largest procedure in the
+        file (1042 words of locals, more than SHOWONE and everything
+        else in it combined) and has not been read yet. }
       FUNCTION SHOWINFO(BLK: INTEGER): BOOLEAN;
         (*STUB*)
       BEGIN
       END;
 
+      { One raw word off the reference stream, double-buffered two bytes
+        at a time: BYTEPOS/RBLOCK above are SHOWONE's own locals, read
+        and written here directly by nested-procedure scoping rather
+        than passed as parameters -- which is also how SHOWREF below
+        reaches them despite being GETWORD's sibling, not its caller.
+        The FBLOCKIO signature is solid (GLOBALS.TEXT's declared six
+        arguments, an eight-word frame exactly -- finding 20a/51b); the
+        byte-assembly around it is not yet reread carefully enough to
+        commit. (*STUB*) }
       PROCEDURE GETWORD(VAR W: INTEGER);
         (*STUB*)
       BEGIN
       END;
 
+      { Print one cross-reference note: the label the caller passes
+        (' global'/' public'/' constant'/' separate'/' unit'/' private'),
+        "word/byte/big reference" (from VAL1, a three-way case), then
+        "(N times)" or "(once)" (from VAL2), then read and discard N
+        more raw words -- read via GETWORD but this procedure's own
+        signature and body are not yet reread carefully enough to
+        commit; passing a string constant's own address to a VAR STRING
+        parameter is what every call site does, which is at least solid.
+        (*STUB*) }
       PROCEDURE SHOWREF(VAR NAME: STRING);
         (*STUB*)
       BEGIN
       END;
 
     BEGIN
+      WRITE(OUTFILE, SEGDICT.SEGNAME[SEGNUM]:8);
+      CASE SEGDICT.SEGKIND[SEGNUM] OF
+        0: BEGIN
+             WRITE(OUTFILE, '  completely linked segment');
+             WRITELN(OUTFILE);
+             IF SEGDICT.TEXTADR[SEGNUM] <> 0 THEN
+             BEGIN
+               NEEDINFO := NOT SHOWINFO(SEGDICT.TEXTADR[SEGNUM])
+             END;
+             EXIT(SHOWONE)
+           END;
+        1: BEGIN
+             WRITE(OUTFILE, '  Pascal host outer block');
+             WRITELN(OUTFILE)
+           END;
+        2: BEGIN
+             WRITE(OUTFILE, '  Pascal segment');
+             WRITELN(OUTFILE);
+             NEEDINFO := NOT SHOWINFO(SEGDICT.TEXTADR[SEGNUM])
+           END;
+        3, 5, 6: BEGIN
+             WRITE(OUTFILE, '  library unit');
+             IF SEGDICT.SEGKIND[SEGNUM] = 5 THEN
+             BEGIN
+               WRITE(OUTFILE, ' (UNLINKED INTRINSIC)');
+               WRITELN(OUTFILE)
+             END
+             ELSE IF SEGDICT.SEGKIND[SEGNUM] = 6 THEN
+             BEGIN
+               WRITE(OUTFILE, ' (LINKED INTRINSIC)');
+               WRITELN(OUTFILE)
+             END
+             ELSE
+             BEGIN
+               WRITELN(OUTFILE)
+             END;
+             NEEDINFO := NOT SHOWINFO(SEGDICT.TEXTADR[SEGNUM])
+           END;
+        4: BEGIN
+             WRITE(OUTFILE, '  separate procedure segment');
+             WRITELN(OUTFILE)
+           END;
+        7: BEGIN
+             WRITE(OUTFILE, '  data segment');
+             WRITELN(OUTFILE);
+             EXIT(SHOWONE)
+           END
+      END;
+      BYTEPOS := 0;
+      RBLOCK := SEGDICT.ADDRLEN[SEGNUM].ADDR +
+                  (SEGDICT.ADDRLEN[SEGNUM].LENG + 511) DIV 512;
+      IF NOT (USINGLIB OR NEEDINFO) THEN EXIT(SHOWONE);
+      (*STUB: the entry-reading loop -- see the procedure comment above*)
     END;
 
   BEGIN

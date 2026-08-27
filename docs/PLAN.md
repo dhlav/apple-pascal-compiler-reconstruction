@@ -50,15 +50,29 @@ map and the 1.1/1.3 correspondence; and the emulator tier below.
 `FORMATTER` possible:
 
 * `tools/emucompile.ps1` -- `C(ompile`
-* `tools/emuassemble.ps1` -- `A(ssem`, with the Filer's `P(refix` set to
-  `APPLE2:` first, because the assembler opens `6502.OPCODES` with no
-  volume and the boot disk does not carry it
+* `tools/emuassemble.ps1` -- `A(ssem`
 * `tools/emulink.ps1` -- `L(ink`, which is the only thing that puts an
   assembled `EXTERNAL` into a compiled host
 
 Their output is kept under `acceptance/` and re-checked against the shipped
 disks on every build by `tools/probes/probe_acceptance.py` -- the one check
 in the repo with none of this project's own code on either side.
+
+**The acceptance-tier drive layout changed since the above was written.**
+`tools/mkharddisks.py` now builds a single 2MB Pascal hard-disk volume
+(`SYSHD`, on a slot-5 HDC) that boots, carries every system tool, and
+carries the reconstruction's own source and output all at once -- and it is
+the default for `runemu.py` and all three `emu*.ps1` scripts. That retires
+the `A(ssem` Filer-`P(refix` step above: `SYSHD` carries `6502.OPCODES`
+itself, so the default prefix (the boot volume) resolves without help.
+**Every codefile created on that merged volume needs a `[*]` size
+specifier** (`SYSHD:NAME.CODE[*]`) -- a single UCSD volume claims all free
+space for a new file and only shrinks it back on close, so a codefile and
+`SYSTEM.ASSMBLER`'s own `%LINKER.INFO` scratch file race for it otherwise.
+The old four-volume floppy layout is unchanged and still available via
+`-Floppy` / `runemu.py --floppy`, where `[*]` is not needed since system
+tools and output live on separate volumes there. See `CLAUDE.md` for the
+full recipe.
 
 ## Next steps
 
@@ -81,11 +95,21 @@ a route end to end; everything else is a straight read-and-rebuild.
    that is something the compiler alone decides or something `SYSTEM.LINKER`
    is meant to drop.
 
-2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. The reason to
-   take it next is `("LIBMAP", 2)`: it is the **last entry in `lift.py`'s
-   `NATIVE_SIG` still read off a call site** rather than a declaration, and
-   the way to retire it is to write the source. Same shape as `FORMATTER`,
-   a third of the size.
+2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. **In progress**
+   (`src/pascal/programs/1.3/LIBMAP.text`). The native half is closed for
+   free: finding 109 found `LIBMAP.2` is byte-for-byte Apple's own
+   `IDSEARCH` from `SYSTEM.COMPILER`, linked in whole rather than
+   rewritten, so `("LIBMAP", 2)` -- the last entry in `lift.py`'s
+   `NATIVE_SIG` still read off a call site rather than a declaration -- is
+   retired with no new 6502 at all. The VAR block compiles to Apple's exact
+   757-word frame; `SWAPBYTES` and `VALIDNAME` are verified byte-for-byte
+   against Apple's own p-code; `SHOWSEGS` is exact on param/data size but
+   not yet checked instruction by instruction; `NEEDSSWAP` and `SWAPALL`
+   are each one word of locals short (documented as a known gap, not
+   forced); procedures 8-12 (`SHOWONE` and its nested `SHOWINFO`/
+   `GETWORD`/`SHOWREF`, then `MAPLIBRARY`) and the outer block are still
+   stubs -- `SHOWONE`'s own procedure 9 is the largest single procedure in
+   the file at 521 words of locals.
 
 3. **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
    are **1.1 binaries Apple never rebuilt** (finding 99c). That is what
