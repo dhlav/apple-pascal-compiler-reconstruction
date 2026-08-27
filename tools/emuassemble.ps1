@@ -6,7 +6,7 @@
 # works the same way -- boot, type the whole command at once, screenshot,
 # shut the emulator down so AppleWin flushes the disk images.
 #
-#   .\tools\emuassemble.ps1 -Name SEARCH              # SYSHD/WORKHD -- the default now
+#   .\tools\emuassemble.ps1 -Name SEARCH              # SYSHD -- the default now
 #   .\tools\emuassemble.ps1 -Name FMTNATIV -Floppy    # the old four-floppy layout
 #
 # One thing differs from a compile on the floppy layout, and it is the
@@ -22,6 +22,15 @@
 # 6502.OPCODES itself, and the boot volume already *is* SYSHD, so the
 # default P(refix resolves without help. -Prefix and -NoPrefix apply only
 # with -Floppy. -HardDisk is accepted but redundant now.
+#
+# The codefile is created as `NAME.CODE[*]`, not plain `NAME.CODE`, on the
+# hard-disk layout: a single Pascal volume claims *all* free space for a new
+# file by default and only shrinks it back on a clean close, so this and
+# SYSTEM.ASSMBLER's own `%LINKER.INFO` scratch file (also on SYSHD now)
+# raced for it and the codefile got "I/O error: no room on volume" with
+# thousands of blocks free (finding: HD acceptance session, 2026-08-26). Not
+# a bug in this tooling -- the manual's own fix for a one-drive system (ch.
+# 3/5) is exactly this size specifier.
 param(
   [string]$Name = "FMTNATIV",
   [int]$Boot = 3,           # seconds to let the system boot before typing
@@ -73,7 +82,7 @@ if (-not $UseHD -and -not $NoPrefix) {
 # stays untouched here rather than risk a regression on a path that worked.
 if ($UseHD) {
   & "$here\emukeys.ps1" -Keys "A" -Wait 3000 -PerKey $PerKey | Out-Null
-  $keys = "WORKHD:$Name.TEXT{ENTER}WORKHD:$Name.CODE{ENTER}{ENTER}"
+  $keys = "SYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
 } else {
   $keys = "AWORK:$Name.TEXT{ENTER}WORK2:$Name.CODE{ENTER}{ENTER}"
 }
@@ -84,4 +93,4 @@ Get-Process AppleWin -EA SilentlyContinue |
 Start-Sleep -Milliseconds 2500
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 800
-if ($UseHD) { "closed; HD2.hdv (WORKHD) flushed" } else { "closed; WORK2.dsk flushed" }
+if ($UseHD) { "closed; HD1.hdv (SYSHD) flushed" } else { "closed; WORK2.dsk flushed" }

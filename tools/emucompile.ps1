@@ -4,16 +4,24 @@
 # captures the screen and shuts the emulator down again -- which is what
 # flushes WORK.dsk, since AppleWin holds the image open until it exits.
 #
-#   .\tools\emucompile.ps1 -Name SKEL13                  # SYSHD/WORKHD -- the default now
+#   .\tools\emucompile.ps1 -Name SKEL13                  # SYSHD -- the default now
 #   .\tools\emucompile.ps1 -Name BODY13 -Compile 40      # a longer source
 #   .\tools\emucompile.ps1 -Name BODY11 -Release 1.1 -Floppy   # 1.1's own compiler
 #
-# The hard-disk layout (SYSHD/WORKHD on the slot-5 HDC, runemu.py --hd,
-# mkharddisks.py) is the default: the source must already be on WORKHD
+# The hard-disk layout (one SYSHD volume on the slot-5 HDC, runemu.py --hd,
+# mkharddisks.py) is the default: the source must already be on SYSHD
 # (mkharddisks.py's own FILES list, or added by hand with cp2), and the
-# compiler runs off SYSHD -- there is only one release of the tools on that
-# path, 1.3's. -HardDisk is accepted but redundant now; pass -Floppy for the
-# older four-floppy layout, where -Release and -Work2 apply.
+# compiler runs off the same volume -- there is only one release of the
+# tools on that path, 1.3's. The codefile is created as `NAME.CODE[*]`, not
+# plain `NAME.CODE`: a single Pascal volume claims *all* free space for a
+# new file by default ([0]) and only shrinks it back on a clean close, so
+# creating the codefile on the same volume the compiler/assembler/linker
+# themselves live on needs an explicit size or their own scratch files can
+# starve it (mkharddisks.py's docstring has the full story; the manual's own
+# fix for a one-drive system, ch. 3/5). -HardDisk is accepted but redundant
+# now; pass -Floppy for the older four-floppy layout (system tools and
+# output on separate volumes, so this does not apply there), where -Release
+# and -Work2 apply.
 #
 # -Release picks which APPLE2 goes in drive 2 on the floppy layout, and that
 # is the only thing that decides which compiler runs there: the boot volume
@@ -57,7 +65,7 @@ Start-Sleep -Seconds 2
 
 # C(ompile, the source file, the codefile, then <ret> for no listing.
 if ($UseHD) {
-  $keys = "CWORKHD:$Name.TEXT{ENTER}WORKHD:$Name.CODE{ENTER}{ENTER}"
+  $keys = "CSYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
 } else {
   $out = if ($Work2) { "WORK2:" } else { "WORK:" }
   $keys = "CWORK:$Name.TEXT{ENTER}$out$Name.CODE{ENTER}{ENTER}"
@@ -70,4 +78,4 @@ Get-Process AppleWin -EA SilentlyContinue |
 Start-Sleep -Milliseconds 2500
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 800
-if ($UseHD) { "closed; HD2.hdv (WORKHD) flushed" } else { "closed; WORK.dsk flushed" }
+if ($UseHD) { "closed; HD1.hdv (SYSHD) flushed" } else { "closed; WORK.dsk flushed" }

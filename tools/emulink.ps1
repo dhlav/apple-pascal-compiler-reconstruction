@@ -5,7 +5,7 @@
 # place. Same shape as emucompile.ps1 and emuassemble.ps1 -- boot, type the
 # whole command, screenshot, shut the emulator down so the images flush.
 #
-#   .\tools\emulink.ps1 -Host SKEL13 -Lib LIBRARY -Out SKEL13LNK   # SYSHD/WORKHD -- the default now
+#   .\tools\emulink.ps1 -Host SKEL13 -Lib LIBRARY -Out SKEL13LNK   # SYSHD -- the default now
 #   .\tools\emulink.ps1 -Host FORMATTR -Lib FMTNATIV -Out FORMATTR -Floppy
 #
 # Both codefiles have to be on a mounted volume already; this does not put
@@ -16,13 +16,18 @@
 # straight to "All segments linked" after the host file alone, which is
 # correct, not a hang.
 #
-# The hard-disk layout (the default) uses SYSHD:/WORKHD: instead of -Vol,
-# and sends the prompts as separate SendKeys calls rather than one burst:
-# SYSTEM.LINKER's own load off disk is slow enough to eat characters typed
-# right behind the bare "L" (finding: HD acceptance session, 2026-08-26 --
-# the single-burst form scrambled into an unrelated filename, "NK.CODE",
-# every time it was tried). -Vol applies only with -Floppy. -HardDisk is
-# accepted but redundant now.
+# The hard-disk layout (the default) uses SYSHD: for everything instead of
+# -Vol (one volume now, not SYSHD+WORKHD split across two), and sends the
+# prompts as separate SendKeys calls rather than one burst: SYSTEM.LINKER's
+# own load off disk is slow enough to eat characters typed right behind the
+# bare "L" (finding: HD acceptance session, 2026-08-26 -- the single-burst
+# form scrambled into an unrelated filename, "NK.CODE", every time it was
+# tried). The output file is created as `NAME.CODE[*]`, not plain
+# `NAME.CODE`: a single volume claims all free space for a new file by
+# default and only shrinks it back on a clean close, which starved a
+# codefile created this way against the Linker's own scratch file when both
+# had to share one volume -- the manual's own fix for a one-drive system.
+# -Vol applies only with -Floppy. -HardDisk is accepted but redundant now.
 param(
   [string]$HostFile = "FORMATTR",
   [string]$Lib = "FMTNATIV",
@@ -51,11 +56,14 @@ if ($UseHD -and -not $PSBoundParameters.ContainsKey("PerKey")) { $PerKey = 100 }
 # on a screen that wasn't ready yet and was lost; the LAST of the later
 # sends was the first to arrive at a live prompt, and its tail is what
 # "NK.CODE" actually was (the end of the *output* filename, not the host
-# one). Only raise it when the caller left -Boot at its default. NOTE: this
-# particular fix has not itself been confirmed by a clean automated run yet
-# (the two attempts after it was made lost window focus to something else on
-# screen before reaching it) -- the reasoning is solid but treat the first
-# real run of it as a check, not a known-good path.
+# one). Only raise it when the caller left -Boot at its default. NOTE: -Boot 6
+# still was NOT enough on at least one later run (same "NK.CODE" scramble,
+# even though a manual step-by-step run at the same wait times, confirming
+# each prompt with a screenshot before sending the next answer, went
+# through clean every time) -- this script is racing the boot on a timer
+# with no way to confirm the prompt actually arrived, and that race is not
+# fully solved. If it scrambles, either raise -Boot further or drive it by
+# hand with emukeys.ps1 one prompt at a time, confirming each with -Shot.
 if ($UseHD -and -not $PSBoundParameters.ContainsKey("Boot")) { $Boot = 6 }
 
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
@@ -76,11 +84,11 @@ if ($UseHD) {
   # L(ink, then each prompt answered separately once it has actually
   # appeared, not on a shared timer -- see the module note.
   & "$here\emukeys.ps1" -Keys "L" -Wait 3000 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "WORKHD:$HostFile.CODE{ENTER}" -Wait 2000 -PerKey $PerKey | Out-Null
+  & "$here\emukeys.ps1" -Keys "SYSHD:$HostFile.CODE{ENTER}" -Wait 2000 -PerKey $PerKey | Out-Null
   & "$here\emukeys.ps1" -Keys "SYSHD:$Lib.CODE{ENTER}" -Wait 2000 -PerKey $PerKey | Out-Null
   & "$here\emukeys.ps1" -Keys "{ENTER}" -Wait 1500 -PerKey $PerKey | Out-Null
   & "$here\emukeys.ps1" -Keys "{ENTER}" -Wait 1500 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "WORKHD:$Out.CODE{ENTER}" -Wait ($Link * 1000) -Shot $Shot -PerKey $PerKey
+  & "$here\emukeys.ps1" -Keys "SYSHD:$Out.CODE[*]{ENTER}" -Wait ($Link * 1000) -Shot $Shot -PerKey $PerKey
 } else {
   # L(ink, host, lib, <ret> to end the lib list, <ret> for no map, output.
   $keys = "L$Vol$HostFile.CODE{ENTER}$Vol$Lib.CODE{ENTER}{ENTER}{ENTER}$Vol$Out.CODE{ENTER}"
@@ -92,4 +100,4 @@ Get-Process AppleWin -EA SilentlyContinue |
 Start-Sleep -Milliseconds 2500
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 800
-if ($UseHD) { "closed; HD2.hdv (WORKHD) flushed" } else { "closed; $Vol flushed" }
+if ($UseHD) { "closed; HD1.hdv (SYSHD) flushed" } else { "closed; $Vol flushed" }

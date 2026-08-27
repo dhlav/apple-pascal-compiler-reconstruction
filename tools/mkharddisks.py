@@ -1,17 +1,42 @@
-"""Build the two hard-disk images the HD acceptance tier mounts.
+"""Build the hard-disk image the HD acceptance tier mounts.
 
-The floppy tier's four volumes (BOOT128, APPLE2, WORK, WORK2) fold onto two
-2MB Pascal hard-disk volumes here, both living on the Hard Disk Controller
-card in slot 5 (`-s5 hdc`):
+The floppy tier's four volumes (BOOT128, APPLE2, WORK, WORK2) fold onto one
+2MB Pascal hard-disk volume here, on the Hard Disk Controller card in slot 5
+(`-s5 hdc`, `-s5h1` only -- `-s5h2` is not used):
 
-  SYSHD   (`build/disks/HD1.hdv`)  boots the machine and carries every system
-          tool Apple shipped -- SYSTEM.APPLE/PASCAL (128K), EDITOR, FILER,
-          LIBRARY, MISCINFO, CHARSET, SYNTAX, ASSMBLER, COMPILER, LINKER,
-          LIBRARY.CODE, LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS. Stable --
-          rebuilding it is cheap, but nothing here changes between runs.
-  WORKHD  (`build/disks/HD2.hdv`)  ours: the same reconstructed source
-          mkworkdisk.py puts on WORK.dsk, and where compiler/assembler/linker
-          output lands.
+  SYSHD  (`build/disks/HD1.hdv`)  boots the machine, carries every system
+         tool Apple shipped -- SYSTEM.APPLE/PASCAL (128K), EDITOR, FILER,
+         LIBRARY, MISCINFO, CHARSET, SYNTAX, ASSMBLER, COMPILER, LINKER,
+         LIBRARY.CODE, LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS -- and also
+         carries the same reconstructed source mkworkdisk.py puts on
+         WORK.dsk, and where compiler/assembler/linker output lands.
+
+**This was two volumes (SYSHD + WORKHD) briefly.** A single UCSD Pascal
+volume claims *all* currently-free contiguous space for a new file at
+creation and shrinks it back down on a clean close -- so `SYSTEM.ASSMBLER`
+creating its own `%LINKER.INFO` scratch file and the output codefile on the
+*same* volume raced for that one free run, and the second file got "I/O
+error: no room on volume" even with thousands of blocks free (finding: HD
+acceptance session, 2026-08-26). This is not a bug in this repo's tooling --
+it is exactly the situation the Apple II Pascal manual describes and gives
+the fix for (ch. 3 "File Size Specification", ch. 5 "Allocating File
+Space"): a single-drive system must give the output codefile an explicit
+size, `NAME.CODE[*]` (second-largest contiguous area, or half the largest,
+whichever is more) rather than the `[0]` default (the entire largest area).
+`emucompile.ps1`/`emuassemble.ps1`/`emulink.ps1` type the `[*]` suffix on
+every codefile they create for exactly this reason -- it is not optional on
+this one-volume layout the way it would be with system tools and output on
+separate volumes.
+
+**A Pascal volume is limited to 77 files regardless of size** (`cp2`'s own
+manual) -- the directory is four fixed 512-byte blocks of 26-byte entries,
+78 slots, the first of which is the volume itself. 2MB of space does not
+relax that. The 15 system tools plus this module's own FILES list plus
+whatever a session's compiler/assembler/linker runs add on top of it (each a
+new .CODE, plus a stray .TEXT from testing) needs watching against that
+ceiling far sooner than against space -- `main()` checks it after every
+build and fails loudly rather than let cp2's own directory-full error be the
+first anyone hears of it.
 
 Two things a 5.25" floppy volume never has to worry about, and a hard disk
 always does:
@@ -22,19 +47,22 @@ always does:
     skew at all, a different (simpler) format this repo has no reader for.
     So this shells out to CiderPress II's `cp2.exe`, which understands the
     Pascal directory format at any size, instead.
-  * **volume names must be distinct.** `cp2 create-disk-image ... pascal`
-    always names a fresh volume `NEWDISK`; two same-named volumes online at
-    once left the Filer unable to tell them apart -- `A(ssem` searched
-    `NEWDISK:` for `SYSTEM.ASSMBLER` and silently found the *other* one,
-    empty, volume (finding: HD acceptance session, 2026-08-26). Renamed here
-    before anything is copied on.
+  * **volume names must be distinct from any other volume online at once.**
+    `cp2 create-disk-image ... pascal` always names a fresh volume
+    `NEWDISK`; two same-named volumes online at once left the Filer unable
+    to tell them apart -- `A(ssem` searched `NEWDISK:` for `SYSTEM.ASSMBLER`
+    and silently found the *other* one, empty, volume (finding: HD
+    acceptance session, 2026-08-26). Not a live concern with only one HD
+    volume mounted, but renamed off `NEWDISK` here regardless, since nothing
+    stops a floppy or a second hard disk called `NEWDISK` from also being
+    online in the same session.
 
 Requires `C:\\CiderPress2\\cp2.exe` (CiderPress II) and boots via SmartPort
 firmware, which AppleWin only defaults to for `-model apple2ee` (the
 *enhanced* //e) -- `apple2e` still uses the older v2 HDC firmware and never
 gets past the `Apple //e` splash. See `runemu.py --hd`.
 
-Writes build/disks/HD1.hdv and build/disks/HD2.hdv.
+Writes build/disks/HD1.hdv.
 """
 import shutil
 import subprocess
@@ -52,7 +80,7 @@ BOOT128 = OUT / "BOOT128.dsk"
 APPLE2 = ROOT / "evidence" / "disks" / "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"
 
 HD1 = OUT / "HD1.hdv"
-HD2 = OUT / "HD2.hdv"
+MAX_FILES = 77   # cp2's own ceiling for a Pascal volume, any size
 
 # Same list mkworkdisk.py puts on WORK.dsk -- see that module for why each
 # one is here and why the names are what they are.
@@ -86,17 +114,11 @@ def main() -> int:
                          "(python tools/mkbootdisk.py)")
     OUT.mkdir(parents=True, exist_ok=True)
 
-    # -- SYSHD: boot + every system tool, rebuilt fresh every run ----------
     HD1.unlink(missing_ok=True)
     cp2("create-disk-image", str(HD1), "2M", "pascal")
     cp2("move", str(HD1), ":", "SYSHD")
     cp2("copy", str(BOOT128), str(HD1))
     cp2("copy", str(APPLE2), str(HD1))
-
-    # -- WORKHD: ours, rebuilt fresh every run ------------------------------
-    HD2.unlink(missing_ok=True)
-    cp2("create-disk-image", str(HD2), "2M", "pascal")
-    cp2("move", str(HD2), ":", "WORKHD")
 
     scratch = OUT / "hd-scratch"
     scratch.mkdir(exist_ok=True)
@@ -112,16 +134,20 @@ def main() -> int:
                 f"{long[:5]} -- fix the generator, not the disk")
         tmp = scratch / name
         tmp.write_bytes(encode_text(text))
-        cp2("add", "--raw", "--no-strip-ext", "--strip-paths", str(HD2),
+        cp2("add", "--raw", "--no-strip-ext", "--strip-paths", str(HD1),
             str(tmp))
-        cp2("set-attr", str(HD2), name, "type=PTX")
+        cp2("set-attr", str(HD1), name, "type=PTX")
     shutil.rmtree(scratch)
 
-    for img, label in ((HD1, "SYSHD"), (HD2, "WORKHD")):
-        out = cp2("catalog", str(img))
-        if f'"{label}"' not in out:
-            raise SystemExit(f"{img.name} did not come up named {label}:\n{out}")
-        print(out, end="")
+    out = cp2("catalog", str(HD1))
+    if '"SYSHD"' not in out:
+        raise SystemExit(f"{HD1.name} did not come up named SYSHD:\n{out}")
+    nfiles = sum(1 for line in out.splitlines()[2:] if line.strip())
+    if nfiles > MAX_FILES:
+        raise SystemExit(f"{HD1.name}: {nfiles} files, over the {MAX_FILES} "
+                         "a Pascal volume can hold regardless of size")
+    print(out, end="")
+    print(f"{nfiles}/{MAX_FILES} files")
     return 0
 
 

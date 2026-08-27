@@ -68,17 +68,34 @@ powershell -File tools/emuassemble.ps1 -Name X
 powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z
 ```
 
-Two 2MB Pascal hard-disk volumes on a slot-5 HDC (`SYSHD` boots and carries
-every tool, `WORKHD` is ours) are now the **default** for all four
-`emu*`/`runemu.py` scripts — `mkharddisks.py` builds them, and `cp2.exe`
+One 2MB Pascal hard-disk volume on a slot-5 HDC (`SYSHD` — boots, carries
+every system tool, and carries ours too) is the **default** for all four
+`emu*`/`runemu.py` scripts — `mkharddisks.py` builds it, and `cp2.exe`
 (CiderPress II, `C:\CiderPress2\cp2.exe`) is required since a2pascal's
 disk/diskwrite only read/write 5.25" floppy geometry. Name files by Pascal
-volume name (`SYSHD:`, `WORKHD:`), not by which `.hdv` holds them, and give
-any new volume a distinct name — two disks both named `NEWDISK` (cp2's
-default) left the Filer unable to tell them apart.
+volume name (`SYSHD:`), not by which `.hdv` holds them.
+
+**Every codefile created on `SYSHD:` needs a `[*]` size specifier** —
+`SYSHD:NAME.CODE[*]`, not `SYSHD:NAME.CODE`. A single UCSD volume claims
+*all* currently-free contiguous space for a new file and only shrinks it
+back on a clean close; `SYSTEM.ASSMBLER`'s own `%LINKER.INFO` scratch file
+and an output codefile both being created on the one merged volume raced
+for that space, and the codefile got `I/O error: no room on volume` even
+with thousands of blocks free. This isn't a bug in this repo's tooling —
+it's the exact situation, and the exact fix, the manual documents for a
+one-drive system (ch. 3 "File Size Specification", ch. 5 "Allocating File
+Space"): `[*]` reserves the second-largest contiguous area (or half the
+largest, whichever is more) instead of grabbing the whole thing. All three
+`emu*.ps1` scripts already append it. **A Pascal volume also holds at most
+77 files regardless of size** — `mkharddisks.py` checks this after every
+build and fails loudly rather than let it be a surprise; give any new
+volume a distinct name too, in case a second one is ever online at once —
+two disks both named `NEWDISK` (cp2's default) left the Filer unable to
+tell them apart.
 
 **The old four-floppy layout is still there behind `-Floppy`** (`runemu.py
---floppy`), unchanged:
+--floppy`), unchanged, and does not need `[*]` — system tools and output
+live on separate volumes there, so nothing races for space:
 
 ```
 python tools/mkworkdisk.py                      # ALWAYS first — stale disks lie
@@ -87,7 +104,7 @@ powershell -File tools/emuassemble.ps1 -Name X -Floppy
 powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z -Floppy
 ```
 
-Then read `build/disks/WORK2.dsk` (or `HD2.hdv` with `cp2.exe`, since
+Then read `build/disks/WORK2.dsk` (or `HD1.hdv` with `cp2.exe`, since
 a2pascal can't) and diff.
 
 ### Emulator pitfalls (all hit for real)

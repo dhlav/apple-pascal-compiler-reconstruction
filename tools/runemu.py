@@ -1,23 +1,30 @@
 """Launch AppleWin with the acceptance-tier drive layout.
 
-**Default (as of finding: HD acceptance session, 2026-08-26): two 2MB Pascal
-hard-disk volumes on a slot-5 HDC**, built by `mkharddisks.py`:
+**Default (as of finding: HD acceptance session, 2026-08-26): one 2MB Pascal
+hard-disk volume on a slot-5 HDC**, built by `mkharddisks.py`:
 
     slot 5 HDC h1   SYSHD    boots the machine, carries every system tool
                              Apple shipped -- APPLE/PASCAL (128K), EDITOR,
                              FILER, LIBRARY, MISCINFO, CHARSET, SYNTAX,
                              ASSMBLER, COMPILER, LINKER, LIBRARY.CODE,
-                             LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS
-    slot 5 HDC h2   WORKHD   ours -- the reconstructed source, and where
-                             compiler/assembler/linker output lands
+                             LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS -- and
+                             also the reconstructed source, and where
+                             compiler/assembler/linker output lands.
     slots 6, 7      empty
 
-Name volumes by their Pascal volume name (`SYSHD:`, `WORKHD:`), not by which
-.hdv holds them -- and both volumes must have *distinct* names. `cp2
-create-disk-image ... pascal` always names a fresh volume `NEWDISK`; two
-same-named volumes online at once left the Filer unable to tell them apart
-(`A(ssem` searching `NEWDISK:` for `SYSTEM.ASSMBLER` silently found the
-*other*, empty, one instead). `-model apple2ee` matters too, not just
+This was two volumes (SYSHD + WORKHD, h1 and h2) briefly; see
+mkharddisks.py's docstring for why a single volume needs `[*]` on every
+codefile it creates and is not simply "the same thing, one disk instead of
+two." `-s5h2` is unused now.
+
+Name the volume by its Pascal volume name (`SYSHD:`), not by which .hdv
+holds it. `cp2 create-disk-image ... pascal` always names a fresh volume
+`NEWDISK`; two same-named volumes online at once left the Filer unable to
+tell them apart back when this was still two volumes (`A(ssem` searching
+`NEWDISK:` for `SYSTEM.ASSMBLER` silently found the *other*, empty, one
+instead) -- not a live concern with a single HD volume, but renamed off
+`NEWDISK` regardless since nothing stops a floppy or second hard disk called
+`NEWDISK` from also being online. `-model apple2ee` matters too, not just
 cosmetically: AppleWin only defaults the HDC to SmartPort firmware for the
 *enhanced* //e -- `apple2e` boots the older v2 HDC firmware and never gets
 past the `Apple //e` splash. And slot 6 needs `empty` stated explicitly, or
@@ -42,10 +49,12 @@ touch whatever configuration is already in the registry.
 no switch that injects keystrokes, and `-screenshot-and-exit` is documented
 for use with `-load-state`, so it fires before a cold boot has finished and
 cannot even confirm one. Driving `X(ecute` is manual. What to type once it is
-up (hard-disk layout; swap `WORKHD:` for `WORK:` on `--floppy`):
+up (hard-disk layout; swap `SYSHD:` for `WORK:` on `--floppy`, and note the
+`[*]` size specifier on the codefile -- mkharddisks.py's docstring explains
+why it is not optional here):
 
-    X  *SYSTEM.ASSMBLER     then  WORKHD:SEARCH      -> WORKHD:SEARCH.CODE
-    X  *SYSTEM.COMPILER     then  WORKHD:SKEL13      -> WORKHD:SKEL13.CODE
+    X  *SYSTEM.ASSMBLER     then  SYSHD:SEARCH      -> SYSHD:SEARCH.CODE[*]
+    X  *SYSTEM.COMPILER     then  SYSHD:SKEL13      -> SYSHD:SKEL13.CODE[*]
 
 and then bring the disk back here and diff it against the binary.
 
@@ -62,8 +71,7 @@ EXE = Path(r"C:\AppleWin\AppleWin.exe")
 DISKS = ROOT / "evidence" / "disks"
 WORK = ROOT / "build" / "disks" / "WORK.dsk"
 WORK2 = ROOT / "build" / "disks" / "WORK2.dsk"
-HD1 = ROOT / "build" / "disks" / "HD1.hdv"     # SYSHD: boot + every tool
-HD2 = ROOT / "build" / "disks" / "HD2.hdv"     # WORKHD: ours
+HD1 = ROOT / "build" / "disks" / "HD1.hdv"     # SYSHD: boot, every tool, ours
 
 # Applied before every launch. AppleWin reads these from the registry at
 # startup and there is no command-line switch for any of them.
@@ -175,16 +183,14 @@ def main_hd(dry_run: bool = False) -> int:
     it (spinning drive light, screen stuck on the splash) before ever
     reaching slot 5.
     """
-    for img, builder in ((HD1, "mkharddisks.py"), (HD2, "mkharddisks.py")):
-        if not img.exists():
-            raise SystemExit(f"{img.relative_to(ROOT)} has not been built "
-                             f"(python tools/{builder})")
+    if not HD1.exists():
+        raise SystemExit(f"{HD1.relative_to(ROOT)} has not been built "
+                         "(python tools/mkharddisks.py)")
 
     cmd = [str(EXE),
            "-model", "apple2ee",
            "-s5", "hdc",
            "-s5h1", str(HD1),
-           "-s5h2", str(HD2),
            "-s6", "empty",
            "-s7", "empty",
            "-power-on"]
@@ -193,8 +199,7 @@ def main_hd(dry_run: bool = False) -> int:
     apply_settings(dry_run)
     print()
 
-    print("Slot 5 HDC h1", HD1.name, " <- SYSHD: boot + every system tool")
-    print("Slot 5 HDC h2", HD2.name, " <- WORKHD: ours")
+    print("Slot 5 HDC h1", HD1.name, " <- SYSHD: boot, every system tool, ours")
     print("Slots 6, 7    empty")
     print()
     print(" ".join(f'"{c}"' if " " in c else c for c in cmd))
