@@ -40,14 +40,24 @@
   FWRITESTRING(@OUTFILE,S,0) are the same instructions), so this does not
   need (*$U-*) or a single OS FORWARD -- only IDSEARCH is EXTERNAL. Without
   $I- every one of those calls carries an extra IOCHECK CSP the binary
-  does not have. }
+  does not have.
+
+  $G+ : Apple Pascal forbids GOTO unless this is set (language reference,
+  p.1793) -- VALIDNAME's early exit needs it, and its absence here was a
+  real bug this file carried since VALIDNAME was first written: the fast
+  tier accepts GOTO regardless of any $G directive, so it never caught
+  this, and only compiling against Apple's own SYSTEM.COMPILER did
+  (finding: LIBMAP session, 2026-08-27). }
 (*$I-*)
+(*$G+*)
 PROGRAM LIBMAP;
 
   TYPE
     DIRENTRY = RECORD
                  ADDR, LENG: INTEGER
                END;
+    SEGWORDS = ARRAY [0..15] OF INTEGER;
+    SEGNAMESTR = PACKED ARRAY [0..7] OF CHAR;
     SEGINFOREC = PACKED RECORD CASE INTEGER OF
                    0: (ASWORD: INTEGER);
                    1: (SEGNUM: 0..255; MTYPE: 0..15;
@@ -105,7 +115,7 @@ PROGRAM LIBMAP;
     on the 6502 it always answers "byte 0". Not yet checked against the
     binary's own CHK placement on the constant index -- (*STUB*) in
     spirit, real in shape. }
-  FUNCTION NEEDSSWAP(VAR P: ARRAY [0..15] OF INTEGER): BOOLEAN;
+  FUNCTION NEEDSSWAP(VAR P: SEGWORDS): BOOLEAN;
     TYPE
       WORDBYTES = PACKED RECORD CASE BOOLEAN OF
                     TRUE:  (ASWORD: INTEGER);
@@ -169,7 +179,7 @@ PROGRAM LIBMAP;
     for instruction, including the early exit: the source leaves the
     result FALSE from the top and jumps straight past the loop rather
     than reassigning it. }
-  FUNCTION VALIDNAME(VAR NAME: PACKED ARRAY [0..7] OF CHAR): BOOLEAN;
+  FUNCTION VALIDNAME(VAR NAME: SEGNAMESTR): BOOLEAN;
     LABEL 1;
     VAR
       LAST, I: 0..7;
@@ -194,12 +204,24 @@ PROGRAM LIBMAP;
     segment number if it has one, the slot position if not (an older,
     pre-II.1 file has no SEGINFO at all) -- then the version/machine-type
     line or "Pre-II.1 segment", then SHOWONE's own detail, then a rule.
-    Reconstructed from the shape of the binary; not yet checked
-    instruction for instruction. }
+
+    The ADDRLEN test was originally written as a pointer
+    (`ENTRY: ^DIRENTRY; ENTRY := @SEGDICT.ADDRLEN[SEGNUM]`), which the fast
+    tier compiled without complaint. Apple's own compiler rejects `@`
+    outright -- error 400, illegal character -- and `ADDR(x)` is simply an
+    undeclared identifier; neither is real Apple Pascal 1.3 syntax, and
+    nothing else in this whole reconstructed codebase uses either one.
+    `WITH SEGDICT.ADDRLEN[SEGNUM] DO` produces the *identical* instruction
+    sequence the binary has (`LAO`, index, bounds check, `IXA`, store into
+    a hidden local -- confirmed against the fast tier instruction for
+    instruction) with no pointer or address-of syntax at all: that address
+    is WITH's own implementation, computed once and reused for both field
+    reads, never exposed to the source (finding: LIBMAP session,
+    2026-08-27). Reconstructed from the shape of the binary; not yet
+    checked instruction for instruction beyond this one statement. }
   PROCEDURE SHOWSEGS;
     VAR
       SEGNUM, LASTSEG: 0..16;
-      ENTRY: ^DIRENTRY;
 
     { Detail for one dictionary slot: a one-line header naming what kind
       of segment it is (SEGDICT.SEGKIND, 0..7, case-dispatched -- the
@@ -226,7 +248,18 @@ PROGRAM LIBMAP;
       LISTREFS, is confirmed as what gates it (LISTREFS only shows up
       inside SHOWREF itself), and every named local below this point is
       real (matched to a specific LDL/STL offset in the disassembly),
-      but the control flow connecting them is not. }
+      but the control flow connecting them is not.
+
+      SWAPTEMP and SWAPBUF close nearly all of a real gap: Apple's own
+      compiler gives this procedure params=2/data=556 (matching this
+      reconstruction's params=2 already); without them this reconstruction
+      compiled to data=20, a 536-word shortfall with no local reference
+      anywhere in the procedure body to explain it. A local variable the
+      same shape as the global dictionary, plus the 8-word (16-byte) swap
+      scratch matching LLA270 in the disassembly, closes it to data=548 --
+      8 words still unexplained, against Apple's own compiler, not the
+      fast tier (finding: LIBMAP session, 2026-08-27). What SWAPTEMP is
+      *for* is not yet known; SHOWINFO -- unread -- is one candidate. }
     PROCEDURE SHOWONE(SEGNUM: INTEGER);
       VAR
         BYTEPOS:  0..32;               { local2: which half of RBUF is owed }
@@ -235,6 +268,8 @@ PROGRAM LIBMAP;
         KIND:     0..14;               { local8 }
         VAL1, VAL2: INTEGER;           { locals 9, 10 }
         NEEDINFO: BOOLEAN;             { local13 }
+        SWAPTEMP: SEGDICTREC;          { role and exact offset not yet known }
+        SWAPBUF:  ARRAY [0..7] OF INTEGER;  { local270, the swap scratch }
 
       { TRUE if SHOWINFO already gave a full account of this segment, so
         SHOWONE should not also print the raw reference stream unless
@@ -338,8 +373,8 @@ PROGRAM LIBMAP;
     LASTSEG := 15;
     WHILE SEGNUM <= LASTSEG DO
     BEGIN
-      ENTRY := @SEGDICT.ADDRLEN[SEGNUM];
-      IF (ENTRY^.LENG > 0) OR (ENTRY^.ADDR > 0) THEN
+      WITH SEGDICT.ADDRLEN[SEGNUM] DO
+      IF (LENG > 0) OR (ADDR > 0) THEN
       BEGIN
         IF SEGDICT.SEGINFO[SEGNUM].SEGNUM <> 0 THEN
         BEGIN
@@ -370,7 +405,7 @@ PROGRAM LIBMAP;
         END;
         SHOWONE(SEGNUM);
         WRITELN(OUTFILE);
-        WRITE(OUTFILE, '----------------------------------------------------------------------':75);
+        WRITE(OUTFILE, '----------------------------------------':75);
         WRITELN(OUTFILE);
         WRITELN(OUTFILE)
       END;
