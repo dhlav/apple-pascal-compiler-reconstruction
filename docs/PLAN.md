@@ -169,6 +169,23 @@ a route end to end; everything else is a straight read-and-rebuild.
     it against the evidence image -- one number for the whole project, and
     a total that has to balance.
 
+13. **`SYSTEM.APPLE`/`128K.APPLE` itself** -- item 11's "disassembly project
+    of its own," scoped into steps:
+    * Analyze John Brooks' `SYSTEM.APPLE` source and pull out whatever in it
+      is not specific to the 128K configuration -- the interpreter core
+      this project actually needs, separated from the parts that only
+      apply to a different memory size.
+    * Convert what's pulled out to Apple's own assembler dialect (Apple
+      Assembler syntax, symbolic operands, `.PROC`/`.FUNC` -- the same
+      conventions `src/native/` already follows), so it is a source this
+      repo can assemble rather than a reference to read past.
+    * Build a turnkey pipeline to recompile/reassemble the whole thing in
+      AppleWin, the same shape as the `emu*.ps1` scripts already give
+      `SYSTEM.COMPILER`/`SYSTEM.ASSMBLER`/`SYSTEM.LINKER`.
+    * Once that stands on its own, adjust it to use the Peter Miller
+      (`ucsdpsys`) tools where that helps -- the fast tier this project
+      already relies on for the p-code side.
+
 ### Carried forward, not scheduled
 
 * **`src/pascal/units/1.1/` is empty.** The 1.1 library has no
