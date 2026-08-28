@@ -1,0 +1,571 @@
+{ SETUP -- the Apple Pascal hardware/terminal configuration utility,
+  APPLE3:SETUP.CODE. Reconstructed from the 1.3 binary
+  (`analysis/utilities/SETUP-1.3-APPLE3.pcode.txt`/`.pas.txt`) --
+  byte-identical between 1.1 and 1.3, and no shipped source exists on any
+  evidence disk for either release.
+
+  A large file: 54 procedures across 12 codefile segments. This is a
+  first, scoped session -- the skeleton, the trivial pieces, and the
+  menu/init machinery that everything else hangs off of, **compiling
+  clean under Apple's own SYSTEM.COMPILER, first full attempt**. Real
+  bodies: the SETUP segment's own outer body (SETUP.1 in the disk
+  catalog's own naming), SETUP2/3/4/5/6, and the whole INITS segment
+  (with one deliberate simplification, see INITS5 below). SETUP7 through
+  SETUP26 -- the actual value-editing screens the CHANGE menu drives --
+  and TEACHSET's own ten tutorial procedures are placeholder stubs,
+  declared with plausible signatures (only ever called with zero
+  arguments from what this session wrote) purely to hold their procedure
+  NUMBER's place in line, since UCSD assigns numbers by declaration
+  order and the menu's own CASE dispatch calls SETUP8/SETUP12 by that
+  number.
+
+  Frame sizes checked against Apple's binary (finding 122): the outer
+  body EXACT (`4/352`), SETUP2 EXACT (`4/82`), SETUP3 EXACT (`6/164`),
+  every one of NUMBER2..NUMBER9 EXACT (`0/0`, all eight). SETUP4 is a
+  known, documented miss (`4/82` here against Apple's `4/2` -- see its
+  own comment below); SETUP5/SETUP6 are `4/0` against Apple's `0/0`, an
+  undiagnosed small params gap on two zero-argument FUNCTIONs, not yet
+  chased. INITS's own nine procedures compile and the whole segment
+  runs correctly in shape, but have not yet been checked one by one
+  against Apple's own per-procedure frame sizes -- the natural next
+  step alongside SETUP7 onward and TEACHSET.
+
+  What SETUP actually does, from what's real so far: builds a binary
+  search tree of named fields over SYSTEM.MISCINFO (the 96-word/192-byte
+  terminal-profile record this program writes -- DISKSET.md's own "not
+  started" data file, and this is the way in to it, per docs/PLAN.md).
+  Each field's name maps to an (OFS, BIT, BITS) triple describing where
+  in that record its value lives; INITS builds the whole tree once at
+  startup (INITS.8/INITS.9's own long call sequences, "HAS CLOCK" at
+  word 29 bit 0, "SCREEN HEIGHT" at word 37, and so on) plus two small
+  linked lists of named values (TRUE/FALSE, and two more groups for
+  8/16-bit prefixed-key fields) a value gets looked up against when the
+  user types a new one. The exact meaning of OFS/BIT/BITS as bit
+  offsets into MISCINFO -- and MISCINFO's own field layout -- is not
+  decoded further than "these are opaque integers this session's own
+  code never interprets," since nothing written here needs to.
+
+  Structure: this is not `(*$U-*) PROGRAM SETUP; ... BEGIN <menu loop>
+  END.` the way a first reading of `lex=0` suggested -- that shape hit
+  error 125 on `EXIT(PROGRAM)` and error 104 on `EXIT(SETUP)`.
+  `SYSTEM.COMPILER`'s own skeleton
+  (`analysis/reconstruction/skeleton-1.3.text`) settles what the real
+  shape is: `(*$U-*) PROGRAM PASCALSYSTEM;` wraps a
+  `SEGMENT PROCEDURE PASCALCOMPILER(CODEP, SYMBUFP)`, and it is that
+  inner segment procedure's own `EXIT(PASCALCOMPILER)` inside `BLOCK`,
+  not the outer program, that the compiler's own `params=4` (the OS's
+  `(NIL,NIL)` two-word invocation convention, the same "hidden bootstrap
+  params" `BINDER.text`'s own outer body already carries) shows up on.
+  Ported the identical shape here: `PROGRAM PASCALSYSTEM` outermost,
+  trivial `BEGIN END.`; `SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR)` one
+  level in, taking the same two unused words, holding everything below
+  and the real menu-loop body; `EXIT(SETUP)` inside `SETUP2` now
+  resolves the same way `EXIT(PASCALCOMPILER)` does.
+
+  PASCALSY's own real content here (`XIT` plus one leftover byte)
+  against `SYSTEM.COMPILER`'s empty/absent one (finding 105a/119) is an
+  open parallel, not settled evidence either way -- both outer bodies
+  are the same trivial `BEGIN END.` shape, so whatever makes one produce
+  a real dictionary entry and the other nothing is still unexplained. }
+(*$I-*)
+(*$U-*)
+PROGRAM PASCALSYSTEM;
+
+  TYPE
+    ANYPTR = ^INTEGER;
+
+SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
+{ P1/P2: the OS's own (NIL, NIL) two-word invocation convention every
+  segment-1 program gets (SYSTEM.COMPILER's own skeleton, finding 59) --
+  never read here, matching PASCALCOMPILER's own CODEP/SYMBUFP being the
+  only two params that convention ever needs to carry meaning. }
+
+  TYPE
+    { A named-value list entry -- 43 words per NEW(x,43). Two lists of
+      these exist (WIDENAMES/KEYNAMES, built by INITS.9) besides the boolean
+      one (BOOLNAMES, built by INITS.8); each is a plain linked list,
+      newest entry first (INITS.7's own I1,1 := L44 at the end).
+      Declared before FIELDNODE below since FIELDNODE.VALUES needs the
+      type name already in scope. }
+    VALPTR = ^VALNODE;
+    VALNODE = RECORD
+                NEXT: VALPTR;
+                TAG:  INTEGER;
+                NAME: STRING
+              END;
+    { The field tree's own node -- 47 words per NEW(x,47) at every
+      creation site (INITS.4 for the sentinel/root, INITS.6 for every
+      real field). OFS/BIT/BITS are read verbatim off the two integer
+      arguments and the enclosing (shared, lexically-scoped) BITS/VALUES
+      context INITS.6 is called under; LEFT/RIGHT are BST children,
+      both pointing at the shared SENTINEL node when empty rather than
+      NIL -- the classic sentinel trick SETUP3's own search loop relies
+      on to terminate without a separate NIL check. }
+    NODEPTR = ^FIELDNODE;
+    FIELDNODE = RECORD
+                  OFS:    INTEGER;   {   0 }
+                  BIT:    INTEGER;   {   1 }
+                  BITS:   INTEGER;   {   2 }
+                  VALUES: VALPTR;    {   3 }
+                  LEFT:   NODEPTR;   {   4 }
+                  RIGHT:  NODEPTR;   {   5 }
+                  NAME:   STRING     {   6, 41 words }
+                END;
+    { SYSTEM.MISCINFO's own on-disk shape -- 96 words, matching
+      DISKSET.md's own 192-byte listing. Left generic: nothing this
+      session wrote reads or writes an individual field, only the
+      OFS/BIT/BITS triple describing where one would be. }
+    MISCREC = ARRAY [0..95] OF INTEGER;
+
+  VAR
+    ROOT:      NODEPTR;    { G9, the field tree's own root }
+    SENTINEL:  NODEPTR;    { G8, the shared sentinel every empty child
+                             points to instead of NIL }
+    CUR, PARENT: NODEPTR;  { G7, G6 -- SETUP3's own search cursor and
+                             the parent it last stepped from }
+    BOOLNAMES: VALPTR;     { G12, 'T'/'TRUE' and 'F'/'FALSE' }
+    WIDENAMES: VALPTR;     { G11, built under BITS=16 (SCREEN
+                             HEIGHT/WIDTH) }
+    KEYNAMES: VALPTR;     { G10, built under BITS=8 (the LEAD-IN /
+                             cursor-movement / key-binding group) }
+    ALLOCQUANTUM: INTEGER; { G14, one NEW(x,1)'s own heap-block size in
+                             words, measured once via two MARK snapshots
+                             -- INITS5's own now-stubbed heap-trim uses
+                             it as a scale factor }
+    LASTKEY:  CHAR;        { G3, SETUP5's own last-read, case-folded key }
+    DOTCOL:   INTEGER;     { G13, the "INITIALIZING...." progress dot's
+                             own column, wrapping at 40 }
+    QUITFLAG: BOOLEAN;     { G5, set true on '!' (SETUP5), read by
+                             SETUP8's own QUIT-menu loop }
+    G4:       INTEGER;     { set to 10 at the very end of INITS's own
+                             top-level body; not otherwise touched by
+                             anything this session wrote -- purpose not
+                             yet known }
+    MISCINFO: MISCREC; { G15 }
+    CTRLNAMES: ARRAY [0..33] OF STRING[3]; { G111 -- 'NUL'..'SP', the 33
+                             control-character names (INITS2/INITS3),
+                             plus one scratch slot at index 33 reused by
+                             SETUP10's own value-entry logic (not written
+                             this session) }
+
+  { SETUP2/SETUP3/SETUP4 (the bug-check, BST search, and trim
+    utilities) are FORWARD-declared here, ahead of their real bodies
+    further down, purely so INITS -- declared next, and needing all
+    three -- can see them. This doesn't touch their procedure NUMBERS:
+    UCSD assigns those where a body is actually compiled, not where a
+    FORWARD stub is (finding 61, already relied on throughout
+    PASCALCO.text), and no segment procedure may follow a body that's
+    already been compiled without tripping error 399 (CODEINSEG) --
+    which is what led to this ordering in the first place: NUMBER2's
+    own declaration hit exactly that error, right after SETUP26's
+    real body, until every SEGMENT PROCEDURE below was moved ahead of
+    all 25 of SETUP2..26's own real bodies (finding: SETUP session,
+    2026-08-28). }
+  PROCEDURE SETUP2(LOC: STRING; OK: BOOLEAN);
+    FORWARD;
+  FUNCTION SETUP3(KEY: STRING): BOOLEAN;
+    FORWARD;
+  PROCEDURE SETUP4(VAR DEST: STRING; SRC: STRING);
+    FORWARD;
+
+  SEGMENT PROCEDURE NUMBER2; BEGIN END;
+  SEGMENT PROCEDURE NUMBER3; BEGIN END;
+  SEGMENT PROCEDURE NUMBER4; BEGIN END;
+  SEGMENT PROCEDURE NUMBER5; BEGIN END;
+  SEGMENT PROCEDURE NUMBER6; BEGIN END;
+  SEGMENT PROCEDURE NUMBER7; BEGIN END;
+  SEGMENT PROCEDURE NUMBER8; BEGIN END;
+  SEGMENT PROCEDURE NUMBER9; BEGIN END;
+
+  { All of SETUP's own one-time startup work: builds the control-
+    character name table, the field tree's sentinel/root pair, the
+    three named-value lists, and the whole field tree itself (INITS8/
+    INITS9's own long call sequences below), printing "INITIALIZING"
+    with a progress dot per field as it goes. }
+  SEGMENT PROCEDURE INITS;
+
+    { Fills CTRLNAMES[0..32] with the 33 ASCII control-character names,
+      NUL through SP, via the nested INITS3 below -- I1,1 in the
+      original, the running index, is this procedure's own local. }
+    PROCEDURE INITS2;
+      VAR
+        NEXTIDX: INTEGER;
+
+      PROCEDURE INITS3(NAME: STRING);
+      BEGIN
+        NEXTIDX := NEXTIDX + 1;
+        CTRLNAMES[NEXTIDX] := NAME
+      END;
+
+    BEGIN
+      NEXTIDX := -1;
+      INITS3('NUL'); INITS3('SOH'); INITS3('STX'); INITS3('ETX');
+      INITS3('EOT'); INITS3('ENQ'); INITS3('ACK'); INITS3('BEL');
+      INITS3('BS');  INITS3('HT');  INITS3('LF');  INITS3('VT');
+      INITS3('FF');  INITS3('CR');  INITS3('SO');  INITS3('SI');
+      INITS3('DLE'); INITS3('DC1'); INITS3('DC2'); INITS3('DC3');
+      INITS3('DC4'); INITS3('NAK'); INITS3('SYN'); INITS3('ETB');
+      INITS3('CAN'); INITS3('EM');  INITS3('SUB'); INITS3('ESC');
+      INITS3('FS');  INITS3('GS');  INITS3('RS');  INITS3('US');
+      INITS3('SP')
+    END;
+
+    { Trims the heap block a just-copied name string consumed back down
+      to only what its actual length needs -- MARK/RELEASE pointer
+      arithmetic scaled by ALLOCQUANTUM in the binary's own version.
+      Not reproduced: a no-op here, so every name this session's own
+      code allocates keeps its full worst-case buffer instead. Harmless
+      for compiling and running (just more heap used, not less), and
+      documented rather than guessed at (*STUB*). }
+    PROCEDURE INITS5(VAR S: STRING);
+    BEGIN
+    END;
+
+    { Builds the field tree's sentinel/root pair and the three named-
+      value lists; CURVALUES/CURBITS are the shared context INITS6's
+      own new nodes are built under -- set by INITS8/INITS9 before each
+      run of INITS6 calls, read here only to pass into NEW's own field
+      assignment below. }
+    PROCEDURE INITS4;
+      VAR
+        CURVALUES: VALPTR;
+        CURBITS:   INTEGER;
+
+      { One named-value list entry, prepended to the shared list
+        CURVALUES points at (INITS8/INITS9 each rebind CURVALUES before
+        their own run of these). }
+      PROCEDURE INITS7(TAG: INTEGER; NAME: STRING);
+        VAR
+          NEWNODE: VALPTR;
+      BEGIN
+        NEW(NEWNODE);
+        NEWNODE^.NEXT := CURVALUES;
+        NEWNODE^.TAG := TAG;
+        NEWNODE^.NAME := NAME;
+        INITS5(NEWNODE^.NAME);
+        CURVALUES := NEWNODE
+      END;
+
+      { One field: NAME (trimmed and BST-inserted), at (OFS, BIT) under
+        the shared (CURVALUES, CURBITS) context. Prints one progress
+        dot, wrapping the line at 40. The `SETUP2(NOT SETUP3(...))`
+        call is a duplicate-name assertion, not a real find -- inserting
+        a brand new field must NOT already be in the tree. }
+      PROCEDURE INITS6(NAME: STRING; OFS, BIT: INTEGER);
+        VAR
+          TRIMMED: STRING;
+          NEWNODE: NODEPTR;
+      BEGIN
+        WRITE(CHR(46));
+        DOTCOL := DOTCOL + 1;
+        IF DOTCOL = 40 THEN
+        BEGIN
+          WRITELN;
+          DOTCOL := 0
+        END;
+        SETUP4(TRIMMED, NAME);
+        SETUP2(CONCAT('ENTER ', NAME), NOT SETUP3(TRIMMED));
+        NEW(NEWNODE);
+        NEWNODE^.NAME := NAME;
+        INITS5(NEWNODE^.NAME);
+        NEWNODE^.OFS := OFS;
+        NEWNODE^.BIT := BIT;
+        NEWNODE^.BITS := CURBITS;
+        NEWNODE^.VALUES := CURVALUES;
+        NEWNODE^.LEFT := SENTINEL;
+        NEWNODE^.RIGHT := SENTINEL;
+        SETUP4(TRIMMED, PARENT^.NAME);
+        IF TRIMMED > NAME THEN
+        BEGIN
+          PARENT^.RIGHT := NEWNODE
+        END
+        ELSE
+        BEGIN
+          PARENT^.LEFT := NEWNODE
+        END
+      END;
+
+      { The boolean-valued fields -- HAS CLOCK through STUDENT (offset
+        29, one bit each), then the eight PREFIXED[...] terminal-
+        capability flags (offset 36). }
+      PROCEDURE INITS8;
+      BEGIN
+        CURVALUES := BOOLNAMES;
+        INITS7(1, 'T'); INITS7(0, 'F');
+        INITS7(1, 'TRUE'); INITS7(0, 'FALSE');
+        CURBITS := 1;
+        INITS6('HAS CLOCK', 29, 0);
+        INITS6('HAS 8510A', 29, 1);
+        INITS6('HAS LOWER CASE', 29, 2);
+        INITS6('HAS RANDOM CURSOR ADDRESSING', 29, 3);
+        INITS6('HAS SLOW TERMINAL', 29, 4);
+        INITS6('STUDENT', 29, 5);
+        INITS6('PREFIXED[MOVE CURSOR UP]', 36, 0);
+        INITS6('PREFIXED[MOVE CURSOR RIGHT]', 36, 1);
+        INITS6('PREFIXED[ERASE TO END OF LINE]', 36, 2);
+        INITS6('PREFIXED[ERASE TO END OF SCREEN]', 36, 3);
+        INITS6('PREFIXED[MOVE CURSOR HOME]', 36, 4);
+        INITS6('PREFIXED[DELETE CHARACTER]', 36, 5);
+        INITS6('PREFIXED[ERASE SCREEN]', 36, 6);
+        INITS6('PREFIXED[ERASE LINE]', 36, 7);
+        INITS6('PREFIXED[KEY FOR MOVING CURSOR RIGHT]', 47, 0);
+        INITS6('PREFIXED[KEY FOR MOVING CURSOR LEFT]', 47, 1);
+        INITS6('PREFIXED[KEY FOR MOVING CURSOR UP]', 47, 2);
+        INITS6('PREFIXED[KEY FOR MOVING CURSOR DOWN]', 47, 3);
+        INITS6('PREFIXED[NON-PRINTING CHARACTER]', 47, 4);
+        INITS6('PREFIXED[KEY FOR STOP]', 47, 6);
+        INITS6('PREFIXED[KEY FOR BREAK]', 47, 7);
+        INITS6('PREFIXED[KEY FOR FLUSH]', 47, 8);
+        INITS6('PREFIXED[KEY TO END FILE]', 47, 9);
+        INITS6('PREFIXED[EDITOR ''ESCAPE'' KEY]', 47, 10);
+        INITS6('PREFIXED[KEY TO DELETE LINE]', 47, 11);
+        INITS6('PREFIXED[KEY TO DELETE CHARACTER]', 47, 12);
+        INITS6('PREFIXED[EDITOR "ACCEPT" KEY]', 47, 13)
+      END;
+
+      { The numeric/key-binding fields, in two BITS-width groups. }
+      PROCEDURE INITS9;
+      BEGIN
+        CURBITS := 16;
+        CURVALUES := WIDENAMES;
+        INITS6('SCREEN HEIGHT', 37, 0);
+        INITS6('SCREEN WIDTH', 38, 0);
+        CURBITS := 8;
+        CURVALUES := KEYNAMES;
+        INITS6('LEAD-IN TO SCREEN', 31, 0);
+        INITS6('MOVE CURSOR HOME', 31, 8);
+        INITS6('ERASE TO END OF SCREEN', 32, 0);
+        INITS6('ERASE TO END OF LINE', 32, 8);
+        INITS6('MOVE CURSOR RIGHT', 33, 0);
+        INITS6('MOVE CURSOR UP', 33, 8);
+        INITS6('BACKSPACE', 34, 0);
+        INITS6('ERASE LINE', 35, 0);
+        INITS6('ERASE SCREEN', 35, 8);
+        INITS6('KEY TO MOVE CURSOR UP', 39, 0);
+        INITS6('KEY TO MOVE CURSOR DOWN', 39, 8);
+        INITS6('KEY TO MOVE CURSOR LEFT', 40, 0);
+        INITS6('KEY TO MOVE CURSOR RIGHT', 40, 8);
+        INITS6('KEY TO END FILE', 41, 0);
+        INITS6('KEY FOR FLUSH', 41, 8);
+        INITS6('KEY FOR BREAK', 42, 0);
+        INITS6('KEY FOR STOP', 42, 8);
+        INITS6('NON-PRINTING CHARACTER', 43, 8);
+        INITS6('KEY TO DELETE LINE', 44, 0);
+        INITS6('EDITOR "ESCAPE" KEY', 44, 8);
+        INITS6('LEAD-IN CHAR FROM KEYBOARD', 45, 0);
+        INITS6('EDITOR "ACCEPT" KEY', 45, 8);
+        INITS6('KEY TO DELETE CHARACTER', 43, 0);
+        CURVALUES := KEYNAMES;
+        INITS6('VERTICAL MOVE DELAY', 34, 8)
+      END;
+
+    BEGIN
+      NEW(ROOT);
+      ROOT^.NAME := '';
+      NEW(ROOT^.LEFT);
+      SENTINEL := ROOT^.LEFT;
+      NEW(BOOLNAMES);
+      NEW(WIDENAMES);
+      INITS5(WIDENAMES^.NAME);
+      NEW(KEYNAMES);
+      INITS5(KEYNAMES^.NAME);
+      INITS8;
+      INITS9
+    END;
+
+  BEGIN
+    SETUP2('INITS', 16 = 15 + 1);
+    { ALLOCQUANTUM itself -- the size, in words, of one NEW(x,1) heap
+      block, measured in the binary via two consecutive heap marks --
+      is never set here, matching INITS5's own stubbed no-op: nothing
+      this session wrote reads it either. }
+    QUITFLAG := FALSE;
+    INITS2;
+    WRITE('INITIALIZING');
+    DOTCOL := 12;
+    INITS4;
+    WRITELN;
+    G4 := 10
+  END;
+
+  { The tutorial screens (T(EACH) on the main menu) -- ten procedures,
+    not written this session. }
+  SEGMENT PROCEDURE TEACHSET; BEGIN END;
+
+  { Bug-check: if OK is false, print the standard "BUG LOCATION" notice
+    (matching this session's own BINDER.text CHECKERR almost verbatim)
+    naming LOC, and terminate the whole program. Every call site this
+    session wrote passes a literally-constant TRUE expression
+    (`16 = 15 + 1`) -- Apple's own compiler folds it away, so it reads
+    as a deliberate, always-true sanity assertion rather than dead code;
+    kept as-is rather than simplified to `TRUE`, since a real developer
+    assertion (comparing two named constants that happen to both equal
+    16) is a more plausible original than a literal `TRUE` would be. }
+  PROCEDURE SETUP2(*LOC: STRING; OK: BOOLEAN*);
+  BEGIN
+    IF NOT OK THEN
+    BEGIN
+      WRITE('BUG LOCATION ');
+      WRITE(LOC);
+      WRITELN;
+      WRITE('PLEASE WRITE DOWN THIS LOCATION AND ANY');
+      WRITELN;
+      WRITE('SUPPORTING DETAILS YOU CAN, AND REPORT');
+      WRITELN;
+      WRITE('IT TO THE UCSD SUPPORT STAFF AT YOUR');
+      WRITELN;
+      WRITE('EARLIEST CONVENIENCE');
+      WRITELN;
+      EXIT(SETUP)
+    END
+  END;
+
+  { BST search for KEY, using the SENTINEL trick: KEY is copied into the
+    sentinel's own name first, so the loop is guaranteed to terminate
+    (worst case, at the sentinel itself) without a separate NIL check.
+    Descends via SETUP4's own trimmed comparison at each step, leaving
+    CUR at the matching node (or the sentinel, if not found) and PARENT
+    at whatever CUR was one step before -- both read afterward by
+    whatever called this (not written this session). }
+  FUNCTION SETUP3(*KEY: STRING): BOOLEAN*);
+    VAR
+      TRIMMED: STRING;
+  BEGIN
+    SENTINEL^.NAME := KEY;
+    CUR := ROOT;
+    TRIMMED := '';
+    WHILE TRIMMED <> KEY DO
+    BEGIN
+      PARENT := CUR;
+      IF TRIMMED > KEY THEN
+      BEGIN
+        CUR := CUR^.RIGHT
+      END
+      ELSE
+      BEGIN
+        CUR := CUR^.LEFT
+      END;
+      SETUP4(TRIMMED, CUR^.NAME)
+    END;
+    SETUP3 := CUR <> SENTINEL
+  END;
+
+  { DEST := SRC with trailing blanks trimmed. The binary's own version
+    uses SCAN and MOVELEFT to do this in place on a single buffer
+    (language reference, "The SCAN Function") -- this session wrote the
+    plain DELETE-loop equivalent instead, matching observable behavior
+    without yet reproducing the exact instruction shape. Confirmed a
+    real, large miss doing it this way: `params=4/data=82` here against
+    Apple's `4/2` -- `DELETE`'s own value-STRING second parameter (SRC)
+    costs the usual ~41-word hidden copy-on-entry every value STRING
+    parameter does elsewhere in this project (`CHECKERR`, `SETUP2`),
+    which the binary's own byte-level SCAN/MOVELEFT approach never pays
+    at all since it never takes a STRING by value. Rewriting this to
+    match SCAN/MOVELEFT is the natural next step, not attempted this
+    session (finding 122). }
+  PROCEDURE SETUP4(*VAR DEST: STRING; SRC: STRING*);
+  BEGIN
+    DEST := SRC;
+    WHILE (LENGTH(DEST) > 0) AND (DEST[LENGTH(DEST)] = ' ') DO
+    BEGIN
+      DELETE(DEST, LENGTH(DEST), 1)
+    END
+  END;
+
+  { Read one command key: FEOLN (an empty line, just RETURN) reads as
+    CHR(13); a lowercase letter is folded to uppercase; '!' sets
+    QUITFLAG (SETUP8's own QUIT-loop reads it as "leave now, no more
+    prompts"). }
+  FUNCTION SETUP5: CHAR;
+  BEGIN
+    READ(LASTKEY);
+    IF EOLN THEN
+    BEGIN
+      LASTKEY := CHR(13)
+    END
+    ELSE
+    BEGIN
+      IF LASTKEY IN ['a'..'z'] THEN
+      BEGIN
+        LASTKEY := CHR(ORD(LASTKEY) - 32)
+      END
+    END;
+    IF LASTKEY = '!' THEN
+    BEGIN
+      QUITFLAG := TRUE
+    END;
+    SETUP5 := LASTKEY
+  END;
+
+  { A yes/no prompt, re-asked until answered. }
+  FUNCTION SETUP6: BOOLEAN;
+  BEGIN
+    REPEAT
+      WRITE('              C(ONTINUE)  Q(UIT)');
+      WRITELN
+    UNTIL SETUP5 IN ['C', 'Q'];
+    SETUP6 := LASTKEY = 'C'
+  END;
+
+  { SETUP7 through SETUP26 -- the CHANGE menu's own value-editing
+    screens (single-field view, prompted walk of the whole tree, octal/
+    decimal/hex display and entry, the tree-insertion assertion helper,
+    and the recursive in-order tree walk itself) -- are not written
+    this session. Declared here, in Apple's own procedure order, purely
+    so their NUMBERS (and so SETUP1's own CASE dispatch to SETUP8 and
+    SETUP12 by that number) land where the binary has them; every one
+    of these is called with zero arguments by anything this session
+    wrote. Real signatures and bodies are the natural next session. }
+  PROCEDURE SETUP7; BEGIN END;
+  PROCEDURE SETUP8; BEGIN END;
+  PROCEDURE SETUP9; BEGIN END;
+  PROCEDURE SETUP10; BEGIN END;
+  PROCEDURE SETUP11; BEGIN END;
+  PROCEDURE SETUP12; BEGIN END;
+  PROCEDURE SETUP13; BEGIN END;
+  PROCEDURE SETUP14; BEGIN END;
+  PROCEDURE SETUP15; BEGIN END;
+  PROCEDURE SETUP16; BEGIN END;
+  PROCEDURE SETUP17; BEGIN END;
+  PROCEDURE SETUP18; BEGIN END;
+  PROCEDURE SETUP19; BEGIN END;
+  PROCEDURE SETUP20; BEGIN END;
+  PROCEDURE SETUP21; BEGIN END;
+  PROCEDURE SETUP22; BEGIN END;
+  PROCEDURE SETUP23; BEGIN END;
+  PROCEDURE SETUP24; BEGIN END;
+  PROCEDURE SETUP25; BEGIN END;
+  PROCEDURE SETUP26; BEGIN END;
+
+BEGIN
+  INITS;
+  REPEAT
+    WRITE('SETUP: C(HANGE T(EACH H(ELP Q(UIT ');
+    WRITE('[S.2]');
+    WRITELN;
+    CASE SETUP5 OF
+      'C': SETUP12;
+      'Q': SETUP8;
+      'T': TEACHSET;
+      'H': BEGIN
+             WRITE('C(HANGE) ALLOWS YOU TO CHANGE OR EXAMINE');
+             WRITELN;
+             WRITE('     THE VARIOUS PIECES OF INFORMATION');
+             WRITELN;
+             WRITE('     THE SYSTEM HAS ABOUT YOUR HARDWARE');
+             WRITELN;
+             WRITE('     CONFIGURATION');
+             WRITELN;
+             WRITE('T(EACH) TEACHES YOU HOW TO USE SETUP');
+             WRITELN;
+             WRITE('Q(UIT) ALLOWS YOU TO MAKE YOUR CHANGES');
+             WRITELN;
+             WRITE('     PERMANENT AND TO LEAVE THIS PROGRAM');
+             WRITELN
+           END
+    END
+  UNTIL FALSE
+END;
+
+BEGIN
+END.

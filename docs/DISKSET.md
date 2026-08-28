@@ -49,7 +49,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 
 | file | what it is | status |
 |---|---|---|
-| SETUP.CODE | Changes hardware settings like your screen size. | not started; 54 procedures in 12 segments, nine of them 16-byte stubs. Byte-identical between 1.1 and 1.3 |
+| SETUP.CODE | Changes hardware settings like your screen size. | **in progress** (`src/pascal/programs/1.3/SETUP.text`, finding 122); 54 procedures in 12 segments, nine of them 16-byte stubs. Byte-identical between 1.1 and 1.3. All 54 compile clean under Apple's own `SYSTEM.COMPILER` (first attempt after discovering the real `PROGRAM PASCALSYSTEM`/`SEGMENT PROCEDURE SETUP` wrapping shape); the outer body, `SETUP2`, `SETUP3`, and all eight `NUMBERn` stubs are frame-exact. `SETUP4` is a known/documented miss; `SETUP7` onward (the value-editing screens) and `TEACHSET` (tutorial text) are still placeholder stubs |
 | FORMATTER.CODE | Utility used to format blank floppy disks. | **reconstructed**, Pascal and 6502 both, compiled/assembled/linked by Apple's own tools to an identical codefile (finding 104) |
 | FORMATTER.DATA | Support data used by the disk formatter. | not started; data file |
 

@@ -180,7 +180,17 @@ a route end to end; everything else is a straight read-and-rebuild.
    16-byte stubs, and **byte-identical between 1.1 and 1.3**. The segment
    structure is the interesting part; the stubs make it cheaper than the
    count suggests. It also writes `SYSTEM.MISCINFO`, so it is the way in to
-   the three `.MISCINFO` files.
+   the three `.MISCINFO` files. **Started** (finding 122,
+   `src/pascal/programs/1.3/SETUP.text`): all 54 procedures compile clean
+   under Apple's own `SYSTEM.COMPILER`, first attempt, after finding the
+   real `(*$U-*) PROGRAM PASCALSYSTEM` / `SEGMENT PROCEDURE
+   SETUP(P1,P2)` wrapping shape (`SYSTEM.COMPILER`'s own skeleton has
+   the precedent -- a naive single-`PROGRAM` shape fails `EXIT`). The
+   outer body, `SETUP2`, `SETUP3`, and all eight `NUMBERn` stubs are
+   frame-exact; `SETUP4` is a documented miss. `SETUP7` onward -- the
+   actual value-editing screens the `CHANGE` menu drives -- and
+   `TEACHSET`'s own ten tutorial procedures are still placeholder stubs,
+   the natural next session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.

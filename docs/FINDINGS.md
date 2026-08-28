@@ -11656,3 +11656,130 @@ stubbed -- the open threads are the small per-procedure word gaps
 already documented (120a/120b) and the still-undecoded `SY=52`/
 identifier-character-set specifics in `SHOWINFO` itself, not missing
 structure.
+
+## 122. `SETUP.CODE` -- reconstruction started, 54 procedures across 12 segments compile clean first attempt
+
+*Confidence: VERIFIED BINARY FACT for the frame-size matches and the
+structural discovery; STRONG INFERENCE for the field-tree's own
+semantics (BST shape, sentinel node) since nothing calls into it yet.
+Acceptance run `2026-08-28-setup-first-compile`.*
+
+Started `SETUP.CODE` (`src/pascal/programs/1.3/SETUP.text`) -- the
+hardware/terminal configuration utility, `docs/PLAN.md` item 5,
+byte-identical between 1.1 and 1.3 with no shipped source on either
+release's evidence disk. A large file: 54 procedures, 12 codefile
+segments (`PASCALSY`, the main `SETUP` segment with 26 procedures,
+eight trivial `NUMBERn` placeholder segments, `INITS` with 9, `TEACHSET`
+with 10). This session's scope: the skeleton, the menu loop, the
+field-tree/BST machinery (`SETUP2`/`SETUP3`/`SETUP4`), the two read-key
+utilities (`SETUP5`/`SETUP6`), and the whole `INITS` startup segment.
+`SETUP7` onward (the actual value-editing screens) and `TEACHSET`
+(tutorial text) are placeholder stubs for a later session.
+
+### 122a. What it does
+
+Builds a binary search tree of named fields over `SYSTEM.MISCINFO` (a
+96-word/192-byte terminal-profile record this program writes --
+`DISKSET.md`'s own "not started" data file, and this is the way in to
+it). Each field's name maps to an `(OFS, BIT, BITS)` triple describing
+where its value lives in that record; `INITS` builds the whole tree
+once at startup ("HAS CLOCK" at word 29 bit 0, "SCREEN HEIGHT" at word
+37, and so on -- `INITS8`/`INITS9`'s own long call sequences) plus two
+small linked lists of named values (`TRUE`/`FALSE`, and two more groups
+for 8/16-bit prefixed-key fields) a value gets looked up against when
+the user types a new one. What `OFS`/`BIT`/`BITS` actually mean as bit
+offsets into `MISCINFO` is not decoded -- nothing this session wrote
+needs to interpret them, only carry them.
+
+### 122b. The real program structure: `PASCALSYSTEM` wraps `SETUP`, not the other way round
+
+A first reading of the disassembly (`lex=0` on what looked like the
+outer program body) suggested `(*$U-*) PROGRAM SETUP; ... BEGIN <menu
+loop> END.` directly. That shape compiles, but `EXIT(PROGRAM)` inside a
+nested `CHECKERR`-style procedure fails error 125 ("error in type of
+standard procedure parameter"), and the seemingly obvious fix,
+`EXIT(SETUP)`, fails error 104 (undeclared) -- the program's own name
+is not usable as an `EXIT` target from within its own nested
+procedures the way the language reference's `EXIT(programname)` form
+implies it should be, at least not under `(*$U-*)`.
+
+`SYSTEM.COMPILER`'s own declaration skeleton
+(`analysis/reconstruction/skeleton-1.3.text`) has the real shape, and
+it was sitting there the whole time: `(*$U-*) PROGRAM PASCALSYSTEM;`
+wraps `SEGMENT PROCEDURE PASCALCOMPILER(CODEP, SYMBUFP)`, and it is
+that *inner* segment procedure's own `EXIT(PASCALCOMPILER)` (used
+inside `BLOCK`, in `PASCALCO.text`) that works -- not the outer
+program. `PASCALCOMPILER`'s own two parameters are the OS's `(NIL,
+NIL)` invocation convention for whatever it loads as segment 1
+(finding 59); the outer `PASCALSYSTEM` itself does nothing but declare
+the OS's own globals and hand off, `BEGIN END.`, trivial.
+
+Ported the identical shape onto `SETUP.text`: `PROGRAM PASCALSYSTEM`
+outermost with a trivial `BEGIN END.`; `SEGMENT PROCEDURE SETUP(P1,
+P2: ANYPTR)` one level in (the same two-word `(NIL,NIL)` convention,
+unused, matching the "hidden bootstrap params" already seen on
+`BINDER.text`'s own outer body at `params=4`) holding everything else
+and the real menu-loop body. `EXIT(SETUP)` inside `SETUP2` now resolves
+exactly the way `EXIT(PASCALCOMPILER)` does.
+
+PASCALSY's own real content here (`XIT` plus one leftover byte) against
+`SYSTEM.COMPILER`'s empty/absent dictionary entry (finding 105a/119) is
+an open parallel worth another look someday -- both outer `PASCALSYSTEM`
+bodies are the identical trivial `BEGIN END.` shape, so whatever makes
+one produce a real 16-byte segment and the other nothing at all is
+still unexplained by this session's own work.
+
+### 122c. `SETUP2`/`SETUP3` calling `SETUP4` before it's declared -- a real FORWARD, and where it goes
+
+`SETUP3` (the BST search) calls `SETUP4` (the name-trim utility), but
+`SETUP4` is Apple's own procedure 4, one *after* `SETUP3` -- meaning
+naively declaring them in Apple's own numeric order gives an
+undeclared-identifier error. Fixed the way `PASCALCO.text` already
+relies on throughout (finding 61's rule: UCSD numbers a procedure where
+its *body* is compiled, not where a `FORWARD` stub sits): `SETUP4` gets
+a `FORWARD` ahead of `SETUP3`'s own declaration, with its real body
+kept in Apple's own physical order after `SETUP3`'s -- so it still
+becomes procedure 4, unaffected by the earlier stub.
+
+### 122d. Declaring a `SEGMENT PROCEDURE` after a real procedure body is error 399, and the fix is declaration order, not code
+
+Declaring `NUMBER2` right after `SETUP26`'s own real body hit error 399
+-- the same `CODEINSEG` restriction finding 119 already found and named
+("code before a SEGMENT PROCEDURE is error 399," `skeleton-1.3.text`'s
+own comment): a value-`STRING`-copying, fully real `SETUP26` body just
+having compiled leaves `CODEINSEG` true, and nothing had reset it via a
+`SEGMENT PROCEDURE`'s own `FINISHSEG` yet. Since a `SEGMENT PROCEDURE`
+declared inside another segment procedure does **not** consume one of
+the enclosing segment's own procedure-number slots (`SETUP`'s dictionary
+entry shows exactly 26 procedures, 1 outer body + `SETUP2`..`SETUP26`,
+with `NUMBER2`..`NUMBER9`/`INITS`/`TEACHSET` entirely separate,
+independently-numbered segments), the fix was purely about *where* to
+place them textually: every `SEGMENT PROCEDURE` moved to right after
+`SETUP`'s own `VAR` block, before any of `SETUP2`..`SETUP26`'s real
+bodies exist to trip `CODEINSEG` -- with `SETUP2`/`SETUP3`/`SETUP4`
+(the three `INITS` itself needs) `FORWARD`-declared ahead of them for
+the same reason as 122c.
+
+### 122e. `NEW(p, n)` is the same variant-tag trap again
+
+`NEW(NEWNODE, 47)`/`NEW(NEWNODE, 43)` on plain (non-variant) `RECORD`
+types hit error 158, the identical mistake finding 113 already named
+for `LIBRARY.text`'s `BIGBUF`: `n` selects a `CASE` variant tag, not a
+size. Neither `FIELDNODE` nor `VALNODE` is a variant record, so every
+site needed plain `NEW(x)` with no second argument.
+
+### 122f. What's confirmed exact, and what's a known, documented gap
+
+Acceptance-tier compiled clean, 0 errors, first attempt after the fixes
+above. `params`/`data` against Apple's own binary: the `SETUP` segment's
+own outer body **exact** (`4/352`), `SETUP2` **exact** (`4/82`), `SETUP3`
+**exact** (`6/164`), all eight of `NUMBER2`..`NUMBER9` **exact** (`0/0`).
+`SETUP4` is a real, understood miss (`4/82` here against `4/2` --
+`DELETE`'s own value-`STRING` parameter costs the usual ~41-word hidden
+copy-on-entry the binary's byte-level `SCAN`/`MOVELEFT` approach never
+pays; rewriting to match is the natural next step). `SETUP5`/`SETUP6`
+are `4/0` against Apple's `0/0`, an undiagnosed small params gap on two
+zero-argument `FUNCTION`s. `INITS`'s own nine procedures compile and run
+in shape but have not yet been checked one by one against Apple's own
+per-procedure frame sizes. `SETUP7` onward and `TEACHSET` remain
+placeholder stubs.

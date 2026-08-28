@@ -90,7 +90,7 @@ APPLE3 = ROOT / "evidence" / "disks" / "Apple II Pascal 1.3 APPLE3_ 680-0290-A.d
 # -- carried over from APPLE3 as-is so they can be run and compared, not
 # reconstructed source. Copied with cp2's own "copy" so the bytes are
 # whatever the evidence disk has, untouched by this repo's tools.
-EVIDENCE_CODEFILES = ["BINDER.CODE", "SET40COLS.CODE"]
+EVIDENCE_CODEFILES = ["BINDER.CODE", "SET40COLS.CODE", "SETUP.CODE"]
 
 # Same list mkworkdisk.py puts on WORK.dsk -- see that module for why each
 # one is here and why the names are what they are.
@@ -127,6 +127,12 @@ FILES = [
     # would overwrite it.
     ("BINDERT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "BINDER.text"),
+    # SETUPT, not SETUP: Apple's own shipped SETUP.CODE is already on
+    # this volume (EVIDENCE_CODEFILES above) and the compiler writes its
+    # output beside the source, so compiling under SETUP's own name
+    # would overwrite it.
+    ("SETUPT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "SETUP.text"),
 ]
 
 
