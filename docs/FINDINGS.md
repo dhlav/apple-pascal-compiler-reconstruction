@@ -10645,3 +10645,62 @@ whole of it, with no new 6502 to reconstruct. `lift.py`'s `NATIVE_SIG`
 entry for `("LIBMAP", 2)` now names it `"IDSEARCH"` rather than carrying a
 placeholder description, retiring the last entry in that table that was
 not backed by reconstructed source (finding 100f).
+
+## 110. `MAXUNIT`/`MAX_SEG` audit -- one real 1.1/1.3 divergence in the tree, both inert
+
+**VERIFIED SOURCE FACT.** Prompted by a user-supplied excerpt of Dave
+Tribby's `SYSTEM.PASCAL` globals (`GLOBAL1_VARS`/`GLOBAL2_VARS`,
+`unit_table: ARRAY [0..20]`), checked whether anything already reconstructed
+in this tree still carries 1.1/64K bounds (`MAXUNIT=12`, `MAX_SEG=31`)
+where 1.3/128K needs the wider ones (`MAXUNIT=20`, `MAX_SEG=63`).
+
+- **`SYSTEM.COMPILER`'s own global block is already right.** `KINDSET` and
+  the `SEG`/`DATASEG` range checks in `src/pascal/1.3/phases/DECLARAT.text`
+  and `UNITPART.text` use `0..63`, matching 1.1's `0..31` one-for-one
+  (`SEGSUSED` in `analysis/reconstruction/globals-1.3.text` is `SET OF
+  0..63`, 1.1's is `SET OF 0..31`) -- already tracked as a real 1.1->1.3
+  drift, not missed.
+- **`src/pascal/units/1.3/PASCALIO.text` and `LONGINTIO.text` still declare
+  `MAXUNIT = 12` and `MAX_SEG = 31`**, verbatim from UCSD II.0's
+  `GLOBALS.TEXT` (the file's own header comment says as much: "the CONST and
+  TYPE blocks below are II.0's, verbatim"). This is a real discrepancy
+  against Tribby's confirmed 1.3/128K values, but it is **inert**: `MAX_SEG`
+  is declared and never referenced anywhere in either file, and `MAXUNIT`
+  only bounds `UNITNUM`, which is the type of one scalar field (`FIB.FUNIT`)
+  that this unit only ever *reads* (`UNITWRITE(FUNIT,...)`,
+  `UNITREAD(FUNIT,...)`), never assigns -- so no `CHK` bound keyed to
+  `MAXUNIT` is ever emitted into the compiled p-code. A subrange's *stored*
+  size is one word regardless of its bound, so it can't affect the FIB
+  record's byte layout either. Confirmed no compiled-output difference is
+  possible; left as-is (renaming it would be re-deriving what the binary
+  already doesn't care about) but flagged here so a future reader doesn't
+  have to re-derive the same thing.
+- `LIBMAP.text`'s own `ARRAY [0..15]` bounds (`SEGWORDS`, the segment
+  dictionary) are a library file's fixed 16-segment-slot format, unrelated
+  to `MAXUNIT`/`MAX_SEG` -- not a 64K/128K question at all.
+
+No missing area found in anything currently reconstructed. `SYSTEM.PASCAL`
+itself (the file that actually owns `unit_table`/`GLOBAL1_VARS`) is not
+started; Tribby's disks are the reference to return to when it is -- see
+`evidence/reference/tribby-6disks-catalog.md`.
+
+**Update, same day -- source located and confirmed.** The user's pasted
+excerpt is Dave Tribby's own `UNIT SysInf` ("Written by DMT beginning
+2-8-87"), found as `SYSINF.TEXT` on his `psys.sdk` (a ShrinkIt-compressed
+copy of the `psys` disk; the raw `.dsk`/`.do`/`.po` versions of that disk
+have a disk-specific directory corruption -- see the catalog file --
+`SYSINF.TEXT` from the `.sdk` decodes cleanly with
+`tools/a2pascal/textfile.py`). Confirmed by reading the live text:
+`max_unit := 12;` for 1.1, `max_unit := 20;` for 1.2 and 1.3
+(`FUNCTION ChkPascal`), `unit_table: ARRAY [0..20] OF RECORD ...` in
+`GLOBAL1_VARS`, `funit: 0..20` in `FIB_TYPE` -- exactly the values the user
+quoted. But **`MAX_SEG` does not appear anywhere in this file** -- Tribby's
+unit only reads `max_unit`/`unit_table`; it has no reason to touch segment
+counts. So the `MAXUNIT = 12`/`MAX_SEG = 31` CONST pair with the "64K vs
+128K" comments the user quoted is not from this file -- it's from a
+different, still-unidentified source (almost certainly a UCSD II.0-style
+`GLOBALS.TEXT` for `SYSTEM.PASCAL` itself, the same lineage `PASCALIO.text`
+and `LONGINTIO.text` copied their own stale `MAXUNIT`/`MAX_SEG` CONSTs
+from, above) -- not present on any of the six Tribby disks. Doesn't change
+the conclusion above: still no missing area in anything this project has
+reconstructed.
