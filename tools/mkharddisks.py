@@ -7,8 +7,11 @@ The floppy tier's four volumes (BOOT128, APPLE2, WORK, WORK2) fold onto one
   SYSHD  (`build/disks/HD1.hdv`)  boots the machine, carries every system
          tool Apple shipped -- SYSTEM.APPLE/PASCAL (128K), EDITOR, FILER,
          LIBRARY, MISCINFO, CHARSET, SYNTAX, ASSMBLER, COMPILER, LINKER,
-         LIBRARY.CODE, LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS -- and also
-         carries the same reconstructed source mkworkdisk.py puts on
+         LIBRARY.CODE, LIBMAP.CODE, 6502.OPCODES, 6502.ERRORS -- plus
+         BINDER.CODE and SET40COLS.CODE off APPLE3 (1.1 binaries Apple
+         never rebuilt for 1.3, PLAN.md item 3 -- carried over as shipped
+         so they can be run and compared, not yet reconstructed) -- and
+         also carries the same reconstructed source mkworkdisk.py puts on
          WORK.dsk, and where compiler/assembler/linker output lands.
 
 **This was two volumes (SYSHD + WORKHD) briefly.** A single UCSD Pascal
@@ -81,6 +84,13 @@ APPLE2 = ROOT / "evidence" / "disks" / "Apple II Pascal 1.3 APPLE2_ 680-0284-A.d
 
 HD1 = OUT / "HD1.hdv"
 MAX_FILES = 77   # cp2's own ceiling for a Pascal volume, any size
+APPLE3 = ROOT / "evidence" / "disks" / "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"
+
+# Shipped codefiles Apple never rebuilt for 1.3 (finding 99c/PLAN.md item 3)
+# -- carried over from APPLE3 as-is so they can be run and compared, not
+# reconstructed source. Copied with cp2's own "copy" so the bytes are
+# whatever the evidence disk has, untouched by this repo's tools.
+EVIDENCE_CODEFILES = ["BINDER.CODE", "SET40COLS.CODE"]
 
 # Same list mkworkdisk.py puts on WORK.dsk -- see that module for why each
 # one is here and why the names are what they are.
@@ -93,6 +103,12 @@ FILES = [
     ("FORMATTR.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "FORMATTER.text"),
     ("FMTNATIV.TEXT", ROOT / "src" / "native" / "FORMATTR.TEXT"),
+    # LIBMAPT, not LIBMAP: Apple's own shipped LIBMAP.CODE is already on
+    # this volume (a system tool, copied in with APPLE2 above) and the
+    # compiler writes its output beside the source, so compiling under
+    # LIBMAP's own name would overwrite it.
+    ("LIBMAPT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "LIBMAP.text"),
 ]
 
 
@@ -119,6 +135,7 @@ def main() -> int:
     cp2("move", str(HD1), ":", "SYSHD")
     cp2("copy", str(BOOT128), str(HD1))
     cp2("copy", str(APPLE2), str(HD1))
+    cp2("copy", str(APPLE3), *EVIDENCE_CODEFILES, str(HD1))
 
     scratch = OUT / "hd-scratch"
     scratch.mkdir(exist_ok=True)
@@ -136,7 +153,7 @@ def main() -> int:
         tmp.write_bytes(encode_text(text))
         cp2("add", "--raw", "--no-strip-ext", "--strip-paths", str(HD1),
             str(tmp))
-        cp2("set-attr", str(HD1), name, "type=PTX")
+        cp2("set-attr", str(HD1), "type=PTX", name)
     shutil.rmtree(scratch)
 
     out = cp2("catalog", str(HD1))

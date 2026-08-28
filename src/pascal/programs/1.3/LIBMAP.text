@@ -37,17 +37,32 @@
 
 { $I- : ordinary WRITE/WRITELN/RESET on OUTFILE and INFILE compile to the
   same CXP 0,n the binary calls directly (verified: WRITE(OUTFILE,S) and
-  FWRITESTRING(@OUTFILE,S,0) are the same instructions), so this does not
-  need (*$U-*) or a single OS FORWARD -- only IDSEARCH is EXTERNAL. Without
-  $I- every one of those calls carries an extra IOCHECK CSP the binary
-  does not have.
+  FWRITESTRING(@OUTFILE,S,0) are the same instructions). Without $I- every
+  one of those calls carries an extra IOCHECK CSP the binary does not
+  have.
 
   $G+ : Apple Pascal forbids GOTO unless this is set (language reference,
   p.1793) -- VALIDNAME's early exit needs it, and its absence here was a
   real bug this file carried since VALIDNAME was first written: the fast
   tier accepts GOTO regardless of any $G directive, so it never caught
   this, and only compiling against Apple's own SYSTEM.COMPILER did
-  (finding: LIBMAP session, 2026-08-27). }
+  (finding: LIBMAP session, 2026-08-27).
+
+  Does not need (*$U-*) or an OS FORWARD: GETWORD's block read is
+  `BLOCKREAD`, a standard Pascal function (language reference,
+  "Untyped File I/O Operations") the compiler recognizes by name the
+  same way it recognizes WRITE, not a hand-declared reach into segment 0.
+  A hand-declared `FUNCTION FBLOCKIO(...); FORWARD;` (segment 0
+  procedure 28, the GLOBALS.TEXT idiom SYSTEM.PASCAL's own source uses
+  internally) was
+  tried first and genuinely does not work for an ordinary program even
+  with $U-: error 160, "previous declaration was not forward", on the
+  *next* declaration down (`IDSEARCH ... EXTERNAL`) once $U- was set,
+  because $U-'s side effects (R-/G+/I-/V- all at once) change how the
+  compiler treats EXTERNAL too, not just FORWARD. `BLOCKREAD` sidesteps
+  the whole question -- it is what the fast tier's "guessing you meant
+  blockread instead" diagnosis was pointing at all along (finding 111
+  update, 2026-08-27). }
 (*$I-*)
 (*$G+*)
 PROGRAM LIBMAP;
@@ -73,6 +88,18 @@ PROGRAM LIBMAP;
                    SPARE:    ARRAY [1..72] OF INTEGER;       { 147, unread }
                    COMMENT:  STRING[79]                     { 219 }
                  END;
+    { One 16-byte entry off a segment's own cross-reference stream, read by
+      GETWORD and dispatched on by SHOWONE. RNAME is only meaningful for a
+      handful of RKIND values (2,3,5,13,14,1,4 -- the ones SHOWREF prints);
+      the last word (SPARE) is real disk space -- the entry is a fixed
+      16-byte record -- but nothing in SHOWONE or GETWORD ever reads or
+      writes it. }
+    REFENTRY = PACKED RECORD
+                 RNAME: SEGNAMESTR;
+                 RKIND: 0..14;
+                 RVAL1, RVAL2: INTEGER;
+                 SPARE: INTEGER
+               END;
 
   VAR
     SEGDICT:  SEGDICTREC;              {   3, one disk block }
@@ -230,50 +257,65 @@ PROGRAM LIBMAP;
       library unit if there is one (SHOWINFO, (*STUB*) below), then --
       unless SHOWINFO already handled it and USINGLIB is off -- the
       segment's own cross-reference stream: one 16-byte entry per
-      external reference, read word at a time from the block right
+      external reference, read entry-at-a-time from the block right
       after the segment's own code (ADDR + CEIL(LENG/512)), each entry
-      an 8-char name, a kind (0..14, dispatched the same way as the
-      header), and up to two more values whose meaning depends on the
-      kind.
+      an 8-char name printed 4-space-indented in a 12-column field, a
+      kind (0..14, dispatched the same way as the header), and up to two
+      more values whose meaning depends on the kind.
 
-      The header dispatch and the block-number arithmetic that follows
-      it are solid. The entry-reading loop past that point is not: it
-      reads a first word to decide whether there is anything to show,
-      then -- only when SWAPPED -- copies what looks like a 16-byte
-      buffer through a second scratch array and back for a per-word
-      SWAPBYTES pass, and the exact order in which the rest of one
-      16-byte entry (name, kind, up to two values) gets read relative to
-      that swap step is not yet pinned down closely enough to write as
-      Pascal. Left as (*STUB*) rather than guessed at -- USINGLIB, not
-      LISTREFS, is confirmed as what gates it (LISTREFS only shows up
-      inside SHOWREF itself), and every named local below this point is
-      real (matched to a specific LDL/STL offset in the disassembly),
-      but the control flow connecting them is not.
+      The whole loop is now reconstructed and traced instruction for
+      instruction against the binary (finding: LIBMAP session,
+      2026-08-27), correcting two things the earlier (*STUB*) comment
+      here got wrong: GETWORD does not read "a first word" -- it copies
+      a whole 16-byte entry in one MOVELEFT, entry-indexed rather than
+      byte-indexed -- and LISTREFS is not confined to SHOWREF's own body;
+      it directly gates the "external proc" case (RKIND 9/10) here too,
+      the same way USINGLIB gates RKIND 6/7/8.
 
-      SWAPTEMP and SWAPBUF close nearly all of a real gap: Apple's own
-      compiler gives this procedure params=2/data=556 (matching this
-      reconstruction's params=2 already); without them this reconstruction
-      compiled to data=20, a 536-word shortfall with no local reference
-      anywhere in the procedure body to explain it. A local variable the
-      same shape as the global dictionary, plus the 8-word (16-byte) swap
-      scratch matching LLA270 in the disassembly, closes it to data=548 --
-      8 words still unexplained, against Apple's own compiler, not the
-      fast tier (finding: LIBMAP session, 2026-08-27). What SWAPTEMP is
-      *for* is not yet known; SHOWINFO -- unread -- is one candidate. }
+      **Acceptance-tier verified**: compiles clean under Apple's own
+      SYSTEM.COMPILER (no fast-tier substitute -- `xcompile.py`'s
+      `moveleft`/`blockread` builtins take three and four arguments,
+      not the five and six the real UCSD calls compile down to, so this
+      procedure was never checkable there) and reproduces Apple's own
+      `params=2/data=556` for SHOWONE and `params=2/data=2` for GETWORD
+      exactly (LIBMAP session, 2026-08-27). GETWORD needed one more
+      correction along the way: Apple's own frame has no local for the
+      read-position index at all (`32 - BYTEPOS` is computed inline in
+      the `MOVELEFT` call, not stored) -- an `IDX` local here gave
+      `data=4`, two words over, until it was removed. }
     PROCEDURE SHOWONE(SEGNUM: INTEGER);
       VAR
-        BYTEPOS:  0..32;               { local2: which half of RBUF is owed }
+        BYTEPOS:  0..32;               { local2: entries left unread in RBUF }
         RBLOCK:   INTEGER;             { local3: next block to read }
-        REFNAME:  PACKED ARRAY [0..7] OF CHAR;  { locals 4-7 }
-        KIND:     0..14;               { local8 }
-        VAL1, VAL2: INTEGER;           { locals 9, 10 }
-        NEEDINFO: BOOLEAN;             { local13 }
-        SWAPTEMP: SEGDICTREC;          { role and exact offset not yet known }
-        SWAPBUF:  ARRAY [0..7] OF INTEGER;  { local270, the swap scratch }
-        PAD:      PACKED ARRAY [0..7] OF CHAR;  { closes params=2/data=556
-                                                   exactly against Apple's
-                                                   own compiler; role and
-                                                   offset not yet known }
+        ENTRY:    REFENTRY;            { locals 4-11, one entry off the stream }
+        NEEDINFO: BOOLEAN;             { local13 -- local12 between ENTRY and
+                                          here is real, unreferenced anywhere
+                                          in this procedure, and unexplained }
+        RBUF:     ARRAY [0..31] OF REFENTRY;  { local14: one disk block, 32
+                                                 entries * 8 words = 256 words
+                                                 = 512 bytes exactly }
+        SWAPBUF:  ARRAY [0..7] OF INTEGER;    { local270, the swap scratch }
+        I, LAST:  0..7;                       { local278, local279: swap-loop
+                                                 counters. local279 is reused
+                                                 earlier in this procedure (a
+                                                 WITH-temp for the RBLOCK
+                                                 computation below) -- normal
+                                                 p-code offset reuse, not a
+                                                 second declaration. }
+        SPARE:    INTEGER;  { local280 -- closes params=2/data=556 exactly
+                               against Apple's own compiler, confirmed this
+                               session (LIBMAP session, 2026-08-27). Trying
+                               it as a 276-element ARRAY OF INTEGER first
+                               overshot to data=1106: this position costs
+                               2 words per declared array element here, not
+                               1 (confirmed empirically -- data dropped to
+                               574 at 10 elements, 556 at exactly 1), a
+                               real anomaly this file does not have an
+                               explanation for yet. A bare scalar INTEGER
+                               sidesteps the question and matches exactly.
+                               Never read or written anywhere in this
+                               procedure -- true identity unknown, same as
+                               local12 above. }
 
       { TRUE if SHOWINFO already gave a full account of this segment, so
         SHOWONE should not also print the raw reference stream unless
@@ -288,30 +330,81 @@ PROGRAM LIBMAP;
       BEGIN
       END;
 
-      { One raw word off the reference stream, double-buffered two bytes
-        at a time: BYTEPOS/RBLOCK above are SHOWONE's own locals, read
-        and written here directly by nested-procedure scoping rather
-        than passed as parameters -- which is also how SHOWREF below
-        reaches them despite being GETWORD's sibling, not its caller.
-        The FBLOCKIO signature is solid (GLOBALS.TEXT's declared six
-        arguments, an eight-word frame exactly -- finding 20a/51b); the
-        byte-assembly around it is not yet reread carefully enough to
-        commit. (*STUB*) }
-      PROCEDURE GETWORD(VAR W: INTEGER);
-        (*STUB*)
+      { Fetch the next reference-stream entry into W, refilling RBUF one
+        disk block at a time. BYTEPOS/RBLOCK/RBUF are SHOWONE's own
+        locals, read and written here directly by nested-procedure
+        scoping rather than passed as parameters. `MOVELEFT` copies the
+        *whole* 16-byte entry in one call -- untyped `VAR` parameters, so
+        no `@` appears anywhere in this procedure: Apple's own compiler
+        rejects it outright (error 400), unlike the fast tier, which
+        accepted it without complaint and so never caught this until the
+        acceptance-tier recompile this session (finding 111 update,
+        2026-08-27). `BLOCKREAD` is the standard Pascal function this
+        actually is at the source level (language reference, "Untyped
+        File I/O Operations") -- a hand-declared `FUNCTION FBLOCKIO(...);
+        FORWARD;` (segment 0 procedure 28), the `GLOBALS.TEXT` idiom
+        SYSTEM.PASCAL's own source uses to reach segment 0 directly, was
+        tried first and does not work here even with `(*$U-*)` (see the
+        file header comment); `BLOCKREAD` compiles to the identical
+        `CXP 0,28` without any of that, which is what the fast tier's
+        own "guessing you meant blockread instead" was pointing at. What
+        wasn't nailed down before this session was that GETWORD's own
+        read position is entry-indexed (IXA 8, an 8-word/16-byte stride)
+        counting BYTEPOS down from 32 to 0 across one 512-byte block
+        (32 * 16 = 512), computed inline rather than stored in a local
+        of its own -- an `IDX` local here matched the binary's own
+        control flow but not its frame size (`params=2/data=4`, two
+        words over Apple's `data=2`); removing it and folding
+        `32 - BYTEPOS` directly into the `MOVELEFT` call closed the gap
+        exactly. Verified instruction for instruction against the
+        binary and acceptance-tier compiled: `params=2/data=2`, matching
+        Apple's own SYSTEM.COMPILER output exactly (LIBMAP session,
+        2026-08-27), including the read-error path (a failed read
+        forces RKIND to 0 so SHOWONE's own UNTIL sees end-of-stream
+        rather than looping on garbage). }
+      PROCEDURE GETWORD(VAR W: REFENTRY);
+        VAR
+          ERR: BOOLEAN;
       BEGIN
+        ERR := FALSE;
+        IF BYTEPOS = 0 THEN
+        BEGIN
+          BYTEPOS := 32;
+          IF BLOCKREAD(INFILE, RBUF, 1, RBLOCK) <> 1 THEN
+          BEGIN
+            WRITE(OUTFILE, 'library read error!');
+            WRITELN(OUTFILE);
+            ERR := TRUE
+          END
+          ELSE
+          BEGIN
+            RBLOCK := RBLOCK + 1
+          END
+        END;
+        MOVELEFT(RBUF[32 - BYTEPOS], W, 16);
+        IF ERR THEN
+        BEGIN
+          W.RKIND := 0
+        END;
+        BYTEPOS := BYTEPOS - 1
       END;
 
       { Print one cross-reference note: the label the caller passes
         (' global'/' public'/' constant'/' separate'/' unit'/' private'),
-        "word/byte/big reference" (from VAL1, a three-way case), then
-        "(N times)" or "(once)" (from VAL2), then read and discard N
-        more raw words -- read via GETWORD but this procedure's own
-        signature and body are not yet reread carefully enough to
-        commit; passing a string constant's own address to a VAR STRING
-        parameter is what every call site does, which is at least solid.
-        (*STUB*) }
-      PROCEDURE SHOWREF(VAR NAME: STRING);
+        "word/byte/big reference" (from ENTRY.RVAL1, a three-way case),
+        then "(N times)" or "(once)" (from ENTRY.RVAL2), then read and
+        discard N more raw entries -- read via GETWORD but this
+        procedure's own signature and body are not yet reread carefully
+        enough to commit. The old guess here -- `VAR NAME: STRING`,
+        reasoning that every call site passes a string constant's own
+        address -- does not survive Apple's own compiler: error 154,
+        actual parameter must be a variable, on exactly that (a `VAR`
+        parameter cannot bind to a literal). A plain value `STRING`
+        parameter is passed by address anyway (strings are variable-size,
+        so UCSD copies via a hidden reference even for a value param),
+        which is almost certainly what produced the original mistaken
+        reading. (finding 111 update, 2026-08-27) (*STUB*) }
+      PROCEDURE SHOWREF(NAME: STRING);
         (*STUB*)
       BEGIN
       END;
@@ -369,7 +462,87 @@ PROGRAM LIBMAP;
       RBLOCK := SEGDICT.ADDRLEN[SEGNUM].ADDR +
                   (SEGDICT.ADDRLEN[SEGNUM].LENG + 511) DIV 512;
       IF NOT (USINGLIB OR NEEDINFO) THEN EXIT(SHOWONE);
-      (*STUB: the entry-reading loop -- see the procedure comment above*)
+      REPEAT
+        GETWORD(ENTRY);
+        IF SWAPPED THEN
+        BEGIN
+          MOVELEFT(ENTRY, SWAPBUF, 16);
+          I := 4;
+          LAST := 7;
+          WHILE I <= LAST DO
+          BEGIN
+            SWAPBYTES(SWAPBUF[I]);
+            I := I + 1
+          END;
+          MOVELEFT(SWAPBUF, ENTRY, 16)
+        END;
+        IF ENTRY.RKIND <> 0 THEN
+        BEGIN
+          IF VALIDNAME(ENTRY.RNAME) THEN
+          BEGIN
+            CASE ENTRY.RKIND OF
+              6: BEGIN
+                   IF USINGLIB THEN
+                   BEGIN
+                     WRITE(OUTFILE, ENTRY.RNAME:12);
+                     WRITE(OUTFILE, ' global addr    P #');
+                     WRITE(OUTFILE, ENTRY.RVAL1);
+                     WRITE(OUTFILE, ',  I #');
+                     WRITE(OUTFILE, ENTRY.RVAL2);
+                     WRITELN(OUTFILE)
+                   END
+                 END;
+              7: BEGIN
+                   IF USINGLIB THEN
+                   BEGIN
+                     WRITE(OUTFILE, ENTRY.RNAME:12);
+                     WRITE(OUTFILE, ' public var  base = ');
+                     WRITE(OUTFILE, ENTRY.RVAL1);
+                     WRITELN(OUTFILE)
+                   END
+                 END;
+              8: BEGIN
+                   IF USINGLIB THEN
+                   BEGIN
+                     WRITE(OUTFILE, ENTRY.RNAME:12);
+                     WRITE(OUTFILE, ' constant value of ');
+                     WRITE(OUTFILE, ENTRY.RVAL1);
+                     WRITELN(OUTFILE)
+                   END
+                 END;
+              9, 10: BEGIN
+                   IF LISTREFS THEN
+                   BEGIN
+                     WRITE(OUTFILE, ENTRY.RNAME:12);
+                     WRITE(OUTFILE, ' external proc  P #');
+                     WRITE(OUTFILE, ENTRY.RVAL1);
+                     WRITELN(OUTFILE)
+                   END
+                 END;
+              11, 12: BEGIN
+                   WRITE(OUTFILE, ENTRY.RNAME:12);
+                   WRITE(OUTFILE, ' separate proc  P #');
+                   WRITE(OUTFILE, ENTRY.RVAL1);
+                   WRITELN(OUTFILE)
+                 END;
+              2: SHOWREF(' global');
+              3: SHOWREF(' public');
+              5: SHOWREF(' constant');
+              13, 14: SHOWREF(' separate');
+              1: SHOWREF(' unit');
+              4: SHOWREF(' private');
+              0: BEGIN
+                   IF SEGDICT.SEGKIND[SEGNUM] = 5 THEN
+                   BEGIN
+                     WRITE(OUTFILE, ' Private dataseg # = ');
+                     WRITE(OUTFILE, ENTRY.RVAL2);
+                     WRITELN(OUTFILE)
+                   END
+                 END
+            END
+          END
+        END
+      UNTIL ENTRY.RKIND = 0
     END;
 
   BEGIN

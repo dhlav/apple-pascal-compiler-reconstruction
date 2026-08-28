@@ -41,8 +41,8 @@ is what says which files Apple actually rebuilt (finding 99c).
 |---|---|---|
 | SYSTEM.LIBRARY | Default code library for running basic graphics and tools. | **reconstructed**, 55 p-code and 14 native procedures (tag `system-library-1.3-complete`) |
 | LIBRARY.CODE | Utility to add or remove tools from library files. | not started; 16 procedures |
-| LIBMAP.CODE | Shows you what is inside a library file. | **in progress**; 12 procedures. Native half free (finding 109 -- `LIBMAP.2` is Apple's own `IDSEARCH`, reused whole from `SYSTEM.COMPILER`); `SWAPBYTES`/`VALIDNAME` verified byte-for-byte, `SHOWSEGS` exact on param/data size, `NEEDSSWAP`/`SWAPALL` close (one word of locals short each, documented not forced), procs 8-12 and the outer block still stubs |
-| BINDER | Joins assembly language parts into Pascal programs. | not started; 6 procedures. A 1.1 binary Apple never rebuilt (finding 99c) |
+| LIBMAP.CODE | Shows you what is inside a library file. | **in progress**; 12 procedures. Native half free (finding 109 -- `LIBMAP.2` is Apple's own `IDSEARCH`, reused whole from `SYSTEM.COMPILER`); `SWAPBYTES`/`VALIDNAME` verified byte-for-byte, `SHOWSEGS` exact on param/data size, `NEEDSSWAP`/`SWAPALL` close (one word of locals short each, documented not forced); `SHOWONE`'s entry-reading loop and `GETWORD` reconstructed instruction-for-instruction and **acceptance-tier verified exact** (`params=2/data=556` and `params=2/data=2`, finding 111 update); `SHOWINFO`, `SHOWREF`, `MAPLIBRARY` and the outer block still stubs |
+| BINDER | Joins assembly language parts into Pascal programs. | not started; 6 procedures. A 1.1 binary Apple never rebuilt (finding 99c); confirmed it runs under 1.3 off `SYSHD:`, so it's in scope |
 
 ## Configuration and Setup
 
@@ -68,7 +68,10 @@ The list above is the interesting half. The disks carry more:
   `SYSTEM.PASCAL`'s: `USERPROG`, `FIOPRIMS`, `PRINTERR` and `FILEPROC`.
 * **`LINEFEED.CODE`** (APPLE3) -- suppresses line feeds. One procedure, 38
   bytes, and **reconstructed** (finding 99a).
-* **`SET40COLS.CODE`** (APPLE3) -- 4 procedures. Another 1.1 binary.
+* **`SET40COLS.CODE`** (APPLE3) -- 4 procedures. Another 1.1 binary Apple
+  never rebuilt (finding 99c); confirmed it runs under 1.3 off `SYSHD:`,
+  so it's in scope alongside `BINDER` (see the scoreboard above and
+  `docs/PLAN.md` item 3) rather than just background.
 * **`SYSTEM.CHARSET`** (APPLE1) -- the hi-res character set, 1024 bytes.
 * **`SYSTEM.SYNTAX`** (APPLE1) -- the compiler's error messages. Already a
   text file on the disk, so it is reproduced by writing the volume.

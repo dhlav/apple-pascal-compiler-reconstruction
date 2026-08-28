@@ -106,18 +106,28 @@ a route end to end; everything else is a straight read-and-rebuild.
    against Apple's own p-code; `SHOWSEGS` is exact on param/data size but
    not yet checked instruction by instruction; `NEEDSSWAP` and `SWAPALL`
    are each one word of locals short (documented as a known gap, not
-   forced); procedures 8-12 (`SHOWONE` and its nested `SHOWINFO`/
-   `GETWORD`/`SHOWREF`, then `MAPLIBRARY`) and the outer block are still
-   stubs -- `SHOWONE`'s own procedure 9 is the largest single procedure in
-   the file at 521 words of locals.
+   forced); `SHOWONE` (procedure 8)'s own entry-reading loop and its
+   nested `GETWORD` are now reconstructed instruction for instruction and
+   **acceptance-tier verified** -- `params=2/data=556` and `params=2/data=2`
+   respectively, both exact matches to Apple's compiled binary (finding
+   111 update; `acceptance/2026-08-27-libmap-showone-getword/`). The fast
+   tier can't check either one (its builtin `moveleft`/`blockread` take
+   the wrong number of arguments for the real UCSD calls this loop
+   needs), so this had to go through AppleWin directly. `SHOWINFO`
+   (procedure 9, the largest single procedure in the file at 1042 words of
+   locals), `SHOWREF` (procedure 11), and `MAPLIBRARY` (procedure 12) plus
+   the outer block are still stubs.
 
 3. **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
    are **1.1 binaries Apple never rebuilt** (finding 99c). That is what
    made `LINEFEED` nearly free: 1.1's APPLE3 ships the source, and the
-   question is only whether it still compiles to the shipped bytes. Do
-   these two the same way and check the answer, which may well be no --
-   `BINDER` differs from its 1.1 copy in 15 bytes, all of them unused
-   SEGINFO slots.
+   question is only whether it still compiles to the shipped bytes. Both
+   run under 1.3 -- confirmed by hand in AppleWin off `SYSHD:` (they're on
+   the disk now, `tools/mkharddisks.py`'s `EVIDENCE_CODEFILES`) -- so
+   **they're in scope, not a maybe**. Do these two the same way as
+   `LINEFEED` and check the answer, which may well be no for `BINDER` --
+   it differs from its 1.1 copy in 15 bytes, all of them unused SEGINFO
+   slots.
 
 4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native. The
    smallest pure-Pascal target left, and it pairs with `LIBMAP`.

@@ -10704,3 +10704,179 @@ and `LONGINTIO.text` copied their own stale `MAXUNIT`/`MAX_SEG` CONSTs
 from, above) -- not present on any of the six Tribby disks. Doesn't change
 the conclusion above: still no missing area in anything this project has
 reconstructed.
+
+## 111. `LIBMAP.text` `SHOWONE`'s entry-reading loop and `GETWORD` reconstructed
+
+**STRONG INFERENCE, instruction-traced.** Continuing `LIBMAP.CODE`
+(procedure 8, `SHOWONE`, and its nested procedure 10, `GETWORD`), left as
+`(*STUB*)` since finding 109/the `SHOWSEGS` session. Read the full raw
+p-code for both procedures (`analysis/utilities/LIBMAP-1.3-APPLE2.pcode.txt`,
+lines 593-988 and 1128-1188) rather than working from the lifted
+pseudo-Pascal alone, since the lifter can't resolve `CSP`/`CXP` argument
+semantics on its own.
+
+- **The earlier stub comment's model was wrong on two counts.** It guessed
+  `GETWORD` reads "a first word... double-buffered two bytes at a time."
+  The actual disassembly shows exactly one `CLP 10` (call `GETWORD`) per
+  loop iteration, immediately followed by a `MOVELEFT` of 16 bytes from
+  `GETWORD`'s target address -- `GETWORD` copies a *whole* reference-stream
+  entry in one shot, not a word. And it guessed `USINGLIB, not LISTREFS...
+  LISTREFS only shows up inside SHOWREF` -- false: `LDO 601` (`LISTREFS`)
+  directly gates the "external proc" case (`RKIND` 9/10), the same way
+  `LDO 602` (`USINGLIB`) gates 6/7/8.
+- **`GETWORD`'s real shape**: a 512-byte read buffer (`RBUF`, one disk
+  block, declared `ARRAY [0..31] OF REFENTRY` -- 32 entries * 8 words =
+  256 words = 512 bytes exactly), refilled via `FBLOCKIO` whenever
+  `BYTEPOS` (which counts entries left unread, not bytes or "half of
+  RBUF") reaches 0, then reset to 32. The read position is `IXA 8` --
+  entry-indexed, an 8-word/16-byte stride -- at index `32 - BYTEPOS`, so
+  the first entry read after a refill is index 0. A `FBLOCKIO <> 1` read
+  error is folded into the stream itself: it forces the freshly-read
+  entry's `RKIND` to 0 rather than raising anything, so `SHOWONE`'s own
+  `UNTIL RKIND = 0` sees ordinary end-of-stream instead of looping on
+  garbage.
+- **The swap step only touches half the entry.** When `SWAPPED`, the loop
+  copies the whole 16-byte entry into `SWAPBUF` and swaps *only* words
+  4 through 7 of the 8-word buffer (`SWAPBYTES(SWAPBUF[I])` for `I := 4 TO
+  7`) -- the four numeric fields (`RKIND`, `RVAL1`, `RVAL2`, and a spare
+  word), not the 4-word name at the front. Byte order doesn't matter for a
+  string; it matters for a 16-bit value, and the binary's own loop bounds
+  (`SLDC 4`/`SLDC 7`, not `0`/`7`) say exactly that.
+- **The RLENG/ALENG argument order in `FWRITEBYTES(VAR F, VAR A, RLENG,
+  ALENG)`** (`GLOBALS.TEXT` line 293) was previously assumed
+  actual-length-then-width from the body's variable names alone; two probe
+  compiles through the fast tier (`WRITE` on a 12-char array with `:8`,
+  then an 8-char array with `:20`) confirm the reverse: the **requested
+  field width is pushed first (RLENG), the item's own static length
+  second (ALENG)**. This resolves what looked like a contradiction in the
+  entry-name print calls (`FWRITEBYTES(...,12,8)`): the name field itself
+  is still the expected 8 characters (`SEGNAMESTR`); the call requests a
+  12-column field, giving the observed 4-space left pad.
+- **`REFENTRY`**, the new type this session added for the reference-stream
+  entry (`RNAME: SEGNAMESTR; RKIND: 0..14; RVAL1, RVAL2: INTEGER; SPARE:
+  INTEGER` -- 8 words/16 bytes, matching every `MOVELEFT` count seen), lets
+  `GETWORD`, the swap block, and `VALIDNAME(ENTRY.RNAME)` all type-check
+  as ordinary Pascal, compiling (per the fast tier, modulo its unrelated
+  `FBLOCKIO`/`MOVELEFT` arity limits below) to the same field-offset loads
+  the binary uses for `RKIND`/`RVAL1`/`RVAL2` (offsets 8, 9, 10 relative
+  to the entry's own base, matching the pre-existing `KIND`/`VAL1`/`VAL2`
+  local numbering this file already had).
+- **Two small gaps are real and still unexplained**: one word between
+  `ENTRY` (locals 4-11) and `NEEDINFO` (local 13), and roughly 276 words
+  after the swap-loop counters that nothing in this procedure's body ever
+  reads or writes -- previously guessed as a `SEGDICTREC`-shaped
+  `SWAPTEMP`, now known to be wrong (the disassembly's only offsets
+  touched anywhere in the whole procedure are 1-3, 4-13, 270-279; nothing
+  in the 14-269 range is read as anything other than `RBUF`, and nothing
+  past 279 is read at all). Left as an honestly-labelled `SPARE` padding
+  array sized to Apple's previously-confirmed `params=2/data=556`, not
+  reconfirmed with this session's real locals in place.
+- **Not yet acceptance-tier verified.** `tools/xcompile.py`'s fast tier
+  cannot check this procedure at all past the syntax level: its own
+  builtin `moveleft`/`blockread` take three and four arguments, not the
+  five and six this loop's `MOVELEFT`/`FBLOCKIO` calls need (confirmed:
+  compiling the full file gets exactly the same "found five fatal errors"
+  either way, all on those two calls, with everything else -- including
+  the new `REFENTRY` type -- parsing clean). The AppleWin/`SYSTEM.COMPILER`
+  acceptance-tier recompile that would pin the two padding gaps down
+  exactly is the next step, not yet done this session.
+
+`SHOWINFO` (procedure 9, 1042 words of locals, the largest in the file --
+`docs/PLAN.md` previously said 521, which was wrong; corrected here),
+`SHOWREF` (procedure 11), and `MAPLIBRARY` (procedure 12) remain
+unread stubs.
+
+**Update, same day -- acceptance-tier verified, both padding gaps
+resolved differently than guessed.** `LIBMAP.text` compiles clean under
+Apple's own `SYSTEM.COMPILER` (via `LIBMAPT.TEXT` on `SYSHD:`, compile
+only, not linked -- `acceptance/2026-08-27-libmap-showone-getword/`),
+reaching all the way to the outer program's `BEGIN` with zero errors.
+Getting there took four real fixes, none of them guessable from the fast
+tier or from reading the disassembly alone -- each is a fact about
+*Apple's compiler*, not about the binary:
+
+- **`@` is illegal, full stop, in every `MOVELEFT` call, not just the
+  `WITH`-vs-pointer case `SHOWSEGS`'s own header comment already
+  documented.** `MOVELEFT(@src, 0, @dst, 0, 16)` was this file's own
+  pre-existing style (written before this session, never acceptance-tier
+  checked) and fails with error 400 exactly like the `ENTRY: ^DIRENTRY`
+  pointer did. Real UCSD Pascal `MOVELEFT` takes three arguments --
+  `MOVELEFT(SOURCE, DESTINATION, COUNT)`, language reference "The
+  MOVELEFT and MOVERIGHT Procedures" -- untyped `VAR`, no `@`, indexed
+  elements allowed directly (`MOVELEFT(RBUF[IDX], W, 16)`). The compiler
+  itself expands each reference argument into the two p-code words
+  (address, 0) already seen in the binary's own `CSP 2` calls, so the
+  five-word call shape that misled the original reading into thinking
+  `MOVELEFT` took five *source* arguments was the compiler's doing, not
+  the programmer's.
+- **The `GLOBALS.TEXT` "reach segment 0 with a body-less `FORWARD`" idiom
+  does not work for an ordinary program.** `FUNCTION FBLOCKIO(...);
+  FORWARD;` with the real six-argument, `FIB`/`WINDOW`-typed signature
+  (untyped `VAR` substituted for both, per the "EXTERNAL routines may
+  declare an untyped VAR parameter" rule -- language reference III-3884)
+  compiles the *declaration*, but the call site then fails with error
+  117, unsatisfied forward reference, because nothing ever gives it a
+  body. `(*$U-*)` ("compile at the system lexical level," language
+  reference, the "user program" option) was tried next and made things
+  worse -- error 160 on the *next* declaration down, because $U-'s side
+  effects (R-/G+/I-/V- all at once) change how the compiler treats
+  `EXTERNAL` too. The actual answer sidesteps the whole mechanism:
+  `BLOCKREAD` is a **standard Pascal function** (language reference,
+  "Untyped File I/O Operations," `BLOCKREAD(file, buffer, count,
+  [blocknumber])`) that the compiler recognizes by name like `WRITE`,
+  and it compiles straight to the same `CXP 0,28` -- exactly what the
+  fast tier's "symbol FBLOCKIO unknown... guessing you meant the
+  blockread function instead" was pointing at three fixes ago. No
+  `FORWARD`, no `$U-`, no `FIB`/`WINDOW` substitute types needed at all.
+- **`SHOWREF`'s parameter is a value `STRING`, not `VAR`.** The
+  pre-existing guess (`VAR NAME: STRING`, reasoning that every call site
+  passes a string constant's own address) fails error 154, actual
+  parameter must be a variable -- a `VAR` parameter cannot bind to a
+  literal like `' global'`. Changed to `NAME: STRING` (still address-passed
+  under the hood, since strings are variable-size, which is almost
+  certainly what produced the original mistaken reading).
+- **A comment-nesting bug, not a Pascal semantics bug**: two of this
+  session's own doc comments put a `{ CXP 0,28 }`-style aside inside a
+  larger `{ ... }` block comment. Apple Pascal comments do not nest, so
+  the inner `{` silently closed the outer one and dumped raw prose into
+  the token stream (error 400 again, on a `,` inside the comment text).
+  Fixed by dropping the inner braces; worth remembering for any future
+  comment in this file.
+
+With those four fixed, **both procedures' frames match Apple's binary
+exactly**: `SHOWONE` `params=2/data=556`, `GETWORD` `params=2/data=2`
+(read from the compiled `LIBMAPT.CODE`'s own attribute table, not
+estimated). Two things about the padding gaps came out differently than
+guessed:
+
+- **`GETWORD`'s `IDX` local was wrong, not just unverified.** Apple's
+  real `GETWORD` has no local for the read-position index at all --
+  `32 - BYTEPOS` is computed inline in the `MOVELEFT` call. An explicit
+  `IDX: INTEGER` local (needed to make the fast tier's stricter checking
+  happy earlier in this same session, before the `@`/`MOVELEFT` argument
+  count was corrected) gave `params=2/data=4`, two words over. Removing
+  it and folding the expression inline closed the gap exactly -- this
+  wasn't a "how big is the mystery padding" question at all, it was a
+  real extra variable that shouldn't have been there.
+- **`SHOWONE`'s trailing `SPARE` gap is one word, not 276, and the type
+  matters in a way this file cannot yet explain.** Declaring it as
+  `ARRAY [1..276] OF INTEGER` (this session's original guess, sized by
+  matching the *previous* session's `data=556` figure against a much
+  cruder local-count) overshot to `data=1106`. Bisecting empirically
+  (`ARRAY [1..276]` gave `1106`, `ARRAY [1..10]` gave `574`, `ARRAY [1..1]`
+  gave exactly `556`) found a clean linear relationship -- `data = 554 +
+  2 * (array element count)` -- meaning **this specific array declaration
+  costs two words per element here, not one.** A bare scalar `SPARE:
+  INTEGER` also gives exactly `556`. Nothing in this file explains *why*
+  an `ARRAY OF INTEGER` local would cost double in this position; it is
+  recorded as a real, reproducible anomaly, not resolved. The practical
+  fix -- declare `SPARE` as a plain `INTEGER` -- sidesteps it and matches
+  Apple exactly, which is what the source now does.
+
+Not yet done: a full instruction-for-instruction diff between this
+session's compiled `SHOWONE`/`GETWORD` and Apple's binary (only the frame
+sizes and the hand-traced control flow are confirmed matching; an
+automated mnemonic-stream diff was attempted and abandoned when the
+regex extractor proved unreliable on `LSA`/`CHK`-style variable-length
+instructions -- worth a proper tool, not a quick script, if it's picked
+up again).
