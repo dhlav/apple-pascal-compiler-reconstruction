@@ -329,17 +329,106 @@ PROGRAM LIBMAP;
                                procedure -- true identity unknown, same as
                                local12 above. }
 
-      { TRUE if SHOWINFO already gave a full account of this segment, so
-        SHOWONE should not also print the raw reference stream unless
-        LISTLINK asked for it explicitly. Called with (BLK, 0, 0) at
-        every site in SHOWONE; the two zero arguments are identical
-        every time, so whatever they are for is not exercised here.
-        (*STUB*) -- this is also the single largest procedure in the
-        file (1042 words of locals, more than SHOWONE and everything
-        else in it combined) and has not been read yet. }
+      { TRUE if SHOWINFO gave a full account of this segment's own
+        interface text, so SHOWONE should not also print the raw
+        reference stream unless LISTLINK asked for it explicitly. Every
+        call site (SHOWSEGS, already exact) passes just the one BLK
+        argument; an earlier note here claiming two extra zero arguments
+        was wrong -- SHOWSEGS's own already-verified-exact code settles
+        it (finding 121).
+
+        Reads BLK's interface text two blocks (1024 bytes) at a time via
+        `BLOCKREAD`, scanning each chunk byte by byte: a `CHR(16)` skips
+        two bytes outright, a letter starts a run handed to `IDSEARCH` --
+        the compiler's own reserved-word lookup (finding 109), reused
+        here purely to advance past one identifier -- and a bare `CHR(13)`
+        immediately followed by `CHR(0)` marks the interface's own true
+        end. Whichever of those two ways the scan stops, NAMESTART holds
+        the width to print the whole 1024-byte chunk trimmed to (UCSD's
+        own `WRITE(packed-array:N)` idiom, printing exactly N characters
+        from the start); the outer `REPEAT` then reads another two
+        blocks (BLK advanced by 2 each time) until DONE.
+
+        IDSEARCH's own `VAR IDREC` is not the 1- or 2-word cursor it
+        looks like from PASCALCO.text's own call
+        (`IDSEARCH(SYMCURSOR,SYMBUFP^)`) -- the gap between where this
+        procedure's own code last touches it (SY, at IDREC's second word)
+        and where NAMESTART sits next in the frame is five more words,
+        exactly filling out a 7-word structure once declared: `IDCURSOR`
+        below, unread past its first two fields the same way `REFENTRY`'s
+        own SPARE is (finding 111). That 7-word figure is what actually
+        closes this procedure's frame size exactly, not a guess kept
+        around for looking plausible: `521` declared words (`IDCURSOR`'s
+        7 + `NAMESTART`'s 1 + `DONE`'s 1 + `RBUF`'s 512) is exactly half
+        of Apple's own `data=1042`, the same words-to-bytes-in-the-field
+        relationship already established for every other procedure in
+        this file (`CHECKERR`'s 42-word copy at `data=84`, `COPYLINK`'s
+        267 words at `data=534`).
+
+        `SY = 52`'s own meaning (some reserved word that ends the scan
+        early) and the exact identifier-character test are reconstructed
+        from the shape of the binary, not checked instruction for
+        instruction past that (finding 121). }
       FUNCTION SHOWINFO(BLK: INTEGER): BOOLEAN;
-        (*STUB*)
+        TYPE
+          IDCURSOR = RECORD
+                       IDX, SY: INTEGER;
+                       SPARE: ARRAY [1..5] OF INTEGER
+                     END;
+        VAR
+          ID: IDCURSOR;
+          NAMESTART: INTEGER;
+          DONE: BOOLEAN;
+          RBUF: PACKED ARRAY [0..1023] OF CHAR;
       BEGIN
+        SHOWINFO := TRUE;
+        IF BLK <= 0 THEN
+        BEGIN
+          SHOWINFO := FALSE;
+          EXIT(SHOWINFO)
+        END;
+        DONE := FALSE;
+        REPEAT
+          IF BLOCKREAD(INFILE, RBUF, 2, BLK - 1) <> 2 THEN
+          BEGIN
+            WRITE('Interface read error');
+            WRITELN;
+            SHOWINFO := FALSE;
+            DONE := TRUE
+          END
+          ELSE
+          BEGIN
+            BLK := BLK + 2;
+            ID.IDX := 0;
+            REPEAT
+              IF RBUF[ID.IDX] = CHR(16) THEN
+              BEGIN
+                ID.IDX := ID.IDX + 2
+              END;
+              IF RBUF[ID.IDX] IN ['A'..'Z', 'a'..'z'] THEN
+              BEGIN
+                NAMESTART := ID.IDX;
+                IDSEARCH(ID, RBUF);
+                IF ID.SY = 52 THEN
+                BEGIN
+                  DONE := TRUE
+                END
+              END;
+              IF RBUF[ID.IDX] = CHR(13) THEN
+              BEGIN
+                IF RBUF[ID.IDX + 1] = CHR(0) THEN
+                BEGIN
+                  NAMESTART := ID.IDX;
+                  ID.IDX := 1023
+                END
+              END;
+              ID.IDX := ID.IDX + 1
+            UNTIL DONE OR (ID.IDX > 1023);
+            WRITE(OUTFILE, RBUF:NAMESTART);
+            WRITELN(OUTFILE)
+          END
+        UNTIL DONE;
+        WRITELN(OUTFILE)
       END;
 
       { Fetch the next reference-stream entry into W, refilling RBUF one

@@ -11595,3 +11595,64 @@ be set by the prompt `'list linker info table (Y/N)? '`, not anything
 library-related -- renamed `LISTLINK` throughout (`SHOWSEGS`/`SHOWONE`
 included, both already-verified-exact procedures whose own instructions
 did not change, only the identifier).
+
+## 121. `SHOWINFO` written for real -- exact on the first attempt, the largest procedure in the file closes the whole one
+
+*Confidence: VERIFIED BINARY FACT. Acceptance run
+`2026-08-28-libmap-showinfo`.*
+
+`LIBMAP.text`'s last stub, and its biggest procedure by far -- 1042 bytes
+of locals against `SHOWONE`'s own 556, the next largest. `params=6/
+data=1042`, matching Apple's binary exactly on the first attempt. Every
+procedure in the file now has a real body; nothing left `(*STUB*)`.
+
+### 121a. What it does
+
+Prints a library unit's own interface text, given its starting block
+(`BLK`; zero or negative means "no interface," an immediate `FALSE` via
+`EXIT(SHOWINFO)`). Reads two blocks (1024 bytes) at a time through
+`BLOCKREAD`, scanning each chunk byte by byte: `CHR(16)` skips two bytes
+outright, a letter starts a run handed to `IDSEARCH` (finding 109's own
+native routine, reused here purely to walk past one identifier -- its
+result, `SY = 52`, marks some reserved word that ends the scan early,
+not yet decoded further than that), and a bare `CHR(13)` immediately
+followed by `CHR(0)` marks the interface's own true end. Whichever way
+the inner scan stops, `NAMESTART` holds how many characters to print --
+UCSD's own `WRITE(packed-array : N)` idiom -- and the outer `REPEAT`
+reads another two blocks (`BLK` advanced by 2 each time) until done.
+
+### 121b. `IDSEARCH`'s cursor is seven words, not one or two
+
+The header comment inherited from finding 111 claimed `SHOWINFO` was
+"called with `(BLK, 0, 0)`" -- wrong; `SHOWSEGS`'s own already-verified-
+exact code (finding 111) calls it with a single argument, and that
+settles it now that a real body exists to check the call site against.
+
+The real find: `IDSEARCH(VAR IDREC, ID)`'s own declaration
+(`PASCALCO.text`, `IDSEARCH(SYMCURSOR, SYMBUFP^)`) reads like a small
+cursor, but the disassembly's own local offsets prove otherwise. The
+procedure's own code only ever touches two words of whatever it passes
+as `IDREC` -- one before the call (the scan position) and one after
+(`SY`) -- but the next local `SHOWINFO` declares (`NAMESTART`) doesn't
+land until five words later. Declaring `IDREC` as a 7-word record
+(`IDX`, `SY`, and a 5-word `SPARE` this procedure never reads, the same
+unread-tail shape `REFENTRY` already has, finding 111) closes the gap
+exactly: `521` declared words (`IDCURSOR`'s 7 + `NAMESTART`'s 1 +
+`DONE`'s 1 + `RBUF`'s 512, one 1024-byte chunk) is precisely half of
+Apple's `data=1042` -- the same words-to-bytes relationship this file's
+own `CHECKERR`-style value-parameter copies and `COPYLINK`'s own
+256-word block already established elsewhere in this project. Matched
+on the first compile, no iteration needed once the record size was
+right.
+
+### 121c. `LIBMAP.text` is now feature-complete
+
+Every one of the file's twelve procedures (eleven p-code, one native)
+now has a real, acceptance-tier-compiled body. Exact matches: the outer
+block, `SWAPBYTES`, `VALIDNAME`, `SHOWSEGS`, `SHOWONE`, `GETWORD`,
+`SHOWINFO`. One word short each, documented not forced: `NEEDSSWAP` (two
+words), `SWAPALL`, `SHOWREF`, `MAPLIBRARY`. Nothing left unread or
+stubbed -- the open threads are the small per-procedure word gaps
+already documented (120a/120b) and the still-undecoded `SY=52`/
+identifier-character-set specifics in `SHOWINFO` itself, not missing
+structure.
