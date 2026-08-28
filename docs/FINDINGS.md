@@ -11444,3 +11444,69 @@ Before catching 118b, tested and killed off:
 
 No candidate for the outer body's missing word remains open. Left
 documented, not forced, per finding 117.
+
+## 119. `CODEINSEG` is global, not per-segment -- narrows finding 105a, doesn't close it
+
+*Confidence: VERIFIED SOURCE FACT for the mechanism (all in already-verified
+`PASCALCO.text`/`BODY3.text`/`COMPINIT.text`); STRONG INFERENCE for what it
+predicts about the host segment; still open where it conflicts with
+105a-i's own emulator test.*
+
+Prompted by a check of whether the standard UCSD `REWRITE`/`CLOSE`/
+`CLOSE(F,LOCK)` directory-space-trimming rule (a real mechanism, but for a
+*volume's* `FILE` variables) could explain finding 105a's extra 512-byte
+`PASCALSY` segment. It cannot: `PASCALCO.text`'s own `WRITECODE`/
+`FINISHSEG` write segment code via raw `BLOCKWRITE(USERINFO.WORKCODE^,
+DISKBUF, 1, CURBLK)` against a preallocated block-numbered scratch area,
+never through `REWRITE`/`CLOSE` on a typed file. Wrong layer entirely --
+worth ruling out explicitly since it's a plausible-sounding wrong answer.
+
+Checking anyway turned up a real, previously uncited mechanism. `BLOCK`
+calls `FINISHSEG` from two sites, not the one finding 105a's writeup
+examined:
+
+* **Line 845**, unconditional, after the lexical stack (`TOS`) is fully
+  unwound -- the only one 105a discussed.
+* **Line 815**, `IF CODEINSEG THEN FINISHSEG`, inside the loop, run once
+  per lexical level as *each* level (including the outermost host, since
+  `(*$U-*) PROGRAM` is itself `ISSEGMENT`, finding 60) finishes and pops
+  off `TOS`.
+
+`CODEINSEG` is not scoped per segment. `COMPINIT.text:334` clears it once
+at the start of compilation; `BODY3.text:131-132` sets it true the moment
+*any* procedure body anywhere emits its first instruction; `FINISHSEG`
+itself clears it back to false as the last thing it does
+(`PASCALCO.text:733`). It is a single global "has any code been generated
+since the last flush" flag, not "does this segment have code."
+
+### 119a. What this predicts for the host
+
+The host's own `BEGIN END` is already established to compile to genuinely
+zero bytes (`enter_ic = exit_ic`, finding 105a). If nothing else sets
+`CODEINSEG` true between the last real segment's own `FINISHSEG` (which
+resets it) and the host's own turn to pop off `TOS`, line 815 is skipped
+for the host, `SEGTABLE[...].CODELENG` for slot 0 is never written, and it
+stays at its initialised zero -- exactly Apple's shipped shape
+(`addr=0000, len=0000`, name blank).
+
+### 119b. Where it stops explaining things
+
+Both `105a-i` test programs (`TESTHOST`/the headerless variant), run
+through the *real* 1.3 compiler, have the identical shape -- one
+`(*$U-*) PROGRAM`, one nested `SEGMENT PROCEDURE INNER` with its own
+nested ordinary `PROCEDURE FOO`, outer body `BEGIN END` -- and came out
+with a **non-empty** segment 0 (`NEXTPROC-1=1`), not the empty shape
+119a predicts. `INNER`'s own body (`BEGIN FOO END`) is real code (a
+`CXP`), so `CODEINSEG` legitimately goes true during `INNER`'s compile;
+`INNER` is itself `ISSEGMENT`, so its own line-815 call should fire and
+reset `CODEINSEG` back to false via its own `FINISHSEG` before the outer
+level's turn -- predicting the same empty-segment-0 outcome as Apple's
+real file, not the non-empty one actually observed.
+
+Something between `INNER` finishing and the host's own pop sets
+`CODEINSEG` true again, and it has not been identified -- a candidate
+worth checking directly against the binary rather than guessed at
+further: whether parsing the `SEGMENT PROCEDURE INNER(...)` *header*
+itself (segment-table allocation, `NEWSEG`-adjacent bookkeeping) emits
+anything, independent of `INNER`'s own body. Left open, narrower than
+before finding 119 but not closed.
