@@ -75,6 +75,12 @@ PROGRAM LIBRARY;
     BIGBUF = RECORD CASE INTEGER OF
                256: (WORDS: ARRAY [0..255] OF INTEGER)
              END;
+    { COPYLINK's own link-info block: 32 eight-word entries, matching the
+      disassembly's own "move 8 words at offset (32-N)*8w" -- READLINK
+      pulls one whole LINKENTRY out of the just-read LINKBLOCK by plain
+      array indexing, no @ needed (finding: LIBRARY session, 2026-08-28). }
+    LINKENTRY = ARRAY [0..7] OF INTEGER;
+    LINKBLOCK = ARRAY [0..31] OF LINKENTRY;
     SEGNAMESTR = PACKED ARRAY [0..7] OF CHAR;
     SEGINFOREC = PACKED RECORD CASE INTEGER OF
                    0: (ASWORD: INTEGER);
@@ -361,24 +367,114 @@ PROGRAM LIBRARY;
         ANSWER: CHAR;
         PAGE: INTEGER;
 
-      { Copy one segment's link-interface information, block at a time,
-        straight through from INFILE to OUTFILE, byte-swapping each
-        8-word entry if SWAPPED. (*STUB*) }
-      PROCEDURE COPYLINK(LASTBLOCK: INTEGER);
+      { Copy one segment's link-interface information, one 8-word entry
+        at a time, refilling a 32-entry block buffer from INFILE (relayed
+        straight to OUTFILE) as it runs dry via READLINK. Runs until an
+        entry's word[4] reads 0 (end marker); anything other than 32767
+        there is flagged 'bad link info' and zeroed so the loop can still
+        end cleanly. word[4] = 24638 marks a "long" entry carrying an
+        extra-entries count in word[6] -- (count+7) DIV 8 further
+        READLINK calls relay those too before the outer loop re-checks.
+        BLOCKNUM starts as the caller's argument and is READLINK's own
+        read cursor, advanced one block at a time -- a value parameter
+        reassigned by the nested procedure that owns it, same lexical
+        sharing SWAPALL/NEEDSSWAP already use on INDICT/OUTDICT. }
+      PROCEDURE COPYLINK(BLOCKNUM: INTEGER);
+        VAR
+          ENTRIESLEFT: INTEGER;
+          EXTRACOUNT: INTEGER;
+          DONE: BOOLEAN;
+          ENTRY: LINKENTRY;
+          BLOCKBUF: LINKBLOCK;
 
-        { Refill the 256-word link-info buffer from INFILE (relaying the
-          same block straight to OUTFILE) when it runs dry, then hand
-          the caller the next 8-word entry out of it. (*STUB*) }
+        { Refill BLOCKBUF from INFILE (relaying the same block straight
+          to OUTFILE) when ENTRIESLEFT hits 0, then hand COPYLINK the
+          next entry out of it. An I/O error here sets COPYLINK's own
+          DONE (not a local of READLINK's -- lexical write into the
+          parent's frame, same as MAINLOOP's ABORT in finding 115). }
         PROCEDURE READLINK;
         BEGIN
+          IF ENTRIESLEFT = 0 THEN
+          BEGIN
+            IF BLOCKREAD(INFILE, BLOCKBUF, 1, BLOCKNUM) <> 1 THEN
+            BEGIN
+              MSG := 'Link info read error';
+              MSGLINE(23);
+              DONE := TRUE
+            END
+            ELSE
+            BEGIN
+              IF BLOCKWRITE(OUTFILE, BLOCKBUF, 1, NEXTBLK) <> 1 THEN
+              BEGIN
+                MSG := 'Code file overflow';
+                MSGLINE(23);
+                DONE := TRUE
+              END
+              ELSE
+              BEGIN
+                NEXTBLK := NEXTBLK + 1;
+                BLOCKNUM := BLOCKNUM + 1;
+                ENTRIESLEFT := 32
+              END
+            END
+          END;
+          IF NOT DONE THEN
+          BEGIN
+            ENTRY := BLOCKBUF[32 - ENTRIESLEFT]
+          END;
+          ENTRIESLEFT := ENTRIESLEFT - 1
         END;
 
       BEGIN
+        ENTRIESLEFT := 0;
+        DONE := FALSE;
+        REPEAT
+          READLINK;
+          IF SWAPPED THEN
+          BEGIN
+            SWAPBYTES(ENTRY[4])
+          END;
+          IF ENTRY[4] <> 32767 THEN
+          BEGIN
+            MSG := 'bad link info';
+            MSGLINE(23);
+            ENTRY[4] := 0
+          END;
+          DONE := (ENTRY[4] = 0);
+          IF NOT DONE THEN
+          BEGIN
+            IF ENTRY[4] = 24638 THEN
+            BEGIN
+              IF SWAPPED THEN
+              BEGIN
+                SWAPBYTES(ENTRY[6])
+              END;
+              EXTRACOUNT := (ENTRY[6] + 7) DIV 8;
+              WHILE EXTRACOUNT > 0 DO
+              BEGIN
+                READLINK;
+                EXTRACOUNT := EXTRACOUNT - 1
+              END
+            END
+          END
+        UNTIL DONE
       END;
 
-      { Copy one segment's own interface (constant/type export) block,
-        the same way COPYLINK relays link info. (*STUB*) }
-      PROCEDURE COPYINTERFACE(N: INTEGER);
+      { Copy one segment's own interface block. IFACEBLOCK <= 0 means
+        there is none. The normal case computes how many blocks to copy
+        as INDICT's own next segment start minus IFACEBLOCK; when that
+        comes out negative (this is the last segment in the file, so
+        there is no "next" start to measure against) it falls back to
+        reading one block at a time until BLOCKREAD itself fails, then
+        checks the block count read landed back on the original IFACEBLOCK
+        value as a consistency check. Reuses COPYSLOT's own MARKPTR local
+        for its MARK/NEW/RELEASE cycle -- COPYINTERFACE always finishes
+        before COPYSLOT's own cycle begins, so the two never overlap. }
+      PROCEDURE COPYINTERFACE(IFACEBLOCK: INTEGER);
+        VAR
+          COUNT: INTEGER;
+          PAGE: INTEGER;
+          LASTPAGE: INTEGER;
 
         PROCEDURE IFACEWERR;
         BEGIN
@@ -387,6 +483,65 @@ PROGRAM LIBRARY;
         END;
 
       BEGIN
+        IF IFACEBLOCK <= 0 THEN
+        BEGIN
+          EXIT(COPYINTERFACE)
+        END;
+        COUNT := INDICT.ADDRLEN[FROMSLOT].ADDR - IFACEBLOCK;
+        OUTDICT.TEXTADR[TOSLOT] := NEXTBLK;
+        IF COUNT < 0 THEN
+        BEGIN
+          COUNT := IFACEBLOCK;
+          WHILE BLOCKREAD(INFILE, BUF^, 1, IFACEBLOCK) = 1 DO
+          BEGIN
+            IFACEBLOCK := IFACEBLOCK + 1;
+            IF BLOCKWRITE(OUTFILE, BUF^, 1, NEXTBLK) <> 1 THEN
+            BEGIN
+              IFACEWERR;
+              EXIT(COPYINTERFACE)
+            END;
+            NEXTBLK := NEXTBLK + 1
+          END;
+          IF COUNT = IFACEBLOCK THEN
+          BEGIN
+            COUNT := 0
+          END
+          ELSE
+          BEGIN
+            EXIT(COPYINTERFACE)
+          END
+        END;
+        IF COUNT = 0 THEN
+        BEGIN
+          MSG := 'Interface error';
+          MSGLINE(23);
+          EXIT(COPYINTERFACE)
+        END;
+        MARK(MARKPTR);
+        PAGE := 1;
+        LASTPAGE := COUNT;
+        WHILE PAGE <= LASTPAGE DO
+        BEGIN
+          NEW(BUF, 256);
+          PAGE := PAGE + 1
+        END;
+        IF BLOCKREAD(INFILE, MARKPTR^, COUNT, IFACEBLOCK) <> COUNT THEN
+        BEGIN
+          MSG := 'Interface read error';
+          MSGLINE(23)
+        END
+        ELSE
+        BEGIN
+          IF BLOCKWRITE(OUTFILE, MARKPTR^, COUNT, NEXTBLK) <> COUNT THEN
+          BEGIN
+            IFACEWERR
+          END
+          ELSE
+          BEGIN
+            NEXTBLK := NEXTBLK + COUNT
+          END
+        END;
+        RELEASE(MARKPTR)
       END;
 
     BEGIN

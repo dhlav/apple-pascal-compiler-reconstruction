@@ -11213,3 +11213,65 @@ exactly on both `params=4` and `data=10`**.
 same caveat as `IFACEWERR` in finding 113 -- an empty body times out at
 zero locals either way, not evidence the eventual real body will also
 need none.
+
+## 116. `COPYLINK`/`READLINK`/`COPYINTERFACE` written for real -- all four exact, first attempt
+
+**VERIFIED BINARY FACT.** The last four stubbed procedures in
+`LIBRARY.text` (finding 115 left `COPYLINK`/`READLINK`/`COPYINTERFACE`
+untouched): written from the disassembly the same way, and all four
+matched Apple's shipped binary exactly on `params`/`data` on the first
+compile.
+
+- **`COPYLINK(BLOCKNUM: INTEGER)`** relays a segment's link-interface
+  information one 8-word entry at a time via its own nested `READLINK`,
+  refilling a 32-entry, 256-word `LINKBLOCK` buffer from `INFILE` (relayed
+  straight to `OUTFILE`) whenever it runs dry. The loop's own exit test
+  reads an entry's word `[4]`: `32767` is the normal marker (anything else
+  is `'bad link info'`, zeroed so the loop still ends cleanly), `0` ends
+  the loop, and `24638` marks a "long" entry whose word `[6]` holds an
+  extra-entries count -- `(count+7) DIV 8` further `READLINK` calls relay
+  those before the outer loop re-checks. `BLOCKNUM` is `COPYLINK`'s own
+  value parameter, advanced by `READLINK` directly (`BLOCKNUM := BLOCKNUM
+  + 1`) -- a nested procedure freely reassigning its enclosing procedure's
+  parameter by lexical scoping, same as `MAINLOOP`'s `ABORT` in finding
+  115. An I/O error inside `READLINK` sets `COPYLINK`'s own `DONE`
+  directly for the same reason.
+- The disassembly's own `move(@I1,5, @I1,13[(32-I1,2)*8w], 8 words)` --
+  copying one whole entry out of the block buffer at a computed offset --
+  is just `ENTRY := BLOCKBUF[32 - ENTRIESLEFT]` once `BLOCKBUF` is typed
+  as `ARRAY [0..31] OF LINKENTRY` rather than a flat word array: Standard
+  Pascal's whole-array-element assignment, no `@`, no manual offset math.
+- The disassembly's `if not ((32767 in 1))` / `if (24638 in 1)` are
+  single-element `SET` membership tests -- `INN` with a one-element set
+  and plain integer equality compile to identical bytecode, so these are
+  written as `ENTRY[4] <> 32767` / `ENTRY[4] = 24638` rather than `IN`
+  literals; `COPYSLOT`'s own `SEGKIND NOT IN [0, 6, 7]` (finding 115)
+  stays a real `SET` because three elements can't be a coincidental
+  equality.
+- **`COPYINTERFACE(IFACEBLOCK: INTEGER)`** copies one segment's own
+  interface block. `IFACEBLOCK <= 0` means there is none. The normal case
+  computes the block count as `INDICT.ADDRLEN[FROMSLOT].ADDR -
+  IFACEBLOCK` (the next segment's own start, minus where this one's
+  interface begins); when that comes out negative -- the last segment in
+  the file has no "next" start to measure against -- it falls back to
+  reading one block at a time through the global scratch buffer `BUF`
+  until `BLOCKREAD` itself fails, then checks the number of blocks read
+  landed back on the original `IFACEBLOCK` value as a consistency check
+  before proceeding.
+- **The `data=6` match depended on *not* declaring `COPYINTERFACE` its own
+  heap-mark pointer.** The disassembly's `MARK(@I1,4)` writes into the
+  *parent*'s (`COPYSLOT`'s) frame at offset 4 -- exactly where `COPYSLOT`'s
+  own `MARKPTR` local already lives (finding 115's declaration order).
+  `COPYINTERFACE` reuses that same variable by name, directly, for its own
+  `MARK`/`NEW`/`RELEASE` cycle; it is always called before `COPYSLOT`'s
+  own cycle begins, so the two never overlap in time. First attempt
+  wrote it this way, matched immediately -- no data-size mismatch to
+  chase.
+
+With this, every one of `LIBRARY.text`'s 16 procedures has either an exact
+or a documented-and-explained close/anomalous frame-size match; nothing
+is left as an unwritten `(*STUB*)`. What remains open is finding 114's
+`MAINLOOP` `data=82` vs Apple's `data=8` anomaly (confirmed not a
+compiler-reconstruction bug, mechanism still not fully attributed) and
+the handful of "close, a few words short" procedures documented in
+finding 113 (`NEEDSSWAP`/`SWAPALL`/`MSGLINE`/`MSGLINEINT`/`SHOWDICT`).
