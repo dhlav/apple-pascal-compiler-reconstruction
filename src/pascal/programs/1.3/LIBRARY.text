@@ -1,0 +1,685 @@
+{ LIBRARY -- the Apple Pascal Librarian, "Apple Pascal Librarian [1.3]",
+  APPLE2:LIBRARY.CODE.
+
+  Reconstructed from the 1.3 binary (`analysis/utilities/
+  LIBRARY-1.3-APPLE2.pcode.txt`/`.pas.txt`). 16 p-code procedures, no
+  native half. Copies segments ("slots") between two SYSTEM.LIBRARY-format
+  files, an input library and a fresh output library, handling byte-order
+  swap when the two machines disagree and copying each segment's own
+  link-interface information (its own procedure-call cross reference,
+  read/written link block at a time) alongside the raw code.
+
+  Procedures 2-4 (SWAPBYTES/NEEDSSWAP/SWAPALL) and the whole segment
+  dictionary layout (DIRENTRY/SEGNAMESTR/SEGINFOREC/SEGDICTREC) started
+  as verbatim reuse from `LIBMAP.text` -- this file's own `params=2/
+  data=4`, `params=6/data=10` and `params=2/data=10` for those three
+  procedures match LIBMAP's SWAPBYTES/NEEDSSWAP/SWAPALL exactly,
+  procedure numbers shifted down by one only because this file has no
+  native IDSEARCH to declare first. NEEDSSWAP's own parameter type did
+  not survive contact with a real call site, though (see `ADDRLENARR`
+  below) -- LIBMAP.text's copy still has the wrong one, since nothing
+  there has ever actually called it.
+
+  Nesting: procedures 11 (COPYSLOT) and 16 (GETCOMMAND) are declared
+  inside 10 (MAINLOOP); 12 (COPYLINK) and 14 (COPYINTERFACE) are declared
+  inside 11; 13 (READLINK) is declared inside 12; 15 (IFACEWERR, procedure
+  14's own interface-write-error message) is declared inside 14 -- the
+  binary's own lex levels (2, 2, 3, 3, 4, 4) fix this, not a guess.
+
+  IFACEWERR was first written as INTERFACEWRITEERR and would not compile
+  -- a syntax error right at its own declaration, reproducible down to
+  its first 8 significant characters (`INTERFAC`). `INTERFACE` is a
+  reserved word (the UCSD UNIT section keyword), and Apple's compiler
+  rejects it as an identifier prefix even in a plain PROGRAM that never
+  declares a UNIT (finding: LIBRARY session, 2026-08-27).
+
+  Two globals share one address space the way LIBMAP's did: INDICT (the
+  library being read from) and OUTDICT (the library being written) are
+  each one whole SEGDICTREC, declared back to back so OUTDICT's own
+  SEGNAME/SEGKIND/TEXTADR/SEGINFO arrays fall exactly where the binary's
+  own G540/G604/G620/G636 operands expect them, 256 words after INDICT's
+  matching fields -- confirms SEGDICTREC really is 256 words end to end. }
+
+{ $G+ : MAINLOOP's own early-exit-to-UNTIL (finding: LIBRARY session,
+  2026-08-27, same reason LIBMAP's VALIDNAME needed it -- GOTO is
+  otherwise forbidden).
+
+  $I- : CHECKIO reads IORESULT itself. }
+(*$G+*)
+(*$I-*)
+PROGRAM LIBRARY;
+
+  TYPE
+    DIRENTRY = RECORD
+                 ADDR, LENG: INTEGER
+               END;
+    { NEEDSSWAP's real parameter type, confirmed against the disassembly's
+      own IXA 2 (finding: LIBRARY session, 2026-08-27 -- both this file's
+      and LIBMAP's copies of NEEDSSWAP index with a 2-word stride, not
+      the 1-word SEGWORDS this project had been declaring for it, which
+      happened to match on frame size alone because it was never actually
+      call-tested against Apple's compiler: MAPLIBRARY, the one place
+      LIBMAP.text would have called it, is still a stub). Named
+      separately from SEGDICTREC.ADDRLEN's own inline array type so a
+      VAR parameter of this type can bind to ADDRLEN directly. }
+    ADDRLENARR = ARRAY [0..15] OF DIRENTRY;
+    { `NEW(p, n)` is not a flex-array size extension -- error 158, no
+      such variant in this record, on the first attempt at `NEW(BUF,
+      256)` when BUF's base type was a plain array (finding: LIBRARY
+      session, 2026-08-27). `n` selects a CASE variant by tag value; the
+      binary's own literal `256` at every `NEW(@G171, 256)` call site is
+      that tag, not a computed count, so BIGBUF only needs the one
+      variant Apple's own case label happens to equal -- one whole disk
+      block's worth of link-info words (matching a chained multi-block
+      buffer the same way BINDER's own G4 does). }
+    BIGBUF = RECORD CASE INTEGER OF
+               256: (WORDS: ARRAY [0..255] OF INTEGER)
+             END;
+    SEGNAMESTR = PACKED ARRAY [0..7] OF CHAR;
+    SEGINFOREC = PACKED RECORD CASE INTEGER OF
+                   0: (ASWORD: INTEGER);
+                   1: (SEGNUM: 0..255; MTYPE: 0..15;
+                       UNUSED: 0..1; VERSION: 0..7)
+                 END;
+    SEGDICTREC = RECORD
+                   ADDRLEN:  ADDRLENARR;                     {   0 }
+                   SEGNAME:  ARRAY [0..15] OF
+                               PACKED ARRAY [1..8] OF CHAR;  {  32 }
+                   SEGKIND:  ARRAY [0..15] OF INTEGER;       {  96 }
+                   TEXTADR:  ARRAY [0..15] OF INTEGER;       { 112 }
+                   SEGINFO:  ARRAY [0..15] OF SEGINFOREC;    { 128 }
+                   SPARE:    ARRAY [1..72] OF INTEGER;       { 144, unread }
+                   COMMENT:  STRING[79]                      { 216 }
+                 END;
+
+  VAR
+    INFILE, OUTFILE: FILE;
+    MSG:      STRING;                    { G90, the shared prompt/notice text }
+    INNAME:   STRING[79];                { G8 }
+    OUTNAME:  STRING[79];                { G49 }
+    NOTICE:   STRING[78];                { G131 }
+    BUF:      ^BIGBUF;                    { G171, the chained heap buffer }
+    NEXTBLK:  INTEGER;                   { G4, next free output block }
+    TOSLOT, FROMSLOT: INTEGER;           { G6, G7 -- COPYSLOT's own two
+                                            args, matched to G6/G7 by the
+                                            call site LIBRARIA.11(G6,G7),
+                                            not by the prompt text's
+                                            English (which reads
+                                            ambiguously either way) }
+    INDICT:   SEGDICTREC;                { G252, library being read }
+    OUTDICT:  SEGDICTREC;                { G508, library being written }
+    NEWOUT:   BOOLEAN;                   { G765, output file just created }
+    SWAPPED:  BOOLEAN;                   { G764, byte order differs }
+    CMDCHAR:  CHAR;                      { G766, last command character }
+    I:        INTEGER;                   { the outer body's own
+                                            blank-name-init loop counter }
+
+  { Byte-swap a word in place. Verbatim from LIBMAP.text (finding 111's
+    own SWAPBYTES), matched here on params=2/data=4. }
+  PROCEDURE SWAPBYTES(VAR W: INTEGER);
+    VAR
+      OLDVAL, NEWVAL: PACKED RECORD CASE BOOLEAN OF
+                        TRUE:  (ASWORD: INTEGER);
+                        FALSE: (LO, HI: 0..255)
+                      END;
+  BEGIN
+    OLDVAL.ASWORD := W;
+    NEWVAL.HI := OLDVAL.LO;
+    NEWVAL.LO := OLDVAL.HI;
+    W := NEWVAL.ASWORD
+  END;
+
+  { TRUE if any of the sixteen words at P has a nonzero byte on the
+    wrong-endian side. Verbatim from LIBMAP.text, matched here on
+    params=6/data=10. }
+  FUNCTION NEEDSSWAP(VAR P: ADDRLENARR): BOOLEAN;
+    TYPE
+      WORDBYTES = PACKED RECORD CASE BOOLEAN OF
+                    TRUE:  (ASWORD: INTEGER);
+                    FALSE: (ASBYTES: PACKED ARRAY [0..1] OF 0..255)
+                  END;
+    VAR
+      HIBYTE: 0..1;
+      I, LAST: 0..15;
+      W: WORDBYTES;
+  BEGIN
+    NEEDSSWAP := FALSE;
+    W.ASWORD := 1;
+    HIBYTE := ORD(W.ASBYTES[0] = 1);
+    I := 0;
+    LAST := 15;
+    WHILE I <= LAST DO
+    BEGIN
+      W.ASWORD := P[I].ADDR;
+      IF W.ASBYTES[HIBYTE] <> 0 THEN
+      BEGIN
+        NEEDSSWAP := TRUE
+      END;
+      I := I + 1
+    END
+  END;
+
+  { Byte-swap every word of one dictionary. Verbatim from LIBMAP.text,
+    matched here on params=2/data=10. }
+  PROCEDURE SWAPALL(VAR D: SEGDICTREC);
+    VAR
+      I, LAST: 0..15;
+      TEMP: INTEGER;
+      INFOTEMP: SEGINFOREC;
+  BEGIN
+    I := 0;
+    LAST := 15;
+    WHILE I <= LAST DO
+    BEGIN
+      SWAPBYTES(D.ADDRLEN[I].ADDR);
+      SWAPBYTES(D.ADDRLEN[I].LENG);
+      TEMP := D.SEGKIND[I];
+      SWAPBYTES(TEMP);
+      D.SEGKIND[I] := TEMP;
+      SWAPBYTES(D.TEXTADR[I]);
+      INFOTEMP := D.SEGINFO[I];
+      SWAPBYTES(INFOTEMP.ASWORD);
+      D.SEGINFO[I] := INFOTEMP;
+      I := I + 1
+    END
+  END;
+
+  { Print MSG on screen row ROW, ringing the bell first if ROW is the
+    bottom (error) line, and if it is, wait for a space before returning.
+    (*STUB*) for the exact backspace/cursor-redraw pair after the
+    message -- the binary computes an address from the file's own hidden
+    window field plus 31 and reads two bytes from screen memory there,
+    which is not something this file has worked out how to write in
+    ordinary Pascal yet (finding: LIBRARY session, 2026-08-27). }
+  PROCEDURE MSGLINE(ROW: INTEGER);
+    VAR
+      CH: CHAR;
+  BEGIN
+    GOTOXY(0, ROW);
+    IF ROW = 23 THEN
+    BEGIN
+      WRITE(CHR(7))
+    END;
+    WRITE(MSG);
+    (*STUB: cursor redraw*)
+    IF ROW = 23 THEN
+    BEGIN
+      WRITE(' ':5);
+      WRITE('Type <space> to continue');
+      REPEAT
+        READ(CH)
+      UNTIL CH = ' ';
+      GOTOXY(0, ROW);
+      (*STUB: cursor redraw*)
+    END
+  END;
+
+  { Print MSG followed by an integer on screen row ROW, ring the bell,
+    then wait for a space. Same (*STUB*) cursor-redraw gap as MSGLINE. }
+  PROCEDURE MSGLINEINT(ROW, N: INTEGER);
+    VAR
+      CH: CHAR;
+  BEGIN
+    GOTOXY(0, ROW);
+    WRITE(CHR(7));
+    WRITE(MSG);
+    WRITE(N);
+    (*STUB: cursor redraw*)
+    WRITE(' ':5);
+    WRITE('Type <space> to continue');
+    REPEAT
+      READ(CH)
+    UNTIL CH = ' ';
+    GOTOXY(0, ROW);
+    (*STUB: cursor redraw*)
+  END;
+
+  { TRUE (and silent) if IORESULT is clean; otherwise reports it on the
+    error line and returns FALSE. }
+  FUNCTION CHECKIO: BOOLEAN;
+    VAR
+      ERR: INTEGER;
+  BEGIN
+    CHECKIO := IORESULT = 0;
+    IF IORESULT <> 0 THEN
+    BEGIN
+      ERR := IORESULT;
+      MSG := 'I/O error # ';
+      MSGLINEINT(23, ERR)
+    END
+  END;
+
+  { Prompt for the input library's filename ("*" means SYSTEM.LIBRARY),
+    open it, retrying with a ".CODE" suffix if the bare name fails, until
+    it opens clean or the name is left blank. }
+  PROCEDURE GETINPUT;
+  BEGIN
+    REPEAT
+      MSG := 'Input File -> ';
+      MSGLINE(5 - 1);
+      READ(INNAME);
+      READLN;
+      IF INNAME = '*' THEN
+      BEGIN
+        INNAME := '*SYSTEM.LIBRARY'
+      END;
+      IF LENGTH(INNAME) > 0 THEN
+      BEGIN
+        RESET(INFILE, INNAME);
+        IF IORESULT <> 0 THEN
+        BEGIN
+          RESET(INFILE, CONCAT(INNAME, '.CODE'))
+        END
+      END
+    UNTIL CHECKIO OR (LENGTH(INNAME) = 0)
+  END;
+
+  { Print one dictionary's 16 slots in two eight-row columns: slot
+    number, its SEGINFO segment number in parens if it has one, the
+    8-char name, and the segment length. Then the "File length -"
+    footer with NEXTBLK. }
+  PROCEDURE SHOWDICT(ROW: INTEGER; VAR DICT: SEGDICTREC);
+    VAR
+      I, SLOT: INTEGER;
+  BEGIN
+    GOTOXY(0, ROW);
+    I := 0;
+    WHILE I <= 15 DO
+    BEGIN
+      SLOT := (I + 1) DIV 2;
+      IF ODD(I) THEN
+      BEGIN
+        SLOT := SLOT + 7
+      END;
+      WRITE(' ':11);
+      WRITE(SLOT:2);
+      WRITE('-');
+      IF DICT.SEGINFO[SLOT].SEGNUM >= 1 THEN
+      BEGIN
+        WRITE('(');
+        WRITE(DICT.SEGINFO[SLOT].SEGNUM:2);
+        WRITE(') ')
+      END
+      ELSE
+      BEGIN
+        WRITE(' ':5)
+      END;
+      WRITE(DICT.SEGNAME[SLOT]:8);
+      WRITE(DICT.ADDRLEN[SLOT].LENG:6);
+      IF ODD(I) THEN
+      BEGIN
+        WRITELN
+      END;
+      I := I + 1
+    END;
+    MSG := 'File length - ';
+    MSGLINE(15 - 1);
+    WRITE(NEXTBLK)
+  END;
+
+  { Show both dictionaries, byte-swapping OUTDICT if the two machines
+    disagree, then dispatch commands from GETCOMMAND until the user
+    quits or aborts. COPYSLOT and GETCOMMAND are declared inside here,
+    not as top-level siblings -- the binary's own lex levels (both 2)
+    fix that, and getting it wrong the first time around shifted every
+    later procedure's number and put GETCOMMAND before COPYSLOT instead
+    of after (finding: LIBRARY session, 2026-08-27 -- caught by every
+    procedure from GETCOMMAND on reporting the wrong params/data against
+    Apple's binary once this compiled clean; procedure *numbers* are
+    fixed by declaration order and this file's order did not match). }
+  PROCEDURE MAINLOOP;
+    LABEL 1;
+    VAR
+      I: INTEGER;
+      ABORT: BOOLEAN;
+
+    { Copy one slot -- INDICT[FROMSLOT] to OUTDICT[TOSLOT] -- reading the
+      whole segment into a heap-chained buffer (MARK the current heap
+      top, NEW enough 256-word pages to hold it, RELEASE them all at
+      once when done -- the same idiom BINDER's own segment copy uses),
+      then its link-interface information block by block (COPYLINK
+      below), unless this is a data segment (SEGKIND 5), which carries
+      none.
+      (*STUB*) -- not yet reconstructed instruction for instruction; the
+      heap MARK/NEW/RELEASE shape and the two-dictionary field copies
+      (SEGNAME/TEXTADR/SEGKIND/SEGINFO) are read off the disassembly
+      (`analysis/utilities/LIBRARY-1.3-APPLE2.pcode.txt` procedure 11).
+      The disassembly takes the address of INDICT.ADDRLEN[FROMSLOT] into
+      a local and dereferences it repeatedly (bare deref reads .ADDR,
+      same SIND0 pattern LIBMAP's own SHOWONE/GETWORD already established
+      for a WITH's hidden implementation) -- @ is not legal Apple Pascal
+      (finding 111), so this is written as WITH INDICT.ADDRLEN[FROMSLOT]
+      DO, matching the instruction shape without an address-of operator.
+      MEMAVAIL comparison guards the whole copy; INDICT.SEGKIND NOT IN
+      [0, 6, 7] (fully-linked / linked-intrinsic / data -- SHOWSEGS's own
+      case dispatch names these) gates the COPYLINK call, since those
+      three kinds carry no separate link-info block to relay. }
+    PROCEDURE COPYSLOT(TOSLOT, FROMSLOT: INTEGER);
+      VAR
+        NUMBLOCKS: INTEGER;
+        MARKPTR: ^INTEGER;
+        ANSWER: CHAR;
+        PAGE: INTEGER;
+
+      { Copy one segment's link-interface information, block at a time,
+        straight through from INFILE to OUTFILE, byte-swapping each
+        8-word entry if SWAPPED. (*STUB*) }
+      PROCEDURE COPYLINK(LASTBLOCK: INTEGER);
+
+        { Refill the 256-word link-info buffer from INFILE (relaying the
+          same block straight to OUTFILE) when it runs dry, then hand
+          the caller the next 8-word entry out of it. (*STUB*) }
+        PROCEDURE READLINK;
+        BEGIN
+        END;
+
+      BEGIN
+      END;
+
+      { Copy one segment's own interface (constant/type export) block,
+        the same way COPYLINK relays link info. (*STUB*) }
+      PROCEDURE COPYINTERFACE(N: INTEGER);
+
+        PROCEDURE IFACEWERR;
+        BEGIN
+          MSG := 'Interface write error';
+          MSGLINE(23)
+        END;
+
+      BEGIN
+      END;
+
+    BEGIN
+      ABORT := FALSE;
+      IF INDICT.SEGNAME[FROMSLOT] <> '        ' THEN
+      BEGIN
+        IF OUTDICT.ADDRLEN[TOSLOT].ADDR <> 0 THEN
+        BEGIN
+          MSG := 'WARNING - Slot ';
+          MSGLINE(2);
+          WRITE(TOSLOT);
+          WRITE(' already linked.  Please reconfirm (y/n) - ');
+          WRITE(CHR(7));
+          READ(ANSWER);
+          WRITELN;
+          MSG := '';
+          MSGLINE(2);
+          IF NOT (ANSWER IN ['y', 'Y']) THEN
+          BEGIN
+            EXIT(COPYSLOT)
+          END
+        END;
+        WITH INDICT.ADDRLEN[FROMSLOT] DO
+        BEGIN
+          IF ADDR = 0 THEN
+          BEGIN
+            NUMBLOCKS := 0
+          END
+          ELSE
+          BEGIN
+            NUMBLOCKS := (LENG + 511) DIV 512
+          END;
+          IF ((MEMAVAIL + 255) DIV 256) < NUMBLOCKS THEN
+          BEGIN
+            MSG := 'Not enough room to copy slot';
+            MSGLINE(23)
+          END
+          ELSE
+          BEGIN
+            OUTDICT.TEXTADR[TOSLOT] := 0;
+            IF INDICT.TEXTADR[FROMSLOT] <> 0 THEN
+            BEGIN
+              COPYINTERFACE(INDICT.TEXTADR[FROMSLOT])
+            END;
+            MARK(MARKPTR);
+            PAGE := 1;
+            WHILE PAGE <= NUMBLOCKS DO
+            BEGIN
+              NEW(BUF, 256);
+              PAGE := PAGE + 1
+            END;
+            IF BLOCKREAD(INFILE, MARKPTR^, NUMBLOCKS, ADDR) <> NUMBLOCKS THEN
+            BEGIN
+              MSG := 'Error reading slot ';
+              MSGLINEINT(23, FROMSLOT)
+            END
+            ELSE
+            BEGIN
+              IF BLOCKWRITE(OUTFILE, MARKPTR^, NUMBLOCKS, NEXTBLK)
+                 <> NUMBLOCKS THEN
+              BEGIN
+                MSG := 'I/O error - no room on disk';
+                ABORT := TRUE;
+                MSGLINE(23)
+              END
+              ELSE
+              BEGIN
+                OUTDICT.SEGNAME[TOSLOT] := INDICT.SEGNAME[FROMSLOT];
+                OUTDICT.ADDRLEN[TOSLOT].LENG := LENG;
+                IF ADDR <> 0 THEN
+                BEGIN
+                  OUTDICT.ADDRLEN[TOSLOT].ADDR := NEXTBLK
+                END;
+                NEXTBLK := NEXTBLK + NUMBLOCKS;
+                IF (INDICT.SEGKIND[FROMSLOT] < 0)
+                   OR (INDICT.SEGKIND[FROMSLOT] > 7) THEN
+                BEGIN
+                  INDICT.SEGKIND[FROMSLOT] := 0
+                END;
+                OUTDICT.SEGKIND[TOSLOT] := INDICT.SEGKIND[FROMSLOT];
+                OUTDICT.SEGINFO[TOSLOT] := INDICT.SEGINFO[FROMSLOT];
+                IF NOT (INDICT.SEGKIND[FROMSLOT] IN [0, 6, 7]) THEN
+                BEGIN
+                  COPYLINK(ADDR + NUMBLOCKS)
+                END
+              END
+            END;
+            RELEASE(MARKPTR);
+            SHOWDICT(15, OUTDICT)
+          END
+        END
+      END
+    END;
+
+    { Read one command: a slot number typed digit by digit (backspace
+      undoes a digit), terminated by '=' (copy all), '?' (select), or a
+      space (copy one slot, prompting for the destination). Returns
+      FALSE for anything else (a bare command letter -- N/Q/A -- with no
+      slot number), letting MAINLOOP's own UNTIL test handle those
+      directly. }
+    FUNCTION GETCOMMAND: BOOLEAN;
+      VAR
+        N: INTEGER;
+    BEGIN
+      GETCOMMAND := FALSE;
+      N := 0;
+      MSG := '';
+      MSGLINE(2);
+      REPEAT
+        READ(CMDCHAR);
+        IF CMDCHAR = CHR(8) THEN
+        BEGIN
+          N := N DIV 10
+        END;
+        IF CMDCHAR IN ['0'..'9'] THEN
+        BEGIN
+          N := (N * 10 + ORD(CMDCHAR)) - 48
+        END
+      UNTIL NOT (CMDCHAR IN [CHR(8), '0'..'9']);
+      IF CMDCHAR IN ['=', '?'] THEN
+      BEGIN
+        GETCOMMAND := TRUE;
+        EXIT(GETCOMMAND)
+      END;
+      IF CMDCHAR <> ' ' THEN
+      BEGIN
+        EXIT(GETCOMMAND)
+      END;
+      IF (INDICT.ADDRLEN[N].LENG > 0) OR (INDICT.SEGKIND[N] = 7) THEN
+      BEGIN
+        TOSLOT := N;
+        REPEAT
+          MSG := 'Slot to copy into? ';
+          MSGLINE(2);
+          READ(FROMSLOT)
+        UNTIL FROMSLOT IN [0..15];
+        READ(CMDCHAR);
+        GETCOMMAND := TRUE
+      END
+    END;
+
+  BEGIN
+    IF LENGTH(INNAME) > 0 THEN
+    BEGIN
+      IF BLOCKREAD(INFILE, INDICT, 1, 0) = 1 THEN
+      BEGIN
+        SHOWDICT(5, INDICT)
+      END
+      ELSE
+      BEGIN
+        MSG := 'Read error # ';
+        MSGLINEINT(23, IORESULT)
+      END
+    END;
+    IF NEWOUT THEN
+    BEGIN
+      IF NEEDSSWAP(INDICT.ADDRLEN) THEN
+      BEGIN
+        SWAPALL(INDICT);
+        SWAPPED := TRUE
+      END
+    END
+    ELSE
+    BEGIN
+      IF SWAPPED <> NEEDSSWAP(INDICT.ADDRLEN) THEN
+      BEGIN
+        MSG := 'Incompatible byte sex';
+        MSGLINE(23)
+      END
+      ELSE
+      BEGIN
+        IF SWAPPED THEN
+        BEGIN
+          SWAPALL(INDICT)
+        END
+      END
+    END;
+    MSG := CONCAT('Slot # to copy and <space>, = for all, ? for select, ',
+                  'N(ew file, Q(uit, A(bort');
+    MSGLINE(0);
+    REPEAT
+      IF GETCOMMAND THEN
+      BEGIN
+        NEWOUT := FALSE;
+        IF CMDCHAR = '=' THEN
+        BEGIN
+          MSG := 'Copying all slots...';
+          MSGLINE(2);
+          I := 0;
+          WHILE I <= 15 DO
+          BEGIN
+            COPYSLOT(I, I);
+            IF ABORT THEN GOTO 1;
+            I := I + 1
+          END
+        END
+        ELSE IF CMDCHAR = '?' THEN
+        BEGIN
+          I := 0;
+          WHILE I <= 15 DO
+          BEGIN
+            IF INDICT.ADDRLEN[I].LENG > 0 THEN
+            BEGIN
+              MSG := 'Copy slot ';
+              MSGLINE(2);
+              WRITE(I);
+              WRITE('? ');
+              READ(CMDCHAR);
+              WRITELN;
+              IF CMDCHAR IN ['y', 'Y'] THEN
+              BEGIN
+                COPYSLOT(I, I);
+                IF ABORT THEN GOTO 1
+              END
+            END;
+            I := I + 1
+          END;
+          CMDCHAR := 'x'
+        END
+        ELSE
+        BEGIN
+          COPYSLOT(TOSLOT, FROMSLOT)
+        END
+      END;
+    1:
+    UNTIL CMDCHAR IN ['A', 'N', 'Q', 'a', 'n', 'q'];
+    CLOSE(OUTFILE)
+  END;
+
+BEGIN
+  GOTOXY(0, 0);
+  MSG := 'Apple Pascal Librarian [1.3]';
+  MSGLINE(0);
+  REPEAT
+    MSG := 'Output file -> ';
+    MSGLINE(15 - 2);
+    READ(OUTNAME);
+    READLN;
+    IF OUTNAME = '*' THEN
+    BEGIN
+      OUTNAME := '*SYSTEM.LIBRARY'
+    END;
+    IF LENGTH(OUTNAME) = 0 THEN
+    BEGIN
+      EXIT(LIBRARY)
+    END
+    ELSE
+    BEGIN
+      REWRITE(OUTFILE, OUTNAME)
+    END
+  UNTIL (LENGTH(OUTNAME) = 0) OR CHECKIO;
+  NEXTBLK := 1;
+  NEW(BUF, 256);
+  NEWOUT := TRUE;
+  SWAPPED := FALSE;
+  FILLCHAR(OUTDICT, 512, 0);
+  I := 0;
+  WHILE I <= 15 DO
+  BEGIN
+    OUTDICT.SEGNAME[I] := '        ';
+    I := I + 1
+  END;
+  REPEAT
+    GETINPUT;
+    MAINLOOP
+  UNTIL CMDCHAR IN ['A', 'Q', 'a', 'q'];
+  IF CMDCHAR IN ['A', 'a'] THEN
+  BEGIN
+    EXIT(LIBRARY)
+  END;
+  GOTOXY(0, 23);
+  MSG := 'Notice? ';
+  WRITE(MSG);
+  WRITE(CHR(7));
+  READ(NOTICE);
+  READLN;
+  IF LENGTH(NOTICE) > 0 THEN
+  BEGIN
+    OUTDICT.COMMENT := NOTICE
+  END;
+  IF SWAPPED THEN
+  BEGIN
+    SWAPALL(OUTDICT)
+  END;
+  IF BLOCKWRITE(OUTFILE, OUTDICT, 1, 0) = 1 THEN
+  BEGIN
+    CLOSE(OUTFILE, LOCK)
+  END
+  ELSE
+  BEGIN
+    WRITE('Code write error');
+    WRITELN
+  END;
+  CLOSE(INFILE);
+  CLOSE(OUTFILE)
+END.

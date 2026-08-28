@@ -31,7 +31,12 @@ turn it back into Apple's bytes:
 all 15 real segments -- `PASCALCO` included, body order and procedure
 numbering both fixed (finding 107) -- are byte-identical to what Apple
 shipped. What remains is finding 105a alone: an extra, empty `PASCALSY` host
-segment, 512 bytes, that Apple's shipped file does not have at all.
+segment, 512 bytes, that Apple's shipped file does not have at all. It also
+now has a real self-hosting check behind it, not just a static byte
+comparison: swapped onto `SYSHD:` in place of Apple's shipped compiler, it
+compiled `LIBRARY.text` (finding 113's real 574-line, 16-procedure source)
+**byte-identically** to what Apple's own compiler produces from the same
+input, 3072 bytes, 0 differences (finding 114).
 
 Counting procedures rather than bytes, and 1.3 only: **216 done of roughly
 861.** Every remaining target can be read before it is written -- the sweep
@@ -119,18 +124,49 @@ a route end to end; everything else is a straight read-and-rebuild.
    the outer block are still stubs.
 
 3. **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
-   are **1.1 binaries Apple never rebuilt** (finding 99c). That is what
-   made `LINEFEED` nearly free: 1.1's APPLE3 ships the source, and the
-   question is only whether it still compiles to the shipped bytes. Both
-   run under 1.3 -- confirmed by hand in AppleWin off `SYSHD:` (they're on
-   the disk now, `tools/mkharddisks.py`'s `EVIDENCE_CODEFILES`) -- so
-   **they're in scope, not a maybe**. Do these two the same way as
-   `LINEFEED` and check the answer, which may well be no for `BINDER` --
-   it differs from its 1.1 copy in 15 bytes, all of them unused SEGINFO
-   slots.
+   are **1.1 binaries Apple never rebuilt** (finding 99c). Both run under
+   1.3 -- confirmed by hand in AppleWin off `SYSHD:` (they're on the disk
+   now, `tools/mkharddisks.py`'s `EVIDENCE_CODEFILES`) -- so **they're in
+   scope, not a maybe**. **Correction, 2026-08-27: neither is "nearly free"
+   like `LINEFEED` -- checked all six evidence disks and there is no
+   `BINDER.TEXT` or `SET40COLS.TEXT` anywhere.** 1.1's APPLE3
+   (`UCSD Pascal 1.1_3.dsk`, volume `APPLE3`) ships `BINDER.CODE` as a
+   binary only, and doesn't carry `SET40COLS` at all in any form. Both
+   need the full lift-and-rewrite treatment this project used for
+   `SYSTEM.LIBRARY`/`SYSTEM.COMPILER`/`LIBMAP`, not a recompile of shipped
+   source. `BINDER` also has a known dead end even after that: its 1.3
+   copy differs from its 1.1 copy in exactly 15 bytes, all unused SEGINFO
+   slots that neither a 1.1 nor a 1.3 compile produces (finding 99c) --
+   so byte-identical is not reachable for `BINDER` until that's explained,
+   independent of how good the reconstructed source is. `SET40COLS` carries
+   no such known blocker; it's the more promising of the two to start with.
+   **`SET40COLS` done to the same wall `BINDER` was already known to have**
+   (finding 112, `src/pascal/programs/1.3/SET40COLS.text`): compiled clean
+   under Apple's own `SYSTEM.COMPILER` on the first attempt, all four
+   procedures' frames exact, a full instruction diff 469/469 identical,
+   and the compiled codefile 2544/2560 bytes identical to Apple's shipped
+   copy -- the remaining 16 bytes are the *same* SEGINFO version-stamp
+   anomaly finding 99c found in `BINDER` (`$42` vs a fresh compile's
+   `$C2`), now confirmed to be the same mechanism in both files rather
+   than two unrelated oddities. `SET40COLS` will not reach byte-identical
+   until that's understood, same as `BINDER` -- but everything this
+   project's own tools can check, checks out. `BINDER` itself (6
+   procedures) is still unstarted.
 
-4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native. The
-   smallest pure-Pascal target left, and it pairs with `LIBMAP`.
+4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native.
+   **Correction: not the smallest target left** -- procedure *count* is
+   small but it nests four lex levels deep with a real heap-chained
+   buffer, byte-order swapping, and per-segment link-interface copying;
+   comparable in scope to `LIBMAP`, not smaller. **In progress**
+   (`src/pascal/programs/1.3/LIBRARY.text`, finding 113): all 16
+   procedures declared with the right structure and compile clean under
+   Apple's own `SYSTEM.COMPILER`; `SWAPBYTES`/`CHECKIO`/`GETINPUT` frames
+   exact, several more (`NEEDSSWAP`, `SWAPALL`, `MSGLINE`, `MSGLINEINT`,
+   `SHOWDICT`) close within a few words (documented, not forced);
+   `MAINLOOP` itself has a real unexplained 74-word frame gap. The
+   copy/link/interface logic (`COPYSLOT`/`COPYLINK`/`READLINK`/
+   `COPYINTERFACE`) and one cosmetic screen-cursor detail in
+   `MSGLINE`/`MSGLINEINT` are still `(*STUB*)`.
 
 5. **`SETUP.CODE`** -- 54 procedures in 12 segments, nine of which are
    16-byte stubs, and **byte-identical between 1.1 and 1.3**. The segment

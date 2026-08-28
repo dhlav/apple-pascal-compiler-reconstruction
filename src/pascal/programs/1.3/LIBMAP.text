@@ -141,7 +141,25 @@ PROGRAM LIBMAP;
     which byte holds it) is generic UCSD, not an Apple-specific trick;
     on the 6502 it always answers "byte 0". Not yet checked against the
     binary's own CHK placement on the constant index -- (*STUB*) in
-    spirit, real in shape. }
+    spirit, real in shape.
+
+    KNOWN WRONG PARAMETER TYPE (finding 113, LIBRARY session,
+    2026-08-27): `VAR P: SEGWORDS` has never actually been called here
+    -- `MAPLIBRARY` below is still a stub -- so its `params=6/data=10`
+    match against the binary is frame-size coincidence, not behavioral
+    proof. `LIBRARY.text`'s own copy of this same procedure hit a real
+    call site and failed (error 142) with this exact declaration; the
+    disassembly for both files' own version of this procedure uses
+    `IXA 2` (a 2-word stride, reading only the first field of each pair)
+    against the caller's actual argument (LIBMAP's `SEGDICT`, LIBRARY's
+    `INDICT`, both `SEGDICTREC`), not `SEGWORDS`'s 1-word stride. The
+    real signature is almost certainly `VAR P: ARRAY [0..15] OF
+    DIRENTRY` reading `P[I].ADDR`, matching `LIBRARY.text`'s
+    `ADDRLENARR`/fix -- not yet applied here since nothing in this file
+    has a live call site to force it, and the type is shared with
+    `SWAPALL`'s own `D.ADDRLEN` usage, so changing it needs the same
+    care `LIBRARY.text` took. Left as-is deliberately rather than
+    changed without a call site to check it against. }
   FUNCTION NEEDSSWAP(VAR P: SEGWORDS): BOOLEAN;
     TYPE
       WORDBYTES = PACKED RECORD CASE BOOLEAN OF

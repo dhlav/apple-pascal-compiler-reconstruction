@@ -10880,3 +10880,336 @@ automated mnemonic-stream diff was attempted and abandoned when the
 regex extractor proved unreliable on `LSA`/`CHK`-style variable-length
 instructions -- worth a proper tool, not a quick script, if it's picked
 up again).
+
+## 112. `SET40COLS.CODE` reconstructed from scratch -- compiles clean first try, 2544/2560 bytes identical
+
+**VERIFIED BINARY FACT.** `docs/PLAN.md` item 3 turned out to need a
+correction before it could be started: checked all six evidence disks and
+there is no `BINDER.TEXT` or `SET40COLS.TEXT` anywhere, so neither file is
+"nearly free" the way `LINEFEED` was (finding 99a) -- both need the same
+lift-and-rewrite treatment as `SYSTEM.LIBRARY`/`SYSTEM.COMPILER`/`LIBMAP`,
+starting from the p-code alone. `SET40COLS.CODE` was picked over `BINDER`
+because it carries no known blocker equivalent to `BINDER`'s already-
+documented 15-byte SEGINFO mystery (finding 99c).
+
+Four p-code procedures, no native half (`analysis/utilities/
+SET40COLS-1.3-APPLE3.pcode.txt`/`.pas.txt`, already lifted). Read
+straightforwardly off the disassembly and the language reference for two
+things not otherwise obvious:
+
+- **The directory flag byte (byte 25 of the volume's own block-2 header)
+  is read/written through a small variant record** -- a whole-byte view
+  to copy it in and out of the 512-byte block buffer, and an
+  eight-`BOOLEAN` view to test/set bit 3 without disturbing the rest.
+  `PACKED RECORD CASE INTEGER OF 0: (ASBYTE: PACKED ARRAY[0..0] OF
+  0..255); 1: (BITS: PACKED ARRAY[0..7] OF BOOLEAN) END`.
+- **The volume-number validation is a real `SET` membership test**, not
+  arithmetic: `UNITNUM IN [4, 5, 9, 10, 11, 12]` compiles to the exact
+  `LDCI 7728` bitmask the binary has (bit *N* set for volume number *N*,
+  confirmed by decoding 7728 in binary against the prompt text's own
+  "4, 5, 9..12").
+
+**Compiled clean under Apple's own `SYSTEM.COMPILER` on the first attempt**
+(`acceptance/2026-08-27-set40cols-compile/`) -- no iteration needed, unlike
+`LIBMAP`'s `SHOWONE`/`GETWORD` (finding 111), because this file has no
+`MOVELEFT`/OS-forward/untyped-parameter traps to fall into; ordinary
+`WRITE`/`READ`/`UNITREAD`/`UNITWRITE` throughout. All four procedures'
+`params`/`data` match Apple's shipped binary exactly (`520`/`8`/`0`/`0`
+data words), and a full mnemonic-stream diff against
+`SET40COLS-1.3-APPLE3.pcode.txt` is **469 of 469 instructions identical**
+-- the regex-based diff tool that proved unreliable on `LIBMAP`'s
+`LSA`/`CHK`-heavy code (finding 111) worked cleanly here.
+
+**The compiled codefile is 2544 of 2560 bytes identical to Apple's
+shipped `SET40COLS.CODE`.** The 16 real differences are all the same
+single byte pattern, at the SEGINFO version-stamp position for each of
+segment 1's 16 procedure slots: Apple's shipped file reads `$42`
+(`0b010_00010`, version field `010` = 2, "1.1 writes 2" per the codefile
+facts), this reconstruction's fresh 1.3 compile reads `$C2`
+(`0b110_00010`, version field `110` = 6, "1.3 writes 6"). This is not a
+new gap -- it is finding 99c's own "`BINDER.CODE`...stamped version 2"
+fact, now directly confirmed for `SET40COLS.CODE` too, at the exact bit
+level finding 99c could only describe from the outside (whole bytes
+changing 0 to `$42`) before any 1.3-compiled comparison existed to read
+the version field against. **Both 1.1-vintage APPLE3 utilities now agree:
+whatever wrote them onto the 1.3 disk was not `SYSTEM.COMPILER`,** and
+this reconstruction cannot reach byte-identical for either file until
+that process is understood -- restated from finding 99c, not resolved
+by it.
+
+## 113. `LIBRARY.CODE` -- 16 procedures reconstructed to a clean compile; a checkpoint, not a finished file
+
+**STRONG INFERENCE.** `LIBRARY.CODE` ("Apple Pascal Librarian") turned out
+much bigger than `docs/PLAN.md`'s "smallest pure-Pascal target left"
+suggested -- 16 procedures nested four lex levels deep, a real heap-chained
+buffer for copying segments between two library files, byte-order
+swapping (the same machinery as `LIBMAP.text`'s), and per-segment
+link-interface relaying. Read the whole disassembly and lift
+(`analysis/utilities/LIBRARY-1.3-APPLE2.pcode.txt`/`.pas.txt`) before
+writing anything, then wrote all 16 procedures at once and iterated
+against the acceptance tier the same way `LIBMAP`'s `SHOWONE`/`GETWORD`
+did (finding 111). `src/pascal/programs/1.3/LIBRARY.text`.
+
+**Compiles clean under Apple's own `SYSTEM.COMPILER`**
+(`acceptance/2026-08-27-library-compile/`), after five real fixes, three
+of them new discoveries this session did not already know from `LIBMAP`/
+`SET40COLS`:
+
+- **`INTERFACE` is a reserved word, and the compiler enforces it even
+  inside a plain `PROGRAM` that never declares a `UNIT`.** A procedure
+  named `INTERFACEWRITEERR` failed with a syntax error at its own
+  declaration, reproducible down to its first 8 significant characters
+  (`INTERFAC`) via a bisected bare fast-tier probe. Renamed to
+  `IFACEWERR`.
+- **`NEW(p, n)` is not a "flex array, n elements" extension -- `n`
+  selects a `CASE` variant by tag value.** `NEW(BUF, 256)` against a
+  plain `ARRAY[0..0] OF INTEGER` base type failed error 158, no such
+  variant in this record. The binary's own repeated `NEW(@G171, 256)`
+  calls all use the same literal 256, which is the variant tag, not a
+  computed count -- fixed by declaring `BUF`'s base type as a one-variant
+  `RECORD CASE INTEGER OF 256: (WORDS: ARRAY[0..255] OF INTEGER) END`.
+- **`FILLCHAR` takes three arguments -- `(START, COUNT, BYTE)` -- not
+  four.** Read off the language reference directly this time rather than
+  re-deriving from the p-code's own push count, which (like `MOVELEFT`
+  and `BLOCKREAD` before it, findings 111/112) includes compiler-added
+  words a naive read mistakes for source-level arguments.
+- **`GOTOXY`, not `FGOTOXY`, is the standard procedure name** -- `FGOTOXY`
+  is segment 0's own internal implementation (`CXP 0,29`), same
+  relationship as `BLOCKREAD`/`FBLOCKIO` (finding 111). The manual states
+  outright that `GOTOXY` "is included as one of the built-in procedures
+  in the Apple Pascal language."
+- **Procedure numbers follow declaration order, which follows lex
+  nesting, and getting that wrong is silent until you check.** `COPYSLOT`
+  and `GETCOMMAND` were first written as top-level siblings of
+  `MAINLOOP` rather than declared inside it; the file still compiled
+  clean, but every procedure number from `GETCOMMAND` on was shifted
+  and the `params`/`data` comparison against Apple's binary caught it
+  immediately once the codefile could be inspected. Moved both inside
+  `MAINLOOP`'s own declaration part, `COPYSLOT` (with its own nested
+  `COPYLINK`/`READLINK`/`COPYINTERFACE`/`IFACEWERR`) before
+  `GETCOMMAND`, matching the binary's lex levels (2, 3, 4, 3, 4, 2)
+  exactly.
+
+**`NEEDSSWAP`'s inherited parameter type was wrong, caught by actually
+calling it.** `LIBMAP.text`'s own `NEEDSSWAP(VAR P: SEGWORDS)` (`SEGWORDS
+= ARRAY[0..15] OF INTEGER`) was reused verbatim on the assumption that
+its `params=6/data=10` match proved it correct -- but that procedure has
+never actually been called in `LIBMAP.text`, since `MAPLIBRARY` is still a
+stub; the match was frame-size coincidence, not behavioral proof. The
+first real call site (`MAINLOOP`'s own `NEEDSSWAP(INDICT.ADDRLEN)`) failed
+error 142, illegal actual parameter -- passing `INDICT.ADDRLEN` (`ARRAY
+[0..15] OF DIRENTRY`) to a `SEGWORDS`-typed `VAR` parameter is not
+type-compatible, contrary to what finding 111's own prose about LIBMAP's
+`MAPLIBRARY` comment assumed. Rereading the raw disassembly (both this
+file's procedure 3 *and* LIBMAP's own procedure 4) confirms it: both use
+`IXA 2`, a 2-word stride, indexing `DIRENTRY` pairs and reading only the
+first field (`.ADDR`) of each -- not `SEGWORDS`'s 1-word stride at all.
+Fixed here with a named `ADDRLENARR = ARRAY[0..15] OF DIRENTRY` type and
+`W.ASWORD := P[I].ADDR`; **`LIBMAP.text`'s own copy still has the old,
+wrong type**, flagged in this file's header rather than silently
+diverging, since nothing there has hit the bug yet to force the fix.
+
+**What's confirmed exact against Apple's shipped binary** (`params`/
+`data` read off the compiled `LIBRARYT.CODE`'s own attribute table):
+`SWAPBYTES` (2/4), `CHECKIO` (4/2), `GETINPUT` (0/86). **Close, a few
+words short, not forced**: `NEEDSSWAP` (6/8 vs Apple's 6/10), `SWAPALL`
+(2/8 vs 2/10), `MSGLINE` (2/2 vs 2/4), `MSGLINEINT` (4/2 vs 4/4),
+`SHOWDICT` (4/4 vs 4/8) -- the same category of gap `LIBMAP`'s
+`NEEDSSWAP`/`SWAPALL` started in before finding 111 closed them, not yet
+repeated here.
+
+**`MAINLOOP`'s own gap traced to a real mechanism, not fully
+characterized.** `MAINLOOP` compiled to `data=82` against Apple's `data=8`
+-- 74 words over, with no candidate local variable to explain it (the
+procedure declares exactly `I: INTEGER` and `ABORT: BOOLEAN`, 2 words).
+Bisected empirically: replacing the long `CONCAT`-built prompt string
+(`MSG := CONCAT('Slot # to copy...', 'N(ew file...')`) with a one-character
+literal dropped `data` from 82 to 4 -- a 78-word swing tied to the
+*length of the string literal being assigned*, not to `CONCAT` itself
+(confirmed with a standalone probe: a plain `MSG := '<77-char literal>'`,
+no `CONCAT` at all, on a fresh one-procedure program, gave `data=80` on
+the same 77-character message; a `STRING[79]` type for the target instead
+of a bare `STRING` only dropped it to `data=80` from `82` -- underlying
+mechanism unaffected by the target's own declared length). The compiled
+instructions for the assignment are exactly `LAO`/`LSA '<literal>'`/`SAS
+<n>` -- a single store, no loop, nothing that touches a local by
+offset -- yet the attribute table's `data` field scales with the
+literal's length anyway, which means the compiler is reserving
+evaluation-stack space for the string constant as part of the
+procedure's static frame, sized to the constant, even though no named
+local ever uses it. **This does not resolve the discrepancy**: Apple's own real `MAINLOOP`
+assigns this *exact* message text through `G90` the same way -- the
+binary's own instructions at that point are the identical `LAO 90; LSA
+'Slot # to copy...'; SAS 80` sequence, inside `MAINLOOP` itself (right
+before its own `CLP 16` call into `GETCOMMAND`) -- and still reports only
+`data=8`. Tried and ruled out: a `CONST` declaration instead of an inline
+literal makes no difference (`data=82` either way, tested standalone).
+So the reservation isn't about *where* the literal comes from
+syntactically, and whatever lets Apple's real source assign this same
+77-character message without paying for it is still unknown. Worth
+returning to with a real disassembler-level comparison of a *minimal*
+Apple-compiled program doing the identical assignment, rather than more
+guessing at the source side.
+
+**Deliberately left `(*STUB*)`**: the whole copy/link/interface machinery
+-- `COPYSLOT` (procedure 11), `COPYLINK` (12), `READLINK` (13),
+`COPYINTERFACE` (14), the outer body's own screen-cursor-redraw detail in
+`MSGLINE`/`MSGLINEINT` (a `FIB`'s own hidden window-pointer field plus a
+fixed offset, read directly as screen memory -- not yet worked out how to
+write in ordinary Pascal). These are read off the disassembly in the
+header comments but not yet instruction-verified or acceptance-tested,
+the same honest-stub practice `LIBMAP.text` uses for `SHOWINFO`/
+`SHOWREF`/`MAPLIBRARY`. `docs/PLAN.md`/`docs/DISKSET.md` reflect this as
+in-progress, not done.
+
+## 114. This project's own `SYSTEM.COMPILER` compiles `LIBRARY.text` byte-identically to Apple's
+
+**VERIFIED BINARY FACT.** Finding 113 left `MAINLOOP`'s `data=82` vs
+Apple's `data=8` gap traced to a real compiler mechanism (evaluation-stack
+reservation scaling with a string literal's length) but not explained --
+and left open whether that mechanism might be something this project's
+own reconstructed `SYSTEM.COMPILER` gets subtly wrong, separate from
+Apple's real one. Settled directly: swapped `acceptance/
+2026-08-25-compiler-linked-v2/COMPLINK.CODE` (this project's own compiled
+`SYSTEM.COMPILER`, already known to have all 15 real segments
+byte-identical to Apple's shipped file, finding 107) onto `SYSHD:` in
+place of Apple's shipped one, and used it to compile `LIBRARYT.TEXT` --
+the same real, 16-procedure, 574-line source finding 113 used, not a
+small calibration program.
+
+**The output is byte-identical to Apple's compiler's own output on the
+same input, all 3072 bytes, 0 differences** -- every procedure's `params`/
+`data` matches exactly, including `MAINLOOP`'s own `data=82`. This is the
+first time this project's reconstructed `SYSTEM.COMPILER` has compiled
+something substantial end to end and been checked against Apple's real
+compiler doing the identical job, rather than only being checked as a
+static, uncompiled codefile (finding 107) or on the small GOTOXY
+calibration programs (finding 49). It passes.
+
+**This settles what finding 113 left open**: the `MAINLOOP` anomaly is
+*not* a bug in this project's compiler reconstruction -- both compilers
+agree on it exactly, so both are being equally faithful to whatever real
+mechanism causes it. What remains unexplained is why Apple's *shipped
+binary* doesn't pay this same cost for what reads as the identical
+source-level operation (`MSG := '<77-char literal>'` before a `MSGLINE`
+call) -- which now has to be a difference between `LIBRARY.text`'s
+reconstruction and Apple's true original source, not a compiler quirk
+worth chasing further on the compiler side.
+
+**Update, same day -- bisected further with the (now-trusted) fast
+emulator loop, ruled out several candidates, and found a genuine
+reversal.** Standalone probes, one change at a time, against a plain
+`PROGRAM` (not `LIBRARY.text` itself, to isolate the mechanism):
+
+- Writing the same 77-character literal directly (`WRITELN('...')`, no
+  variable at all) costs **nothing** -- `data=0`. The cost is specific to
+  *materializing the literal as a string value* (assignment or
+  parameter), not to loading it as an `LSA` operand for immediate
+  `FWRITESTRING` consumption.
+- Assigning it to a **local** variable inside a nested procedure costs
+  the same as assigning to a **global** one -- both `data=82`. Not a
+  scope effect.
+- **`{$R-}` makes no difference** -- ruled out range-check code as the
+  cause.
+- **Passing the literal as a value parameter to a helper procedure that
+  does the assignment moves the cost to the *caller* pushing the
+  argument, not the callee receiving it** -- both ended up `data=82` in
+  that test, but the caller's own frame carried it independent of the
+  callee's.
+- **A genuine reversal**: two sibling procedures, each assigning its own
+  ~77-character literal to the same global, with the *outer* program
+  body only calling both and then doing a plain `WRITELN(MSG)` --
+  the cost landed entirely on the **outer body** (`data=82`), and
+  *both* sibling procedures containing the actual assignments came back
+  `data=0`. This contradicts the earlier local-variable test, where the
+  procedure containing the assignment paid the cost directly. The
+  difference between the two tests: in the local-variable test, the
+  procedure containing the assignment *also* did the `WRITELN` itself;
+  in this one, the assigning procedures do nothing else, and the
+  `WRITELN` moved to the caller.
+
+**Working hypothesis, not confirmed**: this reservation is not a
+per-procedure local count at all, but something closer to a **shared,
+program-wide string-evaluation scratch requirement**, attributed to
+whichever procedure the compiler happens to charge it to based on
+something about call structure or statement shape -- not simply "the
+procedure whose source contains the assignment." That would explain both
+`LIBRARY.text`'s real anomaly (`MAINLOOP` doesn't pay for its own
+77-character assignment) and this session's reversal (a sibling
+procedure's assignment can get charged to its caller instead) as the same
+underlying mechanism, differing only in which procedure ends up "holding"
+the shared requirement in each case. Not chased further this session --
+diminishing returns past this point without instrumenting the compiler's
+own code generator directly, which is out of scope for now. Recorded here
+so the next attempt starts from "attribution, not magnitude" rather than
+re-deriving these same five negative results.
+
+## 115. `COPYSLOT` written for real -- `params`/`data` now exact, `ABORT` is not a parameter
+
+**VERIFIED BINARY FACT.** `LIBRARY.text`'s `COPYSLOT` (procedure 11) was
+still `(*STUB*)` (finding 113) -- the actual segment-copy logic, MARK/NEW/
+RELEASE heap-chained buffer and all, had only been read off the
+disassembly (`analysis/utilities/LIBRARY-1.3-APPLE2.pcode.txt`), not
+written or tested. Wrote it, matching the disassembly instruction by
+instruction:
+
+- The disassembly takes `@G252[FROMSLOT*2w]` (the address of
+  `INDICT.ADDRLEN[FROMSLOT]`) into a local and repeatedly dereferences it,
+  bare `L6^` reading the first field (`ADDR`) and `L6^.f1` the second
+  (`LENG`) -- the same `SIND0`-implies-first-field pattern LIBMAP's own
+  `SHOWONE`/`GETWORD` already established for a `WITH`'s hidden
+  implementation (finding 111), and `@` is not legal Apple Pascal (finding
+  111's own error 400). Written as `WITH INDICT.ADDRLEN[FROMSLOT] DO`
+  around the whole NUMBLOCKS-computation-through-COPYLINK-call block,
+  reading `ADDR`/`LENG` as plain field names inside it.
+- `MARK`/`RELEASE` take a `^INTEGER`, not a pointer to the buffer's own
+  type -- confirmed directly from the language reference (`MARK(HEAPPTR)
+  where HEAPPTR is of type ^INTEGER... called by reference`), not
+  guessed.
+- `FBLOCKIO` in the lift is the disassembler's own name for whichever of
+  `BLOCKREAD`/`BLOCKWRITE` the `DOREAD` argument selects -- same relationship
+  established for `FGOTOXY`/`GOTOXY` (finding 113) and `FBLOCKIO`/
+  `BLOCKREAD`/`BLOCKWRITE` before it (finding: LIBRARY session,
+  2026-08-27, the `WRITE(OUTFILE,...)` structural fix). Written as two
+  separate calls, `BLOCKREAD` for the read (`DOREAD=TRUE` in the p-code)
+  and `BLOCKWRITE` for the write.
+- The p-code's `if not ((193 in 1))` guarding the `COPYLINK` call decodes
+  as a genuine `SET` membership test once `193 = 128+64+1`, bits 0/6/7 --
+  `SEGKIND` values `{0, 6, 7}`, which `SHOWSEGS`'s own case dispatch
+  (finding 111) already names "completely linked", "linked intrinsic",
+  and "data segment": exactly the three kinds with no separate link-info
+  block left to relay. Written as `IF NOT (INDICT.SEGKIND[FROMSLOT] IN
+  [0, 6, 7]) THEN COPYLINK(...)`.
+- A real, working bug caught before testing: the `NEW`-page-allocation
+  loop's own counter can't reuse `MAINLOOP`'s own `I` -- `MAINLOOP`'s
+  outer body calls `COPYSLOT(I, I)` *inside* a `WHILE I <= 15 DO ...  I :=
+  I + 1` loop, so if `COPYSLOT` clobbered the same `I` for its own
+  purposes, the caller's `I := I + 1` after return would advance from
+  `COPYSLOT`'s leftover value, not the loop's own. Given a dedicated local
+  (`PAGE`) instead.
+
+Compiled clean under Apple's real `SYSTEM.COMPILER`, first attempt (0
+errors, 684 lines, `acceptance/2026-08-28-library-copyslot`). Extracted
+and compared against Apple's shipped binary's own `params`/`data`:
+
+`data=10` matched immediately, but `params=6` against Apple's `4` -- two
+words too many, exactly the size of a `VAR ABORT: BOOLEAN` parameter
+(address = 2 words on a 6502... actually a whole extra param slot). This
+is the same signal as the disassembly's own `I1,3 := 0` at the top of the
+procedure: that write goes directly into `MAINLOOP`'s frame at offset 3,
+not into a parameter slot at all -- meaning `ABORT` was never a `COPYSLOT`
+parameter in Apple's real source. `COPYSLOT` reads and writes `MAINLOOP`'s
+own `ABORT` by lexical scoping, exactly the sharing pattern LIBMAP's
+`GETWORD` uses against `SHOWONE`'s locals (finding 111). Dropped the `VAR
+ABORT: BOOLEAN` parameter, changed the signature to `PROCEDURE
+COPYSLOT(TOSLOT, FROMSLOT: INTEGER)`, updated all three call sites.
+Recompiled: still 0 errors, and **`COPYSLOT` now matches Apple's binary
+exactly on both `params=4` and `data=10`**.
+
+`COPYLINK`/`COPYINTERFACE`/`READLINK` are still stubs -- `COPYLINK`'s real
+`data=534` (a whole link-info buffer's worth) and `COPYINTERFACE`'s real
+`data=6` are now known targets for the next pass, not yet written.
+`READLINK`'s stub already matches (`data=0` both sides) coincidentally,
+same caveat as `IFACEWERR` in finding 113 -- an empty body times out at
+zero locals either way, not evidence the eventual real body will also
+need none.

@@ -109,6 +109,18 @@ FILES = [
     # LIBMAP's own name would overwrite it.
     ("LIBMAPT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "LIBMAP.text"),
+    # SET40T, not SET40COLS: Apple's own shipped SET40COLS.CODE is already
+    # on this volume (EVIDENCE_CODEFILES above) and the compiler writes
+    # its output beside the source, so compiling under SET40COLS' own
+    # name would overwrite it.
+    ("SET40T.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "SET40COLS.text"),
+    # LIBRARYT, not LIBRARY: Apple's own shipped LIBRARY.CODE is already
+    # on this volume (a system tool, copied in with APPLE2 above) and the
+    # compiler writes its output beside the source, so compiling under
+    # LIBRARY's own name would overwrite it.
+    ("LIBRARYT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "LIBRARY.text"),
 ]
 
 
