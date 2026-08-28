@@ -121,6 +121,12 @@ FILES = [
     # LIBRARY's own name would overwrite it.
     ("LIBRARYT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "LIBRARY.text"),
+    # BINDERT, not BINDER: Apple's own shipped BINDER.CODE is already on
+    # this volume (EVIDENCE_CODEFILES above) and the compiler writes its
+    # output beside the source, so compiling under BINDER's own name
+    # would overwrite it.
+    ("BINDERT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "BINDER.text"),
 ]
 
 

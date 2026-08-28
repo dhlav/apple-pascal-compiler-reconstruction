@@ -1,0 +1,317 @@
+{ BINDER -- "APPLE GOTOXY BINDER", APPLE3:BINDER.CODE.
+
+  Reconstructed from the 1.3 binary (`analysis/utilities/
+  BINDER-1.3-APPLE3.pcode.txt`/`.pas.txt`). 6 p-code procedures, no native
+  half, one segment. A 1.1-vintage utility Apple's 1.3 disk carries
+  unchanged (finding 99c) -- confirmed to still run correctly under 1.3
+  off `SYSHD:` before reconstruction started, so it is in scope even
+  though it was never recompiled by Apple for 1.3.
+
+  What it does: patches a native GOTOXY procedure (read from a
+  user-supplied codefile, which must declare it as procedure #2) into
+  SYSTEM.PASCAL's own segment #15, shifting that segment's own link
+  information and every later segment's file position to make room, and
+  writes the result out as NEW.PASCAL. This is the tool that turns a
+  freshly-assembled GOTOXY (like `src/native/`'s own eventual native
+  routines) into a bootable operating system that actually has it.
+
+  Two globals read via a single BLOCKREAD each (`FBLOCKIO(...,0,1,0,1)`,
+  one 512-byte block) are still only 32 words of DIRENTRY by their own
+  index arithmetic (`G6[N*2w]`, `G518[N*2w]`) -- but the *offset* gaps
+  from G6 to G518 (512, not 32) and G518 to G1030 (also 512) only balance
+  if each is declared as a full 512-word block, not 256. Nothing in this
+  file's own six procedures ever touches anything past ADDRLEN, so the
+  rest of SEGDICT's own 512 words are honestly unread padding here --
+  unlike LIBRARY.text's SEGDICTREC (confirmed 256 words end to end by its
+  own field layout), this file gives no evidence for what the other 480
+  words actually hold, only that they must be reserved (finding: BINDER
+  session, 2026-08-28).
+
+  G4 (the patch buffer) and G5 (its saved starting page) are addressed
+  exclusively with byte-level STB/LDB throughout -- MOVELEFT/MOVERIGHT,
+  proc3's own two-byte little-endian read, and the direct procedure-kind
+  pokes (`G4^[G1034] := 29`) never touch a whole word at once. Declared
+  as `^PACKED ARRAY OF CHAR` (matching the language reference's own
+  MOVELEFT/MOVERIGHT wording, "subarrays of the same PACKED ARRAY OF
+  CHAR") rather than the WORD-view BIGBUF pattern LIBRARY.text used for
+  its own chained buffer.
+
+  CHECKERR's own params=4/data=84 comes from the value STRING parameter's
+  own compiler-inserted 41-word copy-on-entry plus one CHAR local for the
+  space-bar wait -- the disassembly's own "L3 := L1" is that copy
+  happening, not a second, separately-declared local; writing an explicit
+  extra copy doubled data to 166, wrongly (finding: BINDER session,
+  2026-08-28). READGOTOXY's own local L86 is reused for the '.CODE'
+  fallback retry by reassigning NAME itself rather than a second
+  STRING[80] local -- the same fix, 41 words, brought its own data down
+  from 338 to the exact 256.
+
+  Five of six procedures (everything but the outer body) now match
+  Apple's binary exactly on both params and data. The outer body itself
+  is short by exactly one word (2236 here against Apple's 2238) --
+  WRITESEG/LOADSEG's own WITH DICT.ADDRLEN[N] DO costs a real hidden
+  word in a local procedure frame (confirmed: adding a matching WITH
+  around the outer body's own four separate DICT.ADDRLEN[0] references
+  changed nothing), so whatever holds this one extra global word is not
+  reproduced by the same device at the outer level. Left as a documented
+  gap rather than forced -- @ is not legal Apple Pascal (finding 111), so
+  it is not a stray pointer variable either. }
+
+(*$R-*)
+PROGRAM BINDER;
+
+  TYPE
+    DIRENTRY = RECORD ADDR, LENG: INTEGER END;
+    { Only ADDRLEN is ever indexed in this file; REST pads to the full
+      512-word span the G6->G518->G1030 offset gaps require (see header
+      comment) -- honestly unread, not a guess at real field names. }
+    SEGDICT = RECORD
+                ADDRLEN: ARRAY [0..15] OF DIRENTRY;   {   0 }
+                REST:    ARRAY [1..480] OF INTEGER    {  32, unread }
+              END;
+    BYTEBUF = PACKED ARRAY [0..511] OF CHAR;
+
+  VAR
+    RESERVE:    ^BYTEBUF;    { G3, consumed (never released) purely to
+                                measure how many 256-word pages remain --
+                                see BLOCKS below }
+    PATCH:      ^BYTEBUF;    { G4, the chained multi-page patch buffer }
+    PATCHSTART: ^BYTEBUF;    { G5, PATCH's own first page, saved so
+                                LOADSEG can re-read any earlier segment
+                                out of the whole resident copy }
+    GTXDICT:    SEGDICT;     { G6, the GOTOXY-supplying file's own dict }
+    DICT:       SEGDICT;     { G518, SYSTEM.PASCAL's segment dictionary,
+                                read once, patched in place, written back
+                                out as NEW.PASCAL's own dictionary }
+    SYSLEN:      INTEGER;    { G1030, running total: the patched seg #15's
+                                own new length, then every other moved
+                                segment's cumulative link-info shift }
+    PATCHEND:    INTEGER;    { G1031, byte offset where seg #15's own
+                                patched code ends }
+    ENDBLOCKS:   INTEGER;    { G1032, PATCHEND in blocks }
+    SYSBLOCKS:   INTEGER;    { G1033, seg #15's own original block count }
+    PATCHSIZE:   INTEGER;    { G1034, GOTOXY's own extracted procedure
+                                size in bytes, set by READGOTOXY }
+    NEXTBLK:     INTEGER;    { G1035, NEW.PASCAL's own next free block }
+    SEGNUM:      INTEGER;    { G1036, the shift loop's own segment index }
+    PROCCOUNT:   INTEGER;    { G1037, seg #15's own procedure count byte,
+                                read before the patch overwrites it }
+    SEG0SHIFT:   INTEGER;    { G1038, how far segment #0's own link info
+                                must move to make room for the new
+                                procedure-2 jump table entry }
+    BLOCKS:      INTEGER;    { G1039, total 256-word pages of heap left
+                                once RESERVE's own chain stops growing --
+                                PATCH's own budget, not a real reservation
+                                kept for later }
+    NEWFILE, OSFILE: FILE;   { G1040, G1080 }
+
+  { Print MSG as an error and halt the whole program if FAILED -- the
+    universal guard every risky O.S./disk operation in this file goes
+    through. Matched on params=4/data=84: a value STRING parameter's own
+    41-word local copy (the disassembly's own "L3 := L1" is the
+    compiler's own auto-generated copy-on-entry for MSG, not a second,
+    separately-declared local -- an explicit copy into its own TEXT local
+    doubled data to 166, wrongly, finding: BINDER session, 2026-08-28)
+    plus one CHAR for the space-bar wait. }
+  PROCEDURE CHECKERR(MSG: STRING; FAILED: BOOLEAN);
+    VAR
+      KEY: CHAR;
+  BEGIN
+    IF FAILED THEN
+    BEGIN
+      WRITELN;
+      WRITELN;
+      WRITE('ERROR: ');
+      WRITE(CHR(7));
+      WRITE(MSG);
+      WRITELN;
+      WRITELN;
+      WRITE('Press space to continue');
+      KEY := CHR(63);
+      WHILE KEY <> ' ' DO
+      BEGIN
+        READ(KEY)
+      END;
+      EXIT(PROGRAM)
+    END
+  END;
+
+  { Read PATCH's own two bytes at OFS, little-endian, as one word -- the
+    p-code's own frame reserves one extra word beyond the single param
+    for the function result, matched here on params=6/data=0. }
+  FUNCTION WORDAT(OFS: INTEGER): INTEGER;
+  BEGIN
+    WORDAT := ORD(PATCH^[OFS]) + 256 * ORD(PATCH^[OFS + 1])
+  END;
+
+  { Prompt for a codefile, retry once with '.CODE' appended if the bare
+    name doesn't open, then find GOTOXY (procedure #2, in segment #0 or
+    #1), read that whole segment into PATCH, and cut PATCHSIZE down to
+    just procedure #2's own bytes plus its two-word jump-table entry. }
+  PROCEDURE READGOTOXY;
+    VAR
+      GTXFILE: FILE;
+      NAME:    STRING[80];
+      SEGSTART, PROCOFS, PATCHBASE, NUMBLOCKS: INTEGER;
+  BEGIN
+    REPEAT
+      IF IORESULT <> 0 THEN
+      BEGIN
+        WRITE(CHR(7));
+        WRITE(CHR(7));
+        WRITE(CHR(7))
+      END;
+      WRITE('FILE WHICH CONTAINS GOTOXY? ');
+      READ(NAME);
+      READLN;
+      IF LENGTH(NAME) = 0 THEN
+      BEGIN
+        EXIT(PROGRAM)
+      END;
+      RESET(GTXFILE, NAME);
+      IF IORESULT <> 0 THEN
+      BEGIN
+        NAME := CONCAT(NAME, '.CODE');
+        RESET(GTXFILE, NAME)
+      END
+    UNTIL IORESULT = 0;
+    CHECKERR('READING SEG DICT OF GOTOXY FILE',
+             BLOCKREAD(GTXFILE, GTXDICT, 1, 0) <> 1);
+    IF GTXDICT.ADDRLEN[0].LENG <> 0 THEN
+    BEGIN
+      SEGSTART := 0
+    END
+    ELSE
+    BEGIN
+      IF GTXDICT.ADDRLEN[1].LENG <> 0 THEN
+      BEGIN
+        SEGSTART := 1
+      END
+      ELSE
+      BEGIN
+        CHECKERR('GOTOXY MUST BE IN SEG #0 OR #1', TRUE)
+      END
+    END;
+    WITH GTXDICT.ADDRLEN[SEGSTART] DO
+    BEGIN
+      NUMBLOCKS := (LENG + 511) DIV 512;
+      CHECKERR('READING GOTOXY',
+               BLOCKREAD(GTXFILE, PATCH^, NUMBLOCKS, ADDR) <> NUMBLOCKS);
+      PROCOFS := LENG - 6
+    END;
+    CHECKERR('GOTOXY MUST BE PROCEDURE #2', ORD(PATCH^[PROCOFS - 1]) <= 1);
+    CHECKERR('NO PROCEDURE #2 IN CODE FILE', WORDAT(PROCOFS) <= 0);
+    PROCOFS := PROCOFS - WORDAT(PROCOFS);
+    PATCHBASE := (PROCOFS - 2) - WORDAT(PROCOFS - 2);
+    PATCHSIZE := PROCOFS - PATCHBASE;
+    MOVELEFT(PATCH^[PATCHBASE], PATCH^[0], PATCHSIZE + 2);
+    CLOSE(GTXFILE)
+  END;
+
+  { Write PATCH's own first LEN bytes as segment SEGNUM into NEWFILE at
+    NEXTBLK, and record the new ADDR/LENG in DICT. LEN = 0 means this
+    slot was never patched or shifted in, so there is nothing to write --
+    matches every call site: seg #15's own patched length, seg #0's own
+    shifted length, and each of the other fourteen segments' own
+    unchanged length. }
+  PROCEDURE WRITESEG(SEGNUM, LEN: INTEGER);
+    VAR
+      NUMBLOCKS: INTEGER;
+  BEGIN
+    IF LEN <> 0 THEN
+    BEGIN
+      WRITE('  COPYING SEGMENT ');
+      WRITE(SEGNUM);
+      WRITELN;
+      NUMBLOCKS := (LEN + 511) DIV 512;
+      CHECKERR('WRITING OUT SEGMENT',
+               BLOCKWRITE(NEWFILE, PATCH^, NUMBLOCKS, NEXTBLK) <> NUMBLOCKS);
+      WITH DICT.ADDRLEN[SEGNUM] DO
+      BEGIN
+        ADDR := NEXTBLK;
+        LENG := LEN
+      END;
+      NEXTBLK := NEXTBLK + NUMBLOCKS
+    END
+  END;
+
+  { Load segment SEGNUM's own bytes out of the whole SYSTEM.PASCAL image
+    already resident from PATCHSTART onward, into PATCH, ready for
+    WRITESEG to relay unchanged. }
+  PROCEDURE LOADSEG(SEGNUM: INTEGER);
+    VAR
+      NUMBLOCKS: INTEGER;
+  BEGIN
+    WITH DICT.ADDRLEN[SEGNUM] DO
+    BEGIN
+      NUMBLOCKS := (LENG + 511) DIV 512;
+      MOVERIGHT(PATCHSTART^[512 * (ADDR - 1)], PATCH^[0], LENG)
+    END
+  END;
+
+BEGIN
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITE('':12);
+  WRITE('APPLE GOTOXY BINDER');
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  WRITELN;
+  RESET(OSFILE, 'SYSTEM.PASCAL');
+  CHECKERR('NO FILE SYSTEM.PASCAL', IORESULT <> 0);
+  CHECKERR('READING SEG DICT OF O.S.', BLOCKREAD(OSFILE, DICT, 1, 0) <> 1);
+  NEW(PATCH);
+  PATCHSTART := PATCH;
+  WHILE BLOCKREAD(OSFILE, PATCH^, 1, -1) = 1 DO
+  BEGIN
+    NEW(PATCH)
+  END;
+  BLOCKS := 1;
+  WHILE MEMAVAIL > 2500 DO
+  BEGIN
+    NEW(RESERVE);
+    BLOCKS := BLOCKS + 1
+  END;
+  READGOTOXY;
+  NEXTBLK := 1;
+  REWRITE(NEWFILE, 'NEW.PASCAL');
+  WITH DICT.ADDRLEN[15] DO
+  BEGIN
+    SYSLEN := LENG;
+    SYSBLOCKS := (LENG + 511) DIV 512;
+    PATCHEND := (LENG + PATCHSIZE) + 2;
+    ENDBLOCKS := (PATCHEND + 511) DIV 512;
+    CHECKERR('NOT ENOUGH ROOM TO READ SEGMENT', ENDBLOCKS > BLOCKS);
+    CHECKERR('READING O.S. SEG #15',
+             BLOCKREAD(OSFILE, PATCH^[PATCHSIZE + 2], SYSBLOCKS, ADDR)
+             <> SYSBLOCKS)
+  END;
+  PROCCOUNT := ORD(PATCH^[PATCHEND - 2]);
+  PATCH^[PATCHSIZE] := CHR(29);
+  PATCH^[PATCHSIZE + 1] := CHR(0);
+  WRITESEG(15, PATCHEND);
+  CLOSE(OSFILE);
+  LOADSEG(0);
+  SEG0SHIFT := (DICT.ADDRLEN[0].LENG - 2) - (2 * PROCCOUNT);
+  SYSLEN := SYSLEN + WORDAT(SEG0SHIFT);
+  SYSLEN := SYSLEN + (2 * (PROCCOUNT - 29));
+  PATCH^[(DICT.ADDRLEN[0].LENG - 2) - (2 * 29)] := CHR(SYSLEN MOD 256);
+  PATCH^[((DICT.ADDRLEN[0].LENG - 2) - (2 * 29)) + 1] := CHR(SYSLEN DIV 256);
+  WRITESEG(0, DICT.ADDRLEN[0].LENG);
+  SEGNUM := 1;
+  WHILE SEGNUM <= 14 DO
+  BEGIN
+    LOADSEG(SEGNUM);
+    WRITESEG(SEGNUM, DICT.ADDRLEN[SEGNUM].LENG);
+    SEGNUM := SEGNUM + 1
+  END;
+  CHECKERR('WRITING SEG DICT OF NEW O.S.',
+           BLOCKWRITE(NEWFILE, DICT, 1, 0) <> 1);
+  CLOSE(NEWFILE, LOCK)
+END.

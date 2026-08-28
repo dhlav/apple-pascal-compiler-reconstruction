@@ -11275,3 +11275,99 @@ is left as an unwritten `(*STUB*)`. What remains open is finding 114's
 compiler-reconstruction bug, mechanism still not fully attributed) and
 the handful of "close, a few words short" procedures documented in
 finding 113 (`NEEDSSWAP`/`SWAPALL`/`MSGLINE`/`MSGLINEINT`/`SHOWDICT`).
+
+## 117. `BINDER.text` reconstructed -- five of six procedures exact, first new file
+
+**VERIFIED BINARY FACT.** `BINDER.CODE` (finding 99c: a 1.1-vintage
+binary Apple's 1.3 disk carries unchanged, confirmed to still run under
+1.3, so in scope even though never recompiled) had no shipped source on
+any evidence disk. Written from scratch from `analysis/utilities/
+BINDER-1.3-APPLE3.pcode.txt`/`.pas.txt`, the same lift-and-rewrite
+treatment already used for `SET40COLS.text`/`LIBRARY.text`.
+
+What it does: prompts for a codefile containing a native GOTOXY
+(required to be procedure #2), extracts just that procedure's own bytes,
+and patches them into a fresh copy of `SYSTEM.PASCAL`'s own segment #15
+-- shifting that segment's own link information and every later
+segment's file position to make room -- writing the result out as
+`NEW.PASCAL`.
+
+- **A genuinely undocumented block-size fact, found from offset
+  arithmetic, not a guess.** Two globals (`G6`, the GOTOXY file's own
+  segment dictionary, and `G518`, `SYSTEM.PASCAL`'s) are each populated
+  by exactly one `BLOCKREAD` of one 512-byte block, and only their first
+  32 words (`ADDRLEN`, an `ARRAY[0..15] OF DIRENTRY`) are ever indexed by
+  this file's own six procedures. But the *offset gap* from `G6` to
+  `G518`, and separately from `G518` to the next real global (`G1030`),
+  is 512 words each -- not 256. Declaring each as a 512-word block
+  (`ADDRLEN` plus 480 honestly-unread words) is what makes procedure 1's
+  own global layout land on the right absolute offsets for every
+  subsequent variable; declaring them at the 256-word size LIBRARY.text's
+  own `SEGDICTREC` uses leaves a mystery 256-word gap unaccounted for
+  twice over. Unlike `SEGDICTREC` (confirmed 256 words end to end by its
+  own field layout in finding 113), nothing in `BINDER.text` gives
+  evidence for what those extra 480 words per block actually hold --
+  only that the space must be reserved.
+- **`G4`/`G5` (the patch buffer and its saved starting page) are
+  addressed exclusively byte-by-byte** -- `STB`/`LDB` throughout, never a
+  whole-word store, including the little-endian two-byte read that
+  becomes `WORDAT` and the direct procedure-kind pokes
+  (`PATCH^[PATCHSIZE] := CHR(29)`). Declared `^PACKED ARRAY [0..511] OF
+  CHAR`, matching the language reference's own wording for
+  `MOVELEFT`/`MOVERIGHT` ("subarrays of the same PACKED ARRAY OF CHAR"),
+  not the word-view `BIGBUF` pattern `LIBRARY.text` used for its own
+  chained buffer.
+- **`MOVELEFT`/`MOVERIGHT`'s raw p-code arguments split each reference
+  parameter into an (address, offset) pair** -- five raw operands for a
+  three-parameter call, the same trap already known for
+  `BLOCKREAD`/`FILLCHAR` (finding 113). `MOVELEFT(PATCH^[PATCHBASE],
+  PATCH^[0], PATCHSIZE + 2)` is the real three-argument source form.
+- **A value `STRING` parameter costs its own 41-word copy-on-entry
+  local, invisibly.** `CHECKERR(MSG: STRING; FAILED: BOOLEAN)`'s real
+  `data=84` is exactly one such copy (41 words) plus one `CHAR` local for
+  the space-bar wait loop. The disassembly's own `L3 := L1` is *that*
+  compiler-generated copy happening, not a second, separately-declared
+  local -- writing an explicit extra `TEXT: STRING` and copying `MSG`
+  into it doubled `data` to 166, wrongly. A first attempt at fixing this
+  by declaring `MSG` as `VAR STRING` instead failed for a more basic
+  reason: every call site passes a string *literal*, and a `VAR`
+  parameter cannot bind to one (error 154).
+- **The same "extra explicit local" mistake, same fix, in
+  `READGOTOXY`.** The disassembly's own local `L86` is used first as a
+  `STRING` (the `.CODE`-appended retry filename) and, at first glance,
+  looked like it might need a second declared local for that purpose.
+  Declaring a separate `ALTNAME: STRING[80]` produced `data=338` against
+  Apple's `256` -- 41 words over, the same one-extra-`STRING[80]`
+  signature as `CHECKERR`'s bug. Fixed by reassigning `NAME` itself
+  (`NAME := CONCAT(NAME, '.CODE')`) instead of introducing a second
+  local; `READGOTOXY` matched exactly immediately after.
+- **`WRITESEG`/`LOADSEG` each needed a `WITH DICT.ADDRLEN[N] DO`
+  specifically to reproduce their own real `data`, not just for style.**
+  Without it, `WRITESEG` was short exactly one word (`data=2` against
+  Apple's `4`); wrapping the two field writes in `WITH` supplied the
+  missing word immediately, matching `LOADSEG`'s already-`WITH`-based
+  form exactly (`data=4` from the first attempt). A `WITH`'s own hidden
+  address genuinely costs a real word in a *local procedure frame* --
+  confirmed by this pair, not assumed.
+- **That same device does not reproduce the outer body's own missing
+  word.** The whole file compiles clean and five of six procedures
+  (`CHECKERR`, `WORDAT`, `READGOTOXY`, `WRITESEG`, `LOADSEG`) match
+  Apple's shipped binary exactly on both `params` and `data`. The outer
+  program body itself (`data=2236` here, Apple's own `2238`) is short by
+  exactly one word out of 1119 declared -- wrapping its own four
+  `DICT.ADDRLEN[0]` references in a matching `WITH` (mirroring the
+  `WRITESEG`/`LOADSEG` fix exactly) changed nothing, so whatever holds
+  Apple's one extra *global* word is not the same mechanism as a local
+  procedure frame's `WITH` temp. `@` is not legal Apple Pascal (finding
+  111), ruling out a stray pointer variable as the explanation too. Left
+  as a documented, honest gap -- one word among 1119, not forced.
+
+Two identifier bugs caught by the fast/acceptance loop, both quick:
+`PATCHENDBLK` collided with `PATCHEND` at 8 significant characters
+(error 101, the exact `ONEDRIVE`/`ONEDRIV` gotcha CLAUDE.md already
+documents) -- renamed to `ENDBLOCKS`. `NEW(PATCH, 256)` on a plain
+`PACKED ARRAY OF CHAR` (not a `CASE` variant record) gave error 158, the
+same "`n` selects a variant tag, not a size" trap finding 113 already
+found for `LIBRARY.text`'s `BIGBUF` -- `BYTEBUF` here needs no variant at
+all since it is already a fixed-size type, so the fix was simply `NEW
+(PATCH)` with no second argument, not adding a variant.

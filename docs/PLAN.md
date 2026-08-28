@@ -150,8 +150,16 @@ a route end to end; everything else is a straight read-and-rebuild.
    `$C2`), now confirmed to be the same mechanism in both files rather
    than two unrelated oddities. `SET40COLS` will not reach byte-identical
    until that's understood, same as `BINDER` -- but everything this
-   project's own tools can check, checks out. `BINDER` itself (6
-   procedures) is still unstarted.
+   project's own tools can check, checks out. **`BINDER` itself is now
+   also reconstructed** (finding 117, `src/pascal/programs/1.3/
+   BINDER.text`): compiled clean under Apple's own `SYSTEM.COMPILER`
+   after a handful of real fixes (a value `STRING` parameter's own
+   41-word copy-on-entry local, `NEW` without a variant tag on a plain
+   array, an 8-character identifier collision), and five of its six
+   procedures match Apple's shipped binary exactly on both `params` and
+   `data` -- the sixth (the outer program body) is short by exactly one
+   word out of 1119, documented not forced. Byte-identical is still not
+   reachable, same known wall as `SET40COLS`.
 
 4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native.
    **Correction: not the smallest target left** -- procedure *count* is
