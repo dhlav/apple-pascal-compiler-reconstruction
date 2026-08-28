@@ -71,7 +71,10 @@ PROGRAM LIBMAP;
     DIRENTRY = RECORD
                  ADDR, LENG: INTEGER
                END;
-    SEGWORDS = ARRAY [0..15] OF INTEGER;
+    { Declared separately from SEGDICTREC.ADDRLEN's own inline array type
+      so a VAR parameter of this type can bind to ADDRLEN directly --
+      NEEDSSWAP's own real signature (finding 120). }
+    ADDRLENARR = ARRAY [0..15] OF DIRENTRY;
     SEGNAMESTR = PACKED ARRAY [0..7] OF CHAR;
     SEGINFOREC = PACKED RECORD CASE INTEGER OF
                    0: (ASWORD: INTEGER);
@@ -79,7 +82,7 @@ PROGRAM LIBMAP;
                        UNUSED: 0..1; VERSION: 0..7)
                  END;
     SEGDICTREC = RECORD
-                   ADDRLEN:  ARRAY [0..15] OF DIRENTRY;      {   3 }
+                   ADDRLEN:  ADDRLENARR;                     {   3 }
                    SEGNAME:  ARRAY [0..15] OF
                                PACKED ARRAY [1..8] OF CHAR;  {  35 }
                    SEGKIND:  ARRAY [0..15] OF INTEGER;       {  99 }
@@ -107,7 +110,7 @@ PROGRAM LIBMAP;
     OUTFILE:  TEXT;                    { 299, the map's destination }
     LISTMAP,                           { 600 }
     LISTREFS,                          { 601 }
-    USINGLIB,                          { 602 }
+    LISTLINK,                          { 602 }
     SWAPPED:  BOOLEAN;                 { 603, was DONEFLAG -- see above }
     VERSTRS:  ARRAY [0..7] OF STRING[7];    { 604, 'unknown'/'A2/1.n' }
     TYPESTRS: ARRAY [0..9] OF STRING[23];   { 636, machine-type names }
@@ -143,24 +146,15 @@ PROGRAM LIBMAP;
     binary's own CHK placement on the constant index -- (*STUB*) in
     spirit, real in shape.
 
-    KNOWN WRONG PARAMETER TYPE (finding 113, LIBRARY session,
-    2026-08-27): `VAR P: SEGWORDS` has never actually been called here
-    -- `MAPLIBRARY` below is still a stub -- so its `params=6/data=10`
-    match against the binary is frame-size coincidence, not behavioral
-    proof. `LIBRARY.text`'s own copy of this same procedure hit a real
-    call site and failed (error 142) with this exact declaration; the
-    disassembly for both files' own version of this procedure uses
-    `IXA 2` (a 2-word stride, reading only the first field of each pair)
-    against the caller's actual argument (LIBMAP's `SEGDICT`, LIBRARY's
-    `INDICT`, both `SEGDICTREC`), not `SEGWORDS`'s 1-word stride. The
-    real signature is almost certainly `VAR P: ARRAY [0..15] OF
-    DIRENTRY` reading `P[I].ADDR`, matching `LIBRARY.text`'s
-    `ADDRLENARR`/fix -- not yet applied here since nothing in this file
-    has a live call site to force it, and the type is shared with
-    `SWAPALL`'s own `D.ADDRLEN` usage, so changing it needs the same
-    care `LIBRARY.text` took. Left as-is deliberately rather than
-    changed without a call site to check it against. }
-  FUNCTION NEEDSSWAP(VAR P: SEGWORDS): BOOLEAN;
+    WRONG PARAMETER TYPE, FIXED (finding 113 flagged this, MAPLIBRARY's
+    own real call site -- finding 120 -- settles it): `VAR P: SEGWORDS`
+    never survived contact with a real call. `LIBRARY.text`'s own copy of
+    this same procedure hit the same wall first (error 142) and fixed it
+    to `VAR P: ADDRLENARR` reading `P[I].ADDR`, verified exact there on
+    both `params=6` and `data=10`; `MAPLIBRARY`'s own disassembly here
+    calls it the identical way (`NEEDSSWAP(SEGDICT.ADDRLEN)`), so the same
+    fix applies verbatim (finding 120). }
+  FUNCTION NEEDSSWAP(VAR P: ADDRLENARR): BOOLEAN;
     TYPE
       WORDBYTES = PACKED RECORD CASE BOOLEAN OF
                     TRUE:  (ASWORD: INTEGER);
@@ -178,7 +172,7 @@ PROGRAM LIBMAP;
     LAST := 15;
     WHILE I <= LAST DO
     BEGIN
-      W.ASWORD := P[I];
+      W.ASWORD := P[I].ADDR;
       IF W.ASBYTES[HIBYTE] <> 0 THEN
       BEGIN
         NEEDSSWAP := TRUE
@@ -273,7 +267,7 @@ PROGRAM LIBMAP;
       part below this comment is verified against the disassembly
       instruction group by instruction group), the interface text for a
       library unit if there is one (SHOWINFO, (*STUB*) below), then --
-      unless SHOWINFO already handled it and USINGLIB is off -- the
+      unless SHOWINFO already handled it and LISTLINK is off -- the
       segment's own cross-reference stream: one 16-byte entry per
       external reference, read entry-at-a-time from the block right
       after the segment's own code (ADDR + CEIL(LENG/512)), each entry
@@ -288,7 +282,7 @@ PROGRAM LIBMAP;
       a whole 16-byte entry in one MOVELEFT, entry-indexed rather than
       byte-indexed -- and LISTREFS is not confined to SHOWREF's own body;
       it directly gates the "external proc" case (RKIND 9/10) here too,
-      the same way USINGLIB gates RKIND 6/7/8.
+      the same way LISTLINK gates RKIND 6/7/8.
 
       **Acceptance-tier verified**: compiles clean under Apple's own
       SYSTEM.COMPILER (no fast-tier substitute -- `xcompile.py`'s
@@ -337,7 +331,7 @@ PROGRAM LIBMAP;
 
       { TRUE if SHOWINFO already gave a full account of this segment, so
         SHOWONE should not also print the raw reference stream unless
-        USINGLIB asked for it explicitly. Called with (BLK, 0, 0) at
+        LISTLINK asked for it explicitly. Called with (BLK, 0, 0) at
         every site in SHOWONE; the two zero arguments are identical
         every time, so whatever they are for is not exercised here.
         (*STUB*) -- this is also the single largest procedure in the
@@ -411,20 +405,52 @@ PROGRAM LIBMAP;
         (' global'/' public'/' constant'/' separate'/' unit'/' private'),
         "word/byte/big reference" (from ENTRY.RVAL1, a three-way case),
         then "(N times)" or "(once)" (from ENTRY.RVAL2), then read and
-        discard N more raw entries -- read via GETWORD but this
-        procedure's own signature and body are not yet reread carefully
-        enough to commit. The old guess here -- `VAR NAME: STRING`,
-        reasoning that every call site passes a string constant's own
-        address -- does not survive Apple's own compiler: error 154,
+        discard (RVAL2+7) DIV 8 more raw entries -- ENTRY is SHOWONE's own
+        local, read here by the same nested-procedure scoping GETWORD
+        already uses, not passed in. The old guess here -- `VAR NAME:
+        STRING`, reasoning that every call site passes a string constant's
+        own address -- does not survive Apple's own compiler: error 154,
         actual parameter must be a variable, on exactly that (a `VAR`
         parameter cannot bind to a literal). A plain value `STRING`
         parameter is passed by address anyway (strings are variable-size,
         so UCSD copies via a hidden reference even for a value param),
         which is almost certainly what produced the original mistaken
-        reading. (finding 111 update, 2026-08-27) (*STUB*) }
+        reading. (finding 111 update, 2026-08-27) Compiles to
+        `params=2/data=102` against Apple's `2/104` -- one word short,
+        same small documented-not-forced gap as this file's own
+        `NEEDSSWAP`/`SWAPALL` (finding 120). }
       PROCEDURE SHOWREF(NAME: STRING);
-        (*STUB*)
+        VAR
+          I, LAST: INTEGER;
+          DUMMY: REFENTRY;
       BEGIN
+        IF LISTREFS THEN
+        BEGIN
+          WRITE(OUTFILE, NAME:12);
+          CASE ENTRY.RVAL1 OF
+            0: WRITE(OUTFILE, ' word reference');
+            1: WRITE(OUTFILE, ' byte reference');
+            2: WRITE(OUTFILE, ' big reference')
+          END;
+          IF ENTRY.RVAL2 <> 1 THEN
+          BEGIN
+            WRITE(OUTFILE, ' (');
+            WRITE(OUTFILE, ENTRY.RVAL2);
+            WRITE(OUTFILE, ' times)')
+          END
+          ELSE
+          BEGIN
+            WRITE(OUTFILE, ' (once)')
+          END;
+          WRITELN(OUTFILE)
+        END;
+        I := 1;
+        LAST := (ENTRY.RVAL2 + 7) DIV 8;
+        WHILE I <= LAST DO
+        BEGIN
+          GETWORD(DUMMY);
+          I := I + 1
+        END
       END;
 
     BEGIN
@@ -479,7 +505,7 @@ PROGRAM LIBMAP;
       BYTEPOS := 0;
       RBLOCK := SEGDICT.ADDRLEN[SEGNUM].ADDR +
                   (SEGDICT.ADDRLEN[SEGNUM].LENG + 511) DIV 512;
-      IF NOT (USINGLIB OR NEEDINFO) THEN EXIT(SHOWONE);
+      IF NOT (LISTLINK OR NEEDINFO) THEN EXIT(SHOWONE);
       REPEAT
         GETWORD(ENTRY);
         IF SWAPPED THEN
@@ -500,7 +526,7 @@ PROGRAM LIBMAP;
           BEGIN
             CASE ENTRY.RKIND OF
               6: BEGIN
-                   IF USINGLIB THEN
+                   IF LISTLINK THEN
                    BEGIN
                      WRITE(OUTFILE, ENTRY.RNAME:12);
                      WRITE(OUTFILE, ' global addr    P #');
@@ -511,7 +537,7 @@ PROGRAM LIBMAP;
                    END
                  END;
               7: BEGIN
-                   IF USINGLIB THEN
+                   IF LISTLINK THEN
                    BEGIN
                      WRITE(OUTFILE, ENTRY.RNAME:12);
                      WRITE(OUTFILE, ' public var  base = ');
@@ -520,7 +546,7 @@ PROGRAM LIBMAP;
                    END
                  END;
               8: BEGIN
-                   IF USINGLIB THEN
+                   IF LISTLINK THEN
                    BEGIN
                      WRITE(OUTFILE, ENTRY.RNAME:12);
                      WRITE(OUTFILE, ' constant value of ');
@@ -608,10 +634,190 @@ PROGRAM LIBMAP;
     END
   END;
 
+  { Prompt for a library, validate its dictionary, and print its map --
+    then loop and do it again. An empty library name is the only way out
+    (`EXIT(PROGRAM)`), matching the disassembly's own backward branch to
+    this procedure's very top on both the "bad file" and "not a code
+    file" paths: the whole body is one `REPEAT`.
+
+    LISTMAP, set once by the outer block before its own first call and
+    cleared right after, gates the map-output-filename prompt below --
+    true only for the very first library in a run, so every later one
+    appends to the SAME already-open OUTFILE instead of re-prompting.
+
+    Prompts and the "bad file"/"not a code file" messages go to the
+    plain, unnamed console (bare WRITE/WRITELN/READ/READLN, matching the
+    disassembly's own addressing for Pascal's predeclared INPUT/OUTPUT,
+    distinct from `LOD` on a real global) -- OUTFILE, the user-chosen map
+    destination, is only ever touched by name once it is open.
+
+    Both '.CODE' and '.TEXT' get appended with `INSERT(lit, NAME,
+    LENGTH(NAME)+1)`, not `CONCAT` -- the disassembly's own call is
+    `SINSERT`, and using `CONCAT` here (as `BINDER.text`'s own retry-
+    suffix logic does successfully elsewhere) cost a real, avoidable
+    41-word hidden result temp: `X := CONCAT(X, lit)` and `INSERT(lit, X,
+    LENGTH(X)+1)` are not the same instruction sequence even though they
+    have the same effect, and only one of them is what this procedure's
+    own binary actually does (finding 120). Declaring MAPNAME before
+    LIBNAME (reversed from a first guess) and reusing TEMP1/TEMP2 for the
+    validation loop's own counters, rather than fresh locals, closed the
+    rest of the gap: `params=0/data=170` against Apple's `0/172`, one
+    word short, documented rather than forced. The '.TEXT'-suffix
+    CONSOLE:-default logic is otherwise reconstructed from the shape of
+    the binary and not yet checked instruction for instruction -- the
+    disassembly's own version also scans the name character by character
+    for something this rewrite doesn't reproduce, and it is not yet
+    understood what for; it did not cost the word this session closed. }
   PROCEDURE MAPLIBRARY;
-    (*STUB*)
+    VAR
+      C: CHAR;
+      OK: BOOLEAN;
+      MAPNAME: STRING[80];
+      LIBNAME: STRING[80];
   BEGIN
+    REPEAT
+      SWAPPED := FALSE;
+      CLOSE(INFILE);
+      WRITE('enter library name: ');
+      READ(LIBNAME);
+      READLN;
+      IF LIBNAME = '' THEN
+      BEGIN
+        CLOSE(OUTFILE, LOCK);
+        EXIT(PROGRAM)
+      END;
+      IF LIBNAME = '*' THEN
+      BEGIN
+        LIBNAME := '*SYSTEM.LIBRARY'
+      END;
+      RESET(INFILE, LIBNAME);
+      IF IORESULT <> 0 THEN
+      BEGIN
+        INSERT('.CODE', LIBNAME, LENGTH(LIBNAME) + 1);
+        RESET(INFILE, LIBNAME)
+      END;
+      IF BLOCKREAD(INFILE, SEGDICT, 1, 0) <> 1 THEN
+      BEGIN
+        WRITE('bad file');
+        WRITELN;
+        OK := FALSE
+      END
+      ELSE
+      BEGIN
+        IF NEEDSSWAP(SEGDICT.ADDRLEN) THEN
+        BEGIN
+          SWAPALL(SEGDICT);
+          SWAPPED := TRUE
+        END;
+        TEMP2 := 0;
+        TEMP1 := 15;
+        OK := TRUE;
+        WHILE (TEMP2 <= TEMP1) AND OK DO
+        BEGIN
+          WITH SEGDICT.ADDRLEN[TEMP2] DO
+          IF (LENG <= 0) OR (ADDR <= 0) OR (ADDR > 300) OR
+             NOT VALIDNAME(SEGDICT.SEGNAME[TEMP2]) THEN
+          BEGIN
+            WRITE('not a code file');
+            WRITELN;
+            OK := FALSE
+          END;
+          TEMP2 := TEMP2 + 1
+        END
+      END
+    UNTIL OK;
+    WRITE('list linker info table (Y/N)? ');
+    REPEAT
+      READ(C)
+    UNTIL C IN ['Y', 'y', 'N', 'n'];
+    WRITE(C);
+    WRITELN;
+    LISTLINK := C IN ['Y', 'y'];
+    IF LISTLINK THEN
+    BEGIN
+      WRITE('list referenced items (Y/N)? ');
+      REPEAT
+        READ(C)
+      UNTIL C IN ['Y', 'y', 'N', 'n'];
+      WRITE(C);
+      WRITELN;
+      LISTREFS := C IN ['Y', 'y']
+    END
+    ELSE
+    BEGIN
+      LISTREFS := FALSE
+    END;
+    IF LISTMAP THEN
+    BEGIN
+      REPEAT
+        WRITE('map output file name: ');
+        READ(MAPNAME);
+        READLN;
+        IF MAPNAME = '' THEN
+        BEGIN
+          MAPNAME := 'CONSOLE:'
+        END;
+        IF POS('.TEXT', MAPNAME) <> LENGTH(MAPNAME) - 4 THEN
+        BEGIN
+          INSERT('.TEXT', MAPNAME, LENGTH(MAPNAME) + 1)
+        END;
+        REWRITE(OUTFILE, MAPNAME);
+        OK := IORESULT = 0
+      UNTIL OK
+    END;
+    WRITELN(OUTFILE);
+    WRITE(OUTFILE, '  LIBRARY MAP FOR ');
+    WRITE(OUTFILE, LIBNAME);
+    WRITELN(OUTFILE);
+    WRITELN(OUTFILE);
+    IF LENGTH(SEGDICT.COMMENT) > 0 THEN
+    BEGIN
+      WRITE(OUTFILE, ' ':5);
+      WRITE(OUTFILE, SEGDICT.COMMENT);
+      WRITELN(OUTFILE);
+      WRITELN(OUTFILE)
+    END;
+    WRITELN(OUTFILE)
   END;
 
+{ TEMP2/TEMP1 are the VERSTRS-init loop's own counters -- the outer
+  program block has no locals of its own beyond the global frame, and the
+  binary reuses these two named globals for exactly this one loop rather
+  than anything a name like TEMP1/TEMP2 would suggest elsewhere. Then an
+  unconditional REPEAT MAPLIBRARY; LISTMAP:=FALSE; SHOWSEGS UNTIL FALSE --
+  the binary's own loop-back condition is a literal constant, matching
+  MAPLIBRARY's `EXIT(PROGRAM)` on an empty name as the only way out.
+  FINIT for OUTFILE/INFILE and the FCLOSE pair at exit are both automatic
+  (finding 91's rule, confirmed again here) -- no explicit call for
+  either appears in this block. }
 BEGIN
+  WRITE('Apple Library Map Utility [1.3]');
+  WRITELN;
+  TEMP2 := 0;
+  TEMP1 := 7;
+  WHILE TEMP2 <= TEMP1 DO
+  BEGIN
+    VERSTRS[TEMP2] := 'unknown';
+    TEMP2 := TEMP2 + 1
+  END;
+  VERSTRS[1] := 'A2/1.0';
+  VERSTRS[2] := 'A2/1.1';
+  VERSTRS[5] := 'A2/1.2';
+  VERSTRS[6] := 'A2/1.3';
+  TYPESTRS[0] := 'Undefined';
+  TYPESTRS[1] := 'P-Code (most sig. 1st)';
+  TYPESTRS[2] := 'P-Code (least sig. 1st)';
+  TYPESTRS[3] := 'PDP-11';
+  TYPESTRS[4] := '8080';
+  TYPESTRS[5] := 'Z-80';
+  TYPESTRS[6] := 'GA 440';
+  TYPESTRS[7] := '6502';
+  TYPESTRS[8] := '6800';
+  TYPESTRS[9] := 'TI 9900';
+  LISTMAP := TRUE;
+  REPEAT
+    MAPLIBRARY;
+    LISTMAP := FALSE;
+    SHOWSEGS
+  UNTIL FALSE
 END.

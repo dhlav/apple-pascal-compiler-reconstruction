@@ -11510,3 +11510,88 @@ further: whether parsing the `SEGMENT PROCEDURE INNER(...)` *header*
 itself (segment-table allocation, `NEWSEG`-adjacent bookkeeping) emits
 anything, independent of `INNER`'s own body. Left open, narrower than
 before finding 119 but not closed.
+
+## 120. `LIBMAP.text` -- `SHOWREF`, `MAPLIBRARY`, and the outer block written for real; `NEEDSSWAP`'s wrong parameter type finally forced
+
+*Confidence: VERIFIED BINARY FACT for the frame sizes and the outer
+block's exact match; STRONG INFERENCE for `MAPLIBRARY`'s '.TEXT'-suffix
+character scan, still not reproduced. Acceptance run
+`2026-08-28-libmap-showref-maplibrary`.*
+
+Picked up where the LIBMAP session (finding 111) left off: `SHOWINFO`,
+`SHOWREF`, `MAPLIBRARY` and the outer block were the last stubs in the
+file. `SHOWREF` and the outer block are now exact or effectively exact;
+`MAPLIBRARY` closed almost the whole way; `SHOWINFO` (1042 words of
+locals, the single largest procedure in the file) remains for a later
+session.
+
+### 120a. `SHOWREF` -- one word short, same shape as this file's known gaps
+
+Straightforward once written: `IF LISTREFS THEN` prints the label,
+`CASE ENTRY.RVAL1 OF` the three reference-size words, then `(N times)`/
+`(once)` off `ENTRY.RVAL2`, then reads and discards `(RVAL2+7) DIV 8`
+more raw entries through `GETWORD`, all off `ENTRY` -- `SHOWONE`'s own
+local, read by the same nested-scoping `GETWORD` already established.
+`params=2/data=102` against Apple's `2/104`, one word short -- documented,
+not forced, the same flavor of small gap `NEEDSSWAP`/`SWAPALL` already
+carry in this file.
+
+### 120b. `NEEDSSWAP`'s parameter type -- flagged in finding 113, now forced by a real call site
+
+`MAPLIBRARY`'s own disassembly calls it as `NEEDSSWAP(SEGDICT.ADDRLEN)` --
+the exact call shape `LIBRARY.text` already hit and fixed (its own
+`NEEDSSWAP(INDICT.ADDRLEN)`, verified exact on `params=6/data=10`).
+Ported the identical fix here: `ADDRLENARR = ARRAY [0..15] OF DIRENTRY`
+declared separately so a `VAR` parameter can bind to `SEGDICTREC.ADDRLEN`
+directly (name equivalence, not structural -- an inline-typed field
+won't bind on its own), `SEGDICTREC.ADDRLEN` itself now declared `OF
+ADDRLENARR`, `NEEDSSWAP`'s body reading `P[I].ADDR` instead of `P[I]`.
+Confirms finding 113's own prediction exactly. `SWAPALL` needed no
+change -- its own call site here is a single `LAO 3` with no extra
+pushes, matching its existing `VAR D: SEGDICTREC` signature as-is.
+
+### 120c. `MAPLIBRARY` -- `INSERT`, not `CONCAT`, is what closes the gap
+
+First attempt used `LIBNAME := CONCAT(LIBNAME, '.CODE')` for the
+`.CODE`-retry suffix, mirroring `BINDER.text`'s own successful fix for
+the identical-looking problem. It compiled clean but landed at
+`data=254` against Apple's `172` -- 41 words over, and disassembling this
+project's *own* compiled output (not just reading prose about Apple's)
+showed exactly why: `CONCAT` here compiles through a hidden 41-word
+result temp (`SCONCAT` into a scratch local, then `SAS` to assign it into
+`LIBNAME`), where the real disassembly's own call is `SINSERT` --
+`INSERT('.CODE', LIBNAME, LENGTH(LIBNAME)+1)`, which modifies `LIBNAME`
+in place and needs no second buffer. `CONCAT`-with-hidden-temp and
+`INSERT`-in-place have the same *effect* and are not the same
+*instructions* -- `BINDER.text`'s own working `CONCAT` fix does not mean
+`CONCAT` is free in general, only that its own call site happened to
+compile that way. Fixed both the `.CODE` and `.TEXT` suffix sites to
+`INSERT`; declaring `MAPNAME` before `LIBNAME` (matching the real local
+offsets the disassembly showed, reversed from a first guess) and reusing
+`TEMP1`/`TEMP2` for the validation loop's counters instead of fresh
+locals closed the rest: `params=0/data=170` against Apple's `0/172`, one
+word short, documented not forced. The disassembly's own `.TEXT`-suffix
+logic also scans the name character by character for something this
+rewrite doesn't reproduce (still not understood what for) -- confirmed
+it isn't the source of the word, since removing the whole INSERT-based
+approximation of it changes nothing about the remaining gap's size.
+
+### 120d. The outer block -- exact, and `USINGLIB` renamed `LISTLINK`
+
+`params=4/data=1510`, matching Apple's binary exactly on the first
+attempt: `FINIT` for both file variables is automatic (no explicit call
+needed, same rule finding 91 already established), a
+`WHILE TEMP2<=TEMP1 DO` loop initializes `VERSTRS` to `'unknown'`
+reusing the same two globals `TEMP1`/`TEMP2` the header comment already
+named for exactly this, both string tables are filled in by literal
+assignment, and the whole thing is one unconditional
+`REPEAT MAPLIBRARY; LISTMAP:=FALSE; SHOWSEGS UNTIL FALSE` -- the
+binary's own loop condition is a literal constant, and the only way out
+is `MAPLIBRARY`'s own `EXIT(PROGRAM)` on an empty library name.
+
+Along the way: `G602`, carried since finding 111 as `USINGLIB` on "no
+better evidence than the fourth boolean that made sense," turns out to
+be set by the prompt `'list linker info table (Y/N)? '`, not anything
+library-related -- renamed `LISTLINK` throughout (`SHOWSEGS`/`SHOWONE`
+included, both already-verified-exact procedures whose own instructions
+did not change, only the identifier).
