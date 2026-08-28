@@ -55,7 +55,21 @@
   changed nothing), so whatever holds this one extra global word is not
   reproduced by the same device at the outer level. Left as a documented
   gap rather than forced -- @ is not legal Apple Pascal (finding 111), so
-  it is not a stray pointer variable either. }
+  it is not a stray pointer variable either.
+
+  The SEGNUM loop below IS one real WITH DICT.ADDRLEN[SEGNUM] DO in
+  Apple's own source, not two separate indexed reads -- `SRO 1121`
+  computes ADDRLEN[SEGNUM]'s address once and reuses it for both the
+  LOADSEG call and WRITESEG's own LENG argument. Confirmed directly from
+  the disassembly and applied here; it does not close the one-word gap
+  (the compiler was already reusing a scratch global for the inline
+  form), but it is the byte-for-byte faithful structure regardless.
+  Chased the gap itself much further this session using SYSTEM.COMPILER's
+  own reconstructed DECLARAT.text (FILESIZE=300/NILFILESIZE=40) and the
+  raw local offsets inside READGOTOXY (LDL 86, LLA 305) -- confirmed an
+  untyped FILE's FINIT "window" address never expands ANY frame, outer
+  or local, closing off that entire line of inquiry. No candidate for
+  the missing word remains open (finding: BINDER session, 2026-08-28). }
 
 (*$R-*)
 PROGRAM BINDER;
@@ -307,8 +321,11 @@ BEGIN
   SEGNUM := 1;
   WHILE SEGNUM <= 14 DO
   BEGIN
-    LOADSEG(SEGNUM);
-    WRITESEG(SEGNUM, DICT.ADDRLEN[SEGNUM].LENG);
+    WITH DICT.ADDRLEN[SEGNUM] DO
+    BEGIN
+      LOADSEG(SEGNUM);
+      WRITESEG(SEGNUM, LENG)
+    END;
     SEGNUM := SEGNUM + 1
   END;
   CHECKERR('WRITING SEG DICT OF NEW O.S.',

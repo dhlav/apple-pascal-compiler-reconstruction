@@ -11371,3 +11371,76 @@ same "`n` selects a variant tag, not a size" trap finding 113 already
 found for `LIBRARY.text`'s `BIGBUF` -- `BYTEBUF` here needs no variant at
 all since it is already a fixed-size type, so the fix was simply `NEW
 (PATCH)` with no second argument, not adding a variant.
+
+## 118. `BINDER.text`'s SEGNUM loop -- one real `WITH`, and a dead end chased to ground on the outer body's own one-word gap
+
+*Confidence: VERIFIED BINARY FACT for the `WITH` structure and the units
+reconciliation; STRONG INFERENCE that the outer body's remaining one-word
+gap has no candidate left in the file-variable-sizing rules. Acceptance
+run `2026-08-28-binder-segnum-with`.*
+
+Asked to "open the `BINDER.text` 1-word gap in the compiler disassembly" --
+i.e. use `SYSTEM.COMPILER`'s own reconstructed source, not just guesswork,
+to make progress on finding 117's documented `4/2236` vs Apple's `4/2238`.
+
+### 118a. The real structural fix
+
+`BINDER`'s own disassembly, outer body, the `SEGNUM := 1; WHILE SEGNUM <=
+14 DO ...` loop:
+
+```
+LAO 518; LDO 1036; IXA 2; SRO 1121     { G1121 := @DICT.ADDRLEN[SEGNUM] }
+LDO 1036; CLP 6                        { LOADSEG(SEGNUM) }
+LDO 1121; SIND 1                       { push .LENG through G1121 }
+LDO 1036; CLP 5                        { WRITESEG(SEGNUM, LENG) }
+```
+
+`G1121`'s address is computed **once** and reused for both calls -- Apple's
+real source is `WITH DICT.ADDRLEN[SEGNUM] DO BEGIN LOADSEG(SEGNUM);
+WRITESEG(SEGNUM, LENG) END`, not the inline `DICT.ADDRLEN[SEGNUM].LENG`
+this file had. Fixed in `src/pascal/programs/1.3/BINDER.text`; compiled
+clean, `4/2236` unchanged (the compiler was already reusing an existing
+scratch global for the inline form, so this word was never the missing
+one) and no other procedure regressed. Kept anyway: it is the byte-for-byte
+faithful structure regardless of frame size, matching `WRITESEG`/
+`LOADSEG`'s own internal `WITH` pattern one level up.
+
+### 118b. The units confusion, and why it looked like an 1100-word gap
+
+Manually summing `BINDER`'s declared globals (`RESERVE`..`OSFILE`) gives
+~1117-1120 **words**. The codefile's own `data` field reads `2236`/`2238`
+directly off the jtab with no conversion (`codefile.py`'s `_w(raw, jtab -
+8)`) -- these values are already established elsewhere in this project as
+matching a declared word count doubled (`COPYLINK`'s `data=534` against a
+267-word `LINKBLOCK`+locals sum, `CHECKERR`'s `data=84` against a 42-word
+copy-on-entry+`KEY`). Read naively as words instead of the doubled unit,
+`2236`/`2238` looks like it needs ~1118 more words than anything declared
+-- a false alarm from applying the wrong unit, not a real second block of
+globals. Once corrected, `2238`/`2` = `1119` words lines up with the
+declared total almost exactly, and the real gap is the one word finding
+117 already documented, not eleven hundred.
+
+### 118c. What was ruled out chasing it anyway
+
+Before catching 118b, tested and killed off:
+
+* **The FINIT "window" address (`VADDR+300`) enlarging the frame.**
+  `READGOTOXY`'s own local `GTXFILE` computes `LLA 305` (its own
+  `40`-word offset `5` plus `FILESIZE=300`) right at entry, yet the whole
+  procedure's real frame is only `256` -- smaller than the window address
+  itself. Confirms finding 43's "harmless, never dereferenced" holds at
+  the *local* procedure-frame level too, not just II.0's original global
+  case: the window is truly never real, full stop, regardless of scope.
+* **`SYSTEM.COMPILER`'s own reconstructed `DECLARAT.text`** (already
+  acceptance-verified byte-identical, finding 90/107) carries the exact
+  same `FILESIZE = 300; NILFILESIZE = 40` sizing rule as II.0's
+  `decpart.a.text` and `compglbls.text` -- no 1.3-specific wrinkle to the
+  rule exists to explain a residual word this way.
+* **A second hidden local for the `READGOTOXY` `.CODE`-retry `CONCAT`.**
+  Already ruled out in finding 117 (the `NAME`-reuse fix); reconfirmed
+  here by walking every `LLA`/`LDL`/`STL`/`SLDL` offset the procedure
+  ever touches (`1`-`4`, `5`, `45`, `86`) -- nothing past the already-
+  accounted-for `WITH`-temp at `86` is ever referenced.
+
+No candidate for the outer body's missing word remains open. Left
+documented, not forced, per finding 117.
