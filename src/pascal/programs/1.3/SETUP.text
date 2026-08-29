@@ -151,14 +151,21 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
   { SETUP2/SETUP3/SETUP4 (the bug-check, BST search, and trim
     utilities) are FORWARD-declared here, ahead of their real bodies
     further down, purely so INITS -- declared next, and needing all
-    three -- can see them. This doesn't touch their procedure NUMBERS:
-    UCSD assigns those where a body is actually compiled, not where a
-    FORWARD stub is (finding 61, already relied on throughout
-    PASCALCO.text), and no segment procedure may follow a body that's
-    already been compiled without tripping error 399 (CODEINSEG) --
-    which is what led to this ordering in the first place: NUMBER2's
-    own declaration hit exactly that error, right after SETUP26's
-    real body, until every SEGMENT PROCEDURE below was moved ahead of
+    three -- can see them. This doesn't disturb their procedure
+    NUMBERS: finding 61 established that declaration order (where a
+    header is parsed, FORWARD or not) IS the numbering -- these three
+    are declared FORWARD in the order 2, 3, 4 and completed in the
+    same order 2, 3, 4 further down, so the numbers land right either
+    way. (Finding 126 caught a later, wrong paraphrase of this same
+    finding -- "numbers assign where a body is compiled, not where a
+    FORWARD stub is" -- that this comment used to carry: a group of
+    FORWARDs declared out of identifier order, needed for SETUP12, hit
+    it directly.) Separately, no segment procedure may follow a body
+    that's already been compiled without tripping error 399
+    (CODEINSEG) -- which is what led to this ordering in the first
+    place: NUMBER2's own declaration hit exactly that error, right
+    after SETUP26's real body, until every SEGMENT PROCEDURE below was
+    moved ahead of
     all 25 of SETUP2..26's own real bodies (finding: SETUP session,
     2026-08-28). }
   PROCEDURE SETUP2(LOC: STRING; OK: BOOLEAN);
@@ -508,16 +515,99 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     SETUP6 := LASTKEY = 'C'
   END;
 
-  { SETUP7 through SETUP26 -- the CHANGE menu's own value-editing
-    screens (single-field view, prompted walk of the whole tree, octal/
-    decimal/hex display and entry, the tree-insertion assertion helper,
-    and the recursive in-order tree walk itself) -- are not written
-    this session. Declared here, in Apple's own procedure order, purely
-    so their NUMBERS (and so SETUP1's own CASE dispatch to SETUP8 and
-    SETUP12 by that number) land where the binary has them; every one
-    of these is called with zero arguments by anything this session
-    wrote. Real signatures and bodies are the natural next session. }
-  PROCEDURE SETUP7; BEGIN END;
+  { SETUP8 through SETUP26 -- the QUIT handler and the whole CHANGE
+    submenu -- are not written this session except SETUP7, which is
+    self-contained (only calls SETUP4/SETUP5, both earlier) and
+    genuinely is a lex-1 sibling of SETUP1-11 in Apple's own binary.
+    SETUP12 is also lex 1, but SETUP13 through SETUP26 are lex 2-4 in
+    the lift (`analysis/utilities/SETUP-1.3-APPLE3.pas.txt`) -- they
+    are procedures nested INSIDE SETUP12's own declaration part, not
+    flat top-level siblings the way 7-11 are. A first attempt wrote
+    12-26 as flat stubs/bodies with SETUP14/15/25/26 FORWARD-declared
+    ahead of SETUP12 to let it call them; that compiled clean but with
+    every procedure NUMBER wrong from 7 onward once diffed against
+    Apple's own binary, because a FORWARD reserves the next sequential
+    number immediately, at declaration -- exactly what finding 61
+    itself says ("declaration order is the numbering"), but not what
+    this file's own SETUP2/3/4 comment above used to paraphrase it as
+    ("assigns where a body is compiled, not where a FORWARD stub is").
+    That paraphrase happened to give the right answer for SETUP2/3/4
+    only because those three are declared FORWARD and completed in the
+    same relative order (2, 3, 4 both times); a group of forwards
+    declared out of identifier order is what exposed it as wrong
+    (finding 126). Nesting SETUP13-26 inside SETUP12 properly is the
+    real fix, not attempted yet -- the natural next session. }
+
+  { Read one edited line into L3: '/' backspaces, echoing a `<` the
+    first time in a run of them; '<' zaps the whole buffer; RETURN or
+    '!' ends entry. Trims embedded spaces via SETUP4 before returning
+    -- FALSE means an empty or '!'-aborted answer. }
+  FUNCTION SETUP7(VAR L3: STRING): BOOLEAN;
+    VAR
+      ECHOING: BOOLEAN;
+  BEGIN
+    SETUP7 := TRUE;
+    ECHOING := FALSE;
+    L3 := '';
+    WHILE NOT (SETUP5 IN [CHR(13), '!']) DO
+    BEGIN
+      IF (LASTKEY <> '/') AND ECHOING THEN
+      BEGIN
+        ECHOING := FALSE;
+        WRITE('>')
+      END;
+      IF LASTKEY = '<' THEN
+      BEGIN
+        L3 := '';
+        WRITE('<<ZAP>>');
+        WRITELN
+      END
+      ELSE IF LASTKEY = '/' THEN
+      BEGIN
+        IF LENGTH(L3) > 0 THEN
+        BEGIN
+          IF NOT ECHOING THEN
+          BEGIN
+            WRITE('<')
+          END;
+          ECHOING := TRUE;
+          IF L3[LENGTH(L3)] IN [' '..'~'] THEN
+          BEGIN
+            WRITE(L3[LENGTH(L3)])
+          END
+          ELSE
+          BEGIN
+            WRITE('?')
+          END;
+          DELETE(L3, LENGTH(L3), 1)
+        END
+      END
+      ELSE
+      BEGIN
+        IF LASTKEY IN [' '..'~'] THEN
+        BEGIN
+          WRITE(LASTKEY)
+        END
+        ELSE
+        BEGIN
+          WRITE('?')
+        END;
+        L3 := CONCAT(L3, ' ');
+        L3[LENGTH(L3)] := LASTKEY
+      END
+    END;
+    IF LASTKEY = '!' THEN
+    BEGIN
+      SETUP7 := FALSE
+    END;
+    WRITELN;
+    SETUP4(L3, L3);
+    IF LENGTH(L3) = 0 THEN
+    BEGIN
+      SETUP7 := FALSE
+    END
+  END;
+
   PROCEDURE SETUP8; BEGIN END;
   PROCEDURE SETUP9; BEGIN END;
   PROCEDURE SETUP10; BEGIN END;

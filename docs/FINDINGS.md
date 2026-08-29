@@ -11920,3 +11920,68 @@ live SendKeys as before -- the hard-disk layout is the default this
 project actually runs, and the floppy layout doesn't have the same
 disk-load-races-SendKeys problem to begin with (system tools and output
 live on separate volumes there).
+
+## 126. `SETUP.text` -- `SETUP7` written for real, exact; discovered `SETUP13-26` are nested inside `SETUP12`, not flat siblings, and that `FORWARD` reserves a number immediately
+
+Wrote `SETUP7` (the line-editor helper: `/` backspaces with a `<`
+echoed the first time in a run, `<` zaps the buffer, RETURN or `!`
+ends entry, trims via `SETUP4` before returning) for real. Hit two
+real compiler errors getting there: `CONCAT(L3, LASTKEY)` (a `CHAR`
+argument) is error 125 -- `CONCAT` wants a `STRING`, so appending one
+typed character has to go `L3 := CONCAT(L3, ' '); L3[LENGTH(L3)] :=
+LASTKEY` (append a placeholder, overwrite it), matching what the lift's
+own `SCONCAT`-then-literal-`'#'` shape was actually showing all along
+rather than a decompiler artifact, as first assumed. Verified exact:
+`params=6/data=84`, identical to Apple's own binary.
+
+Also attempted `SETUP12`, `13`, `14`, `15`, `25`, `26` as a flat batch
+this session, with `SETUP14`/`15`/`25`/`26` `FORWARD`-declared ahead
+of `SETUP12` so it could call them. That compiled with **0 errors**
+but came back with **every procedure number wrong from 7 onward**
+once diffed against Apple's binary -- `SETUP7`'s own real shape
+(`6/84`) landed on procedure **11**, not 7, and `SETUP25`'s shape
+(`0/82`) landed on **9**, not 25.
+
+Two things this closes:
+
+* **`FORWARD` reserves the next sequential procedure number at the
+  point it's declared, not at the point it's completed.** This is
+  exactly what finding 61 itself already says -- "declaration order
+  is the numbering," assigned when UCSD parses the header, `FORWARD`
+  or not. What broke this session was a *later paraphrase* of finding
+  61, carried in this file's own `SETUP2`/`3`/`4` comment ("numbers
+  assign where a body is compiled, not where a `FORWARD` stub is"),
+  which is backwards. That paraphrase happened to give the right
+  answer for `SETUP2`/`3`/`4` only because those three are declared
+  `FORWARD` and completed in the same relative order (2, 3, 4 both
+  times) -- "reserve at declaration" and the wrong paraphrase produce
+  identical numbers whenever declaration order matches completion
+  order, so that case was never diagnostic either way. Four forwards
+  (`14`, `15`, `25`, `26`) declared as one group, out of identifier
+  order relative to `SETUP12`'s own position, immediately reserved
+  four consecutive numbers (7, 8, 9, 10) right where they stood, and
+  `SETUP7`'s real body -- textually next, no forward of its own --
+  became procedure 11. Corrected the paraphrase in `SETUP.text`'s own
+  comment in place, in addition to this entry.
+* **`SETUP13` through `SETUP26` are not flat siblings of `SETUP7-12`
+  at all.** The lift (`analysis/utilities/SETUP-1.3-APPLE3.pas.txt`)
+  gives `SETUP12` lex 1 (same level as `SETUP1`-`11`), but `SETUP13`
+  lex 2, `SETUP14` lex 2, `SETUP15` lex 3, `SETUP16` lex 2, `SETUP17`
+  lex 3, `SETUP18` lex 3, `SETUP19` lex 3, `SETUP20` lex 4, `SETUP21`
+  lex 3, `SETUP22`-`24` lex 4, `SETUP25` lex 2, `SETUP26` lex 2 --
+  every one of them is nested **inside `SETUP12`'s own declaration
+  part** (with further nesting among themselves matching the deeper
+  lex levels), not declared alongside it. That's the real reason
+  `SETUP12` can reach `SETUP14`/`25`/`26` at all: ordinary Pascal
+  nested-procedure scoping, no `FORWARD` required once they're nested
+  in the right place. `SETUP7`-`11` staying flat siblings (lex 1,
+  matching the binary) is correct and unaffected by this.
+
+Reverted the flat 12/13/14/15/25/26 attempt back to plain
+zero-argument stubs (matching every other not-yet-written procedure in
+this file) rather than ship it with wrong numbering; only `SETUP7` is
+real this session. Properly nesting `SETUP13`-`26` inside `SETUP12`,
+in the right sub-hierarchy, is the natural next step -- not attempted
+here. Acceptance run `2026-08-28-setup7-exact`: 0 errors, 651 lines,
+`SETUPT.CODE` extracted and confirmed via `CodeFile` (not just the
+compiler's own summary screen).

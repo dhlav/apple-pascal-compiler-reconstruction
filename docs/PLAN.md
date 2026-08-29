@@ -186,14 +186,23 @@ a route end to end; everything else is a straight read-and-rebuild.
    real `(*$U-*) PROGRAM PASCALSYSTEM` / `SEGMENT PROCEDURE
    SETUP(P1,P2)` wrapping shape (`SYSTEM.COMPILER`'s own skeleton has
    the precedent -- a naive single-`PROGRAM` shape fails `EXIT`). The
-   outer body, `SETUP2`, `SETUP3`, `SETUP5`, `SETUP6`, and all eight
-   `NUMBERn` stubs are frame-exact (finding 123 corrected an earlier
-   wrong claim that `SETUP5`/`SETUP6` didn't match -- they always did).
-   `SETUP4` went from an 82-word miss to a one-word miss once `SRC` was
-   made `VAR` instead of value, matching what the binary's own
-   procedure 4 actually loads (finding 123); the one remaining word is
-   documented not forced. `SETUP7` onward -- the actual value-editing
-   screens the `CHANGE` menu drives -- and `TEACHSET`'s own ten
+   outer body, `SETUP2`, `SETUP3`, `SETUP5`, `SETUP6`, `SETUP7`, and
+   all eight `NUMBERn` stubs are frame-exact (finding 123 corrected an
+   earlier wrong claim that `SETUP5`/`SETUP6` didn't match -- they
+   always did). `SETUP4` went from an 82-word miss to a one-word miss
+   once `SRC` was made `VAR` instead of value, matching what the
+   binary's own procedure 4 actually loads (finding 123); the one
+   remaining word is documented not forced. **`SETUP13`-`26` are
+   nested inside `SETUP12`, not flat siblings of it** (finding 126,
+   from the lift's own lex levels) -- a first attempt declaring them
+   flat, with `FORWARD` used to let `SETUP12` reach the later ones,
+   compiled clean but numbered every procedure wrong from 7 onward,
+   since `FORWARD` reserves a number immediately at declaration --
+   which finding 61 already said, but a later paraphrase of it in
+   `SETUP.text`'s own comments had backwards, corrected in place.
+   Reverted to stubs rather than ship it wrong.
+   `SETUP12` onward -- the actual value-editing screens the `CHANGE`
+   menu drives, properly nested this time -- and `TEACHSET`'s own ten
    tutorial procedures are still placeholder stubs, the natural next
    session.
 
