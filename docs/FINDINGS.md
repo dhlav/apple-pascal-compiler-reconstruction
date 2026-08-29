@@ -11985,3 +11985,46 @@ in the right sub-hierarchy, is the natural next step -- not attempted
 here. Acceptance run `2026-08-28-setup7-exact`: 0 errors, 651 lines,
 `SETUPT.CODE` extracted and confirmed via `CodeFile` (not just the
 compiler's own summary screen).
+
+## 127. `SETUP.text` -- the `SETUP12` nesting hypothesis confirmed exactly: 12/13/14/15/25/26 all land on Apple's real numbers and frame sizes
+
+Finding 126 worked out, from the lift's own lex levels and call graph,
+that `SETUP13` through `SETUP26` are nested **inside `SETUP12`'s own
+declaration part** (13, 14, 16, 25, 26 direct children; 15 nested in
+14; 17/18/19/21 nested in 16; 20 nested in 19; 22/23/24 nested in 21),
+not flat siblings the way `SETUP7`-`11` are. Rebuilt `SETUP12` that
+way -- `SETUP13`, `SETUP14` (with `SETUP15` nested inside it), and
+`SETUP25`/`SETUP26` written for real inside `SETUP12`'s own
+declaration part, `SETUP16` (and everything nested inside it, 17-24)
+left as empty stubs with their own further nesting preserved but no
+real bodies yet.
+
+**0 errors, 837 lines, first attempt at the corrected structure.**
+Diffing every procedure's `params`/`data` against Apple's own binary:
+
+| # | mine | Apple's | |
+|---|------|---------|---|
+| 12 | 0/0 | 0/0 | exact |
+| 13 | 4/0 | 4/0 | exact |
+| 14 | 0/0 | 0/0 | exact |
+| 15 | 0/0 | 0/0 | exact |
+| 25 | 0/82 | 0/82 | exact |
+| 26 | 2/0 | 2/0 | exact |
+
+Six for six, with no `FORWARD` needed anywhere in the whole rebuilt
+block -- ordinary nested-procedure scoping was enough once the
+structure matched Apple's own, confirming both finding 126's nesting
+hypothesis and finding 61's real rule (declaration order is the
+numbering) at the same time. `SETUP16`/`17`/`18`/`19`/`20`/`21`/`22`/
+`23`/`24` differ from Apple's binary as expected -- they're still
+empty stubs, not real bodies, and none of the mismatches are the kind
+finding 126 was chasing (wrong procedure number); they're the ordinary
+kind of gap an unwritten stub is expected to show. `SETUP16`'s own
+`params` already came out right (2) purely from guessing a bare
+`(L1: NODEPTR)` signature, which is a good sign for when its real body
+gets written.
+
+Acceptance run `2026-08-28-setup-nested-change`: `SETUPT.CODE`
+extracted and every procedure's `params`/`data` compared directly
+against Apple's `SETUP.CODE` via `CodeFile`, not just the compiler's
+own summary screen.

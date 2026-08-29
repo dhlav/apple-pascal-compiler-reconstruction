@@ -612,21 +612,197 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
   PROCEDURE SETUP9; BEGIN END;
   PROCEDURE SETUP10; BEGIN END;
   PROCEDURE SETUP11; BEGIN END;
-  PROCEDURE SETUP12; BEGIN END;
-  PROCEDURE SETUP13; BEGIN END;
-  PROCEDURE SETUP14; BEGIN END;
-  PROCEDURE SETUP15; BEGIN END;
-  PROCEDURE SETUP16; BEGIN END;
-  PROCEDURE SETUP17; BEGIN END;
-  PROCEDURE SETUP18; BEGIN END;
-  PROCEDURE SETUP19; BEGIN END;
-  PROCEDURE SETUP20; BEGIN END;
-  PROCEDURE SETUP21; BEGIN END;
-  PROCEDURE SETUP22; BEGIN END;
-  PROCEDURE SETUP23; BEGIN END;
-  PROCEDURE SETUP24; BEGIN END;
-  PROCEDURE SETUP25; BEGIN END;
-  PROCEDURE SETUP26; BEGIN END;
+
+  { SETUP12 -- the CHANGE submenu -- turns out to enclose ALL of
+    SETUP13 through SETUP26 as nested procedures, not flat siblings
+    (finding 126, from the lift's own lex levels: SETUP12 is lex 1,
+    same as SETUP1-11, but 13-26 are lex 2-4). The nesting below
+    mirrors the lex levels and the real call graph exactly, so nothing
+    here needs a FORWARD declaration at all: every callee is declared
+    (as a sibling earlier in the same enclosing scope, or as a child
+    of the caller itself) before the point that calls it.
+
+      SETUP12 (lex 1)
+        SETUP13 (lex 2) -- real: a yes/no/quit prompt
+        SETUP14 (lex 2) -- real: the radix submenu
+          SETUP15 (lex 3) -- real: announces the current radix
+        SETUP16 (lex 2) -- stub: the single-field dispatcher
+          SETUP17 (lex 3) -- stub: bit-field pack
+          SETUP18 (lex 3) -- stub: bit-field unpack
+          SETUP19 (lex 3) -- stub: numeric entry driver
+            SETUP20 (lex 4) -- stub: 2^n for bit-width
+          SETUP21 (lex 3) -- stub: scalar-name entry driver
+            SETUP22 (lex 4) -- stub: show current scalar value
+            SETUP23 (lex 4) -- stub: list allowed scalar values
+            SETUP24 (lex 4) -- stub: scalar name lookup
+        SETUP25 (lex 2) -- real: S(ingle, look up one field by name
+        SETUP26 (lex 2) -- real: P(rompted, in-order tree walk
+
+    SETUP16 and everything nested inside it (17-24) are still empty
+    stubs -- the actual numeric/scalar value-editing engine, not
+    written this session. Their signatures are left bare for now
+    rather than guessed; SETUP17-24 all reference their enclosing
+    procedures' own parameters via lexical scoping in the real binary
+    (e.g. SETUP17's `I1,1` is a level-1-up reference, reading SETUP16's
+    own NODEPTR parameter, not a parameter of its own) rather than
+    taking everything as explicit arguments, so their real signatures
+    need that worked out together with their bodies, not guessed
+    ahead of time. }
+  PROCEDURE SETUP12;
+
+    { A yes/no/quit prompt, re-asked until answered. }
+    FUNCTION SETUP13: BOOLEAN;
+    BEGIN
+      IF NOT QUITFLAG THEN
+      BEGIN
+        REPEAT
+          WRITE('WANT TO CHANGE THIS VALUE?');
+          WRITE(' (Y,N,');
+          WRITE('!');
+          WRITE(')');
+          WRITELN;
+          SETUP13 := SETUP5 = 'Y'
+        UNTIL (LASTKEY IN ['N', 'Y']) OR QUITFLAG
+      END
+      ELSE
+      BEGIN
+        SETUP13 := FALSE
+      END
+    END;
+
+    { The radix submenu: O(ct/D(ec/H(ex sets G4 (the display base,
+      8/10/16), Q(uit leaves it as is. }
+    PROCEDURE SETUP14;
+
+      { Announces the current radix by name. }
+      PROCEDURE SETUP15;
+      BEGIN
+        CASE G4 OF
+          8:  WRITE('NOW OCTAL');
+          10: WRITE('NOW DECIMAL');
+          16: WRITE('NOW HEXADECIMAL')
+        END
+      END;
+
+    BEGIN
+      REPEAT
+        SETUP15;
+        WRITE(':  O(CT) D(EC) H(EX) Q(UIT)');
+        WRITELN;
+        CASE SETUP5 OF
+          'O': G4 := 8;
+          'D': G4 := 10;
+          'H': G4 := 16
+        END
+      UNTIL (LASTKEY IN ['O', 'D', 'H', 'Q']) OR QUITFLAG;
+      SETUP15;
+      WRITELN
+    END;
+
+    PROCEDURE SETUP16(L1: NODEPTR);
+      PROCEDURE SETUP17; BEGIN END;
+      PROCEDURE SETUP18; BEGIN END;
+      PROCEDURE SETUP19;
+        FUNCTION SETUP20: INTEGER;
+        BEGIN END;
+      BEGIN END;
+      PROCEDURE SETUP21;
+        PROCEDURE SETUP22; BEGIN END;
+        PROCEDURE SETUP23; BEGIN END;
+        FUNCTION SETUP24: BOOLEAN;
+        BEGIN END;
+      BEGIN END;
+    BEGIN END;
+
+    { S(ingle: look up one field by name, re-prompting until found or
+      '!'-aborted, then hand it to SETUP16's own single-field editor. }
+    PROCEDURE SETUP25;
+      VAR
+        L1: STRING;
+    BEGIN
+      WRITE('NAME OF FIELD: ');
+      IF SETUP7(L1) THEN
+      BEGIN
+        WHILE (NOT SETUP3(L1)) AND (NOT QUITFLAG) DO
+        BEGIN
+          WRITE('DIDN''T FIND ');
+          WRITE(L1);
+          WRITELN;
+          WRITE('NAME OF FIELD: ');
+          IF SETUP7(L1) THEN
+          BEGIN
+          END
+        END;
+        IF NOT QUITFLAG THEN
+        BEGIN
+          SETUP16(CUR)
+        END
+      END
+    END;
+
+    { P(rompted: an in-order walk of the whole field tree -- RIGHT
+      before LEFT, matching INITS6's own inverted insert comparison
+      (a new field goes RIGHT when the parent's trimmed name is
+      greater) -- handing each field to SETUP16 in turn. }
+    PROCEDURE SETUP26(L1: NODEPTR);
+    BEGIN
+      IF (L1 <> SENTINEL) AND (NOT QUITFLAG) THEN
+      BEGIN
+        SETUP26(L1^.RIGHT);
+        IF NOT QUITFLAG THEN
+        BEGIN
+          WRITELN;
+          WRITE('FIELD NAME = ');
+          WRITE(L1^.NAME);
+          WRITELN;
+          SETUP16(L1);
+          SETUP26(L1^.LEFT)
+        END
+      END
+    END;
+
+  BEGIN
+    REPEAT
+      QUITFLAG := FALSE;
+      WRITELN;
+      WRITE('CHANGE: S(INGLE) P(ROMPTED) R(ADIX)');
+      WRITELN;
+      WRITE('    H(ELP) Q(UIT)');
+      WRITELN;
+      CASE SETUP5 OF
+        'S': SETUP25;
+        'P': SETUP26(ROOT^.LEFT);
+        'R': SETUP14;
+        'H': BEGIN
+          WRITELN;
+          WRITE('S(INGLE) ALLOWS YOU TO EXAMINE 1 VALUE');
+          WRITELN;
+          WRITE('    BY NAME');
+          WRITELN;
+          WRITE('P(ROMPTED) TAKES YOU THROUGH ALL FIELDS');
+          WRITELN;
+          WRITE('R(ADIX) ALLOWS YOU TO CHANGE THE ASSUMED');
+          WRITELN;
+          WRITE('    RADIX FROM ');
+          WRITELN;
+          CASE G4 OF
+            8:  WRITE('OCTAL');
+            10: WRITE('DECIMAL');
+            16: WRITE('HEXADECIMAL')
+          END;
+          WRITE(' TO EITHER');
+          WRITELN;
+          WRITE('     ');
+          CASE G4 OF
+            8:  WRITE('DECIMAL OR HEXADECIMAL');
+            10: WRITE('OCTAL OR HEXADECIMAL');
+            16: WRITE('OCTAL OR DECIMAL')
+          END;
+          WRITELN
+        END
+      END
+    UNTIL LASTKEY = 'Q'
+  END;
 
 BEGIN
   INITS;

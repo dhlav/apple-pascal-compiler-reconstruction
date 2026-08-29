@@ -200,10 +200,12 @@ a route end to end; everything else is a straight read-and-rebuild.
    since `FORWARD` reserves a number immediately at declaration --
    which finding 61 already said, but a later paraphrase of it in
    `SETUP.text`'s own comments had backwards, corrected in place.
-   Reverted to stubs rather than ship it wrong.
-   `SETUP12` onward -- the actual value-editing screens the `CHANGE`
-   menu drives, properly nested this time -- and `TEACHSET`'s own ten
-   tutorial procedures are still placeholder stubs, the natural next
+   Rebuilt with the real nesting (finding 127) and it landed exactly:
+   `SETUP12`, `13`, `14`, `15`, `25`, `26` all frame-exact against
+   Apple's binary, no `FORWARD` needed anywhere. `SETUP16` onward --
+   the actual numeric/scalar value-editing engine, nested correctly
+   inside `SETUP16` but still empty -- and `TEACHSET`'s own ten
+   tutorial procedures are the remaining stubs, the natural next
    session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
