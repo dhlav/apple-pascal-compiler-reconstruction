@@ -202,10 +202,15 @@ a route end to end; everything else is a straight read-and-rebuild.
    `SETUP.text`'s own comments had backwards, corrected in place.
    Rebuilt with the real nesting (finding 127) and it landed exactly:
    `SETUP12`, `13`, `14`, `15`, `25`, `26` all frame-exact against
-   Apple's binary, no `FORWARD` needed anywhere. `SETUP16` onward --
-   the actual numeric/scalar value-editing engine, nested correctly
-   inside `SETUP16` but still empty -- and `TEACHSET`'s own ten
-   tutorial procedures are the remaining stubs, the natural next
+   Apple's binary, no `FORWARD` needed anywhere. Filled in the
+   scalar-value trio `SETUP22`/`23`/`24` (finding 128) plus `SETUP20`
+   (`2^N`), all four exact first attempt -- `24` reuses SETUP3's own
+   sentinel-search trick, a second independent confirmation of that
+   idiom. `SETUP8`-`11` (the QUIT handler and the octal/decimal/hex
+   display/entry engine at the flat `SETUP1`-`11` level), `SETUP16`-
+   `19`/`21` (the bit-field pack/unpack and the two entry-loop
+   drivers, nested correctly but still empty), and `TEACHSET`'s own
+   ten tutorial procedures are the remaining stubs, the natural next
    session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this

@@ -12028,3 +12028,39 @@ Acceptance run `2026-08-28-setup-nested-change`: `SETUPT.CODE`
 extracted and every procedure's `params`/`data` compared directly
 against Apple's `SETUP.CODE` via `CodeFile`, not just the compiler's
 own summary screen.
+
+## 128. `SETUP.text` -- `SETUP20`/`22`/`23`/`24` written for real, all four exact first attempt
+
+Continued into `SETUP16`'s own nested subtree (finding 127's confirmed
+structure). Wrote the four self-contained leaves that don't need the
+bit-field pack/unpack trick or the complex numeric-entry retry loop:
+
+* **`SETUP20`** -- `2^N` via a plain `FOR I := 1 TO N DO ANSWER :=
+  ANSWER * 2` loop (the field's own bit width, used as the exclusive
+  upper bound for unsigned octal/decimal/hex entry). The lift's own
+  `L6 := L3` (copying the parameter into a fresh local before looping)
+  is exactly what a `FOR` loop's hidden once-evaluated bound produces
+  -- writing it as a `FOR` loop instead of translating that copy
+  literally is what closed it.
+* **`SETUP22`**/**`SETUP23`**/**`SETUP24`** -- the scalar-value
+  display/list/lookup trio SETUP21 (not written) will drive. All
+  three read `L1` -- SETUP16's own `NODEPTR` parameter -- by ordinary
+  lexical scoping, two levels up, exactly the way finding 127
+  predicted nested procedures would. `SETUP24` reuses SETUP3's own
+  sentinel-search trick (finding 122's BST search): the searched-for
+  name is written into `BOOLNAMES^.NAME` first, so the loop is
+  guaranteed to terminate at worst back at `BOOLNAMES` itself, with no
+  separate bounds check -- the same idiom, a second, independent time.
+
+**All four exact, first attempt**, `params`/`data` against Apple's own
+binary: `SETUP20` `6/6`, `SETUP22` `2/2`, `SETUP23` `0/2`, `SETUP24`
+`8/84`. `SETUP16`'s own bare `(L1: NODEPTR)` guess (finding 127) still
+has the right `params` (`2`) with its body still empty. `SETUP17`,
+`18`, `19`, `21` (the bit-field pack/unpack and the two entry-loop
+drivers) remain unwritten -- the natural next continuation, along with
+`SETUP8`-`11` (the QUIT handler and the octal/decimal/hex display/
+entry engine at the SETUP1-11 flat level) and `TEACHSET`.
+
+Acceptance run `2026-08-28-setup-scalar-editor`: 0 errors, 915 lines,
+`SETUPT.CODE` extracted and every procedure's `params`/`data` compared
+directly against Apple's `SETUP.CODE` via `CodeFile`.

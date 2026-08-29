@@ -702,16 +702,94 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     PROCEDURE SETUP16(L1: NODEPTR);
       PROCEDURE SETUP17; BEGIN END;
       PROCEDURE SETUP18; BEGIN END;
+
+      { The numeric entry driver -- not written this session. }
       PROCEDURE SETUP19;
-        FUNCTION SETUP20: INTEGER;
-        BEGIN END;
+
+        { 2^N, via repeated doubling (the field's own bit WIDTH, used
+          as the exclusive upper bound for an unsigned field's octal/
+          decimal/hex entry range). }
+        FUNCTION SETUP20(N: INTEGER): INTEGER;
+          VAR
+            ANSWER, I: INTEGER;
+        BEGIN
+          ANSWER := 1;
+          FOR I := 1 TO N DO
+          BEGIN
+            ANSWER := ANSWER * 2
+          END;
+          SETUP20 := ANSWER
+        END;
+
       BEGIN END;
+
+      { The scalar-name entry driver -- not written this session. }
       PROCEDURE SETUP21;
-        PROCEDURE SETUP22; BEGIN END;
-        PROCEDURE SETUP23; BEGIN END;
-        FUNCTION SETUP24: BOOLEAN;
-        BEGIN END;
+
+        { Announces the field's current value by name: walks the
+          value list (always BOOLNAMES for a scalar field -- SETUP16
+          only reaches SETUP21 when the field's VALUES list is
+          neither KEYNAMES nor WIDENAMES) until VALUE's own TAG
+          matches, using SETUP2's bug-check with the list's own head
+          as sentinel the same way SETUP3's BST search uses SENTINEL. }
+        PROCEDURE SETUP22(VALUE: INTEGER);
+          VAR
+            P: VALPTR;
+        BEGIN
+          P := L1^.VALUES;
+          SETUP2('SHOWSCALAR', P <> BOOLNAMES);
+          WHILE VALUE <> P^.TAG DO
+          BEGIN
+            P := P^.NEXT;
+            SETUP2('SHOWSCALAR', P <> BOOLNAMES)
+          END;
+          WRITE('CURRENT VALUE IS ');
+          WRITE(P^.NAME);
+          WRITELN
+        END;
+
+        { Lists every allowed value name for the field, walking the
+          same circular value list once around. }
+        PROCEDURE SETUP23;
+          VAR
+            P: VALPTR;
+        BEGIN
+          P := L1^.VALUES;
+          WRITE('ALLOWED VALUES ARE:');
+          WRITELN;
+          REPEAT
+            SETUP2('SHOWALL', P <> BOOLNAMES);
+            WRITE(P^.NAME);
+            WRITELN;
+            P := P^.NEXT
+          UNTIL P = BOOLNAMES
+        END;
+
+        { Looks NAME2 up in the value list by name (the SETUP3/SETUP24
+          sentinel trick again: NAME2 is written into BOOLNAMES' own
+          NAME field first, so the search is guaranteed to terminate
+          at worst back at BOOLNAMES itself, with no separate bounds
+          check). Sets VALUE to the matching TAG; FALSE means NAME2
+          was not a real value name (the search wrapped all the way
+          back to BOOLNAMES). }
+        FUNCTION SETUP24(VAR VALUE: INTEGER; VAR NAME2: STRING): BOOLEAN;
+          VAR
+            P: VALPTR;
+            TARGET: STRING;
+        BEGIN
+          TARGET := NAME2;
+          P := L1^.VALUES;
+          BOOLNAMES^.NAME := TARGET;
+          WHILE P^.NAME <> TARGET DO
+          BEGIN
+            P := P^.NEXT
+          END;
+          VALUE := P^.TAG;
+          SETUP24 := P <> BOOLNAMES
+        END;
+
       BEGIN END;
+
     BEGIN END;
 
     { S(ingle: look up one field by name, re-prompting until found or
