@@ -8,8 +8,18 @@
 #   .\tools\emukeys.ps1 -Keys "F" -Wait 1500 -Shot out.png
 #
 # Keys uses SendKeys syntax: {ENTER} {ESC} {BS} for the special ones, and
-# ^x for control-x. A bare string is typed literally. Omit -Keys to capture
-# without typing anything.
+# ^x for control-x. A bare string is typed literally -- except that
+# SendKeys itself treats % + ~ ( ) { } as modifier/grouping syntax, not
+# literal characters (finding: exec-file session, 2026-08-28 -- an exec
+# file's own terminator is `%` by default, and typing a bare "%%" here
+# silently sent nothing at all: two ALT-with-no-key events, not two percent
+# signs, so the emulator never saw a terminator and the file was left
+# stale). Those seven characters are auto-escaped to {%} {+} {~} {(} {)}
+# {{} {}} below so a bare string really is typed literally; write an
+# explicit {%} etc. yourself only if you want to see the escaping fail
+# loudly instead of silently. ^x for control-x is untouched -- that one is
+# the documented, intentional exception.
+
 param(
   [string]$Keys = "",
   [int]$Wait = 1500,
@@ -68,8 +78,14 @@ if ($Keys -ne "") {
   # at that prompt) and cost a work disk. The gap only has to beat the poll,
   # not the prompts: type-ahead means there is no need to wait for each
   # prompt to appear before answering it.
+  $literalEscapes = @{ '%' = '{%}'; '+' = '{+}'; '~' = '{~}';
+                        '(' = '{(}'; ')' = '{)}'; '{' = '{{}'; '}' = '{}}' }
   foreach ($tok in [regex]::Matches($Keys, '\{[^}]+\}|.')) {
-    [System.Windows.Forms.SendKeys]::SendWait($tok.Value)
+    $send = $tok.Value
+    if ($send.Length -eq 1 -and $literalEscapes.ContainsKey($send)) {
+      $send = $literalEscapes[$send]
+    }
+    [System.Windows.Forms.SendKeys]::SendWait($send)
     Start-Sleep -Milliseconds $PerKey
   }
   Start-Sleep -Milliseconds 150

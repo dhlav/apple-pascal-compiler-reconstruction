@@ -11819,3 +11819,48 @@ not forced. Acceptance run `2026-08-28-setup-var-src`: 0 errors,
 `SETUPT.CODE` extracted and read back with `CodeFile`, `params`/`data`
 confirmed directly rather than assumed from the compiler's own summary
 screen.
+
+## 124. Exec files work end to end for driving the acceptance tier -- and `emukeys.ps1` had a real bug hiding them
+
+Apple Pascal 1.3 has a built-in scripting mechanism (manual, "Making and
+Using Exec Files") that this project had never used: `m` from the Command
+level records a keystroke sequence to a `.TEXT` file, running each command
+live as it's typed; `x` (Execute) with `EXEC/<filename>` replays the whole
+thing later with no per-keystroke waiting. Tried it against a real compile
+(`SET40T.TEXT`) and it reproduces the identical, correct result --
+`SET40COL`'s four procedures came back `params`/`data`-exact, matching
+finding 112, from a single `X EXEC/SYSHD:COMPTEST{ENTER}` instead of the
+full `C...{ENTER}...{ENTER}` sequence `emucompile.ps1` types today.
+
+**The first two attempts silently failed, and the reason is a real bug in
+`tools/emukeys.ps1`, not a misunderstanding of exec files.** An exec
+file's default terminator is `%`, typed twice to close the recording. But
+`emukeys.ps1` passes bare characters straight to .NET's
+`System.Windows.Forms.SendKeys.SendWait`, which treats `% + ~ ( ) { }` as
+modifier/grouping syntax -- `%` means "hold Alt," not "type a percent
+sign." A bare `"%%"` in `-Keys` therefore sent two Alt-with-no-key events
+into AppleWin, not two percent signs; the emulator never saw a
+terminator, and the "exec file" that resulted was a stale, never-closed
+directory entry pointing at leftover disk content from an unrelated
+earlier test (confirmed by extracting it and reading the raw bytes: no
+`%` anywhere in the file, just old bytes from a previously-deleted test
+program). This would have silently broken any future attempt to type one
+of those seven characters through this tool, exec files or otherwise.
+
+Fixed in `tools/emukeys.ps1`: single, unbraced occurrences of
+`% + ~ ( ) { }` are now auto-wrapped (`{%}`, `{+}`, etc.) before being
+sent, so a bare string really is typed literally, matching the module's
+own documented contract. `^x` for control-x is untouched -- that one was
+already an intentional, documented exception, not a bug. Re-run with the
+fix: the exec file recorded and closed correctly (2048-byte `.TEXT` file,
+today's date, real `%` bytes present at the expected offsets), and
+replaying it reproduced the exact compile.
+
+**Not yet done**: wiring this into `emucompile.ps1`/`emuassemble.ps1`/
+`emulink.ps1` as the default driving mechanism -- this session only
+proved the mechanism works end to end and fixed the tool bug blocking it.
+Also on record but explicitly not started (`docs/PLAN.md`, "carried
+forward, not scheduled"): the user's own further idea of patching
+`SYSTEM.COMPILER`/`SYSTEM.PASCAL` itself for interactive, space-to-page
+error listings -- a real source change, not a driving-mechanism change,
+and out of scope until asked for directly.

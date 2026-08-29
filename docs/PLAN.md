@@ -271,6 +271,42 @@ a route end to end; everything else is a straight read-and-rebuild.
   still listed. The demos' 1.1 `.CODE` beside their `.TEXT` is the only
   source-and-output pair Apple left behind, and it is a calibration corpus
   worth using before guessing at a construct.
+* **Interactive acceptance-tier driving (the "REDIRECT" thread).** The
+  user asked whether AppleWin's Super Serial Card (slot 2, TCP port 1977 --
+  confirmed real and working, see below) could replace the current
+  screenshot-and-SendKeys loop with a live, read-as-text session against
+  the running system -- hitting space to page through more compiler
+  errors in one shot instead of one screenshot per keystroke. Checked
+  directly, twice: `REDIRECT` is not a real Apple Pascal 1.3 procedure
+  (compiled a test program against it -- error 104, undeclared -- and it
+  is absent from the full UCSD II.0 source tree in `evidence/`, all six
+  files, zero hits), and `CONSOLE:` is hardwired to the Apple's own
+  screen/keyboard firmware (manual, confirmed), so nothing in Apple
+  Pascal 1.3 itself can redirect the system command level's own I/O to
+  `REMIN:`/`REMOUT:` (slot 2, units 7/8 -- that part of the claim was
+  real). The user's own next idea, not yet tried: **patch the compiler
+  and/or the OS itself** so error reporting (or the console generally)
+  pages interactively rather than stopping the whole compile/list -- a
+  real code change to `SYSTEM.COMPILER`/`SYSTEM.PASCAL`, not a
+  configuration trick, and "system wide" per the user (affecting more
+  than just error listings). Not started; the user asked to hang tight
+  on it. **Tried in the meantime, and it works**: Apple Pascal's own
+  built-in exec files (finding 124) -- `M(ake` records a keystroke
+  sequence to a `.TEXT` file, `X EXEC/<file>` replays the whole thing
+  later without per-keystroke waiting. Proved end to end against a real
+  compile (`SET40T.TEXT`, exact frame-size match to finding 112) and
+  fixed a real bug in `tools/emukeys.ps1` along the way -- it was
+  passing bare `% + ~ ( ) { }` straight to .NET's `SendKeys`, which
+  treats them as modifier/grouping syntax, so an exec file's own `%`
+  terminator was silently never reaching the emulator at all. Not yet
+  wired into `emucompile.ps1`/`emuassemble.ps1`/`emulink.ps1` as the
+  default driving mechanism -- only the mechanism itself and the tool
+  bug are confirmed fixed so far. AppleWin's SSC/TCP mode itself is
+  confirmed live and usable
+  (`HKCU\Software\AppleWin\CurrentVersion\Configuration\Slot 2\Serial
+  Port Name = TCP`, lazily binds port 1977 on first UART access) for
+  anything that talks to `REMIN:`/`REMOUT:` from inside a running
+  program, if that ends up being part of the eventual approach.
 
 ## The compiler phase, kept as the record
 
