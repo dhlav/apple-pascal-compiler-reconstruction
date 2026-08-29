@@ -12098,3 +12098,40 @@ level) still being unwritten. Acceptance run
 `2026-08-28-setup-bitfield`: 0 errors, 966 lines, `SETUPT.CODE`
 extracted and every procedure's `params`/`data` compared directly
 against Apple's `SETUP.CODE` via `CodeFile`.
+
+## 130. `SETUP.text` -- `SETUP9`/`SETUP11` written for real, both exact
+
+The last two self-contained flat (`lex 1`) leaves before `SETUP10`
+itself: `SETUP9` prints one value's octal/decimal/hexadecimal (and,
+when `SHOWCHAR`, ASCII/CONTROL name) read-out line; `SETUP11` prints
+the entry-format help diagram, waiting on `SETUP5` until `'C'`.
+
+`SETUP9` needed the same variant-record bit-view idiom as `SETUP17`/
+`18` (finding 129) applied to a *value* parameter rather than a
+`MISCINFO` word -- octal viewed 5-digits/3-bit-each, hex 4-digits/
+4-bit-each. First attempt combined both views into one 3-way variant
+plus a loop counter (`2` locals, `4` bytes) and landed 4 bytes short
+of Apple's `4/8`; splitting into two *separate* variant locals
+(`OCTVIEW`, `HEXVIEW`) plus an explicit plain-`INTEGER` copy (`L6`,
+used for the decimal column) instead of writing the parameter directly
+-- three named locals plus the loop counter, matching the lift's own
+`L6`/`L4` shape more literally -- closed it exactly.
+
+`SETUP11` needed an explicit `KEY: CHAR` local capturing `SETUP5`'s
+own result inside the wait loop (`REPEAT KEY := SETUP5 UNTIL KEY =
+'C'`) rather than calling `SETUP5` bare in the loop condition -- the
+lift's own `locals 1 words` was the tell, since a bare condition call
+needs no storage at all.
+
+Both exact: `SETUP9` `4/8`, `SETUP11` `6/2`. `SETUP10` -- the actual
+numeric-entry reader (locals 64 words, the largest local frame outside
+`SETUP8` in the whole file: string-buffer entry via `SETUP7`, named-
+key lookup against `CTRLNAMES`, octal/decimal/hex-prefixed digit
+parsing with overflow checking) -- remains a stub, deliberately left
+for a dedicated session rather than a rushed attempt; it's what
+`SETUP19`/`21` (finding 129) are still blocked on. `SETUP8` (the QUIT
+handler) and `TEACHSET` are the other remaining stubs.
+
+Acceptance run `2026-08-28-setup-display-help`: 0 errors, 1117 lines,
+`SETUPT.CODE` extracted and every procedure's `params`/`data` compared
+directly against Apple's `SETUP.CODE` via `CodeFile`.

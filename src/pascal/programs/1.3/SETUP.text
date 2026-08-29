@@ -618,9 +618,160 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
   END;
 
   PROCEDURE SETUP8; BEGIN END;
-  PROCEDURE SETUP9; BEGIN END;
+  { Displays VALUE in octal, decimal, and hexadecimal -- and, when
+    SHOWCHAR, its ASCII/CONTROL name too -- the read-out line the
+    numeric and scalar editors both print before prompting for a new
+    value. The octal/hex digit columns are a variant-record view of
+    VALUE itself (matching SETUP17/18's own bit-view idiom), packed
+    5-per-word/3-bit for octal and 4-per-word/4-bit for hex; a
+    negative value's own octal top "digit" is only one bit wide, so
+    it prints as a literal leading 1 rather than going through the
+    general digit loop. }
+  PROCEDURE SETUP9(SHOWCHAR: BOOLEAN; VALUE: INTEGER);
+    TYPE
+      OCTVIEW = PACKED RECORD CASE INTEGER OF
+                  0: (ASINT: INTEGER);
+                  1: (DIGIT: PACKED ARRAY [0..4] OF 0..7)
+                END;
+      HEXVIEW = PACKED RECORD CASE INTEGER OF
+                  0: (ASINT: INTEGER);
+                  1: (DIGIT: PACKED ARRAY [0..3] OF 0..15)
+                END;
+    VAR
+      OCT: OCTVIEW;
+      HEX: HEXVIEW;
+      L6, I: INTEGER;
+  BEGIN
+    L6 := VALUE;
+    OCT.ASINT := VALUE;
+    HEX.ASINT := VALUE;
+    WRITE(' OCTAL DECIMAL HEXADECIMAL');
+    IF SHOWCHAR THEN
+    BEGIN
+      IF VALUE < 128 THEN
+      BEGIN
+        WRITE(' ASCII')
+      END;
+      IF VALUE < 32 THEN
+      BEGIN
+        WRITE(' CONTROL')
+      END
+    END;
+    WRITELN;
+    I := 4;
+    IF VALUE < 0 THEN
+    BEGIN
+      WRITE('1')
+    END
+    ELSE
+    BEGIN
+      WRITE(' ');
+      WHILE (OCT.DIGIT[I] = 0) AND (I > 0) DO
+      BEGIN
+        I := I - 1;
+        WRITE(' ')
+      END
+    END;
+    WHILE I >= 0 DO
+    BEGIN
+      WRITE(OCT.DIGIT[I]);
+      I := I - 1
+    END;
+    WRITE(' ');
+    WRITE(L6:6);
+    WRITE('  ');
+    I := 3;
+    WHILE (HEX.DIGIT[I] = 0) AND (I > 0) DO
+    BEGIN
+      I := I - 1;
+      WRITE(' ')
+    END;
+    WHILE I >= 0 DO
+    BEGIN
+      IF HEX.DIGIT[I] < 10 THEN
+      BEGIN
+        WRITE(HEX.DIGIT[I])
+      END
+      ELSE
+      BEGIN
+        WRITE(CHR(HEX.DIGIT[I] - 10 + 65))
+      END;
+      I := I - 1
+    END;
+    WRITE(' ':8);
+    IF SHOWCHAR THEN
+    BEGIN
+      IF VALUE < 33 THEN
+      BEGIN
+        WRITE(CTRLNAMES[VALUE]);
+        WRITE(' ':7 - LENGTH(CTRLNAMES[VALUE]))
+      END
+      ELSE IF VALUE = 127 THEN
+      BEGIN
+        WRITE('DEL');
+        WRITE(' ':4)
+      END
+      ELSE IF VALUE IN [33..125] THEN
+      BEGIN
+        WRITE(CHR(VALUE));
+        WRITE(' ':6)
+      END;
+      IF VALUE < 32 THEN
+      BEGIN
+        WRITE('^');
+        WRITE(CHR(VALUE + 64))
+      END
+    END;
+    WRITELN
+  END;
+
   PROCEDURE SETUP10; BEGIN END;
-  PROCEDURE SETUP11; BEGIN END;
+
+  { The entry-format help screen -- explains octal/decimal/hex prefix
+    entry and, when NAMEDOK, the named-key alternative -- shown once
+    SETUP13 confirms the user wants to change the value at all. }
+  PROCEDURE SETUP11(HIGH, LOW: INTEGER; NAMEDOK: BOOLEAN);
+    VAR
+      KEY: CHAR;
+  BEGIN
+    WRITE('INPUT VALUES IN THE DECIMAL RANGE:');
+    WRITELN;
+    WRITE(LOW);
+    WRITE('..');
+    WRITE(HIGH);
+    WRITE(' IN THE FORMAT BELOW:');
+    WRITELN;
+    WRITE('!->O-{OCTAL}-!');
+    WRITELN;
+    WRITE('!            !');
+    WRITELN;
+    WRITE('--DEFAULT----!----------->DIGIT--->(CR)');
+    WRITELN;
+    WRITE('!            ! !      ! !        !');
+    WRITELN;
+    WRITE('!->H-{HEX}---! !->(-)-! !-DIGIT<-!');
+    WRITELN;
+    WRITE('!            !');
+    WRITELN;
+    WRITE('!->D{DECIMAL}!');
+    WRITELN;
+    IF NAMEDOK THEN
+    BEGIN
+      WRITE('OR IF YOUR KEYBOARD CAN GENERATE');
+      WRITELN;
+      WRITE('THE VALUE YOU WANT, JUST TYPE THE KEY');
+      WRITELN;
+      WRITE('AND THEN TYPE CARRIAGE RETURN, OR TYPE');
+      WRITELN;
+      WRITE('THE ASCII MNEMONIC FOR THE CHARACTER');
+      WRITELN
+    END;
+    WRITE('C(ONTINUE)');
+    WRITELN;
+    REPEAT
+      KEY := SETUP5
+    UNTIL KEY = 'C'
+  END;
 
   { SETUP12 -- the CHANGE submenu -- turns out to enclose ALL of
     SETUP13 through SETUP26 as nested procedures, not flat siblings

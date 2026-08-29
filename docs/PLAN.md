@@ -211,12 +211,21 @@ a route end to end; everything else is a straight read-and-rebuild.
    idiom to read/write single bits of a `MISCINFO` word -- both exact
    once a local copy of `SETUP16`'s own parameter (`FIELD := L1`,
    matching the lift's explicit `L3 := I1,1`) was added rather than
-   relying on lexical scoping alone. `SETUP8`-`11` (the QUIT handler
-   and the octal/decimal/hex display/entry engine at the flat
-   `SETUP1`-`11` level), `SETUP19`/`21` (the two entry-loop drivers,
-   nested correctly but still empty, blocked on `SETUP9`-`11`), and
-   `TEACHSET`'s own ten tutorial procedures are the remaining stubs,
-   the natural next session.
+   relying on lexical scoping alone. Filled in `SETUP9`/`11` too
+   (finding 130) -- the octal/decimal/hex read-out line (a second,
+   independent variant-record bit-view use, split into two separate
+   `OCTVIEW`/`HEXVIEW` locals rather than one combined type once a
+   combined attempt landed 4 bytes short) and the entry-format help
+   screen (needed an explicit `KEY: CHAR` local capturing `SETUP5`'s
+   own result, not a bare call in the loop condition) -- both exact.
+   `SETUP8` (the QUIT handler) and `SETUP10` (the numeric-entry
+   reader, `locals 64 words` -- string-buffer entry, named-key lookup,
+   radix-prefixed digit parsing with overflow checking, the largest
+   local frame in the file outside `SETUP8` itself) are the two
+   remaining flat-level stubs, deliberately left for a dedicated
+   session rather than a rushed attempt -- they're what `SETUP19`/`21`
+   are still blocked on. `TEACHSET`'s own ten tutorial procedures are
+   the last stub, the natural next session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.
