@@ -112,10 +112,19 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
                   NAME:   STRING     {   6, 41 words }
                 END;
     { SYSTEM.MISCINFO's own on-disk shape -- 96 words, matching
-      DISKSET.md's own 192-byte listing. Left generic: nothing this
-      session wrote reads or writes an individual field, only the
-      OFS/BIT/BITS triple describing where one would be. }
-    MISCREC = ARRAY [0..95] OF INTEGER;
+      DISKSET.md's own 192-byte listing. Each word is a variant --
+      overlaid as a whole INTEGER for block I/O and as sixteen
+      individual bits for SETUP17/SETUP18's own pack/unpack -- the
+      same idiom already established and compiled clean in
+      SET40COLS.text's own FLAGBYTE. `0..1`, not BOOLEAN: SETUP17's
+      own pack does direct arithmetic on a bit value
+      (`RESULT+RESULT+bit`), which BOOLEAN can't do without an
+      explicit test. }
+    MISCWORD = PACKED RECORD CASE INTEGER OF
+                 0: (ASINT: INTEGER);
+                 1: (BIT: PACKED ARRAY [0..15] OF 0..1)
+               END;
+    MISCREC = ARRAY [0..95] OF MISCWORD;
 
   VAR
     ROOT:      NODEPTR;    { G9, the field tree's own root }
@@ -700,8 +709,50 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     END;
 
     PROCEDURE SETUP16(L1: NODEPTR);
-      PROCEDURE SETUP17; BEGIN END;
-      PROCEDURE SETUP18; BEGIN END;
+      { Packs the current field's own bits out of MISCINFO into
+        RESULT (VAR), most-significant bit first. FIELD is a local
+        copy of L1 (SETUP16's own parameter) -- OFS names the
+        MISCINFO word, BIT/BITS the range within it. }
+      PROCEDURE SETUP17(VAR RESULT: INTEGER);
+        VAR
+          LO, HI: INTEGER;
+          FIELD: NODEPTR;
+      BEGIN
+        RESULT := 0;
+        FIELD := L1;
+        HI := FIELD^.BIT + FIELD^.BITS - 1;
+        LO := FIELD^.BIT;
+        WHILE HI >= LO DO
+        BEGIN
+          RESULT := RESULT + RESULT + MISCINFO[FIELD^.OFS].BIT[HI];
+          HI := HI - 1
+        END
+      END;
+
+      { The inverse of SETUP17: unpacks VALUE's own bits back into
+        MISCINFO, least-significant bit first starting at BIT. A
+        negative VALUE sets the field's own top bit (BIT+BITS-1) as a
+        sign flag and continues with the magnitude. }
+      PROCEDURE SETUP18(VALUE: INTEGER);
+        VAR
+          LO, HI: INTEGER;
+          FIELD: NODEPTR;
+      BEGIN
+        FIELD := L1;
+        IF VALUE < 0 THEN
+        BEGIN
+          MISCINFO[FIELD^.OFS].BIT[FIELD^.BIT + FIELD^.BITS - 1] := 1;
+          VALUE := -VALUE
+        END;
+        LO := FIELD^.BIT;
+        HI := FIELD^.BIT + FIELD^.BITS - 1;
+        WHILE LO <= HI DO
+        BEGIN
+          MISCINFO[FIELD^.OFS].BIT[LO] := VALUE MOD 2;
+          VALUE := VALUE DIV 2;
+          LO := LO + 1
+        END
+      END;
 
       { The numeric entry driver -- not written this session. }
       PROCEDURE SETUP19;

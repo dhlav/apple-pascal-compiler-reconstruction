@@ -12064,3 +12064,37 @@ entry engine at the SETUP1-11 flat level) and `TEACHSET`.
 Acceptance run `2026-08-28-setup-scalar-editor`: 0 errors, 915 lines,
 `SETUPT.CODE` extracted and every procedure's `params`/`data` compared
 directly against Apple's `SETUP.CODE` via `CodeFile`.
+
+## 129. `SETUP.text` -- `SETUP17`/`SETUP18` (bit-field pack/unpack) written for real, exact
+
+`SETUP16`'s two remaining self-contained leaves before the numeric-
+entry driver itself: `SETUP17` packs a field's own bits out of
+`MISCINFO` into an integer, most-significant first; `SETUP18` is the
+inverse, unpacking an integer's bits back in, with a negative value
+setting the field's own top bit as a sign flag first. Both need
+single-bit read/write into one `MISCINFO` word (`ARRAY[0..95] OF
+INTEGER`) -- redeclared `MISCREC`'s element type as a variant record
+(`MISCWORD`), overlaying a whole `INTEGER` with a `PACKED ARRAY[0..15]
+OF 0..1` bit view, reusing the exact idiom already established and
+compiled clean in `SET40COLS.text`'s own `FLAGBYTE` (`0..1`, not
+`BOOLEAN`, since `SETUP17`'s own pack does direct arithmetic on a bit
+value, `RESULT+RESULT+bit`, which `BOOLEAN` can't do without an
+explicit test). No other code touches `MISCINFO`'s elements directly
+yet (`SETUP8` is still a stub), so the type change is safe.
+
+First attempt landed 2 bytes short on each (`2/4` against Apple's
+`2/6`) -- both procedures access `L1` (`SETUP16`'s own parameter)
+directly via lexical scoping, but the lift shows an explicit `L3 :=
+I1,1` step the real source apparently takes too: a local `FIELD:
+NODEPTR` copy of `L1`, one extra word, used throughout instead of `L1`
+itself. Adding it closed both exactly: `SETUP17` `2/6`, `SETUP18`
+`2/6`.
+
+Remaining in `SETUP16`'s own subtree: `SETUP19` and `SETUP21`, the two
+entry-loop drivers that call everything written this session and last
+(`SETUP7`, `9`-`11`, `13`, `17`, `18`, `20`, `22`-`24`) -- blocked on
+`SETUP9`-`11` (the octal/decimal/hex display/entry engine at the flat
+level) still being unwritten. Acceptance run
+`2026-08-28-setup-bitfield`: 0 errors, 966 lines, `SETUPT.CODE`
+extracted and every procedure's `params`/`data` compared directly
+against Apple's `SETUP.CODE` via `CodeFile`.

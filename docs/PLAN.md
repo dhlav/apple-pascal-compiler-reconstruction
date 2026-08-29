@@ -206,12 +206,17 @@ a route end to end; everything else is a straight read-and-rebuild.
    scalar-value trio `SETUP22`/`23`/`24` (finding 128) plus `SETUP20`
    (`2^N`), all four exact first attempt -- `24` reuses SETUP3's own
    sentinel-search trick, a second independent confirmation of that
-   idiom. `SETUP8`-`11` (the QUIT handler and the octal/decimal/hex
-   display/entry engine at the flat `SETUP1`-`11` level), `SETUP16`-
-   `19`/`21` (the bit-field pack/unpack and the two entry-loop
-   drivers, nested correctly but still empty), and `TEACHSET`'s own
-   ten tutorial procedures are the remaining stubs, the natural next
-   session.
+   idiom. Filled in `SETUP17`/`18` too (finding 129, the bit-field
+   pack/unpack), reusing `SET40COLS.text`'s own variant-record bit-view
+   idiom to read/write single bits of a `MISCINFO` word -- both exact
+   once a local copy of `SETUP16`'s own parameter (`FIELD := L1`,
+   matching the lift's explicit `L3 := I1,1`) was added rather than
+   relying on lexical scoping alone. `SETUP8`-`11` (the QUIT handler
+   and the octal/decimal/hex display/entry engine at the flat
+   `SETUP1`-`11` level), `SETUP19`/`21` (the two entry-loop drivers,
+   nested correctly but still empty, blocked on `SETUP9`-`11`), and
+   `TEACHSET`'s own ten tutorial procedures are the remaining stubs,
+   the natural next session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.
