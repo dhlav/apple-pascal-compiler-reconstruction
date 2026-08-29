@@ -51,6 +51,14 @@ $UseHD = -not $Floppy
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 500
 if ($UseHD) {
+  # An exec file (finding 124), not live SendKeys -- see emucompile.ps1's
+  # module note. This is the path that most needed it: the module note
+  # above documents SYSTEM.ASSMBLER's own load eating characters typed
+  # right behind a live "A", which an exec file cannot suffer from at all.
+  $HD1 = "$root\build\disks\HD1.hdv"
+  $asmKeys = "ASYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
+  python "$root\tools\execfile.py" $HD1 GOASM $asmKeys
+  if ($LASTEXITCODE -ne 0) { throw "execfile.py failed to install GOASM.TEXT" }
   Start-Process -FilePath "python" `
     -ArgumentList @("$root\tools\runemu.py","--hd") -WindowStyle Hidden
 } else {
@@ -71,18 +79,14 @@ if (-not $UseHD -and -not $NoPrefix) {
 
 # A(ssemble, the source file, the codefile, then <ret> for no listing.
 #
-# On the HD path this is sent as two SendKeys calls, not one: SYSTEM.ASSMBLER's
-# own load off disk is slow enough to eat characters typed right behind the
-# bare "A" (finding: HD acceptance session, 2026-08-26 -- the whole command
-# in one call scrambled into unrelated single-letter commands both times it
-# was tried there). The floppy path is left as the single burst that was
-# already verified working -- splitting it changed nothing when tried, which
-# on its own would be fine, except the floppy run right after F(iler's
-# P(refix/Q(uit produced no assembler output at all, so the untouched form
-# stays untouched here rather than risk a regression on a path that worked.
+# On the HD path this is now X EXEC/SYSHD:GOASM -- the exec file installed
+# above already holds the whole A...{ENTER}...{ENTER}...{ENTER} sequence,
+# so there is nothing left to split across SendKeys calls or race against
+# SYSTEM.ASSMBLER's own slow load (finding 124). The floppy path is
+# unchanged: still the single live-SendKeys burst that was already
+# verified working there.
 if ($UseHD) {
-  & "$here\emukeys.ps1" -Keys "A" -Wait 3000 -PerKey $PerKey | Out-Null
-  $keys = "SYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
+  $keys = "XEXEC/SYSHD:GOASM{ENTER}"
 } else {
   $keys = "AWORK:$Name.TEXT{ENTER}WORK2:$Name.CODE{ENTER}{ENTER}"
 }

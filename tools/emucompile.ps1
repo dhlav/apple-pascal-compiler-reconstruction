@@ -29,11 +29,16 @@
 # it carries no SYSTEM.COMPILER of its own. 1.1's compiler is the authority
 # for 1.1's p-code, so a 1.1 run must not be left on the default.
 #
-# The keystrokes all go in one SendKeys call. Apple Pascal has a type-ahead
-# buffer and the emulator is running at maximum speed, so there is no need
-# to wait for each prompt to appear and then answer it -- three seconds for
-# the boot, then the whole command at once, and the system consumes it as
-# it gets to each prompt.
+# The hard-disk path drives this through an exec file (finding 124), not
+# live SendKeys: python tools/execfile.py writes the whole compile command
+# straight onto SYSHD as GOCOMP.TEXT, and the only keystrokes actually sent
+# to the emulator are X EXEC/SYSHD:GOCOMP{ENTER} -- two tokens instead of
+# the whole per-field sequence. This is not just fewer keystrokes: the OS
+# reads its own recorded keystrokes off disk at its own pace once X(ecute
+# starts, so there is nothing left for a slow disk load to race against and
+# eat characters from (the exact failure mode emuassemble.ps1/emulink.ps1's
+# own module notes describe for A(ssemble/L(ink). The floppy path is
+# unchanged -- still one live SendKeys burst, as before.
 param(
   [string]$Name = "BODY13",
   [int]$Boot = 3,          # seconds to let the system boot before typing
@@ -60,12 +65,21 @@ if ($UseHD) {
   $emuargs = @("$root\tools\runemu.py","--floppy","--boot128","--release",$Release)
   if ($Work2) { $emuargs += "--work2" }
 }
+$HD1 = "$root\build\disks\HD1.hdv"
+if ($UseHD) {
+  # Written before AppleWin ever opens the volume -- same reasoning as
+  # mkharddisks.py's own source files, just built per invocation instead
+  # of once at disk-build time.
+  $compileKeys = "CSYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
+  python "$root\tools\execfile.py" $HD1 GOCOMP $compileKeys
+  if ($LASTEXITCODE -ne 0) { throw "execfile.py failed to install GOCOMP.TEXT" }
+}
+
 Start-Process -FilePath "python" -ArgumentList $emuargs -WindowStyle Hidden
 Start-Sleep -Seconds 2
 
-# C(ompile, the source file, the codefile, then <ret> for no listing.
 if ($UseHD) {
-  $keys = "CSYSHD:$Name.TEXT{ENTER}SYSHD:$Name.CODE[*]{ENTER}{ENTER}"
+  $keys = "XEXEC/SYSHD:GOCOMP{ENTER}"
 } else {
   $out = if ($Work2) { "WORK2:" } else { "WORK:" }
   $keys = "CWORK:$Name.TEXT{ENTER}$out$Name.CODE{ENTER}{ENTER}"

@@ -69,6 +69,22 @@ if ($UseHD -and -not $PSBoundParameters.ContainsKey("Boot")) { $Boot = 6 }
 Get-Process AppleWin -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue
 Start-Sleep -Milliseconds 500
 if ($UseHD) {
+  # An exec file (finding 124), not live SendKeys -- see emucompile.ps1's
+  # module note. Tried, and a first test (host = SKEL13) looked like it
+  # broke this badly -- but SKEL13 is the plain declaration skeleton
+  # with no unresolved EXTERNAL, so it links after the host file alone
+  # (this module's own note above already says so); the script's extra
+  # scripted answers, meant for prompts that never appear, landed on the
+  # Command: menu instead, and "SKEL13LNK" contains an "L" that
+  # re-triggered Link with the tail as a bogus host answer -- a test
+  # picked wrong, not a bug in exec files or in this script. Re-verified
+  # against FORMATTR/FMTNATIV (a host that actually has an unresolved
+  # EXTERNAL, finding 104's own pair) before trusting this.
+  $HD1 = "$root\build\disks\HD1.hdv"
+  $linkKeys = "LSYSHD:$HostFile.CODE{ENTER}SYSHD:$Lib.CODE{ENTER}" +
+              "{ENTER}{ENTER}SYSHD:$Out.CODE[*]{ENTER}"
+  python "$root\tools\execfile.py" $HD1 GOLINK $linkKeys
+  if ($LASTEXITCODE -ne 0) { throw "execfile.py failed to install GOLINK.TEXT" }
   Start-Process -FilePath "python" `
     -ArgumentList @("$root\tools\runemu.py","--hd") -WindowStyle Hidden
 } else {
@@ -81,14 +97,13 @@ Start-Sleep -Seconds 2
 & "$here\emukeys.ps1" -Wait ($Boot * 1000) | Out-Null
 
 if ($UseHD) {
-  # L(ink, then each prompt answered separately once it has actually
-  # appeared, not on a shared timer -- see the module note.
-  & "$here\emukeys.ps1" -Keys "L" -Wait 3000 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "SYSHD:$HostFile.CODE{ENTER}" -Wait 2000 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "SYSHD:$Lib.CODE{ENTER}" -Wait 2000 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "{ENTER}" -Wait 1500 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "{ENTER}" -Wait 1500 -PerKey $PerKey | Out-Null
-  & "$here\emukeys.ps1" -Keys "SYSHD:$Out.CODE[*]{ENTER}" -Wait ($Link * 1000) -Shot $Shot -PerKey $PerKey
+  # X EXEC/SYSHD:GOLINK -- the exec file installed above already holds
+  # every prompt's answer (host, lib, the two blank lines that end the
+  # lib list and skip the map file, then the output name), so there is
+  # nothing left to answer prompt-by-prompt here (finding 124). Only
+  # correct for a host file with a real unresolved EXTERNAL -- see the
+  # module note above for what happens with one that has none.
+  & "$here\emukeys.ps1" -Keys "XEXEC/SYSHD:GOLINK{ENTER}" -Wait ($Link * 1000) -Shot $Shot -PerKey $PerKey
 } else {
   # L(ink, host, lib, <ret> to end the lib list, <ret> for no map, output.
   $keys = "L$Vol$HostFile.CODE{ENTER}$Vol$Lib.CODE{ENTER}{ENTER}{ENTER}$Vol$Out.CODE{ENTER}"

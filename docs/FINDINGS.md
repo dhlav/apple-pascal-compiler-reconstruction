@@ -11864,3 +11864,59 @@ forward, not scheduled"): the user's own further idea of patching
 `SYSTEM.COMPILER`/`SYSTEM.PASCAL` itself for interactive, space-to-page
 error listings -- a real source change, not a driving-mechanism change,
 and out of scope until asked for directly.
+
+## 125. Exec files wired in as the default for all three emu*.ps1 scripts -- and a false alarm on the way
+
+Finding 124 proved the mechanism; this wires it into `emucompile.ps1`,
+`emuassemble.ps1`, and `emulink.ps1`'s hard-disk paths as the actual
+default, via a new `tools/execfile.py` (`keys_to_exec_text`/
+`build_exec_file`/`install_exec_file`, reusing `a2pascal.textfile.
+encode_text` -- an exec file is just a plain `.TEXT` file with `%`
+framing, nothing new to encode). Each script now writes its whole
+compile/assemble/link keystroke sequence straight onto `HD1.hdv` as a
+fixed-name exec file (`GOCOMP`/`GOASM`/`GOLINK`) before AppleWin ever
+opens it, then sends only `X EXEC/SYSHD:<name>{ENTER}` -- two tokens
+instead of the whole per-field sequence, and nothing left for
+`SYSTEM.ASSMBLER`'s own slow load to eat characters from (the exact
+failure mode `emuassemble.ps1`'s own former module note described).
+
+Verified against real compiles/assembles/links, not just "it ran":
+`SKEL13.TEXT` compiled 599 lines/0 errors; `SEARCH.TEXT` assembled 519
+lines/0 errors (finding 124 already covered these two); `FORMATTR.TEXT`
+compiled 263 lines/0 errors, `FMTNATIV.TEXT` assembled 225 lines/0
+errors, and linking them together reproduced finding 104's own result
+exactly -- `FORMATTE` segment length 2672 bytes, `Copying func
+FORMATDI` in the transcript.
+
+**A false alarm along the way, worth recording as its own lesson.** The
+first attempt to verify `emulink.ps1` used `SKEL13` as the host file and
+appeared to badly corrupt the Linker's first prompt (`Link what host
+codefile? NK.CODE[*]`, `No file NK.CODE[*]`) -- `NK.CODE[*]` is exactly
+the last 10 characters of the *output* filename (`SKEL13LNK.CODE[*]`),
+which looked exactly like an exec-file replay racing SYSTEM.LINKER's own
+slow load and overflowing the type-ahead buffer (plausible: unlike
+SendKeys' 60ms/char pacing, exec-file replay has no throttling at all).
+That diagnosis was **wrong**, caught two ways: the user pointed out
+`SKEL13.CODE` didn't actually exist on the disk at the time (a prior
+`mkharddisks.py` rebuild had wiped the compiler output from an earlier
+session, since it isn't part of `EVIDENCE_CODEFILES` or `FILES`), and
+reverting to the original, previously-"working" multi-call live-SendKeys
+code reproduced the *identical* corruption -- proving it had nothing to
+do with exec files at all. The real cause: `SKEL13.TEXT` is the plain
+declaration skeleton with no unresolved `EXTERNAL`, so `SYSTEM.LINKER`
+links after the host file alone and never asks for a library
+(`emulink.ps1`'s own header comment already says this). The scripted
+answers meant for prompts that never appeared landed on the `Command:`
+menu instead, and `SKEL13LNK` contains an `L` that re-triggered `L(ink`
+with the tail (`NK.CODE[*]`) fed in as a bogus new host-file answer --
+a wrong test case, not a bug in the mechanism under test. Re-verified
+clean against `FORMATTR`/`FMTNATIV`, a host that genuinely has an
+unresolved `EXTERNAL` (finding 104's own pair). The working lesson: when
+a `L(ink` test looks corrupted, check first whether the host file even
+has an `EXTERNAL` to resolve, before chasing a timing theory.
+
+Not touched: the `-Floppy` paths in all three scripts, still driven by
+live SendKeys as before -- the hard-disk layout is the default this
+project actually runs, and the floppy layout doesn't have the same
+disk-load-races-SendKeys problem to begin with (system tools and output
+live on separate volumes there).

@@ -298,11 +298,13 @@ a route end to end; everything else is a straight read-and-rebuild.
   fixed a real bug in `tools/emukeys.ps1` along the way -- it was
   passing bare `% + ~ ( ) { }` straight to .NET's `SendKeys`, which
   treats them as modifier/grouping syntax, so an exec file's own `%`
-  terminator was silently never reaching the emulator at all. Not yet
-  wired into `emucompile.ps1`/`emuassemble.ps1`/`emulink.ps1` as the
-  default driving mechanism -- only the mechanism itself and the tool
-  bug are confirmed fixed so far. AppleWin's SSC/TCP mode itself is
-  confirmed live and usable
+  terminator was silently never reaching the emulator at all. **Now
+  wired in as the default** for all three `emu*.ps1` scripts' hard-disk
+  paths (finding 125, `tools/execfile.py`), verified against real
+  compiles/assembles/links including a full `FORMATTR`/`FMTNATIV` link
+  reproducing finding 104's own byte-identical result -- the `-Floppy`
+  paths are untouched, still live SendKeys. AppleWin's SSC/TCP mode
+  itself is confirmed live and usable
   (`HKCU\Software\AppleWin\CurrentVersion\Configuration\Slot 2\Serial
   Port Name = TCP`, lazily binds port 1977 on first UART access) for
   anything that talks to `REMIN:`/`REMOUT:` from inside a running
