@@ -165,7 +165,7 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     FORWARD;
   FUNCTION SETUP3(KEY: STRING): BOOLEAN;
     FORWARD;
-  PROCEDURE SETUP4(VAR DEST: STRING; SRC: STRING);
+  PROCEDURE SETUP4(VAR DEST: STRING; VAR SRC: STRING);
     FORWARD;
 
   SEGMENT PROCEDURE NUMBER2; BEGIN END;
@@ -450,20 +450,21 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     SETUP3 := CUR <> SENTINEL
   END;
 
-  { DEST := SRC with trailing blanks trimmed. The binary's own version
-    uses SCAN and MOVELEFT to do this in place on a single buffer
-    (language reference, "The SCAN Function") -- this session wrote the
-    plain DELETE-loop equivalent instead, matching observable behavior
-    without yet reproducing the exact instruction shape. Confirmed a
-    real, large miss doing it this way: `params=4/data=82` here against
-    Apple's `4/2` -- `DELETE`'s own value-STRING second parameter (SRC)
-    costs the usual ~41-word hidden copy-on-entry every value STRING
-    parameter does elsewhere in this project (`CHECKERR`, `SETUP2`),
-    which the binary's own byte-level SCAN/MOVELEFT approach never pays
-    at all since it never takes a STRING by value. Rewriting this to
-    match SCAN/MOVELEFT is the natural next step, not attempted this
-    session (finding 122). }
-  PROCEDURE SETUP4(*VAR DEST: STRING; SRC: STRING*);
+  { DEST := SRC with trailing blanks trimmed. First written with SRC as a
+    value STRING parameter, matching observable behavior but costing a
+    real, large miss: `params=4/data=82` against Apple's `4/2`. The
+    binary's own procedure 4 pushes SRC's address for both the `SAS` that
+    does `DEST := SRC` and the later `LDB`/`STB` byte reads -- i.e. SRC is
+    `VAR`, not value, which is what actually explains the whole gap: a
+    value STRING parameter costs the usual ~41-word hidden copy-on-entry
+    seen elsewhere in this project (`CHECKERR`, `SETUP2`), and `VAR`
+    never pays it. Every call site passes an lvalue (`CUR^.NAME`,
+    `PARENT^.NAME`, or INITS6's own value parameter `NAME`), so `VAR`
+    costs nothing at any call site. The binary's own SCAN/MOVELEFT
+    instruction shape is not reproduced here -- this keeps the
+    DELETE-loop but fixes the parameter passing, which is what the frame
+    size actually depends on. }
+  PROCEDURE SETUP4(*VAR DEST: STRING; VAR SRC: STRING*);
   BEGIN
     DEST := SRC;
     WHILE (LENGTH(DEST) > 0) AND (DEST[LENGTH(DEST)] = ' ') DO

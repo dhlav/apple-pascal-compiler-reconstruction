@@ -186,11 +186,16 @@ a route end to end; everything else is a straight read-and-rebuild.
    real `(*$U-*) PROGRAM PASCALSYSTEM` / `SEGMENT PROCEDURE
    SETUP(P1,P2)` wrapping shape (`SYSTEM.COMPILER`'s own skeleton has
    the precedent -- a naive single-`PROGRAM` shape fails `EXIT`). The
-   outer body, `SETUP2`, `SETUP3`, and all eight `NUMBERn` stubs are
-   frame-exact; `SETUP4` is a documented miss. `SETUP7` onward -- the
-   actual value-editing screens the `CHANGE` menu drives -- and
-   `TEACHSET`'s own ten tutorial procedures are still placeholder stubs,
-   the natural next session.
+   outer body, `SETUP2`, `SETUP3`, `SETUP5`, `SETUP6`, and all eight
+   `NUMBERn` stubs are frame-exact (finding 123 corrected an earlier
+   wrong claim that `SETUP5`/`SETUP6` didn't match -- they always did).
+   `SETUP4` went from an 82-word miss to a one-word miss once `SRC` was
+   made `VAR` instead of value, matching what the binary's own
+   procedure 4 actually loads (finding 123); the one remaining word is
+   documented not forced. `SETUP7` onward -- the actual value-editing
+   screens the `CHANGE` menu drives -- and `TEACHSET`'s own ten
+   tutorial procedures are still placeholder stubs, the natural next
+   session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.

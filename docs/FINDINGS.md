@@ -11778,8 +11778,44 @@ own outer body **exact** (`4/352`), `SETUP2` **exact** (`4/82`), `SETUP3`
 `DELETE`'s own value-`STRING` parameter costs the usual ~41-word hidden
 copy-on-entry the binary's byte-level `SCAN`/`MOVELEFT` approach never
 pays; rewriting to match is the natural next step). `SETUP5`/`SETUP6`
-are `4/0` against Apple's `0/0`, an undiagnosed small params gap on two
-zero-argument `FUNCTION`s. `INITS`'s own nine procedures compile and run
-in shape but have not yet been checked one by one against Apple's own
-per-procedure frame sizes. `SETUP7` onward and `TEACHSET` remain
-placeholder stubs.
+were re-checked directly against Apple's own dictionary rather than
+carried forward from memory and turned out already exact at `4/0` each
+-- see 123 below, which corrects this paragraph. `INITS`'s own nine
+procedures compile and run in shape but have not yet been checked one
+by one against Apple's own per-procedure frame sizes. `SETUP7` onward
+and `TEACHSET` remain placeholder stubs.
+
+## 123. `SETUP.text` -- `SETUP4`'s real gap was `VAR` vs value on `SRC`, and `SETUP5`/`SETUP6` were already exact
+
+122f's own claim that `SETUP5`/`SETUP6` were `4/0` against Apple's
+`0/0` doesn't survive a direct check: reading `SETUP.CODE`'s own
+dictionary off `evidence/disks/.../APPLE3...dsk` with `CodeFile` gives
+procedure 5 (`SETUP5`) `params=4/data=0` and procedure 6 (`SETUP6`)
+`params=4/data=0` -- exactly what this project's own `SETUP.text`
+already compiled to. There never was a gap; 122f's summary was wrong,
+not the source.
+
+`SETUP4` (`analysis/utilities/SETUP-1.3-APPLE3.pcode.txt`, procedure 4)
+opens with `SLDL 2` / `SLDL 1` / `SAS 80` -- a string-assign taking two
+*addresses* off the stack, both loaded via `SLDL` (a parameter-list
+load), and the rest of the procedure keeps reading/writing through
+`SLDL 2` (`LDB`/`STB`, byte-level scan-and-shift) the same way. A
+value-`STRING` parameter's own hidden copy is never addressed this way
+-- only a `VAR` parameter's address is loaded straight off the parameter
+list and dereferenced repeatedly like this. So `SRC`, not just `DEST`,
+is `VAR` in Apple's real declaration:
+`PROCEDURE SETUP4(VAR DEST, SRC: STRING)`. Every call site (`SETUP4(TRIMMED,
+CUR^.NAME)`, `SETUP4(TRIMMED, PARENT^.NAME)`, `SETUP4(TRIMMED, NAME)`
+where `NAME` is itself `INITS6`'s own value parameter) passes an lvalue,
+so the change costs nothing at any call site.
+
+Changing `SRC: STRING` to `VAR SRC: STRING` (keeping the existing
+`DELETE`-loop trim, not yet rewritten to the binary's own byte-level
+`SCAN`/`MOVELEFT` shape) took the frame from `4/82` to `4/0` against
+Apple's `4/2` -- the ~41-word hidden-copy miss is gone entirely; what's
+left is a single word, almost certainly the `SCAN` loop's own counter
+local that the `DELETE`-loop rewrite has no equivalent of. Documented,
+not forced. Acceptance run `2026-08-28-setup-var-src`: 0 errors,
+`SETUPT.CODE` extracted and read back with `CodeFile`, `params`/`data`
+confirmed directly rather than assumed from the compiler's own summary
+screen.
