@@ -339,6 +339,34 @@ a route end to end; everything else is a straight read-and-rebuild.
   Port Name = TCP`, lazily binds port 1977 on first UART access) for
   anything that talks to `REMIN:`/`REMOUT:` from inside a running
   program, if that ends up being part of the eventual approach.
+* **A lower-level redirect idea, pasted by the user, not started.**
+  Rather than a language-level `REDIRECT` (established not to exist,
+  above), a pasted `CHANGEIO` program patches the actual I/O dispatch
+  table in low memory: page 0 location 230 (decimal) holds the address
+  of a table of per-unit "write pointers," and each write pointer
+  addresses a location exactly 93 (or 92, per the program's own two
+  slightly differing comments -- worth checking which is right before
+  trusting it) bytes ahead of a JMP to that unit's actual output
+  routine. Unit 1 (CONSOLE:) and unit 6 (PRINTER:) each have a normal
+  pointer; unit 7 (REMIN:) always reads 0 and is unused as storage, so
+  swapping CONSOLE:'s own output-routine address with another unit's
+  (there, PRINTER:) and stashing the original in unit 7's own pointer
+  slot (as a scratch/undo location) redirects console output at
+  runtime, with no compiler support needed at all -- PEEK/POKE only,
+  via a `WORD` variant record overlaying an `INTEGER` with a `^MEM`
+  pointer for byte access (`MEM = PACKED ARRAY[0..1] OF BYTE`). The
+  user's own plan: try something similar to redirect the console
+  *read* pointer to `REMIN:` and the *write* pointer to `REMOUT:`,
+  rather than to `PRINTER:` -- which, if it works, would be the actual
+  fix for the interactive-driving thread above, achieving what
+  `REDIRECT` was wrongly assumed to do. Not verified against anything
+  yet -- not the pasted program's own two addresses/offsets, not
+  whether an analogous *input*-side table exists at some other page-0
+  location for unit 7 the same way this one exists for output units,
+  not whether this even works under 1.3's own layout (the program's
+  own comment dates it 7/22/83, unclear which Pascal version). The
+  user asked to just record this and come back to it later -- nothing
+  here has been tried.
 
 ## The compiler phase, kept as the record
 
