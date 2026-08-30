@@ -13116,3 +13116,103 @@ instruction stream (entry through the `INITIALIZE` call) matches
 Apple's real p-code byte for byte, including the auto-generated
 `FINIT` call neither this file nor its author wrote a line of source
 for.
+
+## 146. `WHAT_F` was two pointers, `WHAT_H` was two booleans -- more of finding 143's own Tribby split corrected
+
+Probing this file's own compiled offsets directly (temporary statements
+referencing every finding-143 field in `PASCALSY.1`'s own body,
+disassembling the host compiler's output) turned up two more spots
+where Tribby's own guessed grouping was wrong in structure though
+right in total size -- the same pattern finding 145 already found for
+`WHAT_I`-`WHAT_K`:
+
+* **`WHAT_F` (word 381-382, declared `ARRAY[1..2] OF INTEGER`) is
+  really two pointers.** `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:
+  2707`: `NEW(@I2,381, 256)` -- word 381 is a pointer, heap-allocating
+  the 256-word (512-byte) EXEC read/write buffer at runtime, not a
+  4-byte static array slot. Word 382 mirrors `EMPTYHEAP` exactly
+  (`I2,382 := I2,54` on entry to EXEC mode, `I1,54 := I1,382` on exit,
+  `PASCALSY.45`) -- a saved heap mark, same pointer type as
+  `EMPTYHEAP` itself, used to `RELEASE` the buffer's own allocation
+  when EXEC processing finishes. Split into `EXBUFPTR: WINDOWP`
+  (typed to match `FINIT`/`FBLOCKIO`'s own parameter with no coercion,
+  not a new array type of this file's own invention) and
+  `EXEC_MARK: ^INTEGER`.
+* **`WHAT_H` (word 392-393, declared `ARRAY[1..2] OF INTEGER`) is
+  really two booleans.** `PASCALSY.57`: `not (I2,390) or I2,392` --
+  used directly as an `OR` operand, which Pascal requires to be
+  `BOOLEAN`, not `INTEGER`. `PASCALSY.45`: `I1,393 := (I1,54 = nil)`
+  -- a plain boolean assignment. Split into `WHAT_H1`/`WHAT_H2:
+  BOOLEAN` (both still Tribby-unidentified in *purpose*, unlike
+  `EXBUFPTR`/`EXEC_MARK` above -- only the *type* is corrected here).
+
+Both splits are same-word-count swaps (2 words either way), so
+`PASCALSY.1`'s own frame held exact at `902` bytes throughout -- these
+fixes were required to make procedures 44-47 (finding 147) *compile*
+under real boolean/pointer semantics, not to close any further size
+gap.
+
+## 147. `PASCALSY.44`-`47` -- the EXEC-file buffered I/O layer, written for real
+
+Past the 41/42 UCSD-declared set (finding 136) -- genuinely new
+territory, no UCSD source and no Tribby name (his own document covers
+data, not procedures). Four short bodies straight from the lift
+(`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:965-1031`), named for
+what they do rather than any recovered name: `EXECPUTCH(CH)` appends
+one character to the write buffer (`EXBUFPTR`), auto-flushing near the
+512-byte boundary and auto-closing on a doubled terminator character;
+`EXECCLOSE(WASNORMAL)` closes the exec file, either read side (plain)
+or write side (padding a doubled terminator + CR first when normal),
+then restores `EMPTYHEAP` from `EXEC_MARK`; `EXECREADBLK`/
+`EXECWRITEBLK` move one 512-byte block through `EXEC_FILE`
+(finding 145).
+
+Two real compiler-syntax lessons surfaced writing these, both
+resolved by precedent already established elsewhere in this project
+rather than guessed at:
+
+* **`FCLOSE`/`FBLOCKIO` cannot be called directly on `EXEC_FILE`.**
+  The host compiler rejects it outright: `EXEC_FILE` is a raw `FILE`,
+  `FCLOSE`'s/`FBLOCKIO`'s own declared parameter is `VAR F: FIB` --
+  different types under normal type-checking, even though the p-code
+  the compiler *auto-generates* for `FINIT` (finding 145) uses exactly
+  this address with no such complaint (compiler-generated code, not
+  type-checked user Pascal). The fix is the standard Pascal sugar
+  instead -- `CLOSE(EXEC_FILE[, LOCK])` and
+  `BLOCKREAD`/`BLOCKWRITE(EXEC_FILE, buffer, nblocks, blocknum)` --
+  already established, working precedent in this project's own
+  verified `PASCALCO.text` (`BLOCKREAD(LIBRARY, SEGDICT, 1, 0)`,
+  `CLOSE(LP, LOCK)`), confirmed directly against the language
+  reference manual's own "Opening and Closing Files" / built-in
+  procedures section.
+* **`SCAN`'s real 3-argument form, not the lift's raw 6-operand
+  dump.** The lift renders `PASCALSY.46`'s real backward buffer scan
+  as `SCAN(-(511), 0, 13, I1,381, 511, 0)` -- not literal, re-typeable
+  syntax (`SCAN` is a special CSP whose true form the lift's generic
+  renderer doesn't reconstruct, same caveat finding 138b already
+  documented for `SPOS`). The manual's own `SCAN(LIMIT, PEXPR,
+  SOURCE)` -- `LIMIT` negative scans backward and returns a negative
+  count, `PEXPR` a match/mismatch operator plus character (`=CH`),
+  `SOURCE` the starting element -- gives `SCAN(-511, =CHR(13),
+  EXBUFPTR^[511])`, matching finding 138b's own `SPOS` precedent
+  exactly (`SCAN(J-I, =CHR(TARGETCHAR), SRC[I])`).
+
+`46`/`47` both compile to Apple's real `data=0` -- no room for a local
+`STRING` to hold an error message literal (and finding 137's own
+literal-to-`VAR`-parameter restriction rules out passing one directly
+to `FWRITESTRING`). Reused the already-declared global `PL: STRING`
+("promptline string") as scratch instead of adding a local, the same
+zero-extra-cost move `PRINTERROR` makes with its own local `S`
+(finding 137) but via an existing global instead, since these two
+procedures' own real frames have no local budget at all.
+
+Verified: all four `params`/`data` exact against Apple's real
+`128K.PASCAL` (`44: 2/0`, `45: 2/0`, `46: 0/0`, `47: 0/0`), first
+attempt after the `CLOSE`/`BLOCKREAD`/`BLOCKWRITE`/`SCAN`/`PL` fixes
+above. `PASCALSY.1`'s own frame held exact at `902` throughout;
+segment 0's 42-of-43 `params` match held unchanged.
+
+Acceptance run `2026-08-29-pascalsystem-exec-44-47`: 0 errors, 1000
+lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure --
+44-47 all exact, procedure 1 still `902`/`902`, nothing else
+regressed.

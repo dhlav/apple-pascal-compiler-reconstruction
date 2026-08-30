@@ -168,6 +168,7 @@ PROGRAM PASCALSYSTEM;
     WINDOWP = ^WINDOW;
     WINDOW = PACKED ARRAY [0..0] OF CHAR;
 
+
     FIBP = ^FIB;
 
     FIB = RECORD
@@ -335,7 +336,26 @@ PROGRAM PASCALSYSTEM;
     CONFIG_CHAR: SET OF CHAR;      { Tribby's config_char -- MISCINFO's own configuration chars }
     CHAIN_NAME: STRING[NAME_LEN];  { Tribby's chain_name -- "Next File" from SETCHAIN }
     CHAIN_MSG: STRING;             { Tribby's chain_msg -- "Message" from SETCVAL }
-    WHAT_F: ARRAY [1..2] OF INTEGER;  { Tribby's what_f -- unidentified pair, EXEC-related }
+    { Tribby's `what_f` (two words, unidentified) is really two
+      pointers, not an integer pair (finding 146): `NEW(@I2,381, 256)`
+      allocates the EXEC buffer here at word 381, and `I2,382 := I2,54`
+      / `I1,54 := I1,382` (mirroring `EMPTYHEAP`, save on entry into
+      EXEC-file mode, restore on exit) makes word 382 a saved heap
+      mark of the very same pointer type as `EMPTYHEAP`. }
+    { Heap-allocated by `NEW(@..., 256)` -- 256 words = 512 bytes =
+      `FBLKSIZE`, byte-indexed 0..511 (`analysis/lifted/128K.PASCAL-
+      1.3-128K.pas.txt`, `PASCALSY.44`'s own `I1,381^[I1,383] := ...`
+      and `PASCALSY.47`'s `FILLCHAR(I1,381, 0, 512, 0)`). Typed
+      `WINDOWP` (not a wider array type of its own) so it binds
+      directly to `FINIT`/`FBLOCKIO`'s own `WINDOW`-typed parameters
+      with no coercion -- the same "trick array" idiom `WINDOW`
+      itself already is (`PACKED ARRAY [0..0] OF CHAR`, indexed far
+      past its own declared bound; range checking is already off for
+      this whole file). Not a `VAR`-declared array -- the pointer to
+      it is the only static storage; the buffer itself lives on the
+      heap. }
+    EXBUFPTR: WINDOWP;             { was Tribby's what_f[1] }
+    EXEC_MARK: ^INTEGER;           { was Tribby's what_f[2] -- saved EMPTYHEAP }
     EXEC_CH_NUM: INTEGER;          { Tribby's exec_ch_num -- next EXEC char in disk buffer }
     WHAT_G: ARRAY [1..2] OF INTEGER;  { Tribby's what_g -- unidentified pair, EXEC-related }
     R_EXEC_FLG: BOOLEAN;           { Tribby's r_exec_flg -- reading an EXEC file }
@@ -344,7 +364,16 @@ PROGRAM PASCALSYSTEM;
     SWAP_1_ON: BOOLEAN;            { Tribby's swap_1_on -- level 1 swapping on }
     SWAP_2_ON: BOOLEAN;            { Tribby's swap_2_on -- level 2 swapping on }
     JUST_BOOT: BOOLEAN;            { Tribby's just_boot -- just booted flag }
-    WHAT_H: ARRAY [1..2] OF INTEGER;  { Tribby's what_h -- unidentified pair }
+    { Tribby's `what_h` (integer pair) is really two BOOLEANs (finding
+      146): `I1,393 := (I1,54 = nil)` is a plain boolean assignment,
+      and `I2,392` is used directly as an `OR` operand
+      (`PASCALSY.57`: `not (I2,390) or I2,392`) -- both need real
+      BOOLEAN type to compile the bodies that use them, not INTEGER
+      (same word count either way, so the frame total is unaffected). }
+    WHAT_H1: BOOLEAN;              { was Tribby's what_h[1] -- tested/cleared
+                                      around user-program dispatch, PASCALSY.57 }
+    WHAT_H2: BOOLEAN;              { was Tribby's what_h[2] -- set from
+                                      (EMPTYHEAP = NIL), PASCALSY.45 }
     EXEC_IN_CH: CHAR;              { Tribby's exec_in_ch -- last char read from EXEC file }
     EXEC_TERM: CHAR;               { Tribby's exec_term -- EXEC file termination char }
 
@@ -458,6 +487,21 @@ PROGRAM PASCALSYSTEM;
   FUNCTION GETCHAR(FLUSH: BOOLEAN): CHAR; FORWARD;
   FUNCTION FETCHDIR(FUNIT: UNITNUM): BOOLEAN; FORWARD;
   PROCEDURE COMMAND; FORWARD;
+
+  { Procedures 44-47: past the 41/42 UCSD-declared set (finding 136),
+    genuinely new 128K/1.3 territory -- no UCSD source, no Tribby
+    name (his own document only covers data, not procedures). Names
+    below are this project's own, chosen for what each body actually
+    does (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:965-1031`),
+    not recovered from any source -- flagged as such rather than
+    presented as Apple's own naming. Together they read/write the
+    `EXEC_FILE`/`EXBUFPTR` pair (finding 145/146): buffered exec-file
+    I/O, one character at a time on the write side, one 512-byte
+    block at a time underneath. }
+  PROCEDURE EXECPUTCH(CH: CHAR); FORWARD;
+  PROCEDURE EXECCLOSE(WASNORMAL: BOOLEAN); FORWARD;
+  PROCEDURE EXECREADBLK; FORWARD;
+  PROCEDURE EXECWRITEBLK; FORWARD;
 
   { The user-program stub: what runs when no real user program has been
     loaded on top of this segment's slot yet. Straight from UCSD's own
@@ -799,6 +843,102 @@ PROGRAM PASCALSYSTEM;
   FUNCTION GETCHAR; BEGIN GETCHAR := ' ' END;
   FUNCTION FETCHDIR; BEGIN FETCHDIR := TRUE END;
   PROCEDURE COMMAND; BEGIN END;
+
+  { PASCALSY.44: append one character to the EXEC write buffer,
+    auto-flushing near the 512-byte boundary, and auto-closing on a
+    doubled terminator character. Real body,
+    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:965-981`. }
+  PROCEDURE EXECPUTCH;
+  BEGIN
+    EXBUFPTR^[EXEC_CH_NUM] := CH;
+    EXEC_CH_NUM := EXEC_CH_NUM + 1;
+    IF (EXEC_CH_NUM > 509) AND (WHAT_G[2] <> 0) THEN
+    BEGIN
+      EXBUFPTR^[EXEC_CH_NUM] := CHR(13);
+      EXECWRITEBLK
+    END ELSE BEGIN
+      IF EXEC_CH_NUM > 511 THEN
+        EXECWRITEBLK
+    END;
+    IF CH = EXEC_TERM THEN
+    BEGIN
+      IF EXEC_IN_CH = EXEC_TERM THEN
+        EXECCLOSE(TRUE)
+    END;
+    EXEC_IN_CH := CH
+  END;
+
+  { PASCALSY.45: close the exec file, either read side (plain) or
+    write side (padding out a doubled terminator + CR first, when
+    `WASNORMAL`), then restore `EMPTYHEAP` from the mark saved at
+    `EXEC_MARK` when exec mode was entered. Real body,
+    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:983-1003`. }
+  PROCEDURE EXECCLOSE;
+  BEGIN
+    IF R_EXEC_FLG THEN
+    BEGIN
+      R_EXEC_FLG := FALSE;
+      CLOSE(EXEC_FILE)
+    END ELSE BEGIN
+      IF WASNORMAL THEN
+      BEGIN
+        EXEC_IN_CH := ' ';
+        EXECPUTCH(EXEC_TERM);
+        EXEC_IN_CH := ' ';
+        EXECPUTCH(EXEC_TERM);
+        EXECPUTCH(CHR(13));
+        EXECWRITEBLK;
+        IF WHAT_G[2] <> 0 THEN
+          EXECWRITEBLK
+      END;
+      W_EXEC_FLG := FALSE;
+      CLOSE(EXEC_FILE, LOCK)
+    END;
+    EMPTYHEAP := EXEC_MARK;
+    JUST_BOOT := TRUE
+  END;
+
+  { PASCALSY.46: read the next 512-byte block into the exec buffer,
+    scanning back from the end for the last CR so `WHAT_G[1]` marks
+    the real end of buffered text, not the block's own padding. Real
+    body, `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1005-1019`. }
+  PROCEDURE EXECREADBLK;
+  BEGIN
+    WHAT_G[2] := WHAT_G[2] + 1;
+    IF BLOCKREAD(EXEC_FILE, EXBUFPTR^, 1, WHAT_G[2]) <> 1 THEN
+    BEGIN
+      FWRITELN(GFILES[1]^);
+      PL := 'Error reading exec file';
+      FWRITESTRING(GFILES[1]^, PL, 0);
+      FWRITELN(GFILES[1]^);
+      EXECCLOSE(TRUE)
+    END ELSE BEGIN
+      EXEC_CH_NUM := 0;
+      IF WHAT_G[2] <> 0 THEN
+        WHAT_G[1] := 510 + SCAN(-511, =CHR(13), EXBUFPTR^[511])
+      ELSE
+        WHAT_G[1] := 511
+    END
+  END;
+
+  { PASCALSY.47: write the exec buffer out as one 512-byte block, then
+    clear it for the next line. Real body,
+    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1021-1031`. }
+  PROCEDURE EXECWRITEBLK;
+  BEGIN
+    IF BLOCKWRITE(EXEC_FILE, EXBUFPTR^, 1, WHAT_G[2]) <> 1 THEN
+    BEGIN
+      FWRITELN(GFILES[1]^);
+      PL := 'Error writing exec file';
+      FWRITESTRING(GFILES[1]^, PL, 0);
+      FWRITELN(GFILES[1]^);
+      EXECCLOSE(FALSE)
+    END ELSE BEGIN
+      FILLCHAR(EXBUFPTR^, 512, CHR(0));
+      EXEC_CH_NUM := 0;
+      WHAT_G[2] := WHAT_G[2] + 1
+    END
+  END;
 
 { PASCALSY.1 -- the real main-loop body, started. Apple's real p-code
   (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:16-28`):

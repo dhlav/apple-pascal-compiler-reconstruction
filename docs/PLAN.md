@@ -374,12 +374,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     compiler auto-generates the entire `FINIT`/`FCLOSE` sequence from
     that one `VAR` declaration, confirmed byte-for-byte against
     Apple's real compile with zero source written for either call.
-    Only the `REPEAT` loop's own `PASCALSY.48` call remains open --
-    needs procedures 44-58 written first, genuinely new territory
-    past the 41/42 forward-declared set. That, every other
-    forward-declared procedure's real content, and four of the six
-    other segments' bodies beyond procedure 1 remain the natural next
-    work.
+    Procedures 44-47 (findings 146/147) -- the EXEC-file buffered I/O
+    layer (`EXECPUTCH`/`EXECCLOSE`/`EXECREADBLK`/`EXECWRITEBLK`,
+    this project's own names, no UCSD/Tribby precedent for procedures
+    past 43) -- are now written and verified exact too, surfacing two
+    more of finding 143's own Tribby fields that were mis-split
+    (`WHAT_F` -> two pointers, `WHAT_H` -> two booleans, same pattern
+    as `WHAT_I`-`WHAT_K`) and establishing the working idiom for
+    calling `CLOSE`/`BLOCKREAD`/`BLOCKWRITE` sugar on `EXEC_FILE`
+    rather than `FCLOSE`/`FBLOCKIO` directly (type-checking rejects
+    the latter). Only the `REPEAT` loop's own `PASCALSY.48` call
+    remains open -- needs procedures 48, 50, 57, 58 written next
+    (`48` itself is short and already visible in the lift; `57`/`58`
+    are the real command-dispatch/segment-loading loop and are
+    substantially larger). That, every other forward-declared
+    procedure's real content, and four of the six other segments'
+    bodies beyond procedure 1 remain the natural next work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
