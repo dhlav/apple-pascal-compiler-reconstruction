@@ -12651,3 +12651,95 @@ nothing regressed.
 Acceptance run `2026-08-29-pascalsystem-printerror`: 0 errors, 474
 lines, `PASCALSYS.CODE` extracted and `PRINTERR`'s own procedure
 compared directly against Apple's real `128K.PASCAL` via `CodeFile`.
+
+## 138. `SYSTEM.PASCAL` -- the five string primitives (`SCONCAT`/`SINSERT`/`SCOPY`/`SDELETE`/`SPOS`) written for real, all exact, and a second parameter-order divergence found
+
+`COPY`/`DELETE`/`POS`/`CONCAT`/`INSERT` sugar all lower to these five
+(finding 52b). Writing their real bodies (`analysis/lifted/
+128K.PASCAL-1.3-128K.pas.txt`, `PASCALSY.23`-`27`) surfaced a second
+real calling-convention fact, independent of finding 136/137's own two:
+**Apple's real declared parameter order for at least this family of
+low-level primitives is not UCSD's own literal `GLOBALS.TEXT` order.**
+
+### 138a. How the real order was recovered
+
+Not by assuming a shortcut (a first attempt at "just reverse the
+list" fit some of the five and not others -- `SPOS` needs no
+reordering at all). Recovered instead by reading each real body's own
+algorithm directly and asking which G-numbered word is read from,
+which is written to, and which is compared as a plain `INTEGER` versus
+dereferenced as a `STRING`'s own length byte -- unambiguous from the
+`MOVELEFT`/`MOVERIGHT` argument roles alone (source vs. destination),
+regardless of what order anything was declared in:
+
+* **`SCONCAT`** (`PASCALSY.23`): `G1` compared as a plain `INTEGER`
+  (`DESTLENG`), `G2` is `MOVELEFT`'s source (`SRC`), `G3` is the
+  destination that grows (`DEST`). UCSD's own order is
+  `(VAR DEST,SRC: STRING; DESTLENG: INTEGER)`; Apple's real one is
+  `(DESTLENG: INTEGER; VAR DEST, SRC: STRING)` -- the value-parameter
+  group moved from last to first, the `VAR` pair's own internal order
+  (`DEST` before `SRC`) unchanged.
+* **`SINSERT`** (`PASCALSY.24`): `G1`/`G2` both plain `INTEGER`s
+  (`INSINX`, `DESTLENG` respectively -- `G1` is the shift/insert
+  position, `G2` the capacity check), `G3` is `DEST` (shifted right,
+  then written into), `G4` is `SRC` (read from). Apple's real order:
+  `(INSINX, DESTLENG: INTEGER; VAR SRC, DEST: STRING)`.
+* **`SCOPY`** (`PASCALSY.25`): `G1`/`G2` are `COPYLENG`/`SRCINX`, `G3`
+  is `DEST` (cleared, then written), `G4` is `SRC` (read from). Real
+  order: `(COPYLENG, SRCINX: INTEGER; VAR SRC, DEST: STRING)`.
+* **`SDELETE`** (`PASCALSY.26`): `G1`/`G2` are `DELLENG`/`DELINX`,
+  `G3` is `DEST` (shifted left over the deleted range). Real order:
+  `(DELLENG, DELINX: INTEGER; VAR DEST: STRING)`.
+* **`SPOS`** (`PASCALSY.27`) needed **no reordering at all** -- its
+  real body's own `G3`/`G4` already match UCSD's own declared
+  `(VAR TARGET, SRC: STRING)` order exactly, the one case out of five
+  where UCSD's literal text was already right.
+
+None of this touches `WRITE`/`INSERT`/`COPY`/etc.'s own compiler
+*sugar* (`PRINTERROR`'s `INSERT('I/O error: ', S, 1)`, finding 137,
+compiles independently of whatever this file declares `SINSERT` to
+be -- sugar lowers straight to a fixed `CXP` target, not through this
+file's own `FORWARD` declarations). It matters only for these five
+procedures' own internal content matching Apple's real compiled bytes
+at their own procedure numbers.
+
+### 138b. The bodies themselves, and one real miss caught and closed
+
+All five translate the real algorithm directly into structured Pascal
+(no `GOTO`s needed for four of them; `SPOS`'s own `GOTO`-based early
+exit became a `WHILE` with an explicit `I := J + 1` to end the search,
+functionally identical since `I`'s own value is never read after the
+loop). `SINSERT`'s real body has a `G5 := 0; IF G5 = 0 THEN ...` right
+before its own `MOVELEFT` -- vestigial, since `G5` is unconditionally
+reset immediately before the check it guards, so the `MOVELEFT` always
+runs; written as the unconditional statement it actually is rather
+than reproduced literally.
+
+`SPOS` needed one real fix: a first attempt sized its own local
+`CANDIDATE` buffer as `STRING[72]`, reasoning (wrongly) that the
+lift's own "locals 44 words" already included the 2 real parameters
+plus the function's own result-and-gap overhead, and so subtracted
+those a second time. It does not -- confirmed directly against
+`SCONCAT`'s own "locals 0 words" matching a real `data=0` -- the
+lift's own figure *is* `CodeFile`'s `data` field, params/result/gap
+accounted separately. Fixed by declaring `CANDIDATE` a plain default
+`STRING` (80 chars, 41 words), closing 44 - 3 (`I`/`J`/`TARGETCHAR`)
+exactly.
+
+`SCAN`, `MOVELEFT`, and `MOVERIGHT` are real, documented, directly
+user-callable Apple Pascal built-ins ("The SCAN Function", "The
+MOVELEFT and MOVERIGHT Procedures" -- `analysis/reference/apple-
+pascal-language-reference.txt`), not something this file needs to
+`FORWARD`-declare itself; `SCAN(LIMIT, PEXPR, SOURCE)`'s own
+`PEXPR` argument is a comparison-operator-plus-character form
+(`=CHR(TARGETCHAR)`), matching the manual's own documented examples
+exactly.
+
+Verified: all five `params`/`data` exact against Apple's real
+`128K.PASCAL`, first attempt for four of five (`SPOS` needed the one
+`STRING[72]`->`STRING` fix above). Segment 0's own 42-of-43 `params`
+match (findings 136/137) held unchanged.
+
+Acceptance run `2026-08-29-pascalsystem-string-primitives`: 0 errors,
+615 lines, `PASCALSYS.CODE` extracted and all five procedures compared
+directly against Apple's real `128K.PASCAL` via `CodeFile`.

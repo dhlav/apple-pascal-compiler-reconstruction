@@ -306,10 +306,18 @@ a route end to end; everything else is a straight read-and-rebuild.
     compiled code shows that same literal reaching that same parameter
     -- legal there only as part of the compiler's own lowering of
     ordinary `INSERT` sugar, which has no such restriction of its own.
-    Not started yet: `PASCALSY`'s own real 451-word main-loop body (the
-    single largest procedure on the whole disk set), every other
-    forward-declared procedure's real content, and four of the six
-    other segments' bodies beyond procedure 1.
+    Filled in `SCONCAT`/`SINSERT`/`SCOPY`/`SDELETE`/`SPOS` too (finding
+    138, what `CONCAT`/`INSERT`/`COPY`/`DELETE`/`POS` sugar lowers to)
+    -- all five exact. Found a third real fact along the way: Apple's
+    actual parameter *order* for these five is not UCSD's own literal
+    text, recovered by reading each real body's own algorithm directly
+    (which word is read from, written to, or compared as a plain
+    `INTEGER`) rather than assuming a "reverse the list" shortcut,
+    which fit some of the five and not others (`SPOS` needed no
+    reordering at all). Not started yet: `PASCALSY`'s own real 451-word
+    main-loop body (the single largest procedure on the whole disk
+    set), every other forward-declared procedure's real content, and
+    four of the six other segments' bodies beyond procedure 1.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
