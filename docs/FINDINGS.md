@@ -12743,3 +12743,105 @@ match (findings 136/137) held unchanged.
 Acceptance run `2026-08-29-pascalsystem-string-primitives`: 0 errors,
 615 lines, `PASCALSYS.CODE` extracted and all five procedures compared
 directly against Apple's real `128K.PASCAL` via `CodeFile`.
+
+## 139. `SYSTEM.PASCAL` -- `PASCALSY`'s own global VAR section: two addressing modes told apart, and the first two globals confirmed by offset
+
+Every remaining tractable-looking segment-0 procedure checked this
+session (`FGOTOXY`, `HOMECURSOR`, `CLEARSCREEN`, `CLEARLINE`, `PROMPT`,
+`SPACEWAIT`, `GETCHAR`) turned out to depend on `PASCALSY`'s own
+451-word global `VAR` section, still an unreconstructed placeholder.
+This is the first real progress on it, and the piece that unblocks
+everything else: telling apart *how* different kinds of procedure
+reach it.
+
+### 139a. `G<n>` and `I1,n` are not the same thing, and which one a procedure uses depends on what kind of procedure it is
+
+`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt` shows **both** notations
+throughout segment 0, and conflating them was the trap:
+
+* **Flat procedures declared directly inside segment 0's own
+  declaration part** (`FGOTOXY`, `SCONCAT`, `SDELETE`, ... -- every one
+  of the 41 `FORWARD`-declared procedures findings 136-138 already
+  cover) are lexically nested one level inside `PASCALSY`'s own body,
+  same segment, no overlay boundary crossed. Their own `G<n>`
+  references are **their own parameters and locals** -- confirmed
+  already, every one of the five string primitives (finding 138) had
+  its `G1`-`G4` match its own declared params/locals exactly, nothing
+  left over. To reach `PASCALSY`'s own *globals* from one of these,
+  the lift shows `I1,n` -- one static-link level up, the same
+  mechanism (and the same "own level + 1" fixed distance) `OUTPUT`
+  itself is reached by in every other file this project has
+  reconstructed (`SETUP.text` included).
+* **`SEGMENT PROCEDURE`s** (`USERPROGRAM`, `PRINTERROR`, `INITIALIZE`,
+  `GETCMD`, and `FIOPRIMS`/`FILEPROC`) are each their own separately
+  loaded overlay -- no static link back to `PASCALSY`'s own frame
+  survives a segment boundary, so they reach shared state a different
+  way. `PRINTERROR`'s own `G3` (finding 137, the error-message buffer)
+  *is* a true global reference into `PASCALSY`'s own `VAR` section,
+  encoded differently (closer to absolute addressing) precisely
+  because `PRINTERROR` cannot use the lex-relative form at all.
+
+Both notations name the same 451-word data area; which one a given
+call site uses is determined by which side of a segment boundary the
+calling code lives on, not by anything about the *variable* itself.
+
+### 139b. `SYSCOM` and `GFILES[1]` confirmed by offset, zero reordering needed
+
+`FGOTOXY`'s own real body (`PASCALSY.29`) clamps its two arguments
+against a pointer set to `I1,1 + 37` -- and `SYSCOMREC.CRTINFO.WIDTH`
+(ported from `GLOBALS.TEXT`, now declared for real in this file) sits
+at exactly that offset from `SYSCOM^`, with `HEIGHT` immediately after
+it clamping the other axis. That fixes `I1,1 = SYSCOM`, offset 1 --
+`GLOBALS.TEXT`'s own first declared global, no reordering from UCSD's
+literal text needed.
+
+`I1,3` -- the target every segment-0 body's own `FWRITESTRING`/
+`FWRITELN` call writes through, previously stood in with a placeholder
+`OUTPUTFIB^` (finding 137's own documented gap) -- is `GFILES[1]^`,
+not a separate variable. `SYSCOM` (1 word) at offset 1, `GFILES`
+(`ARRAY [0..5] OF FIBP`, 6 words) starting at offset 2, puts
+`GFILES[1]` (0-indexed) at offset 3 exactly, with UCSD's own declared
+order (`SYSCOM` then `GFILES`) unchanged -- and matches
+`GLOBALS.TEXT`'s own comment on `GFILES` directly ("0=INPUT, 1=OUTPUT").
+`OUTPUTFIB` is a real, separate global (`GLOBALS.TEXT`'s own comment:
+"GFILES are copies" of it and `INPUTFIB`) -- it is just not what this
+particular call site reaches. `PRINTERROR` updated to call
+`FWRITESTRING(GFILES[1]^, ...)` in place of the placeholder; still
+exact on frame size (`params=4/data=46`, unchanged), and now resting on
+real evidence rather than a stand-in.
+
+Also added for real (previously a `^INTEGER` placeholder): the full
+`SYSCOMREC` type -- `IORSLT`, `XEQERR`, `SYSUNIT`, `BUGSTATE`, `GDIRP`,
+the `MSCWP`/`MSCW`/`TRICKARRAY` mark-stack-record chain (debugger
+internals), `MEMTOP`/`SEG`/`JTAB`, `BRKPTS`, `RETRIES`, `EXPANSION`,
+`MISCINFO`, `CRTTYPE`, `CRTCTRL`, `CRTINFO`, and `SEGTABLE` -- ported
+directly from `GLOBALS.TEXT`, not yet independently verified field by
+field beyond `CRTINFO.WIDTH`/`HEIGHT` above.
+
+### 139c. What this does and does not unblock yet
+
+Two offsets confirmed out of what is likely 100+ distinct globals in a
+451-word frame -- real progress, not a finished reconstruction.
+`FGOTOXY`'s own body can now plausibly be written (bounds-check against
+`SYSCOM^.CRTINFO`, matching the pattern just confirmed), but
+`HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE` all call an unidentified helper
+(`PASCALSY.53`, not among the 41 already-declared procedures -- likely
+one of Apple's own 128K-specific additions past procedure 42, finding
+51c's own territory) and reference `CRTCTRL`'s own escape-sequence
+fields, plus the lift itself flags stack-depth disagreements on
+`CLEARLINE`'s own constant-folded conditionals -- genuinely harder than
+`FGOTOXY`, not attempted this session. `GETCHAR` references two more
+still-unidentified fixed offsets (`I1,58` and thereabouts). Recovering
+the rest of the 451 words -- correlating every `G<n>`/`I1,n` reference
+across all seven segments' own lifts against `GLOBALS.TEXT`'s declared
+order the same way this finding did for the first two -- is the real
+scope of the work ahead, not something this session finishes.
+
+Verified: `PRINTERROR` still `params=4/data=46` exact after the
+`OUTPUTFIB^`->`GFILES[1]^` change; segment 0's own 42-of-43 `params`
+match held unchanged; compiles clean (host and Apple's own) with the
+full `SYSCOMREC` type added.
+
+Acceptance run `2026-08-29-pascalsystem-syscomrec`: 0 errors, 686
+lines, `PASCALSYS.CODE` extracted and re-verified against Apple's real
+`128K.PASCAL` via `CodeFile`.

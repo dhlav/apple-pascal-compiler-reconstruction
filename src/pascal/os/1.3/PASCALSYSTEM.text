@@ -198,11 +198,86 @@ PROGRAM PASCALSYSTEM;
                  CODELENG: INTEGER   { # bytes to read in }
                END;
 
+    { debugger stuff }
+    BYTERANGE = 0..255;
+    TRICKARRAY = RECORD              { memory diddling for EXECERROR }
+                   CASE BOOLEAN OF
+                     TRUE: (WORD: ARRAY [0..0] OF INTEGER);
+                     FALSE: (BYTE: PACKED ARRAY [0..0] OF BYTERANGE)
+                 END;
+    MSCWP = ^MSCW;                   { mark stack record pointer }
+    MSCW = RECORD
+             STATLINK: MSCWP;        { pointer to parent MSCW }
+             DYNLINK: MSCWP;         { pointer to caller's MSCW }
+             MSSEG, MSJTAB: ^TRICKARRAY;
+             MSIPC: INTEGER;
+             LOCALDATA: TRICKARRAY
+           END;
+
+    { system communication area -- see interpreters. NB backward field
+      allocation is assumed. }
+    SEG_ENTRY = RECORD
+                  CODEUNIT: UNITNUM;
+                  CODEDESC: SEG_DESC
+                END;
+    SYSCOMREC = RECORD
+                  IORSLT: IORSLTWD;   { result of last IO call }
+                  XEQERR: INTEGER;    { reason for EXECERROR call }
+                  SYSUNIT: UNITNUM;   { physical unit of bootload }
+                  BUGSTATE: INTEGER;  { debugger info }
+                  GDIRP: DIRP;        { global dir pointer, see VOLSEARCH }
+                  LASTMP, STKBASE, BOMBP: MSCWP;
+                  MEMTOP, SEG, JTAB: INTEGER;
+                  BOMBIPC: INTEGER;   { where EXECERROR blowup was }
+                  HLTLINE: INTEGER;   { more debugger stuff }
+                  BRKPTS: ARRAY [0..3] OF INTEGER;
+                  RETRIES: INTEGER;   { drivers put retry counts }
+                  EXPANSION: ARRAY [0..8] OF INTEGER;
+                  HIGHTIME, LOWTIME: INTEGER;
+                  MISCINFO: PACKED RECORD
+                              NOBREAK, STUPID, SLOWTERM,
+                              HASXYCRT, HASLCCRT, HAS8510A, HASCLOCK: BOOLEAN;
+                              USERKIND: (NORMAL, AQUIZ, BOOKER, PQUIZ);
+                              WORD_MACH, IS_FLIPT: BOOLEAN
+                            END;
+                  CRTTYPE: INTEGER;
+                  CRTCTRL: PACKED RECORD
+                             RLF, NDFS, ERASEEOL, ERASEEOS, HOME,
+                             ESCAPE: CHAR;
+                             BACKSPACE: CHAR;
+                             FILLCOUNT: 0..255;
+                             CLEARSCREEN, CLEARLINE: CHAR;
+                             PREFIXED: PACKED ARRAY [0..15] OF BOOLEAN
+                           END;
+                  CRTINFO: PACKED RECORD
+                             WIDTH, HEIGHT: INTEGER;
+                             RIGHT, LEFT, DOWN, UP: CHAR;
+                             BADCH, CHARDEL, STOP, BREAK, FLUSH, EOF: CHAR;
+                             ALTMODE, LINEDEL: CHAR;
+                             ALPHA_LOCK, ETX, PREFIX: CHAR;
+                             PREFIXED: PACKED ARRAY [0..15] OF BOOLEAN
+                           END;
+                  SEGTABLE: ARRAY [SEG_RANGE] OF SEG_ENTRY
+                END;
+
   VAR
-    SYSCOM: ^INTEGER;                { the real SYSCOMREC is not
-                                        reconstructed yet -- placeholder,
-                                        see the header comment }
-    GFILES: ARRAY [0..5] OF FIBP;    { global files, 0=INPUT, 1=OUTPUT }
+    SYSCOM: ^SYSCOMREC;              { offset 1 -- confirmed against
+                                        FGOTOXY's own real body: it
+                                        clamps X/Y against a pointer set
+                                        to SYSCOM+37, which lands exactly
+                                        on CRTINFO.WIDTH (the next field,
+                                        HEIGHT, clamps the other axis) }
+    GFILES: ARRAY [0..5] OF FIBP;    { offsets 2-7. GFILES[1] (offset 3)
+                                        is what every segment-0 body's
+                                        own FWRITESTRING/FWRITELN call
+                                        actually writes through -- not a
+                                        separate OUTPUTFIB, confirmed by
+                                        the same offset math (SYSCOM=1,
+                                        GFILES[0]=2, GFILES[1]=3, zero
+                                        reordering needed against UCSD's
+                                        own literal declaration order).
+                                        0=INPUT, 1=OUTPUT (GLOBALS.TEXT's
+                                        own comment) }
     USERINFO: INFOREC;               { work stuff for compiler etc }
     EMPTYHEAP: ^INTEGER;             { heap mark for mem managing }
     INPUTFIB, OUTPUTFIB,             { console files -- GFILES are copies }
@@ -334,18 +409,14 @@ PROGRAM PASCALSYSTEM;
     `data=23` with nothing else needed.
 
     Calls `FWRITESTRING`/`FWRITELN` directly (not `WRITE`/`WRITELN`
-    sugar, per the header comment) against `OUTPUTFIB^` -- this
-    project's own global standing in for the real binary's own
-    unidentified target at this exact call site (`I1,3`, one lexical
-    level up). Passing the compiler's own built-in `OUTPUT` there
-    fails to type-check (`VAR F: FIB` won't accept a `TEXT`/
-    `INTERACTIVE` variable, confirmed against the host compiler
-    directly), so it cannot be that identifier despite `I1,3` being
-    exactly where `OUTPUT` sits in every other file this project has
-    reconstructed -- an open question this segment doesn't yet need to
-    answer past compiling and matching on frame size, since the real
-    global VAR layout (this file's own `PASCALSY`, still a stub) isn't
-    reconstructed yet either.
+    sugar, per the header comment) against `GFILES[1]^` -- `I1,3`
+    (finding 139): `SYSCOM` is offset 1, `GFILES` starts at offset 2,
+    so `GFILES[1]` (0-indexed) lands on offset 3 with zero reordering
+    against UCSD's own literal `GLOBALS.TEXT` order, matching
+    `GLOBALS.TEXT`'s own comment ("0=INPUT, 1=OUTPUT") -- not a
+    separate `OUTPUTFIB`, which is a real, distinct global
+    (`GLOBALS.TEXT`'s own comment: "GFILES are copies") that just
+    doesn't happen to be what this specific call site reaches.
 
     The message-prefix insert, though, uses plain `INSERT` sugar, not
     a direct `SINSERT` call -- a *different* restriction from
@@ -405,8 +476,8 @@ PROGRAM PASCALSYSTEM;
       15: BEGIN S := 'Programmed break-point' END;
       16: BEGIN S := 'Codespace overflow' END
     END;
-    FWRITESTRING(OUTPUTFIB^, S, 0);
-    FWRITELN(OUTPUTFIB^)
+    FWRITESTRING(GFILES[1]^, S, 0);
+    FWRITELN(GFILES[1]^)
   END;
 
   { UCSD's own INITIALIZE: system startup. Signature matches Apple's

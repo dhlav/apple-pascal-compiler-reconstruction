@@ -314,10 +314,33 @@ a route end to end; everything else is a straight read-and-rebuild.
     (which word is read from, written to, or compared as a plain
     `INTEGER`) rather than assuming a "reverse the list" shortcut,
     which fit some of the five and not others (`SPOS` needed no
-    reordering at all). Not started yet: `PASCALSY`'s own real 451-word
-    main-loop body (the single largest procedure on the whole disk
-    set), every other forward-declared procedure's real content, and
-    four of the six other segments' bodies beyond procedure 1.
+    reordering at all).
+
+    Started on `PASCALSY`'s own 451-word global `VAR` section too
+    (finding 139) -- what nearly every remaining procedure turned out
+    to depend on once checked (`FGOTOXY`, `HOMECURSOR`, `CLEARSCREEN`,
+    `CLEARLINE`, `PROMPT`, `SPACEWAIT`, `GETCHAR` all do). Told apart
+    two distinct addressing modes the lift shows (`G<n>` = a flat
+    segment-0 procedure's own params/locals, *or* a `SEGMENT
+    PROCEDURE`'s own absolute reach into the globals, depending which
+    kind of procedure it is; `I1,n` = a flat procedure's lex-relative
+    reach into the same globals), then confirmed the first two offsets
+    by reading `FGOTOXY`'s own real body directly: `SYSCOM` (offset 1)
+    and `GFILES[1]` (offset 3 -- the real target of every segment-0
+    body's own console-output call, not a separate `OUTPUTFIB`,
+    zero reordering from UCSD's own declared order needed). The real
+    `SYSCOMREC` type is now declared for real (`CRTINFO`/`CRTCTRL`/
+    `MISCINFO`/`SEGTABLE`/the debugger's own mark-stack chain), not yet
+    verified field by field beyond `CRTINFO.WIDTH`/`HEIGHT`.
+    2 offsets confirmed of a likely 100+ in the full frame -- real
+    progress, not a finished reconstruction. `HOMECURSOR`/`CLEARSCREEN`/
+    `CLEARLINE` call an unidentified helper (`PASCALSY.53`, past
+    procedure 42, likely one of Apple's own 128K-specific additions)
+    and are genuinely harder than `FGOTOXY`; not attempted yet.
+    `PASCALSY`'s own real 451-word main-loop body (the single largest
+    procedure on the whole disk set), every other forward-declared
+    procedure's real content, and four of the six other segments'
+    bodies beyond procedure 1 remain the natural next work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
