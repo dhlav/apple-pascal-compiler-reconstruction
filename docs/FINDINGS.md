@@ -12354,3 +12354,124 @@ tutorial procedures are the last stub in `SETUP.CODE`.
 Acceptance run `2026-08-29-setup8-quit-handler`: 0 errors, 1301 lines,
 `SETUP.CODE` extracted and every procedure's `params`/`data` compared
 directly against Apple's own binary via `CodeFile`.
+
+## 134. `SETUP.text` -- a real parameter-ordering rule found; `SETUP19` attempted and reverted, not shipped
+
+Attempting `SETUP19` (the numeric entry driver, nested in `SETUP16`,
+blocked on nothing after finding 133) surfaced a genuine gap in this
+project's own understanding of finding 93a, and then a second, deeper
+mystery that stayed open. Recorded in full because the first half is a
+real, reusable rule and the second half will save whoever attempts this
+next from repeating the same dead ends.
+
+### 134a. Finding 93a's rule applies to parameters too, and VAR groups behave opposite to VALUE groups
+
+Finding 93a covers `VAR`-block locals only: "declaration groups ascend,
+identifiers within one group descend." Every parameter list reconstructed
+so far happened to be either single-member groups (where ascend/descend
+is unobservable) or the compiler-computed offsets never got checked
+closely enough to notice a conflict. Comparing two already-exact,
+already-shipped signatures directly:
+
+* `SETUP4(VAR DEST: STRING; VAR SRC: STRING)` -- `DEST` (1st-declared)
+  loads its own value into `L2`, `SRC` (2nd-declared) into `L1`. `L1 <
+  L2`, so the **1st-declared VAR parameter gets the *higher* offset** --
+  the same "1st-listed gets the higher address" rule finding 93a already
+  established for `VAR`-block locals.
+* `SETUP11(HIGH, LOW: INTEGER; NAMEDOK: BOOLEAN)` -- `HIGH`
+  (1st-declared) prints at `L1`, `LOW` (2nd-declared) at `L2`. `L1 < L2`,
+  so the **1st-declared VALUE parameter gets the *lower* offset** -- the
+  opposite of the `VAR` case, and the opposite of finding 93a's own rule.
+
+So: a **`VAR`-parameter group descends** (matches `VAR`-block locals);
+a **plain-value-parameter group ascends** (does not). Both are internally
+consistent and independently confirmed by two procedures already
+byte-exact against Apple's binary, so this isn't a live question -- it's
+a fact about this compiler this project hadn't separated out before.
+`SETUP10`'s own already-verified-exact signature
+(`FUNCTION SETUP10(HIGH, LOW: INTEGER; NAMEDOK: BOOLEAN; VAR VALUE:
+INTEGER): BOOLEAN`) is consistent with this rule read correctly:
+`HIGH, LOW` is one ascending VALUE group (`HIGH` lower, `LOW` higher),
+`NAMEDOK` its own single-member group, `VAR VALUE` its own single-member
+`VAR` group -- and confirmed a second, independent way: `SETUP10`'s own
+internal usage dereferences `L6` (the highest of its four param offsets)
+throughout as the return-value pointer, settling which physical offset
+is the `VAR` one without reference to any caller at all.
+
+### 134b. `SETUP19`'s real frame is 44 words against 4 visible in its own body -- not resolved
+
+Writing `SETUP19` to call `SETUP9`/`SETUP10`/`SETUP11`/`SETUP18` with the
+semantically correct arguments (matching the signatures 134a settles)
+compiled clean, first attempt -- but came back `params=2/data=6` against
+Apple's real `2/88`. A 41-word gap this large means something structural
+is missing, not a rounding/one-word miss, so it was reverted rather than
+shipped. What was checked and ruled out:
+
+* **Not a caller-argument-order artifact.** `SETUP19`'s own call to
+  `SETUP.10` in the raw p-code (`enter=$0FC4`, not the simplified lift
+  text) pushes `LLA 4` (the address of its own local 4) *first*, ahead of
+  three plain `SLDL` value pushes -- and `SETUP10`'s sole `VAR` parameter
+  is declared *last* (134a). Cross-checked against an unrelated,
+  already-exact call (`SETUP21`'s own `SETUP.24(@L1, @L2)`, both `VAR`,
+  in declared order) to confirm the lift's displayed call order is
+  normally trustworthy; this one case still doesn't resolve cleanly
+  under a simple "push order = declared order" reading, and was set
+  aside rather than chased further, since it doesn't explain a 41-word
+  *frame* gap either way -- argument order only affects what gets
+  passed, not how many locals the *callee itself* declares.
+* **Not a hidden `STRING` buffer the way `SETUP21`'s own analogous gap
+  is.** `SETUP21` (`params=0/data=84` real -- also large, also
+  unattempted) calls `SETUP.7(@L2)` directly, meaning it owns a local
+  `STRING` (`L2`, ~41 words) to receive text before handing it to
+  `SETUP24`. `SETUP19`'s own body has no `SETUP.7` call anywhere,
+  visible in either the lift or the raw p-code -- it delegates all text
+  entry to `SETUP10` internally, which already accounts for its own
+  41-word buffer inside its *own* already-verified 128-word frame. There
+  is no structural reason visible yet for `SETUP19` to need one too.
+* **Not a lift-tool miscount.** The 44-word figure was confirmed
+  directly from the raw p-code header (`data=88` bytes, not the lift's
+  post-processed `locals 44 words` line) -- a real fact about Apple's
+  compiled bytes, not a decompiler artifact.
+
+Left as a stub (`PROCEDURE SETUP19;`, `SETUP20` still correctly nested
+inside it and still exact on its own).
+
+## 135. `SETUP.text` -- `SETUP21` (the scalar-name entry driver) written for real, exact
+
+`SETUP21`'s own gap turned out to be exactly what finding 134b guessed
+it might be: a local `STRING`. `SETUP21` calls `SETUP.7(@L2)` directly
+(reading a name), unlike `SETUP19`, which delegates all text entry to
+`SETUP10` and never touches `SETUP7` itself -- so `SETUP21` genuinely
+needs to *own* a buffer for the name it reads, where `SETUP19` does not.
+`VALUE: INTEGER` (1 word) plus `ENTRY: STRING` (default, 41 words) is
+`42` words total, matching Apple's real `data=84` bytes exactly, with
+no slack.
+
+Both locals are named to avoid shadowing: `SETUP16`'s own parameter is
+`L1`, and `SETUP17`'s own `VAR RESULT` parameter -- both still reached
+by lexical scoping inside `SETUP22`/`23`/`24`, nested alongside `SETUP21`
+inside `SETUP16` -- would have been silently shadowed by a same-named
+local here, changing what those three procedures actually read without
+a compiler error to catch it.
+
+Body: shows the current value by name (`SETUP22`), then loops `SETUP7`
+(read a name) against `SETUP24` (look it up, setting `VALUE`) and
+`SETUP23` (re-list the allowed names on a miss) until a real match or
+`QUITFLAG`, confirming (`SETUP13`) whether to keep going; the last
+accepted value is packed back with `SETUP18` unless `QUITFLAG` or the
+entry was left blank. `SETUP24`'s own call (`SETUP24(VALUE, ENTRY)`)
+matches its already-established signature
+(`VAR VALUE: INTEGER; VAR NAME2: STRING`) positionally with no
+reordering needed -- unlike `SETUP19`'s own unresolved call into
+`SETUP10` (finding 134b), this one args cleanly on the first attempt.
+
+Verified: `params=0/data=84` exact, first attempt. A full 26-procedure
+diff against Apple's shipped `SETUP.CODE` confirmed nothing else
+regressed. `SETUP19` (finding 134b's own open 41-word mystery, still
+unresolved -- this file's `SETUP7`-ownership pattern doesn't explain it,
+since `SETUP19` never calls `SETUP7`) and `TEACHSET`'s ten tutorial
+procedures are the only two stubs left in the entire file.
+
+Acceptance run `2026-08-29-setup21-scalar-driver`: 0 errors, 1345 lines,
+`SETUP.CODE` extracted and every procedure's `params`/`data` compared
+directly against Apple's own binary via `CodeFile`.

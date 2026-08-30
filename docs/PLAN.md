@@ -244,10 +244,20 @@ a route end to end; everything else is a straight read-and-rebuild.
    alone at 396 words, confirming the rest of the frame is accounted
    for. `params=0/data=792` against Apple's `0/796` -- 2 words short
    (the stubbed M-branch's own loop counter/bound), documented not
-   forced; nothing else regressed. `TEACHSET`'s own ten tutorial
-   procedures are now the only stub left in `SETUP.CODE`; `SETUP19`/`21`
-   are unblocked on this file's own side and just need writing, the
-   natural next session.
+   forced; nothing else regressed. Attempted `SETUP19` next (finding
+   134) -- compiled clean but landed `data=6` against Apple's real `88`,
+   a 41-word gap too large to force, so reverted to a stub rather than
+   shipped. Caught a real, reusable rule along the way: a
+   `VAR`-parameter group descends like a `VAR`-block local (finding
+   93a), but a plain-value-parameter group *ascends* -- the opposite,
+   confirmed by comparing `SETUP4`'s and `SETUP11`'s own already-exact
+   signatures directly. Filled in `SETUP21` instead (finding 135,
+   `params=0/data=84` exact) -- it owns a local `VALUE`/`ENTRY: STRING`
+   (41 words) because it calls `SETUP7` directly to read a name;
+   `SETUP19` never calls `SETUP7` (it delegates all text entry to
+   `SETUP10`), so that pattern doesn't explain its own gap, which stays
+   open. `SETUP19` and `TEACHSET`'s own ten tutorial procedures are now
+   the only two stubs left in `SETUP.CODE`, the natural next session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.

@@ -1089,7 +1089,15 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
         END
       END;
 
-      { The numeric entry driver -- not written this session. }
+      { The numeric entry driver -- not written this session (finding
+        134): bounds and the SETUP9/SETUP10/SETUP11/SETUP18 call
+        sequence are understood (see the finding), but Apple's real
+        frame is 44 words against a 4-word need visible in the lift's
+        own rendering of this procedure's body -- a 40-word gap with no
+        candidate yet, unlike SETUP21's own analogous gap (finding 134
+        also traces that one to a local STRING SETUP19 itself does not
+        appear to need). Left a stub rather than ship a
+        structurally-wrong reconstruction. }
       PROCEDURE SETUP19;
 
         { 2^N, via repeated doubling (the field's own bit WIDTH, used
@@ -1110,7 +1118,19 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
       BEGIN END;
 
       { The scalar-name entry driver -- not written this session. }
+      { The scalar-name entry driver. VALUE/ENTRY are SETUP21's own --
+        not L1/L2, which would shadow SETUP16's own field pointer and
+        SETUP17's own RESULT that SETUP22/23/24 below still need by
+        lexical scoping. Shows the current value by name (SETUP22),
+        then loops SETUP7 (read a name) against SETUP24 (look it up,
+        setting VALUE) and SETUP23 (re-list the allowed names on a
+        miss) until a real match or QUITFLAG, confirming (SETUP13)
+        whether to keep going; the last accepted value is packed back
+        with SETUP18 unless QUITFLAG or the entry was left blank. }
       PROCEDURE SETUP21;
+        VAR
+          VALUE: INTEGER;
+          ENTRY: STRING;
 
         { Announces the field's current value by name: walks the
           value list (always BOOLNAMES for a scalar field -- SETUP16
@@ -1174,7 +1194,31 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
           SETUP24 := P <> BOOLNAMES
         END;
 
-      BEGIN END;
+      BEGIN
+        SETUP17(VALUE);
+        SETUP22(VALUE);
+        IF SETUP13 THEN
+        BEGIN
+          REPEAT
+            WRITE('NEW VALUE: ');
+            IF SETUP7(ENTRY) THEN
+            BEGIN
+              WHILE NOT (SETUP24(VALUE, ENTRY) OR QUITFLAG) DO
+              BEGIN
+                SETUP23;
+                WRITE('NEW VALUE: ');
+                IF SETUP7(ENTRY) THEN
+                BEGIN
+                END
+              END
+            END
+          UNTIL (NOT SETUP13) OR QUITFLAG
+        END;
+        IF (NOT QUITFLAG) AND (ENTRY <> '') THEN
+        BEGIN
+          SETUP18(VALUE)
+        END
+      END;
 
     BEGIN END;
 
