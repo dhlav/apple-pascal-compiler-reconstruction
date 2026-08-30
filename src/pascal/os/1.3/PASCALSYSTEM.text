@@ -80,7 +80,14 @@ PROGRAM PASCALSYSTEM;
 
   CONST
     MMAXINT  = 32767;  { maximum INTEGER value }
-    MAXUNIT  = 12;      { maximum physical unit # for UREAD }
+    MAXUNIT  = 20;      { maximum physical unit # for UREAD -- UCSD
+                          II.0's own GLOBALS.TEXT says 12 (1.1's own
+                          value), but Neil Parker's own documented
+                          DISKNUM table (evidence/reference/
+                          "Undocumented Secrets of Apple Pascal.html")
+                          says the OS's own internal table is "12
+                          (Apple Pascal 1.1) or 20 (Apple Pascal 1.2
+                          and 1.3)" -- 1.3 real, not UCSD generic }
     MAXDIR   = 77;      { max number of entries in a directory }
     VIDLENG  = 7;       { number of chars in a volume ID }
     TIDLENG  = 15;      { number of chars in a title ID }

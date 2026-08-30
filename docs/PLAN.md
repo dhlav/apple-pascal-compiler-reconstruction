@@ -339,7 +339,10 @@ a route end to end; everything else is a straight read-and-rebuild.
     `SYSCOM+37` in a local this version re-derives instead, same
     behavior). A quick check of `DIGITS`/`UNITABLE` alone (82 words,
     isolated compile) confirmed those two fields' own sizes are right;
-    the current VAR section as a whole totals 263 of the needed 451
+    `MAXUNIT` itself was then corrected from UCSD II.0's own `12`
+    (1.1's value) to `20` (1.2/1.3's, per Neil Parker's documented
+    `DISKNUM` table, finding 141), widening `UNITABLE` by 48 words --
+    the current VAR section as a whole totals 311 of the needed 451
     words, so a substantial amount is still genuinely missing or
     undersized elsewhere -- not yet located, and not guessed at to
     close the gap artificially. `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE`

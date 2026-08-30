@@ -12871,3 +12871,37 @@ Verified: `params=4/data=0` against Apple's real `4/2`. Segment 0's own
 Acceptance run `2026-08-29-pascalsystem-fgotoxy`: 0 errors, 719 lines,
 `PASCALSYS.CODE` extracted and `FGOTOXY` compared directly against
 Apple's real `128K.PASCAL` via `CodeFile`.
+
+## 141. `SYSTEM.PASCAL` -- `MAXUNIT` is 20, not UCSD II.0's own 12
+
+`GLOBALS.TEXT` (UCSD II.0) declares `MAXUNIT = 12`, and that value had
+been carried over unchanged into the reconstruction. It is 1.1's own
+figure, not 1.3's. Neil Parker's *Undocumented Secrets of Apple
+Pascal* documents the OS's own internal `DISKNUM` table directly:
+"a table of 12 (Apple Pascal 1.1) or 20 (Apple Pascal 1.2 and 1.3)
+2-byte entries, one for each device from #1: to #12: or #20:" --
+raised by the user directly rather than found independently.
+
+Changed `MAXUNIT` to `20`. `UNITABLE: ARRAY [UNITNUM] OF ...` widens
+from 13 entries (`0..12`) to 21 (`0..20`), an 8-entry, 48-word (96
+byte) growth -- and that is exactly what both compilers show. Host
+compiler: `PASCALSY.1`'s own frame grows from 263 to 311 words.
+Apple's own real compiler, independently: `data` for procedure 1 goes
+from `622` (not recorded as a separate finding at the time) to `622`
+-> matches the host figure exactly, `622` bytes = `311` words, against
+Apple's real `902` bytes = `451` words -- confirming both the growth
+amount and that the two compilers agree with each other on the new
+total, still short of the full 451-word target by 140 words (unrelated
+still-unrecovered globals, finding 139c's own scope).
+
+No procedure's own `params` moved -- `UNITABLE` is a global, not a
+parameter, so this could only ever affect frame *data* sizes, and
+segment 0's own 42-of-43 `params` match (procedures 1-42, compared
+directly against Apple's real `128K.PASCAL`) held unchanged after the
+edit, confirming no regression.
+
+Acceptance run `2026-08-29-pascalsystem-maxunit`: 0 errors, `PASCALSYS.CODE`
+extracted and diffed procedure-by-procedure against Apple's real
+`128K.PASCAL` via `CodeFile`; `params` match held for 1-42, `data` for
+procedure 1 (`PASCALSY.1`, the outer block carrying the global `VAR`
+section) now at 311 of 451 words.
