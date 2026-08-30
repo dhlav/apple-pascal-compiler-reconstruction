@@ -666,7 +666,40 @@ PROGRAM PASCALSYSTEM;
     END
   END;
   FUNCTION FBLOCKIO; BEGIN FBLOCKIO := 0 END;
-  PROCEDURE FGOTOXY; BEGIN END;
+
+  { Positions the cursor, clamped to the terminal's own declared
+    WIDTH/HEIGHT. Real body (`PASCALSY.29`) confirmed `SYSCOM`/
+    `GFILES[1]` (finding 139): it clamps its two arguments against a
+    pointer set to `SYSCOM+37`, landing exactly on `CRTINFO.WIDTH`
+    (`HEIGHT`, the next field, clamps the other axis), then writes the
+    GOTOXY escape (ASCII 30) followed by row and column, each offset
+    by 32, through the same `GFILES[1]` every other segment-0 body
+    writes through. Apple's own real body caches `SYSCOM+37` in a
+    1-word local rather than re-reaching `SYSCOM^.CRTINFO` each time --
+    a real, documented, not-forced 1-word gap (`data`), not attempted
+    to close since it changes nothing observable. }
+  PROCEDURE FGOTOXY;
+  BEGIN
+    IF Y < 0 THEN
+    BEGIN
+      Y := 0
+    END;
+    IF Y > SYSCOM^.CRTINFO.HEIGHT THEN
+    BEGIN
+      Y := SYSCOM^.CRTINFO.HEIGHT
+    END;
+    IF X < 0 THEN
+    BEGIN
+      X := 0
+    END;
+    IF X > SYSCOM^.CRTINFO.WIDTH THEN
+    BEGIN
+      X := SYSCOM^.CRTINFO.WIDTH
+    END;
+    FWRITECHAR(GFILES[1]^, CHR(30), 0);
+    FWRITECHAR(GFILES[1]^, CHR(Y + 32), 0);
+    FWRITECHAR(GFILES[1]^, CHR(X + 32), 0)
+  END;
 
   FUNCTION VOLSEARCH; BEGIN VOLSEARCH := 0 END;
   PROCEDURE WRITEDIR; BEGIN END;

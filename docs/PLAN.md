@@ -333,10 +333,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     `MISCINFO`/`SEGTABLE`/the debugger's own mark-stack chain), not yet
     verified field by field beyond `CRTINFO.WIDTH`/`HEIGHT`.
     2 offsets confirmed of a likely 100+ in the full frame -- real
-    progress, not a finished reconstruction. `HOMECURSOR`/`CLEARSCREEN`/
-    `CLEARLINE` call an unidentified helper (`PASCALSY.53`, past
-    procedure 42, likely one of Apple's own 128K-specific additions)
-    and are genuinely harder than `FGOTOXY`; not attempted yet.
+    progress, not a finished reconstruction. Put it to immediate use:
+    `FGOTOXY` written for real (finding 140), `params=4/data=0` against
+    Apple's real `4/2` -- one documented word (Apple's own body caches
+    `SYSCOM+37` in a local this version re-derives instead, same
+    behavior). A quick check of `DIGITS`/`UNITABLE` alone (82 words,
+    isolated compile) confirmed those two fields' own sizes are right;
+    the current VAR section as a whole totals 263 of the needed 451
+    words, so a substantial amount is still genuinely missing or
+    undersized elsewhere -- not yet located, and not guessed at to
+    close the gap artificially. `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE`
+    call an unidentified helper (`PASCALSY.53`, past procedure 42,
+    likely one of Apple's own 128K-specific additions) and are
+    genuinely harder than `FGOTOXY`; not attempted yet.
     `PASCALSY`'s own real 451-word main-loop body (the single largest
     procedure on the whole disk set), every other forward-declared
     procedure's real content, and four of the six other segments'

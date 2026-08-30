@@ -12845,3 +12845,29 @@ full `SYSCOMREC` type added.
 Acceptance run `2026-08-29-pascalsystem-syscomrec`: 0 errors, 686
 lines, `PASCALSYS.CODE` extracted and re-verified against Apple's real
 `128K.PASCAL` via `CodeFile`.
+
+## 140. `SYSTEM.PASCAL` -- `FGOTOXY` written for real, close, one documented word
+
+The first payoff of finding 139's own `SYSCOM`/`GFILES[1]` work:
+`FGOTOXY` (`PASCALSY.29`) clamps `Y` to `SYSCOM^.CRTINFO.HEIGHT` and
+`X` to `SYSCOM^.CRTINFO.WIDTH`, then writes the GOTOXY escape (ASCII
+30) followed by row and column, each offset by 32, through
+`GFILES[1]` -- the same target every other segment-0 body's own
+console output goes through.
+
+`params=4` exact (`X`, `Y`, matching Apple's real `args 2 words`).
+`data`: mine `0` against Apple's real `2` -- one word short, and
+exactly the gap predicted before compiling, not discovered after:
+Apple's own real body caches `SYSCOM+37` (the address of `WIDTH`) in
+its own local rather than re-reaching `SYSCOM^.CRTINFO` fresh for each
+of the two comparisons. Same observable behavior, one fewer local --
+documented, not forced, matching this project's own established
+practice for a real, understood, immaterial gap (`SETUP4`, `SETUP16`,
+several of `LIBMAP`'s procedures).
+
+Verified: `params=4/data=0` against Apple's real `4/2`. Segment 0's own
+42-of-43 `params` match held unchanged.
+
+Acceptance run `2026-08-29-pascalsystem-fgotoxy`: 0 errors, 719 lines,
+`PASCALSYS.CODE` extracted and `FGOTOXY` compared directly against
+Apple's real `128K.PASCAL` via `CodeFile`.
