@@ -12938,3 +12938,64 @@ Apple's real `128K.PASCAL` via `CodeFile` -- `params` match held for
 1-42, procedure 1's `data` unchanged at 622 of the 902-byte (311-of-451
 word) target, confirming the constant change is inert for this specific
 frame as predicted before compiling.
+
+## 143. `SYSTEM.PASCAL` -- the 451-word `VAR` section closed exactly
+
+Finding 139c left 140 words genuinely unaccounted for past `FILENAME`
+(UCSD II.0's `GLOBALS.TEXT` own last-declared global). Neil Parker's
+document turns out to hold the rest of it: right after `FILENAME` it
+transcribes, field by field with a byte offset beside each, every
+global Apple itself added past UCSD II.0's own set -- reverse-engineered
+and named by Dave Tribby, not read from Apple's own source (`config_char`
+through `run_vol`/`what_l`, ~26 fields, ending with an explicit "End of
+Apple Pascal global variables"). Two things make this usable as more
+than a guess: every single gap between consecutive offsets in that list
+matches this file's own already-derived word-size formula exactly, with
+zero exceptions across roughly 26 fields (`VID`=8 bytes, `FULL_ID`=24,
+`DIRENTRY`=26, a bare `STRING`=82, a `BOOLEAN`=2, and so on); and the
+byte offset where the block starts (Parker's own "502 in 1.2 and 1.3,
+restarting the count at 0" -- the same `MAXUNIT`-driven 96-byte shift
+finding 141 already established) lands exactly on this file's own
+already-compiled, Apple-verified total through `FILENAME` (622 bytes =
+311 words) -- so Apple's real compiler and Parker's transcription agree
+with each other before a line of the new block was even typed.
+
+Added all ~26 fields, named in this file's own `UPPERCASE` convention
+with Tribby's own name and function noted per field (`CONFIG_CHAR`,
+`CHAIN_NAME`, `CHAIN_MSG`, `WHAT_F`, `EXEC_CH_NUM`, `WHAT_G`,
+`R_EXEC_FLG`, `W_EXEC_FLG`, `SWAP_ON`, `SWAP_1_ON`, `SWAP_2_ON`,
+`JUST_BOOT`, `WHAT_H`, `EXEC_IN_CH`, `EXEC_TERM`, `WHAT_I`,
+`EXEC_UNIT`, `EXEC_VOL`, `EXEC_SIZE`, `WHAT_J`, `EXEC_FENTRY`,
+`WHAT_K`, `DLINE_STR`, `BSPACE_STR`, `RUN_VOL`, `WHAT_L`) using the
+types Parker's own listing implies from each field's declared purpose
+and array bounds. Host compiler: `PASCALSY.1`'s frame lands at exactly
+902 bytes (451 words) on the first attempt -- Apple's own real target,
+matched exactly, not approached. Apple's own real compiler, run cold
+against the same source: **`params=0/data=902`, an exact match** to
+the real `128K.PASCAL`'s own procedure 1.
+
+This is labeled STRONG INFERENCE, not VERIFIED SOURCE FACT, for the
+field *names* and *individual types* -- Parker/Tribby are "a lead, not
+an authority" (project rule) and neither is Apple's own source, and
+several fields are honestly unidentified even in Tribby's own telling
+(`WHAT_F` through `WHAT_L`, six placeholder names for blocks whose
+purpose he never worked out). What the frame-size match against
+Apple's real binary *does* verify, as a VERIFIED BINARY FACT: the
+total byte count and the field *boundaries* (offsets) -- since a
+wrong split between two adjacent fields of different total size would
+have changed procedure 1's own frame total, and it did not. Individual
+field identities within that boundary set remain to be confirmed the
+way `SYSCOM`/`GFILES[1]` were (finding 139) -- by reading real bodies
+that reference each offset -- not assumed correct because the sum
+came out right.
+
+No procedure's own `params` moved; segment 0's 42-of-43 `params` match
+held unchanged. This unblocks `PASCALSY.1`'s own real 451-word main
+loop body -- the single largest procedure in the whole disk set, and
+the reason this whole `VAR`-section effort was undertaken -- since
+every offset it might reference now has a declared field behind it.
+
+Acceptance run `2026-08-29-pascalsystem-varsection-complete`: 0 errors,
+780 lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure
+against Apple's real `128K.PASCAL` via `CodeFile` -- procedure 1
+`params=0/data=902`, exact; `params` match held for 1-42 elsewhere.

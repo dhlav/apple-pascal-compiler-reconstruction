@@ -341,16 +341,33 @@ a route end to end; everything else is a straight read-and-rebuild.
     isolated compile) confirmed those two fields' own sizes are right;
     `MAXUNIT` itself was then corrected from UCSD II.0's own `12`
     (1.1's value) to `20` (1.2/1.3's, per Neil Parker's documented
-    `DISKNUM` table, finding 141), widening `UNITABLE` by 48 words --
-    the current VAR section as a whole totals 311 of the needed 451
-    words, so a substantial amount is still genuinely missing or
-    undersized elsewhere -- not yet located, and not guessed at to
-    close the gap artificially. `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE`
-    call an unidentified helper (`PASCALSY.53`, past procedure 42,
-    likely one of Apple's own 128K-specific additions) and are
-    genuinely harder than `FGOTOXY`; not attempted yet.
-    `PASCALSY`'s own real 451-word main-loop body (the single largest
-    procedure on the whole disk set), every other forward-declared
+    `DISKNUM` table, finding 141), widening `UNITABLE` by 48 words, and
+    `MAX_SEG` from `31` to `63` (same source, finding 142, confirmed
+    inert for this frame -- it only widens a heap structure reached
+    through the `SYSCOM` pointer). **The 451-word `VAR` section is now
+    closed exactly** (finding 143): Parker's own document transcribes
+    every field Apple added past UCSD II.0's own `GLOBALS.TEXT` (Dave
+    Tribby's reverse-engineered names -- `CONFIG_CHAR` through
+    `WHAT_L`, ~26 fields), and it checks out two independent ways
+    before typing a line of it: every offset gap in Parker's own list
+    matches this file's already-derived word-size formulas exactly,
+    and the block's own starting offset landed exactly on this file's
+    already-Apple-verified total through `FILENAME`. Procedure 1 now
+    compiles to `params=0/data=902` against Apple's real `128K.PASCAL`
+    -- an **exact match**, both compilers agreeing, first attempt.
+    Field *names* and *individual* types stay STRONG INFERENCE, not
+    verified fact (six of them are Tribby's own unidentified
+    placeholders, `WHAT_F` through `WHAT_L`) -- what the frame-size
+    match verifies is the field *boundaries*, not each identity.
+    `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE` call an unidentified helper
+    (`PASCALSY.53`, past procedure 42, likely one of Apple's own
+    128K-specific additions) and are genuinely harder than `FGOTOXY`;
+    not attempted yet. `PASCALSY`'s own real 451-word main-loop body
+    (the single largest procedure on the whole disk set) is now
+    unblocked on the `VAR`-section side -- every offset it might
+    reference has a declared field behind it, though individual field
+    identities within that set still need confirming one at a time,
+    `SYSCOM`/`GFILES[1]`-style. That, every other forward-declared
     procedure's real content, and four of the six other segments'
     bodies beyond procedure 1 remain the natural next work.
 

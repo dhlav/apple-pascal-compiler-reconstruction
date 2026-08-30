@@ -308,6 +308,57 @@ PROGRAM PASCALSYSTEM;
                 END;
     FILENAME: FILE_TABLE;
 
+  { The fields below are Apple's own additions past UCSD II.0's own
+    `GLOBALS.TEXT` (which ends at `FILENAME`) -- not in any UCSD
+    source this project has. Names and purposes are Dave Tribby's,
+    reverse-engineered from the 128K/1.3 binary and published on his
+    PSYS disk; Neil Parker's own document ("Undocumented Secrets of
+    Apple Pascal") transcribes them with a byte offset beside each
+    field, restarting the count at 0 at `FILENAME` because `MAXUNIT`
+    moved everything after it by 96 bytes between 1.1 and 1.2/1.3
+    (same finding-141 fact, cited directly by Parker himself). This
+    is STRONG INFERENCE, not a verified fact: Parker/Tribby are "a
+    lead, not an authority" (project rule) and neither is Apple's own
+    source. But the offsets are internally self-consistent against
+    every type size already confirmed in this file (VID=8 bytes,
+    FULL_ID=24, DIRENTRY=26, a plain STRING=82, etc. -- every single
+    gap between consecutive offsets in Parker's own list matches this
+    file's own already-derived word-size formula exactly, with zero
+    exceptions across ~26 fields), and the byte offset where this
+    block starts (502, i.e. relative 0) lands exactly on this file's
+    own already-compiled, Apple-verified total through `FILENAME`
+    (622 bytes = 311 words) -- so the two independent sources
+    (Apple's real compiler output, and Parker's own transcription)
+    agree with each other before a line of this block is even typed.
+    Field names below are UPPERCASE to match this file's own style;
+    Tribby's own names (lowercase, snake_case) are noted per field. }
+    CONFIG_CHAR: SET OF CHAR;      { Tribby's config_char -- MISCINFO's own configuration chars }
+    CHAIN_NAME: STRING[NAME_LEN];  { Tribby's chain_name -- "Next File" from SETCHAIN }
+    CHAIN_MSG: STRING;             { Tribby's chain_msg -- "Message" from SETCVAL }
+    WHAT_F: ARRAY [1..2] OF INTEGER;  { Tribby's what_f -- unidentified pair, EXEC-related }
+    EXEC_CH_NUM: INTEGER;          { Tribby's exec_ch_num -- next EXEC char in disk buffer }
+    WHAT_G: ARRAY [1..2] OF INTEGER;  { Tribby's what_g -- unidentified pair, EXEC-related }
+    R_EXEC_FLG: BOOLEAN;           { Tribby's r_exec_flg -- reading an EXEC file }
+    W_EXEC_FLG: BOOLEAN;           { Tribby's w_exec_flg -- writing an EXEC file }
+    SWAP_ON: BOOLEAN;              { Tribby's swap_on -- system swapping on }
+    SWAP_1_ON: BOOLEAN;            { Tribby's swap_1_on -- level 1 swapping on }
+    SWAP_2_ON: BOOLEAN;            { Tribby's swap_2_on -- level 2 swapping on }
+    JUST_BOOT: BOOLEAN;            { Tribby's just_boot -- just booted flag }
+    WHAT_H: ARRAY [1..2] OF INTEGER;  { Tribby's what_h -- unidentified pair }
+    EXEC_IN_CH: CHAR;              { Tribby's exec_in_ch -- last char read from EXEC file }
+    EXEC_TERM: CHAR;               { Tribby's exec_term -- EXEC file termination char }
+    WHAT_I: ARRAY [1..7] OF INTEGER;  { Tribby's what_i -- unidentified 7-word block, EXEC state }
+    EXEC_UNIT: INTEGER;            { Tribby's exec_unit -- EXEC volume unit number }
+    EXEC_VOL: VID;                 { Tribby's exec_vol -- EXEC file volume name }
+    EXEC_SIZE: INTEGER;            { Tribby's exec_size -- # blocks in EXEC file }
+    WHAT_J: ARRAY [1..3] OF INTEGER;  { Tribby's what_j -- unidentified triple, EXEC state }
+    EXEC_FENTRY: DIRENTRY;         { Tribby's exec_fentry -- directory entry for EXEC file }
+    WHAT_K: ARRAY [1..11] OF INTEGER; { Tribby's what_k -- unidentified 11-word block }
+    DLINE_STR: STRING[VIDLENG];    { Tribby's dline_str -- printed per char to delete line }
+    BSPACE_STR: STRING[VIDLENG];   { Tribby's bspace_str -- printed to backspace/blank a char }
+    RUN_VOL: VID;                  { Tribby's run_vol -- run (%) volume; did not exist before 1.2 }
+    WHAT_L: ARRAY [1..4] OF INTEGER;  { Tribby's what_l -- unidentified 4-word block }
+
   { Segment 0's own 41 forward-declared procedures, in `GLOBALS.TEXT`'s
     own order -- 27 "fixed" (addressed directly by object code, so the
     comment there warns not to move them), then 14 "non-fixed". True
