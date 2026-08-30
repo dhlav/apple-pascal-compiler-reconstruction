@@ -1,0 +1,403 @@
+{ SYSTEM.PASCAL -- the Apple Pascal operating system: command menu, file
+  I/O primitives, error printing, initialization, and program loading.
+  Codefile target is **128K.PASCAL** specifically (APPLE3:) -- the only
+  build this project reads, cites, or tests against; the 64K
+  `SYSTEM.PASCAL` build is out of scope entirely, by direct instruction
+  (`analysis/diskset-inventory.txt` has 128K.PASCAL's own 7-segment
+  layout).
+
+  First session: the skeleton only. `PROGRAM PASCALSYSTEM` matches
+  UCSD II.0's own program name exactly (`reference_source/ucsd_ii0/
+  GLOBALS.TEXT`) and the shape SETUP.text's own header comment already
+  worked out for a `(*$U-*)` host program wrapping `SEGMENT PROCEDURE`s
+  one level in. `CONST`/`TYPE` and the VAR section below are ported
+  from `GLOBALS.TEXT` (legitimate for names per the project's own
+  sources-of-truth order -- UCSD source for names, re-derive structure
+  from the binary) as a *starting point*, not yet verified against
+  Apple's own frame sizes; `PASCALSY` (segment 0, the real 451-word
+  main loop, `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`) is left a
+  trivial outer body for now, deliberately deferred -- it is the single
+  biggest procedure in the entire disk set and depends on getting these
+  globals right first.
+
+  **`WRITE`/`WRITELN` do not work here -- call `FWRITESTRING`/
+  `FWRITELN`/etc. directly.** UCSD's own source does exactly that
+  (`SYSSEGS.A.TEXT`'s `FWRITELN(SYSTERM^)`, not `WRITELN(SYSTERM^)`),
+  and it turns out to be load-bearing, not stylistic: `WRITE`/`WRITELN`
+  compile to these same routines as compiler sugar, but Apple's own
+  compiler only accepts a *plain variable identifier* as that sugar's
+  file argument -- `WRITELN(SYSTERM^)` (a pointer dereference, not an
+  identifier) hits error 125 on Apple's real compiler even though the
+  host compiler (`ucsdpsys_compile`) accepts it, one more case of the
+  host tool being more permissive than Apple's (confirmed both ways
+  directly: `WRITELN(SYSTERM^)` fails, `WRITELN(DIRECTF)` on a plain
+  `TEXT` variable of the same type succeeds). Calling `FWRITELN`
+  directly sidesteps the restriction entirely -- it is an ordinary
+  procedure call, not compiler sugar, and ordinary `VAR` parameters
+  accept any suitable expression, dereferences included. This is also
+  why `FIB`, not `TEXT`, is `FWRITELN`'s own real parameter type
+  (`GLOBALS.TEXT`'s own forward declaration, `PROCEDURE
+  FWRITELN(VAR F: FIB); FORWARD;`) -- confirmed against the raw p-code
+  too: `USERPROG.1` pushes `LOD 1,56` (a plain value load, not a
+  dereference-then-load) straight into `CXP 0,22` (`OS.22`, i.e.
+  segment-0 procedure 22 -- `FWRITELN`), meaning the real global at
+  that offset is itself the pointer, loaded and passed as-is.
+
+  That single fact reshaped this file: `GLOBALS.TEXT`'s own "SYSTEM
+  PROCEDURE FORWARD DECLARATIONS" section (27 "fixed", addressed
+  directly by object code, then 14 "non-fixed") is not a documentation
+  aid, it is 41 of segment 0's own procedure declarations, and segment
+  0's own body (`PASCALSY.1`, deferred) makes 42 -- exactly finding
+  51a's own already-verified count for how far Apple's segment-0
+  numbering agrees with UCSD's declared order. Declaring all 41 here,
+  in this same order, before any `SEGMENT PROCEDURE`, lands their
+  procedure *numbers* right even though every body but the two below
+  is still a stub: `FINIT` (2nd declared) already matches an
+  independently-recovered comment from earlier compiler work, `OS.3
+  FINIT` -- procedure 3, one more than its declaration position because
+  the enclosing block's own body always claims number 1.
+
+  `USERPROGRAM` (segment 1, `USERPROG` on disk) is the one real body
+  this session: UCSD's own `SYSSEGS.A.TEXT` gives it verbatim (once
+  written as direct `FWRITELN`/`FWRITESTRING` calls, per above), and
+  Apple's binary (`args 2 words`) matches UCSD's own 2-parameter
+  declaration exactly -- unlike segment 0's own procedures 43 onward
+  (finding 51c), this one is a straight, unmodified port. The other
+  five segments are stubs: `PRINTERROR(XEQERR,IORSLT: INTEGER)`,
+  `INITIALIZE`, and `GETCMD(LASTST: CMDSTATE): CMDSTATE` all match
+  Apple's own real `args` word counts exactly against UCSD's declared
+  signatures (`params=2/1/1` respectively, `analysis/lifted/
+  128K.PASCAL-1.3-128K.pas.txt`), so those signatures are trusted;
+  `FIOPRIMS` (`args 0 words`, real) and `FILEPROC` (`args 6 words`,
+  real) have no UCSD precedent at all -- Apple-specific segments, most
+  likely 128K-only code the 64K system keeps inline in segment 0.
+  `FILEPROC`'s own six words are an unverified placeholder (six plain
+  `INTEGER`s) purely to let the file compile; nothing calls it yet, so
+  the wrong shape costs nothing until it does. }
+
+(*$U-*)
+PROGRAM PASCALSYSTEM;
+
+  CONST
+    MMAXINT  = 32767;  { maximum INTEGER value }
+    MAXUNIT  = 12;      { maximum physical unit # for UREAD }
+    MAXDIR   = 77;      { max number of entries in a directory }
+    VIDLENG  = 7;       { number of chars in a volume ID }
+    TIDLENG  = 15;      { number of chars in a title ID }
+    MAX_SEG  = 31;      { max code segment number }
+    FBLKSIZE = 512;     { standard disk block length }
+    DIRBLK   = 2;       { disk addr of the directory }
+    AGELIMIT = 300;     { max age for GDIRP, in ticks }
+    EOL      = 13;      { end-of-line -- ASCII CR }
+    DLE      = 16;      { blank-compression code }
+    NAME_LEN = 23;      { CONCAT(VIDLENG, ':', TIDLENG) }
+    FILL_LEN = 11;      { max # of nulls in FILLER }
+
+  TYPE
+    IORSLTWD = (INOERROR, IBADBLOCK, IBADUNIT, IBADMODE, ITIMEOUT,
+                ILOSTUNIT, ILOSTFILE, IBADTITLE, INOROOM, INOUNIT,
+                INOFILE, IDUPFILE, INOTCLOSED, INOTOPEN, IBADFORMAT,
+                ISTRGOVFL);
+
+    { command states -- see GETCMD }
+    CMDSTATE = (HALTINIT, DEBUGCALL,
+                UPROGNOU, UPROGUOK, SYSPROG,
+                COMPONLY, COMPANDGO, COMPDEBUG,
+                LINKANDGO, LINKDEBUG);
+
+    { code files used in GETCMD }
+    SYSFILE = (ASSMBLER, COMPILER, EDITOR, FILER, LINKER);
+
+    { archival info -- the date }
+    DATEREC = PACKED RECORD
+                MONTH: 0..12;  { 0 implies date not meaningful }
+                DAY: 0..31;
+                YEAR: 0..100   { 100 is temp-disk flag }
+              END;
+
+    { volume tables }
+    UNITNUM = 0..MAXUNIT;
+    VID = STRING[VIDLENG];
+
+    { disk directories }
+    DIRRANGE = 0..MAXDIR;
+    TID = STRING[TIDLENG];
+    FULL_ID = STRING[NAME_LEN];
+
+    FILE_TABLE = ARRAY [SYSFILE] OF FULL_ID;
+
+    FILEKIND = (UNTYPEDFILE, XDSKFILE, CODEFILE, TEXTFILE,
+                INFOFILE, DATAFILE, GRAFFILE, FOTOFILE, SECUREDIR);
+
+    DIRENTRY = PACKED RECORD
+                 DFIRSTBLK: INTEGER;  { first physical disk addr }
+                 DLASTBLK: INTEGER;   { points at block following }
+                 CASE DFKIND: FILEKIND OF
+                   SECUREDIR,
+                   UNTYPEDFILE:       { only in DIR[0] -- volume info }
+                     (FILLER1: 0..2048;
+                      DVID: VID;
+                      DEOVBLK: INTEGER;
+                      DNUMFILES: DIRRANGE;
+                      DLOADTIME: INTEGER;
+                      DLASTBOOT: DATEREC);
+                   XDSKFILE, CODEFILE, TEXTFILE, INFOFILE,
+                   DATAFILE, GRAFFILE, FOTOFILE:
+                     (FILLER2: 0..1024;
+                      STATUS: BOOLEAN;   { for FILER wildcards }
+                      DTID: TID;
+                      DLASTBYTE: 1..FBLKSIZE;
+                      DACCESS: DATEREC)
+               END;
+
+    DIRP = ^DIRECTORY;
+    DIRECTORY = ARRAY [DIRRANGE] OF DIRENTRY;
+
+    { file information }
+    CLOSETYPE = (CNORMAL, CLOCK, CPURGE, CCRUNCH);
+    WINDOWP = ^WINDOW;
+    WINDOW = PACKED ARRAY [0..0] OF CHAR;
+
+    FIBP = ^FIB;
+
+    FIB = RECORD
+            FWINDOW: WINDOWP;  { user window, F^, used by GET/PUT }
+            FEOF, FEOLN: BOOLEAN;
+            FSTATE: (FJANDW, FNEEDCHAR, FGOTCHAR);
+            FRECSIZE: INTEGER; { bytes; 0=>block file, 1=>char file }
+            CASE FISOPEN: BOOLEAN OF
+              TRUE: (FISBLKD: BOOLEAN;   { file is on a block device }
+                     FUNIT: UNITNUM;
+                     FVID: VID;
+                     FREPTCNT,          { # times F^ valid w/o GET }
+                     FNXTBLK,           { next rel block to IO }
+                     FMAXBLK: INTEGER;  { max rel block accessed }
+                     FMODIFIED: BOOLEAN;
+                     FHEADER: DIRENTRY; { copy of disk dir entry }
+                     CASE FSOFTBUF: BOOLEAN OF
+                       TRUE: (FNXTBYTE, FMAXBYTE: INTEGER;
+                              FBUFCHNGD: BOOLEAN;
+                              FBUFFER: PACKED ARRAY [0..FBLKSIZE] OF CHAR))
+          END;
+
+    { user workfile stuff }
+    INFOREC = RECORD
+                SYMFIBP, CODEFIBP: FIBP;         { workfiles for scratch }
+                ERRSYM, ERRBLK, ERRNUM: INTEGER; { error stuff in edit }
+                SLOWTERM, STUPID: BOOLEAN;
+                ALTMODE: CHAR;                   { washout char, compiler }
+                GOTSYM, GOTCODE: BOOLEAN;        { titles are meaningful }
+                WORKVID, SYMVID, CODEVID: VID;
+                WORKTID, SYMTID, CODETID: TID
+              END;
+
+    { code segment layouts }
+    SEG_RANGE = 0..MAX_SEG;
+    SEG_DESC = RECORD
+                 DISKADDR: INTEGER;  { rel blk in code, abs in SYSCOM^ }
+                 CODELENG: INTEGER   { # bytes to read in }
+               END;
+
+  VAR
+    SYSCOM: ^INTEGER;                { the real SYSCOMREC is not
+                                        reconstructed yet -- placeholder,
+                                        see the header comment }
+    GFILES: ARRAY [0..5] OF FIBP;    { global files, 0=INPUT, 1=OUTPUT }
+    USERINFO: INFOREC;               { work stuff for compiler etc }
+    EMPTYHEAP: ^INTEGER;             { heap mark for mem managing }
+    INPUTFIB, OUTPUTFIB,             { console files -- GFILES are copies }
+    SYSTERM, SWAPFIB: FIBP;          { control and swapspace files }
+    SYVID, DKVID: VID;               { SYSUNIT volid & default volid }
+    THEDATE: DATEREC;                { today -- set in FILER or sign-on }
+    DEBUGINFO: ^INTEGER;             { debugger's global info while running }
+    STATE: CMDSTATE;                 { for GETCOMMAND }
+    PL: STRING;                      { prompt-line string, see PROMPT }
+    IPOT: ARRAY [0..4] OF INTEGER;   { integer powers of ten }
+    FILLER: STRING[FILL_LEN];        { nulls for carriage delay }
+    DIGITS: SET OF '0'..'9';
+    UNITABLE: ARRAY [UNITNUM] OF     { 0 not used }
+                RECORD
+                  UVID: VID;
+                  CASE UISBLKD: BOOLEAN OF
+                    TRUE: (UEOVBLK: INTEGER)
+                END;
+    FILENAME: FILE_TABLE;
+
+  { Segment 0's own 41 forward-declared procedures, in `GLOBALS.TEXT`'s
+    own order -- 27 "fixed" (addressed directly by object code, so the
+    comment there warns not to move them), then 14 "non-fixed". True
+    `FORWARD`s here, not completed bodies: finding 61/126 already
+    established that `FORWARD` reserves a procedure's *number*
+    immediately at declaration, completion order doesn't matter for
+    numbering, and (finding 119) no `SEGMENT PROCEDURE` may textually
+    follow a body that is already *complete* (error 399, `CODEINSEG`)
+    -- so all 41 are forward-declared first, then the six
+    `SEGMENT PROCEDURE`s below (which need `FWRITELN`/`FWRITESTRING`
+    visible to call), then the 41 real completions afterward, past the
+    segments, where being "already compiled" no longer blocks anything. }
+
+  PROCEDURE EXECERROR; FORWARD;
+  PROCEDURE FINIT(VAR F: FIB; WINDOW: WINDOWP; RECWORDS: INTEGER); FORWARD;
+  PROCEDURE FRESET(VAR F: FIB); FORWARD;
+  PROCEDURE FOPEN(VAR F: FIB; VAR FTITLE: STRING;
+                  FOPENOLD: BOOLEAN; JUNK: FIBP); FORWARD;
+  PROCEDURE FCLOSE(VAR F: FIB; FTYPE: CLOSETYPE); FORWARD;
+  PROCEDURE FGET(VAR F: FIB); FORWARD;
+  PROCEDURE FPUT(VAR F: FIB); FORWARD;
+  PROCEDURE XSEEK; FORWARD;
+  FUNCTION FEOF(VAR F: FIB): BOOLEAN; FORWARD;
+  FUNCTION FEOLN(VAR F: FIB): BOOLEAN; FORWARD;
+  PROCEDURE FREADINT(VAR F: FIB; VAR I: INTEGER); FORWARD;
+  PROCEDURE FWRITEINT(VAR F: FIB; I, RLENG: INTEGER); FORWARD;
+  PROCEDURE XREADREAL; FORWARD;
+  PROCEDURE XWRITEREAL; FORWARD;
+  PROCEDURE FREADCHAR(VAR F: FIB; VAR CH: CHAR); FORWARD;
+  PROCEDURE FWRITECHAR(VAR F: FIB; CH: CHAR; RLENG: INTEGER); FORWARD;
+  PROCEDURE FREADSTRING(VAR F: FIB; VAR S: STRING; SLENG: INTEGER); FORWARD;
+  PROCEDURE FWRITESTRING(VAR F: FIB; VAR S: STRING; RLENG: INTEGER); FORWARD;
+  PROCEDURE FWRITEBYTES(VAR F: FIB; VAR A: WINDOW;
+                        RLENG, ALENG: INTEGER); FORWARD;
+  PROCEDURE FREADLN(VAR F: FIB); FORWARD;
+  PROCEDURE FWRITELN(VAR F: FIB); FORWARD;
+  PROCEDURE SCONCAT(VAR DEST, SRC: STRING; DESTLENG: INTEGER); FORWARD;
+  PROCEDURE SINSERT(VAR SRC, DEST: STRING;
+                    DESTLENG, INSINX: INTEGER); FORWARD;
+  PROCEDURE SCOPY(VAR SRC, DEST: STRING; SRCINX, COPYLENG: INTEGER); FORWARD;
+  PROCEDURE SDELETE(VAR DEST: STRING; DELINX, DELLENG: INTEGER); FORWARD;
+  FUNCTION SPOS(VAR TARGET, SRC: STRING): INTEGER; FORWARD;
+  FUNCTION FBLOCKIO(VAR F: FIB; VAR A: WINDOW; I: INTEGER;
+                    NBLOCKS, RBLOCK: INTEGER; DOREAD: BOOLEAN): INTEGER;
+    FORWARD;
+  PROCEDURE FGOTOXY(X, Y: INTEGER); FORWARD;
+
+  { non-fixed forward declarations }
+
+  FUNCTION VOLSEARCH(VAR FVID: VID; LOOKHARD: BOOLEAN;
+                     VAR FDIR: DIRP): UNITNUM; FORWARD;
+  PROCEDURE WRITEDIR(FUNIT: UNITNUM; FDIR: DIRP); FORWARD;
+  FUNCTION DIRSEARCH(VAR FTID: TID; FINDPERM: BOOLEAN;
+                     FDIR: DIRP): DIRRANGE; FORWARD;
+  FUNCTION SCANTITLE(FTITLE: STRING; VAR FVID: VID; VAR FTID: TID;
+                     VAR FSEGS: INTEGER; VAR FKIND: FILEKIND): BOOLEAN;
+    FORWARD;
+  PROCEDURE DELENTRY(FINX: DIRRANGE; FDIR: DIRP); FORWARD;
+  PROCEDURE INSENTRY(VAR FENTRY: DIRENTRY;
+                     FINX: DIRRANGE; FDIR: DIRP); FORWARD;
+  PROCEDURE HOMECURSOR; FORWARD;
+  PROCEDURE CLEARSCREEN; FORWARD;
+  PROCEDURE CLEARLINE; FORWARD;
+  PROCEDURE PROMPT; FORWARD;
+  FUNCTION SPACEWAIT(FLUSH: BOOLEAN): BOOLEAN; FORWARD;
+  FUNCTION GETCHAR(FLUSH: BOOLEAN): CHAR; FORWARD;
+  FUNCTION FETCHDIR(FUNIT: UNITNUM): BOOLEAN; FORWARD;
+  PROCEDURE COMMAND; FORWARD;
+
+  { The user-program stub: what runs when no real user program has been
+    loaded on top of this segment's slot yet. Straight from UCSD's own
+    SYSSEGS.A.TEXT (calling FWRITELN/FWRITESTRING directly, not through
+    WRITE/WRITELN's own sugar -- see the header comment). Apple's real
+    `args 2 words` matches its 2-parameter declaration exactly. }
+  SEGMENT PROCEDURE USERPROGRAM(INPUT, OUTPUT: FIBP);
+  BEGIN
+    FWRITELN(SYSTERM^);
+    PL := 'No user program';
+    FWRITESTRING(SYSTERM^, PL, 0)
+  END;
+
+  { Apple-specific (128K only, no UCSD precedent): file I/O primitives
+    the 64K system keeps inline in segment 0. Real `args 0 words`
+    (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`); not written yet. }
+  SEGMENT PROCEDURE FIOPRIMS;
+  BEGIN END;
+
+  { UCSD's own PRINTERROR: prints the message for a run-time error
+    code (finding 53 already recovered all 31 of its CASE arms'
+    strings against UCSD's own SYSSEGS.A.TEXT). Signature matches
+    Apple's real `args 2 words` exactly; body not written yet. }
+  SEGMENT PROCEDURE PRINTERROR(XEQERR, IORSLT: INTEGER);
+  BEGIN END;
+
+  { UCSD's own INITIALIZE: system startup. Signature matches Apple's
+    real `args 0 words`; body not written yet. }
+  SEGMENT PROCEDURE INITIALIZE;
+  BEGIN END;
+
+  { UCSD's own GETCMD: reads and validates a Command-level keystroke,
+    returning the next CMDSTATE. Signature matches Apple's real
+    `args 1 words`; body not written yet. }
+  SEGMENT FUNCTION GETCMD(LASTST: CMDSTATE): CMDSTATE;
+  BEGIN
+    GETCMD := LASTST
+  END;
+
+  { Apple-specific (128K only, no UCSD precedent): file processing.
+    Real `args 6 words`; this six-plain-INTEGER shape is an unverified
+    placeholder purely to let the file compile -- nothing calls it yet,
+    so the wrong shape costs nothing until it does. }
+  SEGMENT PROCEDURE FILEPROC(A1, A2, A3, A4, A5, A6: INTEGER);
+  BEGIN END;
+
+  { The 41 forward-declared procedures' real completions, same order as
+    their FORWARD declarations above -- trivial stubs except
+    FWRITELN/FWRITESTRING (segment 1 already calls them for real, see
+    USERPROGRAM above; bodies below are a plausible first pass, not yet
+    verified against Apple's binary). }
+
+  PROCEDURE EXECERROR; BEGIN END;
+  PROCEDURE FINIT; BEGIN END;
+  PROCEDURE FRESET; BEGIN END;
+  PROCEDURE FOPEN; BEGIN END;
+  PROCEDURE FCLOSE; BEGIN END;
+  PROCEDURE FGET; BEGIN END;
+  PROCEDURE FPUT; BEGIN END;
+  PROCEDURE XSEEK; BEGIN END;
+  FUNCTION FEOF; BEGIN FEOF := TRUE END;
+  FUNCTION FEOLN; BEGIN FEOLN := TRUE END;
+  PROCEDURE FREADINT; BEGIN END;
+  PROCEDURE FWRITEINT; BEGIN END;
+  PROCEDURE XREADREAL; BEGIN END;
+  PROCEDURE XWRITEREAL; BEGIN END;
+  PROCEDURE FREADCHAR; BEGIN END;
+  PROCEDURE FWRITECHAR; BEGIN END;
+  PROCEDURE FREADSTRING; BEGIN END;
+
+  { What WRITE(f, s) lowers to (finding 52b); UCSD's own source calls
+    it directly rather than going through WRITE's own sugar (header
+    comment). }
+  PROCEDURE FWRITESTRING;
+  BEGIN
+  END;
+
+  PROCEDURE FWRITEBYTES; BEGIN END;
+  PROCEDURE FREADLN; BEGIN END;
+
+  { See FWRITESTRING above -- same status. }
+  PROCEDURE FWRITELN;
+  BEGIN
+  END;
+
+  PROCEDURE SCONCAT; BEGIN END;
+  PROCEDURE SINSERT; BEGIN END;
+  PROCEDURE SCOPY; BEGIN END;
+  PROCEDURE SDELETE; BEGIN END;
+  FUNCTION SPOS; BEGIN SPOS := 0 END;
+  FUNCTION FBLOCKIO; BEGIN FBLOCKIO := 0 END;
+  PROCEDURE FGOTOXY; BEGIN END;
+
+  FUNCTION VOLSEARCH; BEGIN VOLSEARCH := 0 END;
+  PROCEDURE WRITEDIR; BEGIN END;
+  FUNCTION DIRSEARCH; BEGIN DIRSEARCH := 0 END;
+  FUNCTION SCANTITLE; BEGIN SCANTITLE := TRUE END;
+  PROCEDURE DELENTRY; BEGIN END;
+  PROCEDURE INSENTRY; BEGIN END;
+  PROCEDURE HOMECURSOR; BEGIN END;
+  PROCEDURE CLEARSCREEN; BEGIN END;
+  PROCEDURE CLEARLINE; BEGIN END;
+  PROCEDURE PROMPT; BEGIN END;
+  FUNCTION SPACEWAIT; BEGIN SPACEWAIT := TRUE END;
+  FUNCTION GETCHAR; BEGIN GETCHAR := ' ' END;
+  FUNCTION FETCHDIR; BEGIN FETCHDIR := TRUE END;
+  PROCEDURE COMMAND; BEGIN END;
+
+BEGIN
+END.

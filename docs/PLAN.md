@@ -273,12 +273,33 @@ a route end to end; everything else is a straight read-and-rebuild.
 9. **`SYSTEM.EDITOR`** -- 129 procedures in 12 segments, the largest single
    target on the disk set.
 
-10. **The operating system** -- `128K.PASCAL`, 105 procedures. Four of its
-    seven segments are byte-identical to 64K `SYSTEM.PASCAL`'s
-    (`USERPROG`, `FIOPRIMS`, `PRINTERR`, `FILEPROC`), so the two releases
-    of the OS are one target and a bit. `ii0src.sdk` is the UCSD II.0 OS
-    source and is genuinely relevant here, unlike for the compiler
-    (finding 8).
+10. **The operating system** -- `128K.PASCAL` specifically, the only build
+    this file targets, reads, or cites; the 64K `SYSTEM.PASCAL` build is
+    out of scope entirely, by direct instruction. 7 segments, ~105
+    procedures. `ii0src.sdk` is the UCSD II.0 OS source and is genuinely
+    relevant here, unlike for the compiler (finding 8).
+
+    **Started** (finding 136, `src/pascal/os/1.3/PASCALSYSTEM.text`): the
+    skeleton compiles clean under Apple's own `SYSTEM.COMPILER`, first
+    attempt at the restructured file. `CONST`/`TYPE`/`VAR` ported from
+    `GLOBALS.TEXT`; its own 41 forward-declared segment-0 procedures (27
+    "fixed", 14 "non-fixed") declared in order, giving 42 of segment 0's
+    43 procedures a `params` size that already matches Apple's real
+    binary exactly (the one mismatch, procedure 43, is already known not
+    to be `COMMAND` -- finding 51c). All 7 segments land in their real
+    disk slots with their real names; `USERPROGRAM` (segment 1) is a
+    real, working body straight from UCSD's own `SYSSEGS.A.TEXT`, and
+    matches Apple's real `args 2 words` exactly. Getting there required
+    chasing down a real Apple-compiler quirk: `WRITE`/`WRITELN`'s own
+    sugar only accepts a plain variable identifier as its file argument,
+    not a pointer dereference (`WRITELN(SYSTERM^)` fails on Apple's real
+    compiler even though the host compiler accepts it) -- UCSD's own
+    source already avoids this, calling `FWRITELN`/`FWRITESTRING`
+    directly as ordinary forward-declared procedures, which is what this
+    file now does too. Not started yet: `PASCALSY`'s own real 451-word
+    main-loop body (the single largest procedure on the whole disk set),
+    every forward-declared procedure's real content, and five of the six
+    other segments' bodies beyond procedure 1.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

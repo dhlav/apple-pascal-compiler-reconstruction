@@ -22,7 +22,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 | file | what it is | status |
 |---|---|---|
 | SYSTEM.APPLE | Boot files that configure the Apple hardware. | not started; raw 6502, not a codefile |
-| SYSTEM.PASCAL | The main operating system and command menu. | not started; 105 procedures, lifts 105/105 |
+| SYSTEM.PASCAL | The main operating system and command menu. | **in progress, target is 128K.PASCAL specifically** (`src/pascal/os/1.3/PASCALSYSTEM.text`, finding 136); 7 segments, 105-111 procedures depending on build. The skeleton compiles clean under Apple's own `SYSTEM.COMPILER` first attempt: `CONST`/`TYPE`/`VAR` ported from UCSD II.0's `GLOBALS.TEXT`, its own 41 forward-declared segment-0 procedures (27 "fixed", 14 "non-fixed"), and all 7 segments in their real disk slots. 42 of segment 0's 43 procedures already match Apple's real `params` exactly; `USERPROG` (segment 1) matches too, straight from UCSD's own source once written as direct `FWRITELN`/`FWRITESTRING` calls (`WRITE`/`WRITELN`'s own sugar only accepts a plain variable, not a pointer dereference, on Apple's real compiler -- a real quirk, not a reconstruction bug). `PASCALSY` itself (segment 0's own 451-word main loop, the single largest procedure in the whole disk set) is still a trivial stub, along with every forward-declared procedure's real body and five of the six other segments' content beyond procedure 1 |
 | SYSTEM.MISCINFO | Screen and keyboard setup data for your terminal. | not started; written by SETUP |
 
 ## Main Utilities
@@ -65,8 +65,12 @@ is what says which files Apple actually rebuilt (finding 99c).
 The list above is the interesting half. The disks carry more:
 
 * **`128K.APPLE` and `128K.PASCAL`** (APPLE3) -- the 128K system, and the
-  build target. Four of `128K.PASCAL`'s seven segments are byte-identical to
-  `SYSTEM.PASCAL`'s: `USERPROG`, `FIOPRIMS`, `PRINTERR` and `FILEPROC`.
+  build target; see `SYSTEM.PASCAL`'s own row above for reconstruction
+  status (`src/pascal/os/1.3/PASCALSYSTEM.text` targets `128K.PASCAL`
+  directly, not the 64K build). Four of `128K.PASCAL`'s seven segments
+  were already known byte-identical to the 64K build's own -- `USERPROG`,
+  `FIOPRIMS`, `PRINTERR` and `FILEPROC` -- a fact recorded here for the
+  record, not a reason to read or cite that build going forward.
 * **`LINEFEED.CODE`** (APPLE3) -- suppresses line feeds. One procedure, 38
   bytes, and **reconstructed** (finding 99a).
 * **`SYSTEM.CHARSET`** (APPLE1) -- the hi-res character set, 1024 bytes.

@@ -12475,3 +12475,115 @@ procedures are the only two stubs left in the entire file.
 Acceptance run `2026-08-29-setup21-scalar-driver`: 0 errors, 1345 lines,
 `SETUP.CODE` extracted and every procedure's `params`/`data` compared
 directly against Apple's own binary via `CodeFile`.
+
+## 136. `SYSTEM.PASCAL` started: the skeleton compiles clean, and 42 of segment 0's 43 procedures already match on `params`
+
+First session on the operating system, target **128K.PASCAL specifically**
+(not the 64K `SYSTEM.PASCAL` build, which is out of scope for this file
+entirely by direct instruction -- not read, not cited, not compared
+against). New source: `src/pascal/os/1.3/PASCALSYSTEM.text`.
+
+### 136a. `WRITE`/`WRITELN` don't work here -- call the primitives directly
+
+UCSD's own `SYSSEGS.A.TEXT` writes `FWRITELN(SYSTERM^)`, not
+`WRITELN(SYSTERM^)`. Assumed this was just older style and tried the
+sugar form first -- `SYSTERM: FIBP = ^FIB`, `WRITELN(SYSTERM^)` --
+which hit error 125 on Apple's real compiler. Chased it three ways:
+
+* The host compiler (`ucsdpsys_compile`, `A2_UCSDPSYS`) has the real
+  `WRITE`/`WRITELN` builtins' own declared signatures baked in
+  (`lib/translator/builtin.cc` in its own source tree, extracted from
+  `thirdparty/ucsd-psystem-xc-0.13.tar.gz`) and reported them directly:
+  `sys:fwriteln`/`sys:fwritestring`/`sys:fwritechar` all take
+  `VAR F: FILE` (an untyped file, "a file of anything"), and `WRITELN`
+  additionally demands "a file of char" -- neither matches `^FIB`, a
+  pointer to an ordinary record. Retyping `FIBP` as `^TEXT` satisfied
+  the host compiler completely.
+* Apple's own compiler still refused it -- **same error 125, same
+  line** -- even with `FIBP = ^TEXT`. Isolated the exact distinction
+  with a two-line test program: `WRITELN(DIRECTF)`, a plain `TEXT`
+  variable, compiles; `WRITELN(SYSTERM^)`, a pointer *dereference* of
+  the identical type, does not. Apple's `WRITE`/`WRITELN` sugar accepts
+  only a plain variable identifier as its file argument, not a general
+  file-typed expression -- confirmed directly against the real compiler
+  in the emulator, not inferred. The host compiler is more permissive
+  here, consistent with `tools/xcompile.py`'s own header note.
+  SPECULATION, not needed for anything below: this reads like the
+  sugar's own argument-recognition being purely syntactic (is the
+  first token a bare identifier?) rather than a type check, so a
+  dereference just falls through to "no file argument given, write
+  this value to `OUTPUT`" and fails there instead, on writing a whole
+  record as if it were a value.
+* `GLOBALS.TEXT`'s own "SYSTEM PROCEDURE FORWARD DECLARATIONS" section
+  settles it completely: `PROCEDURE FWRITELN(VAR F: FIB); FORWARD;` --
+  an **ordinary ****`VAR`**** parameter of type ****`FIB`****, on an
+  ordinary procedure**, callable directly by name. Ordinary `VAR`
+  parameters accept any file-typed expression, dereferences included --
+  it is specifically `WRITE`/`WRITELN`'s own compiler sugar that is
+  restrictive, and calling the real routine directly sidesteps it
+  entirely. `FIBP = ^FIB` (the original type) was right all along; the
+  fix was calling `FWRITELN`/`FWRITESTRING` directly, the way UCSD's
+  own source already does, not retyping anything.
+
+The raw p-code independently confirms this reading of the calling
+convention, not just the syntax: `USERPROG.1` (segment 1's own body,
+`analysis/utilities/128K-1.3-APPLE3.pcode.txt`) is `LOD 1,56; CXP 0,22`
+-- a plain *value* load (not a dereference-then-load sequence) pushed
+straight into `FWRITELN` (`OS.22`). The global at that offset is
+itself the pointer; its own value already *is* the address `VAR F`
+needs, which is exactly what passing a `FIBP`-typed global (not
+`FIBP^`) to an ordinary `VAR FIB` parameter compiles to.
+
+### 136b. The 41 forward declarations are 41 of segment 0's own procedure numbers
+
+`GLOBALS.TEXT`'s forward-declaration block is not documentation, it is
+41 of segment 0's own procedure declarations -- 27 "fixed" (its own
+comment: "addressed directly by object code... do not move without
+careful thought"), then 14 "non-fixed". Declared all 41, plus the
+still-deferred outer body (`PASCALSY`, the real 451-word main loop,
+`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`), for 42 total --
+exactly finding 51a's own already-verified count for how far Apple's
+real numbering agrees with UCSD's declared order. `FINIT` (2nd
+declared) landing on procedure 3 -- one more than its declaration
+position, since the enclosing block's own body always claims number 1
+-- independently matches an already-recovered comment from earlier
+compiler work, `OS.3 FINIT`.
+
+Structuring the file needed the same two tricks findings 61/126/119
+already established for `SETUP.text`, just at a larger scale: `FORWARD`
+reserves a procedure's number immediately at declaration, not at
+completion, so all 41 are `FORWARD`-declared as a block; and no
+`SEGMENT PROCEDURE` may textually follow a body that is already
+*complete* (error 399, `CODEINSEG`), so the six `SEGMENT PROCEDURE`s
+(`USERPROGRAM` real, the other five plausible-signature stubs) sit
+between the 41 `FORWARD`s and their own 41 real completions, not after
+them.
+
+### 136c. The result
+
+**0 errors**, first attempt at the restructured file, 402 lines. Every
+one of the 7 segments landed in the right disk slot with the right
+name (`PASCALSY`/`USERPROG`/`FIOPRIMS`/`PRINTERR`/`INITIALI`/`GETCMD`/
+`FILEPROC`, matching `analysis/diskset-inventory.txt` exactly), and
+**42 of segment 0's 43 procedures already match Apple's real `params`
+size exactly** -- the one mismatch is procedure 43, which finding 51c
+already established is not `COMMAND` at all (Apple's own insertion,
+identity withheld); nothing here forces or guesses at it. `USERPROGRAM`
+itself (segment 1) matches Apple's real `args 2 words` on `params`,
+straight from UCSD's own `SYSSEGS.A.TEXT`; `PRINTERROR`/`INITIALIZE`/
+`GETCMD`'s own stub signatures also match Apple's real per-segment
+`args` exactly (`GETCMD`'s `params=6` bytes is `1 declared arg + the
+2-word function-result slot`, finding 51a's own rule, not a
+mismatch). `FIOPRIMS`/`FILEPROC` have no UCSD precedent (Apple-specific,
+128K-only segments) and remain unverified placeholders.
+
+Not started yet: `PASCALSY`'s own real 451-word main-loop body (by far
+the largest single procedure in the whole disk set), any of the 41
+forward-declared procedures' real bodies (`FWRITELN`/`FWRITESTRING`
+included -- their current bodies are empty, only `USERPROGRAM` actually
+exercises them and neither is checked against Apple's binary yet), and
+five of the six segments' own real content beyond procedure 1.
+
+Acceptance run `2026-08-29-pascalsystem-skeleton`: 0 errors, 402 lines,
+`PASCALSYS.CODE` extracted and its full segment/procedure structure
+compared directly against Apple's real `128K.PASCAL` via `CodeFile`.
