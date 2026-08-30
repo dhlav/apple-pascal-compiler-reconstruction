@@ -397,20 +397,30 @@ a route end to end; everything else is a straight read-and-rebuild.
     (proc 28), and `57`/`58` inside `48` itself (the one piece with no
     UCSD precedent at all, involving `LOADSEGMENT`/`UNLOADSEGMENT`, a
     `GETCMD.1` dispatch, and a non-local `EXIT`). None of the four
-    parents are written for real yet, but three of the four pairs can
-    now be written alongside their own parent independently, in any
-    order, rather than as one tangled unit. Starting on that work
-    surfaced a labeling trap (finding 150): `G<n>` inside one of these
-    `lex 0` procedures' own bodies is *that procedure's own frame*
-    (its own params/locals, `SLDO`/`LDO` opcodes), not `PASCALSY.1`'s
-    globals -- confirmed by two independent probes -- so `FGET`'s own
+    parents are written for real yet. Starting on that work surfaced
+    a labeling trap (finding 150): `G<n>` inside one of these `lex 0`
+    procedures' own bodies is *that procedure's own frame* (its own
+    params/locals, `SLDO`/`LDO` opcodes), not `PASCALSY.1`'s globals
+    -- confirmed by two independent probes -- so `FGET`'s own
     `G12 := G1; ... G12^.f5 ...` is a local pointer copy plus real
     `FIB`-field access, not a read of global word 12. The `FIB`
     record's own real word layout came out of the same probe
-    (`FWINDOW`=1 through `FBUFFER`=34 onward, 290 words total) but
-    isn't yet independently corroborated against Apple's real
-    `FGET`/`FBLOCKIO` -- next step before writing either for real.
-    That work, every other
+    (`FWINDOW`=1 through `FBUFFER`=34 onward, 290 words total) and is
+    now corroborated against `SYSTEM.LIBRARY`'s own already-verified
+    `PASCALIO.text` (finding 151) -- same field order, confirmed
+    independently. **The four pairs are scope-independent but NOT
+    order-independent** (finding 152, caught by testing before
+    commit): a nested helper's own procedure number is whatever is
+    next available when its *enclosing body* is textually written, not
+    tied to the parent's own already-fixed `FORWARD` number. The
+    required order to keep every number matching Apple's real one:
+    `EXECERROR`'s real body (claims 51, 52 for its own two children)
+    -> stub or real slots for 53/54 (still unidentified) ->
+    `FBLOCKIO`'s real body (claims 55) -> only then `FGET`'s real body
+    (claims 56). `48`+57/58 can go anywhere after all of that, since
+    its own children are the last two numbers in the group. Start the
+    next session on `EXECERROR` -- it is first in this order regardless
+    of which pair looks easiest. That work, every other
     forward-declared procedure's real content, and four of the six
     other segments' bodies beyond procedure 1 remain the natural next
     work.

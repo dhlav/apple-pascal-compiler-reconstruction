@@ -13491,3 +13491,49 @@ host compiler's own forward-declaration-only errors for these
 host-dependent units are unchanged from before the edit (units need
 `PASCALSYSTEM.text` as a host to link against; they were never
 standalone-compilable, comment or no comment).
+
+## 152. Writing order for the four `lex 1` pairs is constrained by numbering, not just scope -- a caught-before-commit mistake
+
+Finding 149 resolved the `lex 1` nested group into four independent
+pairs (`51`/`52` in `EXECERROR`, `56` in `FGET`, `55` in `FBLOCKIO`,
+`57`/`58` in `48`), each nested inside an already-identified `lex 0`
+parent. "Independent" there meant *scope* -- each pair only needs its
+own parent's declaration part, not the others'. It does not mean
+*order-independent*: procedure numbers are assigned by declaration
+order with no gaps (finding 61/126), and a nested helper's number is
+whatever is next available **at the point its own enclosing body is
+textually written**, not wherever its parent's `FORWARD` slot sits (a
+`FORWARD` only fixes the *parent's own* number, established already
+for `EXECERROR`=2, `FGET`=7, `FBLOCKIO`=28 -- their real bodies can be
+written anywhere after that without changing those three numbers).
+
+Concretely, reaching `56` correctly requires four things to already
+exist, **in this order**, past `PASCALSY.50`:
+`EXECERROR`'s real body (its two nested children consume 51, 52) ->
+stub (or real) slots reserved for 53 and 54, whatever those turn out
+to be -> `FBLOCKIO`'s real body (its one nested child consumes 55) ->
+only then does declaring `FGET`'s own nested `EXECGETCH` land on 56.
+
+This was caught by testing, not reasoned out in advance: an attempt
+to write `FGET`'s own read-side EXEC helper (the counterpart to
+`EXECPUTCH`, matching `PASCALSY.56`'s own real body exactly --
+`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1199-1207`, refilling
+via `EXECREADBLK` and closing on a doubled terminator) nested it
+directly inside `FGET`'s stub body, since `FGET`'s own frame isn't
+real yet either way. Compiling showed the nested helper landing on
+procedure number **51** -- not 56 -- because at that textual point
+(right after `PASCALSY.50`) 51 was the next number available, and
+`EXECERROR`'s own body hadn't been written yet to claim it first for
+its own children. Reverted before commit; `FGET` is back to a plain
+`BEGIN END` stub with a comment recording the required order,
+`51` still correctly open for `EXECERROR`'s own real body.
+
+Practical effect on the plan: the four pairs, while independently
+*writable*, are not independently *committable* in arbitrary order.
+`EXECERROR`+51/52 has to come first among the four (nothing else
+needs a number before it does), and `FGET`+56 has to wait for both
+`EXECERROR` and `FBLOCKIO` (via whatever 53/54 turn out to be) to be
+settled first. `FBLOCKIO`+55 only needs 53/54 resolved, not
+`EXECERROR`. `48`+57/58 can go anywhere *after* all of the above,
+since its own children (57, 58) are the last two nested numbers in
+the whole group.

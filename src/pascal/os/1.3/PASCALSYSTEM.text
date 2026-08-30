@@ -710,6 +710,19 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE FRESET; BEGIN END;
   PROCEDURE FOPEN; BEGIN END;
   PROCEDURE FCLOSE; BEGIN END;
+  { PASCALSY.7 = FGET (confirmed by PASCALIO.text's own "CXP 0,7"
+    comment on its matching forward declaration, finding 151). Not
+    written for real yet -- see finding 152: its own nested helper
+    (`PASCALSY.56`) can only get the right procedure number once
+    `EXECERROR`'s real body (51/52), stub slots for 53/54, and
+    `FBLOCKIO`'s real body (55) are declared first, in that order --
+    genuinely new territory past `PASCALSY.50`, not attempted this
+    session (a first attempt at nesting `56` directly here, before
+    that sequence existed, silently took procedure number 51 instead
+    of 56 -- caught before commit, reverted). `G7`'s own real role
+    (used directly as `UNITREAD`/`UNITWRITE`'s own unit-number
+    argument, but reads as `F^.FISBLKD` under this file's own probed
+    `FIB` layout, findings 150/151) is also still unconfirmed. }
   PROCEDURE FGET; BEGIN END;
   PROCEDURE FPUT; BEGIN END;
   PROCEDURE XSEEK; BEGIN END;
