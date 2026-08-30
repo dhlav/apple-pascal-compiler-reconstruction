@@ -420,7 +420,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     (claims 56). `48`+57/58 can go anywhere after all of that, since
     its own children are the last two numbers in the group. Start the
     next session on `EXECERROR` -- it is first in this order regardless
-    of which pair looks easiest. That work, every other
+    of which pair looks easiest.
+    **`EXECERROR` itself is still a stub** -- its two children's own
+    bodies (`51`="S#/P#/I#", `52`="Execution error #...") are fully
+    understood (finding 153: `L1^.f1/f9/f8/f11` map to `XEQERR`,
+    `SEG`, `JTAB`, `BOMBIPC` via finding 93a's reversal rule applied to
+    `SYSCOMREC`'s two 3-identifier field groups -- STRONG INFERENCE,
+    multi-way consistent, not yet probe-verified) but `L1`'s own type
+    and how it gets a `TRICKARRAY`-shaped view of `SYSCOM`+1 word is
+    not: two naive probes this session (`L1 := SYSCOM;` across
+    unrelated pointer types; a literal-constant index into
+    `WORD: ARRAY[0..0] OF INTEGER`) both failed to compile, for
+    reasons independent of `{$R-}`. Read Hyde's *P-Source* on the
+    mark-stack-control-word layout before probing further -- it may be
+    that `L1` reaches `SEG`/`JTAB`/`BOMBIPC` through `BOMBP^`'s own
+    frame (`MSCW.LOCALDATA`) rather than through `SYSCOM` at all, which
+    changes what "field 8/9/11" even means. That work, every other
     forward-declared procedure's real content, and four of the six
     other segments' bodies beyond procedure 1 remain the natural next
     work.
