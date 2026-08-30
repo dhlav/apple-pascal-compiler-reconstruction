@@ -13634,3 +13634,71 @@ opening lines (`G2 := SYSCOM`, saving `IORESULT()` into
 memory-diddle still not understood) are the next work, now that its
 own frame no longer has to reserve room for an untyped-cast local that
 turned out not to exist.
+
+## 154. EXECERROR (PASCALSY.2) written for real, whole body -- the "TRICKARRAY diddle" was a plain DIRP dereference
+
+VERIFIED BINARY FACT for every field/global identity; the control
+structure and the two literal strings/branches match the real binary
+instruction-for-instruction where the host compiler's own codegen
+choices don't diverge (noted below).
+
+Went back to `128K.PASCAL`'s own raw p-code for proc 2 the same way
+finding 153 did for 51/52, rather than trust the lift's rendering a
+second time. That paid off immediately: the lift's own `"G2^.f2"` (used
+in `not(PASCALSY.42(G2^.f2))`) is actually `SIND 2` -- `SYSCOMREC`'s
+plain declared field order, no 93a reversal, landing on `SYSUNIT`
+(field 3, `IORSLT`+0/`XEQERR`+1/`SYSUNIT`+2) -- not `XEQERR` as the
+lift's own ambiguous numbering suggested. And the "memory diddling"
+comment on `TRICKARRAY` that kicked off this whole EXECERROR
+investigation turned out not to apply to this procedure at all: the
+lift's opaque `(G2^.f4[0*13w]+3) <> @I1,63` is nothing but
+`G2^.GDIRP^[0].DVID <> SYVID` -- `GDIRP: DIRP` is already declared as
+`^DIRECTORY = ^ARRAY[DIRRANGE] OF DIRENTRY`; `SIND 4` reaches `GDIRP`
+(field 5, no reversal -- it's a lone identifier, not a group);
+`SLDC 0 / IXA 13` indexes element 0 of that array at `DIRENTRY`'s own
+already-established 13-word stride; `INC 3` reaches `DVID`, the fourth
+field of `DIRENTRY`'s `UNTYPEDFILE`/`SECUREDIR` variant
+(`DFIRSTBLK`+0, `DLASTBLK`+1, `FILLER1`+2, `DVID`+3); and the compare
+is a fused string-`NEQ` opcode (`LDA 1,63` = address of `SYVID`, then
+`NEQ STR`), not a raw address/pointer comparison. No cast, no `@`, no
+`TRICKARRAY` anywhere in this procedure -- the two probes burned on
+that idea earlier in the session (see finding 153) were chasing a
+premise this procedure never needed.
+
+Every other value in the body was probe-confirmed the same way:
+`GFILES[0]`/`GFILES[1] := INPUTFIB`/`OUTPUTFIB` (`LOD 1,58`/`57`, a
+probe compiling `GFILES[0]:=INPUTFIB; GFILES[1]:=OUTPUTFIB;
+GFILES[2]:=SYSTERM; GFILES[3]:=SWAPFIB` against the real 902-word `VAR`
+section confirmed all four in one pass: `INPUTFIB`=58, `OUTPUTFIB`=57,
+`SYSTERM`=56, `SWAPFIB`=55 -- the reversed-group pattern a fourth
+time, in a fourth record, `SYSTERM` being the value `FWRITELN(SYSTERM^)`
+(`LOD 1,56`, `CBP 22`) needed and wasn't previously named). `R_EXEC_FLG`
+(386) / `W_EXEC_FLG` (387) confirmed the same way, matching the real
+binary's `LOD 1,386`/`387` exactly, gating `EXECCLOSE(TRUE)` (`CBP 45`,
+already forward-declared).
+
+**The reboot/hang condition's set literals are exact, not
+approximate**: the lift's own uninterpretable `"(26978 in 1)"` is a
+one-word `SET` bitmask -- `2^1+2^5+2^6+2^8+2^11+2^13+2^14 = 26978`,
+checked by hand -- i.e. `XEQERR IN [1,5,6,8,11,13,14]`; the second `IN`
+test's two-word constant (`$FFFE`, `$001F`) covers ordinals 1-15 and
+16-20, together `[1..20]`, matching the lift's own literal `{1,...,20}`
+and cross-confirming the bitmask-decoding method on the one field
+where the lift's own rendering was already trusted.
+
+**Known, expected fast-tier divergences** (not source bugs -- the host
+compiler's own codegen choices, per the project's own two-tier design):
+the `MEMAVAIL() <= (2028+50)` comparison constant-folds to `2078` on
+this host compiler where Apple's real binary keeps `LDCI 2028 / SLDC 50
+/ ADI` unfolded; `R_EXEC_FLG OR W_EXEC_FLG` compiles to a short-circuit
+`LNOT`/`FJP` chain on this host compiler where the real binary computes
+a true `LOR` value first. Both are compiler-optimization differences on
+an already-correct source expression, not evidence the source is wrong
+-- flagged for the acceptance tier to either confirm or reopen, not
+silently worked around.
+
+**Not yet done**: `EXECCLOSE`, `SPACEWAIT`, `FETCHDIR`'s own real
+bodies, `PRINTERROR`'s real per-code message table, and the six other
+forward-declared-but-stub procedures `EXECERROR` itself now calls for
+real remain stubs. `PASCALSY.1`'s own `REPEAT ... UNTIL EMPTYHEAP =
+NIL` loop (calling `PASCALSY.48`) is still not written.

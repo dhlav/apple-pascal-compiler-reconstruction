@@ -772,14 +772,107 @@ PROGRAM PASCALSYSTEM;
       END
     END;
 
-  { EXECERROR's own outer body -- not written yet. It calls PRINTSPI
-    ("PASCALSY.51") and PRTXEQER unconditionally near its start
-    (finding 149's caller graph), saves IORESULT into USERINFO.ERRNUM
-    at entry (matches PRTXEQER's own read of it, above), and does a
-    MEMAVAIL threshold check plus TRICKARRAY-style memory diddling
-    (`G2^.f4[0*13w]`, still not understood) before deciding whether to
-    warm-boot or hang at "Press CONTROL-RESET". }
-  BEGIN END;
+  { EXECERROR's own outer body -- raw p-code for 128K.PASCAL's real
+    proc 2, decoded directly (not the lift's rendering, which named
+    the wrong SYSCOMREC field for two of these and rendered the
+    "TRICKARRAY memory-diddle" as opaque array-index arithmetic that
+    turned out to be nothing but a plain `DIRP` dereference):
+
+    - `GFILES[0]/[1] := INPUTFIB/OUTPUTFIB` (`LOD 1,58`/`57` into the
+      array-indexed store this file's own comment already predicted:
+      "console files -- GFILES are copies").
+    - `USERINFO.ERRNUM := IORESULT()` (`CSP 34` = `IORESULT`, `STR
+      1,10` -- the same global word 10 finding 153's `PRTXEQER`
+      reads back for `"I/O error #"`).
+    - `UNITCLEAR(3)` (`CSP 38`), `FWRITELN(SYSTERM^)` (`LOD 1,56`,
+      probe-confirmed -- `SYSTERM` is the reversed-group neighbour of
+      `INPUTFIB`/`OUTPUTFIB`/`SWAPFIB`, same 93a pattern a third
+      time).
+    - The `MEMAVAIL`/`FETCHDIR`/volume-id chain: `G2^.SYSUNIT` is
+      `SIND 2` (word +2, matching `SYSCOMREC`'s plain declared order,
+      no reversal -- the lift's own "`G2^.f2`" mislabeled this as
+      `XEQERR`); the "`G2^.f4[0*13w]+3`" the lift rendered as opaque
+      `TRICKARRAY` arithmetic is nothing but `G2^.GDIRP^[0].DVID` --
+      `GDIRP: DIRP = ^DIRECTORY = ^ARRAY[DIRRANGE] OF DIRENTRY`
+      already declared above, indexed at 0 (`IXA 13`, `DIRENTRY`'s own
+      already-established 13-word size) then offset +3 into that
+      entry, which lands exactly on `DVID` in the `UNTYPEDFILE`/
+      `SECUREDIR` variant (`DFIRSTBLK`+0, `DLASTBLK`+1, `FILLER1`+2,
+      `DVID`+3) -- compared against `SYVID` with a fused string-NEQ
+      opcode, not a raw address compare. No `TRICKARRAY` cast, no `@`,
+      no pointer coercion anywhere in this procedure after all.
+    - `PRINTERROR(G2^.XEQERR, USERINFO.ERRNUM)` only on the path where
+      all three checks above pass (`CXP 3,1` -- `PRINTERROR`'s own
+      segment, already declared above as a stub).
+    - `PRINTSPI` unconditionally next (`CLP 51`), then
+      `IF R_EXEC_FLG OR W_EXEC_FLG THEN EXECCLOSE(TRUE)` (`LOD
+      1,386`/`387`, probe-confirmed; `CBP 45` = `EXECCLOSE`, already
+      forward-declared).
+    - The reboot/hang decision's own condition is a VERIFIED BINARY
+      FACT down to the exact set literals, not the lift's uninterpretable
+      "(26978 in 1)": `LDCI 26978` is a one-word `SET` bitmask whose
+      set bits (2^1+2^5+2^6+2^8+2^11+2^13+2^14 = 26978, checked by
+      hand) are exactly `[1,5,6,8,11,13,14]`; the second `IN` test's
+      two-word constant (`$FFFE`, `$001F`) covers ordinals 1-15 and
+      16-20 respectively -- together `[1..20]`, matching the lift's own
+      literal set of 1 through 20 exactly and cross-confirming the
+      bitmask method on the field where the lift's rendering was
+      already known to be right.
+    - `SPACEWAIT(TRUE)` (`CBP 40`) gates a warm reboot (`UNITCLEAR`
+      loops over units 1-20 and 128-143, `WAITSYSVOL`, then a
+      non-local `EXIT(STUB48)` -- `CSP 4` with the callee's own
+      `(segment, procedure)` pair, `(0, 48)`, matching `PASCALSY.1`'s
+      own `REPEAT PASCALSY.48() ...` loop this exits back into) against
+      hanging at `"Press CONTROL-RESET"` forever. }
+  VAR
+    G1: INTEGER;
+    G2: ^SYSCOMREC;
+    G3: INTEGER;
+  BEGIN
+    G2 := SYSCOM;
+    GFILES[0] := INPUTFIB;
+    GFILES[1] := OUTPUTFIB;
+    USERINFO.ERRNUM := IORESULT();
+    UNITCLEAR(3);
+    FWRITELN(SYSTERM^);
+    IF MEMAVAIL() <= (2028 + 50) THEN
+      PRTXEQER
+    ELSE IF NOT FETCHDIR(G2^.SYSUNIT) THEN
+      PRTXEQER
+    ELSE IF G2^.GDIRP^[0].DVID <> SYVID THEN
+      PRTXEQER
+    ELSE
+      PRINTERROR(G2^.XEQERR, USERINFO.ERRNUM);
+    PRINTSPI;
+    IF R_EXEC_FLG OR W_EXEC_FLG THEN
+      EXECCLOSE(TRUE);
+    IF (G2^.XEQERR IN [1, 5, 6, 8, 11, 13, 14])
+       OR ((G2^.XEQERR = 10) AND (USERINFO.ERRNUM IN [1..20])) THEN
+    BEGIN
+      IF NOT SPACEWAIT(TRUE) THEN
+      BEGIN
+        G1 := 1;
+        G3 := 20;
+        WHILE G1 <= G3 DO BEGIN
+          UNITCLEAR(G1);
+          G1 := G1 + 1
+        END;
+        G1 := 128;
+        G3 := 143;
+        WHILE G1 <= G3 DO BEGIN
+          UNITCLEAR(G1);
+          G1 := G1 + 1
+        END;
+        WAITSYSVOL;
+        EXIT(STUB48)
+      END ELSE BEGIN
+        FWRITESTRING(GFILES[1]^, 'Press CONTROL-RESET', 0);
+        FWRITELN(GFILES[1]^);
+        WHILE TRUE DO
+        BEGIN END
+      END
+    END
+  END;
   PROCEDURE FINIT; BEGIN END;
   PROCEDURE FRESET; BEGIN END;
   PROCEDURE FOPEN; BEGIN END;

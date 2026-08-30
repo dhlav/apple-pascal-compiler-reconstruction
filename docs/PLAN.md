@@ -444,15 +444,33 @@ a route end to end; everything else is a straight read-and-rebuild.
     (expected -- compiled standalone, not through the real split
     segment 0).
 
-    **`EXECERROR` itself is still `BEGIN END`.** Its own opening lines
-    -- `G2 := SYSCOM`, saving `IORESULT()` into `USERINFO.ERRNUM`
-    (now a known, real field, not a placeholder), the `MEMAVAIL`
-    threshold check, and a `G2^.f4[0*13w]` memory-diddle still not
-    understood -- are the natural next step, and its own frame no
-    longer needs to reserve room for a cast-built local that turned
-    out not to exist. That work, every other forward-declared
-    procedure's real content, and four of the six other segments'
-    bodies beyond procedure 1 remain the natural next work.
+    **`EXECERROR` itself is now written for real too** (finding 154),
+    whole body, same session. The "`TRICKARRAY` memory-diddle" that
+    justified the earlier detour into Hyde's *P-Source* turned out not
+    to apply to this procedure at all -- the lift's opaque
+    `(G2^.f4[0*13w]+3) <> @I1,63` is nothing but `G2^.GDIRP^[0].DVID <>
+    SYVID`, an ordinary `DIRP` dereference through a type already
+    declared in this file, no cast needed. `GFILES[0]`/`[1] :=
+    INPUTFIB`/`OUTPUTFIB`, `USERINFO.ERRNUM := IORESULT()`,
+    `FWRITELN(SYSTERM^)` (a fourth global identified via the same
+    probe-and-disassemble method, `SYSTERM`=56), the `MEMAVAIL`
+    threshold check, `FETCHDIR`/volume-id/`PRINTERROR` chain, the
+    `R_EXEC_FLG`/`W_EXEC_FLG`-gated `EXECCLOSE(TRUE)`, and the
+    reboot/hang decision (exact `SET` literals decoded by hand from
+    the raw bitmask constants -- `XEQERR IN [1,5,6,8,11,13,14]`, and
+    `[1..20]` for the I/O-error sub-case) are all VERIFIED BINARY FACT,
+    disassembling instruction-for-instruction identical to the real
+    binary apart from two flagged, expected fast-tier compiler-codegen
+    differences (constant folding on `2028+50`; short-circuit vs. `LOR`
+    codegen for one `OR`).
+
+    **Still stubs**: `EXECCLOSE`, `SPACEWAIT`, `FETCHDIR`'s own real
+    bodies, `PRINTERROR`'s real per-code message table, and
+    `PASCALSY.1`'s own `REPEAT ... UNTIL EMPTYHEAP = NIL` loop (which
+    calls `PASCALSY.48`, also still a stub). Every other
+    forward-declared procedure's real content, and four of the six
+    other segments' bodies beyond procedure 1, remain the natural next
+    work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
