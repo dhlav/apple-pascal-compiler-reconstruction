@@ -13216,3 +13216,84 @@ Acceptance run `2026-08-29-pascalsystem-exec-44-47`: 0 errors, 1000
 lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure --
 44-47 all exact, procedure 1 still `902`/`902`, nothing else
 regressed.
+
+## 148. `PASCALSY.50` (`WAITSYSVOL`) written; `PASCALSY.48`/`49` reserved as stubs; two more global offsets confirmed by probe
+
+Continuing past 44-47 into `PASCALSY.1`'s own still-open `REPEAT ...
+UNTIL EMPTYHEAP = NIL` loop (finding 144) means resolving
+`PASCALSY.48` first, and `48` calls `PASCALSY.50` *and* `PASCALSY.58`
+by number (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1033-1042`).
+Procedure numbers are assigned by declaration order with no gaps
+(finding 61/126), so reaching `58` for real needs `49`, `51`-`57`
+declared first too -- and six of those seven (`51`/`52`/`55`/`56`/
+`57`/`58`) are `lex 1`, textually nested one level inside some
+enclosing procedure not yet identified, unlike everything written so
+far. That nested-scope analysis is real, separate work (`PASCALSY.57`
+alone involves `LOADSEGMENT`/`UNLOADSEGMENT`, a `GETCMD.1` dispatch,
+and a non-local `EXIT(0, 57)`) -- not attempted this session. `48` and
+`49` are declared as `STUB48`/`STUB49` (`BEGIN END`-shaped, procedure
+numbers reserved only, identifiers kept under 8 significant characters
+to avoid colliding with `PROGRAM PASCALSYSTEM`'s own truncated name --
+`PASCALSY48STUB` truncates to `PASCALSY`, which collides).
+
+`PASCALSY.50` itself (`WAITSYSVOL`, a name not recovered from any
+source) is `lex 0` and self-contained -- no dependency on the nested
+group -- so it was written for real: `RELEASE(EMPTYHEAP)`, then
+`WHILE UNITABLE[SYSCOM^.SYSUNIT].UVID <> SYVID DO` prompt "Put in
+:<vid>, then press RETURN" and wait for a line before re-checking.
+Three more global-offset facts confirmed by the same probe technique
+findings 141-147 used (temporary self-referencing statements compiled
+cold, LDA/SIND operands read directly off the disassembly, checked
+against both the host compiler and Apple's real binary's own
+disassembly of this same procedure):
+
+* `SYSCOM^.SYSUNIT` is `SYSCOM`'s **third** field (`SIND [2]`, 0-
+  indexed) -- not the more obvious-looking `XEQERR` (field 2), which
+  the lift's opaque `I1,1^.f2` naming invited assuming first.
+* `SYVID` -- not `DKVID` -- is the field at global word 63. Both are
+  declared together as `SYVID, DKVID: VID`, and finding 93a's own rule
+  (declaration groups ascend, identifiers *within* a group descend)
+  puts the second-named identifier at the lower offset: `DKVID` = 59,
+  `SYVID` = 63. Real `PASCALSY.50` uses offset 63 (confirmed: probing
+  `SYVID` compiles to `LLA [63]`, probing `DKVID` gives `LLA [59]`) --
+  and the semantics agree independently (comparing the boot unit's
+  current volume ID against the *system* volume ID one expects to find
+  there reads right; comparing it against the *default* volume ID
+  does not).
+* `STATE` = global word 69, `SWAP_ON` = 388 (used by `PASCALSY.48`'s
+  own `I1,69 := 0` / `I1,388 := 0`, not yet wired in since `48` is
+  still a stub) -- both fall out of the same field ordering already
+  established in finding 143, confirmed directly rather than derived
+  by hand arithmetic (the project's own established caution: "hand
+  arithmetic proved error-prone").
+
+Two known, already-documented-elsewhere compiler divergences remain at
+the instruction level (not logic errors, and not fixable from source
+alone): `SINSERT`'s real argument push order differs from this file's
+declared-order call (finding 138's own family of push-order
+divergences), and Apple's real second `FWRITESTRING` call embeds its
+string literal directly rather than through an assigned `PL` first
+(finding 137's workaround, applied here, may be unnecessary for
+`FWRITESTRING` specifically -- unconfirmed).
+
+One gap is **not** closed: `data` is `1` word here (`DUMMY: CHAR`
+alone) against Apple's real `2`. A third divergence is the likely
+cause -- every `GFILES[1]^` reference here compiles, on both
+compilers, to full runtime array-index code, matching the pattern
+`EXECREADBLK`/`EXECWRITEBLK` already use and were verified exact
+against (finding 147) -- but Apple's real procedure 50 loads the same
+value with one direct `LOD 1,3`, the shape for a bare identifier, not
+an indexed one. `GLOBALS.TEXT`'s own separately-declared `OUTPUTFIB:
+FIBP` is the obvious candidate (finding 137 already flagged it "almost
+certainly" the real name for this role) but sits at a different global
+offset (55) in this file's own layout, not 3 -- using it here as
+written would not produce `LOD 1,3` either without re-examining that
+offset first. Documented rather than guessed at further; same category
+of gap as `LIBMAP.text`'s `NEEDSSWAP`/`SWAPALL`, each already
+documented short by one word.
+
+Acceptance run `2026-08-30-pascalsystem-waitsysvol`: 0 errors, 1073
+lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure --
+`44`-`47` still exact, procedure 1 still `902`/`902`, `50`'s `params`
+exact (`0`) and `data` documented short by the one word above, nothing
+else regressed.

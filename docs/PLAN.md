@@ -383,13 +383,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     as `WHAT_I`-`WHAT_K`) and establishing the working idiom for
     calling `CLOSE`/`BLOCKREAD`/`BLOCKWRITE` sugar on `EXEC_FILE`
     rather than `FCLOSE`/`FBLOCKIO` directly (type-checking rejects
-    the latter). Only the `REPEAT` loop's own `PASCALSY.48` call
-    remains open -- needs procedures 48, 50, 57, 58 written next
-    (`48` itself is short and already visible in the lift; `57`/`58`
-    are the real command-dispatch/segment-loading loop and are
-    substantially larger). That, every other forward-declared
-    procedure's real content, and four of the six other segments'
-    bodies beyond procedure 1 remain the natural next work.
+    the latter). Procedure 50 (`WAITSYSVOL`, finding 148) is now
+    written too -- `params` exact, `data` documented one word short,
+    a likely-related open question about how `GFILES[1]^` is really
+    reached at that point in Apple's own source. `48`/`49` are
+    declared only as number-preserving stubs: reaching `PASCALSY.58`
+    (which `48`'s own real `REPEAT` loop calls, along with `50`) needs
+    `51`-`57` declared first too, six of which (`51`/`52`/`55`-`58`)
+    are lexically nested one level inside a not-yet-identified
+    enclosing procedure -- real, separate work, not attempted yet.
+    `57` alone involves `LOADSEGMENT`/`UNLOADSEGMENT`, a `GETCMD.1`
+    dispatch, and a non-local `EXIT`. That nested-scope group, every
+    other forward-declared procedure's real content, and four of the
+    six other segments' bodies beyond procedure 1 remain the natural
+    next work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

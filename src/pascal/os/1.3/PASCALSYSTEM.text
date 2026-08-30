@@ -503,6 +503,77 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE EXECREADBLK; FORWARD;
   PROCEDURE EXECWRITEBLK; FORWARD;
 
+  { PASCALSY.48/49 are declared here only to hold their procedure
+    numbers -- Apple's real `PASCALSY.1` calls procedure 58 by that
+    exact number (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1038`),
+    and procedure numbers are assigned by declaration order with no
+    gaps (finding 61/126), so reaching 58 for real requires 49, 51-57
+    declared first too -- the lex-1 nested group (51/52/55/56/57/58)
+    needs its own enclosing-procedure analysis, not attempted yet.
+    STUB, not real content. }
+  PROCEDURE STUB48; FORWARD;
+  FUNCTION STUB49(A: INTEGER): INTEGER; FORWARD;
+
+  { PASCALSY.50: prompt for and wait until the correct boot volume is
+    back in its unit before returning -- `WHILE UNITABLE[SYSCOM^.
+    SYSUNIT].UVID <> SYVID DO` insert `SYVID` into the cached "Put in
+    :" prompt line (`PL`, reused scratch per finding 137) at index 8
+    (right after "Put in :"), print it, then wait for a full line
+    (any `FREADCHAR`/`FEOLN` pair) before re-checking. Real body,
+    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1095-1109`. Field
+    offsets confirmed against the real binary's own disassembly of
+    this exact procedure (`SIND [2]` off `SYSCOM^` = `SYSUNIT`, `LLA
+    [63]` = `SYVID`, `LLA [126]` = `UNITABLE`, `LLA [70]` = `PL`,
+    `LLA [59]` = `DKVID` -- confirmed NOT the field used here, ruling
+    out the more obvious-looking name) -- and against the host
+    compiler probed cold off this file's own declarations. `params=0`
+    matches exactly on both compilers. `data`: **close, not exact** --
+    this compiles to 1 word (`DUMMY: CHAR` alone) on both the host
+    compiler and Apple's own real `SYSTEM.COMPILER`, against Apple's
+    shipped `128K.PASCAL`'s own real `data=2` (words) for this same
+    procedure number. One local word is still unaccounted for --
+    documented as a known gap (same category as `LIBMAP.text`'s
+    `NEEDSSWAP`/`SWAPALL`, each short one word), not forced by adding
+    an unused variable to make the count match without a reason.
+
+    Two more instruction-level gaps remain, both already-known compiler
+    divergences (not logic errors): Apple's real `SINSERT` call pushes
+    `SRC, DEST, DESTLENG, INSINX` while this source's declared-order
+    call pushes `INSINX, DESTLENG, SRC, DEST` (finding 138's own
+    already-documented push-order divergence, same family). And
+    Apple's real second `FWRITESTRING` call embeds `'then press
+    RETURN'` directly (`LSA` straight into `CXP 0,19`, no separate
+    string-variable store first) where this source assigns it to `PL`
+    first (finding 137's own literal-to-`VAR`-parameter workaround) --
+    unconfirmed whether Apple's own compiler genuinely allows a
+    literal through `FWRITESTRING` directly where it rejects one
+    through `SINSERT`, or whether Apple's real source does something
+    else entirely here.
+
+    A third gap, plausibly the source of the missing local word above:
+    every `GFILES[1]^` reference here compiles (on *both* compilers,
+    confirmed against Apple's own under the emulator) to full runtime
+    array-index code (`LDA` base, `SLDC` index, `IXA`, `SIND`), but
+    Apple's real procedure 50 loads the same value with one direct
+    `LOD 1,3` -- a plain global-frame word load, the shape a compiler
+    emits for a bare identifier, not an indexed one. Every other
+    already-verified-exact procedure in this file that touches
+    `GFILES[1]^` (`EXECREADBLK`/`EXECWRITEBLK`, finding 147) uses the
+    array-index shape and matches Apple's real binary doing the same
+    -- so Apple's compiler *does* expand `GFILES[1]^` that way
+    elsewhere, and procedure 50's plain `LOD 1,3` most likely means
+    its real source reaches that same physical word through a
+    *different* identifier there, not through `GFILES[1]` as written.
+    `GLOBALS.TEXT`'s own separately-declared `OUTPUTFIB: FIBP` is the
+    obvious candidate (finding 137 already flagged it as "almost
+    certainly" the real name for this role, unconfirmed) -- but
+    `OUTPUTFIB` is declared at a different offset in this file's own
+    global layout (55, alongside `INPUTFIB`/`SYSTERM`/`SWAPFIB`), not
+    3, so using it here outright would not compile to `LOD 1,3` either
+    without first re-examining whether *that* offset is right. Left as
+    `GFILES[1]^` and documented rather than guessed at further. }
+  PROCEDURE WAITSYSVOL; FORWARD;
+
   { The user-program stub: what runs when no real user program has been
     loaded on top of this segment's slot yet. Straight from UCSD's own
     SYSSEGS.A.TEXT (calling FWRITELN/FWRITESTRING directly, not through
@@ -937,6 +1008,33 @@ PROGRAM PASCALSYSTEM;
       FILLCHAR(EXBUFPTR^, 512, CHR(0));
       EXEC_CH_NUM := 0;
       WHAT_G[2] := WHAT_G[2] + 1
+    END
+  END;
+
+  { STUBS -- procedure numbers 48/49 reserved only, see the forward
+    declaration comment above. Not Apple's real content. }
+  PROCEDURE STUB48; BEGIN END;
+  FUNCTION STUB49; BEGIN STUB49 := 0 END;
+
+  PROCEDURE WAITSYSVOL;
+  VAR DUMMY: CHAR;
+  BEGIN
+    RELEASE(EMPTYHEAP);
+    WHILE UNITABLE[SYSCOM^.SYSUNIT].UVID <> SYVID DO
+    BEGIN
+      PL := 'Put in :';
+      SINSERT(8, 80, SYVID, PL);
+      PROMPT;
+      FWRITELN(GFILES[1]^);
+      CLEARLINE;
+      PL := 'then press RETURN';
+      FWRITESTRING(GFILES[1]^, PL, 0);
+      REPEAT
+        FREADCHAR(GFILES[2]^, DUMMY)
+      UNTIL FEOLN(GFILES[2]^);
+      IF FETCHDIR(SYSCOM^.SYSUNIT) THEN
+      BEGIN
+      END
     END
   END;
 
