@@ -491,20 +491,36 @@ a route end to end; everything else is a straight read-and-rebuild.
     1 is `FTYPE`, not `F`) before calling a 2-arg helper with `F,
     ORD(FTYPE)`.
 
-    **The real blocker, precisely stated (finding 156c)**: `FILEPROC`'s
-    word 1 needs to accept `CLOSETYPE` (`FCLOSE`), `FIBP` (`FOPEN`),
-    and a plain constant length (arm 4, already probe-verified) at
-    different call sites through the *same* declared parameter --
-    strict Pascal type-checking rejects the two naive ways to do this,
-    confirmed by two more probes this session. The shape of the fix is
-    clear (a case-variant record parameter, the idiom Hyde's *P-Source*
-    documents for exactly this -- read earlier this project) but not
-    yet built or byte-verified against all four real call sites. Also
-    surfaced: this project's own procedure-number count puts `COMMAND`
-    at 43, but the real `PASCALSY.43` needs three words of params where
-    `COMMAND`'s current forward declaration (matching UCSD's own
-    plain, argument-less `COMMAND`) takes none -- unresolved, flagged
-    for whoever writes `COMMAND` for real.
+    **`FILEPROC` written for real, `FRESET`/`FOPEN`/`FCLOSE` unblocked**
+    (finding 157) -- the predicted variant-record parameter turned out
+    unnecessary: `ORD(FTYPE)` at `FCLOSE`'s own call site satisfies the
+    shared `ARGINT` slot directly, since a `CLOSETYPE`'s ordinal
+    representation already *is* a plain integer. `FILEPROC`'s real
+    signature (`OP: INTEGER; VAR F: FIB; VAR ARGSTR: STRING; ARGBOOL:
+    BOOLEAN; ARGPTR: FIBP; ARGINT: INTEGER`) is written and compiling
+    clean, and all three forwarders now route through it with an
+    almost instruction-for-instruction match against the real binary's
+    own call sites (`FOPEN`'s call matches literally on every real-
+    valued slot). Three small, documented frame-size gaps remain
+    (`FRESET` 5 words, `FOPEN` 1 word, `FCLOSE` 4 words) -- all from
+    Apple's real binary reading uninitialized don't-care locals where
+    this reconstruction passes explicit `FALSE`/`NIL`/`0` instead, a
+    deliberate, defensible choice not chased to exact match. Also
+    surfaced, still open: this project's own procedure-number count
+    puts `COMMAND` at 43, but the real `PASCALSY.43` needs three words
+    of params where `COMMAND`'s current forward declaration (matching
+    UCSD's own plain, argument-less `COMMAND`) takes none --
+    unresolved, flagged for whoever writes `COMMAND` for real (arm 4
+    of `FILEPROC`, the file-title normalizer, is not yet exercised by
+    any written caller in this file for the same reason).
+
+    **`FILEPROC`'s own arm bodies are still `BEGIN END`** -- the
+    dispatcher (`FILEPROC.1`) routes correctly now, but `FRESET`/
+    `FOPEN`/`FCLOSE` don't yet *do* anything until `FILEPROC`-segment-
+    local procedures 2/3/4/7 (arm 1/2/3/3's-inner-helper) are written
+    for real. `FILEPROC.8` (arm 4, the title normalizer) is already
+    independently probe-verified by `probe_osproc43.py` and doesn't
+    need rework.
 
     **The `FBLOCKIO` chain remains the other high-value target and the
     harder one**: `FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc. all build
@@ -514,13 +530,10 @@ a route end to end; everything else is a straight read-and-rebuild.
     `FREADINT`/`FWRITEINT` are each full parsing/formatting state
     machines (~50-70 instructions), not short wrappers -- confirmed by
     reading their raw p-code directly, not assumed from the header
-    comment's word counts. Each of `FBLOCKIO`, `FILEPROC`'s variant-
-    record parameter, and the two numeric-I/O routines is its own
-    multi-session-scale piece of work. Recommended next: build and
-    byte-verify `FILEPROC`'s variant-record parameter against all four
-    real call sites (finishes what 156 mapped, unblocks three
-    one-liners), then `FBLOCKIO`+`STUB49` (unblocks the largest
-    remaining cluster).
+    comment's word counts. Recommended next: `FILEPROC`'s own arm
+    bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
+    functional, not just correctly-routed), then `FBLOCKIO`+`STUB49`
+    (unblocks the largest remaining cluster in the `FIB` layer).
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

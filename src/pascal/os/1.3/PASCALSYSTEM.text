@@ -71,9 +71,10 @@
   `FIOPRIMS` (`args 0 words`, real) and `FILEPROC` (`args 6 words`,
   real) have no UCSD precedent at all -- Apple-specific segments, most
   likely 128K-only code the 64K system keeps inline in segment 0.
-  `FILEPROC`'s own six words are an unverified placeholder (six plain
-  `INTEGER`s) purely to let the file compile; nothing calls it yet, so
-  the wrong shape costs nothing until it does. }
+  `FILEPROC`'s own six words dispatch on the first (`OP`) to one of
+  several internal arms, mapped directly from the real binary's own
+  `FILEPROC` segment (finding 156) -- `VAR F: FIB`, `VAR ARGSTR:
+  STRING`, `ARGBOOL: BOOLEAN`, `ARGPTR: FIBP`, `ARGINT: INTEGER`. }
 
 (*$U-*)
 PROGRAM PASCALSYSTEM;
@@ -693,10 +694,29 @@ PROGRAM PASCALSYSTEM;
   END;
 
   { Apple-specific (128K only, no UCSD precedent): file processing.
-    Real `args 6 words`; this six-plain-INTEGER shape is an unverified
-    placeholder purely to let the file compile -- nothing calls it yet,
-    so the wrong shape costs nothing until it does. }
-  SEGMENT PROCEDURE FILEPROC(A1, A2, A3, A4, A5, A6: INTEGER);
+    Real `args 6 words`, dispatching on the first (`OP`) to one of (so
+    far) three or four internal arms -- read directly from the real
+    `SYSTEM.PASCAL` 1.3 binary's own `FILEPROC` segment, not guessed
+    (finding 156). `OP=1`/`FRESET`'s arm reads only `F`; `OP=2`/
+    `FOPEN`'s arm reads `F, ARGSTR, ARGBOOL, ARGPTR` (its own
+    `FTITLE, FOPENOLD, JUNK`, in that order); `OP=3`/`FCLOSE`'s arm
+    reads `F` and an inner 0..3 dispatch on `ARGINT` (`ORD(FTYPE)`,
+    `CLOSETYPE`'s own ordinal, converted at the call site since one
+    shared word can't be typed as both `CLOSETYPE` and a plain
+    `INTEGER` -- confirmed the naive alternatives don't type-check,
+    finding 156c). A fourth arm (`OP=4`, the file-title normalizer
+    `probe_osproc43.py` already established independently) is real
+    too, but its own caller inside this file (`PASCALSY.43`, believed
+    to be `COMMAND` by procedure-number count, but `COMMAND`'s current
+    signature doesn't fit -- also finding 156) isn't written yet, so
+    this signature isn't cross-checked against that fourth call site.
+    `VAR F: FIB` and `VAR ARGSTR: STRING` are real pass-through
+    parameters (each arm that doesn't need them is simply passed a
+    don't-care local of the same type -- costs nothing, matches this
+    file's own established "wrong value, right shape" idiom). }
+  SEGMENT PROCEDURE FILEPROC(OP: INTEGER; VAR F: FIB; VAR ARGSTR: STRING;
+                             ARGBOOL: BOOLEAN; ARGPTR: FIBP;
+                             ARGINT: INTEGER);
   BEGIN END;
 
   { The 41 forward-declared procedures' real completions, same order as
@@ -912,9 +932,43 @@ PROGRAM PASCALSYSTEM;
         F.FRECSIZE := RECWORDS + RECWORDS
     END
   END;
-  PROCEDURE FRESET; BEGIN END;
-  PROCEDURE FOPEN; BEGIN END;
-  PROCEDURE FCLOSE; BEGIN END;
+  { PASCALSY.4 = FRESET. Real body is a one-line forward into
+    `FILEPROC` arm 1 (finding 156b), which reads only `F` -- the other
+    `FILEPROC` slots are don't-cares here. `PL` (the global scratch
+    string, finding 137's own established reuse pattern) fills the
+    `VAR ARGSTR: STRING` slot instead of a fresh local -- a fresh
+    local compiled to `params=1/data=41` against the real binary's
+    `1/5`, a 36-word gap; reusing `PL` closes it to `1/0` against `1/5`
+    (5 words undocumented -- plausibly Apple's own real don't-care
+    value came from somewhere else entirely, not chased further). }
+  PROCEDURE FRESET;
+  BEGIN
+    FILEPROC(1, F, PL, FALSE, NIL, 0)
+  END;
+
+  { PASCALSY.5 = FOPEN. Real body forwards into `FILEPROC` arm 2
+    (finding 156b), which reads `F, FTITLE, FOPENOLD, JUNK` -- FOPEN's
+    own four parameters, straight through in their own declared
+    order. `params=4/data=0` against the real binary's `4/1`, one
+    word short, documented not forced (matches this project's own
+    established "close" pattern elsewhere). }
+  PROCEDURE FOPEN;
+  BEGIN
+    FILEPROC(2, F, FTITLE, FOPENOLD, JUNK, 0)
+  END;
+
+  { PASCALSY.6 = FCLOSE. Real body forwards into `FILEPROC` arm 3
+    (finding 156b), which reads `F` and `ORD(FTYPE)` (`FILEPROC`'s
+    shared `ARGINT` slot can't be typed `CLOSETYPE` -- it also carries
+    a plain length for a different arm -- so the ordinal is converted
+    at the call site, finding 156c). `params=2/data=0` against the
+    real binary's `2/4` -- four words undocumented, same "don't-care
+    value came from somewhere else" gap as `FRESET`'s own, not chased
+    further this session. }
+  PROCEDURE FCLOSE;
+  BEGIN
+    FILEPROC(3, F, PL, FALSE, NIL, ORD(FTYPE))
+  END;
   { PASCALSY.7 = FGET (confirmed by PASCALIO.text's own "CXP 0,7"
     comment on its matching forward declaration, finding 151). Not
     written for real yet -- see finding 152: its own nested helper

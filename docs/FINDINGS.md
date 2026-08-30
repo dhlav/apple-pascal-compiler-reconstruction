@@ -13889,3 +13889,71 @@ nested helper that is the true forwarder rather than `COMMAND` itself
 being it, mirroring the `WAITSYSVOL`/`EXECERROR` nesting pattern
 already established. Not resolved -- flagged for whoever writes
 `COMMAND` for real.
+
+## 157. FILEPROC written for real; FRESET/FOPEN/FCLOSE unblocked -- no variant record needed after all
+
+VERIFIED BINARY FACT for the call structure (matches the real binary's
+own instruction sequence almost exactly, per-arm); STRONG INFERENCE
+for exact frame sizes (three small, documented gaps, not forced).
+
+Finding 156c predicted a case-variant record parameter would be needed
+to satisfy `FILEPROC`'s shared `ARGINT` slot (`CLOSETYPE` for
+`FCLOSE`, a plain length for arm 4). Turned out unnecessary: `FCLOSE`
+just needs `ORD(FTYPE)` at the call site -- `CLOSETYPE`'s own ordinal
+representation IS a plain integer, so converting explicitly compiles
+to the same bare value push a variant would have, with none of a
+variant's own complexity. `FILEPROC`'s real signature, written and
+compiling clean:
+
+```pascal
+SEGMENT PROCEDURE FILEPROC(OP: INTEGER; VAR F: FIB; VAR ARGSTR: STRING;
+                           ARGBOOL: BOOLEAN; ARGPTR: FIBP;
+                           ARGINT: INTEGER);
+```
+
+`FRESET`/`FOPEN`/`FCLOSE` now forward into arms 1/2/3 respectively.
+Disassembling the reconstructed calls against the real binary's own
+`FRESET`/`FOPEN`/`FCLOSE` (already read in finding 156b) shows an
+almost instruction-for-instruction match -- same opcodes, same operand
+order, for every slot that carries a real value (`FOPEN`'s call is a
+literal match on all four real args plus the dispatch constant: `SLDC2
+/ SLDO4 / SLDO3 / SLDO2 / SLDO1`, identical to the real binary). The
+only difference is what fills each procedure's own **don't-care**
+slots: Apple's real binary reads uninitialized locals there (harmless
+garbage, since the receiving arm never touches them); this
+reconstruction passes explicit `FALSE`/`NIL`/`0` instead, which is
+more defensible than reproducing undefined behavior on purpose and
+costs nothing semantically.
+
+That determinism choice does cost frame-size exactness, documented
+per procedure rather than forced:
+
+- **`FRESET`**: reusing the existing global scratch string `PL`
+  (finding 137's own established pattern) for the `VAR ARGSTR: STRING`
+  don't-care slot got `params=1/data=0` against the real binary's
+  `1/5` -- a fresh local instead gave `1/41` (a full default `STRING`
+  is 41 words), so `PL` is a large improvement, but the remaining 5
+  words are still open; Apple's own don't-care value plausibly came
+  from somewhere else the raw p-code doesn't reveal on its own,not
+  chased further.
+- **`FOPEN`**: `params=4/data=0` against the real binary's `4/1` --
+  one word short, the same class of small, documented gap this
+  project has accepted elsewhere (`NEEDSSWAP`/`SWAPALL` in `LIBMAP`,
+  `WAITSYSVOL`'s own one-word gap).
+- **`FCLOSE`**: `params=2/data=0` against the real binary's `2/4` --
+  same open question as `FRESET`'s gap, not chased further.
+
+None of these gaps affect the call *semantics* already confirmed
+exact (finding 156b's own per-arm word mapping) -- they are purely
+about what, if anything, Apple's real source declared beyond what
+this reconstruction's calls actually need.
+
+**Still open**: `FILEPROC`'s own arm bodies (`FILEPROC`-segment-local
+procedures 2/3/4/7/8, `FILEPROC.8` already independently probe-
+verified) are not written -- only the dispatcher (`FILEPROC.1`) has a
+real, tested signature; its own body is still `BEGIN END`, so `FRESET`
+etc. compile and route correctly but don't yet *do* anything. `arm 4`
+(the file-title normalizer, already established) is not exercised by
+this session's work since its own caller (`PASCALSY.43`/`COMMAND`,
+finding 156's own open question) isn't written yet -- this signature
+hasn't been cross-checked against that fourth call site.
