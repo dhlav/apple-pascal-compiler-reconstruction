@@ -13697,8 +13697,84 @@ an already-correct source expression, not evidence the source is wrong
 -- flagged for the acceptance tier to either confirm or reopen, not
 silently worked around.
 
-**Not yet done**: `EXECCLOSE`, `SPACEWAIT`, `FETCHDIR`'s own real
-bodies, `PRINTERROR`'s real per-code message table, and the six other
-forward-declared-but-stub procedures `EXECERROR` itself now calls for
-real remain stubs. `PASCALSY.1`'s own `REPEAT ... UNTIL EMPTYHEAP =
-NIL` loop (calling `PASCALSY.48`) is still not written.
+**Not yet done**: `SPACEWAIT`, `FETCHDIR`'s own real bodies,
+`PRINTERROR`'s real per-code message table remain stubs. (`EXECCLOSE`
+turned out to already be written and correct from an earlier point in
+this same session -- rediscovered, not re-derived, while starting
+finding 155.) `PASCALSY.1`'s own `REPEAT ... UNTIL EMPTYHEAP = NIL`
+loop (calling `PASCALSY.48`) is still not written.
+
+## 155. FINIT/FEOF/FEOLN written for real; FILEPROC's placeholder signature is now a real blocker, not a free pass
+
+VERIFIED BINARY FACT for `FEOF`/`FEOLN` (trivial field accessors);
+STRUCTURALLY VERIFIED for `FINIT` (matches the raw binary's algorithm
+exactly, one word of frame-size divergence from a host-compiler
+optimization, same category as findings 153/154's other flagged
+codegen differences).
+
+Scope check first: after finding 154, "the rest of the stubs" turned
+out to be 28 trivial `BEGIN END;` bodies in segment 0 alone (most of
+the `FIB` I/O primitives: `FINIT` through `FWRITELN`, `WRITEDIR`
+through `COMMAND`, `STUB48`) plus four *entire other segments*
+(`FIOPRIMS`, `INITIALIZE`, `GETCMD`, `FILEPROC`) that are `BEGIN END`
+in full, each of which will itself decompose into several procedures
+once opened up -- `EXECERROR` alone (one procedure) took a full
+session at this project's verification bar. Continuing at the same
+rigor but working in dependency order rather than file order, per
+direction this session.
+
+**`FINIT`** (`PASCALSY.3`) -- raw p-code matches this project's own
+very first lifted rendering of this procedure (from early in the
+project, before `FIB`'s field names existed) exactly once the lift's
+own `(G4+n)^` arithmetic is read against `FIB`'s now-real field names:
+`(G4+3)^`=`FSTATE`, `(G4+5)^`=`FISOPEN`, `(G4+2)^`=`FEOF`, `(G4+1)^`=
+`FEOLN`, `G4^`=`FWINDOW`. A second, independent probe (self-assigning
+each named `FIB` field of a bare local `VAR F: FIB` and reading the
+compiled `SRO`/`SLDO` operands back) landed on the identical offsets.
+Compiles to `params=3/data=0` against the real binary's `params=3/
+data=1` -- the host compiler doesn't need a local copy of `F`'s
+address where Apple's real one cached it in one, the same "compiler
+optimization, not source bug" category flagged in finding 154 (and
+the `(A=0) OR (A=-2)` condition again compiles short-circuit-style
+here rather than `LOR`, same pattern).
+
+**`FEOF`/`FEOLN`** (`PASCALSY.10`/`11`) -- three raw instructions each
+(`SLDO 3 / SIND 2 / SRO 1` and `SLDO 3 / SIND 1 / SRO 1`): load `F`,
+read the named field, store to the function's own result. `FEOF :=
+F.FEOF` and `FEOLN := F.FEOLN`, nothing else.
+
+**`FRESET`/`FOPEN`/`FCLOSE` are blocked on a real question, not just
+undone work.** All three are one-liners that forward into `FILEPROC`
+(already known from early in this project: `FILEPROC.1(1, F, @<local>,
+<locals>...)` and similar for the other two), but `FILEPROC`'s own
+declared signature -- `PROCEDURE FILEPROC(A1..A6: INTEGER)` -- is
+explicitly flagged in this file's own comment as "an unverified
+placeholder... the wrong shape costs nothing until [something] calls
+it." That "until" has arrived: a probe compiling `FILEPROC(1, F, ...)`
+with `F: FIB` against the current placeholder signature is rejected
+outright (`"parameter two: given a record FIB variable F ... but
+declaration of A2 is integer type"`) -- real Pascal type-checking, not
+a raw-byte concern. Apple's real call sites pass a `VAR FIB`'s own
+address, a `VAR STRING`'s own address, and plain integers all through
+the *same* six argument slots, meaning `FILEPROC`'s real parameter
+types cannot be plain `INTEGER` the way this file currently guesses --
+something with 1-word representation-compatible but type-flexible
+parameters, or a different calling shape entirely. Not resolved this
+session; flagged rather than forced. This blocks three of the highest-
+value remaining stubs (`FRESET`/`FOPEN`/`FCLOSE`) until `FILEPROC`'s
+real signature is worked out.
+
+**Also confirmed by direct measurement, not guessed**: `FREADINT`
+(`PASCALSY.12`) is a ~70-instruction integer-parsing state machine
+(sign handling, digit accumulation, `-32768` overflow special case,
+`CBP 54`-driven lookahead) and `FWRITEINT` (`PASCALSY.13`) is a full
+integer-to-decimal-string converter (repeated division/modulo digit
+extraction into a local buffer, then `FWRITESTRING`) -- neither is a
+short wrapper, both are comparable in size to `EXECERROR`. `FBLOCKIO`
+(`PASCALSY.28`, already known from finding 149 to nest `PASCALSY.55`)
+is a ~110-instruction buffered-disk-I/O routine with retry logic and a
+call into `STUB49` (still a stub function returning 0) that needs a
+real body too. These three are the actual unblocking targets for the
+rest of the `FIB` layer (`FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc.
+all build on `FBLOCKIO`) and are each their own multi-session-scale
+piece of work, not something to rush.

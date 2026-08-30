@@ -464,13 +464,43 @@ a route end to end; everything else is a straight read-and-rebuild.
     differences (constant folding on `2028+50`; short-circuit vs. `LOR`
     codegen for one `OR`).
 
-    **Still stubs**: `EXECCLOSE`, `SPACEWAIT`, `FETCHDIR`'s own real
-    bodies, `PRINTERROR`'s real per-code message table, and
-    `PASCALSY.1`'s own `REPEAT ... UNTIL EMPTYHEAP = NIL` loop (which
-    calls `PASCALSY.48`, also still a stub). Every other
-    forward-declared procedure's real content, and four of the six
-    other segments' bodies beyond procedure 1, remain the natural next
-    work.
+    **Scope check (finding 155)**: "the rest of the stubs" is 28
+    trivial `BEGIN END;` bodies in segment 0 alone, plus four *entire
+    other segments* (`FIOPRIMS`, `INITIALIZE`, `GETCMD`, `FILEPROC`)
+    that are `BEGIN END` in full and will each decompose into several
+    procedures once opened -- `EXECERROR` alone took a full session.
+    User direction: work in **dependency order**, not file order, so
+    partial progress stays maximally useful.
+
+    `FINIT` (finding 155, `PASCALSY.3`) and the trivial accessors
+    `FEOF`/`FEOLN` (`PASCALSY.10`/`11`) are now written and verified.
+    `EXECCLOSE` turned out to already be correct from earlier in the
+    session (rediscovered, not redone).
+
+    **`FRESET`/`FOPEN`/`FCLOSE` are blocked on a real architectural
+    question**, not just unstarted: all three forward into `FILEPROC`,
+    whose declared signature (`A1..A6: INTEGER`) is explicitly flagged
+    in this file's own comment as an unverified placeholder. A probe
+    this session confirmed the placeholder is now actually wrong --
+    passing a `VAR FIB`'s address where `INTEGER` is declared is
+    rejected by real Pascal type-checking. `FILEPROC`'s true parameter
+    shape needs to be worked out (something 1-word-representation-
+    compatible but not plain `INTEGER`) before these three can be
+    written for real.
+
+    **The `FBLOCKIO` chain is the actual highest-value target and the
+    hardest**: `FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc. all build on
+    `FBLOCKIO` (`PASCALSY.28`), a ~110-instruction buffered-disk-I/O
+    routine with retry logic that also needs `STUB49` (currently a
+    stub) written for real and nests its own `PASCALSY.55`.
+    `FREADINT`/`FWRITEINT` are each full parsing/formatting state
+    machines (~50-70 instructions), not short wrappers -- confirmed by
+    reading their raw p-code directly, not assumed from the header
+    comment's word counts. Each of `FBLOCKIO`, `FILEPROC`, and the two
+    numeric-I/O routines is its own multi-session-scale piece of work.
+    Recommended order for the next session: `FILEPROC`'s real
+    signature first (unblocks three one-liners immediately), then
+    `FBLOCKIO`+`STUB49` (unblocks the largest remaining cluster).
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

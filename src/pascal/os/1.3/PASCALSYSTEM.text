@@ -873,7 +873,45 @@ PROGRAM PASCALSYSTEM;
       END
     END
   END;
-  PROCEDURE FINIT; BEGIN END;
+  { PASCALSY.3 = FINIT. Raw p-code (`params 3 locals 1`) matches this
+    file's own already-lifted `PASCALSY.3` body (read early this
+    project, before `FIB`'s field names existed) field-for-field once
+    the field *names* are substituted for the lift's own word-offset
+    arithmetic -- `(G4+3)^`=`FSTATE`, `(G4+5)^`=`FISOPEN`, `(G4+2)^`=
+    `FEOF`, `(G4+1)^`=`FEOLN`, `G4^`=`FWINDOW` -- a probe confirming
+    the exact same offsets a second, independent way (self-assigning
+    each field of a bare `VAR F: FIB` local and reading back the
+    compiled `SRO`/`SLDO` operands). `RECWORDS = 0` (a char file) sets
+    `FSTATE := FNEEDCHAR`; `RECWORDS = -2` behaves the same but leaves
+    `FSTATE` alone (its caller -- not yet written -- must set it);
+    both clear the first byte of the caller's own window buffer
+    (`FWINDOW^[1]`, one past `WINDOW`'s own `[0..0]` declared bound --
+    the same idiom `WINDOW` itself already is, no-range-check already
+    established). `RECWORDS < 0` (untyped `FILE`) leaves `FWINDOW`
+    `NIL` and `FRECSIZE` 0; otherwise `FRECSIZE` is `RECWORDS` doubled
+    (words to bytes). }
+  PROCEDURE FINIT;
+  BEGIN
+    F.FSTATE := FJANDW;
+    F.FISOPEN := FALSE;
+    F.FEOF := TRUE;
+    F.FEOLN := TRUE;
+    F.FWINDOW := WINDOW;
+    IF (RECWORDS = 0) OR (RECWORDS = -2) THEN
+    BEGIN
+      F.FWINDOW^[1] := CHR(0);
+      F.FRECSIZE := 1;
+      IF RECWORDS = 0 THEN
+        F.FSTATE := FNEEDCHAR
+    END ELSE BEGIN
+      IF RECWORDS < 0 THEN
+      BEGIN
+        F.FWINDOW := NIL;
+        F.FRECSIZE := 0
+      END ELSE
+        F.FRECSIZE := RECWORDS + RECWORDS
+    END
+  END;
   PROCEDURE FRESET; BEGIN END;
   PROCEDURE FOPEN; BEGIN END;
   PROCEDURE FCLOSE; BEGIN END;
@@ -893,8 +931,12 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE FGET; BEGIN END;
   PROCEDURE FPUT; BEGIN END;
   PROCEDURE XSEEK; BEGIN END;
-  FUNCTION FEOF; BEGIN FEOF := TRUE END;
-  FUNCTION FEOLN; BEGIN FEOLN := TRUE END;
+  { PASCALSY.10/11 -- plain field accessors, raw p-code is `SLDO
+    3 / SIND 2 / SRO 1` and `SLDO 3 / SIND 1 / SRO 1`: load the VAR
+    `F` param, read `FEOF`/`FEOLN` off it, store to the function's own
+    result slot. Nothing else. }
+  FUNCTION FEOF; BEGIN FEOF := F.FEOF END;
+  FUNCTION FEOLN; BEGIN FEOLN := F.FEOLN END;
   PROCEDURE FREADINT; BEGIN END;
   PROCEDURE FWRITEINT; BEGIN END;
   PROCEDURE XREADREAL; BEGIN END;
