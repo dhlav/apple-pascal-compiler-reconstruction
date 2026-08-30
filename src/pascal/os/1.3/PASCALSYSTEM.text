@@ -347,13 +347,36 @@ PROGRAM PASCALSYSTEM;
     WHAT_H: ARRAY [1..2] OF INTEGER;  { Tribby's what_h -- unidentified pair }
     EXEC_IN_CH: CHAR;              { Tribby's exec_in_ch -- last char read from EXEC file }
     EXEC_TERM: CHAR;               { Tribby's exec_term -- EXEC file termination char }
-    WHAT_I: ARRAY [1..7] OF INTEGER;  { Tribby's what_i -- unidentified 7-word block, EXEC state }
-    EXEC_UNIT: INTEGER;            { Tribby's exec_unit -- EXEC volume unit number }
-    EXEC_VOL: VID;                 { Tribby's exec_vol -- EXEC file volume name }
-    EXEC_SIZE: INTEGER;            { Tribby's exec_size -- # blocks in EXEC file }
-    WHAT_J: ARRAY [1..3] OF INTEGER;  { Tribby's what_j -- unidentified triple, EXEC state }
-    EXEC_FENTRY: DIRENTRY;         { Tribby's exec_fentry -- directory entry for EXEC file }
-    WHAT_K: ARRAY [1..11] OF INTEGER; { Tribby's what_k -- unidentified 11-word block }
+
+    { Tribby split this next 40-word span into seven fields (what_i
+      through what_k: exec_unit/exec_vol/exec_size/what_j/exec_fentry
+      included) -- but nothing in the whole disk set ever references
+      any offset strictly inside that span (`I1,397` through `I1,435`
+      never appear anywhere in `analysis/lifted/128K.PASCAL-1.3-128K.
+      pas.txt`), only its start. Its start (word 396) is exactly where
+      `PASCALSY.1`'s own real body calls `FINIT(@L396, @L696, -1)` and
+      `FCLOSE(@L396, 0)` (finding 144) -- and `696 - 396 = 300 =
+      FILESIZE`, the *typed*-file constant, but that's the dead
+      `VADDR+FILESIZE` arithmetic findings 43a/118c already proved the
+      compiler emits unconditionally for *every* file variable "harmless
+      ... never dereferenced" regardless of the file's real declared
+      size, so it does not by itself mean this variable is 300 words.
+      Tribby's own seven guessed fields sum to exactly 40 words --
+      `NILFILESIZE`, the constant for a bare, *untyped* `FILE` (finding
+      43a). That match, the total silence on any offset within the
+      span, and the two independent `FWRITESTRING(..., @I1,436, ...)` /
+      `(..., @I1,440, ...)` calls in `PASCALSY.54` landing exactly on
+      `DLINE_STR`/`BSPACE_STR`'s own real start right after this span
+      (confirmed directly against this file's own compiled offsets, not
+      assumed) all agree: this is one opaque, untyped `FILE` variable,
+      not seven named fields. Apple's own compiler emits the observed
+      `FINIT`/`FCLOSE` calls automatically for a declared file-typed
+      `VAR` (finding 43a) -- so once this line compiles, `PASCALSY.1`'s
+      body should not need to call `FINIT`/`FCLOSE` explicitly at all. }
+    EXEC_FILE: FILE;               { untyped, 40 words -- Tribby's what_i
+                                      through what_k collapsed to one real
+                                      file variable (see above) }
+
     DLINE_STR: STRING[VIDLENG];    { Tribby's dline_str -- printed per char to delete line }
     BSPACE_STR: STRING[VIDLENG];   { Tribby's bspace_str -- printed to backspace/blank a char }
     RUN_VOL: VID;                  { Tribby's run_vol -- run (%) volume; did not exist before 1.2 }
@@ -799,29 +822,26 @@ PROGRAM PASCALSYSTEM;
   CSP 38 (`tools/a2pascal/syscall.py`), a plain callable builtin, no
   declaration needed in `(*$U-*)` system code.
 
-  Two pieces are NOT written yet, both genuinely unresolved rather
-  than guessed at:
+  `FINIT(@L396, @L696, -1)` / `FCLOSE(@L396, 0)` are RESOLVED (finding
+  145) -- not written as explicit source at all. `@L396` is
+  `EXEC_FILE: FILE`, an untyped file variable that collapses seven of
+  Tribby's own guessed fields (`WHAT_I` through `WHAT_K`, finding 143)
+  into the one real 40-word (`NILFILESIZE`) variable that was
+  actually there -- nothing in the whole disk set ever references any
+  offset strictly inside that 40-word span, only its boundary, and
+  Apple's own compiler auto-generates both this `FINIT` call at block
+  entry and the `FCLOSE`+`XIT` at block exit purely from the `VAR`
+  declaration (finding 43a's own established pattern: "the loop that
+  initialises a block's file variables"). `@L696` is the same dead
+  `VADDR+FILESIZE` arithmetic findings 43a/118c already proved
+  harmless elsewhere -- confirmed here too: Apple's real compiler,
+  run cold against this exact declaration, emits the identical
+  instruction sequence (`LLA 396`, `LLA 696`, `LDCI 1`, `NGI`,
+  `CXP 0,3` at entry; `LLA 396`, `SLDC 0`, `CXP 0,6`, `XIT` at exit)
+  byte for byte.
 
-  * `FINIT(@L396, @L696, -1)` / `FCLOSE(@L396, 0)`. `LLA 696` is
-    almost certainly the SAME dead-arithmetic pattern findings 43/118c
-    already proved elsewhere in this project: the compiler emits
-    `VADDR + FILESIZE` (a fixed +300) as the `WINDOW` argument for
-    *every* file-typed variable's auto-generated `FINIT` call,
-    "harmless: ... the pointer is never dereferenced" (finding 43a) --
-    396+300=696 exactly. That means `@L696` needs no real storage of
-    its own; only `@L396` (the file variable itself) does. But this
-    call is very likely COMPILER-GENERATED initialization code for a
-    real file-typed `VAR` (finding 43a's `bodypart.e.text` excerpt:
-    "the loop that initialises a block's file variables"), not
-    hand-written source -- meaning one of this file's own currently
-    `FIBP`-typed globals (`INPUTFIB`/`OUTPUTFIB`/`SYSTERM`/`SWAPFIB`,
-    offsets 55-58) is likely mis-typed; word 396 falls inside this
-    file's own Tribby-derived block (finding 143) around `EXEC_VOL`/
-    `EXEC_SIZE`/`WHAT_J`, whose real identity there needs
-    re-examining before this line can be written for real. Left out
-    entirely rather than guessed, per this project's own established
-    practice (finding 105a and others: a documented gap, not a forced
-    close).
+  One piece remains, genuinely unresolved rather than guessed at:
+
   * `PASCALSY.48()`. Procedure 48 is past the 41/42 forward-declared
     set this file has (finding 136) -- genuinely new territory,
     `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1033-1042` shows its
@@ -834,7 +854,8 @@ BEGIN
   EMPTYHEAP := NIL;
   UNITCLEAR(1);
   INITIALIZE;
-  { REPEAT ... UNTIL EMPTYHEAP = NIL calling PASCALSY.48 and FINIT/
-    FCLOSE on the still-unresolved file variable: not written yet,
-    see the comment above. }
+  { REPEAT ... UNTIL EMPTYHEAP = NIL calling PASCALSY.48: not written
+    yet, see the comment above -- FINIT/FCLOSE need no source here,
+    the compiler emits them automatically from EXEC_FILE's own
+    declaration. }
 END.

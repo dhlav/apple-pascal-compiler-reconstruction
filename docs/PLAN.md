@@ -365,16 +365,21 @@ a route end to end; everything else is a straight read-and-rebuild.
     not attempted yet. `PASCALSY.1`'s own real main-loop body is
     started (finding 144): `EMPTYHEAP := NIL`, `UNITCLEAR(1)`,
     `INITIALIZE` all written and verified exact (`params=0/data=902`
-    held). Two pieces of its own short body remain open, both
-    genuinely unresolved rather than guessed -- the `FINIT`/`FCLOSE`
-    calls on a still-misidentified file-typed variable (`LLA 396`;
-    `LLA 696` is dead arithmetic, `VADDR+FILESIZE`, already proven
-    harmless by findings 43a/118c), and the `REPEAT` loop's own
-    `PASCALSY.48` call, which needs procedures 44-58 written first --
-    genuinely new territory past the 41/42 forward-declared set.
-    That, every other forward-declared procedure's real content, and
-    four of the six other segments' bodies beyond procedure 1 remain
-    the natural next work.
+    held). The `FINIT`/`FCLOSE` gap closed too (finding 145): the
+    "still-misidentified" file variable turned out to be seven of
+    finding 143's own Tribby-guessed fields (`WHAT_I`-`WHAT_K`)
+    collapsing into one real, opaque, untyped `EXEC_FILE: FILE` (40
+    words = `NILFILESIZE` exactly -- nothing in the whole disk set
+    references any offset strictly inside that span). Apple's own
+    compiler auto-generates the entire `FINIT`/`FCLOSE` sequence from
+    that one `VAR` declaration, confirmed byte-for-byte against
+    Apple's real compile with zero source written for either call.
+    Only the `REPEAT` loop's own `PASCALSY.48` call remains open --
+    needs procedures 44-58 written first, genuinely new territory
+    past the 41/42 forward-declared set. That, every other
+    forward-declared procedure's real content, and four of the six
+    other segments' bodies beyond procedure 1 remain the natural next
+    work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

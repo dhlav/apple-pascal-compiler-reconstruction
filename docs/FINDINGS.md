@@ -13050,3 +13050,69 @@ unchanged.
 Acceptance run `2026-08-29-pascalsystem-mainloop-start`: 0 errors, 839
 lines, `PASCALSYS.CODE` extracted and diffed -- procedure 1
 `params=0/data=902`, still exact.
+
+## 145. `PASCALSY.1`'s `FINIT`/`FCLOSE` resolved -- `EXEC_FILE: FILE`, not seven small fields
+
+Finding 144 left `FINIT(@L396, @L696, -1)`/`FCLOSE(@L396, 0)` open:
+`LLA 696` exceeds this file's own 451-word frame, and word 396 sits
+inside finding 143's own speculative Tribby-derived block, mapped at
+the time to `WHAT_I` (an "unidentified 7-word block").
+
+Ran the compiler's own real p-code, not more guessing. Adding two
+temporary probe statements to `PASCALSY.1`'s own body (`WHAT_I[7] :=
+WHAT_I[7]`, `EXEC_UNIT := EXEC_UNIT`, etc.) and disassembling the host
+compiler's output for this file directly gave the exact offsets this
+file's own declarations actually compile to: `WHAT_I` starts at word
+**396** -- exactly `@L396`. Then two things closed it:
+
+* **The silence test.** `WHAT_I` through `WHAT_K` (Tribby's seven
+  guessed fields spanning that region) sum to exactly **40 words**,
+  and `grep`ing the *entire* lifted disk set for `I1,397` through
+  `I1,435` (every offset strictly inside that 40-word span) returns
+  **nothing** -- not one reference anywhere, in any of the seven
+  segments. A real set of seven separately-used named fields would be
+  read or written individually somewhere; an opaque file-record blob,
+  touched only through its own boilerplate `FINIT`/`FCLOSE` and
+  through `GET`/`PUT`-style primitives that never emit raw `LDL n`
+  for its interior, would not be.
+* **The size match.** 40 words is exactly `NILFILESIZE` (finding
+  43a's own constant, "a bare `FILE` is 40" words) -- the size the
+  compiler gives an *untyped* `FILE` variable, independent of whatever
+  it's actually used for.
+* **Independent confirmation from the neighbors.** Two real
+  `FWRITESTRING(I1,3, @I1,436, 0)` / `(..., @I1,440, 0)` calls in
+  `PASCALSY.54` (the delete-line/backspace routine) land exactly on
+  where `DLINE_STR`/`BSPACE_STR` (the very next declared fields,
+  finding 143) actually compile to in this file -- confirmed directly
+  against the same probe-disassembly, not assumed.
+
+Collapsed `WHAT_I`/`EXEC_UNIT`/`EXEC_VOL`/`EXEC_SIZE`/`WHAT_J`/
+`EXEC_FENTRY`/`WHAT_K` (seven fields) into one `EXEC_FILE: FILE;` --
+an untyped file, still in the EXEC-file-handling region Tribby's own
+comments describe throughout, matching finding 43a's own
+`bodypart.e.text` pattern: the compiler auto-generates a `FINIT` call
+at block entry and an `FCLOSE` at block exit for *any* file-typed
+`VAR`, with no source written for either. Frame held exact (`902`
+bytes, unchanged -- the seven fields summed to the same 40 words as
+the one that replaced them). Host compiler confirmed the auto-
+generated entry code first: `LLA 396`, `LLA 696`, `LDCI 1`, `NGI`,
+`CXP 0,3` -- appearing with **zero source written for it**, purely
+from declaring `EXEC_FILE`.
+
+Apple's own real compiler, run cold against the same source, produced
+the **exact same instruction sequence**, byte for byte: entry `LLA
+396 / LLA 696 / LDCI 1 / NGI / CXP 0,3`, exit `LLA 396 / SLDC 0 / CXP
+0,6 / XIT` -- an exact match to the original lift's own `FINIT(@L396,
+@L696, -(1))` ... `FCLOSE(@L396, 0); XIT`. `params=0/data=902` held
+exact throughout; segment 0's 42-of-43 `params` match held unchanged.
+
+This closes finding 144's own remaining `FINIT`/`FCLOSE` gap entirely
+-- `PASCALSY.1`'s only unwritten piece is now the `REPEAT` loop's own
+`PASCALSY.48` call, which needs procedures 44-58 written first.
+
+Acceptance run `2026-08-29-pascalsystem-execfile-finit`: 0 errors, 862
+lines, `PASCALSYS.CODE` extracted -- procedure 1's compiled
+instruction stream (entry through the `INITIALIZE` call) matches
+Apple's real p-code byte for byte, including the auto-generated
+`FINIT` call neither this file nor its author wrote a line of source
+for.
