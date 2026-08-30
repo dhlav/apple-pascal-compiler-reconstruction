@@ -530,10 +530,25 @@ a route end to end; everything else is a straight read-and-rebuild.
     `FREADINT`/`FWRITEINT` are each full parsing/formatting state
     machines (~50-70 instructions), not short wrappers -- confirmed by
     reading their raw p-code directly, not assumed from the header
-    comment's word counts. Recommended next: `FILEPROC`'s own arm
-    bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
-    functional, not just correctly-routed), then `FBLOCKIO`+`STUB49`
-    (unblocks the largest remaining cluster in the `FIB` layer).
+    comment's word counts.
+
+    **Neither remaining path turned out self-contained on closer
+    inspection.** `FILEPROC`'s arm 1 (`FILEPROC`-segment-local
+    `PASCALSY`-unrelated proc 3, `FRESET`'s real target) itself calls
+    a cross-segment `FIOPRIMS.2` (that whole segment is still `BEGIN
+    END`) and `PASCALSY.7`/`FGET` (also still a stub) -- so even
+    "finish `FILEPROC`'s arm bodies" transitively needs most of the
+    `FIB` layer written first, not just `FILEPROC` itself.
+    `PASCALSY.55` (finding 158) has its overall loop structure solid
+    but two of its six parameter roles unresolved -- not forced into
+    committed code. Recommended next: the probe finding 158 itself
+    suggests (isolate `UNITREAD`/`UNITWRITE`'s exact compiled
+    argument-push shape against a small known-good call) to settle
+    `PASCALSY.55` properly, since that's the one piece with no further
+    undiscovered dependencies once its own two open parameters are
+    pinned. `FILEPROC`'s own arm bodies (2/3/4/7 -- makes `FRESET`/
+    `FOPEN`/`FCLOSE` actually functional, not just correctly-routed)
+    come after that, once `FGET`/`FIOPRIMS.2` are within reach.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

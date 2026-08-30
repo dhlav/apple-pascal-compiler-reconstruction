@@ -13957,3 +13957,55 @@ etc. compile and route correctly but don't yet *do* anything. `arm 4`
 this session's work since its own caller (`PASCALSY.43`/`COMMAND`,
 finding 156's own open question) isn't written yet -- this signature
 hasn't been cross-checked against that fourth call site.
+
+## 158. `FBLOCKIO`'s nested `PASCALSY.55` -- the chunked-transfer loop is understood, two of six param roles are not yet, not forced
+
+STRONG INFERENCE for the overall structure (retry loop, block
+chunking, `UNITREAD`/`UNITWRITE` dispatch); two parameter identities
+left open rather than guessed into committed code. Recorded so the
+next attempt starts from here instead of re-deriving it.
+
+Went to `128K.PASCAL`'s own raw p-code for `PASCALSY.55` (`FILEPROC`'s
+own arm-3 helper does not call this -- this is `FBLOCKIO`'s own nested
+child, per finding 149) directly, addressed, since `FBLOCKIO`'s call
+site turned out to push **six** values, not five as the unaddressed
+listing first suggested -- `SLDO 9 / SIND 7` (`F^` at offset+7, i.e.
+`FUNIT`, matching `FIB`'s established field-8 position) is itself the
+first pushed argument, easy to miss reading the mnemonics without
+their target addresses.
+
+**Solid**: the loop caps each transfer at 63 blocks (`SLDC 63 /
+GRTI`), computes a byte length (`blocks * 512`), loops `WHILE
+<remaining> <> 0`, dispatches `UNITREAD` (`CSP 5`) or `UNITWRITE`
+(`CSP 6`) on a boolean parameter (the read/write flag, `FBLOCKIO`'s
+own `DOREAD`), checks `IORESULT` (`CSP 34`) after each transfer and
+does a **non-local `EXIT(0, 55)`** -- the procedure exiting itself --
+on any nonzero result (a hard bail-out, not a retry), then advances
+two running values by different amounts each iteration (one by the
+*byte* count just transferred, the other by the *block* count) before
+re-capping at 63 for the next chunk if fewer than 63 remain. The
+`CSP_EFFECT` table (`tools/a2pascal/lift.py`) already fixes `UNITREAD`/
+`UNITWRITE`'s standard-procedure numbers (5/6) and `IORESULT`'s (34,
+already used in findings 148/154) and `EXIT`'s (4, already used in
+finding 154) -- no new CSP identities needed here.
+
+**Not resolved**: which of the two per-iteration-advancing values is
+the buffer address and which is the block number. The one advanced by
+the *byte* count (`local7`, the per-chunk length) is the more natural
+candidate for a buffer pointer; the one advanced by the *block* count
+is the more natural candidate for the block number -- but the raw
+`UNITREAD`/`UNITWRITE` call itself pushes a *third*, non-advancing
+value in what would be the manual's own `ARRAY` argument position,
+which doesn't fit either advancing value cleanly and hasn't been
+reconciled. Rather than force a plausible-looking but unverified
+parameter list into `PASCALSY.55`'s declaration (which would then
+also need `FBLOCKIO`'s own frame-word-to-parameter mapping resolved
+correctly to call it, a second open sub-problem), this is left
+undone. Writing it for real needs either: a probe isolating
+`UNITREAD`/`UNITWRITE`'s exact compiled argument-push shape against a
+small known-good call (so the raw bytes can be matched confidently
+instead of inferred), or reading `FBLOCKIO`'s own remaining
+not-yet-decoded instructions (the `IXA 13` / directory-entry-touching
+tail visible in the earlier full dump but not yet walked through
+carefully) for corroborating evidence of which value is dereferenced
+as a pointer versus compared/stored as a small integer.
