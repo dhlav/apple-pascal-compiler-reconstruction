@@ -387,16 +387,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     written too -- `params` exact, `data` documented one word short,
     a likely-related open question about how `GFILES[1]^` is really
     reached at that point in Apple's own source. `48`/`49` are
-    declared only as number-preserving stubs: reaching `PASCALSY.58`
-    (which `48`'s own real `REPEAT` loop calls, along with `50`) needs
-    `51`-`57` declared first too, six of which (`51`/`52`/`55`-`58`)
-    are lexically nested one level inside a not-yet-identified
-    enclosing procedure -- real, separate work, not attempted yet.
-    `57` alone involves `LOADSEGMENT`/`UNLOADSEGMENT`, a `GETCMD.1`
-    dispatch, and a non-local `EXIT`. That nested-scope group, every
-    other forward-declared procedure's real content, and four of the
-    six other segments' bodies beyond procedure 1 remain the natural
-    next work.
+    declared only as number-preserving stubs, needed to reach
+    `PASCALSY.58` by number from `48`'s own real `REPEAT` loop.
+    **The `lex 1` nested group is no longer one undifferentiated
+    blob** (finding 149): a full caller-graph read resolved it into
+    four small, independent pairs, each nested inside an
+    already-identified `lex 0` parent -- `51`/`52` inside `EXECERROR`
+    (proc 2), `56` inside `FGET` (proc 7), `55` inside `FBLOCKIO`
+    (proc 28), and `57`/`58` inside `48` itself (the one piece with no
+    UCSD precedent at all, involving `LOADSEGMENT`/`UNLOADSEGMENT`, a
+    `GETCMD.1` dispatch, and a non-local `EXIT`). None of the four
+    parents are written for real yet, but three of the four pairs can
+    now be written alongside their own parent independently, in any
+    order, rather than as one tangled unit. That work, every other
+    forward-declared procedure's real content, and four of the six
+    other segments' bodies beyond procedure 1 remain the natural next
+    work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

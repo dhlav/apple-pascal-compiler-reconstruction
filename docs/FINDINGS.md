@@ -13297,3 +13297,59 @@ lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure --
 `44`-`47` still exact, procedure 1 still `902`/`902`, `50`'s `params`
 exact (`0`) and `data` documented short by the one word above, nothing
 else regressed.
+
+## 149. The `lex 1` nested group is four separate pairs, not one big dispatcher -- caller analysis, not source changes
+
+Finding 148 left "the lex-1 nested group (51/52/55/56/57/58)" as one
+undifferentiated blob needing "its own enclosing-procedure analysis."
+Grepping the *entire* lifted disk set for every call site of each of
+these six procedure numbers (not just their own bodies) resolves it
+into four small, independent nestings, each inside an already
+forward-declared `lex 0` procedure whose real identity was already
+known from UCSD's own declaration order (`reference_source/ucsd_ii0/
+GLOBALS.TEXT`'s own `PROCEDURE`/`FUNCTION` list, counted the same way
+finding 148 counted `PROMPT`=39/`CLEARLINE`=38/`FETCHDIR`=42):
+
+* **`PASCALSY.51`/`52` are nested inside `PASCALSY.2` = `EXECERROR`**
+  (2nd declared, per `GLOBALS.TEXT`'s own order). `PASCALSY.2` is the
+  *only* caller of either, anywhere in the disk set (`PASCALSY.52()`
+  three times, `PASCALSY.51()` once, all four calls physically inside
+  procedure 2's own body, `analysis/lifted/128K.PASCAL-1.3-128K.pas.
+  txt:33-81`). Fits their own content exactly: `51` prints `S# <n>,
+  P# <n>, I# <n>` and `52` prints `Execution error # <n>` (plus an
+  `I/O error #` sub-line for error 10) -- textbook p-machine runtime
+  error diagnostics, which is exactly what `EXECERROR` is for.
+* **`PASCALSY.56` is nested inside `PASCALSY.7` = `FGET`** (7th
+  declared). `PASCALSY.7` is `56`'s only caller anywhere
+  (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:141`, inside
+  procedure 7's own body, `113-200`).
+* **`PASCALSY.55` is nested inside `PASCALSY.28` = `FBLOCKIO`** (28th
+  declared, confirmed by its own real `args 6 words` matching
+  `FBLOCKIO`'s declared six parameters exactly). `PASCALSY.28` is
+  `55`'s only caller, twice, both inside its own body
+  (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:516,532`, body
+  `494-550`).
+* **`PASCALSY.57`/`58` are nested inside `PASCALSY.48`**, the one
+  still-unreconstructed procedure with no UCSD precedent at all.
+  `PASCALSY.48` is `58`'s *only* caller anywhere in the disk set
+  (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1038`), and `58` is
+  in turn `57`'s only caller (`:1268`) -- so `57`/`58` are siblings,
+  both nested one level inside `48`, not nested inside each other
+  (both are `lex 1`, the same depth; nesting one inside the other
+  would make the inner one `lex 2`). This is the one piece of the four
+  that stays "substantially larger": `57` alone involves
+  `LOADSEGMENT`/`UNLOADSEGMENT`, a `GETCMD.1` dispatch, and a
+  non-local `EXIT(0, 57)`, none of which have UCSD source to check
+  against.
+
+None of the four enclosing procedures (`EXECERROR`/`FGET`/`FBLOCKIO`/
+`48`) are written for real yet -- this finding only narrows *where*
+each nested helper belongs, not their own content, and required no
+source changes (a pure caller-graph read against the existing lift,
+cross-checked against `GLOBALS.TEXT`'s own declaration order for the
+`EXECERROR`/`FGET`/`FBLOCKIO` identifications). The practical effect:
+what looked like one large, tangled dispatcher to write is actually
+three small, already-scoped helper pairs (`51`/`52`, `56`, `55`) that
+can each be written alongside their own already-forward-declared
+parent independently, plus the one genuinely large piece (`48`
++`57`/`58`) still ahead.
