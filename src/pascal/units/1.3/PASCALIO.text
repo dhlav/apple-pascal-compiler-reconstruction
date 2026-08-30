@@ -35,11 +35,27 @@ PROGRAM PASCALSYSTEM;
 
 CONST
      MMAXINT = 32767;
-     MAXUNIT = 12;
+     MAXUNIT = 12;      { UCSD II.0's own value, left as is deliberately --
+                          SYSTEM.PASCAL's own reconstruction needed this
+                          corrected to 20 for 1.2/1.3 (finding 141) because
+                          it sizes UNITABLE, a real declared array whose
+                          size changes PASCALSY.1's own frame. This unit
+                          never declares anything sized by MAXUNIT (its own
+                          SYSCOMREC below is a two-field stub, not
+                          UNITABLE), and it is already verified byte-for-
+                          byte against Apple's real SYSTEM.LIBRARY with
+                          this exact value in place (finding 95) -- proof
+                          it is inert here, not an oversight (finding 151).
+                          Left at UCSD's own original number for that
+                          reason, not "fixed" to match. }
      MAXDIR = 77;
      VIDLENG = 7;
      TIDLENG = 15;
-     MAX_SEG = 31;
+     MAX_SEG = 31;      { same story as MAXUNIT above -- UCSD II.0's own
+                          64K-system value, inert here since nothing in
+                          this unit declares a SEGTABLE-sized structure
+                          (finding 151); SYSTEM.PASCAL needed 63 (finding
+                          142) because its own SYSCOMREC does. }
      FBLKSIZE = 512;
      NAME_LEN = 23;
 

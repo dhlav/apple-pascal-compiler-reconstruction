@@ -13428,3 +13428,66 @@ No source changes this finding -- pure caller/probe analysis, kept out
 of `src/` until the `FIB` layout is corroborated the same way
 `SYSCOMREC` was (multiple independent real-body call sites agreeing),
 not asserted from one procedure's plausible-sounding read alone.
+
+**Update (finding 151): now corroborated.** `src/pascal/units/1.3/
+PASCALIO.text` -- `SYSTEM.LIBRARY`, already verified byte-for-byte
+(finding 95) -- declares the identical `FIB` type and documents its
+own independently-derived offsets (finding 95a): `FEOF` at word 2,
+`FEOLN` at word 1, `FMAXBLK` at 12, `FNXTBLK` at 13, `FREPTCNT` at 14.
+Every one of those is this finding's own number **minus exactly one**
+(`FEOF`=3, `FEOLN`=2, `FMAXBLK`=13, `FNXTBLK`=14, `FREPTCNT`=15 here)
+-- a uniform base-1 (this finding's `SLDO`-probe convention, matching
+this whole file's own established offset-1 style: `SYSCOM`=1 not 0)
+versus base-0 (finding 95a's own counting, `FWINDOW` treated as word
+0) difference, not a disagreement about field order or count. Same
+record, same relative layout, two independently-derived numberings
+that agree once the base is accounted for -- real corroboration, not
+assumption.
+
+## 151. Cascade check: `MAXUNIT`/`MAX_SEG` in `SYSTEM.LIBRARY`'s two units stay at UCSD's original values, deliberately
+
+`SYSTEM.PASCAL`'s own `MAXUNIT`/`MAX_SEG` corrections (findings 141,
+142 -- 12->20, 31->63) raised the question of whether the same
+correction is owed to the other files already reconstructed this
+project marks "done" (`SYSTEM.COMPILER`, `SYSTEM.LIBRARY`). A grep
+across all of `src/pascal/` for `MAXUNIT`/`MAX_SEG`/`FIB = RECORD`/
+`SYSCOMREC` turns up exactly three files: `PASCALSYSTEM.text` itself,
+and `src/pascal/units/1.3/PASCALIO.text` / `LONGINTIO.text` (both
+`SYSTEM.LIBRARY` units, both hosted inside `(*$U-*)` code and carrying
+their own copy of UCSD's `GLOBALS.TEXT` `CONST`/`TYPE` blocks the same
+way `PASCALSYSTEM.text` originally did). `SYSTEM.COMPILER`
+(`PASCALCO.text` and its phases) never declares either constant or
+either type at all -- a wholly separate `CONST`/`TYPE` namespace, no
+cascade applies there.
+
+**Conclusion: no functional change needed in either unit.** Three
+independent reasons, not one:
+
+* Both units' own `SYSCOMREC` is a two-field stub (`IORSLT`/`XEQERR`
+  only) -- neither declares `UNITABLE` or `SEGTABLE`, the two real
+  structures `MAXUNIT`/`MAX_SEG` actually size in `PASCALSYSTEM.text`.
+  Nothing in either unit's own compiled output is sized by either
+  constant.
+* `UNITNUM = 0..MAXUNIT` and `SEG_RANGE = 0..MAX_SEG` are subranges
+  used only as plain `INTEGER`-width fields inside non-`PACKED`
+  records (`FIB.FUNIT`, `SEG_DESC`) -- a subrange's own declared width
+  does not change a non-packed field's word allocation regardless of
+  its value, so even where the type IS used, the numeric bound is
+  inert.
+* Both units are **already verified byte-for-byte** against Apple's
+  real `SYSTEM.LIBRARY` (findings 95, 96) with `MAXUNIT=12`/
+  `MAX_SEG=31` -- UCSD II.0's own 1.1/64K-era values -- still in
+  place. If either constant mattered to the compiled bytes, that
+  match would already have failed. The match is the proof, not an
+  assumption resting on the two points above.
+
+Left at UCSD's original values on purpose, not overlooked: comments
+added at both declaration sites in both files explaining why, so a
+future reader doesn't mistake this for the same bug findings 141/142
+fixed elsewhere and "fix" it into a spurious byte-exact-match
+regression. No recompile/re-acceptance needed -- comment-only changes,
+confirmed both files stay within the 80-column source limit and the
+host compiler's own forward-declaration-only errors for these
+host-dependent units are unchanged from before the edit (units need
+`PASCALSYSTEM.text` as a host to link against; they were never
+standalone-compilable, comment or no comment).

@@ -21,11 +21,17 @@ PROGRAM PASCALSYSTEM;
 
 CONST
      MMAXINT = 32767;
-     MAXUNIT = 12;
+     MAXUNIT = 12;      { UCSD II.0's own value, deliberately left as is --
+                          see PASCALIO.text's own comment on this same
+                          constant (finding 151). This unit's SYSCOMREC is
+                          the same two-field stub, nothing here is sized
+                          by MAXUNIT, and the whole segment is already
+                          verified byte-for-byte against Apple's real
+                          SYSTEM.LIBRARY with this value in place. }
      MAXDIR = 77;
      VIDLENG = 7;
      TIDLENG = 15;
-     MAX_SEG = 31;
+     MAX_SEG = 31;      { same story -- see PASCALIO.text (finding 151) }
      FBLKSIZE = 512;
      NAME_LEN = 23;
 
