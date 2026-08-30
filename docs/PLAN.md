@@ -399,7 +399,18 @@ a route end to end; everything else is a straight read-and-rebuild.
     `GETCMD.1` dispatch, and a non-local `EXIT`). None of the four
     parents are written for real yet, but three of the four pairs can
     now be written alongside their own parent independently, in any
-    order, rather than as one tangled unit. That work, every other
+    order, rather than as one tangled unit. Starting on that work
+    surfaced a labeling trap (finding 150): `G<n>` inside one of these
+    `lex 0` procedures' own bodies is *that procedure's own frame*
+    (its own params/locals, `SLDO`/`LDO` opcodes), not `PASCALSY.1`'s
+    globals -- confirmed by two independent probes -- so `FGET`'s own
+    `G12 := G1; ... G12^.f5 ...` is a local pointer copy plus real
+    `FIB`-field access, not a read of global word 12. The `FIB`
+    record's own real word layout came out of the same probe
+    (`FWINDOW`=1 through `FBUFFER`=34 onward, 290 words total) but
+    isn't yet independently corroborated against Apple's real
+    `FGET`/`FBLOCKIO` -- next step before writing either for real.
+    That work, every other
     forward-declared procedure's real content, and four of the six
     other segments' bodies beyond procedure 1 remain the natural next
     work.

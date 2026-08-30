@@ -13353,3 +13353,78 @@ three small, already-scoped helper pairs (`51`/`52`, `56`, `55`) that
 can each be written alongside their own already-forward-declared
 parent independently, plus the one genuinely large piece (`48`
 +`57`/`58`) still ahead.
+
+## 150. `G<n>` inside a `lex 0` segment-0 procedure is that procedure's own frame, not `PASCALSY.1`'s globals -- and the real `FIB` word layout, probed
+
+Starting on the `FGET`/`FBLOCKIO` pair (finding 149) surfaced a
+labeling trap in the lift's own output before any source was written.
+The file's own header comment (`analysis/lifted/128K.PASCAL-1.3-128K.
+pas.txt:1-7`) says "`G<n>` is global word `n`", and every already-
+verified procedure in this session (`WAITSYSVOL` etc.) reaches
+`PASCALSY.1`'s own globals via `I1,n` (an explicit-level `LOD`/`LDA`),
+never `G`. `PASCALSY.7` (`FGET`) and `PASCALSY.28` (`FBLOCKIO`) are
+both also `lex 0`, but their own bodies are full of bare `G<n>`
+(`G12 := G1; ... G12^.f5 ...`) -- reading that as "`PASCALSY.1`'s own
+global word 12" makes no sense against the already-known field layout
+(word 12 sits inside `USERINFO`, a plain record, not a `FIB` pointer).
+
+Two probes settle it. `STUB48`, given a temporary local `VAR TESTF:
+FIB` and one self-assignment per field, compiles every field access to
+`SLDO`/`LDO`/`SRO` -- the *exact* opcode family the lift renders as
+`G<n>` -- confirming `G` can mean "this procedure's own frame," not
+only "global." `STUB49`, given its own unrelated temporary local (one
+`CHAR`), compiles it to `SLDO [4]`/`SRO [4]` -- small, independent
+offset numbers that do not continue from `STUB48`'s own (which ran
+past `33`), and don't collide with either procedure's real declared
+`args`/`locals` count. Two different procedures, two independent,
+non-overlapping small-numbered "own frame" spaces: this is
+per-activation addressing under a different opcode family, not one
+shared pool. (Likely why: `(*$U-*)` non-reentrant "segment procedures"
+declared directly under the program block get their own frame
+statically rather than via the stack-relative `MP`-register addressing
+`LDL`/`STL` use elsewhere in this same file -- `SLDO`/`LDO` is simply
+the opcode family the 6502 interpreter uses for that shape of access.
+Not confirmed against Hyde or the language reference directly; inferred
+from these two probes alone, STRONG INFERENCE not VERIFIED BINARY
+FACT.) Practical effect: `G<n>` inside `FGET`/`FBLOCKIO`/`EXECERROR`/
+any other `lex 0` procedure's own body is that procedure's *own*
+param+local slot `n` (`G1` = the first parameter, `G<args+1>` through
+`G<args+locals>` = its own locals in declaration order) -- read it as
+`L<n>` would be read anywhere else, not as a `PASCALSY.1` field.
+
+The same `TESTF: FIB` probe also gives `FIB`'s own real word layout,
+confirmed by a total that matches exactly (`STUB48` compiles to
+`data=580` bytes = 290 words with `TESTF` added, and nothing else in
+its body): `FWINDOW`=1, `FEOLN`=2, `FEOF`=3 (declared together, finding
+93a's descending-within-group rule -- `FEOF,FEOLN` in that source
+order puts the second name lower), `FSTATE`=4, `FRECSIZE`=5,
+`FISOPEN`=6, `FISBLKD`=7, `FUNIT`=8, `FVID`=9-12 (`VID`, 4 words),
+`FMAXBLK`=13, `FNXTBLK`=14, `FREPTCNT`=15 (same descending rule again,
+three names this time), `FMODIFIED`=16, `FHEADER`=17-29 (`DIRENTRY`,
+13 words, matches a `MOV [13]` on self-assignment), `FSOFTBUF`=30,
+`FMAXBYTE`=31, `FNXTBYTE`=32 (descending rule again), `FBUFCHNGD`=33,
+`FBUFFER`=34 onward (`PACKED ARRAY[0..FBLKSIZE] OF CHAR`, byte-
+addressed via `LDB`/`STB`, matching the total).
+
+This offset scheme is what makes `FGET`'s own `.fN` field accesses
+(`G12^.f5`, `.f14`, `.f29`, `.f7`, `.f4`, `.f3`, `.f1`, `.f2`) line up
+semantically with this layout -- `.f5`=`FRECSIZE` ("bytes; 0=>block
+file, 1=>char file", matching `FGET`'s own entry branch exactly),
+`.f1`/`.f2`/`.f3`/`.f4` = `FWINDOW`/`FEOLN`/`FEOF`/`FSTATE`. **Not yet
+independently confirmed against Apple's real compiled `FGET`/
+`FBLOCKIO`, though**: this offset table comes from probing *this
+file's own ported* `FIB` declaration (from UCSD's `GLOBALS.TEXT`,
+finding 143's own "legitimate for names, re-derive structure"
+caveat), not yet checked word-for-word against Apple's real binary the
+way `SYSCOMREC`/the post-`FILENAME` globals were. One access
+(`G12^.f7`, tested `= 1` then reused as a raw value passed to
+`UNITREAD`'s own unit-number parameter) is at least *consistent* with
+`f7`=`FISBLKD` (a `BOOLEAN`, `0`/`1`, doubling as "unit 0 = console"
+when false) but not yet proven -- flagged rather than written into
+source, since a wrong field order here would silently corrupt every
+future procedure that touches a `FIB`.
+
+No source changes this finding -- pure caller/probe analysis, kept out
+of `src/` until the `FIB` layout is corroborated the same way
+`SYSCOMREC` was (multiple independent real-body call sites agreeing),
+not asserted from one procedure's plausible-sounding read alone.
