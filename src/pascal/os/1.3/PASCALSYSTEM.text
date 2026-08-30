@@ -705,7 +705,81 @@ PROGRAM PASCALSYSTEM;
     USERPROGRAM above; bodies below are a plausible first pass, not yet
     verified against Apple's binary). }
 
-  PROCEDURE EXECERROR; BEGIN END;
+  PROCEDURE EXECERROR;
+
+  { PASCALSY.51/52 (finding 153) are the "S#/P#/I#" and "Execution
+    error #" diagnostic printers EXECERROR calls -- VERIFIED BINARY
+    FACT, read straight from 128K.PASCAL's own raw p-code (not the
+    lift's abstracted rendering, which this once disagreed with).
+
+    Both open with `LOD 2,1 / STL 1`: their own local `L1` is copied
+    directly from the *enclosing block's* global word 1 (`SYSCOM`),
+    two lex levels up from a procedure nested one level inside
+    `EXECERROR` -- not through any `EXECERROR`-local intermediary, no
+    `TRICKARRAY` casting needed at all (a probe this session ruled out
+    two ways to build one; that whole investigation turned out to be
+    unnecessary once the raw bytes settled how `L1` is actually built).
+
+    `L1^` is then addressed with `SIND 1` (`.XEQERR`, unaffected by
+    grouping) and `IND 9`/`IND 8`/`IND 11` (`.SEG`/`.JTAB`/`.BOMBIPC`).
+    Those three only fit the field *names* actually printed
+    ("S#"=segment#, "P#"=procedure#, "I#"=IC#) once finding 93a's
+    identifier-group reversal rule -- established for procedure-local
+    `VAR` sections -- is applied to `SYSCOMREC`'s own two 3-identifier
+    field groups exactly as they are already declared above:
+    `LASTMP, STKBASE, BOMBP` reverses to `BOMBP`=+5 .. `LASTMP`=+7, and
+    `MEMTOP, SEG, JTAB` reverses to `JTAB`=+8 .. `MEMTOP`=+10 -- `IND
+    8`=`JTAB` fits "P#" where forward declaration order's `MEMTOP`
+    would not, and `IND 9`=`SEG` fits "S#" either way (the group's
+    middle identifier is invariant under reversal). No change was
+    needed to `SYSCOMREC`'s declaration above: it was already right.
+
+    The "I/O error #" branch's `LOD 2,10` (global word 10) is
+    `USERINFO.ERRNUM` -- also confirmed structurally: a probe
+    self-assignment to `USERINFO.ERRNUM` inside this file's own
+    already-verified 902-word VAR section compiles to `LOD/STR 1,10`
+    exactly, the same word EXECERROR's own real body (not yet written)
+    saves `IORESULT()` into at entry. `ERRNUM` is again the
+    *last*-named identifier of its own group ("ERRSYM, ERRBLK,
+    ERRNUM: INTEGER", `USERINFO`'s own `INFOREC`) -- 93a's reversal a
+    third time, in a third distinct record, with a fourth semantic fit
+    ("error stuff", comment already on `INFOREC` above) that forward
+    order (`ERRSYM`) would not have given. }
+    PROCEDURE PRINTSPI;
+    VAR L1: ^SYSCOMREC;
+    BEGIN
+      L1 := SYSCOM;
+      FWRITESTRING(GFILES[1]^, 'S# ', 0);
+      FWRITEINT(GFILES[1]^, L1^.SEG, 0);
+      FWRITESTRING(GFILES[1]^, ', P# ', 0);
+      FWRITEINT(GFILES[1]^, L1^.JTAB, 0);
+      FWRITESTRING(GFILES[1]^, ', I# ', 0);
+      FWRITEINT(GFILES[1]^, L1^.BOMBIPC, 0);
+      FWRITELN(GFILES[1]^)
+    END;
+
+    PROCEDURE PRTXEQER;
+    VAR L1: ^SYSCOMREC;
+    BEGIN
+      L1 := SYSCOM;
+      FWRITESTRING(GFILES[1]^, 'Execution error # ', 0);
+      FWRITEINT(GFILES[1]^, L1^.XEQERR, 0);
+      FWRITELN(GFILES[1]^);
+      IF L1^.XEQERR = 10 THEN BEGIN
+        FWRITESTRING(GFILES[1]^, 'I/O error # ', 0);
+        FWRITEINT(GFILES[1]^, USERINFO.ERRNUM, 0);
+        FWRITELN(GFILES[1]^)
+      END
+    END;
+
+  { EXECERROR's own outer body -- not written yet. It calls PRINTSPI
+    ("PASCALSY.51") and PRTXEQER unconditionally near its start
+    (finding 149's caller graph), saves IORESULT into USERINFO.ERRNUM
+    at entry (matches PRTXEQER's own read of it, above), and does a
+    MEMAVAIL threshold check plus TRICKARRAY-style memory diddling
+    (`G2^.f4[0*13w]`, still not understood) before deciding whether to
+    warm-boot or hang at "Press CONTROL-RESET". }
+  BEGIN END;
   PROCEDURE FINIT; BEGIN END;
   PROCEDURE FRESET; BEGIN END;
   PROCEDURE FOPEN; BEGIN END;

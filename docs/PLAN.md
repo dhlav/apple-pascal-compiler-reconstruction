@@ -421,24 +421,38 @@ a route end to end; everything else is a straight read-and-rebuild.
     its own children are the last two numbers in the group. Start the
     next session on `EXECERROR` -- it is first in this order regardless
     of which pair looks easiest.
-    **`EXECERROR` itself is still a stub** -- its two children's own
-    bodies (`51`="S#/P#/I#", `52`="Execution error #...") are fully
-    understood (finding 153: `L1^.f1/f9/f8/f11` map to `XEQERR`,
-    `SEG`, `JTAB`, `BOMBIPC` via finding 93a's reversal rule applied to
-    `SYSCOMREC`'s two 3-identifier field groups -- STRONG INFERENCE,
-    multi-way consistent, not yet probe-verified) but `L1`'s own type
-    and how it gets a `TRICKARRAY`-shaped view of `SYSCOM`+1 word is
-    not: two naive probes this session (`L1 := SYSCOM;` across
-    unrelated pointer types; a literal-constant index into
-    `WORD: ARRAY[0..0] OF INTEGER`) both failed to compile, for
-    reasons independent of `{$R-}`. Read Hyde's *P-Source* on the
-    mark-stack-control-word layout before probing further -- it may be
-    that `L1` reaches `SEG`/`JTAB`/`BOMBIPC` through `BOMBP^`'s own
-    frame (`MSCW.LOCALDATA`) rather than through `SYSCOM` at all, which
-    changes what "field 8/9/11" even means. That work, every other
-    forward-declared procedure's real content, and four of the six
-    other segments' bodies beyond procedure 1 remain the natural next
-    work.
+    **`51`/`52` are now written for real and VERIFIED BINARY FACT**
+    (finding 153): read from `128K.PASCAL`'s own raw p-code directly,
+    not the lift's abstracted `.fN` rendering, which had led two
+    earlier probes this session into a dead end (guessing `L1` needed
+    a `TRICKARRAY` cast built via pointer-type coercion -- both
+    rejected by the host compiler). The premise was wrong: `L1 :=
+    I2,1` is two lex levels up from a proc nested one level inside
+    `EXECERROR`, which reaches the *block itself*, i.e. true global
+    word 1 = `SYSCOM` directly -- an ordinary `^SYSCOMREC := ^SYSCOMREC`
+    assignment, no cast needed at all. `IND`/`SIND n` is a plain
+    zero-based word offset from `SYSCOM`; `SEG`/`JTAB`/`BOMBIPC` only
+    fit their printed labels (`"S#"`/`"P#"`/`"I#"`) once finding 93a's
+    identifier-group reversal is applied to `SYSCOMREC`'s own two
+    3-identifier groups exactly as already declared (no source change
+    needed), and the `"I/O error #"` value is `USERINFO.ERRNUM` --
+    confirmed structurally via a probe self-assignment inside this
+    file's own real, already-verified `VAR` section. The reconstructed
+    bodies disassemble instruction-for-instruction identical to the
+    real binary (same string literals, same `IND`/`SIND` operands,
+    same call sequence) except `CBP` where the real binary has `CXP`
+    (expected -- compiled standalone, not through the real split
+    segment 0).
+
+    **`EXECERROR` itself is still `BEGIN END`.** Its own opening lines
+    -- `G2 := SYSCOM`, saving `IORESULT()` into `USERINFO.ERRNUM`
+    (now a known, real field, not a placeholder), the `MEMAVAIL`
+    threshold check, and a `G2^.f4[0*13w]` memory-diddle still not
+    understood -- are the natural next step, and its own frame no
+    longer needs to reserve room for a cast-built local that turned
+    out not to exist. That work, every other forward-declared
+    procedure's real content, and four of the six other segments'
+    bodies beyond procedure 1 remain the natural next work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

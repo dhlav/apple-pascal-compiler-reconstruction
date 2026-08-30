@@ -13538,97 +13538,99 @@ settled first. `FBLOCKIO`+55 only needs 53/54 resolved, not
 since its own children (57, 58) are the last two nested numbers in
 the whole group.
 
-## 153. EXECERROR's "S#/P#/I#" fields -- SEG/JTAB/BOMBIPC, via finding 93a's reversal rule applied to a RECORD field group
+## 153. PASCALSY.51/52 written for real -- SEG/JTAB/BOMBIPC/ERRNUM, all VERIFIED BINARY FACT
 
-STRONG INFERENCE, not yet probe-verified -- multi-way consistent, not
-compiled. Recorded so the next session doesn't have to re-derive it.
+VERIFIED BINARY FACT. The session's first pass at this (reasoning from
+the lift's abstracted `.fN` rendering, guessing `L1` needed a
+`TRICKARRAY` cast built via `@`/pointer-type coercion) was a dead end:
+two probes burned confirming the host compiler rejects both plausible
+casts (`L1 := SYSCOM;` across unrelated pointer types: `"assignment
+type mismatch"`; a literal-constant `TRICKARRAY.WORD[n]` index:
+`"expression value n is not in the range 0..0"`, independent of
+`{$R-}`). Both dead ends, because the premise was wrong -- see below.
 
-`PASCALSY.51`/`52` (`analysis/lifted/...pas.txt:1111-1130`) are the
-`"S# / P# / I#"` and `"Execution error # ... I/O error # ..."`
-diagnostic printers nested inside `EXECERROR` (finding 149). Both take
-0 params, 1 local (`L1`), and read `I2,1` -- their own enclosing
-procedure's (`EXECERROR`'s) local word 1 -- as a pointer, then print
-fields off it: proc 51 prints `L1^.f9` (`"S# "`), `L1^.f8` (`", P# "`),
-`L1^.f11` (`", I# "`); proc 52 prints `L1^.f1` (`"Execution error # "`)
-and, if that equals 10, `I2,10` (`"I/O error # "`, the global word
-already holding `IORESULT()`, per finding 148/`EXECERROR` itself).
+Went to the raw p-code instead of the lift (`128K.PASCAL`, segment
+`PASCALSY`, procs 51/52, read directly via
+`a2pascal.codefile`/`a2pascal.pcode.disassemble`, not `lift.py`'s
+pretty-printer). That settled everything the lift's `.fN` notation had
+obscured:
 
-`.fN` elsewhere in this lift is a 1-indexed *word* offset from the
-pointer's own base (finding 150's `FIB` derivation used the same
-convention). Taking `L1 := SYSCOM + 1 word` (i.e. pointing directly at
-`SYSCOMREC.XEQERR`, the record's field 2) makes `L1^.f1` land exactly
-on `XEQERR` -- matching `"Execution error #"` immediately, no
-speculation needed for that one field.
+```
+proc 51 params 0 locals 1 lex 1
+  LOD 2,1 / STL 1                  { L1 := <2 lex levels up, word 1> }
+  ... LSA 'S# ' ... CXP 0,19       { FWRITESTRING }
+  LOD 2,3 / SLDL 1 / IND 9  ... CXP 0,13   { FWRITEINT(..., L1^ at +9, ...) }
+  ... LSA ', P# ' ...
+  LOD 2,3 / SLDL 1 / IND 8  ... CXP 0,13
+  ... LSA ', I# ' ...
+  LOD 2,3 / SLDL 1 / IND 11 ... CXP 0,13
+  ... CXP 0,22                     { FWRITELN }
 
-The other three don't fit under `SYSCOMREC`'s *declared* field order
-(`... LASTMP, STKBASE, BOMBP: MSCWP; MEMTOP, SEG, JTAB: INTEGER; ...`,
-`PASCALSYSTEM.text:240-241`) at face value -- `L1^.f9` would land on
-plain declaration-order `SEG` (fine, matches `"S#"`), but `L1^.f8`
-would land on `MEMTOP` (no fit for `"P#"`) and there's no field at all
-that isn't `SEG` or `BOMBIPC` positioned to be a procedure number.
+proc 52 params 0 locals 1 lex 1
+  LOD 2,1 / STL 1
+  ... LSA 'Execution error # ' ... CXP 0,19
+  LOD 2,3 / SLDL 1 / SIND 1 ... CXP 0,13   { FWRITEINT(..., L1^ at +1, ...) }
+  ... CXP 0,22
+  SLDL 1 / SIND 1 / SLDC 10 / EQUI / FJP ...
+  ... LSA 'I/O error # ' ... CXP 0,19
+  LOD 2,3 / LOD 2,10 ... CXP 0,13          { FWRITEINT(..., <2 up, word 10>, ...) }
+  ... CXP 0,22
+```
 
-Applying finding 93a's rule -- identifiers **within one declared
-group** allocate in the *reverse* of textual order, first-named
-getting the *highest* offset -- to these two 3-identifier field groups
-(not just `VAR` sections, where 93a was first established) instead:
-`LASTMP, STKBASE, BOMBP: MSCWP` becomes `BOMBP`=6, `STKBASE`=7,
-`LASTMP`=8; `MEMTOP, SEG, JTAB: INTEGER` becomes `JTAB`=9, `SEG`=10,
-`MEMTOP`=11 (the middle identifier of an odd-length group lands on the
-same offset either way, which is why `SEG` already matched above).
-Recomputing from `L1 = SYSCOM+1`:
+**`L1 := I2,1` is not a copy of an `EXECERROR`-local at all.** `proc
+51`/`52` are nested *one* level inside `EXECERROR` (lex 1); going up
+*two* lex levels from there reaches the enclosing block itself, i.e.
+true global word 1 -- `SYSCOM`. `L1: ^SYSCOMREC; L1 := SYSCOM;` is a
+completely ordinary same-type pointer assignment. No cast, no
+`TRICKARRAY`, no `@`, no offset arithmetic -- the entire premise of
+the earlier dead-end probes (that `L1` needed to point at `SYSCOM`
+*plus one word*, to land field 2 on `.f1`) was wrong, because `.fN` in
+the lift is not 1-indexed from `L1`'s own base the way finding 150's
+`FIB` derivation was; the raw `IND`/`SIND` operand *is* the field's
+plain zero-based word offset from `SYSCOM` itself.
 
-- `L1^.f9` = field 10 = `SEG` -- `"S#"`, segment number. Fits by name.
-- `L1^.f8` = field 9 = `JTAB` -- `"P#"`, procedure number. `JTAB` is
-  exactly the kind of value that identifies a procedure (an index into
-  or pointer to the segment's own procedure dictionary) -- this is the
-  field that made no sense under forward declaration order and does
-  under reversed.
-- `L1^.f11` = field 12 = `BOMBIPC` -- `"I#"`, IC number. Matches the
-  field's own existing comment (`"where EXECERROR blowup was"`)
-  exactly.
+**`IND`/`SIND n` = the word at `SYSCOM + n` (0-based).** `SIND 1` in
+`proc 52` (`XEQERR`, printed as `"Execution error #"`) matches
+`SYSCOMREC`'s own declared order exactly with *no* reversal --
+`IORSLT` at +0, `XEQERR` at +1, exactly as already written in this
+file. `proc 51`'s `IND 9`/`IND 8`/`IND 11` land on `SEG`/`JTAB`/
+`BOMBIPC` -- but only once finding 93a's identifier-group reversal is
+applied to `SYSCOMREC`'s own two 3-identifier groups exactly as
+**already declared** (`LASTMP, STKBASE, BOMBP: MSCWP` gives `BOMBP`=+5
+.. `LASTMP`=+7; `MEMTOP, SEG, JTAB: INTEGER` gives `JTAB`=+8 ..
+`MEMTOP`=+10 -- `IND 8`=`JTAB` fits `"P#"` where forward order's
+`MEMTOP` would not; `IND 9`=`SEG` fits `"S#"` under either ordering,
+since the group's middle identifier is invariant under reversal). No
+change to `SYSCOMREC`'s declaration was needed -- 93a already applies
+automatically, as written.
 
-All three now fit their printed labels under one consistent rule
-(93a's reversal, already established and load-bearing elsewhere in
-this same file) with no field left unexplained and no forced
-coincidence -- `SEG` landing on the same offset under both orderings
-is what makes this a real corroboration rather than three independent
-free parameters. This is the strongest evidence yet that 93a's
-reversal rule is general to *any* same-type declared identifier group
-in this compiler, not special-cased to procedure-local `VAR` blocks.
+**The `"I/O error #"` value (`LOD 2,10`, global word 10) is
+`USERINFO.ERRNUM`** -- confirmed structurally, not just by elimination:
+a probe self-assignment `USERINFO.ERRNUM := USERINFO.ERRNUM` inside
+this file's own already-verified 902-word `VAR` section (the real
+file, not a mockup) compiles to `LOD/STR 1,10` exactly. `ERRNUM` is
+the *last*-named identifier of `INFOREC`'s own `ERRSYM, ERRBLK,
+ERRNUM: INTEGER` group -- 93a's reversal a *third* time, in a *third*
+distinct record, with a semantic fit (`"error stuff"`, `INFOREC`'s own
+comment) forward order (`ERRSYM`) would not give. Three independent
+groups in three different records, all reversed, all fitting -- 93a is
+general to any declared identifier group in this compiler, full stop.
 
-**Not yet done**: `L1`'s own Pascal *type* is still open --
-`TRICKARRAY` (`PASCALSYSTEM.text:214-218`, "memory diddling for
-EXECERROR", 0-indexed `WORD: ARRAY[0..0] OF INTEGER`) is the file's own
-established idiom for this exact kind of arbitrary word-indexed access
-and is almost certainly what `L1` is declared as, but two probes this
-session ruled out the two most obvious ways to *get* a `^TRICKARRAY`
-pointing at `SYSCOM` (or `SYSCOM`+1 word):
+**Written and verified**: `PASCALSY51`/`PASCALSY52` (renamed from
+`PASCALSY.51`/`52` -- 8-char truncation collides with `PROGRAM
+PASCALSYSTEM`, same trap as finding 148's `STUB48`/`49`), nested
+inside `EXECERROR`'s own declaration part, claim procedure numbers 51
+and 52 exactly (checked via `CodeFile` after compiling the real file).
+Disassembling the reconstructed bodies is instruction-for-instruction
+identical to the real binary above -- same `LSA` string literals byte
+for byte, same `IND`/`SIND` operands, same call sequence -- except
+`CBP` where the real binary has `CXP 0,n`, expected and not forced:
+this was compiled standalone, not through the real split segment 0
+(finding 50), so there is no cross-piece boundary for `CXP` to cross.
 
-- `L1 := SYSCOM;` (`L1: ^TRICKARRAY`, `SYSCOM: ^SYSCOMREC`) -- rejected
-  outright, `"assignment type mismatch, unable to assign a pointer to
-  record SYSCOMREC variable SYSCOM ... to a pointer to record
-  TRICKARRAY variable L1"`. The host compiler does not allow silent
-  pointer-type coercion the way this construct would need.
-- `L1^.WORD[8]` with a **literal constant** index against `WORD:
-  ARRAY[0..0] OF INTEGER` -- also rejected at compile time,
-  `"expression value 8 is not in the range 0..0"`, for every literal
-  index tried (1, 8, 9, 11). This is a compile-time constant-folding
-  check, not a runtime `CHK` -- so it is independent of this file's
-  own established `{$R-}` (finding 96 family) and cannot be
-  suppressed that way. Whatever indexes `TRICKARRAY.WORD` in Apple's
-  real source, it is not a bare integer literal; it has to be a
-  variable or a non-constant expression the compiler can't fold, or a
-  different addressing idiom is used entirely (e.g. indexing through
-  `BOMBP^` -- a real `MSCWP` -- rather than reinterpreting `SYSCOM`
-  itself as a `TRICKARRAY`, in which case `.f8/.f9/.f11` would land
-  inside `MSCW.LOCALDATA`, the crashed frame's own raw stack words,
-  which is arguably more architecturally sensible for an error handler
-  than reading `SYSCOM`'s own bookkeeping fields by hand -- but that
-  reopens what SEG#/PROC#/IC# mean as *frame-relative* offsets, which
-  is p-machine ABI territory (Hyde's *P-Source*, project source-of-
-  truth #3, not consulted yet this session).
-
-Next step: read Hyde's *P-Source* on the mark-stack-control-word
-layout before probing further -- guessing at UCSD's pointer-coercion
-syntax blind burned two probes for zero signal. `EXECERROR`/`51`/`52`
-are not written; `PASCALSY.2` stays `BEGIN END`.
+`EXECERROR` itself (`PASCALSY.2`) is still `BEGIN END` -- its own
+opening lines (`G2 := SYSCOM`, saving `IORESULT()` into
+`USERINFO.ERRNUM`, the `MEMAVAIL` threshold check, and a `G2^.f4[0*13w]`
+memory-diddle still not understood) are the next work, now that its
+own frame no longer has to reserve room for an untyped-cast local that
+turned out not to exist.
