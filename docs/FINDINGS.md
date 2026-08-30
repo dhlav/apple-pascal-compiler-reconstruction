@@ -12135,3 +12135,222 @@ handler) and `TEACHSET` are the other remaining stubs.
 Acceptance run `2026-08-28-setup-display-help`: 0 errors, 1117 lines,
 `SETUPT.CODE` extracted and every procedure's `params`/`data` compared
 directly against Apple's `SETUP.CODE` via `CodeFile`.
+
+## 131. `REMIN:`/`REMOUT:` console redirect: the read/write table confirmed live and a working redirect written; the actual byte transfer over AppleWin's SSC+TCP socket hangs, root cause not found
+
+Carried forward from the "REDIRECT" interactivity thread (`docs/PLAN.md`):
+`REDIRECT` itself doesn't exist (established earlier), and a pasted,
+LLM-generated "Unit Vector Table at zero-page $1A" writeup didn't either
+-- it contradicts the language reference's own statement that zero-page
+`0..35` decimal is explicitly scratch, reused by the system between
+calls (`analysis/reference/apple-pascal-language-reference.txt:1782`),
+and nothing in the UCSD II.0 OS source (`reference_source/ucsd_ii0/`)
+names any such table. `$1A` is inside that scratch range -- a real
+persistent OS pointer living there would be a contradiction in Apple's
+own manual, not just unconfirmed.
+
+**What's real, and independently confirmed twice over.** The user's own
+`CHANGEIO` program (D.M.T., 7/22/83, pasted whole) hardcodes page-zero
+location 230 decimal as a write-table base and works. Neil Parker's
+*Undocumented Secrets* (a lead, not an authority, per project rules)
+independently names 230 decimal (`$E6`) `WTPTR` and adds 228 (`$E4`)
+`RTPTR` -- an 8-entry table of 2-byte pointers, one per unit `#1`..`#8`,
+mirroring `WTPTR`'s own layout for the read side. `IOPROBE.TEXT` (a
+throwaway PEEK-based probe, compiled clean, run on the real 1.3 system)
+confirmed both addresses and the full 8-unit layout live:
+
+```
+RTPTR(228) = -2850   WTPTR(230) = -2866
+unit 1  read=-256  write=-253   CONSOLE:
+unit 2  read=-256  write=-253   SYSTERM: (identical to unit 1 -- CHANGEIO's own comment, now confirmed on the read side too)
+unit 3  read=   0  write=-223   GRAPHIC:
+unit 4  read=   0  write=   0   DISK1: (block device -- not in this table at all)
+unit 5  read=   0  write=   0   DISK2:
+unit 6  read=   0  write=-247   PRINTER: (write-only)
+unit 7  read=-232  write=   0   REMIN: (read-only -- write=0 matches CHANGEIO's own comment)
+unit 8  read=   0  write=-229   REMOUT: (write-only)
+```
+
+Unit 6's read slot and unit 7's write slot both read back 0 live, exactly
+as needed: `CHANGEIO` already used unit 7's write slot as scratch to hold
+CONSOLE:'s original write address; unit 6's read slot is the exact
+mirror for the read side.
+
+**`REDIRIO.TEXT`**, the symmetric extension of `CHANGEIO` (swaps both
+CONSOLE:'s read pointer to REMIN:'s routine and its write pointer to
+REMOUT:'s, using unit 6's read slot and unit 7's write slot as the two
+scratch/restore locations, toggling the same way `CHANGEIO` does), also
+compiled clean and **ran successfully**: after
+`Redirecting console I/O to REMIN:/REMOUT:` printed (through the
+original path, before the swap), the Command level's own next prompt
+never appeared, and typing `HELLO<CR>` at the physical keyboard produced
+*zero* change on screen (confirmed via `tools/watchscreen.py`'s idle
+detection, not just eyeballing a screenshot) -- CONSOLE: read and write
+are both genuinely off the keyboard/screen and pointed at REMIN:/REMOUT:.
+Fully recoverable: killing the AppleWin process and rebooting reverts
+everything, since only RAM was ever touched.
+
+**The round trip over an actual endpoint does not work yet, and the
+failure is earlier than expected.** `tools/runemu.py` gained an `--ssc`
+flag (`-s2 ssc`, plus the `Slot 2\Serial Port Name=TCP` registry value
+AppleWin's own `SerialComms.cpp` reads -- a *different* registry subkey
+than the flat one `SETTINGS` already writes, confirmed by reading
+`CSuperSerialCard`'s constructor directly off GitHub). With that in
+place:
+
+- `UNITSTATUS(7, result, 1)` and `UNITSTATUS(8, result, 1)` both return
+  `IORESULT=0` -- Apple Pascal genuinely detects the card in slot 2.
+- `UNITCLEAR(8)` also returns `IORESULT=0`.
+- A plain `UNITWRITE(8, buf[0], 5, , 12)` -- the manual's own
+  `TestStuff` call shape, Chapter 10 -- **hangs indefinitely** (tested
+  past 60 seconds, both with and without AppleWin's `-modem` switch,
+  which GH issue #311 says is needed for DTR/DCD/DSR emulation).
+- Read AppleWin's own `source/SerialComms.cpp` directly (`gh api
+  repos/AppleWin/AppleWin/contents/...`): `CheckComm()` -- the function
+  that creates, binds, and listens the port-1977 socket -- is the first
+  line of *every* register handler (`CommCommand`, `CommControl`,
+  `CommReceive`, `CommTransmit`, `CommStatus`). `netstat` confirmed port
+  1977 **never binds**, through a 60-second hang, either with the plain
+  `UNITWRITE` or with `UNITCLEAR(8)` (which itself returns success)
+  immediately followed by the same `UNITWRITE`. Since *any* register
+  touch would trigger the bind, a hang with no bind at all means
+  Apple Pascal's REMOUT: driver never executes a single SSC register
+  access during the hang -- it's stuck in software, before ever reaching
+  the hardware, for a reason not yet identified.
+
+**Not yet tried**: single-stepping/logging inside AppleWin itself (a
+debug build, or its own trace logging) to see where the 6502 PC actually
+is during the hang; checking whether `UNITSTATUS`'s own successful
+`IORESULT=0` implies register access already happened (in which case the
+bind should already be live by the time `UNITWRITE` is called, and isn't
+-- worth rechecking netstat right after `UNITSTATUS` alone); trying the
+write with `(*$I-*)` and a hard timeout/retry wrapper in case it's not a
+true infinite loop; the DIPSW baud-rate/interrupt defaults
+(`SetDIPSWDefaults`, 9600-8-N-1, interrupts *on*) combined with
+AppleWin's high `Emulation Speed` setting, in case an IRQ-driven
+handshake the driver expects never arrives at the emulated speed.
+
+Scratch programs (`IOPROBE.TEXT`, `REDIRIO.TEXT`, `SSCCHECK.TEXT`,
+`SSCWRITE.TEXT`/`SSCWRITE2.TEXT`) live outside the repo for now (session
+scratchpad) -- not part of the disk-set reconstruction, and not moved in
+until the round trip actually works end to end.
+
+## 132. `SETUP.text` -- `SETUP10` (the numeric-entry reader) written for real, exact
+
+The largest remaining flat-level stub before this session, and what
+`SETUP19`/`21` (finding 129) are blocked on. `FUNCTION SETUP10(HIGH, LOW:
+INTEGER; NAMEDOK: BOOLEAN; VAR VALUE: INTEGER): BOOLEAN` -- reads a line
+via `SETUP7`, then accepts it three ways: a single non-digit character
+taken literally (`ORD`) when `NAMEDOK`; a <=3-character match against
+`CTRLNAMES` or the literal `'DEL'` when `NAMEDOK` (the sentinel-search
+idiom a third time -- `CTRLNAMES[33]` is written with the entry itself
+first, guaranteeing the search loop terminates, same trick as `SETUP3`'s
+BST search and `SETUP24`'s scalar lookup); or an optionally-signed,
+optionally `D`/`H`/`O`-prefixed (default radix `G4`) run of digits,
+validated digit-by-digit against a `SET OF CHAR` built from the radix
+before any parsing, then accumulated with an overflow check
+(`VALUE > (32767-DIGIT) DIV RADIX`) one digit at a time rather than after
+the fact. Returns `TRUE` only if parsing succeeded and the result falls
+in `[LOW..HIGH]`.
+
+Parameter order (`HIGH, LOW: INTEGER; NAMEDOK: BOOLEAN`) matches
+`SETUP11`'s already-exact signature exactly, both independently derived:
+`SETUP10`'s own comparisons (`VALUE >= LOW`, `VALUE <= HIGH`) plus the
+established rule that parameters ascend directly in declaration order
+(confirmed again here, opposite of `VAR`-block locals, which descend
+within a group -- `SETUP9`'s `SHOWCHAR` at local 1/`VALUE` at local 2
+already showed the ascending-params half; `SETUP11`'s `HIGH` at local
+1/`LOW` at local 2, printed in the source as `LOW..HIGH`, is what nails
+down that a two-identifier *parameter* group ascends by listed order,
+the mirror image of a `VAR` group).
+
+First attempt landed `params=12` exact (confirming the parameter list
+itself, and that a `FUNCTION`'s frame reserves a 1-word result plus a
+1-word gap before its real parameters start -- already established by
+`SETUP3`/`SETUP7`, both 1-argument functions whose own single parameter
+landed at local 3, not 1 or 2) but `data=118` against Apple's `128` -- 10
+bytes, 5 words, short. Diffing local-frame offsets directly out of the
+compiled p-code (`LLA`/`STL`/`SLDL` operands) confirmed every other
+local landed exactly where expected (booleans at 7/8, four working
+integers at 9-12, the digit `SET OF CHAR` at 13, the entry buffer at 29)
+-- the miss was entirely inside the entry buffer's own declared size.
+The first attempt declared it `STRING[70]`, sized to exactly consume the
+remaining budget under a (wrong) `ceil((N+1)/2)` guess; the real buffer
+is a plain default `STRING` (80 characters, 41 words) -- bigger than the
+tightest guess that would fit the frame, not sized to exactly fill it.
+Switching to plain `STRING` closed it to `params=12/data=128` exact, and
+a full 26-procedure diff against Apple's shipped `SETUP.CODE` confirmed
+nothing else regressed -- only the pre-existing, already-documented gaps
+remain (`SETUP4`'s one-word miss, `SETUP16`'s one-word miss, and stubs
+`SETUP8`/`SETUP19`/`SETUP21`).
+
+Acceptance run `2026-08-29-setup10-numeric-entry`: 0 errors, 1244 lines,
+`SETUP.CODE` extracted and every procedure's `params`/`data` compared
+directly against Apple's own binary via `CodeFile`.
+
+## 133. `SETUP.text` -- `SETUP8` (the QUIT handler) written for real, D/H/E exact, M a documented stub
+
+The largest procedure in the file (`data=796` bytes, 398 words -- bigger
+than `SETUP10`'s 128). `PROCEDURE SETUP8` loops printing `QUIT: D(ISK)
+OR M(EMORY) UPDATE, R(ETURN) H(ELP) E(XIT)` until `R` or `QUITFLAG`,
+dispatching on `SETUP5`:
+
+* **D(isk)** -- `REWRITE(F, '*NEW.MISCINFO'); F^ := MISCINFO; PUT(F);
+  CLOSE(F, LOCK)`, where `F: FILE OF MISCREC`. The `*` volume prefix
+  (search every online volume) is written literally into the string
+  constant, matching Apple's own p-code exactly.
+* **H(elp)** -- six literal `WRITE`/`WRITELN` blocks of help text, no
+  new mechanism.
+* **E(xit)** -- `EXIT(SETUP)`. Two other spellings were tried and both
+  failed: the bare `EXIT(PROGRAM)` (valid Pascal in general, per the
+  language reference's own examples) hit error 125 (type mismatch) here,
+  and `EXIT(PASCALSYSTEM)` (the outer `(*$U-*) PROGRAM`'s own name) hit
+  error 104 (undeclared) -- both dead ends this file's own header
+  comment already recorded for `SETUP2`'s identical case, with
+  `SYSTEM.COMPILER`'s own `BLOCK`/`EXIT(PASCALCOMPILER)` as the
+  precedent that settled it. `EXIT(SETUP)` -- naming the enclosing
+  `SEGMENT PROCEDURE`, not the outer `PROGRAM` -- is the form that
+  works, and it is what `SETUP2` already uses.
+* **M(emory)** -- left `(*STUB*)`, documented not forced. Apple's own
+  binary pokes `MISCINFO`'s words 29..47 directly into a location the
+  lift reaches via "2 levels up" from `SETUP8` -- the *same* lexical
+  distance every `WRITE`/`WRITELN` in this file reaches `OUTPUT` from,
+  regardless of how deeply the calling procedure is nested (confirmed
+  by comparing raw p-code lex operands directly: `SETUP.1` reaches
+  `OUTPUT` via `LOD 1,3`, `SETUP8` -- one level deeper -- via `LOD 2,3`,
+  the encoding growing by exactly the extra static link, not a fixed
+  absolute level). That places the M-branch's write target in
+  `PASCALSYSTEM`'s own implicit scope, one level *above* `SETUP` itself
+  -- genuinely outside what this file can declare, since `SYSTEM.PASCAL`
+  (or whatever hosts `PASCALSYSTEM`'s own real globals at that level)
+  is not reconstructed yet (`docs/DISKSET.md`). Writing a guessed
+  identifier there would either fail to compile or silently compile
+  against the wrong thing; left as an intentional no-op instead, the
+  same call this file already made for `INITS5`.
+
+`F: FILE OF MISCREC`'s own frame contribution was the other real
+unknown -- a `FINIT(@L2, @L302, 96)` call implied roughly 300 words of
+file-control overhead before the 96-word `MISCREC` buffer even starts,
+far bigger than a typical Apple Pascal FCB. Rather than guess, a
+throwaway probe program (`FSIZE.TEXT`, session scratchpad, not part of
+this file) declared nothing but `F: FILE OF MISCREC` and one small
+local, compiled it, and read its outer body's own `data_size` back via
+`CodeFile` directly: **396 words for the file variable alone**. Together
+with the M-branch's own loop counter and bound (1 word each, left
+undeclared along with the stub), that accounts for the *entire* 398-word
+frame -- confirming nothing else is hiding in this procedure, and that
+`(1 loop var) + (396-word file var) + (1 loop bound) = 398` is the whole
+story, not a coincidence.
+
+Verified: `params=0/data=792` against Apple's `0/796` -- 2 words short,
+exactly the stubbed M-branch's own loop counter and bound, documented
+not forced. A full 26-procedure diff against Apple's shipped `SETUP.CODE`
+confirmed nothing else regressed (the same four pre-existing gaps as
+finding 132: `SETUP4`, `SETUP16`, and stubs `SETUP19`/`SETUP21`).
+`SETUP19`/`21` (blocked on `SETUP8` and `SETUP10` both) are now blocked
+on nothing from this file except being written; `TEACHSET`'s own ten
+tutorial procedures are the last stub in `SETUP.CODE`.
+
+Acceptance run `2026-08-29-setup8-quit-handler`: 0 errors, 1301 lines,
+`SETUP.CODE` extracted and every procedure's `params`/`data` compared
+directly against Apple's own binary via `CodeFile`.

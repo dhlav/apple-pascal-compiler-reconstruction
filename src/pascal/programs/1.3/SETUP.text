@@ -617,7 +617,64 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     END
   END;
 
-  PROCEDURE SETUP8; BEGIN END;
+  { The QUIT handler: writes SYSTEM.MISCINFO's replacement out to disk
+    as NEW.MISCINFO (D), pokes the running system's own in-memory copy
+    directly so the change takes effect without a restart (M -- an
+    intentional stub, see below), shows the D/M/R/E help text (H), or
+    leaves the program (E). Loops until R(eturn) or QUITFLAG, matching
+    every other CHANGE-menu level in this file.
+
+    `F: FILE OF MISCREC` alone was empirically measured (a throwaway
+    probe compile, not part of this file) at exactly 396 words --
+    together with the loop counter and bound the real M-branch needs
+    (1 word each), that is Apple's own `data=398` exactly, confirming
+    this is genuinely the whole of this procedure's storage and nothing
+    else is missing. }
+  PROCEDURE SETUP8;
+    VAR
+      F: FILE OF MISCREC;
+  BEGIN
+    REPEAT
+      WRITE('QUIT: D(ISK) OR M(EMORY) UPDATE,'); WRITELN;
+      WRITE('          R(ETURN) H(ELP) E(XIT)'); WRITELN;
+      CASE SETUP5 OF
+        'D': BEGIN
+          REWRITE(F, '*NEW.MISCINFO');
+          F^ := MISCINFO;
+          PUT(F);
+          CLOSE(F, LOCK)
+        END;
+        'M': BEGIN
+          (*STUB*)
+          { Apple's binary pokes MISCINFO's words 29..47 directly into
+            the currently-running system's own in-memory copy -- a
+            cross-segment write, the lift's own "2 levels up" reference
+            at exactly the lexical distance WRITE/WRITELN's own OUTPUT
+            is reached from (PASCALSYSTEM's own implicit scope, not
+            SETUP's), so the change takes effect immediately without a
+            restart. SYSTEM.PASCAL is not reconstructed yet
+            (docs/DISKSET.md), so there is no correct identifier to
+            write here; left an intentional no-op rather than guess,
+            same as INITS5 above. }
+        END;
+        'H': BEGIN
+          WRITE('D(ISK) UPDATE PUTS THE CURRENT SETUP ON'); WRITELN;
+          WRITE('     DISK AS THE FILE "NEW.MISCINFO"'); WRITELN;
+          WRITE('     WHICH MUST BE CHANGED IN THE'); WRITELN;
+          WRITE('     FILER TO "SYSTEM.MISCINFO"'); WRITELN;
+          WRITE('M(EMORY) UPDATE CHANGES THE SETUP IN'); WRITELN;
+          WRITE('     MEMORY UNTIL THE NEXT SYSTEM'); WRITELN;
+          WRITE('     INITIALIZATION'); WRITELN;
+          WRITE('R(ETURN) TAKES YOU BACK INTO SETUP'); WRITELN;
+          WRITE('     IF YOU''RE NOT DONE'); WRITELN;
+          WRITE('E(XIT) TERMINATES THIS PROGRAM'); WRITELN
+        END;
+        'E': BEGIN
+          EXIT(SETUP)
+        END
+      END
+    UNTIL (LASTKEY = 'R') OR QUITFLAG
+  END;
   { Displays VALUE in octal, decimal, and hexadecimal -- and, when
     SHOWCHAR, its ASCII/CONTROL name too -- the read-out line the
     numeric and scalar editors both print before prompting for a new
@@ -725,7 +782,134 @@ SEGMENT PROCEDURE SETUP(P1, P2: ANYPTR);
     WRITELN
   END;
 
-  PROCEDURE SETUP10; BEGIN END;
+  { The numeric-entry reader: reads a line via SETUP7, then accepts it as
+    either (NAMEDOK) a single non-digit character taken literally, a
+    <=3-char match against CTRLNAMES/'DEL' (the sentinel-search idiom
+    again -- CTRLNAMES[33] is written with the entry itself first so the
+    search always terminates), or an optionally-signed D/H/O-prefixed
+    (default G4) run of digits, overflow-checked against 32767 one digit
+    at a time. Returns TRUE only if parsing succeeded and the result
+    lands in [LOW..HIGH]. }
+  FUNCTION SETUP10(HIGH, LOW: INTEGER; NAMEDOK: BOOLEAN;
+                    VAR VALUE: INTEGER): BOOLEAN;
+    VAR
+      OK, NEG: BOOLEAN;
+      RADIX, DIGIT, KEYIDX, I: INTEGER;
+      DIGITS: SET OF CHAR;
+      ENTRY: STRING[80];
+  BEGIN
+    OK := TRUE;
+    WRITE('NEW VALUE: ');
+    IF NOT SETUP7(ENTRY) THEN
+    BEGIN
+      OK := FALSE
+    END
+    ELSE
+    BEGIN
+      IF (LENGTH(ENTRY) = 1) AND NAMEDOK AND NOT (ENTRY[1] IN ['0'..'9']) THEN
+      BEGIN
+        VALUE := ORD(ENTRY[1])
+      END
+      ELSE
+      BEGIN
+        IF NAMEDOK AND (LENGTH(ENTRY) <= 3) THEN
+        BEGIN
+          CTRLNAMES[33] := ENTRY;
+          KEYIDX := 0;
+          WHILE ENTRY <> CTRLNAMES[KEYIDX] DO
+          BEGIN
+            KEYIDX := KEYIDX + 1
+          END;
+          IF ENTRY = 'DEL' THEN
+          BEGIN
+            KEYIDX := 127
+          END
+        END;
+        IF NAMEDOK AND (KEYIDX <> 33) AND (LENGTH(ENTRY) <= 3) THEN
+        BEGIN
+          VALUE := KEYIDX
+        END
+        ELSE
+        BEGIN
+          IF NOT (ENTRY[1] IN ['D', 'H', 'O']) THEN
+          BEGIN
+            RADIX := G4
+          END
+          ELSE
+          BEGIN
+            CASE ENTRY[1] OF
+              'O': BEGIN RADIX := 8 END;
+              'D': BEGIN RADIX := 10 END;
+              'H': BEGIN RADIX := 16 END
+            END;
+            DELETE(ENTRY, 1, 1)
+          END;
+          IF ENTRY[1] = '-' THEN
+          BEGIN
+            NEG := TRUE;
+            DELETE(ENTRY, 1, 1)
+          END
+          ELSE
+          BEGIN
+            NEG := FALSE
+          END;
+          CASE RADIX OF
+            8:  BEGIN DIGITS := ['0'..'7'] END;
+            10: BEGIN DIGITS := ['0'..'9'] END;
+            16: BEGIN DIGITS := ['0'..'9', 'A'..'F'] END
+          END;
+          IF LENGTH(ENTRY) = 0 THEN
+          BEGIN
+            OK := FALSE
+          END
+          ELSE
+          BEGIN
+            FOR I := 1 TO LENGTH(ENTRY) DO
+            BEGIN
+              IF NOT (ENTRY[I] IN DIGITS) THEN
+              BEGIN
+                OK := FALSE
+              END
+            END
+          END;
+          IF OK THEN
+          BEGIN
+            VALUE := 0;
+            I := 1;
+            IF ENTRY[I] IN ['0'..'9'] THEN
+            BEGIN
+              DIGIT := ORD(ENTRY[I]) - ORD('0')
+            END
+            ELSE
+            BEGIN
+              DIGIT := (ORD(ENTRY[I]) - ORD('A')) + 10
+            END;
+            REPEAT
+              VALUE := (VALUE * RADIX) + DIGIT;
+              I := I + 1;
+              IF I <= LENGTH(ENTRY) THEN
+              BEGIN
+                IF ENTRY[I] IN ['0'..'9'] THEN
+                BEGIN
+                  DIGIT := ORD(ENTRY[I]) - ORD('0')
+                END
+                ELSE
+                BEGIN
+                  DIGIT := (ORD(ENTRY[I]) - ORD('A')) + 10
+                END
+              END
+            UNTIL (I > LENGTH(ENTRY)) OR (VALUE > ((32767 - DIGIT) DIV RADIX));
+            OK := (I > LENGTH(ENTRY));
+            IF NEG THEN
+            BEGIN
+              VALUE := -VALUE
+            END
+          END
+        END
+      END
+    END;
+    SETUP10 := (OK AND (VALUE >= LOW)) AND (VALUE <= HIGH)
+  END;
 
   { The entry-format help screen -- explains octal/decimal/hex prefix
     entry and, when NAMEDOK, the named-key alternative -- shown once

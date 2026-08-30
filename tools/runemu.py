@@ -101,6 +101,20 @@ SETTINGS = {
     "Monochrome Color": ("REG_SZ", "12632256"),    # 0xC0C0C0
 }
 
+# A Super Serial Card in slot 2, in TCP mode -- confirmed working in the
+# REMIN:/REMOUT: redirect session (finding 131): `-s2 ssc` inserts the card,
+# and this registry value under its own `Slot 2` subkey (not the flat
+# Configuration key SETTINGS writes to) tells AppleWin to bind port 1977 as
+# a TCP socket instead of a real COM port. The bind is lazy -- it happens on
+# first UART access, not at launch -- so nothing is listening until the
+# guest program actually touches the card (REDIRIO's own contoremote, or
+# anything else that talks to unit 7/8).
+SSC_REGKEY = REGKEY + r"\Slot 2"
+SSC_SETTINGS = {
+    "Serial Port Name": ("REG_SZ", "TCP"),
+}
+SSC_TCP_PORT = 1977
+
 RELEASES = {
     "1.3": {"d1": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
             "d2": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
@@ -157,10 +171,15 @@ def enforce_readonly(paths) -> None:
             os.chmod(p, os.stat(p).st_mode & ~stat.S_IWRITE)
 
 
-def apply_settings(dry_run: bool = False) -> None:
-    """Write the two configuration values AppleWin has no switch for."""
-    for name, (regtype, value) in SETTINGS.items():
-        cmd = ["reg", "add", REGKEY, "/v", name, "/t", regtype,
+def apply_settings(dry_run: bool = False, ssc: bool = False) -> None:
+    """Write the configuration values AppleWin has no switch for."""
+    items = list(SETTINGS.items())
+    regkeys = [REGKEY] * len(SETTINGS)
+    if ssc:
+        items += list(SSC_SETTINGS.items())
+        regkeys += [SSC_REGKEY] * len(SSC_SETTINGS)
+    for regkey, (name, (regtype, value)) in zip(regkeys, items):
+        cmd = ["reg", "add", regkey, "/v", name, "/t", regtype,
                "/d", value, "/f"]
         print("  " + " ".join(f'"{c}"' if " " in c else c for c in cmd))
         if dry_run:
@@ -171,7 +190,7 @@ def apply_settings(dry_run: bool = False) -> None:
                              f"{(r.stdout + r.stderr).strip()}")
 
 
-def main_hd(dry_run: bool = False) -> int:
+def main_hd(dry_run: bool = False, ssc: bool = False) -> int:
     """The hard-disk layout: SYSHD + WORKHD on the slot-5 HDC, nothing else.
 
     `-model apple2ee` is not cosmetic here -- AppleWin only defaults the HDC
@@ -182,6 +201,12 @@ def main_hd(dry_run: bool = False) -> int:
     there with no media, and the autostart ROM's boot scan hangs waiting on
     it (spinning drive light, screen stuck on the splash) before ever
     reaching slot 5.
+
+    `ssc` puts a Super Serial Card in slot 2 instead of leaving it at
+    AppleWin's own factory default, in TCP mode on port 1977 (finding 131) --
+    what a REMIN:/REMOUT: redirect (`REDIRIO.CODE`) needs a real endpoint
+    behind it, rather than the silent, do-nothing I/O failures a redirect
+    with nothing in slot 2 produces.
     """
     if not HD1.exists():
         raise SystemExit(f"{HD1.relative_to(ROOT)} has not been built "
@@ -192,14 +217,18 @@ def main_hd(dry_run: bool = False) -> int:
            "-s5", "hdc",
            "-s5h1", str(HD1),
            "-s6", "empty",
-           "-s7", "empty",
-           "-power-on"]
+           "-s7", "empty"]
+    if ssc:
+        cmd += ["-s2", "ssc"]
+    cmd += ["-power-on"]
 
     print("AppleWin settings (registry; no switch exists for these):")
-    apply_settings(dry_run)
+    apply_settings(dry_run, ssc=ssc)
     print()
 
     print("Slot 5 HDC h1", HD1.name, " <- SYSHD: boot, every system tool, ours")
+    if ssc:
+        print(f"Slot 2 SSC (TCP, port {SSC_TCP_PORT}, binds lazily on first UART access)")
     print("Slots 6, 7    empty")
     print()
     print(" ".join(f'"{c}"' if " " in c else c for c in cmd))
@@ -233,13 +262,17 @@ def main() -> int:
                     help="boot the old four-floppy layout (BOOT128, APPLE2, "
                          "WORK, WORK2/APPLE3) instead of the hard-disk one. "
                          "--boot128, --release and --work2 apply only here.")
+    ap.add_argument("--ssc", action="store_true",
+                    help="put a Super Serial Card in slot 2, TCP mode, port "
+                         f"{SSC_TCP_PORT} -- the endpoint a REMIN:/REMOUT: "
+                         "redirect needs. --hd only.")
     args = ap.parse_args()
 
     if not EXE.exists():
         raise SystemExit(f"{EXE} not found")
 
     if not args.floppy:
-        return main_hd(args.dry_run)
+        return main_hd(args.dry_run, ssc=args.ssc)
 
     if not WORK.exists():
         raise SystemExit("build/disks/WORK.dsk has not been built "

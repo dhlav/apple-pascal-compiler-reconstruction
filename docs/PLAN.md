@@ -218,14 +218,36 @@ a route end to end; everything else is a straight read-and-rebuild.
    combined attempt landed 4 bytes short) and the entry-format help
    screen (needed an explicit `KEY: CHAR` local capturing `SETUP5`'s
    own result, not a bare call in the loop condition) -- both exact.
-   `SETUP8` (the QUIT handler) and `SETUP10` (the numeric-entry
-   reader, `locals 64 words` -- string-buffer entry, named-key lookup,
-   radix-prefixed digit parsing with overflow checking, the largest
-   local frame in the file outside `SETUP8` itself) are the two
-   remaining flat-level stubs, deliberately left for a dedicated
-   session rather than a rushed attempt -- they're what `SETUP19`/`21`
-   are still blocked on. `TEACHSET`'s own ten tutorial procedures are
-   the last stub, the natural next session.
+   Filled in `SETUP10` too (finding 132) -- the numeric-entry reader,
+   `locals 64 words`, the largest local frame in the file outside
+   `SETUP8`: string-buffer entry via `SETUP7`, the sentinel-search
+   idiom a third time for named-key lookup, radix-prefixed digit
+   parsing with a per-digit overflow check. Exact (`params=12/data=128`)
+   once the entry buffer was declared a plain default `STRING` (80
+   chars) rather than a `STRING[70]` sized to exactly fit the remaining
+   frame budget -- a first attempt at the tighter guess landed 5 words
+   short; Apple's real buffer is bigger than the tightest fit, not
+   sized to consume it exactly. A full 26-procedure diff against
+   Apple's shipped binary confirmed nothing else regressed. Filled in
+   `SETUP8` too (finding 133) -- the QUIT handler, the largest
+   procedure in the file at 398 words: D(isk) writes `NEW.MISCINFO` via
+   `REWRITE`/`PUT`/`CLOSE(F,LOCK)`, H(elp) is six literal `WRITE`
+   blocks, E(xit) is `EXIT(SETUP)` (this file's own established form --
+   `EXIT(PROGRAM)` and `EXIT(PASCALSYSTEM)` both fail, errors 125 and
+   104, same as `SETUP2`'s own precedent). M(emory)-update is left an
+   intentional stub: Apple's binary pokes `MISCINFO` directly into a
+   location reached via the *same* lexical distance every `WRITE` in
+   this file reaches `OUTPUT` from -- `PASCALSYSTEM`'s own implicit
+   scope, one level above `SETUP` itself, genuinely outside what this
+   file can declare until `SYSTEM.PASCAL` is reconstructed. A throwaway
+   probe (not part of this file) empirically measured `FILE OF MISCREC`
+   alone at 396 words, confirming the rest of the frame is accounted
+   for. `params=0/data=792` against Apple's `0/796` -- 2 words short
+   (the stubbed M-branch's own loop counter/bound), documented not
+   forced; nothing else regressed. `TEACHSET`'s own ten tutorial
+   procedures are now the only stub left in `SETUP.CODE`; `SETUP19`/`21`
+   are unblocked on this file's own side and just need writing, the
+   natural next session.
 
 6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.
@@ -339,34 +361,38 @@ a route end to end; everything else is a straight read-and-rebuild.
   Port Name = TCP`, lazily binds port 1977 on first UART access) for
   anything that talks to `REMIN:`/`REMOUT:` from inside a running
   program, if that ends up being part of the eventual approach.
-* **A lower-level redirect idea, pasted by the user, not started.**
-  Rather than a language-level `REDIRECT` (established not to exist,
-  above), a pasted `CHANGEIO` program patches the actual I/O dispatch
-  table in low memory: page 0 location 230 (decimal) holds the address
-  of a table of per-unit "write pointers," and each write pointer
-  addresses a location exactly 93 (or 92, per the program's own two
-  slightly differing comments -- worth checking which is right before
-  trusting it) bytes ahead of a JMP to that unit's actual output
-  routine. Unit 1 (CONSOLE:) and unit 6 (PRINTER:) each have a normal
-  pointer; unit 7 (REMIN:) always reads 0 and is unused as storage, so
-  swapping CONSOLE:'s own output-routine address with another unit's
-  (there, PRINTER:) and stashing the original in unit 7's own pointer
-  slot (as a scratch/undo location) redirects console output at
-  runtime, with no compiler support needed at all -- PEEK/POKE only,
-  via a `WORD` variant record overlaying an `INTEGER` with a `^MEM`
-  pointer for byte access (`MEM = PACKED ARRAY[0..1] OF BYTE`). The
-  user's own plan: try something similar to redirect the console
-  *read* pointer to `REMIN:` and the *write* pointer to `REMOUT:`,
-  rather than to `PRINTER:` -- which, if it works, would be the actual
-  fix for the interactive-driving thread above, achieving what
-  `REDIRECT` was wrongly assumed to do. Not verified against anything
-  yet -- not the pasted program's own two addresses/offsets, not
-  whether an analogous *input*-side table exists at some other page-0
-  location for unit 7 the same way this one exists for output units,
-  not whether this even works under 1.3's own layout (the program's
-  own comment dates it 7/22/83, unclear which Pascal version). The
-  user asked to just record this and come back to it later -- nothing
-  here has been tried.
+* **The low-level `CHANGEIO`-style redirect (finding 131): mechanism
+  proven, round trip still blocked.** A pasted, LLM-generated "Unit
+  Vector Table at zero-page $1A" writeup turned out fabricated too --
+  contradicts the language reference's own statement that zero-page
+  `0..35` decimal is scratch space, and matches nothing in the UCSD OS
+  source. The user's own `CHANGEIO` program (page-zero 230 decimal, a
+  write-pointer table, `CONSOLE:`<->`PRINTER:`) is real and independently
+  confirmed by Neil Parker's document (`RTPTR`=228/`WTPTR`=230, 8 entries
+  of 2 bytes, one per unit `#1`..`#8`) *and* by a live PEEK probe against
+  the real 1.3 system -- table contents, all 8 units, matched exactly,
+  including unit 6's read slot and unit 7's write slot both reading back
+  0 live, the two scratch slots a symmetric read+write redirect needs.
+  `REDIRIO.TEXT`, the read+write extension of `CHANGEIO`, compiled clean
+  and **works**: after running it, the physical keyboard stopped
+  affecting the screen at all (confirmed via `tools/watchscreen.py`'s
+  idle detection) -- Command-level I/O is genuinely off CONSOLE: and
+  pointed at REMIN:/REMOUT:. Fully recoverable (RAM-only, a reboot
+  reverts it).
+  What's still blocked: the actual byte transfer over AppleWin's SSC+TCP
+  socket. `tools/runemu.py --ssc` now wires up `-s2 ssc` + the
+  `Slot 2\Serial Port Name=TCP` registry value AppleWin itself reads.
+  `UNITSTATUS`/`UNITCLEAR` on units 7/8 both succeed (`IORESULT=0`), but
+  a plain `UNITWRITE(8,...)` -- even the manual's own documented call
+  shape -- hangs indefinitely, with or without AppleWin's `-modem`
+  switch, and `netstat` confirms port 1977 never even binds -- meaning
+  Apple Pascal's REMOUT: driver never touches the SSC's hardware
+  registers at all during the hang (confirmed by reading AppleWin's own
+  `SerialComms.cpp`: every register handler calls the bind/listen setup
+  as its first line). Root cause not yet found; see finding 131 for what
+  hasn't been tried yet (single-stepping AppleWin itself, IRQ/DIPSW
+  timing at high emulation speed). Scratch programs live outside the
+  repo for now, not moved in until the round trip actually works.
 
 ## The compiler phase, kept as the record
 
