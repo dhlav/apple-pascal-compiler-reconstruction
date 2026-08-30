@@ -91,7 +91,10 @@ PROGRAM PASCALSYSTEM;
     MAXDIR   = 77;      { max number of entries in a directory }
     VIDLENG  = 7;       { number of chars in a volume ID }
     TIDLENG  = 15;      { number of chars in a title ID }
-    MAX_SEG  = 31;      { max code segment number }
+    MAX_SEG  = 63;      { max code segment number -- 31 for the 64K
+                          system, 63 for the 128K system (Neil Parker,
+                          "Undocumented Secrets of Apple Pascal");
+                          this build targets 128K.PASCAL }
     FBLKSIZE = 512;     { standard disk block length }
     DIRBLK   = 2;       { disk addr of the directory }
     AGELIMIT = 300;     { max age for GDIRP, in ticks }

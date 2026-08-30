@@ -12905,3 +12905,36 @@ extracted and diffed procedure-by-procedure against Apple's real
 `128K.PASCAL` via `CodeFile`; `params` match held for 1-42, `data` for
 procedure 1 (`PASCALSY.1`, the outer block carrying the global `VAR`
 section) now at 311 of 451 words.
+
+## 142. `SYSTEM.PASCAL` -- `MAX_SEG` is 63, not UCSD II.0's own 31
+
+Same pattern as finding 141, same source: Neil Parker's own document
+annotates `GLOBALS.TEXT`'s `MAX_SEG = 31` directly ("31 for the 64K
+system, 63 for the 128K system"), and the user caught it again before
+this session found it independently.
+
+Unlike `MAXUNIT`, this one does **not** move `PASCALSY.1`'s own frame
+at all -- `SEG_RANGE = 0..MAX_SEG` only widens `SYSCOMREC.SEGTABLE`
+(`ARRAY [SEG_RANGE] OF SEG_ENTRY`), and `SYSCOMREC` is a heap
+structure reached through the `SYSCOM: ^SYSCOMREC` pointer, not a
+field inside the outer block's own `VAR` section. `SYSCOM` itself
+stays a 1-word pointer either way. Confirmed directly: the host
+compiler's `PASCALSY.1` frame is unchanged at 311 words after the
+edit, and so is Apple's real compiler's -- `data=622` bytes before and
+after, byte for byte.
+
+Still a real correctness fix, not a no-op: whatever eventually builds
+`SYSCOMREC` at boot (not yet reconstructed) sizes its own allocation
+off this constant, and any segment-table walk past index 31 would
+silently miss the 128K system's own real 32 extra slots if left at
+UCSD's literal value.
+
+No procedure's own `params` moved; segment 0's 42-of-43 `params` match
+held unchanged.
+
+Acceptance run `2026-08-29-pascalsystem-maxseg`: 0 errors, 729 lines,
+`PASCALSYS.CODE` extracted and diffed procedure-by-procedure against
+Apple's real `128K.PASCAL` via `CodeFile` -- `params` match held for
+1-42, procedure 1's `data` unchanged at 622 of the 902-byte (311-of-451
+word) target, confirming the constant change is inert for this specific
+frame as predicted before compiling.
