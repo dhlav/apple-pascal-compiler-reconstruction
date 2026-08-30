@@ -477,30 +477,50 @@ a route end to end; everything else is a straight read-and-rebuild.
     `EXECCLOSE` turned out to already be correct from earlier in the
     session (rediscovered, not redone).
 
-    **`FRESET`/`FOPEN`/`FCLOSE` are blocked on a real architectural
-    question**, not just unstarted: all three forward into `FILEPROC`,
-    whose declared signature (`A1..A6: INTEGER`) is explicitly flagged
-    in this file's own comment as an unverified placeholder. A probe
-    this session confirmed the placeholder is now actually wrong --
-    passing a `VAR FIB`'s address where `INTEGER` is declared is
-    rejected by real Pascal type-checking. `FILEPROC`'s true parameter
-    shape needs to be worked out (something 1-word-representation-
-    compatible but not plain `INTEGER`) before these three can be
-    written for real.
+    **`FILEPROC`'s real dispatch is now fully mapped** (finding 156),
+    read directly from `SYSTEM.PASCAL` 1.3's own `FILEPROC` segment --
+    `FILEPROC.1` dispatches on word 6 (`OP`, the first-declared
+    parameter, per a new confirmed rule: 156a, separately-declared
+    parameter clauses reverse across the whole list, not just within
+    one `VAR`/value group as findings 93a/134a covered). All three of
+    `FRESET`/`FOPEN`/`FCLOSE`'s own arms are pinned exactly: arm 1
+    calls a 1-arg helper with `F`; arm 2 calls a 4-arg helper with
+    `F, FTITLE, FOPENOLD, JUNK` (their own original declared order);
+    arm 3 runs an inner 0..3 dispatch on `FTYPE: CLOSETYPE` (which only
+    resolving `FCLOSE`'s own parameter order under 156a reveals -- word
+    1 is `FTYPE`, not `F`) before calling a 2-arg helper with `F,
+    ORD(FTYPE)`.
 
-    **The `FBLOCKIO` chain is the actual highest-value target and the
-    hardest**: `FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc. all build on
-    `FBLOCKIO` (`PASCALSY.28`), a ~110-instruction buffered-disk-I/O
+    **The real blocker, precisely stated (finding 156c)**: `FILEPROC`'s
+    word 1 needs to accept `CLOSETYPE` (`FCLOSE`), `FIBP` (`FOPEN`),
+    and a plain constant length (arm 4, already probe-verified) at
+    different call sites through the *same* declared parameter --
+    strict Pascal type-checking rejects the two naive ways to do this,
+    confirmed by two more probes this session. The shape of the fix is
+    clear (a case-variant record parameter, the idiom Hyde's *P-Source*
+    documents for exactly this -- read earlier this project) but not
+    yet built or byte-verified against all four real call sites. Also
+    surfaced: this project's own procedure-number count puts `COMMAND`
+    at 43, but the real `PASCALSY.43` needs three words of params where
+    `COMMAND`'s current forward declaration (matching UCSD's own
+    plain, argument-less `COMMAND`) takes none -- unresolved, flagged
+    for whoever writes `COMMAND` for real.
+
+    **The `FBLOCKIO` chain remains the other high-value target and the
+    harder one**: `FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc. all build
+    on `FBLOCKIO` (`PASCALSY.28`), a ~110-instruction buffered-disk-I/O
     routine with retry logic that also needs `STUB49` (currently a
     stub) written for real and nests its own `PASCALSY.55`.
     `FREADINT`/`FWRITEINT` are each full parsing/formatting state
     machines (~50-70 instructions), not short wrappers -- confirmed by
     reading their raw p-code directly, not assumed from the header
-    comment's word counts. Each of `FBLOCKIO`, `FILEPROC`, and the two
-    numeric-I/O routines is its own multi-session-scale piece of work.
-    Recommended order for the next session: `FILEPROC`'s real
-    signature first (unblocks three one-liners immediately), then
-    `FBLOCKIO`+`STUB49` (unblocks the largest remaining cluster).
+    comment's word counts. Each of `FBLOCKIO`, `FILEPROC`'s variant-
+    record parameter, and the two numeric-I/O routines is its own
+    multi-session-scale piece of work. Recommended next: build and
+    byte-verify `FILEPROC`'s variant-record parameter against all four
+    real call sites (finishes what 156 mapped, unblocks three
+    one-liners), then `FBLOCKIO`+`STUB49` (unblocks the largest
+    remaining cluster).
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

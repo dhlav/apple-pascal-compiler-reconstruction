@@ -13778,3 +13778,114 @@ real body too. These three are the actual unblocking targets for the
 rest of the `FIB` layer (`FGET`/`FPUT`/`FREADCHAR`/`FWRITECHAR`/etc.
 all build on `FBLOCKIO`) and are each their own multi-session-scale
 piece of work, not something to rush.
+
+## 156. `FILEPROC`'s real dispatch structure, mapped completely -- a new parameter-clause-reversal rule, and the actual blocker
+
+VERIFIED BINARY FACT for the parameter-ordering rule (three independent
+confirmations, one a clean controlled probe) and for `FILEPROC.1`'s own
+dispatch structure (read from the real `SYSTEM.PASCAL` 1.3 binary's
+`FILEPROC` segment directly, not this project's own reconstruction).
+STRONG INFERENCE for the type-mismatch resolution, not yet built.
+
+### 156a. Finding 93a's reversal rule applies across separately-declared parameter clauses, not just within one comma-group
+
+Finding 134a settled *within-one-group* behavior (`VAR` groups descend,
+plain-value groups ascend) but left open what happens across several
+*separate* single-member clauses of mixed kind -- exactly `FINIT`'s own
+shape (`VAR F: FIB; WINDOW: WINDOWP; RECWORDS: INTEGER`, three clauses,
+not one group). `FINIT`'s own already-verified compile (finding 155)
+showed `F` (declared first) landing at word 3, the *highest* -- opposite
+of what "each single-member clause is trivially its own ascending
+group" would predict.
+
+A clean, purpose-built probe confirms it generally: `PROCEDURE
+TESTORDER(VAR A: INTEGER; B: INTEGER; C: INTEGER)` -- three separate
+clauses, mixed `VAR`/value -- compiles `A := A` through `SIND 0` off
+word 3, `B := B` through word 2, `C := C` through word 1. **The clause
+declared first gets the highest word, regardless of `VAR`-vs-value
+kind, whenever clauses are separate** -- the same direction as finding
+93a's original `VAR`-block-local rule and finding 134a's `VAR`-group
+rule, extended to cover the case neither finding's own examples
+happened to test.
+
+### 156b. `FILEPROC.1`'s real dispatch, read from `SYSTEM.PASCAL` 1.3 itself
+
+`FILEPROC.1` (`params=6`) opens `SLDO 6 / UJP $08A5` then `XJP 1..4
+else $08B4 [$0865 $086A $0872 $089E]` -- it dispatches on **word 6**,
+which by 156a is the *first-declared* parameter of `FILEPROC`'s own
+6-clause signature (call it `OP`, matching every known call site's own
+`FILEPROC(<op>, ...)` shape from early in this project). Cross-checking
+against `FRESET`/`FOPEN`/`FCLOSE`'s own already-known real call sites
+(each written in `<op>, <arg2>, <arg3>, <arg4>, <arg5>, <arg6>` textual
+order, which per 156a maps to `word6, word5, word4, word3, word2,
+word1` respectively) resolves every arm cleanly:
+
+- **Arm `OP=1`** (`$0865`, `FRESET`'s arm): `SLDO 5 / CLP 3` -- one arg,
+  word 5 = `F` (`FRESET`'s sole parameter). Calls `FILEPROC`-local
+  `proc3(F)`.
+- **Arm `OP=2`** (`$086A`, `FOPEN`'s arm): `SLDO 5 / SLDO 4 / SLDO 3 /
+  SLDO 2 / CLP 4` -- four args, words 5,4,3,2 = `F, FTITLE, FOPENOLD,
+  JUNK` -- `FOPEN`'s own four parameters, in their own original
+  declared order. Calls `FILEPROC`-local `proc4(F, FTITLE, FOPENOLD,
+  JUNK)`.
+- **Arm `OP=3`** (`$0872`, `FCLOSE`'s arm): `SLDO 1 / UJP $0889` into a
+  *second*, inner `XJP 0..3` dispatch on word 1 -- which only makes
+  sense as `FTYPE: CLOSETYPE` (an exact 0..3 ordinal range), not `F`.
+  Re-deriving `FCLOSE`'s own parameter layout under 156a (`VAR F: FIB`
+  declared first -> word 2, `FTYPE: CLOSETYPE` declared second -> word
+  1) confirms it -- word 1 *is* `FTYPE`, exactly range-matching. Each
+  of the four inner arms (`CNORMAL`/`CLOCK`/`CPURGE`/`CCRUNCH`) stores
+  its own ordinal into a local, an identity transform that only makes
+  sense as coercing the enum into a plain `INTEGER` for the next call
+  -- `SLDO 5 / SLDO 7 / CLP 7`, i.e. `FILEPROC`-local `proc7(F,
+  ORD(FTYPE))`.
+- **Arm `OP=4`** (`$089E`, already established by `probe_osproc43.py`
+  as the file-title-normalizer forwarder): `SLDO 4 / SLDO 3 / SLDO 1 /
+  CLP 8` -- three args, words 4,3,1 -- matches `FILEPROC.8`'s own
+  already-probe-verified signature (`VAR S: STRING`, a 0/1 suffix
+  flag, a constant length) exactly, with words 5 and 2 (the caller's
+  own scratch buffer address and a snapshotted global) present but
+  unused by this arm -- exactly the probe's own comment ("`@G4` and
+  `G294` are procedure 43's own local buffer... never reads").
+
+### 156c. What's actually blocking `FRESET`/`FOPEN`/`FCLOSE`, precisely
+
+Not "unwritten" -- **type-blocked**. `FILEPROC.1`'s word 1 needs to
+accept `FTYPE: CLOSETYPE` (`FCLOSE`), `JUNK: FIBP` (`FOPEN`), and a
+plain constant length (arm 4) at different call sites, all through the
+same declared parameter. Two probes this session confirm the two
+naive ways to do this both fail real Pascal type-checking, the same
+category of rejection finding 153's dead ends hit: assigning a `FIBP`
+value to a plain `INTEGER` variable is rejected outright
+(`"assignment type mismatch, unable to assign a pointer to record FIB
+variable J ... to an integer variable N"`), and passing a `VAR FIB`
+where `INTEGER` is declared was already rejected in finding 155's own
+probe. `FILEPROC`'s real parameter types cannot be uniformly `INTEGER`
+the way the current placeholder guesses, confirming finding 155's flag
+was right, now for a structurally understood reason rather than just
+"it doesn't type-check."
+
+**Not yet built, but the shape is now clear**: a case-variant record
+parameter -- the exact "share one word of storage between an `INTEGER`,
+an enum, and a pointer" idiom Hyde's *P-Source* documents (`TRIX`/
+`MAGIC`, read earlier this project) is the standard UCSD Pascal
+mechanism for exactly this situation: each caller constructs the right
+variant view of its own value and passes it by value into a single
+1-word-representation parameter slot that still type-checks at every
+call site. Building and byte-verifying that variant type against all
+four real call sites (`FRESET`, `FOPEN`, `FCLOSE`, and whichever
+procedure really is `PASCALSY.43` -- see below) is real, additional
+work, not attempted this session.
+
+**Also surfaced, unresolved**: this project's own procedure-number
+count (established last session, used successfully for `STUB48`'s
+number and multiple compiles since) puts `COMMAND` at procedure 43 --
+but the real `PASCALSY.43` needs `params=6` (three words) while
+`COMMAND`'s current forward declaration (matching UCSD's own plain
+`PROCEDURE COMMAND;`) takes none. Apple's real `COMMAND` likely gained
+parameters past UCSD's own version (consistent with how many other
+Apple-specific additions this file already documents), or contains a
+nested helper that is the true forwarder rather than `COMMAND` itself
+being it, mirroring the `WAITSYSVOL`/`EXECERROR` nesting pattern
+already established. Not resolved -- flagged for whoever writes
+`COMMAND` for real.
