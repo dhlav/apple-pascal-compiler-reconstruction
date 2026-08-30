@@ -12999,3 +12999,54 @@ Acceptance run `2026-08-29-pascalsystem-varsection-complete`: 0 errors,
 780 lines, `PASCALSYS.CODE` extracted and diffed procedure-by-procedure
 against Apple's real `128K.PASCAL` via `CodeFile` -- procedure 1
 `params=0/data=902`, exact; `params` match held for 1-42 elsewhere.
+
+## 144. `PASCALSY.1` -- the main-loop body started, three lines in, one gap identified precisely
+
+The real p-code (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:16-28`)
+is short: `FINIT(@L396, @L696, -1)`, `EMPTYHEAP := NIL`,
+`UNITCLEAR(1)`, `INITIALIZE`, a `REPEAT ... UNTIL EMPTYHEAP = NIL`
+loop around `PASCALSY.48` with a conditional re-`INITIALIZE`, then
+`FCLOSE(@L396, 0)` and `XIT`. Wrote the three lines that need nothing
+further resolved: `EMPTYHEAP := NIL`, `UNITCLEAR(1)` (CSP 38, a plain
+callable builtin -- the host compiler accepts it directly, no
+declaration needed), and `INITIALIZE` (this file's own segment
+procedure). Frame size held exact at `902` both before and after, as
+expected -- none of these three add a local.
+
+Two pieces left out, both genuinely unresolved rather than guessed:
+
+* **`FINIT(@L396, @L696, -1)` / `FCLOSE(@L396, 0)`.** `LLA 696`
+  exceeds this file's own confirmed 451-word frame outright -- and
+  that turns out to already be explained by this project's own prior
+  work, not a new problem. Findings 43a/118c already established that
+  the compiler emits a file variable's `WINDOW` argument as a fixed
+  `VADDR + FILESIZE` (`FILESIZE = 300`) for *every* file-typed
+  variable's auto-generated `FINIT` call, "harmless: ... the pointer
+  is never dereferenced" -- and `396 + 300 = 696` exactly. So `@L696`
+  needs no real storage; only `@L396` does. But that call is very
+  likely compiler-generated initialization for a real file-typed
+  `VAR` (finding 43a's own `bodypart.e.text` excerpt: "the loop that
+  initialises a block's file variables"), which means one of this
+  file's currently `FIBP`-typed globals (`INPUTFIB`/`OUTPUTFIB`/
+  `SYSTERM`/`SWAPFIB`, offsets 55-58) is likely mis-typed relative to
+  Apple's real source -- and word 396 sits inside finding 143's own
+  Tribby-derived block, around `EXEC_VOL`/`EXEC_SIZE`/`WHAT_J`, whose
+  real identity there needs re-examining before this line can be
+  written for real, not assumed correct because the frame total came
+  out right (finding 143 already flagged this same risk for that
+  region generally).
+* **`PASCALSY.48()`.** Past the 41/42 forward-declared procedures
+  this file has (finding 136) -- new territory. Its own small body
+  (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1033-1042`) sets
+  `STATE := HALTINIT`, clears an exec-related flag, then loops calling
+  `PASCALSY.50`/`PASCALSY.58` and conditionally `USERPROG.1(NIL,
+  NIL)` -- but procedures 44-58 have no source in this file at all
+  yet. Writing them is the natural next step.
+
+Compiles clean both tiers, `params=0/data=902` still exact against
+Apple's real `128K.PASCAL`; segment 0's 42-of-43 `params` match held
+unchanged.
+
+Acceptance run `2026-08-29-pascalsystem-mainloop-start`: 0 errors, 839
+lines, `PASCALSYS.CODE` extracted and diffed -- procedure 1
+`params=0/data=902`, still exact.

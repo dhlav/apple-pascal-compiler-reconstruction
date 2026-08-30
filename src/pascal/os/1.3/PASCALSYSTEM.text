@@ -777,5 +777,64 @@ PROGRAM PASCALSYSTEM;
   FUNCTION FETCHDIR; BEGIN FETCHDIR := TRUE END;
   PROCEDURE COMMAND; BEGIN END;
 
+{ PASCALSY.1 -- the real main-loop body, started. Apple's real p-code
+  (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:16-28`):
+
+    PASCALSY.3:FINIT(@L396, @L696, -(1));
+    L54 := nil;
+    UNITCLEAR(1);
+    INITIALI.1();
+    repeat
+      PASCALSY.48();
+      if (L54 <> nil) then begin
+        INITIALI.1();
+      end;
+    until (L54 = nil);
+    PASCALSY.6:FCLOSE(@L396, 0);
+    XIT;
+
+  `L54 = nil`/`FCLOSE(..., 0)` match `EMPTYHEAP := NIL` and
+  `CNORMAL = 0` exactly (finding 139's own offset work); `INITIALI.1`
+  is this file's own `INITIALIZE` segment procedure; `UNITCLEAR` is
+  CSP 38 (`tools/a2pascal/syscall.py`), a plain callable builtin, no
+  declaration needed in `(*$U-*)` system code.
+
+  Two pieces are NOT written yet, both genuinely unresolved rather
+  than guessed at:
+
+  * `FINIT(@L396, @L696, -1)` / `FCLOSE(@L396, 0)`. `LLA 696` is
+    almost certainly the SAME dead-arithmetic pattern findings 43/118c
+    already proved elsewhere in this project: the compiler emits
+    `VADDR + FILESIZE` (a fixed +300) as the `WINDOW` argument for
+    *every* file-typed variable's auto-generated `FINIT` call,
+    "harmless: ... the pointer is never dereferenced" (finding 43a) --
+    396+300=696 exactly. That means `@L696` needs no real storage of
+    its own; only `@L396` (the file variable itself) does. But this
+    call is very likely COMPILER-GENERATED initialization code for a
+    real file-typed `VAR` (finding 43a's `bodypart.e.text` excerpt:
+    "the loop that initialises a block's file variables"), not
+    hand-written source -- meaning one of this file's own currently
+    `FIBP`-typed globals (`INPUTFIB`/`OUTPUTFIB`/`SYSTERM`/`SWAPFIB`,
+    offsets 55-58) is likely mis-typed; word 396 falls inside this
+    file's own Tribby-derived block (finding 143) around `EXEC_VOL`/
+    `EXEC_SIZE`/`WHAT_J`, whose real identity there needs
+    re-examining before this line can be written for real. Left out
+    entirely rather than guessed, per this project's own established
+    practice (finding 105a and others: a documented gap, not a forced
+    close).
+  * `PASCALSY.48()`. Procedure 48 is past the 41/42 forward-declared
+    set this file has (finding 136) -- genuinely new territory,
+    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1033-1042` shows its
+    own small body (`STATE := HALTINIT; <exec flag> := FALSE; REPEAT
+    PASCALSY.50(); PASCALSY.58(); IF <exec flag> THEN
+    USERPROG.1(NIL, NIL) UNTIL STATE = HALTINIT`-shaped, per that
+    lift), but procedures 44-58 have no source in this file at all
+    yet -- writing them is the next real step, not this one. }
 BEGIN
+  EMPTYHEAP := NIL;
+  UNITCLEAR(1);
+  INITIALIZE;
+  { REPEAT ... UNTIL EMPTYHEAP = NIL calling PASCALSY.48 and FINIT/
+    FCLOSE on the still-unresolved file variable: not written yet,
+    see the comment above. }
 END.

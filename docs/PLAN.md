@@ -362,14 +362,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE` call an unidentified helper
     (`PASCALSY.53`, past procedure 42, likely one of Apple's own
     128K-specific additions) and are genuinely harder than `FGOTOXY`;
-    not attempted yet. `PASCALSY`'s own real 451-word main-loop body
-    (the single largest procedure on the whole disk set) is now
-    unblocked on the `VAR`-section side -- every offset it might
-    reference has a declared field behind it, though individual field
-    identities within that set still need confirming one at a time,
-    `SYSCOM`/`GFILES[1]`-style. That, every other forward-declared
-    procedure's real content, and four of the six other segments'
-    bodies beyond procedure 1 remain the natural next work.
+    not attempted yet. `PASCALSY.1`'s own real main-loop body is
+    started (finding 144): `EMPTYHEAP := NIL`, `UNITCLEAR(1)`,
+    `INITIALIZE` all written and verified exact (`params=0/data=902`
+    held). Two pieces of its own short body remain open, both
+    genuinely unresolved rather than guessed -- the `FINIT`/`FCLOSE`
+    calls on a still-misidentified file-typed variable (`LLA 396`;
+    `LLA 696` is dead arithmetic, `VADDR+FILESIZE`, already proven
+    harmless by findings 43a/118c), and the `REPEAT` loop's own
+    `PASCALSY.48` call, which needs procedures 44-58 written first --
+    genuinely new territory past the 41/42 forward-declared set.
+    That, every other forward-declared procedure's real content, and
+    four of the six other segments' bodies beyond procedure 1 remain
+    the natural next work.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
