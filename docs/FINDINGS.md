@@ -12587,3 +12587,67 @@ five of the six segments' own real content beyond procedure 1.
 Acceptance run `2026-08-29-pascalsystem-skeleton`: 0 errors, 402 lines,
 `PASCALSYS.CODE` extracted and its full segment/procedure structure
 compared directly against Apple's real `128K.PASCAL` via `CodeFile`.
+
+## 137. `SYSTEM.PASCAL` -- `PRINTERROR` written for real, exact, and it is not a straight UCSD port
+
+`PRINTERROR` (segment 3, `PRINTERR` on disk) is the first real segment
+body in this file besides `USERPROGRAM`. Its own real content
+(`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`) diverges from UCSD's
+`SYSSEGS.A.TEXT` (finding 53's own source) in several places -- Apple
+reworded a handful of messages ("No procedure in segment-table" for
+UCSD's "No proc in seg-table", "System I/O error" for "System IO
+error", and throughout the nested `IORSLT` case), added a 16th
+`XEQERR` arm ("Codespace overflow"), **dropped** `IORSLT` arm 15
+("ring buffer overflow"), and added `IORSLT` arms 18-20 for the 128K
+system's own ProFile hard-drive support ("illegal buffer address",
+"must read a multiple of 512 bytes", "unknown ProFile error"). Written
+directly from the real binary's own `CASE` arms, in Apple's own words,
+not from finding 53's older UCSD text.
+
+`S: STRING[45]`, not UCSD's `STRING[40]`: the real binary's own
+`SINSERT` call passes `DESTLENG=45`, which is exactly the longest real
+message ("I/O error: " + "must read a multiple of 512 bytes" = 45
+characters) -- and `STRING[45]` alone is 23 words, matching Apple's
+real `data=23` (`locals 23 words` in the lift) with no other local
+needed at all.
+
+Two more calling-convention restrictions surfaced, distinct from
+finding 136's `WRITE`/`WRITELN` one:
+
+* **A literal cannot bind to a `VAR` parameter through a direct call**,
+  even when the real binary's own compiled code shows the literal
+  reaching that exact parameter. `SINSERT(VAR SRC: STRING; ...)`
+  called directly with `'I/O error: '` as `SRC` is error 154. Apple's
+  own p-code (`analysis/utilities/128K-1.3-APPLE3.pcode.txt`) shows
+  `SINSERT` receiving that same literal -- legal there only because the
+  compiler generated the call itself while lowering ordinary `INSERT`
+  sugar (which copies a literal into a temporary internally before the
+  `VAR` parameter ever sees it), not because a direct call to `SINSERT`
+  could do the same. Fix: use `INSERT('I/O error: ', S, 1)` sugar, not
+  `SINSERT(...)` directly -- unlike `WRITE`/`WRITELN`, `INSERT`'s own
+  sugar has no restriction on its own arguments' shape, so this one
+  works normally once written as sugar.
+* **The real global `OUTPUT`-equivalent `FWRITESTRING`/`FWRITELN` are
+  called against (`I1,3`, one lexical level up -- the exact position
+  `OUTPUT` itself sits at in every other file this project has
+  reconstructed) still isn't identified.** Apple's own built-in
+  `OUTPUT` (type `TEXT`/`INTERACTIVE`) does not type-check against
+  `FWRITESTRING`'s real `VAR F: FIB` parameter (confirmed directly
+  against the host compiler), so whatever is really at that position is
+  not the compiler's own predeclared file -- almost certainly
+  `OUTPUTFIB`, `GLOBALS.TEXT`'s own name for exactly this role, but
+  unconfirmable until `PASCALSY`'s own real global `VAR` layout is
+  reconstructed (still a stub). Stood in `OUTPUTFIB^` (this project's
+  own declared global) for now, documented rather than guessed at
+  further -- it doesn't block compiling or matching this procedure's
+  own frame size, which is the check that matters until the globals
+  themselves are real.
+
+Verified: `params=4/data=46` exact, first attempt (after the
+`SINSERT`->`INSERT` fix) against Apple's real `128K.PASCAL`. Segment
+0's own 42-of-43 `params` match (finding 136) held unchanged --
+nothing regressed.
+
+Acceptance run `2026-08-29-pascalsystem-printerror`: 0 errors, 474
+lines, `PASCALSYS.CODE` extracted and `PRINTERR`'s own procedure
+compared directly against Apple's real `128K.PASCAL` via `CodeFile`.

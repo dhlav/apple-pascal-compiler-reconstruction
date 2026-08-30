@@ -296,9 +296,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     compiler even though the host compiler accepts it) -- UCSD's own
     source already avoids this, calling `FWRITELN`/`FWRITESTRING`
     directly as ordinary forward-declared procedures, which is what this
-    file now does too. Not started yet: `PASCALSY`'s own real 451-word
-    main-loop body (the single largest procedure on the whole disk set),
-    every forward-declared procedure's real content, and five of the six
+    file now does too. Filled in `PRINTERROR` too (finding 137,
+    `params=4/data=46` exact) -- not a straight UCSD port, Apple's real
+    `CASE` arms rework several messages and add 128K ProFile-specific
+    error codes, written directly from the binary's own text. Caught a
+    second calling-convention restriction along the way: a literal
+    can't bind to a `VAR` parameter through a *direct* call (`SINSERT`
+    itself is error 154 on a literal `SRC`), even though Apple's own
+    compiled code shows that same literal reaching that same parameter
+    -- legal there only as part of the compiler's own lowering of
+    ordinary `INSERT` sugar, which has no such restriction of its own.
+    Not started yet: `PASCALSY`'s own real 451-word main-loop body (the
+    single largest procedure on the whole disk set), every other
+    forward-declared procedure's real content, and four of the six
     other segments' bodies beyond procedure 1.
 
 11. **The files that are not codefiles.** They still have to come from

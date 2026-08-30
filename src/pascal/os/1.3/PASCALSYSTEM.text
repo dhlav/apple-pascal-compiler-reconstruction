@@ -310,12 +310,96 @@ PROGRAM PASCALSYSTEM;
   SEGMENT PROCEDURE FIOPRIMS;
   BEGIN END;
 
-  { UCSD's own PRINTERROR: prints the message for a run-time error
-    code (finding 53 already recovered all 31 of its CASE arms'
-    strings against UCSD's own SYSSEGS.A.TEXT). Signature matches
-    Apple's real `args 2 words` exactly; body not written yet. }
+  { Prints the message for a run-time error code. Apple's real body
+    (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`, segment 3) is not
+    a straight port of UCSD's own SYSSEGS.A.TEXT (finding 53 recovered
+    that older text, not this one) -- Apple reworded several messages,
+    added a 16th XEQERR arm ("Codespace overflow"), dropped IORSLT arm
+    15 ("ring buffer overflow"), and added IORSLT arms 18-20 for the
+    128K system's own ProFile hard-drive support. Written here from
+    the real binary's own CASE arms directly, in Apple's own words.
+
+    `S: STRING[45]`, not UCSD's `STRING[40]` -- `SINSERT`'s own real
+    call passes `DESTLENG=45`, matching the longest real message
+    exactly ("I/O error: " + "must read a multiple of 512 bytes" = 45
+    chars), and `STRING[45]` alone is 23 words, matching Apple's real
+    `data=23` with nothing else needed.
+
+    Calls `FWRITESTRING`/`FWRITELN` directly (not `WRITE`/`WRITELN`
+    sugar, per the header comment) against `OUTPUTFIB^` -- this
+    project's own global standing in for the real binary's own
+    unidentified target at this exact call site (`I1,3`, one lexical
+    level up). Passing the compiler's own built-in `OUTPUT` there
+    fails to type-check (`VAR F: FIB` won't accept a `TEXT`/
+    `INTERACTIVE` variable, confirmed against the host compiler
+    directly), so it cannot be that identifier despite `I1,3` being
+    exactly where `OUTPUT` sits in every other file this project has
+    reconstructed -- an open question this segment doesn't yet need to
+    answer past compiling and matching on frame size, since the real
+    global VAR layout (this file's own `PASCALSY`, still a stub) isn't
+    reconstructed yet either.
+
+    The message-prefix insert, though, uses plain `INSERT` sugar, not
+    a direct `SINSERT` call -- a *different* restriction from
+    `WRITE`/`WRITELN`'s: `SINSERT`'s first parameter is `VAR SRC:
+    STRING`, and a literal (`'I/O error: '`) cannot bind to a `VAR`
+    parameter at all when called directly (error 154), literal or not.
+    Ordinary `INSERT` sugar handles the literal-to-temporary copy
+    internally, the same way it must for Apple's own real call
+    (`analysis/utilities/128K-1.3-APPLE3.pcode.txt` shows `SINSERT`
+    itself receiving the literal directly -- legal only because the
+    compiler generated that call as part of lowering `INSERT`'s own
+    sugar, not because a direct call could do the same). }
   SEGMENT PROCEDURE PRINTERROR(XEQERR, IORSLT: INTEGER);
-  BEGIN END;
+    VAR
+      S: STRING[45];
+  BEGIN
+    S := 'Unknown run-time error';
+    CASE XEQERR OF
+      1: BEGIN S := 'Value range error' END;
+      2: BEGIN S := 'No procedure in segment-table' END;
+      3: BEGIN S := 'Exit from uncalled procedure' END;
+      4: BEGIN S := 'Stack overflow' END;
+      5: BEGIN S := 'Integer overflow' END;
+      6: BEGIN S := 'Divide by zero' END;
+      7: BEGIN S := 'NIL pointer reference' END;
+      8: BEGIN S := 'Program interrupted by user' END;
+      9: BEGIN S := 'System I/O error' END;
+      10: BEGIN
+        S := 'unknown cause';
+        CASE IORSLT OF
+          1: BEGIN S := 'parity (CRC)' END;
+          2: BEGIN S := 'illegal volume #' END;
+          3: BEGIN S := 'illegal I/O request' END;
+          4: BEGIN S := 'data-com timeout' END;
+          5: BEGIN S := 'volume went off-line' END;
+          6: BEGIN S := 'file lost in directory' END;
+          7: BEGIN S := 'bad file name' END;
+          8: BEGIN S := 'no room on volume' END;
+          9: BEGIN S := 'volume not found' END;
+          10: BEGIN S := 'file not found' END;
+          11: BEGIN S := 'duplicate directory entry' END;
+          12: BEGIN S := 'file already open' END;
+          13: BEGIN S := 'file not open' END;
+          14: BEGIN S := 'bad input format' END;
+          16: BEGIN S := 'disk write protected' END;
+          17: BEGIN S := 'illegal block #' END;
+          18: BEGIN S := 'illegal buffer address' END;
+          19: BEGIN S := 'must read a multiple of 512 bytes' END;
+          20: BEGIN S := 'unknown ProFile error' END
+        END;
+        INSERT('I/O error: ', S, 1)
+      END;
+      11: BEGIN S := 'Unimplemented instruction' END;
+      12: BEGIN S := 'Floating point error' END;
+      13: BEGIN S := 'String overflow' END;
+      14: BEGIN S := 'Programmed HALT' END;
+      15: BEGIN S := 'Programmed break-point' END;
+      16: BEGIN S := 'Codespace overflow' END
+    END;
+    FWRITESTRING(OUTPUTFIB^, S, 0);
+    FWRITELN(OUTPUTFIB^)
+  END;
 
   { UCSD's own INITIALIZE: system startup. Signature matches Apple's
     real `args 0 words`; body not written yet. }
