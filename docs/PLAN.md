@@ -684,6 +684,29 @@ a route end to end; everything else is a straight read-and-rebuild.
     read too. Genuinely multi-session scale, as finding 172 already
     said -- this pass narrows what's left rather than closing it.
 
+    **The `OLDOK` blocker is now resolved as far as static analysis can
+    take it (finding 178)**: an exhaustive search of every call site in
+    all six of `128K.PASCAL`'s segments confirms `FILEPROC`'s
+    dispatcher has exactly three callers (`FRESET`/`FOPEN`/`FCLOSE`,
+    matching `PASCALSY.4`/`.5`/`.6`) and no undiscovered fourth one --
+    the real value really is a plain `0`/`1` boolean from every known
+    caller. Loose `BOOLEAN`/`INTEGER` typing is also ruled out (this
+    host compiler rejects it outright) and a plain `ORD()` cast gets
+    constant-folded away by the compiler's own static boolean-range
+    analysis. What *does* work: `TRICKARRAY` (this file's own existing
+    "memory diddling" union type) reinterprets `OLDOK`'s raw bits in a
+    way the compiler can't statically bound, reproducing the real
+    binary's own `GRTI`/`EQUI` comparisons exactly. One gap remains
+    before writing the body: the real binary's `(P2=2) OR (P2=4)`
+    compiles to a literal `LOR`, but every source variant tried this
+    session compiles through this host tool to a short-circuit `FJP`
+    chain instead -- not yet resolved, plausibly another host-compiler
+    divergence (findings 174/176's own class) rather than a wrong
+    reading. A small unrelated gap was also caught in the process:
+    `FOPEN`'s own already-written forwarder passes a literal `0` for
+    `FILEPROC`'s `ARGINT` slot where the real binary reads a genuine
+    global (`SLDO 5`) instead -- not fixed this session.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

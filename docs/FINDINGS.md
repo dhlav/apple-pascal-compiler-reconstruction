@@ -15425,3 +15425,77 @@ arms at once -- a real risk to already-`VERIFIED BINARY FACT` work,
 not something to do speculatively. Stopping here for this session;
 resuming this thread means finding that caller (a wider search than
 this file alone) rather than more probing of `FPOPEN` in isolation.
+
+## 178. `FPOPEN`'s `OLDOK` blocker: no other caller anywhere in the compiled OS; `TRICKARRAY` reproduces the real comparisons
+
+STRONG INFERENCE for the resolution mechanism (compiles to the right
+opcodes, not yet checked against real bytes end-to-end); VERIFIED
+BINARY FACT for the exhaustive caller search (every `CXP`/`CLP`/`CGP`
+call site in all six segments of `128K.PASCAL` enumerated directly).
+
+**The exhaustive search came back negative.** Disassembled every
+procedure in every one of `128K.PASCAL`'s six segments (`PASCALSY`,
+`USERPROG`, `FIOPRIMS`, `PRINTERR`, `INITIALI`, `GETCMD`, `FILEPROC`
+itself) and listed every `CXP`/`CLP`/`CGP` call site. `FILEPROC`'s own
+dispatcher (segment 6, procedure 1) is reached from exactly three
+places in the whole OS: `PASCALSY.4` (`OP=1`, matches `FRESET`),
+`PASCALSY.5` (`OP=2`, matches `FOPEN`), `PASCALSY.6` (`OP=3`, matches
+`FCLOSE`) -- confirming (and slightly correcting) this project's own
+prior procedure-number guesses for these three forwarders along the
+way. **There is no fourth, internal caller anywhere** that could be
+passing something other than a genuine `0`/`1` boolean into `OP=2`'s
+`ARGBOOL` slot. The "undiscovered caller" explanation from finding 177
+is dead.
+
+**Also caught along the way, unrelated to the blocker**: the real
+`PASCALSY.5` (`FOPEN`) pushes `SLDO 5` for `FILEPROC`'s final `ARGINT`
+argument, not a literal `0` -- this reconstruction's own already-
+written `FOPEN` body (`FILEPROC(2, F, FTITLE, FOPENOLD, JUNK, 0)`)
+passes a constant instead of whatever global `SLDO 5` actually reads.
+Not identified or fixed this session; a small, separate, low-risk gap
+worth closing whenever `FOPEN` itself gets revisited.
+
+**Ruled out the loose-typing explanation too**: recompiling `FPOPEN`
+with `OLDOK: INTEGER` against `FILEPROC.1`'s existing `ARGBOOL:
+BOOLEAN` dispatch call is flatly rejected (`"parameter three: given a
+boolean variable"`) -- this host compiler enforces the same
+`BOOLEAN`/`INTEGER` type strictness ISO Pascal does, same-segment,
+no exception. And using `ORD(OLDOK)` inside `FPOPEN` itself to try to
+smuggle the raw value past its own declared type doesn't work either:
+the compiler statically knows `ORD` of a genuine two-valued `BOOLEAN`
+parameter can never exceed `1`, and **constant-folds every comparison
+against `2`/`4` away entirely** -- confirmed with an isolated probe
+compiling `IF ORD(OLDOK) > 1 THEN ...` inside a real procedure and
+getting zero instructions back for the whole body.
+
+**What does work**: `TRICKARRAY` -- this file's own already-declared
+"memory diddling for `EXECERROR`" union type (`RECORD CASE BOOLEAN OF
+TRUE: (WORD: ARRAY[0..0] OF INTEGER); FALSE: (BYTE: PACKED ARRAY[0..0]
+OF BYTERANGE) END`) -- reinterprets `OLDOK`'s own bit pattern as a
+plain `INTEGER` in a way the compiler *can't* statically bound, because
+the value now flows through an opaque variant rather than a directly-
+typed `BOOLEAN` expression. A probe assigning `TRICK.BYTE[0] :=
+ORD(OLDOK)` and then testing `TRICK.WORD[0] > 1` (with a real side
+effect in the branch, to also rule out empty-branch elimination as the
+cause) produces genuine `SLDL/SLDC/GRTI/FJP` -- the comparison survives,
+matching the real binary's own `SLDL 2; SLDC 1; GRTI` shape exactly.
+
+**One remaining discrepancy, not yet resolved**: the real binary's
+`(P2 = 2) OR (P2 = 4)` compiles to two plain `EQUI`s combined with a
+literal `LOR` (finding-establishes-elsewhere fact: "the compiler does
+not short-circuit"). Every variant tried this session -- comparison
+expressions, plain `BOOLEAN` variables, inside an `IF`, assigned to a
+value -- compiled through this host tool to a short-circuit `FJP` chain
+instead, never `LOR`. Either this specific host-compiler invocation
+short-circuits where Apple's real one didn't (a new instance of the
+already-documented class of host-vs-Apple compiler divergence, findings
+174/176), or some other syntactic detail (not yet found) triggers
+`LOR` specifically. Left open -- the mechanism for reading `OLDOK`'s
+raw value is solved; reproducing the exact combining operator is not.
+
+Not written into `PASCALSYSTEM.text` this session -- this closes the
+investigation into *why* the comparisons are possible at all, clearing
+the path for an actual body-writing pass next time, but the `TRICKARRAY`
+idiom's exact placement (is it really what Apple wrote, or just a
+technique that happens to produce equivalent bytes?) and the `LOR` gap
+above are both still open before committing to source.
