@@ -727,6 +727,21 @@ a route end to end; everything else is a straight read-and-rebuild.
     this file's own convention is a complete, compiling procedure
     before landing it, not a partial one.
 
+    **Extended past `VOLSEARCH` (finding 180)**: every `F^`-field write
+    once a volume is found (`FISOPEN`, `FMODIFIED`, `FUNIT`, `FVID`,
+    `FNXTBLK`, `FISBLKD`, `FSOFTBUF`) matches its already-established
+    offset exactly, field-by-field against the real instructions, and
+    `OLDOK`'s own storage gets overwritten with the `TRICKARRAY`-derived
+    flag matching the `STL 2` writeback finding 178 first flagged. The
+    `DIR<>NIL AND LENGTH(TID)>0` branch gating `DIRSEARCH` also matches
+    exactly. The **one remaining blocker** before this whole section can
+    compile as a real, testable candidate is the bootstrap fallback
+    block itself (`MARK`/`RELEASE`/`UNITABLE`-linear-search, magic
+    constants `2028`/`400`) -- a *structural* gap (a whole missing
+    branch), not the usual small "word or two short" class this file
+    otherwise tolerates, so not committed until that block is decoded
+    too.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

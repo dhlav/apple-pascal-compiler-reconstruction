@@ -15551,3 +15551,50 @@ the guide for what's left). Written up as a scratch probe
 partial `FPOPEN` body would be worse than the current honest stub --
 this file's own convention throughout has been to land a complete,
 compiling procedure before committing it.
+
+## 180. `FPOPEN`'s `F`-field population confirmed field-by-field (addr 787-849); the bootstrap block is the one thing blocking a full candidate
+
+STRONG INFERENCE, confirmed by direct field-by-field comparison against
+the real disassembly rather than a naive whole-procedure diff (which
+the still-missing bootstrap block from finding 179 pollutes).
+
+Extended finding 179's preamble through `VOLSEARCH` and the population
+of `F^`'s own fields once a volume is found. Every field write matches
+its already-established `FIB` offset exactly once the source is
+compared segment-by-segment against the corresponding real instructions
+(shifted by the same missing-`WITH`-cache gap findings 174/179 already
+accept): `FISOPEN := TRUE`, `FMODIFIED := FALSE`, `FUNIT := UNITNO`
+(`VOLSEARCH`'s own result), `FVID := VID` (a `SAS 7` string-assign,
+width matching `VIDLENG`), `FNXTBLK := 0`, `FISBLKD :=
+UNITABLE[UNITNO].UISBLKD`, `FSOFTBUF := UNITABLE[UNITNO].UISBLKD AND
+(FRECSIZE <> 0)` (soft-buffering only applies to a block device with a
+real record size), and finally `OLDOK`'s own storage gets overwritten
+with the `TRICKARRAY`-derived flag (`OLDOK := TRICK.WORD[0] <> 0`,
+matching the real binary's own `STL 2` writeback that finding 178 first
+flagged but didn't yet place). The branch after this (`DIR <> NIL AND
+LENGTH(TID) > 0`, gating the `DIRSEARCH` path finding 177 already
+predicted) also compiles to the exact expected shape (`SLDL 5; LDCN;
+NEQI; LLA 18; SLDC 0; LDB; SLDC 0; GRTI; LAND; FJP jtab-10`).
+
+**Caught one real bug while drafting this**: `UNIT` was used as a
+local variable name in the first draft -- this project's own
+already-documented gotcha (`CLAUDE.md`: "`UNIT` is a reserved word") --
+caught immediately by the compiler's own syntax error, renamed to
+`UNITNO`.
+
+**Not committed, and a whole-procedure diff isn't meaningful yet**: a
+naive instruction-by-instruction comparison of this candidate against
+the real binary diverges heavily and early, but *only* because the
+bootstrap fallback block (finding 179's own flagged gap -- the
+`MARK`/`RELEASE`/`UNITABLE`-linear-search path gated on
+`SWAPFIB^.FISOPEN AND GDIRP = NIL`) is still entirely missing from the
+candidate, shifting every subsequent address. This is a *structural*
+gap (an entire missing branch), not the usual small "a word or two
+short" class this file otherwise accepts -- worth calling out
+explicitly, since committing a candidate with a whole branch missing
+would be a materially different kind of gap than what's normally
+tolerated here. Decoding that bootstrap block (magic constants `2028`
+and `400`, an `IXA 6`-indexed scan through `UNITABLE`, a string
+equality test, and a `UNITWRITE`) is now the one remaining blocker
+before a real candidate for this whole section can be assembled and
+compiled as a unit.
