@@ -758,6 +758,25 @@ a route end to end; everything else is a straight read-and-rebuild.
     soft-buffer setup tail (roughly addr 787-1358) are the only piece
     of `FPOPEN` left entirely undrafted now.
 
+    **`DIRSEARCH`/`FPALLOC`/`DELENTRY` decoded and compiled (finding
+    182)**: found-vs-not-found on `DIRSEARCH`, crossed with `OLDOK`,
+    branches to `RESET`-style-found/`REWRITE`-style-create-new; a new
+    file's `KIND` defaults to `DATAFILE` when `SCANTITLE` left it
+    `UNTYPEDFILE`; `SEGS` (`SCANTITLE`'s own segment-count output)
+    doubles as `FPALLOC`'s requested size; a non-`TEXTFILE` entry gets
+    its `DLASTBLK` shrunk by one block, and `DELENTRY`'d back out if
+    that leaves it `<= 4` blocks. Caught a real, generally-useful bug
+    along the way: a local var named identically to its own type
+    (`VID: VID`, `TID: TID` -- this file's own established style)
+    shadows that type for every *nested* scope, breaking `FPALLOC`'s
+    own `VAR FTID: TID` parameter with a confusing "unknown symbol" at
+    the nested site, not the shadowing declaration. New memory:
+    `var-type-name-collision`. Compiles clean as a complete standalone
+    procedure (`params` exact) covering the whole preamble through this
+    section. Only the soft-buffer setup tail (addr 1050-1358, ~290
+    instructions) remains before `FPOPEN` can be assembled and
+    committed whole.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

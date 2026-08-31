@@ -15653,3 +15653,60 @@ still needs the `DIRSEARCH`/`FPALLOC`/`INSENTRY` path and the
 soft-buffer setup tail (roughly addr 787-1358) before it's a complete
 procedure. That's now the only piece of `FPOPEN` left entirely
 undrafted.
+
+## 182. `FPOPEN`'s `DIRSEARCH`/`FPALLOC`/`DELENTRY` section decoded and compiled -- a variable/type-name collision found along the way
+
+STRONG INFERENCE for the decode; VERIFIED BINARY FACT for the naming
+bug (a clean minimal probe reproduces it in total isolation).
+
+Decoded real addr 787-1050 in full, using precisely-computed decimal
+jump targets throughout (re-derived with the tool rather than by hand
+after an earlier hand-computed hex-to-decimal conversion in this same
+stretch turned out wrong -- worth the reminder that jump-target math
+belongs to the tooling, not mental arithmetic, once a procedure gets
+this large).
+
+**The real shape**: once a volume is found and `F^`'s fields are
+populated (finding 180), `IF (DIR <> NIL) AND (LENGTH(TID) > 0) THEN`
+calls `DIRSEARCH`. If `OLDOK`: found means copy the entry into
+`F^.FHEADER` (`MOV 13`), not-found means `INOFILE`. If not `OLDOK`:
+found means `IDUPFILE` (can't create over an existing file); not-found
+means allocate a new one -- defaulting `KIND` to `DATAFILE` when
+`SCANTITLE` left it `UNTYPEDFILE`, then `FPALLOC(TID, SEGS, KIND, DIR)`
+(`SEGS`, `SCANTITLE`'s own segment-count output, doubles as the
+requested block size here -- an Apple-specific reuse, not documented
+anywhere but implied cleanly by the exact argument shape). For any
+non-`TEXTFILE` kind, the newly-allocated entry's `DLASTBLK` gets
+shrunk by one block (a block-boundary adjustment `TEXTFILE`s don't
+need); if that leaves the entry `<= 4` blocks, it's judged too small
+and `DELENTRY`'d back out, treated the same as an outright allocation
+failure (`INOROOM`). Otherwise: copy the entry into `F^.FHEADER`, mark
+`F^.FMODIFIED`, and `WRITEDIR`. The `ELSE` side of the very first `IF`
+(`DIR = NIL` or no title given) checks `UNITABLE[UNITNO].UISBLKD`:
+error `INOFILE` only if the unit *is* block-structured (a directory
+search should have been possible but wasn't) -- silently fine
+otherwise, matching a non-block device like the console needing no
+directory at all.
+
+**The naming bug**: a candidate declaring local variables `VID: VID`
+and `TID: TID` (matching the type's own name, exactly the style this
+whole file already uses for e.g. `DIR: DIRP`) compiled fine on its
+own, but broke as soon as the nested `FPALLOC` (which itself declares
+`VAR FTID: TID`) was added to the same procedure: `"symbol FTID
+unknown"`, even though `FTID` is right there in `FPALLOC`'s own
+parameter list. Reproduced in total isolation with a four-line probe
+(`VAR FOO: FOO;` in an outer scope breaks a nested procedure's own
+`VAR A: FOO` parameter). Declaring a local variable with the exact
+name of its own type shadows that type name for every *nested* scope
+too, not just the declaring one -- fine as long as nothing nested
+needs the type again, but `FPOPEN` needs both a local `TID`-typed
+variable *and* a nested `FPALLOC` that uses `TID` as a type, so the
+two can't share the name. Fixed by renaming the outer locals
+(`FILEVID`/`FILETID`); `FPALLOC`'s own internal `FTID` parameter name
+is a separate scope and was never the problem.
+
+Compiles clean as a complete standalone procedure covering the whole
+preamble through this section (`params` exact, `8` bytes, matching
+`FPOPEN`'s own real signature). Only the soft-buffer setup tail (real
+addr 1050-1358, roughly 290 instructions) remains before `FPOPEN` can
+be assembled and committed as one complete procedure.
