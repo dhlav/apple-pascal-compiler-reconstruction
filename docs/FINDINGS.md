@@ -15407,3 +15407,21 @@ own already-`VERIFIED BINARY FACT` shared signature (`ARGBOOL:
 BOOLEAN`) to something else -- deliberately not attempted this session
 since that signature change would touch three already-verified arms,
 not just this one.
+
+**Third follow-up: tested and ruled out "UCSD just accepts the boolean
+loosely".** Changed `FPOPEN`'s own declared parameter to `OLDOK:
+INTEGER` and recompiled the whole file against `FILEPROC.1`'s existing
+`ARGBOOL: BOOLEAN` dispatch call -- rejected outright: `"parameter
+three: given a boolean variable"` (a genuine type-mismatch fatal
+error). This host compiler enforces strict `BOOLEAN`/`INTEGER`
+parameter-type matching same-segment, same as ISO Pascal; there is no
+loose-typing escape hatch here. Combined with the earlier two
+follow-ups, this leaves only two live explanations: an undiscovered
+internal caller passes something other than `0`/`1` into this exact
+slot (most likely, given the `addr 661` global-offset-55 lead already
+flagged, plausibly CODE-file/segment-loading-related), or `FILEPROC`'s
+own shared signature genuinely needs to change for all three verified
+arms at once -- a real risk to already-`VERIFIED BINARY FACT` work,
+not something to do speculatively. Stopping here for this session;
+resuming this thread means finding that caller (a wider search than
+this file alone) rather than more probing of `FPOPEN` in isolation.
