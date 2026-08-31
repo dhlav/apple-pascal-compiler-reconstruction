@@ -915,8 +915,119 @@ PROGRAM PASCALSYSTEM;
                      JUNK: FIBP);
     BEGIN END;
 
+    { `FPCLOSE` = `FILEPROC.7`, `FCLOSE`'s real target (finding 173),
+      decoded from its own addressed disassembly. Guards on the file
+      actually being open and not the system terminal (`F.FWINDOW <>
+      SYSTERM^.FWINDOW`), then only block-device files (`FISBLKD`) with
+      a sane cached header (`LENGTH(DVID) > 0`, the same sanity check
+      `STUB49` uses) do real work:
+
+      `CCRUNCH` (`FTYPE = 3`) shrinks the file to its current position
+      first (`FMAXBLK := FNXTBLK`) and marks the header temp (`DACCESS.
+      YEAR := 100`, `DATEREC`'s own documented sentinel). `FPNEWBLK`
+      flushes any pending soft-buffer write. If anything actually
+      changed (`FMODIFIED`, the temp mark, or `CPURGE`), re-`VOLSEARCH`
+      the file's volume (bailing `ILOSTUNIT` on a unit mismatch, the
+      same shape `STUB49` established) and re-scan the directory for
+      the matching entry by block range (`ILOSTFILE` if not found,
+      again matching `STUB49`'s own idiom). Then: `CNORMAL` on a
+      temp-marked entry, or any `CPURGE`, deletes it outright
+      (`DELENTRY`); otherwise `DIRSEARCH`es by *title* for a
+      same-named conflicting entry and deletes that one first (with an
+      index adjustment if it sat earlier in the directory), decides the
+      entry's `DACCESS` date (stamp `THEDATE` if either side was
+      temp-marked or the file was genuinely modified with a real
+      `THEDATE` available, otherwise keep the directory's own existing
+      date unchanged), finalizes `DLASTBLK`/`DLASTBYTE` from the
+      relative bookkeeping, clears the modified flag, and writes the
+      whole header back with `WRITEDIR`. `CPURGE` with no title clears
+      the cached volume ID in `UNITABLE` too, even for non-block files
+      (the one piece of work outside the `FISBLKD` guard). Every path
+      converges on the same tail: `FEOF`/`FEOLN := TRUE`,
+      `FISOPEN := FALSE`.
+
+      Global word 67 (`THEDATE`, "today -- set in FILER or sign-on",
+      already declared in this file) confirmed by an isolated probe
+      before trusting it, not assumed from the comment alone
+      (`probe_thedate_offset.py`, scratch). Compiles clean; `params=4`
+      bytes exact against the real binary; `locals=8` against the real
+      `12` -- two words short, documented not forced, same class as
+      this file's other close-not-exact matches. }
     PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: INTEGER);
-    BEGIN END;
+      VAR
+        DIR: DIRP;
+        I, J: INTEGER;
+        FOUND: BOOLEAN;
+    BEGIN
+      IF F.FISOPEN AND (F.FWINDOW <> SYSTERM^.FWINDOW) THEN
+        IF F.FISBLKD THEN
+          IF LENGTH(F.FHEADER.DVID) > 0 THEN
+          BEGIN
+            IF FTYPE = 3 THEN
+            BEGIN
+              F.FMAXBLK := F.FNXTBLK;
+              F.FHEADER.DACCESS.YEAR := 100;
+              IF F.FSOFTBUF THEN
+                F.FNXTBYTE := F.FMAXBYTE
+            END;
+            FPNEWBLK(F);
+            IF F.FMODIFIED OR (F.FHEADER.DACCESS.YEAR = 100) OR (FTYPE = 2) THEN
+              IF VOLSEARCH(F.FHEADER.DVID, FALSE, DIR) <> F.FUNIT THEN
+                SYSCOM^.IORSLT := ILOSTUNIT
+              ELSE
+              BEGIN
+                FOUND := FALSE;
+                I := 1;
+                WHILE (I <= DIR^[0].DNUMFILES) AND NOT FOUND DO
+                BEGIN
+                  FOUND := (DIR^[I].DFIRSTBLK = F.FHEADER.DFIRSTBLK) AND
+                           (DIR^[I].DLASTBLK = F.FHEADER.DLASTBLK);
+                  I := I + 1
+                END;
+                IF NOT FOUND THEN
+                  SYSCOM^.IORSLT := ILOSTFILE
+                ELSE
+                BEGIN
+                  I := I - 1;
+                  IF ((FTYPE = 0) AND (DIR^[I].DACCESS.YEAR = 100))
+                     OR (FTYPE = 2) THEN
+                    DELENTRY(I, DIR)
+                  ELSE
+                  BEGIN
+                    J := DIRSEARCH(F.FHEADER.DTID, TRUE, DIR);
+                    IF (J <> 0) AND (J <> I) THEN
+                    BEGIN
+                      DELENTRY(J, DIR);
+                      IF J < I THEN I := I - 1
+                    END;
+                    IF DIR^[I].DACCESS.YEAR = 100 THEN
+                    BEGIN
+                      IF F.FHEADER.DACCESS.YEAR = 100 THEN
+                        F.FHEADER.DACCESS := THEDATE
+                    END
+                    ELSE
+                      IF F.FMODIFIED AND (THEDATE.MONTH <> 0) THEN
+                        F.FHEADER.DACCESS := THEDATE
+                      ELSE
+                        F.FHEADER.DACCESS := DIR^[I].DACCESS;
+                    F.FHEADER.DLASTBLK := F.FHEADER.DFIRSTBLK + F.FMAXBLK;
+                    IF F.FSOFTBUF THEN
+                      F.FHEADER.DLASTBYTE := F.FNXTBYTE;
+                    F.FHEADER.FILLER2 := 0;
+                    F.FMODIFIED := FALSE;
+                    DIR^[I] := F.FHEADER;
+                    WRITEDIR(F.FUNIT, DIR)
+                  END
+                END
+              END
+          END;
+      IF FTYPE = 2 THEN
+        IF LENGTH(F.FHEADER.DTID) = 0 THEN
+          UNITABLE[F.FUNIT].UVID := '';
+      F.FEOF := TRUE;
+      F.FEOLN := TRUE;
+      F.FISOPEN := FALSE
+    END;
 
     { `FPTITLE` = `FILEPROC.8`, the file-title normalizer (finding
       167), decoded from its own addressed disassembly

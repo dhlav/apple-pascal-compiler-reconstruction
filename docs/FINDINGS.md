@@ -14991,3 +14991,66 @@ mode, then the nested helper for buffer setup) is visible at a glance
 but not walked through instruction by instruction -- a genuinely
 separate, larger undertaking than anything else in this file's `FIB`
 layer so far, left for its own dedicated pass.
+
+## 173. `FPCLOSE` (`FILEPROC.7`) written whole -- `FCLOSE`'s real target, all four close modes
+
+STRONG INFERENCE, full manual decode of a ~140-instruction routine;
+`params` exact, `locals` two words short.
+
+Where finding 172 found `FPOPEN`'s target too large to attempt this
+session, `FPCLOSE`'s target turned out tractable with the vocabulary
+findings 161-172 already built up -- `STUB49`'s scan-loop idiom,
+`DIRENTRY`'s real offsets, `VOLSEARCH`/`DIRSEARCH`/`DELENTRY`/
+`WRITEDIR`'s real identities, and the `DATEREC` "temp-disk flag"
+sentinel all recur here directly, which is what made a ~140-instruction
+routine readable in one pass where `FPOPEN`'s ~340 wasn't.
+
+**Guard**: only an open, non-terminal file (`F.FISOPEN AND (F.FWINDOW
+<> SYSTERM^.FWINDOW)`) does anything; only block-device files
+(`FISBLKD`) with a sane cached header (`LENGTH(DVID) > 0`) do real
+directory work.
+
+**`CCRUNCH`** shrinks the file to its current write position
+(`FMAXBLK := FNXTBLK`) and marks the header temp (`DACCESS.YEAR :=
+100`) before the shared path runs. `FPNEWBLK` (already written,
+finding 168) flushes any pending soft-buffer write regardless of close
+type.
+
+**Directory update**, gated on `FMODIFIED OR (header temp-marked) OR
+CPURGE` (skip entirely if nothing changed and it's not a purge):
+re-`VOLSEARCH`es the volume (`ILOSTUNIT` on a unit mismatch) and
+re-scans the directory by block range for the matching entry
+(`ILOSTFILE` if not found) -- both exactly `STUB49`'s own idiom. Then:
+
+* `CNORMAL` closing a temp-marked entry, or any `CPURGE`, just
+  `DELENTRY`s it outright.
+* Otherwise, `DIRSEARCH`es by *title* for a same-named conflicting
+  entry and deletes that one first (adjusting the working index if it
+  sat earlier in the directory -- deleting shifts everything after it
+  down by one), decides the entry's `DACCESS` date (stamp `THEDATE`
+  when either side is temp-marked, or when the file was genuinely
+  modified and a real `THEDATE` is available; otherwise keep the
+  directory's existing date unchanged -- three distinct sub-cases,
+  read out fully rather than approximated), finalizes
+  `DLASTBLK`/`DLASTBYTE` from the relative bookkeeping, clears
+  `FMODIFIED`, and writes the whole header back with `WRITEDIR`.
+
+**`CPURGE` with no title** clears the cached volume ID in `UNITABLE`
+too -- the one piece of work that runs even for non-block files,
+outside the `FISBLKD` guard entirely.
+
+**Every path converges** on the same tail regardless of which guard
+failed or which branch ran: `FEOF`/`FEOLN := TRUE`, `FISOPEN := FALSE`.
+
+**`THEDATE`'s global word offset (67) confirmed by probe**
+(`probe_thedate_offset.py`, scratch: a self-assignment through the
+`INITIALIZE` stub) rather than assumed from this file's own already-
+correct declaration comment ("today -- set in FILER or sign-on") --
+the comment turned out right, but this project's own discipline
+(`probe-record-offsets` memory) says confirm the number, not just the
+prose, before trusting it in committed code.
+
+Written into `PASCALSYSTEM.text`. Compiles clean; `params=4` bytes
+exact against the real binary; `locals=8` against the real `12` -- two
+words short, documented not forced, same class of gap as everywhere
+else in this file.

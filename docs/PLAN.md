@@ -633,10 +633,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     three more segment-0 identities along the way by exact frame-size
     match: `32=DIRSEARCH`, `33=SCANTITLE`, `34=DELENTRY`, placing five
     of the file's six "non-fixed forward declarations" against real
-    procedure numbers (only `INSENTRY` still unplaced). `FPCLOSE`'s own
-    target (`FILEPROC.7`, ~140 instructions, several still-unidentified
-    `CXP` calls) remains the other large, unattempted piece of this
-    segment.
+    procedure numbers (only `INSENTRY` still unplaced). `FPCLOSE`
+    (`FILEPROC.7`) is now written whole too (finding 173) -- turned out
+    tractable where `FPOPEN`'s target wasn't, since the vocabulary
+    findings 161-172 built up (`STUB49`'s scan-loop idiom, `DIRENTRY`'s
+    real offsets, `VOLSEARCH`/`DIRSEARCH`/`DELENTRY`/`WRITEDIR`) all
+    recur directly in it: all four `CLOSE` modes (`CNORMAL`/`CLOCK`/
+    `CPURGE`/`CCRUNCH`), directory-entry deletion/replacement, and
+    `DACCESS` date-stamping logic. `params` exact, `locals` two words
+    short. `FILEPROC` now has only `FPOPEN` (arm 2, `FILEPROC.4`, ~340
+    instructions with its own nested helper chain) left unwritten as a
+    body -- everything else in this segment is real. `FIOPRIMS.2`
+    (soft-buffer window advance) remains the other standing gap in the
+    `FIB` layer overall.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
