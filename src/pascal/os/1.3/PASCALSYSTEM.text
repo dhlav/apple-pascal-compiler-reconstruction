@@ -514,14 +514,20 @@ PROGRAM PASCALSYSTEM;
     STUB, not real content. }
   PROCEDURE STUB48; FORWARD;
   { `STUB49`'s real call site (`FBLOCKIO`, finding 161) pushes three
-    words -- `F` itself (the raw `VAR F: FIB` address, not the cached
-    local copy), then two `SLDC 0` constants -- not the one-`INTEGER`
-    placeholder this had. Signature corrected to type-check the real
-    call; the two trailing `INTEGER` params are only known to be
-    constant `0` at this one call site, not derived from any other
-    evidence, and the body is still `STUB49 := 0`, not Apple's real
+    words -- `F` (the raw `VAR F: FIB` address), then two `SLDC 0`
+    constants. A first pass read those as two real trailing `INTEGER`
+    arguments (finding 161's own first draft); a probe of this exact
+    shape (`probe_cbp_shape.py`, scratch: a `FORWARD`-declared
+    `BOOLEAN` function taking one `VAR` parameter, called before its
+    own definition) shows the identical three-push/call/`FJP` pattern
+    with only ONE real argument -- the two `SLDC 0`s are the compiler's
+    own automatic function-result reservation for a call to a
+    not-yet-locally-resolved routine, not caller-supplied arguments.
+    Real signature: one `VAR F: FIB` parameter, `BOOLEAN` result (not
+    `INTEGER` -- `FBLOCKIO`'s own call already treats it as one,
+    finding 161). Body still `STUB49 := FALSE`, not Apple's real
     content. }
-  FUNCTION STUB49(VAR F: FIB; B, C: INTEGER): INTEGER; FORWARD;
+  FUNCTION STUB49(VAR F: FIB): BOOLEAN; FORWARD;
 
   { PASCALSY.50: prompt for and wait until the correct boot volume is
     back in its unit before returning -- `WHILE UNITABLE[SYSCOM^.
@@ -1208,10 +1214,11 @@ PROGRAM PASCALSYSTEM;
     first pass assumed). `RBLOCK`/`I` arrive relative to the file, not
     absolute -- the block-device branch converts by adding/subtracting
     `F.FHEADER.DFIRSTBLK` around the transfer. `STUB49` (still just a
-    stub; signature corrected here to the real 3-argument call this
-    site needs) is called for its side effect only, discarded via `IF
-    <call> <> 0 THEN ;` -- matching the real binary's own call-then-
-    branch-to-the-very-next-instruction shape exactly. The general
+    stub; its real one-`VAR F`-argument, `BOOLEAN`-result signature is
+    finding 161's own correction of a first-pass misreading -- see its
+    own forward declaration comment) is called for its result only,
+    discarded via `IF <call> THEN ;` -- matching the real binary's own
+    call-then-branch-to-the-very-next-instruction shape exactly. The general
     (non-block) branch's trailing-zero trim uses `SCAN` with relop `1`,
     confirmed by probe to mean `<>`, not assumed. Compiles clean (no
     errors) in this file as a whole, but unlike `BLKXFER`, could NOT be
@@ -1233,7 +1240,7 @@ PROGRAM PASCALSYSTEM;
         RBLOCK := RBLOCK + F.FHEADER.DFIRSTBLK;
         IF RBLOCK + NBLOCKS > F.FHEADER.DLASTBLK THEN
           IF NOT DOREAD THEN
-            IF STUB49(F, 0, 0) <> 0 THEN ;
+            IF STUB49(F) THEN ;
         IF RBLOCK + NBLOCKS > F.FHEADER.DLASTBLK THEN
           NBLOCKS := F.FHEADER.DLASTBLK - RBLOCK;
         F.FEOF := RBLOCK >= F.FHEADER.DLASTBLK;
@@ -1417,7 +1424,7 @@ PROGRAM PASCALSYSTEM;
   { STUBS -- procedure numbers 48/49 reserved only, see the forward
     declaration comment above. Not Apple's real content. }
   PROCEDURE STUB48; BEGIN END;
-  FUNCTION STUB49; BEGIN STUB49 := 0 END;
+  FUNCTION STUB49; BEGIN STUB49 := FALSE END;
 
   PROCEDURE WAITSYSVOL;
   VAR DUMMY: CHAR;

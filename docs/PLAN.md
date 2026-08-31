@@ -564,7 +564,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     functional, not just correctly-routed) are the next natural target,
     once `FGET`/`FIOPRIMS.2` are within reach; `STUB49`'s own real
     behavior (the write-time file-extension logic `FBLOCKIO` calls
-    into) is a second option, now that its signature is settled.
+    into) is a second option, now that its signature is settled --
+    corrected again, finding 162: one `VAR F: FIB` parameter,
+    `BOOLEAN` result, not the three-argument reading finding 161 first
+    assumed from the call site (the two extra pushes were the
+    compiler's own result-reservation mechanism for a not-yet-resolved
+    call, not real arguments -- probe-confirmed). Its body caches
+    `&F.FHEADER` the same way `FBLOCKIO` does (word3→local9→local10),
+    a solid starting point for whoever picks it up next, but is
+    otherwise unwalked.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

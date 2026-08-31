@@ -14386,3 +14386,42 @@ therefore labelled STRONG INFERENCE on the strength of the manual
 decode and clean type-checking alone, not cross-checked
 instruction-for-instruction -- the acceptance tier (or a resolved
 quirk) is what would upgrade it.
+
+## 162. `STUB49`'s real arity is one, not three -- the extra pushes were the compiler's own result reservation, not arguments
+
+VERIFIED BINARY FACT for the mechanism (a probe-confirmed compiled
+shape), correcting finding 161's own first-pass reading of `STUB49`'s
+call site.
+
+Finding 161 read `FBLOCKIO`'s `CBP 49` call site (`SLDO 8 / SLDC 0 /
+SLDC 0 / CBP 49`) as three real arguments: `F`, then two `INTEGER`
+zeros. Disassembling `PASCALSY.49` itself (`128K.PASCAL`, addressed)
+shows `params=6 locals=16` (3 words params, matching 3 pushed values)
+-- but word 2 is never referenced anywhere in the body (no `SLDO
+2`/`SRO 2` at all), and word 1 is overwritten immediately
+(`SLDC 1 / SRO 1`, the very first instruction) with no earlier read --
+neither behaves like a real, consumed argument. Word 3 alone is cached
+into a local (`SLDO 3 / SRO 9`) and dereferenced as a `FIB` pointer
+throughout (`SIND 7`, `INC 16` for `&F.FHEADER`, matching `FBLOCKIO`'s
+own established caching pattern) -- the one genuinely used parameter.
+
+Probed directly: a `FORWARD`-declared `BOOLEAN` function taking a
+single `VAR` parameter, called before its own definition (forcing the
+same not-yet-locally-resolved call the real `STUB49` needs), compiles
+to the *identical* three-push shape (`probe_cbp_shape.py`, scratch:
+`SLDL 1 / SLDC 0 / SLDC 0 / CGP 2 / FJP`) with only one real argument.
+The two constant-`0` pushes are the compiler's own automatic
+function-result reservation for a call through the not-yet-resolved
+(`CBP`/`CGP`-style) path -- invisible for an already-resolved `CLP`
+call (as `BLKXFER`'s own call sites show, no extra pushes), but made
+explicit by the caller for this kind of call. Not a caller-supplied
+argument at all.
+
+Corrected: `STUB49`'s real signature is `FUNCTION STUB49(VAR F: FIB):
+BOOLEAN;`, one parameter. `FBLOCKIO`'s own call site simplifies from
+`IF STUB49(F, 0, 0) <> 0 THEN ;` to `IF STUB49(F) THEN ;` -- the exact
+same real-binary shape, just no longer misread as extra arguments.
+Body remains `STUB49 := FALSE`, still not Apple's real content; its
+own actual behavior (past caching `&F.FHEADER` into local 10, matching
+`FBLOCKIO`'s pattern -- consistent with the file-extension role
+finding 161 already inferred from the call site) is unwalked.
