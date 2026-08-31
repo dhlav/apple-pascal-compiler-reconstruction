@@ -15335,3 +15335,34 @@ closer read before compiling a candidate, and the parameter-3 type
 question above blocks writing the signature at all. Multi-session
 scale, as finding 172 already said -- this pass narrows what's left
 rather than closing it.
+
+**Follow-up on the open blocker**: checked whether `FILEPROC.1`'s own
+dispatch is the mismatch (a bad instruction at the call site) rather
+than `FPOPEN`'s declared parameter type -- it isn't. `FILEPROC.1`'s
+real `OP=2` arm (`SLDO 5 / SLDO 4 / SLDO 3 / SLDO 2 / CLP 4`) is
+already `VERIFIED BINARY FACT` against the real binary (finding 166),
+confirming `ARGBOOL` really is pushed into this exact parameter slot.
+And the only caller of `FILEPROC` with `OP=2` in this whole
+reconstruction is `FOPEN` itself (`FILEPROC(2, F, FTITLE, FOPENOLD,
+JUNK, 0)`, `PASCALSYSTEM.text:1561`), passing `FOPENOLD` straight
+through with no transformation -- and `FOPEN`'s own public signature
+(`PASCALSYSTEM.text:431-432`, `FOPENOLD: BOOLEAN`) is the manual's own
+documented interface, about as solid a source as this project has for
+any type.
+
+So the contradiction survives both checks: a genuinely two-valued
+`BOOLEAN`, passed unchanged through an already-`VERIFIED` call chain,
+somehow gets compared against `1` (greater-than), `2`, and `4` inside
+`FPOPEN` itself, then has that comparison's *result* written back over
+it (`STL 2` at addr 656). The likeliest reading, not yet confirmed: the
+manual's plain-English "boolean" description doesn't necessarily mean
+Apple's real declared type is a two-valued `BOOLEAN` -- a small ordinal
+subrange (documented values `0`/`1` matching `FALSE`/`TRUE` for public
+callers, with `2` and `4` reserved for internal system-level calls this
+project hasn't found a caller for yet) would satisfy every constraint
+observed so far without contradicting the manual's own description of
+*documented* behavior. Left open rather than resolved -- the next step
+would be finding what internal Apple code (the `FILER`, say) calls
+`FOPEN`/`FILEPROC` with something other than a plain `TRUE`/`FALSE`,
+or reading further into `FPOPEN`'s own addr 658-676 (what the derived
+boolean at `STL 2` controls) for a semantic clue instead.
