@@ -14296,3 +14296,93 @@ block-number value) and was not written down as fact. This is real
 remaining work, not a formality: the two branch bodies are most of
 `FBLOCKIO`'s ~110 instructions, and this finding only accounts for the
 ~15 that establish which word is which parameter.
+
+## 161. `FBLOCKIO`'s real body written whole -- the offset-12/13 confusion resolved, `STUB49`'s real arity found, a fast-tier quirk documented
+
+STRONG INFERENCE (not the higher-confidence exact-instruction match
+finding 159 got for `BLKXFER`), built from a probe-verified correction
+to finding 160's own field offsets plus a full manual decode of
+`PASCALSY.28`'s addressed disassembly.
+
+**The offset-12/13 confusion, resolved by probe, not by re-reading
+harder.** Finding 160 flagged that hand-counting `FIB`'s field
+offsets put `FMODIFIED` at 12 and got a type mismatch. The actual bug
+was hand-counting at all: `VID` (`FVID`'s type) is `STRING[VIDLENG]`,
+an *8-byte, 4-word* field, not the 1-word scalar a quick count assumes.
+Compiling this file's own real `FIB`/`DIRENTRY`/`VID` declarations
+standalone (`probe_fib_offsets.py`, scratch) and reading the `INC n`
+operand the host compiler emits for each named-field access settles
+every offset directly: `FUNIT`=7, `FVID`=8..11, **`FMAXBLK`=12,
+`FNXTBLK`=13, `FREPTCNT`=14** (reversed from declaration order --
+`FREPTCNT, FNXTBLK, FMAXBLK` was declared in that order but lands
+14,13,12 -- the same first-declared-gets-the-higher-address reversal
+already established for parameter clauses, finding 156a, now shown to
+apply to combined *record field* clauses too), `FMODIFIED`=15,
+`FHEADER`=16 (so `FHEADER.DFIRSTBLK`=16, `.DLASTBLK`=17). With these,
+every `IND`/`SIND 12`/`13` in the real disassembly reads as a coherent
+"is `FNXTBLK` now past the recorded `FMAXBLK` high-water mark, and if
+so raise it" check -- not the type-mismatched nonsense the wrong
+offsets produced.
+
+**`STUB49`'s real call site needs three arguments, not one.** `CBP 49`
+at `0x3a3` pushes `F` (the raw `VAR F: FIB` address, not the local-9
+cache), then two `SLDC 0` constants -- three words, not the
+placeholder's single `INTEGER`. `STUB49`'s forward declaration and stub
+body are updated to `FUNCTION STUB49(VAR F: FIB; B, C: INTEGER):
+INTEGER;` so the real call site type-checks; the body is still `STUB49
+:= 0`, and the two trailing arguments are known to be constant `0` at
+this one call site only, nothing more.
+
+**The full body, decoded instruction by instruction from the addressed
+disassembly** (guard clause, then two branches on `F.FISBLKD`):
+
+* Guard: `IF NOT (F.FISOPEN AND (NBLOCKS >= 0))` -- real binary jumps
+  to `jtab-12` on failure, an internal trap address rather than an
+  ordinary fall-through; not reproduced (an ordinary `IF` with no
+  `ELSE` was used instead, since what that trap actually does isn't
+  established).
+* Block-device branch (`F.FISBLKD`): `RBLOCK` defaults to `F.FNXTBLK`
+  when negative, then converts from file-relative to absolute by
+  adding `F.FHEADER.DFIRSTBLK`. Two *separate* (not `AND`-combined --
+  confirmed by two independent `FJP`s with no `LAND` between them,
+  consistent with this file's established no-short-circuit rule)
+  bounds checks against `F.FHEADER.DLASTBLK` bracket a
+  write-only file-extension attempt through `STUB49`, whose result is
+  evaluated and discarded (`IF STUB49(...) <> 0 THEN ;` -- the real
+  binary's own `CBP 49` immediately followed by an `FJP` to the very
+  next instruction, an unmistakable "call for the side effect, ignore
+  the boolean" shape). After clamping `NBLOCKS`, sets `F.FEOF` and (if
+  not already at EOF) calls `BLKXFER`, then on success updates
+  `F.FMODIFIED` (writes only), `F.FEOF` again, converts `RBLOCK` back
+  to file-relative into `F.FNXTBLK`, and raises `F.FMAXBLK` if
+  `FNXTBLK` now exceeds it.
+* General (non-block) branch: calls `BLKXFER` directly with the raw
+  parameters (no relative/absolute conversion -- general files don't
+  have a `DFIRSTBLK` origin the same way), then on a successful *read*
+  only, trims trailing zero-padding from the last (possibly partial)
+  block with `SCAN(-LEN, <>CHR(0), A[I+LEN-1])` -- relop `1` confirmed
+  by probe (`probe_scan_relop.py`, scratch) to mean `<>`, not assumed
+  -- and converts the trimmed byte count back to a ceiling-divided
+  block count for both the function result and a final `F.FEOF` check.
+  Writes skip all of this and simply report `NBLOCKS` back unchanged.
+
+**Written into `PASCALSYSTEM.text` and compiles clean** (no errors,
+the file's usual handful of pre-existing benign warnings only).
+**Not verified the way `BLKXFER` was**, and this is the honest
+difference from finding 159: `tools/xcompile.py` silently omits
+`FBLOCKIO` from its own compiled codefile's procedure table --
+confirmed true even for the one-line stub this body replaces (checked
+against the pre-session revision), and confirmed NOT to be simple
+dead-code elimination of an uncalled routine (a minimal repro with an
+uncalled `FORWARD` function compiles it anyway) or an intervening
+`SEGMENT PROCEDURE` between the forward declaration and the body (a
+minimal repro with one in between still compiles the routine). The
+exact trigger inside this ~1400-line file is not found; a targeted
+attempt to bisect it by stubbing `FILEPROC` was abandoned after a
+regex-based edit corrupted an unrelated block rather than push further
+into what is, per this project's own tiering, a fast-tier
+quirk that "can only falsify, never accept" regardless. This body is
+therefore labelled STRONG INFERENCE on the strength of the manual
+decode and clean type-checking alone, not cross-checked
+instruction-for-instruction -- the acceptance tier (or a resolved
+quirk) is what would upgrade it.

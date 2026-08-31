@@ -550,22 +550,21 @@ a route end to end; everything else is a straight read-and-rebuild.
     55 -- the host compiler has never assigned `FBLOCKIO`'s own stub a
     number at all (confirmed pre-existing, not caused by this change),
     so whatever occupies real procedures 53/54 is still unplaced.
-    `FBLOCKIO`'s own body (the outer wrapper that calls `BLKXFER`) is
-    still `BEGIN FBLOCKIO := 0 END`, but its full eight-word parameter
-    mapping is now solid (finding 160): word1=result, word2=unused,
-    word3=`DOREAD`, word4=`RBLOCK`, word5=`NBLOCKS`, word6=`I`,
-    word7=`A`, word8=`F` (cached into local9). What's left is the
-    actual body -- two large branches (`F^.FISBLKD` true/false, block-
-    device vs. general-file paths) that do real work past the `CLP 55`
-    call: bounds-checking `RBLOCK`/`NBLOCKS` against
-    `F^.FHEADER.DFIRSTBLK`, and (in the non-block branch) converting a
-    record-relative position to blocks+bytes via `*512`/`DIV 512`
-    arithmetic. Local 10's role and the `F^.FHEADER` offset-12/13
-    field semantics aren't pinned down yet -- that's the concrete next
-    step, not a fresh unknown. `FILEPROC`'s own arm bodies (2/3/4/7 --
-    makes `FRESET`/`FOPEN`/`FCLOSE` actually functional, not just
-    correctly-routed) come after that, once `FGET`/`FIOPRIMS.2` are
-    within reach.
+    `FBLOCKIO`'s own body is now written whole (finding 161) and
+    compiles clean, but is labelled STRONG INFERENCE rather than
+    verified: unlike `BLKXFER`, its shape could not be cross-checked
+    instruction-for-instruction because `tools/xcompile.py` silently
+    omits `FBLOCKIO` from its own compiled procedure table for reasons
+    not tracked down (confirmed not dead-code elimination, not a
+    `SEGMENT PROCEDURE` in between -- see finding 161's own note). The
+    acceptance tier is what would actually confirm this one. `STUB49`'s
+    real 3-argument signature is now known (`VAR F: FIB; B, C:
+    INTEGER`) even though its body is still a stub. `FILEPROC`'s own
+    arm bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
+    functional, not just correctly-routed) are the next natural target,
+    once `FGET`/`FIOPRIMS.2` are within reach; `STUB49`'s own real
+    behavior (the write-time file-extension logic `FBLOCKIO` calls
+    into) is a second option, now that its signature is settled.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
