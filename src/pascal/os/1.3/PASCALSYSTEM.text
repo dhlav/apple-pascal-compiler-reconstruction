@@ -752,8 +752,73 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: INTEGER);
     BEGIN END;
 
+    { `FPTITLE` = `FILEPROC.8`, the file-title normalizer (finding
+      167), decoded from its own addressed disassembly
+      (`SYSTEM.PASCAL` 1.3) and independently already confirmed real
+      by `probe_osproc43.py` (blank deletion, a trailing `.`, the
+      `[...]` size spec, `.TEXT`/`.CODE`, `ORD(c) - 32` upshifting, the
+      1.3-only control-character clamp -- all present here, this is
+      the transcription of what that probe already established
+      structurally). Deletes every blank via a `SPOS`/`SDELETE` loop;
+      if the name already ends in `.`, just truncates that dot and
+      stops (no suffix appended). Otherwise: cuts any trailing `[...]`
+      size specification aside (`SPOS`/`SCOPY`/`SDELETE`, `BRACKET`),
+      and -- only if the name has no `:` (a volume-name prefix is left
+      completely alone) -- upshifts every letter and clamps control
+      characters to `?`, appends `.TEXT`/`.CODE` per `SUFFIX` if `N`
+      leaves room, then re-appends the saved `BRACKET` suffix.
+      `SCONCAT`'s own already-written body (this file, above) does its
+      own bounds check against `N`, so this doesn't reproduce the real
+      binary's separate `SLDL 1 / SLDC 5 / SBI / LEQI` guard
+      instruction-for-instruction -- same-shaped simplification as
+      `FILEPROC.1`'s own arm 3 (finding 166). Compiles clean:
+      `params=12` bytes exact against the real binary; `locals=170`
+      bytes against the real `180` -- ten bytes (five words) short,
+      documented not forced, the same class of small gap already
+      accepted elsewhere in this file. }
     PROCEDURE FPTITLE(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
-    BEGIN END;
+      VAR
+        P, L, I: INTEGER;
+        BRACKET, SUFFIXSTR: STRING;
+    BEGIN
+      P := SPOS(' ', S);
+      WHILE P > 0 DO
+      BEGIN
+        SDELETE(1, P, S);
+        P := SPOS(' ', S)
+      END;
+      IF LENGTH(S) > 0 THEN
+        IF S[LENGTH(S)] = '.' THEN
+          S[0] := CHR(LENGTH(S) - 1)
+        ELSE
+        BEGIN
+          BRACKET := '';
+          P := SPOS('[', S);
+          IF P > 0 THEN
+          BEGIN
+            L := (LENGTH(S) - P) + 1;
+            SCOPY(L, P, S, BRACKET);
+            SDELETE(L, P, S)
+          END;
+          IF SPOS(':', S) = 0 THEN
+          BEGIN
+            IF SUFFIX THEN
+              SUFFIXSTR := '.CODE'
+            ELSE
+              SUFFIXSTR := '.TEXT';
+            FOR I := 1 TO LENGTH(S) DO
+            BEGIN
+              IF (S[I] >= 'a') AND (S[I] <= 'z') THEN
+                S[I] := CHR(ORD(S[I]) - 32);
+              IF S[I] < ' ' THEN
+                S[I] := '?'
+            END;
+            IF (N - LENGTH(S)) >= 5 THEN
+              SCONCAT(N, S, SUFFIXSTR);
+            SCONCAT(N, S, BRACKET)
+          END
+        END
+    END;
 
   { `FILEPROC.1`'s own real dispatch (finding 166), read directly from
     finding 156b's per-arm word mapping. Written as a plain `CASE OP

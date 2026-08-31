@@ -14674,3 +14674,58 @@ chased further here either. The four arm bodies themselves (`FPRESET`/
 one with the most existing groundwork (`FILEPROC.8`, already
 independently confirmed real behavior by `probe_osproc43.py`) but its
 actual body isn't transcribed into source yet.
+
+## 167. `FPTITLE` (`FILEPROC.8`) written for real -- `params` exact, `locals` five words short
+
+STRONG INFERENCE, built from a full manual decode of the real
+disassembly and cross-checked against `probe_osproc43.py`'s own
+independent, already-established facts about this exact procedure
+(which check the real binary directly, not this reconstruction).
+
+Disassembled `FILEPROC.8` (`SYSTEM.PASCAL` 1.3, addressed) end to end.
+First identified which segment-0 procedures its four `CXP 0,n` calls
+reach: `n=23,24,25,26,27` complete, in that order, as `SCONCAT`,
+`SINSERT`, `SCOPY`, `SDELETE`, `SPOS` respectively (`SPOS`'s own
+44-word-locals shape, already noted in this file's own comments, picks
+out `27` uniquely; the other four follow from completion order and
+matching `param`/`data` sizes against their own already-written real
+bodies above). With those identified, the whole routine reads as:
+
+* A `SPOS(' ', S)`/`SDELETE` loop deleting every blank from `S`.
+* `IF S[LENGTH(S)] = '.' THEN` just truncate that trailing dot and
+  stop -- a first read of the branch had the polarity backwards (an
+  `NEQI`+`FJP` reads as "jump away when *not* ending in `.`", not "when
+  it does"), caught by re-checking which target address holds the
+  short truncate-and-exit code versus the long remaining logic.
+* Otherwise: `SPOS('[', S)` finds a trailing `[...]` size
+  specification, if present `SCOPY`s it aside into `BRACKET` and
+  `SDELETE`s it from `S` (LSA-then-SAS clears `BRACKET` to `''`
+  unconditionally first, so "not found" is handled for free).
+* `SPOS(':', S) = 0` gates everything past this point -- a name with a
+  `:` (a volume prefix) is left completely alone, matching the
+  probe's own "leaves a volume name alone".
+* Otherwise: picks `.CODE`/`.TEXT` by `SUFFIX`, upshifts every letter
+  (`ORD(c) - 32` for `'a'..'z'`) and clamps control characters to `?`
+  (this file targets 1.3 specifically, so the clamp is unconditional
+  here -- 1.1 doesn't have it, `probe_osproc43.py`'s own check), then
+  `SCONCAT`s the suffix on if `N` leaves room and re-`SCONCAT`s
+  `BRACKET` back on.
+
+**One deliberate simplification, not an oversight**: `SCONCAT`'s own
+already-written real body (this file) does its own bounds check
+(`IF (LENGTH(SRC)+LENGTH(DEST)) <= DESTLENG THEN`), so calling it with
+`DESTLENG = N` directly makes the real binary's own separate `SLDL 1 /
+SLDC 5 / SBI / LEQI` guard instruction redundant for this
+reconstruction's types -- the same shape of simplification finding 166
+already made for `FILEPROC.1`'s own arm 3, not chased to an exact
+instruction match.
+
+Compiles clean. `params=12` bytes -- exact match to the real binary.
+`locals=170` bytes against the real `180` -- ten bytes (five words)
+short, likely one or two additional scratch temporaries the real body
+uses that this reconstruction's more direct `SCONCAT`-based approach
+doesn't need; documented, not forced, the same class of small gap this
+file already accepts elsewhere (`FRESET`/`FOPEN`/`FCLOSE`, finding
+157). `probe_osproc43.py`'s own ten checks against the real binaries
+(unaffected by anything in this reconstruction, since it reads
+`evidence/` directly) still all pass.
