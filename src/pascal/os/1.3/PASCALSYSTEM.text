@@ -997,6 +997,125 @@ PROGRAM PASCALSYSTEM;
 
     PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
                      JUNK: FIBP);
+
+      { `FPALLOC` = `FILEPROC.5`, `FPOPEN`'s own nested free-space
+        search (finding 175, body written per finding 176). Given a new
+        file's name/kind/requested size and the directory to search,
+        finds where to put it and inserts the entry via `INSENTRY`,
+        returning the chosen index (`0` on failure). Two totally
+        different algorithms depending on `FSIZE`'s sign at entry:
+
+        - `FSIZE > 0` (an explicit size, `NAME.CODE[nnn]`): a plain
+          first-fit scan over `1..DNUMFILES`, taking the first gap
+          (`DFIRSTBLK[i] - DLASTBLK[i-1]`) at least `FSIZE` blocks wide.
+        - `FSIZE <= 0` (`[*]`, or no size given): `FPGAP` (below) tracks
+          the *two* largest gaps across the whole directory (including
+          the gap after the last file, up to the volume's own
+          `DEOVBLK`); the final choice is the second-largest gap if
+          it's at least half the largest, else half the largest
+          (rounded up) -- this project's own `CLAUDE.md` already
+          documents this exact algorithm as UCSD's `[*]` file-size
+          rule ("reserves the second-largest contiguous area, or half
+          the largest, whichever is more"), a real independent
+          confirmation that this reading is right, not just plausible.
+
+        A full `DNUMFILES = 77` directory (this project's own
+        already-documented 77-file volume cap) forces failure
+        (`BESTIDX := 0`) regardless of which path found a candidate.
+
+        `FTID` is a `VAR` parameter -- not a value one -- confirmed by
+        a locals-size mismatch: a value `STRING[15]` parameter costs
+        the callee an 8-word local shadow copy the real binary's own
+        `locals=40` doesn't have room for; making it `VAR` closes the
+        gap to one word. `FPGAP`'s own three parameters, decoded from
+        its real call sites, follow the parameter-list reversal rule
+        (finding 175's own new memory) rather than naive push order.
+        Compiles clean: `params` exact for both, **instruction count
+        exact** (`177`/`25`) against the real binary for both -- the
+        closest match anywhere in this whole forward-declared-far-
+        from-body class of routine; `locals` exact for `FPGAP`, one
+        word short for `FPALLOC` (the `NEWENTRY` `DACCESS`/`DTID`
+        packed-field group almost certainly accounts for it, same
+        class of gap as everywhere else in this file, not chased
+        further). }
+      FUNCTION FPALLOC(VAR FTID: TID; FSIZE: INTEGER; FKIND: FILEKIND;
+                        FDIR: DIRP): DIRRANGE;
+        VAR
+          NUMFILES, I, BESTIDX, SECONDIDX, SECONDSIZE: INTEGER;
+          NEG: BOOLEAN;
+          NEWENTRY: DIRENTRY;
+
+        PROCEDURE FPGAP(GAPIDX, GAPEND, GAPSTART: INTEGER);
+          VAR GAP: INTEGER;
+        BEGIN
+          GAP := GAPSTART - GAPEND;
+          IF GAP > FSIZE THEN
+          BEGIN
+            SECONDIDX := BESTIDX;
+            SECONDSIZE := FSIZE;
+            BESTIDX := GAPIDX;
+            FSIZE := GAP
+          END
+          ELSE IF GAP > SECONDSIZE THEN
+          BEGIN
+            SECONDSIZE := GAP;
+            SECONDIDX := GAPIDX
+          END
+        END;
+
+      BEGIN
+        NUMFILES := FDIR^[0].DNUMFILES;
+        BESTIDX := 0;
+        SECONDIDX := 0;
+        SECONDSIZE := 0;
+        IF FSIZE > 0 THEN
+        BEGIN
+          I := 1;
+          WHILE I <= NUMFILES DO
+          BEGIN
+            IF (FDIR^[I].DFIRSTBLK - FDIR^[I - 1].DLASTBLK) >= FSIZE THEN
+            BEGIN
+              BESTIDX := I;
+              I := NUMFILES
+            END;
+            I := I + 1
+          END
+        END
+        ELSE
+        BEGIN
+          NEG := FSIZE < 0;
+          I := 1;
+          WHILE I <= NUMFILES DO
+          BEGIN
+            FPGAP(I, FDIR^[I - 1].DLASTBLK, FDIR^[I].DFIRSTBLK);
+            I := I + 1
+          END;
+          FPGAP(NUMFILES + 1, FDIR^[NUMFILES].DLASTBLK, FDIR^[0].DEOVBLK);
+          IF NEG THEN
+            IF (FSIZE DIV 2) <= SECONDSIZE THEN
+            BEGIN
+              FSIZE := SECONDSIZE;
+              BESTIDX := SECONDIDX
+            END
+            ELSE
+              FSIZE := (FSIZE + 1) DIV 2
+        END;
+        IF NUMFILES = 77 THEN BESTIDX := 0;
+        IF BESTIDX > 0 THEN
+        BEGIN
+          NEWENTRY.DFIRSTBLK := FDIR^[BESTIDX - 1].DLASTBLK;
+          NEWENTRY.DLASTBLK := NEWENTRY.DFIRSTBLK + FSIZE;
+          NEWENTRY.DFKIND := FKIND;
+          NEWENTRY.DTID := FTID;
+          NEWENTRY.DLASTBYTE := 512;
+          NEWENTRY.DACCESS.MONTH := 0;
+          NEWENTRY.DACCESS.DAY := 0;
+          NEWENTRY.DACCESS.YEAR := 100;
+          INSENTRY(NEWENTRY, BESTIDX, FDIR)
+        END;
+        FPALLOC := BESTIDX
+      END;
+
     BEGIN END;
 
     { `FPCLOSE` = `FILEPROC.7`, `FCLOSE`'s real target (finding 173),

@@ -15197,8 +15197,53 @@ DIRRANGE; FDIR: DIRP)`'s own already-forward-declared signature.
 six of this file's non-fixed forward declarations are now placed
 against real procedure numbers.
 
-Not written into `PASCALSYSTEM.text` -- `.5`/`.6` together are ~200
-instructions and `.4` (`FPOPEN` itself, which calls into `.5`) is 472
-more; genuinely multi-session scale, same reasoning finding 172 already
-gave for not forcing this. `docs/PLAN.md` updated to record this
-structural progress rather than claim the body is written.
+Written into `PASCALSYSTEM.text` this session after all (finding 176,
+below) -- see there for the body and the exact-instruction-count match.
+`.4` (`FPOPEN` itself, 472 instructions) remains unwritten; genuinely
+multi-session scale, same reasoning finding 172 already gave.
+
+## 176. `FPALLOC`/`FPGAP` (`FILEPROC.5`/`.6`) written whole -- exact instruction-count match against the real binary
+
+STRONG INFERENCE; `params` exact for both, `locals` exact for `FPGAP`
+and one word short for `FPALLOC`, **instruction count exact** (`177`/
+`25`) against the real binary for both -- the tightest match anywhere
+in this file's whole forward-declared-far-from-body class.
+
+Finding 175 mapped this structurally but stopped short of writing it.
+Turning that reading into compiled source surfaced one real correction
+and confirmed the rest:
+
+**`FTID` is a `VAR` parameter, not a value one.** The first compiled
+candidate (`FTID: TID`, a plain value `STRING[15]`) produced
+`locals=54` against the real `40` -- 14 bytes over, the wrong direction
+for this file's usual "close, a word or two short" gap. Tracing it
+down: a value `STRING[15]` parameter costs the callee an **8-word
+local shadow copy** at procedure entry (`LLA 7; SLDL 6; SAS 15`,
+confirmed by an isolated probe that wrote nothing to that parameter at
+all and still saw the copy emitted) -- UCSD's calling convention
+copies a value string parameter into its own local storage,
+unconditionally. Declaring `VAR FTID: TID` instead (an address, no
+copy) dropped `locals` to `38`, one word short of the real `40` --
+back to this file's normal gap size, not an inflation.
+
+**`FPGAP`'s own accumulator local (`GAP`) matches exactly once
+restored**: the very first candidate inlined `GAPSTART - GAPEND`
+everywhere instead of caching it, landing on `locals=0` against the
+real `2`. Adding back `VAR GAP: INTEGER` (matching the structural read
+finding 175 already proposed and this pass initially dropped for
+simplicity) closed it to an exact match.
+
+**Everything else survived unchanged from finding 175's own read**:
+the `FSIZE > 0` first-fit scan vs. `FSIZE <= 0` two-largest-gap search
+(`FPGAP`, matching this project's own documented `[*]` allocation
+algorithm), the `DNUMFILES = 77` full-directory guard, and the
+`NEWENTRY` construction feeding `INSENTRY`. `FPGAP`'s own three
+parameters (`GAPIDX, GAPEND, GAPSTART`, in that declaration order) were
+chosen specifically to reproduce the real call sites' push order under
+the now-confirmed parameter-list reversal rule (finding 175's own
+`param-reversal-applies-to-calls` memory) -- `GAPSTART` (last declared)
+lands on `P1`, matching `FPGAP`'s own `P1 - P2` gap computation.
+
+`FILEPROC` now has only `.4` (`FPOPEN` itself, 472 instructions, the
+one procedure that actually calls `FPALLOC`) left unwritten anywhere in
+the file.

@@ -652,17 +652,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     this host tool where the real binary's own access is a plain word).
     That second gap is latent in every already-written `DLASTBYTE`
     reference in this file (`STUB49`, `FPCLOSE`) too, previously
-    undetected. `FPOPEN` is now the only body left unwritten anywhere
-    in `FILEPROC`/`FIOPRIMS`. Its two nested helpers (`FILEPROC.5`/`.6`,
-    177+25 instructions) are now read in structural outline (finding
-    175, not written): a free-space-for-a-new-file search tracking the
-    largest and second-largest gaps between directory entries, matching
-    this project's own documented UCSD `[*]` allocation algorithm --
-    and along the way `PASCALSY.35 = INSENTRY` was confirmed, placing
-    the last of this file's six non-fixed forward declarations. `.4`
-    (`FPOPEN` itself, 472 instructions, calls into `.5`) is still
-    entirely unread past finding 172's own high-level mapping --
-    genuinely multi-session scale.
+    undetected. `FPOPEN`'s own two nested helpers are now written for
+    real too (`FPALLOC`/`FPGAP` = `FILEPROC.5`/`.6`, findings 175-176):
+    a free-space-for-a-new-file search tracking the largest and
+    second-largest gaps between directory entries, matching this
+    project's own documented UCSD `[*]` allocation algorithm -- `params`
+    exact, instruction count exact (`177`/`25`) against the real binary
+    for both, the tightest match anywhere in this file's whole
+    forward-declared-far-from-body class. Along the way `PASCALSY.35 =
+    INSENTRY` was confirmed, placing the last of this file's six
+    non-fixed forward declarations, and `FTID` had to become a `VAR`
+    parameter (a value `STRING` costs the callee an 8-word local shadow
+    copy this file's own routines never carry). `.4` (`FPOPEN` itself,
+    472 instructions, the one procedure that actually calls `FPALLOC`)
+    is now the only body left unwritten anywhere in
+    `FILEPROC`/`FIOPRIMS` -- still entirely unread past finding 172's
+    own high-level mapping; genuinely multi-session scale.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
