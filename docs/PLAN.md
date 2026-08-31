@@ -666,8 +666,23 @@ a route end to end; everything else is a straight read-and-rebuild.
     copy this file's own routines never carry). `.4` (`FPOPEN` itself,
     472 instructions, the one procedure that actually calls `FPALLOC`)
     is now the only body left unwritten anywhere in
-    `FILEPROC`/`FIOPRIMS` -- still entirely unread past finding 172's
-    own high-level mapping; genuinely multi-session scale.
+    `FILEPROC`/`FIOPRIMS`. Its full disassembly is now read in
+    structural outline (finding 177): every real branch identified by
+    known call sites (`SCANTITLE`/`VOLSEARCH`/`DIRSEARCH`/`FPALLOC`/
+    `WRITEDIR`/`FPRESET`/`FPNEWBLK`) and cross-checked against the
+    `IORSLTWD` enum's own error names, which line up with what each
+    branch is actually doing -- a `RESET`-vs-`REWRITE` split on
+    `DIRSEARCH`'s result, directory-entry population, and a soft-buffer
+    setup tail. **One open blocker**: the stub's guessed third
+    parameter (`OLDOK: BOOLEAN`) is contradicted by the real bytecode
+    (`SLDL 2; SLDC 1; GRTI`, then compared against `2`/`4` -- no
+    two-valued `BOOLEAN` produces that), so the real type needs settling
+    -- possibly also implicating `FILEPROC.1`'s own dispatcher call
+    site (finding 166) -- before a candidate body can even declare the
+    right signature. Several stretches (a `MARK`/`RELEASE` heap-scratch
+    block, the exact `FHEADER` population order) still need a closer
+    read too. Genuinely multi-session scale, as finding 172 already
+    said -- this pass narrows what's left rather than closing it.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

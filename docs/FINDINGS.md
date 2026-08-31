@@ -15247,3 +15247,91 @@ lands on `P1`, matching `FPGAP`'s own `P1 - P2` gap computation.
 `FILEPROC` now has only `.4` (`FPOPEN` itself, 472 instructions, the
 one procedure that actually calls `FPALLOC`) left unwritten anywhere in
 the file.
+
+## 177. `FPOPEN`'s full 472-instruction body read in structural outline -- every real branch identified, no source written yet
+
+STRONG INFERENCE for the overall shape; VERIFIED BINARY FACT for the
+parameter-offset mapping and the `SYSCOM^.IORSLT` idiom (both settled
+by clean standalone probes, not inferred). No source written this
+session -- this is a read-through of the complete real disassembly
+(`128K.PASCAL`, addressed, addr 608-1358), the first time `.4` itself
+(as opposed to its helpers) has been examined past finding 172's
+high-level `params`/`locals`/instruction-count mapping.
+
+**Confirmed mechanically**: `SYSCOM^.IORSLT := INOERROR` at entry
+compiles to exactly `LOD 2,1; SLDC 0; STO` -- checked with an isolated
+probe inside this same segment, settling `LOD 2,1` as `SYSCOM^.IORSLT`
+for any lex-1 procedure in `FILEPROC` (two lex levels up: past the
+procedure's own frame, then past the segment procedure's). The four
+formal parameters follow the same reversal rule confirmed in finding
+175/176 (a clean `VAR,VAR,BOOLEAN,pointer` probe matching exactly):
+first-declared `F` is `P4`, then `TITLE`=`P3`, the third parameter
+(stub calls it `OLDOK`)=`P2`, `JUNK`=`P1`.
+
+**Open question, not resolved**: the stub's own guessed signature
+(`OLDOK: BOOLEAN`) is contradicted by the real bytecode. `IF OLDOK
+THEN` for a genuine `BOOLEAN` compiles to a bare `SLDL n; FJP` (checked
+with the same clean probe) -- but the real binary tests this parameter
+with `SLDL 2; SLDC 1; GRTI` (greater-than-1) at entry, and later with
+two `EQUI`s against `2` and `4`, `LOR`'d together. A true two-valued
+`BOOLEAN` cannot produce any of these comparisons. Either the third
+parameter's real type is a small `INTEGER`/enum (not `BOOLEAN`), or
+`FILEPROC.1`'s own already-written dispatcher (finding 166, `FPOPEN(F,
+ARGSTR, ARGBOOL, ARGPTR)`) has a type mismatch at this exact call site
+that hasn't been checked at the instruction level either. Needs
+resolving before this parameter can be written correctly -- flagged
+rather than guessed past.
+
+**The rest of the body's shape**, matching known call identities and
+the `IORSLTWD` enum (`docs/PASCALSYSTEM.text:108-111`) by name, not
+just position -- a nice piece of self-corroborating evidence, since
+every error code produced lines up with what the routine is actually
+doing at that point:
+
+* Guard: if `F^.FISOPEN`, fail with `INOTCLOSED` (12) -- can't open an
+  already-open file.
+* Parses the title via `SCANTITLE` (`CXP 0,33`); on failure, falls
+  through to the routine's own tail and fails with `IBADTITLE` (7) --
+  the very last three instructions in the procedure.
+* A `MARK`/`RELEASE` (`CSP 32`/`CSP 33`) heap-scratch bracket around a
+  string-equality check and a `MOVELEFT`/`UNITWRITE`-adjacent block --
+  not yet decoded in detail, plausibly building a temporary title
+  buffer for volume lookup.
+* `VOLSEARCH` (`CXP 0,30`); `0` result fails with `INOUNIT` (9).
+* Populates several of `F^`'s own fields directly (`FISBLKD`,
+  `FMODIFIED`, `FUNIT`, `FSOFTBUF`, ...) ahead of the directory search.
+* `DIRSEARCH` (`CXP 0,32`); the third parameter (the still-unresolved
+  one, above) branches the result check two ways -- found-required vs.
+  not-found-required, matching a `RESET`-vs-`REWRITE` split: failing to
+  find when required gives `INOFILE` (10); finding when a fresh file
+  was required gives `IDUPFILE` (11).
+* On a found entry: `MOV 13` copies the real `DIRENTRY` (matching its
+  already-established 13-word size) into `F^.FHEADER`.
+* On no entry found (create path): `FPALLOC` (`CLP 5`, this session's
+  own finding 176) allocates one; `0` result fails with `INOROOM` (8).
+  A further `WRITEDIR` (`CXP 0,31`) call and a second `MOV 13` follow
+  for the newly-created case.
+* A further title/`JUNK` check fails again with `INOFILE` (10) --
+  distinct code path from the `DIRSEARCH` one above, not yet fully
+  traced.
+* A long tail (addr 1050-1274) populates the rest of `F^`'s soft-buffer
+  fields (`FMAXBLK`, `FNXTBLK`, a packed `DACCESS` set, `FSOFTBUF`
+  branching), zero-fills a fresh block via `FILLCHAR`/`UNITWRITE`
+  (`CSP 10`/`CSP 6`) for the newly-created case, then calls into one of
+  this session's own already-written siblings -- `CGP 3` (`FPRESET`)
+  or `CGP 2` (`FPNEWBLK`), chosen by the still-unresolved parameter --
+  to finish establishing the block/window state exactly the way an
+  already-open file would expect.
+* Tail: releases the heap mark, a final `VOLSEARCH`/`UNITREAD` (`CSP
+  5`) pass (plausibly priming the first block for reading), and falls
+  into the shared `IBADTITLE` exit if nothing else already returned.
+
+Not written into `PASCALSYSTEM.text` -- roughly two-thirds of the
+routine's branches are outlined above at the level SCANTITLE/VOLSEARCH/
+DIRSEARCH/FPALLOC/INSENTRY call sites justify, but several stretches
+(the `MARK`/`RELEASE` block, the exact `FHEADER` field population
+order, the `FPRESET`/`FPNEWBLK` dispatch condition) still need a
+closer read before compiling a candidate, and the parameter-3 type
+question above blocks writing the signature at all. Multi-session
+scale, as finding 172 already said -- this pass narrows what's left
+rather than closing it.
