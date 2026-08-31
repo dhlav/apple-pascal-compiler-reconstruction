@@ -14425,3 +14425,61 @@ Body remains `STUB49 := FALSE`, still not Apple's real content; its
 own actual behavior (past caching `&F.FHEADER` into local 10, matching
 `FBLOCKIO`'s pattern -- consistent with the file-extension role
 finding 161 already inferred from the call site) is unwalked.
+
+## 163. `STUB49`'s own two `CBP` calls identified as `VOLSEARCH` and `WRITEDIR` by frame-size match against declarations already in the file
+
+STRONG INFERENCE for the overall shape of `STUB49`'s body (volume
+verification, then a directory operation, then an EOF/EOLN update on
+success); the identifications themselves are solid (frame size and
+argument shape both match), but the directory-scan loop in the middle
+is not walked through and the body is not written into source.
+
+`STUB49`'s own disassembly (`PASCALSY.49`, addressed) makes two more
+`CBP` calls past the `SLDO3/SRO9`+`SLDO9/INC16/SRO10` caching pattern
+already noted in finding 161 (`F` into local 9, `&F.FHEADER` into local
+10):
+
+* **`CBP 30`** pushes five words: `&F.FVID` (via `SLDO 9 / INC 8`),
+  `SLDC 0`, `LAO 8` (the address of local 8, an array), `SLDC 0`,
+  `SLDC 0`. `PASCALSY.30`'s own frame is `params=10 locals=12` (5
+  words) -- matching `VOLSEARCH(VAR FVID: VID; LOOKHARD: BOOLEAN; VAR
+  FDIR: DIRP): UNITNUM`'s already-declared 3-parameter signature plus
+  the 2-word result reservation finding 162 established for a `CBP`
+  call to a not-yet-resolved routine. Pushed order lines up exactly:
+  `&F.FVID`→`VAR FVID`, `SLDC 0`→`LOOKHARD` (`FALSE`), `LAO 8`→`VAR
+  FDIR` (local 8 receives the found volume's directory). The result is
+  compared not against a literal (no extra `SLDC 0` before the `NEQI`,
+  unlike a clean probe of the same call shape with a literal `<> 0`
+  comparison -- `probe_cbp_shape2.py`, scratch) but against `F.FUNIT`,
+  pushed one instruction earlier (`SLDO 9 / SIND 7` at `0xf01-0xf02`,
+  immediately before the `VOLSEARCH` call sequence begins): `IF
+  VOLSEARCH(F.FVID, FALSE, FDIR) <> F.FUNIT THEN <SYSCOM-field := 5;
+  exit>` -- i.e., bail out if the volume search doesn't find this
+  file's volume on the same unit it was already opened on, setting
+  what is almost certainly `SYSCOM^.XEQERR := 5` (`LOD 1,1 / SLDC 5 /
+  STO`, the same outer-frame-field-write shape `EXECERROR` established,
+  finding 154) before jumping to the epilogue.
+* **`CBP 31`** (`0xf8e`, after the directory-scan loop) pushes two
+  words: `F.FUNIT` and local 8 (still the directory array/pointer from
+  the `VOLSEARCH` call). `PASCALSY.31`'s own frame is `params=4
+  locals=36` (2 words, no result) -- matching `PROCEDURE
+  WRITEDIR(FUNIT: UNITNUM; FDIR: DIRP)`'s already-declared signature
+  exactly, and as a `PROCEDURE` needs no result reservation, consistent
+  with exactly 2 words pushed (not 2+2). `CSP 34` (`IORESULT`)
+  immediately follows, checked for zero before the success path sets
+  local 5 (the "extension succeeded" flag established at the very top
+  of this finding) and, at the epilogue, `F.FEOF`/`F.FEOLN := TRUE`.
+
+**Not walked through**: the directory-scan loop itself (`0xf17-0xf42`),
+which indexes local 8 as a `DIRRANGE`-bounded array of `DIRENTRY`
+(`IXA 13`, 13 words per element -- `DIRENTRY`'s own established size)
+comparing each entry's `DFIRSTBLK`/`DLASTBLK` (`SIND 0`/`SIND 1`) --
+plausibly searching for the file's own entry, or for a free slot to
+extend into, but which is not confirmed. Also not resolved: the guard
+at the very top (`SLDO 10 / INC 3 / SLDC 0 / LDB` -- a *byte*-level
+read at `F.FHEADER`+3, `DIRENTRY`'s packed `DFKIND`/`FILLER1`
+boundary) and the `STP` instruction near the end with operands `7, 9,
+100` (`0xfbc-0xfbf`), an opcode not yet seen elsewhere in this
+project's reconstruction work. `STUB49` is not written into
+`PASCALSYSTEM.text` -- what's here is solid enough to save real
+re-derivation next time, not to commit as a body.

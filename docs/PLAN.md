@@ -571,8 +571,14 @@ a route end to end; everything else is a straight read-and-rebuild.
     compiler's own result-reservation mechanism for a not-yet-resolved
     call, not real arguments -- probe-confirmed). Its body caches
     `&F.FHEADER` the same way `FBLOCKIO` does (word3→local9→local10),
-    a solid starting point for whoever picks it up next, but is
-    otherwise unwalked.
+    then calls `VOLSEARCH` (verify the file's volume is still on the
+    same unit) and, later, `WRITEDIR` (finding 163) -- both identified
+    by frame-size match against their own already-declared signatures
+    in this file, not guessed. Open: the directory-scan loop between
+    those two calls, a packed-field byte read on `F.FHEADER`'s
+    `DFKIND`/`FILLER1` boundary, and an `STP` opcode with operands `7,
+    9, 100` not seen elsewhere in this project. Not yet written into
+    source.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
