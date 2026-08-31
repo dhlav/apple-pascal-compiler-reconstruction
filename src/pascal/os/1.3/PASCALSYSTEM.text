@@ -1140,6 +1140,57 @@ PROGRAM PASCALSYSTEM;
       END
     END
   END;
+  { `FBLOCKIO`'s own body is still not written -- its frame-word-to-
+    parameter mapping isn't resolved (finding 158). Its nested helper
+    (`PASCALSY.55`, the chunked-transfer loop) is written for real,
+    below, and claims procedure number 55 by textual declaration order
+    the same way it does in the binary (finding 61/126), independent
+    of whether `FBLOCKIO`'s own body calls it yet.
+
+    `PASCALSY.55` itself (finding 159): all six real binary p-code
+    instructions were matched mnemonic-for-mnemonic, operand-for-
+    operand against a probe compile of this exact signature and body
+    (`probe_p55_final.py`, scratch) -- not just a frame-size match.
+    Six *value* parameters (not `VAR` -- the loop's bookkeeping updates
+    use plain `STL`, never `SIND` through a pointer, so nothing here
+    propagates back to `FBLOCKIO`'s own locals; `FBLOCKIO` only learns
+    whether the whole transfer succeeded, via `IORESULT` after the
+    call returns) in declaration order `UNITNO, BUFADDR, BYTEOFS,
+    NBLOCKS, BLOCKNUM, DOREAD` -- reversed to real binary words 6..1
+    by finding 156a, confirmed here by the exact match rather than
+    assumed. `BUFADDR: ^WINDOW` matches `FBLOCKIO`'s own declared `VAR
+    A: WINDOW` parameter; `WINDOW`'s `PACKED ARRAY[0..0] OF CHAR`
+    single-element declaration is the standard UCSD out-of-bounds-
+    buffer trick, and this file's own no-range-check status
+    (established, finding 51 correspondence) is why indexing
+    `BUFADDR^[BYTEOFS]` with `BYTEOFS`
+    running into the thousands compiles with no bounds check at all --
+    exactly what the real binary's `CSP 5`/`6` calls show (no `CHK`,
+    no index arithmetic, `BYTEOFS` loaded and pushed as-is). Caps each
+    transfer at 63 blocks per `UNITREAD`/`UNITWRITE` call (`512` bytes/
+    block), retrying chunks until `NBLOCKS` reaches 0, bailing out via
+    non-local `EXIT` on any nonzero `IORESULT`. }
+  PROCEDURE BLKXFER(UNITNO: INTEGER; BUFADDR: WINDOWP; BYTEOFS: INTEGER;
+                        NBLOCKS: INTEGER; BLOCKNUM: INTEGER; DOREAD: BOOLEAN);
+    VAR
+      NB, LEN: INTEGER;
+  BEGIN
+    IF NBLOCKS > 63 THEN NB := 63 ELSE NB := NBLOCKS;
+    LEN := NB * 512;
+    WHILE NBLOCKS <> 0 DO
+    BEGIN
+      IF DOREAD THEN
+        UNITREAD(UNITNO, BUFADDR^[BYTEOFS], LEN, BLOCKNUM)
+      ELSE
+        UNITWRITE(UNITNO, BUFADDR^[BYTEOFS], LEN, BLOCKNUM);
+      IF IORESULT <> 0 THEN EXIT(BLKXFER);
+      NBLOCKS := NBLOCKS - NB;
+      BYTEOFS := BYTEOFS + LEN;
+      BLOCKNUM := BLOCKNUM + NB;
+      IF NBLOCKS < NB THEN NB := NBLOCKS;
+      LEN := NB * 512
+    END
+  END;
   FUNCTION FBLOCKIO; BEGIN FBLOCKIO := 0 END;
 
   { Positions the cursor, clamped to the terminal's own declared

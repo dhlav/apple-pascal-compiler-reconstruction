@@ -539,23 +539,27 @@ a route end to end; everything else is a straight read-and-rebuild.
     END`) and `PASCALSY.7`/`FGET` (also still a stub) -- so even
     "finish `FILEPROC`'s arm bodies" transitively needs most of the
     `FIB` layer written first, not just `FILEPROC` itself.
-    `PASCALSY.55` (findings 158/159) now has all six parameter *roles*
-    identified (`DOREAD`, running `BLOCKNUM`/`NBLOCKS`/`BYTEOFS`, a
-    constant `BUFADDR`, `UNITNO`) and its declared frame size confirmed
-    by a probe compile (`params=12 locals=4`, matching the binary
-    exactly). What's still open is narrower now: the exact Pascal
-    source shape of the `UNITREAD`/`UNITWRITE` calls themselves --
-    `word 4` (`BYTEOFS`) arrives at the CSP with no bounds-check/
-    address arithmetic ahead of it, which rules out an ordinary
-    `BUFADDR^[BYTEOFS+1]` packed-array index (tested, falsified; see
-    finding 159's addendum). Recommended next: try a non-packed
-    (word-granular) buffer element type for the indexing, or read
-    `SYSTEM.COMPILER`'s own `get_byte_pointer`-equivalent codegen (it's
-    already fully reconstructed) to see what it does differently from
-    the host reimplementation for that case. `FILEPROC`'s own arm
-    bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
-    functional, not just correctly-routed) come after that, once
-    `FGET`/`FIOPRIMS.2` are within reach.
+    `PASCALSY.55` (findings 158/159) is now written for real as
+    `BLKXFER` and matches the binary's disassembly instruction-for-
+    instruction -- all six parameters turned out to be plain values,
+    not `VAR` (a correction to 159's own first draft), and the
+    `BUFADDR^[BYTEOFS]` indexing that looked ruled out was actually
+    right once tested against the real `WINDOWP` type with this file's
+    established no-range-check status instead of a placeholder array.
+    Still open: `BLKXFER` currently lands on procedure number 53, not
+    55 -- the host compiler has never assigned `FBLOCKIO`'s own stub a
+    number at all (confirmed pre-existing, not caused by this change),
+    so whatever occupies real procedures 53/54 is still unplaced.
+    `FBLOCKIO`'s own body (the outer chunking/retry wrapper that calls
+    `BLKXFER`) is still `BEGIN FBLOCKIO := 0 END` -- its own
+    frame-word-to-parameter mapping is the next piece, using the
+    `fblockio_addr.txt` scratch capture's call-site evidence (already
+    lines up cleanly against `BLKXFER`'s six roles: `FUNIT`→unitno,
+    local7→bufaddr, local6→byteofs, local5→nblocks, local4→blocknum,
+    local3→doread). `FILEPROC`'s own arm bodies (2/3/4/7 -- makes
+    `FRESET`/`FOPEN`/`FCLOSE` actually functional, not just
+    correctly-routed) come after that, once `FGET`/`FIOPRIMS.2` are
+    within reach.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

@@ -14149,16 +14149,56 @@ ARRAY OF INTEGER`) targets and can pass a raw word offset unmodified,
 or (2) word 4 is not part of the buffer address at all and belongs to
 a role not yet considered. Left open rather than guessed further.
 
-**Not done here, and the actual next step**: write this signature into
-`src/pascal/os/1.3/PASCALSYSTEM.text` as `PASCALSY.55`'s real body and
-compile it standalone (`tools/xcompile.py`) to confirm the host
-compiler reproduces `params=12 locals=4` exactly -- that is the
-probe finding 158 asked for, now aimable at a concrete candidate
-instead of a blank search. If it matches, the second half of the work
-is reconciling `FBLOCKIO`'s own call-site locals (`local3..local7` in
-the `fblockio_addr.txt` dump, findings 158's own scratch capture) against
-these six roles via the parameter-clause-reversal rule (finding 156a:
-first-pushed = highest word), which the call-site evidence above
-already lines up cleanly with (`FUNIT`→word6, local7→word5,
-local6→word4, local5→word3, local4→word2, local3→word1) but has not
-yet been written into `FBLOCKIO`'s own body.
+**Update, same session: written for real and matched instruction-for-
+instruction, not just by frame size.** The array-index hypothesis for
+`BYTEOFS` was wrong in a second way, not just the CHK issue above: with
+`(*$R-*)` added to the probe (matching this file's own established
+no-range-check status) and the buffer indexed from `0` (matching
+`WINDOW`'s own `PACKED ARRAY[0..0] OF CHAR` declaration, the real
+type -- not a placeholder), `BUFADDR^[BYTEOFS]` compiles with **no**
+`CHK` and **no** index arithmetic at all: `SLDL`/`SLDO` loads the base
+pointer, `BYTEOFS` loads and pushes straight through as the second
+`CSP` word. The earlier falsification was an artifact of the
+placeholder array's `1..30000` bounds (forcing a `-1` lower-bound
+adjustment) and default range-checking, not evidence against the
+indexing model itself.
+
+That single correction cascaded into a bigger one: the bookkeeping
+updates (`SLDL 3/SLDL 8/SBI/STL 3` etc.) use plain `STL`/`SRO`
+(store to *this procedure's own* word), never `SIND` through a
+dereferenced pointer -- meaning **none of the six parameters are
+`VAR`**, contrary to this finding's first draft above. They are
+six *value* parameters, initialized from the caller's arguments and
+freely mutated as local working state for the duration of the loop,
+with nothing propagated back to `FBLOCKIO` -- consistent with
+`FBLOCKIO` needing only the post-call `IORESULT`, not any updated
+block/offset bookkeeping, to know how the transfer went.
+
+Reordering to `UNITNO, BUFADDR, BYTEOFS, NBLOCKS, BLOCKNUM, DOREAD`
+(declaration order, reversed to real words 6..1 by finding 156a) and
+compiling that exact body against the real WINDOWP type (already
+declared in this file, `WINDOWP = ^WINDOW`) produces **the identical
+instruction sequence, mnemonic-for-mnemonic and operand-for-operand**,
+against `PASCALSY.55`'s real disassembly -- confirmed by direct diff of
+both listings, not eyeballed (`SLDO`/`SRO` vs. the real binary's
+`SLDL`/`STL` is this file's own established own-frame-at-lex-0
+addressing convention, not a discrepancy -- see the `G-notation = own
+frame` project memory).
+
+Written into `src/pascal/os/1.3/PASCALSYSTEM.text` as `PROCEDURE
+BLKXFER` (`PASCALSY55` collides at 8 characters with `PASCALSYSTEM`,
+the same truncation trap as finding 153's `PRINTSPI`/`PRTXEQER`), a
+sibling of `FBLOCKIO`'s own stub rather than textually nested inside
+it -- declaring it as a true nested procedure of `FBLOCKIO` was tried
+first and produces a different (wrong) lex level; as a sibling it
+compiles to `lex=0`, matching the real binary's `lex=1` under this
+file's own frame-addressing convention. It currently claims procedure
+number **53**, not 55: this file's host-compiled procedure count still
+stops at 52 before `FBLOCKIO` even in the pre-existing source (confirmed
+by compiling the pre-session revision -- `FBLOCKIO`'s own stub has
+never been assigned a procedure number by the host compiler, a
+separate, pre-existing puzzle, not something this change caused).
+Whatever two real procedures occupy 53/54 in the shipped binary
+(flagged as an open gap since finding 149) still need placing before
+`BLKXFER` will land on its real number 55 -- immaterial to whether its
+*body* is correct, which is now verified independently of numbering.
