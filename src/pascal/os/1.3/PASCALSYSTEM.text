@@ -604,8 +604,94 @@ PROGRAM PASCALSYSTEM;
 
   { Apple-specific (128K only, no UCSD precedent): file I/O primitives
     the 64K system keeps inline in segment 0. Real `args 0 words`
-    (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`); not written yet. }
+    (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`). Five real
+    procedures (finding 170): `.2`/`.3` are `FUNCTION(VAR F: FIB):
+    BOOLEAN`, `.4` a plain `PROCEDURE(VAR F: FIB)` -- confirmed by
+    argument count at `FGET`'s own three call sites, not guessed. `.5`
+    isn't tied to a known caller yet (plausibly `FPUT`'s own
+    counterpart, still unwritten). }
   SEGMENT PROCEDURE FIOPRIMS;
+
+    { `FIOPRIMS.2` -- soft-buffer window advance (finding 170). Read in
+      full, but its exact byte-count arithmetic across several branches
+      isn't confidently resolved; left a stub rather than guessed. }
+    FUNCTION FPWINADV(VAR F: FIB): BOOLEAN;
+    BEGIN
+      FPWINADV := FALSE
+    END;
+
+    { `FIOPRIMS.3` -- DLE-blank expansion (finding 171). Called by
+      `FGET` only right after reading a literal `DLE` (`16`) byte, per
+      `FGET`'s own gate. Reads the *next* byte (the two-byte DLE code's
+      count, `+32`, this file's own already-quoted manual comment on
+      `DLE`-blank codes); if it's a real character (`> ' '`) rather
+      than a valid count byte, treats the `DLE` as spurious, reads past
+      it, and reports `FALSE` (no compression applied). Otherwise loads
+      `F.FREPTCNT` with the decoded blank count and replaces the window
+      byte with a space -- `FGET`'s own opening guard (`IF F.FREPTCNT >
+      0 THEN` decrement and return early, no real read) is exactly what
+      consumes this: each of the next `FREPTCNT` `GET`s just replays
+      the cached space with no further I/O. Compiles clean, `params=6`
+      bytes exact; `locals=0` against the real `2` -- one word short
+      (the real body caches `F` into a local, this one dereferences
+      `F.FWINDOW` directly instead), documented not forced. }
+    FUNCTION FPDLE(VAR F: FIB): BOOLEAN;
+    BEGIN
+      FGET(F);
+      IF F.FWINDOW^[0] > ' ' THEN
+      BEGIN
+        FGET(F);
+        FPDLE := FALSE
+      END
+      ELSE
+      BEGIN
+        F.FREPTCNT := ORD(F.FWINDOW^[0]) - 32;
+        F.FWINDOW^[0] := ' ';
+        FPDLE := TRUE
+      END
+    END;
+
+    { `FIOPRIMS.4` -- speculative lookahead `GET` with rollback
+      (finding 171). Snapshots the *entire* `FIB` (a plain record
+      assignment compiles to exactly the real binary's own `MOV 290`
+      -- confirmed by an isolated probe before trusting it, not assumed
+      from the locals count alone), advances `FNXTBLK` and sets
+      `FMAXBYTE` to look one record ahead, then calls `FGET` for real.
+      If that hits real `EOF`, rolls the whole `FIB` back to the
+      snapshot (undoing the speculative advance) and marks
+      `FEOF`/`FEOLN` true with `FMAXBYTE` backed off by one -- a
+      lookahead specifically for `TEXTFILE` `EOLN` detection (matches
+      `FGET`'s own gate: `FSOFTBUF AND (DFKIND = TEXTFILE)`). Compiles
+      clean, `params=2` bytes exact; `locals` is dominated by the
+      290-word `FIB` snapshot itself, matching the real binary's own
+      huge `locals=582` almost exactly (`580` here, two bytes short --
+      the same one-word-ish gap class as this file's other close
+      matches). }
+    PROCEDURE FPPEEK(VAR F: FIB);
+      VAR
+        SAVE: FIB;
+    BEGIN
+      SAVE := F;
+      IF F.FNXTBLK <> 0 THEN F.FNXTBLK := F.FNXTBLK + 1;
+      F.FMAXBYTE := 512;
+      FGET(F);
+      IF F.FEOF THEN
+      BEGIN
+        F := SAVE;
+        F.FEOF := TRUE;
+        F.FEOLN := TRUE;
+        F.FMAXBYTE := F.FMAXBYTE - 1
+      END
+    END;
+
+    { `FIOPRIMS.5` -- not yet tied to any known caller (finding 170).
+      Signature guessed only to preserve procedure numbering; not
+      Apple's real content. }
+    FUNCTION FPSTUB5(VAR F: FIB): BOOLEAN;
+    BEGIN
+      FPSTUB5 := FALSE
+    END;
+
   BEGIN END;
 
   { Prints the message for a run-time error code. Apple's real body

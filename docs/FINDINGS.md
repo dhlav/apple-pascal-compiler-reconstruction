@@ -14887,3 +14887,60 @@ undone rather than guessed; `FIOPRIMS.3`/`.4` (much shorter --
 `FIOPRIMS.3` ends in the same non-local `EXIT(0,7)` `FGET`'s own call
 site already showed, `FIOPRIMS.4` is a single procedure body not yet
 even read) are the more tractable next pieces of this segment.
+
+## 171. `FIOPRIMS.3`/`.4` written for real -- DLE-blank expansion and a speculative lookahead `GET`
+
+STRONG INFERENCE for both; `FIOPRIMS.3` compiles to an exact `params`
+match, close-not-exact on `locals` for both. Corrects a wrong
+prediction of finding 170's own (below).
+
+**`FIOPRIMS.3`** (renamed `FPDLE`), read in full (~15 instructions,
+much shorter than `.2`): calls `FGET` immediately (it's invoked right
+after `FGET`'s own caller already saw a literal `DLE` byte, per
+finding 169's own gate -- this reads the *second* byte of the two-byte
+DLE-blank code the manual documents). If that byte is `> ' '` (not a
+valid count encoding), treats the `DLE` as spurious: calls `FGET` again
+to move past it and reports `FALSE`. Otherwise decodes the count as
+`byte - 32`, stores it into `F.FREPTCNT`, and replaces the window byte
+with a space, reporting `TRUE`. This ties directly into `FGET`'s own
+opening guard (`IF F.FREPTCNT > 0 THEN` decrement and return
+immediately, no real read, already established) -- the compression
+scheme is: instead of storing N literal spaces, the file stores `DLE`
++ `(N+32)`, and unpacking it here primes `FREPTCNT` so the next `N`
+`GET`s replay the cached space with zero further I/O. Compiles clean;
+`params=6` bytes exact, `locals=0` against the real `2` -- one word
+short (the real body caches `F` into a local; this one dereferences
+`F.FWINDOW` directly), documented not forced.
+
+**Corrects finding 170's own prediction**: that finding guessed
+`FIOPRIMS.3` "ends in the same non-local `EXIT(0,7)`" `FGET`'s call
+site shows -- wrong. Reading `.3`'s real disassembly directly shows no
+`CSP 4` anywhere in it; the `EXIT(0,7)` finding 169 found belongs to
+`FGET` itself (triggered by `FIOPRIMS.3`'s *caller*, not by anything
+inside `.3`). A guess from adjacency, corrected once the actual bytes
+were read -- exactly the discipline this project's own memory
+(`no-bash-backtick-edits`, `probe-record-offsets`) keeps trying to
+reinforce: read the bytes before trusting a prediction, even one this
+project made itself two findings ago.
+
+**`FIOPRIMS.4`** (renamed `FPPEEK`) is much shorter than its own
+582-byte locals count first suggested: a speculative lookahead `GET`
+with rollback. Snapshots the entire `FIB` record (a plain Pascal record
+assignment, `SAVE := F`, compiles to exactly the real binary's own `MOV
+290` -- confirmed with an isolated probe before trusting it, not
+assumed from the locals figure alone: `probe_fib_mov290.py`, scratch),
+advances `FNXTBLK` by one and sets `FMAXBYTE` to `512` to look one
+record ahead, then calls `FGET` for real. If that hits genuine `EOF`,
+rolls the *entire* `FIB` back to the pre-call snapshot (undoing the
+speculative advance completely) and marks `FEOF`/`FEOLN` true with
+`FMAXBYTE` backed off by one. Matches `FGET`'s own gate for calling
+this (`FSOFTBUF AND (DFKIND = TEXTFILE)`) as exactly what a `TEXTFILE`
+needs to detect a real `EOLN`/`EOF` one record ahead without
+permanently consuming it if the peek turns out to be past the end.
+Compiles clean; `params=2` bytes exact, `locals=580` against the real
+`582` -- two bytes short, the same small-gap class as everywhere else
+in this file (the 290-word snapshot dominates both figures, so the gap
+is proportionally tiny).
+
+`FIOPRIMS.2` (soft-buffer window advance) and `.5` (no known caller
+yet) remain stubs, per finding 170's own already-stated reasoning.

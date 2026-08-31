@@ -617,9 +617,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     `.2`'s own body was read in full (soft-buffer window advance via
     `MOVELEFT`/`UNITREAD`/`UNITWRITE`) but its exact byte-count
     arithmetic isn't confidently resolved -- left undone rather than
-    guessed. `.3` (shorter, ends in the same non-local `EXIT(0,7)`
-    `FGET`'s own call site showed) and `.4` (not yet read at all) are
-    the more tractable next pieces.
+    guessed. `.3`/`.4` are now written for real (finding 171): `.3`
+    (`FPDLE`) is DLE-blank expansion, priming `F.FREPTCNT` so `FGET`'s
+    own early-return guard replays a cached space with no further I/O;
+    `.4` (`FPPEEK`) is a speculative lookahead `GET` with rollback for
+    `TEXTFILE` `EOLN` detection, snapshotting the whole `FIB` via a
+    plain record assignment. Both compile clean, close-not-exact on
+    `locals`. `FIOPRIMS.2` (soft-buffer window advance) remains the one
+    real gap in this segment -- the harder routine, not chased further
+    this session.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
