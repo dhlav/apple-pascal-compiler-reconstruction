@@ -14483,3 +14483,71 @@ boundary) and the `STP` instruction near the end with operands `7, 9,
 project's reconstruction work. `STUB49` is not written into
 `PASCALSYSTEM.text` -- what's here is solid enough to save real
 re-derivation next time, not to commit as a body.
+
+## 164. `DIRENTRY`'s own real field offsets (probe-verified, not hand-counted this time) -- `STUB49`'s guard clause and directory-scan loop resolved
+
+VERIFIED BINARY FACT for the offsets (probe-confirmed, same method as
+finding 161 for `FIB`); STRONG INFERENCE for the resulting reading of
+`STUB49`'s guard clause and scan loop.
+
+Finding 163 left `STUB49`'s guard clause (`SLDO 10 / INC 3 / SLDC 0 /
+LDB`) and its directory-scan loop unresolved, hand-guessing `DIRENTRY`
+offsets from the textual declaration order the way finding 160 first
+(wrongly) did for `FIB`. Same fix applied here before trusting
+anything: compiled `DIRENTRY`'s own real declaration standalone
+(`probe_direntry_offsets.py`, scratch) and read the `INC`/`STP`
+operand for each named field. Real offsets, `SECUREDIR`/`UNTYPEDFILE`
+variant (the one `FHEADER` is used as everywhere in this file):
+
+```
+DFIRSTBLK = 0            DVID       = 3..6  (VID, 4 words)
+DLASTBLK  = 1            DEOVBLK    = 7
+DFKIND    = 2 (packed, bits 0-3)     DNUMFILES  = 8 (packed, bits 0-6)
+FILLER1   = 2 (packed, bits 4-15)    DLOADTIME  = 9
+                                     DLASTBOOT  = 10 (packed DATEREC)
+```
+
+`DFKIND` and `FILLER1` share one packed word at offset 2 -- the case
+tag does not get its own separate word the way a first guess (finding
+160's original draft, before it was itself corrected) assumed. The
+other variant (`XDSKFILE`/`CODEFILE`/etc., not used by anything in
+this file so far) is the one that sets the record's real total size:
+its own fields run through offset 12, giving `DIRENTRY` its established
+13-word/26-byte size (`IXA 13`'s own stride, and this file's own
+existing "`DIRENTRY`=26" comment) -- the `SECUREDIR`/`UNTYPEDFILE`
+variant only uses offsets 0-10, leaving 11-12 unused padding for that
+variant specifically.
+
+With these, both open pieces resolve cleanly:
+
+* **Guard clause**: `INC 3` from `&F.FHEADER` is `F.FHEADER.DVID`'s
+  own start -- a `STRING`, so byte 0 of it is the UCSD length byte.
+  `SLDC 0 / LDB / SLDC 0 / GRTI / FJP jtab-12` reads as `IF
+  LENGTH(F.FHEADER.DVID) <= 0 THEN <bail out>` -- a sanity check that
+  the cached directory header actually holds a real volume ID before
+  anything else runs.
+* **Scan loop** (`0xf17-0xf42`): bounded by `IND 8` on `DIR[0]`
+  (`DNUMFILES`, confirmed at offset 8 above, read as a plain word
+  despite being a packed 7-bit field -- safe here since nothing else
+  shares that word), i.e. `index := 1; WHILE (index <= DIR[0].
+  DNUMFILES) AND NOT found DO`. Each iteration compares `DIR[index].
+  DFIRSTBLK`/`DLASTBLK` (via `IXA 13`, confirming the 13-word stride
+  directly rather than just citing the existing comment) against
+  `F.FHEADER.DFIRSTBLK`/`DLASTBLK` (via local 10) -- searching the
+  freshly-`VOLSEARCH`ed directory for the entry matching *this file's
+  own* header, i.e. finding `F`'s own slot in the directory it just
+  fetched. On loop exit, `IF NOT found THEN <SYSCOM-field := 6; exit>`
+  -- a second, distinct error code from the volume-mismatch path's `5`
+  (finding 163), same `LOD 1,1 / SLDC n / STO` shape as `EXECERROR`
+  established.
+
+**Not yet resolved**: what happens past `0xf4f` (the actual extension
+-- writing a new `DLASTBLK` into the matched directory entry, or
+similar, is the obvious guess given `STUB49`'s role, but not confirmed
+instruction by instruction) and the `STP` instruction near the very end
+with operands `7, 9, 100` (`0xfbc-0xfbf`) -- now that `STP`'s general
+shape is understood from this session's own `DIRENTRY` probe (`width,
+bit-offset, value`), `7, 9, 100` reads as "store a 7-bit-wide field at
+bit-offset 9 with value 100", but which field that targets in
+`F.FHEADER` (or elsewhere) is not identified. `STUB49` remains
+unwritten in `PASCALSYSTEM.text`.

@@ -574,11 +574,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     then calls `VOLSEARCH` (verify the file's volume is still on the
     same unit) and, later, `WRITEDIR` (finding 163) -- both identified
     by frame-size match against their own already-declared signatures
-    in this file, not guessed. Open: the directory-scan loop between
-    those two calls, a packed-field byte read on `F.FHEADER`'s
-    `DFKIND`/`FILLER1` boundary, and an `STP` opcode with operands `7,
-    9, 100` not seen elsewhere in this project. Not yet written into
-    source.
+    in this file, not guessed. `DIRENTRY`'s own real field offsets
+    (finding 164, probe-verified after a hand-counted first guess got
+    it wrong the same way `FIB`'s did) resolve the guard clause (a
+    sanity check that `F.FHEADER.DVID` is non-empty) and the scan loop
+    (searching `VOLSEARCH`'s freshly-fetched directory for the entry
+    matching `F`'s own header). Open: what the scan finding a match
+    actually does past `0xf4f` -- presumably the real extension, not
+    confirmed -- and an `STP` opcode with operands `7, 9, 100` whose
+    target field isn't identified. Not yet written into source.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
