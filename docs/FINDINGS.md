@@ -15505,3 +15505,49 @@ body-writing pass next time. The one open question left is whether
 `TRICKARRAY` is really the idiom Apple wrote here or just a technique
 that happens to produce equivalent bytes -- not resolvable without the
 acceptance tier, and not blocking a `STRONG INFERENCE` write.
+
+## 179. `FPOPEN`'s own preamble (addr 608-676) drafted and test-compiled -- `SWAPFIB` identified, structure confirmed; body still not committed
+
+STRONG INFERENCE; VERIFIED BINARY FACT for `SWAPFIB`'s own global
+offset (settled by a clean isolated probe, not inferred from context).
+
+**`LOD 2,55`, the global finding 178 flagged as an unresolved lead, is
+`SWAPFIB`** ("swapspace file" pointer, `PASCALSYSTEM.text:296`).
+Settled the same way `THEDATE`'s own offset was (`probe-record-offsets`
+memory): probed `SWAPFIB^.FISOPEN` in isolation and got the exact real
+shape back, `LOD 2,55; SIND 5`. Also settled `LDA 2,126` from the same
+stretch: `UNITABLE`'s own base address (`probe`d via `UNITABLE[1].UVID
+:= ...` landing on global offset `132`, six words per entry --
+`UNITABLE`'s own declared `RECORD (UVID: VID; CASE ... OF TRUE:
+(UEOVBLK: INTEGER))` is exactly four words for `UVID` plus a packed
+tag/variant word, close enough to explain the six-word stride with the
+tag needing its own word here, not chased to the exact bit further).
+
+**The preamble's real control flow, confirmed structurally**: guard on
+`F^.FISOPEN` (`INOTCLOSED`); call `SCANTITLE`, and only on *success*
+does the routine do anything else (real's own `FJP` after the call
+jumps straight to the shared `IBADTITLE` tail on failure, no `NOT`
+needed -- the whole rest of the routine lives in the success branch);
+compute the `TRICKARRAY`-derived flag from `OLDOK` (finding 178); then
+check `SWAPFIB^.FISOPEN AND (SYSCOM^.GDIRP = NIL)` -- a bootstrap-time
+special case (the global directory pointer not yet initialized, only
+plausible very early in system startup) gating the `MARK`/`RELEASE`/
+`UNITABLE`-linear-search block finding 177 already flagged as
+undecoded. Drafted and compiled a candidate covering everything up to
+that gate (`params` exact); the missing-`F`-cache gap already
+documented for `FPWINADV` (finding 174) reappears here too -- this
+host compiler still won't cache a trivial `VAR F` address into a local
+via `WITH F DO`, even though the real binary caches it once for the
+whole 472-instruction routine's own heavy reuse. Same accepted class of
+gap, not chased further.
+
+**Not committed to `PASCALSYSTEM.text`.** This is roughly the first
+15% of the routine (through the bootstrap-check gate); the
+bootstrap-fallback block itself, the entire directory-search/
+`FPALLOC`/`INSENTRY` path, and the soft-buffer setup tail all remain
+undecoded as source (finding 177's own structural map still stands as
+the guide for what's left). Written up as a scratch probe
+(`probe_fpopen_preamble.py`) rather than committed source, since a
+partial `FPOPEN` body would be worse than the current honest stub --
+this file's own convention throughout has been to land a complete,
+compiling procedure before committing it.

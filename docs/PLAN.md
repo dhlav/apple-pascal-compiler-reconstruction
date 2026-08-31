@@ -707,6 +707,26 @@ a route end to end; everything else is a straight read-and-rebuild.
     `FILEPROC`'s `ARGINT` slot where the real binary reads a genuine
     global (`SLDO 5`) instead -- not fixed this session.
 
+    **The `LOR` gap turned out general, not FPOPEN-specific (finding
+    178's own follow-up)**: the already-committed `FPCLOSE` body, which
+    itself uses `AND`/`OR` several times, also never emits `LAND`/`LOR`
+    under this host compiler -- it always short-circuits. New memory:
+    `host-compiler-always-shortcircuits`. This affects every `AND`/`OR`
+    in this file's reconstructed source, not just this one comparison.
+
+    **The preamble itself is now drafted and test-compiled (finding
+    179)**, though not committed to source: `LOD 2,55` is `SWAPFIB`
+    (confirmed by probe), `LDA 2,126` is `UNITABLE`'s own base. Real
+    control flow: guard `F^.FISOPEN`, call `SCANTITLE` (success is the
+    `THEN` branch, not `NOT`-wrapped), compute the `TRICKARRAY`-derived
+    `OLDOK` flag, then gate a `MARK`/`RELEASE`/`UNITABLE`-search
+    bootstrap fallback on `SWAPFIB^.FISOPEN AND (SYSCOM^.GDIRP = NIL)`.
+    That whole fallback block, the directory-search/`FPALLOC`/
+    `INSENTRY` path, and the soft-buffer setup tail remain undecoded --
+    this covers roughly the first 15% of the routine. Not committed:
+    this file's own convention is a complete, compiling procedure
+    before landing it, not a partial one.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
