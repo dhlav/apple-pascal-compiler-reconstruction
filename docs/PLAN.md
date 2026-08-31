@@ -550,14 +550,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     55 -- the host compiler has never assigned `FBLOCKIO`'s own stub a
     number at all (confirmed pre-existing, not caused by this change),
     so whatever occupies real procedures 53/54 is still unplaced.
-    `FBLOCKIO`'s own body (the outer chunking/retry wrapper that calls
-    `BLKXFER`) is still `BEGIN FBLOCKIO := 0 END` -- its own
-    frame-word-to-parameter mapping is the next piece, using the
-    `fblockio_addr.txt` scratch capture's call-site evidence (already
-    lines up cleanly against `BLKXFER`'s six roles: `FUNIT`→unitno,
-    local7→bufaddr, local6→byteofs, local5→nblocks, local4→blocknum,
-    local3→doread). `FILEPROC`'s own arm bodies (2/3/4/7 -- makes
-    `FRESET`/`FOPEN`/`FCLOSE` actually functional, not just
+    `FBLOCKIO`'s own body (the outer wrapper that calls `BLKXFER`) is
+    still `BEGIN FBLOCKIO := 0 END`, but its full eight-word parameter
+    mapping is now solid (finding 160): word1=result, word2=unused,
+    word3=`DOREAD`, word4=`RBLOCK`, word5=`NBLOCKS`, word6=`I`,
+    word7=`A`, word8=`F` (cached into local9). What's left is the
+    actual body -- two large branches (`F^.FISBLKD` true/false, block-
+    device vs. general-file paths) that do real work past the `CLP 55`
+    call: bounds-checking `RBLOCK`/`NBLOCKS` against
+    `F^.FHEADER.DFIRSTBLK`, and (in the non-block branch) converting a
+    record-relative position to blocks+bytes via `*512`/`DIV 512`
+    arithmetic. Local 10's role and the `F^.FHEADER` offset-12/13
+    field semantics aren't pinned down yet -- that's the concrete next
+    step, not a fresh unknown. `FILEPROC`'s own arm bodies (2/3/4/7 --
+    makes `FRESET`/`FOPEN`/`FCLOSE` actually functional, not just
     correctly-routed) come after that, once `FGET`/`FIOPRIMS.2` are
     within reach.
 

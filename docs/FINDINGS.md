@@ -14202,3 +14202,97 @@ Whatever two real procedures occupy 53/54 in the shipped binary
 (flagged as an open gap since finding 149) still need placing before
 `BLKXFER` will land on its real number 55 -- immaterial to whether its
 *body* is correct, which is now verified independently of numbering.
+
+## 160. `FBLOCKIO`'s own parameter mapping, all eight words -- solid; the two branch bodies are not
+
+STRONG INFERENCE for the eight-word parameter/result layout, built
+from cross-checking two independent pieces of evidence against each
+other (the already-probe-verified `BLKXFER` call site, and the FIB
+field layout `PASCALSYSTEM.text` already declares). The branch bodies
+themselves (what each of the two large `IF F^.FISBLKD`/`GOTO` arms
+actually does past the `CLP 55` call) are NOT resolved here and are
+not guessed at -- see below.
+
+`FBLOCKIO`'s own disassembly (`128K.PASCAL`, `PASCALSY.28`, addressed
+directly): `params=16 locals=4` (8 words params+result, 2 words
+locals). Its declared forward signature is already in
+`PASCALSYSTEM.text`: `FUNCTION FBLOCKIO(VAR F: FIB; VAR A: WINDOW; I:
+INTEGER; NBLOCKS, RBLOCK: INTEGER; DOREAD: BOOLEAN): INTEGER;` -- five
+clause-groups (`F`, `A`, `I`, the combined `{NBLOCKS, RBLOCK}`, and
+`DOREAD`), six real parameter words plus this file's standard
+always-reserve-two-words function-result convention (finding 155's
+own `SPOS`/`SCONCAT` note) = 8.
+
+**Word roles, all cross-checked, not assumed from a single source**:
+
+* **word 1 = the function result.** Set to `0` in the very first two
+  instructions of the procedure (`SLDC 0 / SRO 1`), then overwritten
+  again on every return path (`0x3da`, `0x405`, `0x44c` in the raw
+  addressed dump) before falling through to the end -- the standard
+  "default then overwrite" shape for a function result register.
+* **word 2 = unused padding**, the second reserved result word --
+  never referenced anywhere in the body (no `SLDO 2`/`SRO 2` appears
+  at all).
+* **word 8 = `F`** (`VAR F: FIB`, the first-declared clause, landing
+  on the highest available word by finding 156a's reversal rule).
+  Copied once, at the top (`SLDO 8 / SRO 9`), into local 9 for the
+  rest of the body -- a frame-caching pattern, not a second parameter.
+  Confirmed by field offset, not assumed: `SLDO 9 / SIND 5` and `SIND
+  6` right after match `PASCALSYSTEM.text`'s own declared `FIB` layout
+  exactly (`FWINDOW`=0, `FEOF`=1, `FEOLN`=2, `FSTATE`=3, `FRECSIZE`=4,
+  `FISOPEN`=5, `FISBLKD`=6, `FUNIT`=7 -- and `SIND 7` at the `CLP 55`
+  call site is exactly the `UNITNO` finding 159 already established).
+* **word 7 = `A`** (`VAR WINDOW`, second-declared). Loaded raw with no
+  `SIND` (a `VAR` parameter's loaded value already *is* the address)
+  and pushed straight into the `CLP 55` call in `BLKXFER`'s `BUFADDR`
+  slot -- exactly what finding 159 needs, no computation required.
+* **word 6 = `I`** (third-declared, plain `INTEGER`). Also pushed
+  straight into `CLP 55`, landing in `BLKXFER`'s `BYTEOFS` slot with
+  no arithmetic anywhere on it in this procedure -- `I` *is* the
+  starting byte offset the caller wants, forwarded unchanged. Neither
+  word 6 nor word 7 is ever the target of an `SRO` in this disassembly
+  -- consistent with both being used read-only, straight from the
+  caller, rather than computed.
+* **word 4 = `RBLOCK`, word 5 = `NBLOCKS`** (the combined clause,
+  fourth-declared). Confirmed by usage, not just position: word 4 is
+  clamped against `F^.FHEADER.DFIRSTBLK` when negative (`0x384-0x38c`,
+  offset 13 from `SLDO 9` -- `FHEADER`'s own first field, `DIRENTRY`'s
+  `DFIRSTBLK`, matching a "starting block" role), then `word 4 + word
+  5` is computed and bounds-checked twice (`0x394-0x3a7`) -- exactly
+  the "does `RBLOCK + NBLOCKS` run past the file" check a block-I/O
+  routine needs. This also settles the internal order within the
+  combined clause: `NBLOCKS` (declared first) lands on the *higher*
+  word (5), `RBLOCK` (declared second) on the *lower* (4) -- the same
+  first-declared-gets-higher direction as finding 156a's whole-list
+  reversal, not finding 134a's older ascending rule for combined value
+  groups. Whether this is a correction to 134a or a difference specific
+  to combined clauses sitting inside an already-reversed list is not
+  settled -- flagged for whenever another combined-clause case turns up.
+* **word 3 = `DOREAD`** (fifth-declared, lowest word among the six
+  real parameters, as the reversal rule predicts). Checked with `LNOT`
+  in both branches (`0x39c`, `0x3d1`) and is the exact value finding
+  159 already matched at `BLKXFER`'s own `DOREAD` slot.
+
+**Locals**: local 9 caches `F` (see above). Local 10's role is not yet
+pinned down -- it is dereferenced with `SIND 0` and `SIND 1` at several
+points (`0x38e`, `0x397`, `0x3aa`, `0x3ba`) suggesting a second
+FIB-adjacent record (its own two-field access pattern doesn't match
+`FIB` itself), plausibly a directory or window-adjacent pointer, but
+this is not resolved.
+
+**Not resolved, and deliberately not guessed into `PASCALSYSTEM.text`**:
+what the two large branches (gated on `F^.FISOPEN >= 0 AND RBLOCK >= 0`
+failing to `jtab-12` as an error exit, then on `F^.FISBLKD` choosing
+between a block-device path at `0x37f-0x402` and a non-block path at
+`0x404-0x44f`) actually compute. The non-block path's extra `MPI`/`DVI`
+arithmetic against `FRECSIZE`-shaped values (`*512`, `DIV 512`) is
+consistent with "convert a record-relative position into block count
+plus byte remainder" but the exact source expressions are not derived.
+The block-device path's tail (`0x3f2-0x401`, touching `F^.FHEADER` at
+offsets 12/13) needs the `DIRENTRY`/`FHEADER` field layout worked
+through carefully -- a first attempt at reading offset 12 as
+`FMODIFIED` produced a type mismatch (a boolean field receiving a
+block-number value) and was not written down as fact. This is real
+remaining work, not a formality: the two branch bodies are most of
+`FBLOCKIO`'s ~110 instructions, and this finding only accounts for the
+~15 that establish which word is which parameter.
