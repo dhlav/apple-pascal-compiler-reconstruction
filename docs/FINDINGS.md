@@ -15366,3 +15366,44 @@ would be finding what internal Apple code (the `FILER`, say) calls
 `FOPEN`/`FILEPROC` with something other than a plain `TRUE`/`FALSE`,
 or reading further into `FPOPEN`'s own addr 658-676 (what the derived
 boolean at `STL 2` controls) for a semantic clue instead.
+
+**Second follow-up, still open**: `JUNK` (`P1` by the same reversal
+mapping) is referenced **nowhere** in the whole 472-instruction body --
+no `SLDL 1` anywhere, not even passed through to another call. That
+rules out one tempting alternative reading (that this project's
+assumed declaration order has `OLDOK`/`JUNK` swapped relative to
+Apple's real one) -- swapping them would just make the *other*
+parameter the unused one, and wouldn't explain the `>1`/`=2`/`=4`
+comparisons either way, since the caller's fixed push order
+(`FOPENOLD` third, `JUNK` fourth, both established `VERIFIED BINARY
+FACT` at the call site) pins whichever position gets `FOPENOLD`'s value
+regardless of what this reconstruction chooses to *name* it.
+
+Traced one more lead: `addr 661` (`LOD 2,55`) reads a *different*
+global than `SYSCOM^` itself (`SYSCOM^`'s own fields are always reached
+via `LOD 2,1` then `INC`/`IND`/`SIND` -- `LOD 2,55` is a direct global
+at offset `55`, a different variable in the same enclosing scope
+entirely, not yet identified against this project's own global-layout
+map). Whatever it is gets dereferenced (`SIND 5`) right after the
+`OLDOK`-derived flag is computed, suggesting the two are related --
+plausibly something CODE-file-specific (`SYSCOMREC.SEGTABLE` itself
+starts at global-adjacent offset `48`, close enough in the same
+neighborhood to be worth checking directly, not yet done). Not chased
+to a conclusion this session -- flagged as the next concrete lead
+rather than left as a dead end.
+
+**Current best guess, unconfirmed**: `FOPENOLD`'s manually-documented
+"boolean" behavior is real for ordinary user calls (`0`/`1` from
+`FOPEN`'s own public interface), but Apple's actual compiled type for
+this shared `FILEPROC` slot is not a strict two-valued `BOOLEAN` --
+either a small `INTEGER` the compiler doesn't complain about receiving
+a `BOOLEAN` actual argument for (UCSD is looser than ISO here in
+places already documented elsewhere in this project), or values `2`/`4`
+are reachable only through an internal caller this reconstruction
+doesn't have written yet (plausibly CODE-file-specific, given the
+`addr 661` lead above). Resolving this cleanly would mean either
+finding such a caller, or accepting the risk of changing `FILEPROC`'s
+own already-`VERIFIED BINARY FACT` shared signature (`ARGBOOL:
+BOOLEAN`) to something else -- deliberately not attempted this session
+since that signature change would touch three already-verified arms,
+not just this one.
