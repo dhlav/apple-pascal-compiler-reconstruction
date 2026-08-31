@@ -14551,3 +14551,74 @@ bit-offset, value`), `7, 9, 100` reads as "store a 7-bit-wide field at
 bit-offset 9 with value 100", but which field that targets in
 `F.FHEADER` (or elsewhere) is not identified. `STUB49` remains
 unwritten in `PASCALSYSTEM.text`.
+
+## 165. `STUB49` written whole: the write-time file-extension routine, resolving the `STP 7,9,100` mystery too
+
+STRONG INFERENCE, all instructions of `PASCALSY.49` now accounted for.
+Compiles clean; close but not exact frame-size match (see below for
+why exact match isn't the applicable bar here).
+
+Picked up finding 164's two open pieces (what happens once the scan
+loop's match is found, and the `STP 7, 9, 100` instruction) and walked
+the rest of `PASCALSY.49`'s disassembly:
+
+* Past the match, `index` (incremented one past the matched entry by
+  the loop) is compared against `DIR[0].DNUMFILES` again: `IF index >
+  DNUMFILES` (matched the *last* directory entry) `THEN <boundary> :=
+  DIR[0].DEOVBLK` (the volume's own end-of-volume block) `ELSE
+  <boundary> := DIR[index].DFIRSTBLK` (the *next* file's own start
+  block) -- the natural extension ceiling either way.
+* `IF (F.FHEADER.DLASTBLK < boundary) OR (F.FHEADER.<offset 11> <
+  512) THEN` skip straight to the shared success epilogue with no
+  write at all -- there's already room, or the last block isn't full,
+  so no extension is needed. Offset 11 here is *not* padding the way
+  it is in the `SECUREDIR`/`UNTYPEDFILE` variant `DIR[0]` uses
+  (finding 164) -- `F.FHEADER` for an ordinary open file uses
+  `DIRENTRY`'s *other* variant (`XDSKFILE`/`CODEFILE`/etc.), where
+  offset 11 is `DLASTBYTE` (already probed in finding 164's own
+  `probe_direntry_offsets.py`, which touched both variants) -- the
+  same union storage, read under a different variant's
+  field names depending on which kind of directory entry is meant,
+  exactly as Pascal variant records allow.
+* Otherwise (genuinely out of room): re-derives the matched entry's own
+  address (`index - 1`, undoing the loop's own increment), writes the
+  new `DLASTBLK` and resets `DLASTBYTE` to `512` (a fresh, full block)
+  into *that* directory entry, then calls `WRITEDIR(F.FUNIT, DIR)` and
+  checks `IORESULT`. On success: clears `F.FEOF`/`F.FEOLN`, resets
+  `F.FSTATE` to `FNEEDCHAR` unless it's already `FJANDW`, mirrors the
+  new `DLASTBLK`/`DLASTBYTE` into `F`'s own cached `FHEADER` (keeping
+  the in-memory copy consistent with what was just written to disk),
+  and -- the `STP 7, 9, 100` mystery -- writes offset 12's own packed
+  field (`DACCESS`, the *other* variant's field name, a packed
+  `DATEREC`): probed directly rather than inferred from sequential
+  position after `DLASTBYTE` (the exact trap findings 161/164 already
+  caught twice) -- `probe_direntry_daccess.py`, scratch, compiling
+  `D.DACCESS.YEAR := 100` in isolation, produces the *identical*
+  `INC 12 / SLDC 7 / SLDC 9 / SLDC 100 / STP` sequence. Exactly
+  `DATEREC.YEAR := 100`, matching `DATEREC`'s own already-documented
+  comment in this file ("100 is temp-disk flag"). The
+  function result is set to `FALSE` only on this successful-extension
+  path; every failure path leaves it at its default `TRUE`
+  (initialized at entry), and the "no extension needed" fast path also
+  leaves it `TRUE` -- `FBLOCKIO`'s own call discards the result either
+  way (finding 161), so this distinction doesn't affect that caller,
+  but is preserved as real, deliberate behavior rather than flattened.
+* `SYSCOM^.IORSLT`'s two error codes (`5`, `6`, set on the volume-
+  mismatch and entry-not-found paths respectively) are `IORSLTWD`'s own
+  declared `ILOSTUNIT` and `ILOSTFILE` -- names that independently
+  confirm the semantic reading rather than just fitting it after the
+  fact.
+
+**Written into `PASCALSYSTEM.text`** with `WITH F DO` / `WITH FHEADER
+DO` / `WITH DIR^[I - 1] DO` matching the real disassembly's own
+address-caching pattern as closely as natural Pascal allows. Compiles
+clean and lands `params=6 locals=14` bytes against the real `params=6
+locals=16` -- seven named/cached locals against the real eight, close
+but not exact. This is the same situation finding 161 already
+documented for `FBLOCKIO` (and, per finding 163, apparently affects
+this whole forward-declared-far-from-its-body group of routines in
+this file): exact instruction-for-instruction comparison isn't
+available here the way it was for `BLKXFER`, so this is labelled
+STRONG INFERENCE on the strength of the full manual decode and clean
+type-checking, same as `FBLOCKIO`, not the higher-confidence verified
+match. The acceptance tier is what would actually confirm it.

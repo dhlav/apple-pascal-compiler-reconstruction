@@ -525,8 +525,9 @@ PROGRAM PASCALSYSTEM;
     not-yet-locally-resolved routine, not caller-supplied arguments.
     Real signature: one `VAR F: FIB` parameter, `BOOLEAN` result (not
     `INTEGER` -- `FBLOCKIO`'s own call already treats it as one,
-    finding 161). Body still `STUB49 := FALSE`, not Apple's real
-    content. }
+    finding 161). Real body written for real, finding 165 -- the
+    write-time file-extension attempt this whole chain was inferred to
+    be from `FBLOCKIO`'s own call site alone. }
   FUNCTION STUB49(VAR F: FIB): BOOLEAN; FORWARD;
 
   { PASCALSY.50: prompt for and wait until the correct boot volume is
@@ -1213,12 +1214,13 @@ PROGRAM PASCALSYSTEM;
     seen for parameters, finding 156a; not the hand-counted order a
     first pass assumed). `RBLOCK`/`I` arrive relative to the file, not
     absolute -- the block-device branch converts by adding/subtracting
-    `F.FHEADER.DFIRSTBLK` around the transfer. `STUB49` (still just a
-    stub; its real one-`VAR F`-argument, `BOOLEAN`-result signature is
-    finding 161's own correction of a first-pass misreading -- see its
-    own forward declaration comment) is called for its result only,
-    discarded via `IF <call> THEN ;` -- matching the real binary's own
-    call-then-branch-to-the-very-next-instruction shape exactly. The general
+    `F.FHEADER.DFIRSTBLK` around the transfer. `STUB49` (written for
+    real, finding 165; its real one-`VAR F`-argument, `BOOLEAN`-result
+    signature is finding 161's own correction of a first-pass
+    misreading -- see its own forward declaration comment) is called
+    for its result only, discarded via `IF <call> THEN ;` -- matching
+    the real binary's own call-then-branch-to-the-very-next-instruction
+    shape exactly. The general
     (non-block) branch's trailing-zero trim uses `SCAN` with relop `1`,
     confirmed by probe to mean `<>`, not assumed. Compiles clean (no
     errors) in this file as a whole, but unlike `BLKXFER`, could NOT be
@@ -1424,7 +1426,86 @@ PROGRAM PASCALSYSTEM;
   { STUBS -- procedure numbers 48/49 reserved only, see the forward
     declaration comment above. Not Apple's real content. }
   PROCEDURE STUB48; BEGIN END;
-  FUNCTION STUB49; BEGIN STUB49 := FALSE END;
+  { `STUB49`'s real body (finding 165), decoded from `PASCALSY.49`'s
+    addressed disassembly using `DIRENTRY`'s probe-verified offsets
+    (finding 164). Attempts to extend `F`'s file allocation on disk:
+    verifies `F.FHEADER.DVID` is non-empty, `VOLSEARCH`es for the
+    file's own volume and checks it landed on the same unit
+    (`SYSCOM^.IORSLT := ILOSTUNIT` if not -- `IORSLTWD`'s own value 5),
+    scans the fetched directory for the entry matching `F`'s cached
+    header by `DFIRSTBLK`/`DLASTBLK` (`ILOSTFILE`, value 6, if not
+    found), computes the extension boundary (the next file's own
+    `DFIRSTBLK`, or the volume's `DEOVBLK` if this is the last entry),
+    and either reports no extension was needed (result stays `TRUE`)
+    or extends the entry, writes the directory back via `WRITEDIR`,
+    and on success updates `F`'s own cached fields to match (clearing
+    `FEOF`/`FEOLN`, `FSTATE`, and stamping `DACCESS.YEAR := 100` --
+    `DATEREC`'s own documented "temp-disk flag" sentinel) before
+    returning `FALSE`. Compiles clean and matches the decode closely
+    (`locals=14` bytes here vs. the real `16` -- close, not exact; see
+    finding 161's own note on why exact instruction-for-instruction
+    verification isn't available for this whole forward-declared-far-
+    from-its-body group of routines in this file). }
+  FUNCTION STUB49;
+    VAR
+      I: INTEGER;
+      DONE, FOUND: BOOLEAN;
+      NEWLAST: INTEGER;
+      DIR: DIRP;
+  BEGIN
+    STUB49 := TRUE;
+    DONE := FALSE;
+    WITH F DO
+      IF LENGTH(FHEADER.DVID) > 0 THEN
+        WITH FHEADER DO
+          IF VOLSEARCH(DVID, FALSE, DIR) <> FUNIT THEN
+            SYSCOM^.IORSLT := ILOSTUNIT
+          ELSE
+          BEGIN
+            FOUND := FALSE;
+            I := 1;
+            WHILE (I <= DIR^[0].DNUMFILES) AND NOT FOUND DO
+            BEGIN
+              FOUND := (DIR^[I].DFIRSTBLK = DFIRSTBLK) AND
+                       (DIR^[I].DLASTBLK = DLASTBLK);
+              I := I + 1
+            END;
+            IF NOT FOUND THEN
+              SYSCOM^.IORSLT := ILOSTFILE
+            ELSE
+            BEGIN
+              IF I > DIR^[0].DNUMFILES THEN
+                NEWLAST := DIR^[0].DEOVBLK
+              ELSE
+                NEWLAST := DIR^[I].DFIRSTBLK;
+              IF (DLASTBLK < NEWLAST) OR (DLASTBYTE < 512) THEN
+                DONE := TRUE
+              ELSE
+                WITH DIR^[I - 1] DO
+                BEGIN
+                  DLASTBLK := NEWLAST;
+                  DLASTBYTE := 512;
+                  WRITEDIR(F.FUNIT, DIR);
+                  IF IORESULT = 0 THEN
+                  BEGIN
+                    F.FEOF := FALSE;
+                    F.FEOLN := FALSE;
+                    IF F.FSTATE <> FJANDW THEN F.FSTATE := FNEEDCHAR;
+                    F.FHEADER.DLASTBLK := NEWLAST;
+                    F.FHEADER.DLASTBYTE := 512;
+                    F.FHEADER.DACCESS.YEAR := 100;
+                    STUB49 := FALSE;
+                    DONE := TRUE
+                  END
+                END
+            END
+          END;
+    IF DONE THEN
+    BEGIN
+      F.FEOF := TRUE;
+      F.FEOLN := TRUE
+    END
+  END;
 
   PROCEDURE WAITSYSVOL;
   VAR DUMMY: CHAR;

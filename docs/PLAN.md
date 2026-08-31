@@ -562,27 +562,26 @@ a route end to end; everything else is a straight read-and-rebuild.
     INTEGER`) even though its body is still a stub. `FILEPROC`'s own
     arm bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
     functional, not just correctly-routed) are the next natural target,
-    once `FGET`/`FIOPRIMS.2` are within reach; `STUB49`'s own real
-    behavior (the write-time file-extension logic `FBLOCKIO` calls
-    into) is a second option, now that its signature is settled --
-    corrected again, finding 162: one `VAR F: FIB` parameter,
-    `BOOLEAN` result, not the three-argument reading finding 161 first
-    assumed from the call site (the two extra pushes were the
-    compiler's own result-reservation mechanism for a not-yet-resolved
-    call, not real arguments -- probe-confirmed). Its body caches
-    `&F.FHEADER` the same way `FBLOCKIO` does (word3→local9→local10),
-    then calls `VOLSEARCH` (verify the file's volume is still on the
-    same unit) and, later, `WRITEDIR` (finding 163) -- both identified
-    by frame-size match against their own already-declared signatures
-    in this file, not guessed. `DIRENTRY`'s own real field offsets
-    (finding 164, probe-verified after a hand-counted first guess got
-    it wrong the same way `FIB`'s did) resolve the guard clause (a
-    sanity check that `F.FHEADER.DVID` is non-empty) and the scan loop
-    (searching `VOLSEARCH`'s freshly-fetched directory for the entry
-    matching `F`'s own header). Open: what the scan finding a match
-    actually does past `0xf4f` -- presumably the real extension, not
-    confirmed -- and an `STP` opcode with operands `7, 9, 100` whose
-    target field isn't identified. Not yet written into source.
+    once `FGET`/`FIOPRIMS.2` are within reach. `STUB49` (the write-time
+    file-extension logic `FBLOCKIO` calls into) is now written whole
+    (finding 165), after a chain of corrections along the way: its
+    real signature is one `VAR F: FIB` parameter, `BOOLEAN` result
+    (finding 162, not the three-argument reading finding 161 first
+    assumed); its body calls `VOLSEARCH` (verify the file's volume is
+    still on the same unit) and `WRITEDIR` (finding 163), both
+    identified by frame-size match against signatures already declared
+    in this file; `DIRENTRY`'s own real field offsets (finding 164,
+    probe-verified after a hand-counted guess got them wrong the same
+    way `FIB`'s did) resolve the guard clause and directory-scan loop;
+    and the body's full logic (compute an extension boundary, skip the
+    write if there's already room, otherwise extend the matched entry
+    and write it back, then update `F`'s own cached fields -- including
+    the `STP 7, 9, 100` mystery, resolved as `DATEREC.YEAR := 100`,
+    this file's own documented "temp-disk flag") is finding 165 itself.
+    Compiles clean; close but not exact frame-size match, the same
+    situation as `FBLOCKIO` (not the higher-confidence verified match
+    `BLKXFER` got). `FILEPROC`'s own arm bodies are the next natural
+    target now that this whole chain is closed.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
