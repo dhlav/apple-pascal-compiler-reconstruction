@@ -15480,22 +15480,28 @@ effect in the branch, to also rule out empty-branch elimination as the
 cause) produces genuine `SLDL/SLDC/GRTI/FJP` -- the comparison survives,
 matching the real binary's own `SLDL 2; SLDC 1; GRTI` shape exactly.
 
-**One remaining discrepancy, not yet resolved**: the real binary's
-`(P2 = 2) OR (P2 = 4)` compiles to two plain `EQUI`s combined with a
-literal `LOR` (finding-establishes-elsewhere fact: "the compiler does
-not short-circuit"). Every variant tried this session -- comparison
-expressions, plain `BOOLEAN` variables, inside an `IF`, assigned to a
-value -- compiled through this host tool to a short-circuit `FJP` chain
-instead, never `LOR`. Either this specific host-compiler invocation
-short-circuits where Apple's real one didn't (a new instance of the
-already-documented class of host-vs-Apple compiler divergence, findings
-174/176), or some other syntactic detail (not yet found) triggers
-`LOR` specifically. Left open -- the mechanism for reading `OLDOK`'s
-raw value is solved; reproducing the exact combining operator is not.
+**The `LOR` discrepancy is now explained, not just observed.**
+`CLAUDE.md`'s own "the compiler does not short-circuit" rule describes
+how to *read Apple's real disassembly* (an `FJP` chain found there
+means nested `IF`s in Apple's own source, not a decompiled `AND`/`OR`)
+-- it says nothing about what *this reconstruction's own host
+compiler* produces when compiling reconstructed Pascal back down.
+Checked the already-committed, previously-`STRONG INFERENCE`-verified
+`FPCLOSE` body, which itself uses `AND`/`OR` several times: it *also*
+never emits `LAND`/`LOR` anywhere in its own compiled output, always a
+short-circuit `FJP` chain. This host compiler (`ucsdpsys_compile`)
+simply always short-circuits boolean combination -- a new, generally-
+applicable instance of the host-vs-Apple compiler divergence class
+(findings 174/176), not specific to this one expression. New memory:
+`host-compiler-always-shortcircuits`. Every `AND`/`OR` anywhere in this
+whole file's reconstructed source will diverge from a real
+`LAND`/`LOR`-based binary the same way -- expected and harmless, only
+the acceptance tier can confirm the source itself is right.
 
 Not written into `PASCALSYSTEM.text` this session -- this closes the
-investigation into *why* the comparisons are possible at all, clearing
-the path for an actual body-writing pass next time, but the `TRICKARRAY`
-idiom's exact placement (is it really what Apple wrote, or just a
-technique that happens to produce equivalent bytes?) and the `LOR` gap
-above are both still open before committing to source.
+investigation into *why* the comparisons are possible at all and *why*
+the combining operator differs, clearing the path for an actual
+body-writing pass next time. The one open question left is whether
+`TRICKARRAY` is really the idiom Apple wrote here or just a technique
+that happens to produce equivalent bytes -- not resolvable without the
+acceptance tier, and not blocking a `STRONG INFERENCE` write.
