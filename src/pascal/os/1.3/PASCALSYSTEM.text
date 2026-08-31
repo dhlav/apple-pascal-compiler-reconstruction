@@ -732,7 +732,51 @@ PROGRAM PASCALSYSTEM;
   SEGMENT PROCEDURE FILEPROC(OP: INTEGER; VAR F: FIB; VAR ARGSTR: STRING;
                              ARGBOOL: BOOLEAN; ARGPTR: FIBP;
                              ARGINT: INTEGER);
-  BEGIN END;
+
+    { The four arms themselves (finding 166): still stubs. `FPRESET`
+      needs `FIOPRIMS.2`/`FGET` (`FPRESET`'s own real work, per
+      finding 158's own scope note); `FPOPEN`/`FPCLOSE` are genuinely
+      unwritten; `FPTITLE` (arm 4) is `FILEPROC.8`, already
+      independently confirmed real behavior by `probe_osproc43.py`
+      (deletes blanks, honours a trailing `.`, tests for `.`/`:`,
+      upshifts via `ORD(c) - 32`) but not yet transcribed into source
+      here. Only the dispatcher (below) is written for real this
+      session. }
+    PROCEDURE FPRESET(VAR F: FIB);
+    BEGIN END;
+
+    PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
+                     JUNK: FIBP);
+    BEGIN END;
+
+    PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: INTEGER);
+    BEGIN END;
+
+    PROCEDURE FPTITLE(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
+    BEGIN END;
+
+  { `FILEPROC.1`'s own real dispatch (finding 166), read directly from
+    finding 156b's per-arm word mapping. Written as a plain `CASE OP
+    OF` rather than reproducing the real binary's own inner `XJP 0..3`
+    on `ARGINT` for arm 3 (finding 156b): that inner dispatch only
+    exists because Apple's real `ARGINT`-equivalent parameter is
+    plausibly typed as `CLOSETYPE` there, not the plain `INTEGER` this
+    reconstruction settled on for the *caller* side (finding 157) --
+    `ARGINT` already arrives holding `ORD(FTYPE)`'s own value by the
+    time `FCLOSE` calls in, so re-deriving it via a second dispatch
+    would be redundant here regardless of whether Apple's own compiler
+    needed to for type reasons. Same behavior, simpler shape -- not
+    forced to match instruction-for-instruction, consistent with this
+    whole procedure's own already-documented small, non-forced gaps
+    (finding 157). }
+  BEGIN
+    CASE OP OF
+      1: FPRESET(F);
+      2: FPOPEN(F, ARGSTR, ARGBOOL, ARGPTR);
+      3: FPCLOSE(F, ARGINT);
+      4: FPTITLE(ARGSTR, ARGBOOL, ARGINT)
+    END
+  END;
 
   { The 41 forward-declared procedures' real completions, same order as
     their FORWARD declarations above -- trivial stubs except

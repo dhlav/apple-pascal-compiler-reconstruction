@@ -580,8 +580,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     this file's own documented "temp-disk flag") is finding 165 itself.
     Compiles clean; close but not exact frame-size match, the same
     situation as `FBLOCKIO` (not the higher-confidence verified match
-    `BLKXFER` got). `FILEPROC`'s own arm bodies are the next natural
-    target now that this whole chain is closed.
+    `BLKXFER` got). `FILEPROC.1`'s own dispatch body is now written too
+    (finding 166) -- three of its four arms (`OP=1,2,4`) match the real
+    binary's instruction shape exactly (proc-number gap aside, the same
+    kind of gap already seen for `BLKXFER`); arm 3 is a deliberate,
+    documented simplification. The four arm bodies themselves
+    (`FPRESET`/`FPOPEN`/`FPCLOSE`/`FPTITLE`) are still `BEGIN END` --
+    `FPTITLE` (`FILEPROC.8`) has the most groundwork already laid
+    (`probe_osproc43.py`'s own independent confirmation of its real
+    behavior) and is the natural next target.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

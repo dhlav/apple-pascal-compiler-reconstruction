@@ -14622,3 +14622,55 @@ available here the way it was for `BLKXFER`, so this is labelled
 STRONG INFERENCE on the strength of the full manual decode and clean
 type-checking, same as `FBLOCKIO`, not the higher-confidence verified
 match. The acceptance tier is what would actually confirm it.
+
+## 166. `FILEPROC.1`'s own dispatch body written for real -- three of four arms match the real binary's instruction shape exactly
+
+VERIFIED BINARY FACT for arms 1, 2, and 4 (instruction-for-instruction
+identical to the real binary apart from the called procedure's own
+*number*); STRONG INFERENCE for arm 3, deliberately simplified rather
+than forced to match.
+
+Finding 157 wrote `FILEPROC`'s real six-word signature and got
+`FRESET`/`FOPEN`/`FCLOSE` calling into it correctly, but `FILEPROC.1`'s
+own body was left as `BEGIN END` -- routing compiled clean but did
+nothing. Written now as a plain `CASE OP OF` with the four arms
+(`FPRESET`/`FPOPEN`/`FPCLOSE`/`FPTITLE`) declared as nested stub
+procedures, using finding 156b's own already-established per-arm word
+mapping. Compiling the whole file and disassembling `FILEPROC.1`
+directly:
+
+* **Arm `OP=1`**: `SLDO 5 / CLP 2` -- identical to the real binary's
+  `SLDO 5 / CLP 3` except the called procedure's own number (`2` here
+  vs. `3` real).
+* **Arm `OP=2`**: `SLDO 5 / SLDO 4 / SLDO 3 / SLDO 2 / CLP 3` --
+  identical to the real `SLDO 5 / SLDO 4 / SLDO 3 / SLDO 2 / CLP 4`,
+  same gap.
+* **Arm `OP=4`**: `SLDO 4 / SLDO 3 / SLDO 1 / CLP 5` -- identical to
+  the real `SLDO 4 / SLDO 3 / SLDO 1 / CLP 8`, same gap.
+* **Arm `OP=3`**: written as `SLDO 5 / SLDO 1 / CLP 4` (call
+  `FPCLOSE(F, ARGINT)` directly) rather than reproducing the real
+  binary's own inner `XJP 0..3` re-dispatch on `ARGINT` before the
+  call (finding 156b). Deliberate, not an oversight: by the time
+  `FCLOSE` calls into `FILEPROC` here, `ARGINT` already holds
+  `ORD(FTYPE)`'s value (finding 157's own call site), so re-deriving
+  it via a second dispatch is redundant for this reconstruction's
+  types even though Apple's real (plausibly `CLOSETYPE`-typed)
+  parameter needed the compiler to generate one. Same behavior,
+  simpler shape -- consistent with this whole procedure's already-
+  documented small, non-forced gaps.
+* The outer dispatch itself (`SLDO 6` loading `OP`, then a jump into
+  the arm block, `XJP` jump table placed *after* the arm bodies) also
+  matches the real binary's own documented shape and this project's
+  own established "UCSD puts a `CASE` jump table after the arms" fact.
+
+**The proc-number gap (2/3/5 here vs. the real 3/4/8) is itself a
+finding, not noise**: it means the real `FILEPROC` segment declares at
+least two more nested local procedures before reaching what corresponds
+to `FPCLOSE`/`FPTITLE` than this reconstruction currently has -- the
+same shape of gap already documented for `PASCALSY`'s own top-level
+numbering (`BLKXFER` landing on 53 instead of 55, finding 159) and not
+chased further here either. The four arm bodies themselves (`FPRESET`/
+`FPOPEN`/`FPCLOSE`/`FPTITLE`) remain `BEGIN END` -- `FPTITLE` is the
+one with the most existing groundwork (`FILEPROC.8`, already
+independently confirmed real behavior by `probe_osproc43.py`) but its
+actual body isn't transcribed into source yet.
