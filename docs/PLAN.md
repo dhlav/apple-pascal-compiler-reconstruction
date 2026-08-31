@@ -625,7 +625,18 @@ a route end to end; everything else is a straight read-and-rebuild.
     plain record assignment. Both compile clean, close-not-exact on
     `locals`. `FIOPRIMS.2` (soft-buffer window advance) remains the one
     real gap in this segment -- the harder routine, not chased further
-    this session.
+    this session. `FPOPEN`'s own real target (`FILEPROC.4`) is mapped
+    but not attempted as a body (finding 172): ~340 instructions, an
+    order of magnitude larger than anything else in this file so far,
+    with its own nested helper (`FILEPROC.5`, itself nesting `.6`) --
+    genuinely multi-session-scale, not something to force. Confirmed
+    three more segment-0 identities along the way by exact frame-size
+    match: `32=DIRSEARCH`, `33=SCANTITLE`, `34=DELENTRY`, placing five
+    of the file's six "non-fixed forward declarations" against real
+    procedure numbers (only `INSENTRY` still unplaced). `FPCLOSE`'s own
+    target (`FILEPROC.7`, ~140 instructions, several still-unidentified
+    `CXP` calls) remains the other large, unattempted piece of this
+    segment.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

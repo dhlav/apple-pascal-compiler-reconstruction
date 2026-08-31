@@ -14944,3 +14944,50 @@ is proportionally tiny).
 
 `FIOPRIMS.2` (soft-buffer window advance) and `.5` (no known caller
 yet) remain stubs, per finding 170's own already-stated reasoning.
+
+## 172. `FPOPEN`'s real target mapped -- three more segment-0 procedure identities confirmed by exact frame-size match; the body itself is multi-session-scale, not attempted
+
+STRONG INFERENCE for the overall shape; VERIFIED BINARY FACT for the
+three new procedure identities (exact `params` byte match against
+their own already-declared signatures, not just a call-site argument
+count). No source written -- this genuinely doesn't fit in one pass.
+
+Disassembled `FILEPROC.4` (`FOPEN`'s real target, finding 156b):
+`params=8 locals=50`, ~340 instructions -- an order of magnitude
+larger than anything else written so far in this file, and it calls
+its own nested helper (`FILEPROC.5`, itself nested two levels deep,
+which per finding 156's own earlier note nests `FILEPROC.6` a third
+level down) partway through. Not attempted as a body this session.
+
+**Three more segment-0 (`PASCALSY`) procedure identities confirmed**,
+matching already-declared signatures in this file by exact `params`
+byte count, not inferred from call-site argument counting alone:
+
+* **`PASCALSY.32` = `DIRSEARCH`** (`params=10`, matching `FUNCTION
+  DIRSEARCH(VAR FTID: TID; FINDPERM: BOOLEAN; FDIR: DIRP): DIRRANGE`'s
+  3 real words + 2-word reservation).
+* **`PASCALSY.33` = `SCANTITLE`** (`params=14`, matching `FUNCTION
+  SCANTITLE(FTITLE: STRING; VAR FVID: VID; VAR FTID: TID; VAR FSEGS:
+  INTEGER; VAR FKIND: FILEKIND): BOOLEAN`'s 5 real words + 2-word
+  reservation).
+* **`PASCALSY.34` = `DELENTRY`** (`params=4`, matching `PROCEDURE
+  DELENTRY(FINX: DIRRANGE; FDIR: DIRP)`'s 2 words, no reservation --
+  a plain procedure).
+
+Together with findings 162/163's own `30 = VOLSEARCH` and `31 =
+WRITEDIR`, this places five of `PASCALSYSTEM.text`'s six `{ non-fixed
+forward declarations }` against real procedure numbers
+(`VOLSEARCH`/`WRITEDIR`/`DIRSEARCH`/`SCANTITLE`/`DELENTRY`) -- only
+`INSENTRY` (`VAR FENTRY: DIRENTRY; FINX: DIRRANGE; FDIR: DIRP`) is
+still unplaced, not yet seen called from anywhere disassembled so far. `FILEPROC.4`'s own body calls `SCANTITLE` (once,
+near the top), `VOLSEARCH`, `DIRSEARCH`, and `DELENTRY` (once, deeper
+in), plus its own nested `FILEPROC.5` (`CLP 5`) and, at the very end,
+calls back into the now-already-written `FILEPROC.2`/`.3`
+(`FPNEWBLK`/`FPRESET`, `CGP 2`/`CGP 3`) -- consistent with `FOPEN`
+finishing by priming the file exactly the way an explicit `RESET`
+would. The overall shape (title-scan, volume search, directory search
+for an existing entry, delete-and-recreate or create-new depending on
+mode, then the nested helper for buffer setup) is visible at a glance
+but not walked through instruction by instruction -- a genuinely
+separate, larger undertaking than anything else in this file's `FIB`
+layer so far, left for its own dedicated pass.
