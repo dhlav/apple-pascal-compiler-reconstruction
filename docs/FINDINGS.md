@@ -15598,3 +15598,58 @@ and `400`, an `IXA 6`-indexed scan through `UNITABLE`, a string
 equality test, and a `UNITWRITE`) is now the one remaining blocker
 before a real candidate for this whole section can be assembled and
 compiled as a unit.
+
+## 181. `FPOPEN`'s bootstrap block fully decoded and drafted -- an emergency swap-out, gated three levels deep
+
+STRONG INFERENCE, full manual decode plus a compiling candidate;
+structure confirmed against the real disassembly, two accepted gaps
+(the already-documented missing-`WITH`-cache class, plus a new
+constant-folding difference).
+
+**Two more global offsets settled by probe**: `LOD 2,54` is
+`EMPTYHEAP` (`^INTEGER`, "heap mark for mem managing" -- exactly what
+a `MARK`/`RELEASE` block would reference); `SYSCOM^.LASTMP` (`SIND 7`)
+is confirmed too (the `LASTMP, STKBASE, BOMBP: MSCWP` clause reverses
+per the already-established rule, `BOMBP`=5, `STKBASE`=6, `LASTMP`=7).
+
+**The block's real shape, decoded end to end**: only entered when
+`SWAPFIB^.FISOPEN AND (SYSCOM^.GDIRP = NIL)` (finding 179's own
+bootstrap gate). `MARK(M)` snapshots the current heap top. Two nested
+guards follow, both computed via `ORD()` on the pointers (plain
+pointer subtraction across different pointer *types* -- `MSCWP` vs
+`^INTEGER` -- is flatly rejected by this compiler, `"invalid
+subtraction expression"`; `ORD()` sidesteps it and reproduces the real
+`SBI` shape exactly, the same general "escape a type restriction via
+an integer reinterpretation" move as `TRICKARRAY` in finding 178, just
+via the builtin `ORD()` instead of a variant record this time): first,
+heap growth since `SYSCOM^.LASTMP` must be small and positive (`> 0`
+and `<= 2028 + 400`); second, heap growth since `EMPTYHEAP` must
+*also* be large (`> 0` and `> 2028`) *and* `UNITABLE`'s own recorded
+volume ID for `SWAPFIB^.FUNIT` must still match `SWAPFIB^.FVID` (a
+consistency check). Only if every one of those holds: `UNITWRITE`s
+`2028` bytes starting at `EMPTYHEAP^` out to `SWAPFIB^.FHEADER
+.DFIRSTBLK` -- an emergency dump of the free-heap area to the swap
+file -- then `RELEASE(EMPTYHEAP)` (releasing back to the *canonical*
+empty mark, not the `M` just taken -- `M` was only ever used for the
+comparisons) and finally sets the `FLAG` local to `1`. Every other path
+through this block leaves `FLAG` at its initial `0`, including the
+"gate didn't fire at all" case -- `FLAG` isn't a general
+"bootstrap-vs-normal" indicator the way earlier findings guessed, just
+a "did the emergency swap-out actually run" one.
+
+**Two accepted gaps, both already-documented classes**: the missing-
+`F`-cache shift (findings 174/179/180) shows up here too, same as
+everywhere else in this routine; and a *new* instance of a similar
+divergence -- this host compiler constant-folds `2028 + 400` into a
+single `LDCI 2428` at compile time, where the real binary keeps `LDCI
+2028; LDCI 400; ADI` as separate runtime operations. Not chased
+further (same "compiler decides differently than Apple's did"
+category as findings 174/176/178's own already-accepted gaps).
+
+Compiles clean as a standalone candidate covering addr 608-786 in full
+(the entire preamble through `VOLSEARCH`, including this bootstrap
+block). Still not committed to `PASCALSYSTEM.text` -- the routine
+still needs the `DIRSEARCH`/`FPALLOC`/`INSENTRY` path and the
+soft-buffer setup tail (roughly addr 787-1358) before it's a complete
+procedure. That's now the only piece of `FPOPEN` left entirely
+undrafted.

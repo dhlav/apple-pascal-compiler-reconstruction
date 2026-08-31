@@ -742,6 +742,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     otherwise tolerates, so not committed until that block is decoded
     too.
 
+    **That blocker is now cleared (finding 181)**: the bootstrap block
+    is an emergency swap-out, gated three levels deep (`SWAPFIB^
+    .FISOPEN AND GDIRP=NIL`, then two heap-growth-bound checks via
+    `MARK`/`ORD()`-on-pointers, then a `UNITABLE`-vs-`SWAPFIB^.FVID`
+    consistency check) before it `UNITWRITE`s the free-heap area out to
+    the swap file and releases back to `EMPTYHEAP`. Compiles clean as a
+    standalone candidate covering the full preamble through `VOLSEARCH`
+    (addr 608-786). One new host-compiler quirk found doing this: `2028
+    + 400` gets constant-folded to `LDCI 2428` here, where the real
+    binary keeps it as two separate pushes plus a runtime `ADI` --
+    another instance of the already-accepted "compiler decides
+    differently than Apple's did" class (findings 174/176/178). Still
+    not committed -- the `DIRSEARCH`/`FPALLOC`/`INSENTRY` path and the
+    soft-buffer setup tail (roughly addr 787-1358) are the only piece
+    of `FPOPEN` left entirely undrafted now.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
