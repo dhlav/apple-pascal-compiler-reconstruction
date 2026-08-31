@@ -14782,3 +14782,61 @@ Arms 2/3 (`FPOPEN`/`FPCLOSE`, `FILEPROC.4`/`.7`) remain `BEGIN END` --
 unidentified `CXP` calls) and `FPOPEN`'s has its own nested helpers
 (`FILEPROC.5`/`.6`, one nested two levels deep, one three) neither
 attempted this session.
+
+## 169. `FGET`'s real shape mapped -- `FIOPRIMS` is woven through it, not a simple prerequisite
+
+STRONG INFERENCE for the overall structure; not written into source.
+This is a mapping finding, the same kind as 156b/158/163 before their
+own bodies got written -- recorded so the next attempt starts here
+instead of re-deriving it.
+
+Disassembled `PASCALSY.7` (`FGET`, `params=2 locals=22`) directly. The
+opening is clean and self-contained: clear `SYSCOM^.IORSLT`, bail with
+error `13` if `F` isn't open (`FISOPEN`), and if `F.FREPTCNT > 0`
+(cached record still valid) just decrement it and return immediately
+-- no read at all. Past that, reading the record for real turns out to
+call into `FIOPRIMS` at three separate points, not one:
+
+* **`CXP 2,2`** (segment 2 = `FIOPRIMS`, its own procedure 2) --
+  gated on `F.FSOFTBUF`: soft-buffered files ask `FIOPRIMS.2` to
+  advance the in-memory window first; if it reports success, `FGET`
+  skips the disk read entirely and jumps straight to the shared
+  `FEOF`/`FEOLN`-setting exit. Block-device (non-soft-buffered) files
+  skip this call completely -- this is the piece an earlier session's
+  note conflated with `FPRESET`'s own dependency (finding 168 already
+  corrected that half of the mix-up).
+* **`CXP 2,3`** -- gated on `F.FUNIT > 2` and the just-read byte being
+  `16` (`DLE`, the line-indentation marker this file's own comments
+  already document from the manual): asks `FIOPRIMS.3` something,
+  and on a true result does a **non-local `EXIT(0, 7)`** (`CSP 4`) --
+  `FGET` exiting itself outright, not just branching.
+* **`CXP 2,4`** -- gated on `F.FSOFTBUF AND (F.FHEADER.DFKIND =
+  TEXTFILE)` when the byte isn't null: calls `FIOPRIMS.4`; the `ELSE`
+  side just replaces the byte with a space (`32`).
+
+Between the `FIOPRIMS` calls, the main read loop (bounded by
+`F.FRECSIZE`) is otherwise self-contained: remaps unit `1`→`2` for a
+special echo path, calls `UNITREAD` one byte at a time (`CSP 5`), bails
+on nonzero `IORESULT`, and -- gated on the already-established
+`R_EXEC_FLG`/`W_EXEC_FLG` globals (finding 149's own EXEC-redirect
+work) -- mirrors the read through **`CLP 56`** (a same-scope call,
+confirming `PASCALSY.56` is nested *inside* `FGET`, matching the
+lex-1 nested group finding 149 first surfaced but never placed) on the
+read side and **`CBP 44`** on the write-mirror side. Neither `56` nor
+`44` is written yet either. A `CR`-vs-other-byte check afterward
+(replacing `CR` with a space and setting `FEOLN`) and an `SYSCOM`
+packed-field-at-offset-41 comparison (a configured special character,
+identity not determined) round out the tail.
+
+**Why this isn't written into `PASCALSYSTEM.text`**: three of the
+loop's own branches call directly into `FIOPRIMS`, an entirely
+unwritten segment (still `SEGMENT PROCEDURE FIOPRIMS; BEGIN END;`,
+no internal procedure numbering at all) -- not a clean prerequisite
+the way `FGET` itself was for `FPRESET` (finding 168), but load-bearing
+for `FGET`'s own control flow in a way that can't be stubbed around
+without silently changing behavior (skipping `FIOPRIMS.2`'s branch
+entirely would make every soft-buffered `GET` fall through to a disk
+read it shouldn't attempt). `FIOPRIMS` itself -- specifically working
+out its own procedures 2/3/4's real signatures and behavior -- is now
+the higher-leverage target than `FGET` directly, contrary to finding
+168's own recommendation.

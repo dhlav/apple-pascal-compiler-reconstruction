@@ -599,10 +599,18 @@ a route end to end; everything else is a straight read-and-rebuild.
     remain `BEGIN END` -- `FPCLOSE`'s target is large (~140
     instructions, several still-unidentified `CXP` calls) and
     `FPOPEN`'s has its own nested helpers (`FILEPROC.5`/`.6`) neither
-    attempted yet. `FGET` itself (`PASCALSY.7`) is now the most
-    leveraged remaining target: writing it unblocks `FPRESET`
-    completely and is a prerequisite for `FPUT`/the rest of the `FIB`
-    read/write layer regardless.
+    attempted yet. `FGET`'s own real shape is now mapped (finding
+    169), but it turned out **not** to be the clean next target
+    finding 168 expected: three separate branches of its main loop
+    call directly into `FIOPRIMS` (segment 2, still entirely
+    unwritten, no internal procedure numbering at all) for soft-buffer
+    window advance, `DLE`-indentation handling, and `TEXTFILE` byte
+    expansion -- load-bearing control flow, not a prerequisite that
+    can be stubbed around. `PASCALSY.56` is also now confirmed nested
+    *inside* `FGET` itself (the lex-1 nested group finding 149 first
+    surfaced), for the `EXEC`-redirect read-mirror path. `FIOPRIMS`
+    itself -- specifically its own procedures 2/3/4 -- is the actual
+    highest-leverage target now, not `FGET` directly.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
