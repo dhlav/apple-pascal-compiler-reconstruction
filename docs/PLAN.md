@@ -643,9 +643,17 @@ a route end to end; everything else is a straight read-and-rebuild.
     `DACCESS` date-stamping logic. `params` exact, `locals` two words
     short. `FILEPROC` now has only `FPOPEN` (arm 2, `FILEPROC.4`, ~340
     instructions with its own nested helper chain) left unwritten as a
-    body -- everything else in this segment is real. `FIOPRIMS.2`
-    (soft-buffer window advance) remains the other standing gap in the
-    `FIB` layer overall.
+    body -- everything else in this segment is real. `FPWINADV`
+    (`FIOPRIMS.2`, soft-buffer window advance) is now written too
+    (finding 174), closing out `FIOPRIMS` entirely -- `params` exact,
+    `locals` two words short, from two identified, host-compiler-only
+    gaps (a redundant `WITH F DO` address cache the host tool always
+    collapses away, and `DIRENTRY.DLASTBYTE` compiling packed under
+    this host tool where the real binary's own access is a plain word).
+    That second gap is latent in every already-written `DLASTBYTE`
+    reference in this file (`STUB49`, `FPCLOSE`) too, previously
+    undetected. `FPOPEN` is now the only body left unwritten anywhere
+    in `FILEPROC`/`FIOPRIMS`.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

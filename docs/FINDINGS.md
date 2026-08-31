@@ -15054,3 +15054,74 @@ Written into `PASCALSYSTEM.text`. Compiles clean; `params=4` bytes
 exact against the real binary; `locals=8` against the real `12` -- two
 words short, documented not forced, same class of gap as everywhere
 else in this file.
+
+## 174. `FPWINADV` (`FIOPRIMS.2`) written for real -- closes finding 170's own standing gap; a real compiler-packing divergence caught along the way
+
+STRONG INFERENCE. `params=6` bytes exact; `locals=12` against the real
+`14`, two words short -- but the shape of that gap, and a second
+independent one, are both now understood rather than just accepted.
+
+Disassembled `FIOPRIMS.2` fresh from `128K.PASCAL` (~103 instructions,
+`params=6 locals=14`) and decoded it as the soft-buffer window-advance
+routine `FGET` calls when its own cached window byte runs out: copy up
+to `F.FRECSIZE` bytes from the in-memory soft buffer into `F^`,
+fetching fresh blocks via `UNITREAD` (and flushing a dirty one via
+`UNITWRITE` first) whenever the current block doesn't have enough left.
+Structurally a `WITH F DO WITH FHEADER DO REPEAT ... UNTIL FILLED`,
+matching the `WITH`-nesting idiom finding 165 already established for
+`STUB49`.
+
+**First false start, caught by the project's own discipline**: the
+initial decode assigned `FNXTBYTE=30`/`FMAXBYTE=31` from this session's
+own carried-over memory note, rather than probing them fresh for the
+routine actually being written. The compiled candidate's field order
+came out swapped against the real trace at the very two `IND 30`/`IND
+31` instructions that exercise this pair. Direct probe (`F.FNXTBYTE :=
+1; F.FMAXBYTE := 2`, isolated) settled it conclusively: `FNXTBYTE=31`,
+`FMAXBYTE=30` -- the *opposite* of what memory carried in, and
+consistent with the reversal rule (finding 156a) once actually applied
+to this declared pair rather than assumed from a stale note. The
+carried-over memory note was wrong; corrected here rather than
+propagated a third time.
+
+**Two systematic, not-source-fixable gaps** account for the remaining
+`params`-exact/`locals`-short shape, same class as `STUB49`/`FBLOCKIO`/
+`FPCLOSE`:
+
+* The real binary caches `F`'s own address into a second local (`SLDL
+  3; STL 9`) immediately before computing `FHEADER`'s address from it
+  (`SLDL 9; INC 16; STL 10`) -- even though `F` is already a trivially
+  addressable `VAR` parameter needing no cache at all. This host
+  compiler collapses that redundant step regardless of how the `WITH`s
+  are written (nested `WITH F DO WITH FHEADER DO`, a combined `WITH F,
+  FHEADER DO`, and an explicit `WITH F DO WITH F.FHEADER DO` all
+  compiled identically, none matching). One word of the `locals` gap.
+* `DIRENTRY.DLASTBYTE` is declared `1..FBLKSIZE` (`1..512`, needing all
+  10 bits) and this host compiler *always* compiles any access to it
+  through a packed load/store (`LDP`/`STP`) -- confirmed with three
+  independent isolated probes (`D.DLASTBYTE := 5` for a local `D`,
+  `X := F.FHEADER.DLASTBYTE` for a read, and a scan of `DIRENTRY`'s
+  other fields to locate `D`'s own base local slot and confirm
+  `DLASTBYTE`'s relative offset really is 11, matching the
+  already-established `DIRENTRY` layout exactly). The real binary's own
+  `FHEADER.DLASTBYTE` read here is a plain unpacked `IND`/`STO` -- no
+  `LDP` anywhere nearby. `DLASTBYTE` shares no word with a neighbor in
+  this variant (`STATUS` and `DACCESS` are packed separately, confirmed
+  by the same probe pass), so Apple's own compiler evidently declines
+  to pack a subrange into fewer bits than its own natural word when
+  doing so saves nothing -- a genuine compiler-behavior difference from
+  this host tool, not a source-level choice this project can fix.
+  **Every already-written `DLASTBYTE` reference in this file** (`STUB49`,
+  `FPCLOSE`) carries the same latent gap, previously undetected because
+  neither was checked at the instruction level for this specific field.
+
+Both gaps are properties of the host compiler's own codegen, not of the
+reconstructed source; documented in the source comment rather than
+chased further, consistent with this file's whole "close, not exact"
+class. The acceptance tier is what would actually confirm both.
+
+`FIOPRIMS` is now fully written -- all five procedures (`.1`-`.5`) have
+real bodies or the stub each one's own finding already justified
+(`.5`'s caller is still unknown). `FPOPEN` (`FILEPROC.4`, ~340
+instructions, finding 172) remains the one standing gap in `FILEPROC`
+itself.

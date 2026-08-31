@@ -612,12 +612,96 @@ PROGRAM PASCALSYSTEM;
     counterpart, still unwritten). }
   SEGMENT PROCEDURE FIOPRIMS;
 
-    { `FIOPRIMS.2` -- soft-buffer window advance (finding 170). Read in
-      full, but its exact byte-count arithmetic across several branches
-      isn't confidently resolved; left a stub rather than guessed. }
+    { `FIOPRIMS.2` -- soft-buffer window advance (finding 174, closing
+      finding 170's own standing gap). Copies up to `FRECSIZE` bytes
+      from the in-memory soft buffer into the user's window (`F^`),
+      pulling in fresh disk blocks via `UNITREAD` as needed and flushing
+      a dirty buffer via `UNITWRITE` first when one is pending. `ROOM`
+      is computed one of two ways depending on whether `FNXTBLK` is
+      still short of `FMAXBLK` (already-known blocks ahead -- use the
+      full `512`) or at/past it (the file's last known block -- use
+      `FHEADER.DLASTBYTE`, the true end of valid data, and give up with
+      no advance at all if even one more record would run past
+      `FNXTBYTE`, the real `EOF` case). `NEED` clamps `RECSIZE` to
+      `ROOM`; a `MOVELEFT` copies what's available this pass and updates
+      `FNXTBYTE`/`WINOFS`/`RECSIZE`; if `RECSIZE` isn't yet `0`, the loop
+      writes back a dirty block, reads the next one, and retries.
+      Result is `TRUE` only on the genuine-`EOF`/`IORESULT`-error exits
+      (via `GOTO`, matching the real binary's own jump table entry for
+      an early return past the trailing `FPWINADV := FALSE`); `FALSE`
+      once the loop's own natural exit is reached, `RECSIZE = 0`.
+
+      Two systematic gaps, not forced: the real binary caches `F`'s own
+      address into a *second* local (`STL 9`) even though it's already
+      a trivially-addressable `VAR` parameter, on top of the expected
+      `FHEADER` cache -- the same `WITH F DO WITH FHEADER DO` idiom used
+      successfully elsewhere in this file (`STUB49`, finding 165) still
+      doesn't reproduce that extra, semantically-redundant caching
+      step under this host compiler; `params=6` bytes exact, `locals=12`
+      against the real `14`, two words short from this alone.
+
+      Separately: `DIRENTRY.DLASTBYTE` is declared `1..FBLKSIZE`
+      (`1..512`, needing all 10 bits) and this host compiler always
+      compiles any access to it as a packed load/store (`LDP`/`STP`,
+      confirmed by an isolated probe compiling `D.DLASTBYTE := 5` in
+      total isolation) -- but the real binary's own `FHEADER.DLASTBYTE`
+      read here is a plain unpacked `IND`/`STO`, no `LDP` anywhere
+      nearby. `DLASTBYTE` doesn't share a word with any neighboring
+      field in this variant (`STATUS` and `DACCESS` are packed
+      separately), so Apple's own compiler evidently doesn't bother
+      packing a subrange into fewer than its natural word when doing so
+      saves nothing -- a real compiler-behavior divergence from this
+      host tool, not a source-level choice available to fix. Any other
+      already-written `DLASTBYTE` reference in this file (`STUB49`,
+      `FPCLOSE`) carries the same latent, previously-undetected gap. }
     FUNCTION FPWINADV(VAR F: FIB): BOOLEAN;
+      LABEL 1;
+      VAR
+        RECSIZE, WINOFS, ROOM, NEED: INTEGER;
+        FILLED: BOOLEAN;
     BEGIN
-      FPWINADV := FALSE
+      FPWINADV := TRUE;
+      WITH F DO
+        WITH FHEADER DO
+        BEGIN
+          RECSIZE := FRECSIZE;
+          WINOFS := 0;
+          REPEAT
+            IF FNXTBLK >= FMAXBLK THEN
+            BEGIN
+              IF (FNXTBYTE + RECSIZE) > FMAXBYTE THEN GOTO 1;
+              ROOM := DLASTBYTE - FNXTBYTE
+            END
+            ELSE
+              ROOM := 512 - FNXTBYTE;
+            NEED := RECSIZE;
+            IF NEED > ROOM THEN NEED := ROOM;
+            IF NEED > 0 THEN
+            BEGIN
+              MOVELEFT(FBUFFER[FNXTBYTE], FWINDOW^[WINOFS], NEED);
+              FNXTBYTE := FNXTBYTE + NEED;
+              WINOFS := WINOFS + NEED;
+              RECSIZE := RECSIZE - NEED
+            END;
+            FILLED := RECSIZE = 0;
+            IF NOT FILLED THEN
+            BEGIN
+              IF FBUFCHNGD THEN
+              BEGIN
+                FBUFCHNGD := FALSE;
+                FMODIFIED := TRUE;
+                UNITWRITE(FUNIT, FBUFFER[0], 512, DFIRSTBLK + FNXTBLK - 1)
+              END;
+              IF IORESULT <> 0 THEN GOTO 1;
+              UNITREAD(FUNIT, FBUFFER[0], 512, DFIRSTBLK + FNXTBLK);
+              IF IORESULT <> 0 THEN GOTO 1;
+              FNXTBLK := FNXTBLK + 1;
+              FNXTBYTE := 0
+            END
+          UNTIL FILLED;
+          FPWINADV := FALSE
+        END;
+      1: ;
     END;
 
     { `FIOPRIMS.3` -- DLE-blank expansion (finding 171). Called by
