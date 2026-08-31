@@ -15125,3 +15125,80 @@ real bodies or the stub each one's own finding already justified
 (`.5`'s caller is still unknown). `FPOPEN` (`FILEPROC.4`, ~340
 instructions, finding 172) remains the one standing gap in `FILEPROC`
 itself.
+
+## 175. `FPOPEN`'s own helper chain (`FILEPROC.5`/`.6`) read in structural outline -- `INSENTRY` identified, closing all six forward declarations; a general reversal-rule extension confirmed
+
+STRONG INFERENCE for the structural read; VERIFIED BINARY FACT for
+`INSENTRY`'s identity (exact argument-shape match at the real call
+site) and for the parameter-reversal generalization (a clean standalone
+probe, not inferred from this file). No body written -- `FPOPEN`
+itself (`FILEPROC.4`, 472 instructions) is untouched; this finding
+covers only its two nested helpers, `FILEPROC.5` (177 instructions,
+lex 2) and `FILEPROC.6` (25 instructions, lex 3, nested inside `.5`).
+
+**`FILEPROC.6` decoded whole**: given three arguments -- a gap's start
+block, its preceding entry's end block, and an index -- computes `GAP
+:= START - PRECEDING_END` and compares it against two accumulators
+held in its *enclosing* frame (`.5`'s own frame, read via `LOD 1,n`/
+`STR 1,n`): if `GAP` beats the current best, the old best (size and
+index) is demoted to second-best and `GAP`/index become the new best;
+else if `GAP` beats the current second-best, it replaces just the
+second-best. This is exactly the two-largest-free-extent tracking this
+project's own `CLAUDE.md` already documents as UCSD's `[*]`
+file-size-specifier algorithm ("reserves the second-largest contiguous
+area, or half the largest, whichever is more") -- seeing that same
+algorithm inside `FPOPEN`'s own helper chain is a strong structural
+confirmation that `.5`/`.6` are the free-space-for-a-new-file search,
+not read cold as a guess but recognized from a spec this project had
+already needed for its own emulator tooling.
+
+**Decoding `.6`'s own three parameters required correcting an initial
+misreading**: the real call site (`.5`, addr 393-406) pushes three
+values in the order `[i, DLASTBLK_prev, DFIRSTBLK_i]`; assuming
+first-pushed-is-`P1` (the naive default) makes `.6`'s own `P1 - P2`
+computation nonsensical (`i - DLASTBLK_prev`). A standalone probe
+(`PROCEDURE TESTCALL3(A,B,C:INTEGER); BEGIN A:=B+C END; ...
+TESTCALL3(100,200,300)`) settled it: the caller pushes arguments in
+plain declaration order, but the *callee's own frame* assigns the
+**last**-pushed argument to `P1`, working backward -- exactly the
+existing declaration-reversal rule (finding 156a), now shown to apply
+to a procedure's own formal-parameter list, not just combined `VAR`
+declarations. With that correction, `.6`'s `P1` is `DFIRSTBLK_i` (last
+pushed) and `P1 - P2` becomes `DFIRSTBLK_i - DLASTBLK_prev`, a sensible
+gap size. New memory: `param-reversal-applies-to-calls`.
+
+**`FILEPROC.5`'s opening read** (through roughly its first third):
+`local9 := DIR^[0].DNUMFILES` (own directory's file count, matches the
+established `DIR[0]` volume-info layout); a size-request parameter
+(`P5`) is tested against `<= 0` and `< 0` early on -- plausibly the
+`[*]`/explicit-size distinction `FPOPEN`'s own caller (`FCREATE`) would
+need to pass through; a `WHILE i <= DNUMFILES DO` loop calls `.6` once
+per directory entry, computing each entry's leading gap from the
+previous entry's `DLASTBLK`, i.e. exactly the free-space scan `.6`'s
+own logic (above) expects to drive.
+
+**`INSENTRY` identified**, closing all six of this file's `{ non-fixed
+forward declarations }`: `.5`'s own tail (addr 547-588) builds a
+13-word local `DIRENTRY` (`DFKIND` at the established packed offset 2,
+`DTID` via `SAS` string-assign at offset 3, `DLASTBYTE` set to `512` at
+offset 11 via a **plain unpacked `STL`, no `LDP`/`STP`** -- independent
+corroboration, from completely different evidence, of finding 174's own
+conclusion that Apple's real compiler doesn't pack `DLASTBYTE`, since
+this local variable is subject to the exact same host-compiler-vs-Apple
+question and shows the same plain-word shape in the *real binary* this
+time -- and `DACCESS` set via three packed `STP`s matching `DATEREC`'s
+`MONTH`/`DAY`/`YEAR` sub-fields, `YEAR := 100` confirming the
+already-established temp-file sentinel yet again), then calls `CXP
+0,35` with `(ADDR(local DIRENTRY), local8, P3)` -- an exact match,
+argument-for-argument, for `INSENTRY(VAR FENTRY: DIRENTRY; FINX:
+DIRRANGE; FDIR: DIRP)`'s own already-forward-declared signature.
+`PASCALSY.35 = INSENTRY`, joining findings 162/163's `VOLSEARCH`/
+`WRITEDIR` and finding 172's `DIRSEARCH`/`SCANTITLE`/`DELENTRY` -- all
+six of this file's non-fixed forward declarations are now placed
+against real procedure numbers.
+
+Not written into `PASCALSYSTEM.text` -- `.5`/`.6` together are ~200
+instructions and `.4` (`FPOPEN` itself, which calls into `.5`) is 472
+more; genuinely multi-session scale, same reasoning finding 172 already
+gave for not forcing this. `docs/PLAN.md` updated to record this
+structural progress rather than claim the body is written.
