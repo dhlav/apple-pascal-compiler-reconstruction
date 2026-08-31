@@ -539,16 +539,23 @@ a route end to end; everything else is a straight read-and-rebuild.
     END`) and `PASCALSY.7`/`FGET` (also still a stub) -- so even
     "finish `FILEPROC`'s arm bodies" transitively needs most of the
     `FIB` layer written first, not just `FILEPROC` itself.
-    `PASCALSY.55` (finding 158) has its overall loop structure solid
-    but two of its six parameter roles unresolved -- not forced into
-    committed code. Recommended next: the probe finding 158 itself
-    suggests (isolate `UNITREAD`/`UNITWRITE`'s exact compiled
-    argument-push shape against a small known-good call) to settle
-    `PASCALSY.55` properly, since that's the one piece with no further
-    undiscovered dependencies once its own two open parameters are
-    pinned. `FILEPROC`'s own arm bodies (2/3/4/7 -- makes `FRESET`/
-    `FOPEN`/`FCLOSE` actually functional, not just correctly-routed)
-    come after that, once `FGET`/`FIOPRIMS.2` are within reach.
+    `PASCALSY.55` (findings 158/159) now has all six parameter *roles*
+    identified (`DOREAD`, running `BLOCKNUM`/`NBLOCKS`/`BYTEOFS`, a
+    constant `BUFADDR`, `UNITNO`) and its declared frame size confirmed
+    by a probe compile (`params=12 locals=4`, matching the binary
+    exactly). What's still open is narrower now: the exact Pascal
+    source shape of the `UNITREAD`/`UNITWRITE` calls themselves --
+    `word 4` (`BYTEOFS`) arrives at the CSP with no bounds-check/
+    address arithmetic ahead of it, which rules out an ordinary
+    `BUFADDR^[BYTEOFS+1]` packed-array index (tested, falsified; see
+    finding 159's addendum). Recommended next: try a non-packed
+    (word-granular) buffer element type for the indexing, or read
+    `SYSTEM.COMPILER`'s own `get_byte_pointer`-equivalent codegen (it's
+    already fully reconstructed) to see what it does differently from
+    the host reimplementation for that case. `FILEPROC`'s own arm
+    bodies (2/3/4/7 -- makes `FRESET`/`FOPEN`/`FCLOSE` actually
+    functional, not just correctly-routed) come after that, once
+    `FGET`/`FIOPRIMS.2` are within reach.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

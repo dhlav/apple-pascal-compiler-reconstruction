@@ -14009,3 +14009,156 @@ not-yet-decoded instructions (the `IXA 13` / directory-entry-touching
 tail visible in the earlier full dump but not yet walked through
 carefully) for corroborating evidence of which value is dereferenced
 as a pointer versus compared/stored as a small integer.
+
+## 159. `PASCALSY.55`'s six parameter roles resolved, by shape-matching against the host compiler's own `UNITREAD`/`UNITWRITE` builtin
+
+STRONG INFERENCE, built from two VERIFIED BINARY FACTs. Not yet forced
+into `PASCALSYSTEM.text`: the role assignment is solid, but the exact
+Pascal *types* (plain `INTEGER` vs `VAR INTEGER`, and what `BUFADDR`'s
+declared type is) are inferred from stack shape, not confirmed by a
+frame-size-matching probe compile yet -- that is the next step, not
+done here.
+
+Finding 158's own probe recommendation ("isolate `UNITREAD`/
+`UNITWRITE`'s exact compiled argument-push shape against a small
+known-good call") was carried out: `tools/xcompile.py` (the host
+`ucsdpsys_compile`) compiled a 4-argument
+`UNITREAD(UNITNO, BUF, CNT, BLK)` call and the host compiler's own
+source (`ucsdpsys_compile/symbol/function/unitread.cc`, read directly
+in WSL, not guessed) states the *real* UCSD declared signature this
+reimplementation targets:
+
+```
+PROCEDURE UNITREAD(unitnumber: INTEGER; VAR a: ANYTHING; length: INTEGER;
+                    blocknumber: INTEGER; mode: INTEGER);
+```
+
+with `blocknumber` and `mode` optional (defaulted to `0` when the call
+supplies fewer than 5/6 arguments -- confirmed by the `rhs.size() >= 5`
+/ `>= 6` checks in that source file). The compiled call for my 4-arg
+test pushed exactly **six** words: `unitnumber`, then *two* words for
+the `VAR a` argument (a base address, then a second word the source's
+own `get_byte_pointer()` synthesizes -- `0` in my test since I passed a
+whole array), then `length`, `blocknumber`, `mode`. This is a fact
+about the host reimplementation's calling convention, not about Apple
+-- but it is a strong structural template, since Apple's own compiler
+is CSP-based the same way and the CSP itself (`CSP 5`/`6`) is a fixed
+p-machine primitive, not something either compiler invents its own
+shape for.
+
+Disassembling `128K.PASCAL`'s own `PASCALSY.55` directly (`APPLE3`
+disk, addressed, via `a2pascal.codefile`/`a2pascal.pcode`) shows
+`params=12 locals=4` (6 word parameters, 2 word locals) and its `CSP 5`
+call at `0x1218` pushes exactly six values in this order: `SLDL 6,
+SLDL 5, SLDL 4, SLDL 7, SLDL 2, SLDC 0`. Matching position-for-position
+against the confirmed template above (`unitnumber, addr, byteoffset,
+length, blocknumber, mode`):
+
+* `SLDL 6` = **word 6 = unit number** (`unitnumber`)
+* `SLDL 5` = **word 5 = buffer base address** (`addr`) -- loaded with
+  plain `SLDL`, not `LAO`, so word 5 is *already* a pointer-typed
+  value, not a variable whose address is taken
+* `SLDL 4` = **word 4 = running byte offset** (`byteoffset`) -- not a
+  constant `0` the way my host-compiler test's whole-array case was;
+  this is a real local mutated later in the loop (see below), so
+  `PASCALSY.55` is doing its own pointer arithmetic across calls into
+  the CSP rather than relying on the CSP to advance anything
+* `SLDL 7` = **`length`**, but this is `PASCALSY.55`'s *own* local 7
+  (`data_size` word 1), not a parameter -- computed at `0x1203-0x1208`
+  as `local8 (blocks this chunk, capped at 63) * 512`
+* `SLDL 2` = **word 2 = running block number** (`blocknumber`)
+* `SLDC 0` = **`mode`**, always the literal `0` -- `PASCALSY.55` never
+  passes a nonzero mode
+
+The `CSP 6` (`UNITWRITE`) call three instructions later, gated on the
+same `SLDL 1` boolean at `0x120f`, pushes the identical five values in
+the identical order -- confirming `SLDL 1` (word 1) is the read/write
+flag (`DOREAD`) and that the other five roles are shared between both
+directions, exactly as finding 158 expected.
+
+The loop body confirms which words are mutated in place (a plain-value
+parameter cannot carry a result back to `FBLOCKIO` across the call, so
+a mutated word implies `VAR`, though this is inferred from behavior,
+not yet from a declared-type probe):
+
+* word 3 (`SLDL 3`, checked at `0x11f6`/`0x120a`/`0x123d`, decremented
+  at `0x122e-0x1231`) is the **remaining block count** -- capped at 63
+  per iteration (`local 8`), the `SLDL 3 / SLDC 63 / GRTI` at the very
+  top matches finding 158's "loop caps each transfer at 63 blocks"
+  exactly.
+* word 2 (`blocknumber`) advances by `local 8` (blocks transferred this
+  chunk) at `0x1238-0x123b`.
+* word 4 (`byteoffset`) advances by `local 7` (bytes transferred this
+  chunk) at `0x1233-0x1236`.
+* word 5 (`addr`, the buffer base) is **never** stored to -- read-only
+  throughout the loop, which is why finding 158's own candidate ("the
+  one advanced by the byte count") was half right: something *is*
+  advanced by the byte count, but it is a separate running offset
+  (word 4), not the base address itself (word 5). This is the concrete
+  resolution finding 158 asked for.
+* `CSP 34` (`IORESULT`) is checked after each transfer; nonzero triggers
+  the non-local `EXIT(0, 55)` (`SLDC 0 / SLDC 55 / CSP 4`) exactly as
+  finding 158 described.
+
+So the structural signature, word order 1-6, params only (locals 7/8
+are `PASCALSY.55`'s own chunk-size scratch, not parameters):
+
+```
+1  DOREAD:     BOOLEAN        (value)
+2  BLOCKNUM:   VAR INTEGER    (running block number)
+3  NBLOCKS:    VAR INTEGER    (remaining block count)
+4  BYTEOFS:    VAR INTEGER    (running byte offset into the buffer)
+5  BUFADDR:    <pointer type> (value; base address, constant)
+6  UNITNUM:    INTEGER        (value)
+```
+
+matching `params=12` bytes = 6 words exactly. `locals=4` bytes = 2
+words (the chunk block count and chunk byte length scratch, `local 7`
+and `local 8` above) also matches with nothing left over.
+
+**Frame size confirmed by probe compile** (`tools/xcompile.py`): a
+candidate `PROCEDURE P55(DOREAD: BOOLEAN; VAR BLOCKNUM, NBLOCKS,
+BYTEOFS: INTEGER; BUFADDR: PTR; UNITNO: INTEGER)` (with `PTR = ^INTEGER`
+as a placeholder pointer type -- the real element type is still open)
+compiles to `params=12 locals=4` exactly, matching the binary.
+
+**Word 4 (`BYTEOFS`)'s role in the `CSP 5`/`6` call itself is not yet
+settled, and one concrete hypothesis is now ruled out.** The manual
+(`analysis/reference/apple-pascal-language-reference.txt:961`) gives
+`UNITREAD`'s real declared form as `UNITREAD(UNITNUMBER, ARRAY, LENGTH
+[, [BLOCKNUMBER] [, MODE]])` -- matching the host reimplementation's
+model exactly (confirmed by reading `ucsdpsys_compile/symbol/function/
+unitread.cc` in WSL directly, not guessed): `ARRAY` alone expands to
+*two* pushed words (a base address, then a packed-char byte-selector
+that `get_byte_pointer()` synthesizes). The natural reading of `word 4`
+being a real, growing local rather than the constant `0` my whole-array
+test produced was that the source indexes into the buffer
+(`BUFADDR^[BYTEOFS + 1]`) so the selector genuinely varies. **Tested
+and falsified**: compiling that exact call shape produces `CHK` /
+`DVI`-style bounds-check and address-decomposition instructions
+immediately before the `CSP` (`probe_p55_call_shape.py`, scratch), and
+the real binary's `CSP 5`/`6` call has *none* of that -- `SLDL 6, SLDL
+5, SLDL 4, SLDL 7, SLDL 2, SLDC 0` runs straight into `CSP 5` with no
+intervening arithmetic at all. So word 4 is not an ordinary
+packed-array index computed by the compiler; whatever it is, the
+compiler passes it through unmodified, which the whole-array indexing
+model cannot produce. Two explanations remain untried: (1) the real
+Apple compiler's own `get_byte_pointer`-equivalent works differently
+from the host reimplementation's for word-aligned (non-packed, e.g. `^
+ARRAY OF INTEGER`) targets and can pass a raw word offset unmodified,
+or (2) word 4 is not part of the buffer address at all and belongs to
+a role not yet considered. Left open rather than guessed further.
+
+**Not done here, and the actual next step**: write this signature into
+`src/pascal/os/1.3/PASCALSYSTEM.text` as `PASCALSY.55`'s real body and
+compile it standalone (`tools/xcompile.py`) to confirm the host
+compiler reproduces `params=12 locals=4` exactly -- that is the
+probe finding 158 asked for, now aimable at a concrete candidate
+instead of a blank search. If it matches, the second half of the work
+is reconciling `FBLOCKIO`'s own call-site locals (`local3..local7` in
+the `fblockio_addr.txt` dump, findings 158's own scratch capture) against
+these six roles via the parameter-clause-reversal rule (finding 156a:
+first-pushed = highest word), which the call-site evidence above
+already lines up cleanly with (`FUNIT`→word6, local7→word5,
+local6→word4, local5→word3, local4→word2, local3→word1) but has not
+yet been written into `FBLOCKIO`'s own body.
