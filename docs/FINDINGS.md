@@ -14840,3 +14840,50 @@ read it shouldn't attempt). `FIOPRIMS` itself -- specifically working
 out its own procedures 2/3/4's real signatures and behavior -- is now
 the higher-leverage target than `FGET` directly, contrary to finding
 168's own recommendation.
+
+## 170. `FIOPRIMS`'s own real segment layout: five procedures, three real signatures confirmed by argument-count match
+
+VERIFIED BINARY FACT for the signatures (argument count and shape
+match at every one of `FGET`'s three call sites, no guessing); STRONG
+INFERENCE only for `FIOPRIMS.2`'s own high-level purpose, and its
+detailed internal logic is explicitly NOT resolved here.
+
+`FIOPRIMS` (`SYSTEM.PASCAL` 1.3) has five real procedures, not the
+single placeholder body this file currently declares:
+
+```
+1: params=0 locals=0    (the segment's own outer body)
+2: params=6 locals=14   (F + 2-word BOOLEAN-function reservation)
+3: params=6 locals=2    (same shape as 2)
+4: params=2 locals=582  (F alone, no reservation -- a plain PROCEDURE)
+5: params=6 locals=14   (same shape as 2/3, not yet tied to a caller)
+```
+
+Matches finding 169's own three `FGET` call sites exactly: `CXP 2,2`
+and `CXP 2,3` each push `F` plus two `SLDC 0` reservation words (three
+total, matching `params=6`) -- confirming both are `FUNCTION
+<name>(VAR F: FIB): BOOLEAN;`, the same `CBP`/`CGP`/`CXP`
+result-reservation shape findings 161/162 already established, just
+across a segment boundary this time. `CXP 2,4` pushes only `F` (one
+word, matching `params=2`) -- confirming it's a plain `PROCEDURE
+<name>(VAR F: FIB);`, no result at all. `FIOPRIMS.5` is not yet tied to
+any known caller -- plausibly `FPUT`'s own counterpart to one of
+`FGET`'s three calls, since `FPUT` is itself still unwritten.
+
+**`FIOPRIMS.2`'s own body was read in full** (soft-buffer window
+advance, ~105 instructions): caches `F` and `&F.FHEADER`, compares
+`F.FNXTBLK`/`F.FMAXBLK` and `F.FMAXBYTE`/`F.FNXTBYTE` to decide how
+much of the requested record already sits in the in-memory buffer,
+calls `MOVELEFT` (`CSP 2`) to shift already-buffered bytes into
+position, and falls back to `UNITREAD`/`UNITWRITE` (`CSP 5`/`6`) when
+the buffer needs refilling from disk -- consistent with "soft-buffer
+window advance" as a high-level description. **The exact byte-count
+arithmetic in several of its branches is not confidently resolved** --
+this genuinely is a harder routine than `STUB49`'s own directory-scan
+loop was, and forcing an unverified body into `PASCALSYSTEM.text` here
+risks writing something plausible-looking but wrong, which this
+project's own discipline treats as worse than an honest stub. Left
+undone rather than guessed; `FIOPRIMS.3`/`.4` (much shorter --
+`FIOPRIMS.3` ends in the same non-local `EXIT(0,7)` `FGET`'s own call
+site already showed, `FIOPRIMS.4` is a single procedure body not yet
+even read) are the more tractable next pieces of this segment.

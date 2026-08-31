@@ -610,7 +610,16 @@ a route end to end; everything else is a straight read-and-rebuild.
     *inside* `FGET` itself (the lex-1 nested group finding 149 first
     surfaced), for the `EXEC`-redirect read-mirror path. `FIOPRIMS`
     itself -- specifically its own procedures 2/3/4 -- is the actual
-    highest-leverage target now, not `FGET` directly.
+    highest-leverage target now, not `FGET` directly. `FIOPRIMS`'s own
+    five-procedure layout is now mapped and three signatures confirmed
+    by argument-count match (finding 170): `.2`/`.3` are `FUNCTION
+    (VAR F: FIB): BOOLEAN`, `.4` is a plain `PROCEDURE (VAR F: FIB)`.
+    `.2`'s own body was read in full (soft-buffer window advance via
+    `MOVELEFT`/`UNITREAD`/`UNITWRITE`) but its exact byte-count
+    arithmetic isn't confidently resolved -- left undone rather than
+    guessed. `.3` (shorter, ends in the same non-local `EXIT(0,7)`
+    `FGET`'s own call site showed) and `.4` (not yet read at all) are
+    the more tractable next pieces.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
