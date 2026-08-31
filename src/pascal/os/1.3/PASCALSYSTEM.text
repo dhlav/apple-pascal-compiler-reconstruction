@@ -742,8 +742,88 @@ PROGRAM PASCALSYSTEM;
       upshifts via `ORD(c) - 32`) but not yet transcribed into source
       here. Only the dispatcher (below) is written for real this
       session. }
+    { `FPNEWBLK` = `FILEPROC.2` (finding 168), `FPRESET`'s own nested
+      helper -- decoded from its addressed real disassembly. Advances
+      `F` past a block boundary: clears `FREPTCNT`/`FEOF`/`FEOLN`,
+      then (block-device files only) raises `FMAXBLK` if `FNXTBLK` has
+      gone past it, and (soft-buffered files only) flushes a changed
+      in-memory buffer to disk via `UNITWRITE` -- zero-padding its tail
+      with `FILLCHAR` first when at a fresh high-water block, and (for
+      `TEXTFILE`s specifically, at a boundary) writing a second,
+      freshly-zeroed block immediately after and bumping `FMAXBLK`
+      again. Resets `FNXTBLK` to `0` (or `2`, for a soft-buffered
+      `TEXTFILE`) at the end either way. `IORSLT`-style bookkeeping and
+      absolute-block arithmetic (`FHEADER.DFIRSTBLK + FNXTBLK`, `-1`
+      for the just-finished block vs. none for the new one) mirror the
+      same idiom `STUB49` already established (finding 165). Compiles
+      clean; `params=2` bytes exact, `locals=2` against the real `4` --
+      two bytes (one word) short, documented not forced. }
+    PROCEDURE FPNEWBLK(VAR F: FIB);
+      VAR
+        ATBOUNDARY: BOOLEAN;
+    BEGIN
+      F.FREPTCNT := 0;
+      F.FEOLN := FALSE;
+      F.FEOF := FALSE;
+      IF F.FISBLKD THEN
+      BEGIN
+        ATBOUNDARY := F.FNXTBLK > F.FMAXBLK;
+        IF ATBOUNDARY THEN F.FMAXBLK := F.FNXTBLK;
+        IF F.FSOFTBUF THEN
+        BEGIN
+          IF ATBOUNDARY THEN
+            F.FNXTBYTE := F.FMAXBYTE
+          ELSE IF (F.FNXTBLK = F.FMAXBLK) AND (F.FMAXBYTE >= F.FNXTBYTE) THEN
+          BEGIN
+            ATBOUNDARY := TRUE;
+            F.FNXTBYTE := F.FMAXBYTE
+          END;
+          IF F.FBUFCHNGD THEN
+          BEGIN
+            F.FBUFCHNGD := FALSE;
+            F.FMODIFIED := TRUE;
+            IF ATBOUNDARY THEN
+              FILLCHAR(F.FBUFFER[F.FMAXBYTE], 512 - F.FMAXBYTE, CHR(0));
+            UNITWRITE(F.FUNIT, F.FBUFFER[0], 512,
+                      (F.FHEADER.DFIRSTBLK + F.FNXTBLK) - 1);
+            IF ATBOUNDARY AND (F.FHEADER.DFKIND = TEXTFILE) AND
+               (F.FNXTBLK <> 0) THEN
+            BEGIN
+              F.FMAXBLK := F.FMAXBLK + 1;
+              FILLCHAR(F.FBUFFER[0], 512, CHR(0));
+              UNITWRITE(F.FUNIT, F.FBUFFER[0], 512,
+                        F.FHEADER.DFIRSTBLK + F.FNXTBLK)
+            END
+          END;
+          F.FMAXBYTE := 512
+        END;
+        F.FNXTBLK := 0;
+        IF F.FSOFTBUF AND (F.FHEADER.DFKIND = TEXTFILE) THEN
+          F.FNXTBLK := 2
+      END
+    END;
+
+    { `FPRESET` = `FILEPROC.3`, `FRESET`'s real target (finding 168).
+      Short and clean: clears `IORSLT`, and for an already-open file
+      calls `FPNEWBLK` then either flags `FNEEDCHAR` (a `FJANDW` file)
+      or calls `FGET` (still a stub) to actually prime the first
+      record -- no `FIOPRIMS` dependency at all, contrary to an
+      earlier session's assumption before this procedure was actually
+      disassembled. Compiles clean; `params=2` bytes exact, `locals=0`
+      against the real `2` -- one word short, documented not forced. }
     PROCEDURE FPRESET(VAR F: FIB);
-    BEGIN END;
+    BEGIN
+      SYSCOM^.IORSLT := INOERROR;
+      IF F.FISOPEN THEN
+      BEGIN
+        FPNEWBLK(F);
+        IF F.FRECSIZE > 0 THEN
+          IF F.FSTATE = FJANDW THEN
+            F.FSTATE := FNEEDCHAR
+          ELSE
+            FGET(F)
+      END
+    END;
 
     PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
                      JUNK: FIBP);

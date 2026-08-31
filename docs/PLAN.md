@@ -590,9 +590,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     `CXP` calls (`SCONCAT`/`SINSERT`/`SCOPY`/`SDELETE`/`SPOS`, segment
     0's own string-sugar helpers) and cross-checked against
     `probe_osproc43.py`'s own independent facts about the real binary.
-    `FPRESET`/`FPOPEN`/`FPCLOSE` (arms 1-3) remain `BEGIN END` --
-    `FPRESET` needs `FIOPRIMS.2`/`FGET` (still unwritten), so `FPOPEN`/
-    `FPCLOSE` are the more self-contained targets left in this segment.
+`FPRESET` (arm 1, `FILEPROC.3`) and its own block-advance
+    helper `FPNEWBLK` (`FILEPROC.2`) are now written for real too
+    (finding 168) -- turned out to need no `FIOPRIMS` dependency at
+    all, contrary to an earlier assumption made before either was
+    actually disassembled; the only remaining stub in that path is
+    `FGET` itself. `FPOPEN`/`FPCLOSE` (arms 2/3, `FILEPROC.4`/`.7`)
+    remain `BEGIN END` -- `FPCLOSE`'s target is large (~140
+    instructions, several still-unidentified `CXP` calls) and
+    `FPOPEN`'s has its own nested helpers (`FILEPROC.5`/`.6`) neither
+    attempted yet. `FGET` itself (`PASCALSY.7`) is now the most
+    leveraged remaining target: writing it unblocks `FPRESET`
+    completely and is a prerequisite for `FPUT`/the rest of the `FIB`
+    read/write layer regardless.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

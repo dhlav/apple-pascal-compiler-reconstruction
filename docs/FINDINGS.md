@@ -14729,3 +14729,56 @@ file already accepts elsewhere (`FRESET`/`FOPEN`/`FCLOSE`, finding
 157). `probe_osproc43.py`'s own ten checks against the real binaries
 (unaffected by anything in this reconstruction, since it reads
 `evidence/` directly) still all pass.
+
+## 168. `FPRESET`'s real target needs no `FIOPRIMS` dependency at all -- `FILEPROC.2`/`.3` written for real
+
+STRONG INFERENCE, full manual decode; close but not exact frame-size
+match on both procedures (one word short each), consistent with this
+session's own established tier for this class of routine.
+
+An earlier session's own note (recorded before either procedure was
+actually disassembled) assumed `FRESET`'s real target needed
+`FIOPRIMS.2` as a dependency. Disassembling `FILEPROC.3` (`FPRESET`'s
+target, `params=2 locals=2`) directly shows this was never true: its
+only calls are to `FILEPROC.2` (a same-segment helper, no cross-segment
+call of any kind) and segment 0's own `FGET` (`CXP 0,7`) -- already
+correctly stub-declared in this file with the right signature. Nothing
+here touches `FIOPRIMS` at all.
+
+**`FILEPROC.3` (`FPRESET`)**, in full: clears `SYSCOM^.IORSLT`, and for
+an already-open file (`F.FISOPEN`) calls the block-advance helper then
+either flags `FNEEDCHAR` directly (a `FJANDW` file needs no priming
+read) or calls `FGET` (`FRECSIZE > 0` files only) to actually read the
+first record. Thirteen instructions, one guard, one helper call, one
+two-way branch -- genuinely simple once seen directly.
+
+**`FILEPROC.2`** (named `FPNEWBLK`, ~90 instructions, no cross-segment
+calls at all) is `FPRESET`'s own real work: advancing a `FIB` past a
+block boundary. Clears `FREPTCNT`/`FEOF`/`FEOLN` unconditionally, then
+for block-device files (`FISBLKD`) raises `FMAXBLK` when `FNXTBLK` has
+overtaken it, and for soft-buffered files (`FSOFTBUF`) flushes a
+changed in-memory buffer to disk: `FILLCHAR`s the buffer's unused tail
+with zero bytes before the `UNITWRITE` when moving into fresh
+territory, and -- specifically for a `TEXTFILE` at a boundary --
+writes a *second*, freshly-zeroed block immediately after and bumps
+`FMAXBLK` again (matches `TEXTFILE`'s own documented UCSD convention
+of reserving a lookahead block). Absolute-block arithmetic
+(`FHEADER.DFIRSTBLK + FNXTBLK`, with a `-1` for the block just
+finished but none for the fresh one) and the `IORSLT`-adjacent
+bookkeeping mirror `STUB49`'s own already-established idiom (finding
+165) closely enough that recognizing the shape sped up reading this
+one considerably.
+
+Both compile clean. `FILEPROC.3`: `params=2` bytes exact, `locals=0`
+against the real `2` -- one word short. `FILEPROC.2`: `params=2` bytes
+exact, `locals=2` against the real `4` -- also one word short. Neither
+gap chased further, same class as this file's other small, documented
+gaps.
+
+`FILEPROC`'s own arm 1 (`OP=1`, `FRESET`) is now real end to end except
+for `FGET`'s own body (still a stub, its own separate future work).
+Arms 2/3 (`FPOPEN`/`FPCLOSE`, `FILEPROC.4`/`.7`) remain `BEGIN END` --
+`FPCLOSE`'s target is large (~140 instructions, several still-
+unidentified `CXP` calls) and `FPOPEN`'s has its own nested helpers
+(`FILEPROC.5`/`.6`, one nested two levels deep, one three) neither
+attempted this session.
