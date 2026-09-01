@@ -16208,3 +16208,65 @@ reverted after the isolated repro confirmed the limitation).
 `FGET`'s own decode above is solid and ready to be written the moment
 a workaround is found -- candidate saved at `scratchpad/probe_fget.py`
 (this session's temp directory).
+
+## 191. `HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE`/`PROMPT` written for real -- and a live demonstration of the "no gaps" numbering rule
+
+VERIFIED SOURCE FACT. Four small, self-contained `CRTCTRL`-escape-
+sequence routines (`PASCALSY.36`-`.39`), already flagged since
+finding 139c as calling a then-unidentified shared helper
+(`PASCALSY.53`). All four turned out tractable once that helper's own
+body was decoded directly.
+
+**The shared shape**: write `SYSCOM^.CRTCTRL.ESCAPE` first unless
+`CRTCTRL.PREFIXED[idx]` (a `PACKED ARRAY[0..15] OF BOOLEAN`, `idx`
+naming which control function this is) says this particular one
+doesn't need an escape prefix; write the control character itself;
+then, if `FILL_LEN > 0` (a real check against the manifest constant
+`11`, reproduced literally even though it folds to always-true -- a
+defensive guard in case someone changes `FILL_LEN`, not dead code by
+accident), write `FILLER`'s padding nulls for slow-terminal carriage
+delay. `HOMECURSOR` does this once (`CRTCTRL.HOME`, `idx=4`).
+`CLEARSCREEN` calls `HOMECURSOR`, then `UNITCLEAR(3)` (a real call --
+Apple's own console driver apparently treats the CRT itself as unit
+`3` here, not otherwise documented in this project), then prefers
+`CRTCTRL.ERASEEOS` (`idx=3`) if the terminal has one, falling back to
+the dedicated `CRTCTRL.CLEARSCREEN` code (`idx=6`) otherwise.
+`CLEARLINE` is a three-tier fallback: `ERASEEOL` (`idx=2`), else
+`CLEARLINE` (`idx=7`), else -- only if the terminal has at least an
+`RLF` (reverse linefeed) code -- blank the whole line by writing
+`CRTINFO.WIDTH - 1` literal spaces, `FWRITELN`, then send `RLF`
+(`idx=0`) to move back up -- a real, substantially different path for
+genuinely dumb terminals with no direct line-clear support. `PROMPT`
+is the simplest: `HOMECURSOR`, `CLEARLINE`, then `FWRITESTRING` of
+`PL` (the prompt-line scratch string, global word `70`).
+
+`CRTCTRL`'s own field offsets (all packed, 2-per-word) were derived
+from the shared helper's own body and cross-checked field-by-field
+against each caller's own semantic use (e.g. the word at
+`CRTCTRL`-base `+4, offset 8` had to be `CLEARSCREEN` specifically,
+since `PASCALSY.37` -- literally named `CLEARSCREEN` by this project's
+own already-established numbering -- is the one writing it): `ESCAPE`
+(offset `0`)/`HOME` (offset `8`) share one word, `ERASEEOS`/`ERASEEOL`
+the next, `NDFS`/`RLF` the next, then `CLEARLINE`/`CLEARSCREEN` --
+all following the declaration-group reversal rule already established
+throughout this file (last-declared name gets the lower offset).
+
+**A live demonstration of "declaration order is the numbering, with
+no gaps"** (already documented, `PASCALCO.text`'s own header comment,
+finding 61/126): the shared helper was first factored into its own
+top-level `FORWARD`-declared procedure, positioned right before
+`HOMECURSOR`'s own declaration. That shifted every procedure number
+declared afterward by one -- `HOMECURSOR` itself landed on `37`
+instead of `36`, confirmed directly by recompiling and comparing
+frame sizes against the real binary before this was caught. Reverted;
+the shared logic is inlined at each of the three call sites instead
+(a deliberate simplification, not an oversight) rather than risk
+disturbing this file's already-verified numbering for everything
+after it. `PASCALSY.53`'s own real declaration position is genuinely
+unresolved as a result -- left open rather than guessed at.
+
+Compiles clean; all four `params=0` bytes exact against the real
+binary, matching numbers unchanged (`36`-`39`). `locals` run larger
+than real in each (inlining without a shared temp costs some reuse
+efficiency, the same tradeoff direction as `VOLSEARCH`/`SCANTITLE`'s
+own gaps, not chased tighter). Committed to `PASCALSYSTEM.text`.

@@ -936,6 +936,28 @@ a route end to end; everything else is a straight read-and-rebuild.
     inexact class, worth flagging since it will recur for any other
     cross-`SEGMENT PROCEDURE` call this file still needs.
 
+    **`HOMECURSOR`/`CLEARSCREEN`/`CLEARLINE`/`PROMPT` written for real
+    (finding 191)**: four `CRTCTRL`-escape-sequence routines
+    (`PASCALSY.36`-`.39`), flagged since finding 139c as depending on
+    a then-unidentified shared helper (`PASCALSY.53`), decoded and
+    written once that helper's own body was read directly. Shared
+    shape: write `CRTCTRL.ESCAPE` unless `CRTCTRL.PREFIXED[idx]` says
+    this control function doesn't need it, write the control
+    character, then `FILLER`'s padding nulls if `FILL_LEN > 0`.
+    `CLEARSCREEN` calls `UNITCLEAR(3)` (Apple's own console driver
+    apparently treats the CRT as unit `3`) before its `ERASEEOS`/
+    `CLEARSCREEN` fallback; `CLEARLINE` has a real third tier for
+    terminals with neither `ERASEEOL` nor `CLEARLINE`: blank the line
+    with literal spaces and an `RLF`. Along the way, a live
+    demonstration of this file's own "declaration order is the
+    numbering, no gaps" rule: factoring the shared helper into its own
+    top-level `FORWARD` shifted every later procedure number by one
+    (`HOMECURSOR` itself landed on `37` instead of `36`, caught by
+    recompiling and comparing against the real binary) -- reverted,
+    inlined at each of the three call sites instead, leaving
+    `PASCALSY.53`'s own real declaration position unresolved. All four
+    compile clean, `params=0` exact, numbers unchanged. Committed.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

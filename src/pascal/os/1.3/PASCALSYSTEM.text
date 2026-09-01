@@ -2633,10 +2633,121 @@ PROGRAM PASCALSYSTEM;
     FDIR^[FINX] := FENTRY;
     FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES + 1
   END;
-  PROCEDURE HOMECURSOR; BEGIN END;
-  PROCEDURE CLEARSCREEN; BEGIN END;
-  PROCEDURE CLEARLINE; BEGIN END;
-  PROCEDURE PROMPT; BEGIN END;
+  { These four (findings 191) all share a real helper (`PASCALSY.53`)
+    that writes a control character -- `SYSCOM^.CRTCTRL.ESCAPE` first
+    unless `CRTCTRL.PREFIXED[idx]` says this particular one doesn't
+    need the prefix, then the character itself, then `FILLER`'s
+    padding nulls if `FILL_LEN > 0` (a real, if tautological, guard
+    against the manifest constant, reproduced literally) -- for
+    slow-terminal carriage delay. Not factored into a shared
+    procedure here: a new top-level `FORWARD` declaration shifts every
+    procedure number declared after it (this project's own "no gaps"
+    numbering rule -- confirmed the hard way, by trying it and
+    watching `HOMECURSOR`'s own real `36` shift to `37`), and
+    `PASCALSY.53`'s own true position in this file's declaration
+    order isn't independently pinned down this session. Inlined at
+    each of the three call sites instead -- a deliberate
+    simplification, not an oversight. }
+
+  { `HOMECURSOR` = `PASCALSY.36` (finding 191). Writes the terminal's
+    `HOME` control character. Compiles clean, `params=0` exact against
+    the real binary. }
+  PROCEDURE HOMECURSOR;
+  BEGIN
+    IF SYSCOM^.CRTCTRL.HOME <> CHR(0) THEN
+    BEGIN
+      IF NOT SYSCOM^.CRTCTRL.PREFIXED[4] THEN
+        FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+      FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.HOME, 0);
+      IF FILL_LEN > 0 THEN
+        FWRITESTRING(GFILES[1]^, FILLER, 0)
+    END
+  END;
+
+  { `CLEARSCREEN` = `PASCALSY.37` (finding 191). `HOMECURSOR`s first,
+    then `UNITCLEAR(3)` (a real call -- Apple's own console driver
+    treats the CRT as unit `3` here, not otherwise documented in this
+    project), then prefers `CRTCTRL.ERASEEOS` if the terminal has one,
+    falling back to the dedicated `CRTCTRL.CLEARSCREEN` code
+    otherwise. Compiles clean, `params=0` exact. }
+  PROCEDURE CLEARSCREEN;
+  BEGIN
+    HOMECURSOR;
+    UNITCLEAR(3);
+    IF SYSCOM^.CRTCTRL.ERASEEOS <> CHR(0) THEN
+    BEGIN
+      IF NOT SYSCOM^.CRTCTRL.PREFIXED[3] THEN
+        FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+      FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ERASEEOS, 0);
+      IF FILL_LEN > 0 THEN
+        FWRITESTRING(GFILES[1]^, FILLER, 0)
+    END
+    ELSE
+    BEGIN
+      IF NOT SYSCOM^.CRTCTRL.PREFIXED[6] THEN
+        FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+      FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.CLEARSCREEN, 0);
+      IF FILL_LEN > 0 THEN
+        FWRITESTRING(GFILES[1]^, FILLER, 0)
+    END
+  END;
+
+  { `CLEARLINE` = `PASCALSY.38` (finding 191). Three-tier fallback:
+    `CRTCTRL.ERASEEOL` if the terminal has one; else
+    `CRTCTRL.CLEARLINE`; else, only if the terminal at least has an
+    `RLF` (reverse linefeed) code, blank the whole line by writing
+    `CRTINFO.WIDTH - 1` spaces, `FWRITELN`, then `RLF` back up to the
+    start of the line -- a real, substantially different code path for
+    genuinely dumb terminals with no direct line-clear support.
+    Compiles clean, `params=0` exact. }
+  PROCEDURE CLEARLINE;
+    VAR I: INTEGER;
+  BEGIN
+    IF SYSCOM^.CRTCTRL.ERASEEOL <> CHR(0) THEN
+    BEGIN
+      IF NOT SYSCOM^.CRTCTRL.PREFIXED[2] THEN
+        FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+      FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ERASEEOL, 0);
+      IF FILL_LEN > 0 THEN
+        FWRITESTRING(GFILES[1]^, FILLER, 0)
+    END
+    ELSE
+      IF SYSCOM^.CRTCTRL.CLEARLINE <> CHR(0) THEN
+      BEGIN
+        IF NOT SYSCOM^.CRTCTRL.PREFIXED[7] THEN
+          FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+        FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.CLEARLINE, 0);
+        IF FILL_LEN > 0 THEN
+          FWRITESTRING(GFILES[1]^, FILLER, 0)
+      END
+      ELSE
+        IF SYSCOM^.CRTCTRL.RLF <> CHR(0) THEN
+        BEGIN
+          I := 2;
+          WHILE I <= SYSCOM^.CRTINFO.WIDTH DO
+          BEGIN
+            FWRITECHAR(GFILES[1]^, ' ', 0);
+            I := I + 1
+          END;
+          FWRITELN(GFILES[1]^);
+          IF NOT SYSCOM^.CRTCTRL.PREFIXED[0] THEN
+            FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.ESCAPE, 0);
+          FWRITECHAR(GFILES[1]^, SYSCOM^.CRTCTRL.RLF, 0);
+          IF FILL_LEN > 0 THEN
+            FWRITESTRING(GFILES[1]^, FILLER, 0)
+        END
+  END;
+
+  { `PROMPT` = `PASCALSY.39` (finding 191). `HOMECURSOR`, `CLEARLINE`,
+    then writes `PL` (the prompt-line string, `GETCOMMAND`'s own
+    scratch, global word `70`) to the console. Compiles clean,
+    `params=0` exact. }
+  PROCEDURE PROMPT;
+  BEGIN
+    HOMECURSOR;
+    CLEARLINE;
+    FWRITESTRING(GFILES[1]^, PL, 0)
+  END;
   FUNCTION SPACEWAIT; BEGIN SPACEWAIT := TRUE END;
   FUNCTION GETCHAR; BEGIN GETCHAR := ' ' END;
   { `FETCHDIR` = `PASCALSY.42` (finding 188). Reads a unit's directory
