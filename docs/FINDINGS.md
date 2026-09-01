@@ -16379,3 +16379,34 @@ numbers `54`/`55`, not real `57`/`58` -- the same already-documented,
 pre-existing numbering drift `BLKXFER` already carries in this range
 (`docs/PLAN.md`), not something newly introduced here. Committed to
 `PASCALSYSTEM.text`.
+
+## 193. Five more segment-0 stubs written for real -- three exact byte-for-byte, two waiting only on `FGET`/`FPUT`
+
+VERIFIED SOURCE FACT. A sweep for remaining tractable stubs (checking
+every real `PASCALSY` procedure this file still has as an empty
+`BEGIN END` against its real instruction count) turned up five small
+ones, all written and compiled this pass.
+
+**`XSEEK`/`XREADREAL`/`XWRITEREAL`** (`PASCALSY.9`/`.14`/`.15`) --
+UCSD's own `SEEK` and real-number `READ`/`WRITE` support, never
+implemented for the Apple II's own software floating point (and no
+hardware seek either). All three real bodies are byte-identical:
+`SYSCOM^.XEQERR := 11` (this file's own already-declared `PRINTERROR`
+`CASE` arm 11, `"Unimplemented instruction"`) then call `EXECERROR`.
+Compiles clean; `params=0` exact and **instruction count exact (`5`)
+against the real binary for all three** -- as close to byte-identical
+as this fast tier can confirm.
+
+**`FREADLN`/`FWRITELN`** (`PASCALSY.21`/`.22`) -- `FREADLN` reads past
+the rest of the current line (`WHILE NOT F.FEOLN DO FGET(F)`), then
+one more `GET` if the file is still in its initial `FJANDW` state
+(priming it), or primes `FNEEDCHAR` and clears `FEOLN` itself
+otherwise; `FWRITELN` writes a `CR` to the window and `PUT`s it. Both
+call the still-blocked `FGET`/`FPUT` (finding 190) -- compiling clean
+regardless, since those routines' own `FORWARD` declarations already
+carry the right signatures, and these two bodies will start doing
+real work the moment `FGET`/`FPUT` themselves are written. Compiles
+clean; `params=2` bytes exact for both, and **instruction count exact
+(`23`/`7`) against the real binary for both**.
+
+All five committed to `PASCALSYSTEM.text`.

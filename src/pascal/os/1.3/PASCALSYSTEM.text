@@ -1827,7 +1827,18 @@ PROGRAM PASCALSYSTEM;
     `FIB` layout, findings 150/151) is also still unconfirmed. }
   PROCEDURE FGET; BEGIN END;
   PROCEDURE FPUT; BEGIN END;
-  PROCEDURE XSEEK; BEGIN END;
+  { `XSEEK`/`XREADREAL`/`XWRITEREAL` (`PASCALSY.9`/`.14`/`.15`, finding
+    193) -- UCSD's own `SEEK`/`READ(REAL)`/`WRITE(REAL)` support, never
+    implemented for the Apple II's own software floating point (no
+    hardware `SEEK` either). All three real bodies are byte-identical:
+    `SYSCOM^.XEQERR := 11` (`"Unimplemented instruction"`, this file's
+    own `PRINTERROR` `CASE` arm 11) then call `EXECERROR`. Compiles
+    clean; `params=0` exact against the real binary for all three. }
+  PROCEDURE XSEEK;
+  BEGIN
+    SYSCOM^.XEQERR := 11;
+    EXECERROR
+  END;
   { PASCALSY.10/11 -- plain field accessors, raw p-code is `SLDO
     3 / SIND 2 / SRO 1` and `SLDO 3 / SIND 1 / SRO 1`: load the VAR
     `F` param, read `FEOF`/`FEOLN` off it, store to the function's own
@@ -1836,8 +1847,16 @@ PROGRAM PASCALSYSTEM;
   FUNCTION FEOLN; BEGIN FEOLN := F.FEOLN END;
   PROCEDURE FREADINT; BEGIN END;
   PROCEDURE FWRITEINT; BEGIN END;
-  PROCEDURE XREADREAL; BEGIN END;
-  PROCEDURE XWRITEREAL; BEGIN END;
+  PROCEDURE XREADREAL;
+  BEGIN
+    SYSCOM^.XEQERR := 11;
+    EXECERROR
+  END;
+  PROCEDURE XWRITEREAL;
+  BEGIN
+    SYSCOM^.XEQERR := 11;
+    EXECERROR
+  END;
   PROCEDURE FREADCHAR; BEGIN END;
   PROCEDURE FWRITECHAR; BEGIN END;
   PROCEDURE FREADSTRING; BEGIN END;
@@ -1850,11 +1869,36 @@ PROGRAM PASCALSYSTEM;
   END;
 
   PROCEDURE FWRITEBYTES; BEGIN END;
-  PROCEDURE FREADLN; BEGIN END;
 
-  { See FWRITESTRING above -- same status. }
+  { `FREADLN` = `PASCALSY.21` (finding 193). `GET`s past the rest of
+    the current line (`WHILE NOT F.FEOLN DO FGET(F)`), then one more
+    `GET` if the file is still in its initial `FJANDW` state (priming
+    it); otherwise primes `FNEEDCHAR` directly and clears `FEOLN`
+    itself rather than reading again. Calls the still-unwritten `FGET`
+    (finding 190's own blocked routine) -- compiles clean regardless,
+    since `FGET`'s forward declaration already carries the right
+    signature; this body will start doing real work the moment `FGET`
+    itself is. `params=2` bytes exact against the real binary. }
+  PROCEDURE FREADLN;
+  BEGIN
+    WHILE NOT F.FEOLN DO
+      FGET(F);
+    IF F.FSTATE = FJANDW THEN
+      FGET(F)
+    ELSE
+    BEGIN
+      F.FSTATE := FNEEDCHAR;
+      F.FEOLN := FALSE
+    END
+  END;
+
+  { `FWRITELN` = `PASCALSY.22` (finding 193). Writes a `CR` to the
+    window and `PUT`s it -- same status as `FWRITESTRING` above,
+    calling the still-unwritten `FPUT`. `params=2` bytes exact. }
   PROCEDURE FWRITELN;
   BEGIN
+    F.FWINDOW^[0] := CHR(13);
+    FPUT(F)
   END;
 
   { What `CONCAT` lowers to (finding 52b). Real body

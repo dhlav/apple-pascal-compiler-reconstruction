@@ -981,6 +981,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     not real `57`/`58` -- the same pre-existing `BLKXFER`-class
     numbering drift, not new. Committed.
 
+    **Five more small stubs written for real (finding 193)**:
+    `XSEEK`/`XREADREAL`/`XWRITEREAL` (`.9`/`.14`/`.15`, UCSD's own
+    never-implemented `SEEK`/real-number I/O -- `SYSCOM^.XEQERR := 11;
+    EXECERROR`, all three byte-identical) and `FREADLN`/`FWRITELN`
+    (`.21`/`.22`, small wrappers around the still-blocked `FGET`/
+    `FPUT` that will start doing real work once those are written).
+    All five compile clean with **exact instruction counts against the
+    real binary**. Committed.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
