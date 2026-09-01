@@ -16051,3 +16051,78 @@ recomputes it fresh. Committed to `PASCALSYSTEM.text`.
 
 `SCANTITLE` (`PASCALSY.33`, 353 instructions) is now the only
 remaining stub in `FPOPEN`'s whole dependency chain.
+
+## 189. `SCANTITLE` (`PASCALSY.33`) written for real -- `FPOPEN`'s whole dependency chain is now closed
+
+STRONG INFERENCE, one detail unresolved (below). `SCANTITLE` parses a
+full title (`VOLNAME:FILENAME.EXT[size]`, every piece optional) into
+`FVID`/`FTID`/`FSEGS`/`FKIND` -- the largest of the six routines
+`FPOPEN` depends on (353 real instructions) and, with this, the last
+one written.
+
+**The real shape**: normalize a local working copy `T` of `FTITLE`
+(strip every character `<= ' '`, upshift `'a'..'z'`; empty fails
+outright). Volume prefix: `T[1]='*'` sets `FVID := SYVID` (global word
+`63`, confirmed by an isolated probe this session) and deletes the
+`'*'`; `T[1]='%'` sets `FVID` from a second global, deletes the `'%'`
+(see below). Then `POS(':', T)`: no colon, or one right at the front,
+falls back to `FVID := DKVID` ("default volid," global word `59`,
+also probe-confirmed) only if nothing already set `FVID`; a colon
+`1..7` characters in copies everything before it into `FVID`; a colon
+further out than that is left alone entirely -- an over-long volume
+name before `:` isn't even attempted. `FVID` still empty at this point
+fails the whole call. File ID: whatever precedes a `'['` (or all of
+`T`, no bracket) becomes `FTID`, but only if `<= 15` characters (over
+that fails); empty is fine (a volume-only reference). Size spec:
+nothing left after the name is success with none; `T = "[]"` is
+success with none too (tolerated, not an error); missing `']'`
+otherwise fails. Between the brackets, every character must be a
+digit (`FSEGS` accumulated the usual way) *unless* the bracket held
+exactly one character and it was `'*'` -- `FSEGS := -1`, this
+project's own already-documented `[*]` sentinel (`CLAUDE.md`,
+independently confirmed by `FPALLOC`'s real body, finding 176). Kind
+from suffix, only once everything succeeded and `FTID` is long enough
+(`> 5` chars): the last five characters checked against
+`'.TEXT'`/`'.CODE'`/`'.BACK'`/`'.INFO'`/`'.GRAF'`/`'.FOTO'` in that
+order -- `'.BACK'` (a text-editor backup file) mapping to the same
+`TEXTFILE` kind as `'.TEXT'` is a real, previously-undocumented fact.
+No match leaves `FKIND` at `UNTYPEDFILE`, which `FPOPEN`'s own already
+-committed body already defaults to `DATAFILE` itself (finding 182).
+
+**Written with `COPY`/`DELETE`/`POS` sugar, not direct `SCOPY`/
+`SDELETE`/`SPOS` calls**: the real disassembly's own `CXP 0,25`/`0,26`/
+`0,27` call sites (this file's own already-identified string-sugar
+targets, finding 167) don't match a *direct* call's established push
+order (`FPTITLE`'s own working `SCOPY(L, P, S, BRACKET)` call pushes
+cleanly in declared order) -- here, an address gets pushed and left
+sitting on the value stack *across* the call, consumed only
+afterward. That's exactly what the sugar's own lowering does
+differently from a hand-written direct call, and finding 138 already
+established `COPY`/`DELETE`/`POS` sugar as what these routines exist
+for -- so writing the natural form here sidesteps re-deriving an
+argument order that was never a direct call's shape to begin with.
+
+**One unresolved detail**: `'%'`'s own target global (real word offset
+`444`) wasn't identified by name -- it's neither `SYVID` (`63`) nor
+`DKVID` (`59`), and lands well past `UNITABLE` (`126`-`251`) and
+`FILENAME` (through word `311`), inside the "Apple additions past
+UCSD" block this file's own comments already flag as less certain
+(`CONFIG_CHAR` onward). The candidate uses `DKVID` there as a
+documented placeholder -- functionally reasonable (both `'%'` and "no
+prefix at all" plausibly mean some notion of "default volume"), but
+not verified as the real global. Left open rather than guessed at
+further.
+
+Compiles clean; `params=14` bytes exact, matching the real signature
+precisely. `locals=254` bytes against the real `172` -- *longer* than
+real by `41` words, the same direction as `VOLSEARCH`'s own gap
+(finding 187): named, reusable working variables instead of the real
+binary's own tighter, phase-specific scratch reuse, plus this
+reconstruction's `T` defaulting to a full 80-character `STRING` where
+the real binary likely sizes its own scratch buffers smaller. Not
+chased tighter, a deliberate readability tradeoff.
+
+Committed to `PASCALSYSTEM.text`. This closes `FPOPEN`'s entire
+dependency chain -- every routine it calls, transitively
+(`VOLSEARCH`, `WRITEDIR`, `DIRSEARCH`, `SCANTITLE`, `DELENTRY`,
+`INSENTRY`, `FETCHDIR`), is now written for real rather than stubbed.

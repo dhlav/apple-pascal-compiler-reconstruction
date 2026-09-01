@@ -888,6 +888,32 @@ a route end to end; everything else is a straight read-and-rebuild.
     else in the file). Committed. `SCANTITLE` (353 instructions) is
     now the only remaining stub in `FPOPEN`'s whole dependency chain.
 
+    **`SCANTITLE` written for real -- `FPOPEN`'s whole chain closed
+    (finding 189)**: the largest of the six (353 instructions).
+    Parses `VOLNAME:FILENAME.EXT[size]` into `FVID`/`FTID`/`FSEGS`/
+    `FKIND`: normalize (strip blanks/controls, upshift letters);
+    `'*'`/`'%'` volume-prefix shorthands (`SYVID`/a second,
+    unidentified global -- see below); a `:`-delimited volume name
+    (over 7 characters is left alone entirely); a `<=15`-character
+    file ID before an optional `[...]` size spec, where a lone `'*'`
+    inside the brackets is `CLAUDE.md`'s own already-documented `[*]`
+    sentinel (`FSEGS := -1`); and a suffix-driven `FKIND`
+    (`.TEXT`/`.CODE`/`.BACK`/`.INFO`/`.GRAF`/`.FOTO`, with `.BACK`
+    mapping to the same `TEXTFILE` kind as `.TEXT` -- a real,
+    previously-undocumented fact). Written using `COPY`/`DELETE`/
+    `POS` sugar rather than direct `SCOPY`/`SDELETE`/`SPOS` calls,
+    since the real disassembly's own push shapes at those call sites
+    don't match a direct call's established order (finding 138
+    already established the sugar as what these routines exist for).
+    One open detail: `'%'`'s own target global (real word offset
+    `444`) wasn't identified by name; the candidate uses `DKVID` as a
+    documented placeholder. Compiles clean, `params` exact; `locals`
+    longer than real by 41 words (named working variables instead of
+    the real binary's tighter scratch reuse, same direction as
+    `VOLSEARCH`'s own gap). Committed -- **this closes `FPOPEN`'s
+    entire dependency chain**: every routine it calls, transitively,
+    is now written for real.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

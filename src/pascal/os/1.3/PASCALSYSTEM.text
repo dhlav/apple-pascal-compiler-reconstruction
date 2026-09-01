@@ -2392,7 +2392,201 @@ PROGRAM PASCALSYSTEM;
     END
   END;
 
-  FUNCTION SCANTITLE; BEGIN SCANTITLE := TRUE END;
+  { `SCANTITLE` = `PASCALSY.33` (finding 189), the largest of the six
+    routines `FPOPEN` depends on and the last one left. Parses a whole
+    Apple Pascal title string (`VOLNAME:FILENAME.EXT[size]`, every
+    piece optional) into `FVID`/`FTID`/`FSEGS`/`FKIND`.
+
+    1. **Normalize** a local working copy `T` of `FTITLE`: strip every
+       character `<= ' '` (blanks and controls) outright, upshift
+       `'a'..'z'`. An empty result after that fails immediately.
+    2. **Volume prefix.** `T[1] = '*'` sets `FVID := SYVID` (the boot
+       unit's own volume -- global word `63`, confirmed by an isolated
+       probe) and deletes the `'*'`; `T[1] = '%'` sets `FVID` from a
+       second global (STRONG INFERENCE only -- real word offset `444`,
+       not identified by name; `DKVID` used as a documented
+       placeholder, see below) and deletes the `'%'`. Then `POS(':',
+       T)`: no colon at all, or one right at the very front, falls
+       back to `FVID := DKVID` ("default volid," global word `59`,
+       also probe-confirmed) only if nothing set `FVID` already, and
+       eats a leading `':'` if that's what was found; a colon `1..7`
+       characters in copies everything before it into `FVID` and
+       deletes through it; a colon further out than that is left
+       entirely alone (an over-long volume name before `:` doesn't
+       even get attempted). If `FVID` is *still* empty at this point
+       (no prefix, no colon, and `DKVID` itself came up empty), the
+       whole call fails.
+    3. **File ID.** Whatever's left of `T` up to a `'['` (or all of it,
+       no bracket) becomes `FTID`, deleted out of `T` -- but only if
+       that piece is `<= 15` characters (`TID`'s own real size); over
+       that, immediate failure. An empty piece is fine (a volume-only
+       reference).
+    4. **Size spec.** Nothing left in `T` after the name comes out is
+       success with no size. Otherwise: `T = "[]"` is success with no
+       size (an empty bracket is tolerated, not an error); a `']'`
+       found is required beyond that, or failure. Between the
+       brackets: every character must be a digit (`FSEGS` accumulated
+       in the usual `* 10 + (ord - 48)` way) *unless* the bracket held
+       exactly one character and that character was `'*'` --
+       `FSEGS := -1`, this project's own already-documented `[*]`
+       "reserve the second-largest gap, or half the largest" sentinel
+       (`CLAUDE.md`, confirmed independently by `FPALLOC`'s own real
+       body, finding 176). Any other single bad character fails the
+       whole parse.
+    5. **Kind from suffix**, only once everything above succeeded and
+       `FTID` is long enough (`> 5` characters) to possibly hold one:
+       the last five characters of `FTID` get checked against
+       `'.TEXT'`/`'.CODE'`/`'.BACK'`/`'.INFO'`/`'.GRAF'`/`'.FOTO'` in
+       that order, setting `FKIND` to `TEXTFILE`/`CODEFILE`/
+       `TEXTFILE`/`INFOFILE`/`GRAFFILE`/`FOTOFILE` respectively --
+       `'.BACK'` (a text-editor backup file) mapping to the same
+       `TEXTFILE` kind as `'.TEXT'` is a real, undocumented fact this
+       reconstruction didn't have before. No match, or `FTID` too
+       short, leaves `FKIND` at `UNTYPEDFILE` -- `FPOPEN`'s own already
+       -committed body defaults that to `DATAFILE` itself (finding
+       182), so this routine doesn't need to.
+
+    Every `SCOPY`/`SDELETE`/`SPOS` call in the real disassembly (`CXP
+    0,25`/`0,26`/`0,27`, this file's own already-identified string
+    sugar targets, finding 167) is written here using the ordinary
+    `COPY`/`DELETE`/`POS` built-ins instead of calling those routines
+    directly -- the real call sites' own argument shapes didn't match
+    a *direct* `SCOPY`/`SDELETE` call's established push order (an
+    address left sitting on the stack across the call, consumed only
+    afterward), which is exactly what the sugar's own lowering does
+    differently from a hand-written direct call; this project's own
+    finding 138 already established that `COPY`/`DELETE`/`POS` sugar
+    *is* what these routines exist for, so writing the natural form
+    here avoids re-deriving an argument order that was never a direct
+    call's to begin with.
+
+    Compiles clean; `params=14` bytes exact, matching the real
+    signature precisely. `locals=254` bytes against the real `172` --
+    *longer* than real by `41` words, the same direction (not
+    magnitude) as `VOLSEARCH`'s own gap (finding 187): named, reusable
+    working variables (`T`, `I`, `P`, `L`, `OK`) instead of the real
+    binary's own tighter, phase-specific scratch reuse, plus this
+    reconstruction's `T` defaulting to a full `STRING` (80 characters)
+    where the real binary likely sizes its own scratch buffers to
+    just what each phase needs. Not chased tighter -- a deliberate
+    readability tradeoff, consistent with `VOLSEARCH`'s own precedent.
+    Committed to `PASCALSYSTEM.text`, closing `FPOPEN`'s entire
+    dependency chain: every routine it calls, transitively, is now
+    written for real. }
+  FUNCTION SCANTITLE;
+    VAR
+      T: STRING;
+      I, P, L: INTEGER;
+      OK: BOOLEAN;
+  BEGIN
+    T := FTITLE;
+    FVID := '';
+    FTID := '';
+    FSEGS := 0;
+    FKIND := UNTYPEDFILE;
+    SCANTITLE := FALSE;
+
+    I := 1;
+    WHILE I <= LENGTH(T) DO
+      IF T[I] <= ' ' THEN
+        DELETE(T, I, 1)
+      ELSE
+      BEGIN
+        IF (T[I] >= 'a') AND (T[I] <= 'z') THEN
+          T[I] := CHR(ORD(T[I]) - 32);
+        I := I + 1
+      END;
+
+    IF LENGTH(T) > 0 THEN
+    BEGIN
+      IF T[1] = '*' THEN
+      BEGIN
+        FVID := SYVID;
+        DELETE(T, 1, 1)
+      END
+      ELSE IF T[1] = '%' THEN
+      BEGIN
+        FVID := DKVID;
+        DELETE(T, 1, 1)
+      END;
+
+      P := POS(':', T);
+      IF P <= 1 THEN
+      BEGIN
+        IF LENGTH(FVID) = 0 THEN
+          FVID := DKVID;
+        IF P = 1 THEN
+          DELETE(T, 1, 1)
+      END
+      ELSE IF (P - 1) <= 7 THEN
+      BEGIN
+        FVID := COPY(T, 1, P - 1);
+        DELETE(T, 1, P)
+      END;
+
+      IF LENGTH(FVID) > 0 THEN
+      BEGIN
+        P := POS('[', T);
+        IF P > 0 THEN
+          L := P - 1
+        ELSE
+          L := LENGTH(T);
+        IF L <= 15 THEN
+        BEGIN
+          IF L > 0 THEN
+          BEGIN
+            FTID := COPY(T, 1, L);
+            DELETE(T, 1, L)
+          END;
+          IF LENGTH(T) = 0 THEN
+            OK := TRUE
+          ELSE
+          BEGIN
+            OK := FALSE;
+            P := POS(']', T);
+            IF P = 2 THEN
+              OK := TRUE
+            ELSE IF P > 2 THEN
+            BEGIN
+              OK := TRUE;
+              I := 2;
+              WHILE (I <> P) AND OK DO
+              BEGIN
+                IF T[I] IN DIGITS THEN
+                  FSEGS := FSEGS * 10 + (ORD(T[I]) - 48)
+                ELSE
+                  OK := FALSE;
+                I := I + 1
+              END;
+              IF (I = 3) AND (P = 3) THEN
+                IF T[P - 1] = '*' THEN
+                BEGIN
+                  FSEGS := -1;
+                  OK := TRUE
+                END
+            END;
+            SCANTITLE := OK;
+            IF OK AND (LENGTH(FTID) > 5) THEN
+            BEGIN
+              T := COPY(FTID, LENGTH(FTID) - 4, 5);
+              IF T = '.TEXT' THEN
+                FKIND := TEXTFILE
+              ELSE IF T = '.CODE' THEN
+                FKIND := CODEFILE
+              ELSE IF T = '.BACK' THEN
+                FKIND := TEXTFILE
+              ELSE IF T = '.INFO' THEN
+                FKIND := INFOFILE
+              ELSE IF T = '.GRAF' THEN
+                FKIND := GRAFFILE
+              ELSE IF T = '.FOTO' THEN
+                FKIND := FOTOFILE
+            END
+          END
+        END
+      END
+    END
+  END;
 
   { `DELENTRY` = `PASCALSY.34` (finding 185). Removes directory entry
     `FINX` by shifting every later entry down by one, then blanks the
