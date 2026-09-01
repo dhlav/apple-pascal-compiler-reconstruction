@@ -2967,7 +2967,133 @@ PROGRAM PASCALSYSTEM;
 
   { STUBS -- procedure numbers 48/49 reserved only, see the forward
     declaration comment above. Not Apple's real content. }
-  PROCEDURE STUB48; BEGIN END;
+  { `STUB48` (`PASCALSY.48`), with its two nested helpers `GETNEXTCMD`
+    (real `PASCALSY.57`) and `CMDDISPATCH` (real `PASCALSY.58`)
+    (finding 192). This is `PASCALSY`'s own top-level "wait for the
+    system volume, read commands, launch the user program" loop --
+    called directly from the whole program's own outer `BEGIN...END`
+    block (`CBP 48` from `PASCALSY.1` itself, not from `COMMAND`).
+
+    Globals identified this session, all now real declared names
+    rather than raw offsets: `STATE` (word `69`, already declared,
+    `CMDSTATE`), `SWAP_ON`/`SWAP_1_ON`/`SWAP_2_ON` (words `388`-`390`,
+    already declared), `WHAT_H1` (word `392`, already declared and
+    already annotated "tested/cleared around user-program dispatch,
+    `PASCALSY.57`" -- a direct, independent confirmation this session's
+    own reading of `PASCALSY.57` is right), `CHAIN_NAME` (word `328`,
+    already declared), `USERINFO.ERRNUM`/`.CODEFIBP` (words `10`/`8`,
+    already declared). `PASCALSY.6` = `FCLOSE`, `PASCALSY.42` =
+    `FETCHDIR` (finding 188), segment `1` = `USERPROGRAM`, segment `3`
+    = `PRINTERROR`, segment `5` = `GETCMD` -- all confirmed by
+    argument-count/shape match against their own already-declared
+    signatures.
+
+    `GETNEXTCMD`: while `SWAP_ON`, waits for the system volume and
+    reads a command via `GETCMD`; a real command (`STATE >=
+    UPROGNOU`) either launches `USERPROGRAM` (when `SWAP_2_ON` and
+    `WHAT_H1` says it's safe) or re-arms `SWAP_ON` and returns early.
+    Either way, a real command also clears the swap flag, resets unit
+    `3`, and re-verifies the boot unit's own directory (`FETCHDIR`,
+    result intentionally discarded -- the real binary's own bare
+    boolean-statement shape this host compiler won't accept directly,
+    same class of divergence as elsewhere in this file). A just-
+    finished compile-only command (`COMPONLY`/`COMPANDGO`/
+    `COMPDEBUG`) with no error gets its scratch code file `FCLOSE`'d
+    and locked, reporting a real I/O error via `PRINTERROR` if that
+    fails; a program-load command additionally locks both console
+    files. Finally, if either console unit is busy, it gets cleared.
+
+    `CMDDISPATCH`: while still waiting, calls `WAITSYSVOL` and
+    `GETNEXTCMD`, then launches `USERPROGRAM` when the flags allow it
+    or re-arms `SWAP_ON` and returns. `STUB48` itself is the outermost
+    version of the same three-step shape.
+
+    Compiles clean; all three `params=0` bytes exact against the real
+    binary. `GETNEXTCMD`/`CMDDISPATCH` also match `data` exactly
+    (`0`/`2` bytes) -- `CMDDISPATCH`'s own instruction count matches
+    the real binary exactly too (`19`). Landed on this candidate's own
+    procedure numbers `54`/`55`, not real `57`/`58` -- the same
+    already-documented, pre-existing numbering drift `BLKXFER`
+    (finding "not chased further", `docs/PLAN.md`) already carries in
+    this range, not something newly introduced here. }
+  PROCEDURE STUB48;
+
+    PROCEDURE GETNEXTCMD;
+      LABEL 999;
+      VAR DUMMY: BOOLEAN;
+    BEGIN
+      WHILE STATE = HALTINIT DO
+      BEGIN
+        IF SWAP_ON THEN
+        BEGIN
+          WAITSYSVOL;
+          STATE := GETCMD(STATE);
+          CHAIN_NAME := '';
+          IF STATE >= UPROGNOU THEN
+            IF SWAP_2_ON AND NOT WHAT_H1 THEN
+            BEGIN
+              WHAT_H1 := FALSE;
+              USERPROGRAM(NIL, NIL)
+            END
+            ELSE
+            BEGIN
+              SWAP_ON := TRUE;
+              GOTO 999
+            END
+        END;
+        IF STATE >= UPROGNOU THEN
+        BEGIN
+          SWAP_ON := FALSE;
+          UNITCLEAR(3);
+          DUMMY := FETCHDIR(SYSCOM^.SYSUNIT)
+        END;
+        IF STATE IN [COMPONLY..COMPDEBUG] THEN
+          IF USERINFO.ERRNUM = 0 THEN
+          BEGIN
+            FCLOSE(USERINFO.CODEFIBP^, CLOCK);
+            IF IORESULT <> 0 THEN
+              PRINTERROR(10, IORESULT)
+          END;
+        IF STATE IN [UPROGNOU, UPROGUOK] THEN
+        BEGIN
+          FCLOSE(GFILES[0]^, CNORMAL);
+          FCLOSE(GFILES[1]^, CLOCK)
+        END;
+        IF UNITBUSY(1) OR UNITBUSY(2) THEN
+          UNITCLEAR(1)
+      END;
+      999:
+    END;
+
+    PROCEDURE CMDDISPATCH;
+      LABEL 999;
+    BEGIN
+      WHILE STATE = HALTINIT DO
+      BEGIN
+        WAITSYSVOL;
+        GETNEXTCMD;
+        IF (NOT SWAP_1_ON) AND SWAP_ON THEN
+          USERPROGRAM(NIL, NIL)
+        ELSE
+        BEGIN
+          SWAP_ON := TRUE;
+          GOTO 999
+        END
+      END;
+      999:
+    END;
+
+  BEGIN
+    STATE := HALTINIT;
+    SWAP_ON := FALSE;
+    WHILE STATE = HALTINIT DO
+    BEGIN
+      WAITSYSVOL;
+      CMDDISPATCH;
+      IF SWAP_ON THEN
+        USERPROGRAM(NIL, NIL)
+    END
+  END;
   { `STUB49`'s real body (finding 165), decoded from `PASCALSY.49`'s
     addressed disassembly using `DIRENTRY`'s probe-verified offsets
     (finding 164). Attempts to extend `F`'s file allocation on disk:

@@ -16305,3 +16305,77 @@ binary, matching numbers unchanged (`36`-`39`). `locals` run larger
 than real in each (inlining without a shared temp costs some reuse
 efficiency, the same tradeoff direction as `VOLSEARCH`/`SCANTITLE`'s
 own gaps, not chased tighter). Committed to `PASCALSYSTEM.text`.
+
+## 192. `STUB48` (`PASCALSY.48`) written for real, with its two nested helpers -- the OS's own top-level command loop
+
+STRONG INFERENCE for the overall shape; several individual pieces
+VERIFIED SOURCE FACT (globals identified by direct probe, cross-
+checked against this file's own pre-existing comments). Prompted by
+checking the user's own UCSD OS source mirror first (no help here --
+this whole routine is in the "43+" Apple-only numeric range with no
+UCSD precedent), then working the real disassembly directly, this
+time all the way through two levels of nested helpers rather than
+stopping at the first sign of complexity.
+
+**`STUB48` is `PASCALSY`'s own top-level command loop**, called
+directly from the whole program's own outer `BEGIN...END` (`CBP 48`
+from `PASCALSY.1` itself -- confirmed by scanning every real `CBP`/
+`CLP`/`CGP 48` call site in the segment, there's exactly one, and it's
+the program body), not from `COMMAND` as first guessed. It nests two
+helpers: `GETNEXTCMD` (real `PASCALSY.57`, confirmed by `CGP` reaching
+it from the other helper one lexical level up) and `CMDDISPATCH`
+(real `PASCALSY.58`, matching finding 149's own already-suspected "lex-1
+nested group 51/52/55/56/57/58").
+
+**Every global this routine touches was pinned down by direct probe,
+and every single one turned out to already be declared** (a real
+system-input loop reuses this file's own existing globals rather than
+needing new ones): `STATE` (word `69`, `CMDSTATE`), `SWAP_ON`/
+`SWAP_1_ON`/`SWAP_2_ON` (words `388`-`390`), `WHAT_H1` (word `392` --
+already carrying the comment "tested/cleared around user-program
+dispatch, `PASCALSY.57`," an independent, pre-existing confirmation
+this session's own reading of `.57` is right, from a session that had
+no memory of writing that comment), `CHAIN_NAME` (word `328`, matching
+`FULL_ID`'s own size, blanked each read), `USERINFO.ERRNUM`/
+`.CODEFIBP` (words `10`/`8`). Also confirmed by argument shape:
+`PASCALSY.6` = `FCLOSE`, segment `1` = `USERPROGRAM`, segment `3` =
+`PRINTERROR`, segment `5` = `GETCMD` (`CXP 5,1` -- `GETCMD` is itself
+a lone-procedure `SEGMENT FUNCTION`, so it's always procedure `1` of
+its own segment).
+
+**`GETNEXTCMD`**: while `SWAP_ON`, wait for the system volume
+(`WAITSYSVOL`) and read a command via `GETCMD`, clearing `CHAIN_NAME`
+each time. A real command (`STATE >= UPROGNOU`, i.e. anything past
+the two OS-internal `HALTINIT`/`DEBUGCALL` states) either launches
+`USERPROGRAM(NIL, NIL)` -- when `SWAP_2_ON` and `WHAT_H1` says it's
+safe -- or re-arms `SWAP_ON` and returns early. Either way, a real
+command also clears `SWAP_ON`, resets unit `3`, and re-verifies the
+boot unit's own directory (`FETCHDIR`, result intentionally
+discarded, matching the real binary's own bare-boolean-statement
+shape this host compiler won't accept directly -- same divergence
+class as elsewhere in this file). A just-finished compile-only command
+(`COMPONLY`/`COMPANDGO`/`COMPDEBUG`) with no error gets its scratch
+code file `FCLOSE`'d and locked, reporting a real I/O error via
+`PRINTERROR(10, ...)` if that fails; a program-load command
+(`UPROGNOU`/`UPROGUOK`) additionally locks both console files
+(`GFILES[0]`/`[1]`). Finally, if either console unit (`1`/`2`) is
+busy, it gets cleared.
+
+**`CMDDISPATCH`**: while still waiting, `WAITSYSVOL` then
+`GETNEXTCMD`, then launches `USERPROGRAM` when the flags allow it or
+re-arms `SWAP_ON` and returns. `STUB48` itself is the outermost
+version of the exact same three-step shape (`WAITSYSVOL`;
+`CMDDISPATCH`; launch `USERPROGRAM` if `SWAP_ON`) -- three nested
+copies of the same "wait, read, maybe launch" pattern, each one
+level further removed from actually reading a keystroke, which is
+presumably why Apple split it this way (retry logic at three
+independent layers).
+
+Compiles clean; all three `params=0` bytes exact against the real
+binary. `GETNEXTCMD`/`CMDDISPATCH` also match `data` exactly (`0`/`2`
+bytes), and `CMDDISPATCH`'s own instruction count matches the real
+binary exactly too (`19`). Landed on this candidate's own procedure
+numbers `54`/`55`, not real `57`/`58` -- the same already-documented,
+pre-existing numbering drift `BLKXFER` already carries in this range
+(`docs/PLAN.md`), not something newly introduced here. Committed to
+`PASCALSYSTEM.text`.

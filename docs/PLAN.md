@@ -958,6 +958,29 @@ a route end to end; everything else is a straight read-and-rebuild.
     `PASCALSY.53`'s own real declaration position unresolved. All four
     compile clean, `params=0` exact, numbers unchanged. Committed.
 
+    **`STUB48` written for real, with two nested helpers (finding
+    192)**: `PASCALSY`'s own top-level "wait for the system volume,
+    read commands, launch the user program" loop, called directly
+    from the program's own outer `BEGIN...END` (not from `COMMAND`).
+    Nests `GETNEXTCMD` (real `.57`) and `CMDDISPATCH` (real `.58`).
+    Every global it touches -- `STATE`, `SWAP_ON`/`SWAP_1_ON`/
+    `SWAP_2_ON`, `WHAT_H1`, `CHAIN_NAME`, `USERINFO.ERRNUM`/
+    `.CODEFIBP` -- turned out already declared; `WHAT_H1`'s own
+    pre-existing comment ("tested/cleared around user-program
+    dispatch, `PASCALSY.57`") independently confirmed this session's
+    read of `.57` before it was even written. `GETNEXTCMD` reads
+    commands via `GETCMD` and either launches `USERPROGRAM` or
+    re-arms the swap flag, with post-command cleanup (`FETCHDIR`
+    re-verify, `FCLOSE`-and-lock the scratch code file after a
+    compile-only command, lock both console files after a
+    program-load command, clear a busy console unit). `CMDDISPATCH`
+    and `STUB48` itself are two more layers of the same "wait, read,
+    maybe launch" shape. Compiles clean, `params=0` exact throughout;
+    `CMDDISPATCH` also matches the real binary's own instruction count
+    exactly (`19`). Lands on this candidate's own numbers `54`/`55`,
+    not real `57`/`58` -- the same pre-existing `BLKXFER`-class
+    numbering drift, not new. Committed.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
