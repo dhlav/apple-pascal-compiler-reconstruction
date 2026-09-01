@@ -16410,3 +16410,89 @@ clean; `params=2` bytes exact for both, and **instruction count exact
 (`23`/`7`) against the real binary for both**.
 
 All five committed to `PASCALSYSTEM.text`.
+
+## 194. `FGET`'s cross-segment call into `FIOPRIMS` -- five real-hardware experiments, all ruled out; the mechanism is still unknown
+
+VERIFIED BINARY FACT for every experiment result (all run on Apple's own
+1.3 `SYSTEM.COMPILER` under AppleWin, not the host tool). Nothing
+committed to `PASCALSYSTEM.text` -- this narrows the search, it does not
+close finding 190.
+
+Finding 190 root-caused *why* `ucsdpsys_compile` rejects the obvious
+fix (an outer `FORWARD` completed by a short form nested one level
+inside `SEGMENT PROCEDURE FIOPRIMS`), but left open whether that was a
+limitation of the host tool specifically. It is not. Apple's own 1.3
+compiler was tested directly, since the host tool "can only falsify,
+never accept" (project rule) -- a rejection there is not evidence about
+Apple. Five minimal, isolated programs were written, added to `SYSHD:`
+by hand (`cp2 add`/`set-attr`, bypassing `mkharddisks.py`'s own `FILES`
+list since these are throwaway), and compiled with
+`tools/emucompile.ps1`:
+
+1. **Plain outer `FORWARD`, short-form completion nested inside a
+   `SEGMENT PROCEDURE`** (finding 190's own repro, re-run on real
+   hardware): `error 123: Missing result type in function declaration`
+   at the nested completion -- the *same* failure shape
+   `ucsdpsys_compile` reports (as "must specify a return type"), just
+   Apple's own error number. Confirms finding 190's conclusion holds
+   under the acceptance tier, not just the fast one.
+2. **Each helper declared as its own separate top-level `SEGMENT
+   FUNCTION`, called by an ordinary sibling** (no forward/nesting trick
+   at all -- ordinary Pascal visibility): compiles clean. But the
+   resulting codefile has *three* segments (`SEGTEST`, `FPWINADV`,
+   `FPDLE`), each named after its own procedure and numbered
+   sequentially from 7 (matching the language reference's own words:
+   "these procedures or functions use sequentially increasing segment
+   numbers starting at 7"). Real `FIOPRIMS` is one segment holding
+   four/five procedures under one name -- this shape doesn't produce
+   that, so it's not how Apple wrote it, even though it compiles.
+3. **The `FORWARD` itself marked `SEGMENT`** (`SEGMENT FUNCTION
+   FPWINADV(...): BOOLEAN; FORWARD;`), completed nested inside a
+   separate `SEGMENT PROCEDURE FIOPRIMS` the same way as (1): identical
+   `error 123` at the same spot. Marking the forward `SEGMENT` doesn't
+   change how the completion binds.
+4. **Full header repeated at the nested completion site** (not the
+   short form) inside `SEGMENT PROCEDURE FIOPRIMS`, with the outer
+   `FORWARD` left as in (1): this compiles *without* erroring on the
+   nested declaration itself (it's accepted as a brand-new local
+   symbol private to `FIOPRIMS`), but the outer `FORWARD` is never
+   satisfied -- `FPWINADV undefined` is reported separately, and the
+   sibling caller's own use of the name fails with `error 117` at the
+   program's final `BEGIN`. Confirms the full-header form doesn't bind
+   to an outer forward across a `SEGMENT PROCEDURE` boundary either --
+   it just silently declares an unrelated same-named local.
+5. **A Regular `UNIT` defined inline in the host program**, per the
+   language reference's own "for test purposes... compile the UNIT and
+   the host program together" note, with `FPWINADV`/`FPDLE` in its
+   `INTERFACE` (ordinarily globally visible, which would solve the
+   problem outright if it worked) and `USES FIOPRIMS;` in the host
+   program: the `UNIT` block itself compiles clean (`18212 words`), but
+   the `USES` line fails with `error 190: Unit not in library` --
+   inline compilation of the *unit* text does not itself make it
+   available to `USES`; a Regular Unit apparently still needs a real
+   library-file round trip (compile to a library, `L(ink` or install
+   it) even when its source sits in the same `.TEXT` file, contrary to
+   how that manual note reads in isolation.
+
+**What this rules out**: any plain `FORWARD`/short-form-completion
+pairing across a `SEGMENT PROCEDURE` boundary (1, 3); declaring the
+helpers as their own independent top-level segments (2, wrong segment
+shape even though it compiles); a same-named full-header redeclaration
+nested inside the segment (4, silently shadows instead of binding); and
+a same-file inline `UNIT` without a real library step (5). `FPWINADV`/
+`FPDLE`/`FPPEEK` are still, by frame-size evidence (findings 170/171/
+174), genuine children of one `FIOPRIMS` segment -- so whatever Apple's
+real source did, it must reconcile that shared-segment fact with
+`FGET`'s own external, by-name calls into it, and none of the five
+obvious source shapes for doing so survive contact with the real
+compiler. Two angles not yet tried: (a) a Regular Unit taken through an
+*actual* library round trip (compile it alone first, `LIBRARY` it into
+a `.CODE`, then compile the host program against that library, `L(ink`
+the result) -- closer to what the manual's *non*-"for test purposes"
+path describes, and would need a throwaway multi-step build rather than
+one `C(ompile`; (b) re-reading `PASCALIO.text`'s own `CXP 0,7` call site
+again for a clue about how *it* names `FGET` across a segment boundary,
+since that comment is the one piece of independent evidence this whole
+question rests on. Left for a future session -- `FGET`, `FPUT`, and
+their dependents (`FREADINT`/`FWRITEINT`/`FREADCHAR`/`FWRITECHAR`/
+`FREADSTRING`/`FWRITEBYTES`) stay stubs.
