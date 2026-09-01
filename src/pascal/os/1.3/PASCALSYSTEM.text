@@ -2445,7 +2445,123 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE PROMPT; BEGIN END;
   FUNCTION SPACEWAIT; BEGIN SPACEWAIT := TRUE END;
   FUNCTION GETCHAR; BEGIN GETCHAR := ' ' END;
-  FUNCTION FETCHDIR; BEGIN FETCHDIR := TRUE END;
+  { `FETCHDIR` = `PASCALSY.42` (finding 188). Reads a unit's directory
+    off disk into `SYSCOM^.GDIRP` (lazily allocated on first use --
+    the real binary passes an explicit `1014`-word size to `NEW` here,
+    `78 * 13` matching `DIRECTORY`'s own already-established element
+    count and size; this host compiler refuses any extra argument to
+    `NEW` on a variant-record array ("you may not specify variant
+    parameters..."), so this candidate calls plain `NEW(SYSCOM^.GDIRP)`
+    instead -- behaviourally equivalent, since `DIRECTORY`'s element
+    count is fixed at compile time either way, but a real, noted
+    divergence, not silently forced), validates it, and caches the
+    result in `UNITABLE[FUNIT]`.
+
+    Validation, in order: `DFIRSTBLK = 0`, and `DFKIND` must be the
+    variant appropriate to the CURRENT `SYSCOM^.MISCINFO.USERKIND`
+    (`BOOKER` accepts anything; the `AQUIZ`/`PQUIZ` "quiz mode" pair
+    requires `SECUREDIR`; plain `NORMAL` requires `UNTYPEDFILE`) -- a
+    real access-control check, a directory tagged for the wrong mode
+    is rejected outright. Then `DVID`'s length (`1..7`) and
+    `DNUMFILES`'s range (`0..77`) get sanity-checked. Only if the
+    freshly-read `DVID` differs from what `UNITABLE[FUNIT]` already
+    has cached (nothing to re-verify if it's the same volume as last
+    time) does it walk every real entry (`1..DNUMFILES`), checking
+    `DTID` length (`1..15`), `DLASTBLK >= DFIRSTBLK`, `DLASTBYTE`
+    range (`1..512`), and `DACCESS.YEAR < 100` (this file's own
+    temp-file sentinel, finding 173, so a lingering temp-marked entry
+    counts as corrupt here) -- `DELENTRY`ing (finding 185) any entry
+    that fails, re-checking the shifted-in replacement at the same
+    index rather than advancing. If anything got deleted, the cleaned
+    directory is `UNITWRITE`'ed back to block `2` (the same shape
+    `WRITEDIR` already established, finding 186) before the result
+    counts as success.
+
+    On success, `UNITABLE[FUNIT]`'s own `UVID`/`UEOVBLK` get refreshed
+    from the validated directory and `DLOADTIME` is restamped via
+    `TIME` (closing the loop for `VOLSEARCH`'s and `WRITEDIR`'s own
+    freshness checks, findings 186/187); on failure, the same
+    cache-invalidation tail those two already established (`UVID`
+    blanked, `UEOVBLK := 32767`) plus `RELEASE(SYSCOM^.GDIRP)` and
+    `SYSCOM^.GDIRP := NIL`, giving back the heap space.
+
+    Compiles clean; `params=6` bytes exact (`FUNIT` plus this file's
+    own established 2-word function-result reservation). `locals=6`
+    against the real `14` -- a larger gap than usual, but explained by
+    the same already-accepted "missing address-cache" class (findings
+    174/179/180/183): this routine dereferences `SYSCOM^`,
+    `UNITABLE[FUNIT]`, and `SYSCOM^.GDIRP^[...]` more times than
+    almost anything else in this file, and the real binary caches each
+    of those addresses into its own scratch local where this host
+    compiler always recomputes them fresh. }
+  FUNCTION FETCHDIR;
+    VAR
+      OK: BOOLEAN;
+      I: DIRRANGE;
+      HITIME: INTEGER;
+  BEGIN
+    FETCHDIR := FALSE;
+    IF SYSCOM^.GDIRP = NIL THEN
+      NEW(SYSCOM^.GDIRP);
+    UNITREAD(FUNIT, SYSCOM^.GDIRP^, 2028, 2);
+    OK := SYSCOM^.IORSLT = INOERROR;
+    IF OK THEN
+    BEGIN
+      OK := FALSE;
+      IF (SYSCOM^.GDIRP^[0].DFIRSTBLK = 0) AND
+         ((SYSCOM^.MISCINFO.USERKIND = BOOKER) OR
+          ((SYSCOM^.MISCINFO.USERKIND IN [AQUIZ, PQUIZ]) AND
+           (SYSCOM^.GDIRP^[0].DFKIND = SECUREDIR)) OR
+          ((SYSCOM^.MISCINFO.USERKIND = NORMAL) AND
+           (SYSCOM^.GDIRP^[0].DFKIND = UNTYPEDFILE))) THEN
+        IF (LENGTH(SYSCOM^.GDIRP^[0].DVID) > 0) AND
+           (LENGTH(SYSCOM^.GDIRP^[0].DVID) <= 7) AND
+           (SYSCOM^.GDIRP^[0].DNUMFILES >= 0) AND
+           (SYSCOM^.GDIRP^[0].DNUMFILES <= 77) THEN
+        BEGIN
+          OK := TRUE;
+          IF SYSCOM^.GDIRP^[0].DVID <> UNITABLE[FUNIT].UVID THEN
+          BEGIN
+            I := 1;
+            WHILE I <= SYSCOM^.GDIRP^[0].DNUMFILES DO
+            BEGIN
+              IF (LENGTH(SYSCOM^.GDIRP^[I].DTID) <= 0) OR
+                 (LENGTH(SYSCOM^.GDIRP^[I].DTID) > 15) OR
+                 (SYSCOM^.GDIRP^[I].DLASTBLK < SYSCOM^.GDIRP^[I].DFIRSTBLK) OR
+                 (SYSCOM^.GDIRP^[I].DLASTBYTE > 512) OR
+                 (SYSCOM^.GDIRP^[I].DLASTBYTE <= 0) OR
+                 (SYSCOM^.GDIRP^[I].DACCESS.YEAR >= 100) THEN
+              BEGIN
+                OK := FALSE;
+                DELENTRY(I, SYSCOM^.GDIRP)
+              END
+              ELSE
+                I := I + 1
+            END;
+            IF NOT OK THEN
+            BEGIN
+              UNITWRITE(FUNIT, SYSCOM^.GDIRP^,
+                        (SYSCOM^.GDIRP^[0].DNUMFILES + 1) * 26, 2);
+              OK := SYSCOM^.IORSLT = INOERROR
+            END
+          END
+        END
+    END;
+    FETCHDIR := OK;
+    IF OK THEN
+    BEGIN
+      UNITABLE[FUNIT].UVID := SYSCOM^.GDIRP^[0].DVID;
+      UNITABLE[FUNIT].UEOVBLK := SYSCOM^.GDIRP^[0].DEOVBLK;
+      TIME(HITIME, SYSCOM^.GDIRP^[0].DLOADTIME)
+    END
+    ELSE
+    BEGIN
+      UNITABLE[FUNIT].UVID := '       ';
+      UNITABLE[FUNIT].UEOVBLK := 32767;
+      RELEASE(SYSCOM^.GDIRP);
+      SYSCOM^.GDIRP := NIL
+    END
+  END;
   PROCEDURE COMMAND; BEGIN END;
 
   { PASCALSY.44: append one character to the EXEC write buffer,

@@ -863,6 +863,31 @@ a route end to end; everything else is a straight read-and-rebuild.
     surfaced) are what remain before `FPOPEN`'s whole dependency chain
     is closed.
 
+    **`FETCHDIR` written for real (finding 188)**: reads a unit's
+    directory into `SYSCOM^.GDIRP` (lazily `NEW`'d), validates it, and
+    caches the result -- closing `VOLSEARCH`'s own last dependency. A
+    real access-control check turned up new to this project:
+    `DFKIND` must match the variant appropriate to the current
+    `SYSCOM^.MISCINFO.USERKIND` (`BOOKER` accepts anything; the
+    `AQUIZ`/`PQUIZ` "quiz mode" pair requires `SECUREDIR`; `NORMAL`
+    requires `UNTYPEDFILE`) -- Apple Pascal's own documented
+    restricted-access feature, enforced for the first time in this
+    reconstruction. Self-healing on read: only when the directory's
+    name actually changed does it walk every entry, `DELENTRY`ing
+    (finding 185) anything structurally invalid and `UNITWRITE`ing the
+    cleaned result back (`WRITEDIR`'s own shape, finding 186). A real,
+    documented `NEW`-argument divergence: the real binary passes an
+    explicit `1014`-word size, this host compiler refuses any extra
+    argument to `NEW` on a variant-record array, so the candidate
+    calls plain `NEW(SYSCOM^.GDIRP)` -- behaviourally equivalent since
+    the element count is fixed at compile time either way. Compiles
+    clean, `params` exact; `locals` short by `8` bytes (`4` words),
+    the biggest gap yet but still the same accepted "missing
+    address-cache" class (this routine dereferences `SYSCOM^`/
+    `UNITABLE[FUNIT]`/`SYSCOM^.GDIRP^[...]` more than almost anything
+    else in the file). Committed. `SCANTITLE` (353 instructions) is
+    now the only remaining stub in `FPOPEN`'s whole dependency chain.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

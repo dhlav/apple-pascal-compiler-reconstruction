@@ -15997,3 +15997,57 @@ not a forced match, and not chased tighter. Committed to
 `SCANTITLE` (`PASCALSY.33`, 353 real instructions, the largest of the
 six) and `FETCHDIR` (`PASCALSY.42`, ~234) are what remain before
 `FPOPEN`'s whole real dependency chain is closed.
+
+## 188. `FETCHDIR` (`PASCALSY.42`) written for real -- a `MISCINFO.USERKIND` access-control check and a `NEW`-argument divergence
+
+STRONG INFERENCE. `FETCHDIR` reads a unit's directory into
+`SYSCOM^.GDIRP` (lazily allocated via `NEW` on first use), validates
+it, and caches the result -- closing out `VOLSEARCH`'s own last
+unwritten dependency (finding 187).
+
+**A real access-control check, new to this project**: after the raw
+`UNITREAD` succeeds, `DFKIND` must match the variant appropriate to
+the *current* `SYSCOM^.MISCINFO.USERKIND` -- `BOOKER` accepts any
+kind; the `AQUIZ`/`PQUIZ` "quiz mode" pair requires `SECUREDIR`;
+plain `NORMAL` requires `UNTYPEDFILE`. A directory tagged for the
+wrong mode is rejected outright, before `DVID` length (`1..7`) or
+`DNUMFILES` range (`0..77`) are even checked. This is Apple Pascal's
+own documented "quiz"/restricted-access feature showing up as a real
+enforcement point for the first time in this reconstruction.
+
+**Self-healing on read**: only when the freshly-read `DVID` differs
+from `UNITABLE[FUNIT]`'s own cached name (nothing to re-verify for the
+same volume as last time) does it walk every real entry, checking
+`DTID` length (`1..15`), `DLASTBLK >= DFIRSTBLK`, `DLASTBYTE` range
+(`1..512`), and `DACCESS.YEAR < 100` (this file's own temp-file
+sentinel, finding 173 -- a lingering temp-marked entry counts as
+corrupt here). A failing entry gets `DELENTRY`'d (finding 185) and the
+same index re-checked (the shifted-in replacement), not advanced. Any
+deletion triggers a `UNITWRITE` of the cleaned directory back to block
+`2` -- the same shape `WRITEDIR` already established (finding 186) --
+before success counts. On success, `UNITABLE[FUNIT]`'s own cache gets
+refreshed and `DLOADTIME` restamped, closing the loop for
+`VOLSEARCH`'s and `WRITEDIR`'s own freshness checks; on failure, the
+same cache-invalidation tail those two already established, plus
+`RELEASE(SYSCOM^.GDIRP)` and `SYSCOM^.GDIRP := NIL`.
+
+**A real `NEW`-argument divergence, not silently forced**: the real
+binary passes an explicit `1014`-word size to `NEW` (`78 * 13`,
+matching `DIRECTORY`'s own already-established element count and
+size), but this host compiler refuses any extra argument to `NEW` on
+a variant-record array ("you may not specify variant parameters...").
+The candidate calls plain `NEW(SYSCOM^.GDIRP)` instead --
+behaviourally equivalent, since `DIRECTORY`'s element count is fixed
+at compile time either way, but a real, documented gap between what
+Apple's compiler accepted and what this host tool will.
+
+Compiles clean; `params=6` bytes exact. `locals=6` against the real
+`14` -- a bigger gap than usual, but the same already-accepted
+"missing address-cache" class (findings 174/179/180/183): this
+routine dereferences `SYSCOM^`, `UNITABLE[FUNIT]`, and
+`SYSCOM^.GDIRP^[...]` more than almost anything else in this file, and
+the real binary caches each address where this host tool always
+recomputes it fresh. Committed to `PASCALSYSTEM.text`.
+
+`SCANTITLE` (`PASCALSY.33`, 353 instructions) is now the only
+remaining stub in `FPOPEN`'s whole dependency chain.
