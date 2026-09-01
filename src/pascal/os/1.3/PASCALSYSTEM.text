@@ -2142,10 +2142,87 @@ PROGRAM PASCALSYSTEM;
 
   FUNCTION VOLSEARCH; BEGIN VOLSEARCH := 0 END;
   PROCEDURE WRITEDIR; BEGIN END;
-  FUNCTION DIRSEARCH; BEGIN DIRSEARCH := 0 END;
+
+  { `DIRSEARCH` = `PASCALSY.32` (finding 185). Linear scan over
+    `FDIR^[1..DNUMFILES]` for an entry whose `DTID` matches `FTID` and
+    whose "permanent" status agrees with `FINDPERM` -- a permanent
+    entry is one whose `DACCESS.YEAR <> 100`, this file's own already-
+    established temp-file sentinel (`DATEREC.YEAR := 100`, first
+    documented at `FPCLOSE`, finding 173). `FPOPEN` calls this with
+    `FINDPERM := OLDOK`: opening an existing file (`OLDOK`) must match
+    a real, non-temp entry; creating one checks the *same* condition to
+    reject a name collision even against a stray temp entry. Stops at
+    the first match (`FOUND` gates the loop, matching the real binary's
+    own `LAND`-with-loop-condition shape) and returns its index, or `0`
+    if the whole directory is scanned with no match. Compiles clean;
+    `params=10` bytes exact, `locals=4` against the real `6` -- one
+    word short, the same already-accepted host-compiler gap class as
+    everywhere else in this file. }
+  FUNCTION DIRSEARCH;
+    VAR I: DIRRANGE; FOUND: BOOLEAN;
+  BEGIN
+    DIRSEARCH := 0;
+    FOUND := FALSE;
+    I := 1;
+    WHILE (I <= FDIR^[0].DNUMFILES) AND NOT FOUND DO
+    BEGIN
+      IF (FDIR^[I].DTID = FTID) AND
+         (FINDPERM = (FDIR^[I].DACCESS.YEAR <> 100)) THEN
+      BEGIN
+        DIRSEARCH := I;
+        FOUND := TRUE
+      END;
+      I := I + 1
+    END
+  END;
+
   FUNCTION SCANTITLE; BEGIN SCANTITLE := TRUE END;
-  PROCEDURE DELENTRY; BEGIN END;
-  PROCEDURE INSENTRY; BEGIN END;
+
+  { `DELENTRY` = `PASCALSY.34` (finding 185). Removes directory entry
+    `FINX` by shifting every later entry down by one, then blanks the
+    now-vacated last slot's `DTID` (the real binary reads `DNUMFILES`
+    fresh a second time for this, not the pre-decrement value cached
+    in `LAST` -- reproduced literally, not simplified to reusing
+    `LAST + 1`) and decrements `DNUMFILES`. `FPOPEN` calls this when a
+    freshly-`FPALLOC`'d entry turns out too small to keep (finding
+    182). Compiles clean; `params=4` bytes exact, `locals=2` against
+    the real `6` -- two words short, same accepted class; the real
+    binary's own `IND 8` (an *unpacked* read of `DNUMFILES`) instead of
+    this host compiler's `LDP` is the `DLASTBYTE`-packing divergence
+    (finding 174) recurring for a different subrange field that also
+    happens to have its whole word to itself. }
+  PROCEDURE DELENTRY;
+    VAR LAST: DIRRANGE;
+  BEGIN
+    LAST := FDIR^[0].DNUMFILES - 1;
+    WHILE FINX <= LAST DO
+    BEGIN
+      FDIR^[FINX] := FDIR^[FINX + 1];
+      FINX := FINX + 1
+    END;
+    FDIR^[FDIR^[0].DNUMFILES].DTID := '               ';
+    FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES - 1
+  END;
+
+  { `INSENTRY` = `PASCALSY.35` (finding 185). `DELENTRY`'s mirror image:
+    shifts every entry from `FINX` to the current `DNUMFILES` up by
+    one to open a gap, copies `FENTRY` into the vacated slot, and
+    increments `DNUMFILES`. `FPOPEN`'s own `FPALLOC` (finding 176)
+    calls this with a freshly-built entry once free space is found.
+    Compiles clean; `params=6` bytes exact, `locals=2` against the real
+    `6` -- two words short, same accepted class. }
+  PROCEDURE INSENTRY;
+    VAR I: DIRRANGE;
+  BEGIN
+    I := FDIR^[0].DNUMFILES;
+    WHILE I >= FINX DO
+    BEGIN
+      FDIR^[I + 1] := FDIR^[I];
+      I := I - 1
+    END;
+    FDIR^[FINX] := FENTRY;
+    FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES + 1
+  END;
   PROCEDURE HOMECURSOR; BEGIN END;
   PROCEDURE CLEARSCREEN; BEGIN END;
   PROCEDURE CLEARLINE; BEGIN END;

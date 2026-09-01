@@ -15846,3 +15846,56 @@ the established gap class; instruction count differs throughout from
 the same cause (documented since finding 181). This closes the last
 undrafted routine in `FILEPROC`/`FIOPRIMS` -- `SYSTEM.PASCAL`'s
 reconstruction moves on to whatever `docs/PLAN.md` names next.
+
+## 185. `DIRSEARCH`/`DELENTRY`/`INSENTRY` (`PASCALSY.32`/`.34`/`.35`) written for real
+
+VERIFIED SOURCE FACT. With `FPOPEN` committed (finding 184), the next
+targets are its own remaining dependencies still stubbed at the
+segment-0 level: `VOLSEARCH`, `WRITEDIR`, `DIRSEARCH`, `SCANTITLE`,
+`DELENTRY`, `INSENTRY` -- all six still `BEGIN <trivial> END`. Sizing
+them first (real instruction counts) rather than guessing: `INSENTRY`
+39, `DELENTRY`/`DIRSEARCH` 44 each, `WRITEDIR` 128, `VOLSEARCH` 244,
+`SCANTITLE` 353 -- the three smallest are tractable in one pass, the
+other three are `FPOPEN`-scale undertakings for later sessions.
+
+**`DIRSEARCH`**: `FUNCTION DIRSEARCH := 0`, then a linear scan
+`I := 1 TO DNUMFILES` (loop-gated by `AND NOT FOUND`, stopping at the
+first hit rather than scanning to the end) for `FDIR^[I].DTID = FTID`
+*and* `FINDPERM = (FDIR^[I].DACCESS.YEAR <> 100)` -- `DACCESS.YEAR :=
+100` is this file's own already-documented temp-file sentinel
+(`FPCLOSE`, finding 173), so `DIRSEARCH` doubles as "does a matching
+*permanent* entry exist" or "does a matching *temp* entry exist"
+depending on the caller's `FINDPERM`. `FPOPEN` passes `OLDOK` for it
+(finding 182): opening an existing file must land on a real entry;
+creating one still checks the same condition, so a stray temp entry
+with the same name doesn't silently get overwritten OR silently allow
+a duplicate to be created.
+
+**`DELENTRY`**: shift every entry after `FINX` down by one
+(`WHILE FINX <= LAST DO FDIR^[FINX] := FDIR^[FINX+1]`, `LAST` cached
+once at `DNUMFILES - 1` matching the real binary's own single
+up-front computation), blank the now-duplicate last slot's `DTID`
+(re-reading `DNUMFILES` a *second* time for this rather than reusing
+`LAST + 1` -- reproduced literally since that's what the real
+disassembly does, not simplified away), then `DNUMFILES := DNUMFILES
+- 1`. `INSENTRY` is `DELENTRY`'s mirror: shift everything from the
+*current* `DNUMFILES` down to `FINX` **up** by one to open a gap,
+drop `FENTRY` into the vacated slot, `DNUMFILES := DNUMFILES + 1`.
+
+**A second, independent sighting of the `DLASTBYTE`-class packing
+divergence (finding 174/183)**: the real `DELENTRY`/`INSENTRY`
+disassembly reads/writes `DNUMFILES` (`DIRRANGE`, `0..77`, a subrange
+needing only 7 bits) with a plain `IND`/`STO`, never `LDP`/`STP`; this
+host compiler always packs it. Same root cause as `DLASTBYTE`
+-- nothing else shares `DNUMFILES`'s own word in this variant, so
+Apple's real compiler skips the bit-mask dance this host tool never
+skips. Not chased further, same accepted class.
+
+All three compile clean with `params` exact against the real binary
+(`10`/`4`/`6` bytes) and small `locals` gaps (`1`/`2`/`2` words) --
+comfortably inside the range every other procedure in this file
+already carries (finding 184's own survey: `1` to `5` words). All
+three committed to `PASCALSYSTEM.text`.
+
+`VOLSEARCH`, `WRITEDIR`, and `SCANTITLE` remain stubs -- the next
+targets, in ascending order of size.

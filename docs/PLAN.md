@@ -805,6 +805,26 @@ a route end to end; everything else is a straight read-and-rebuild.
     `PASCALSYSTEM.text` -- the last undrafted routine in
     `FILEPROC`/`FIOPRIMS` is closed.
 
+    **`DIRSEARCH`/`DELENTRY`/`INSENTRY` written for real (finding
+    185)**: `FPOPEN`'s remaining segment-0 dependencies were still six
+    stubs (`VOLSEARCH`, `WRITEDIR`, `DIRSEARCH`, `SCANTITLE`,
+    `DELENTRY`, `INSENTRY`). Sized all six by real instruction count
+    first: `INSENTRY` 39, `DELENTRY`/`DIRSEARCH` 44 each -- tractable
+    in one pass -- versus `WRITEDIR` 128, `VOLSEARCH` 244, `SCANTITLE`
+    353, each its own undertaking. `DIRSEARCH` scans for an entry
+    matching both `DTID` and a permanent-vs-temp status test against
+    `DACCESS.YEAR <> 100` (this file's own temp-file sentinel, finding
+    173); `DELENTRY`/`INSENTRY` are a shift-down/shift-up pair around
+    the directory array. A second, independent instance of the
+    `DLASTBYTE`-class packing divergence (finding 174) turned up on
+    `DNUMFILES` (also a subrange alone in its own word, also read
+    unpacked by Apple's real compiler where this host tool always
+    packs it). All three compile clean, `params` exact, `locals`
+    short by 1-2 words each -- inside finding 184's own established
+    range -- and are now committed. `VOLSEARCH`, `WRITEDIR`, and
+    `SCANTITLE` remain stubs, the natural next targets in that
+    ascending-size order.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
