@@ -15944,3 +15944,56 @@ Compiles clean; `params=4` bytes exact, `locals=32` against the real
 everywhere else in this file. Committed to `PASCALSYSTEM.text`.
 `VOLSEARCH` and `SCANTITLE` remain stubs, the two largest of `FPOPEN`'s
 own remaining dependencies.
+
+## 187. `VOLSEARCH` (`PASCALSY.30`) written for real -- a bigger dependency turns up: `FETCHDIR`
+
+STRONG INFERENCE. `VOLSEARCH`'s own body is written, but it leans on a
+call this project hadn't identified yet: `CBP 42` twice, matching
+`FETCHDIR(FUNIT: UNITNUM): BOOLEAN`'s already-declared forward
+signature by frame size (`param=6` bytes = `1` real word + this file's
+own established 2-word function-result reservation). `PASCALSY.42`
+turns out to be its own ~234-instruction routine, comparable in size
+to `VOLSEARCH` itself -- not attempted this session, left a stub
+(matching how `FPOPEN` leaned on `FPALLOC` as a separately-written
+dependency, findings 175/176). Writing `VOLSEARCH`'s own logic around
+`FETCHDIR` as an opaque call, the same way `FPOPEN` was written around
+`FPRESET`/`FPNEWBLK` before those existed, kept this session's own
+scope tractable.
+
+**The real shape, three phases, all gated behind `LENGTH(FVID) > 0`**:
+
+1. **`"#nn"` unit-number syntax.** `FVID[1] = CHR(35)` (`'#'`) with a
+   real digit run parses straight to a unit number, valid only for
+   `1..20` -- a genuinely new fact this project didn't have: `MAXUNIT
+   = 20`. A valid `"#nn"` forces `LOOKHARD` off (no need for the
+   thorough fallback once a caller named an exact unit).
+2. **A plain named search** otherwise: units `20` downto `1`, first
+   `UNITABLE[unit].UVID = FVID` match wins.
+3. Whichever found a candidate, block-structured units get verified:
+   if `SYSCOM^.GDIRP` already caches *this* volume's directory and was
+   loaded within the last `300` ticks (`WRITEDIR`'s own freshness
+   idiom, finding 186), trust it outright; otherwise call `FETCHDIR`,
+   re-verifying the fetched `DVID` against `FVID` only for a
+   name-matched unit (a `"#nn"` one doesn't need it).
+
+If still not found and `LOOKHARD` remains set, a *fourth* pass -- units
+`20` downto `1` again, unconditionally `FETCHDIR`ing every
+block-structured one and comparing its freshly-read `DVID` -- catches
+a volume `UNITABLE`'s own cache doesn't know about yet. On success:
+the unit number, `FVID` updated to the real matched name (fills in the
+actual name for a `"#nn"` lookup), `FDIR := SYSCOM^.GDIRP` **only**
+for a block device (`NIL` for anything else -- a valid, deliberate
+result `FPOPEN` already handles, findings 182/183, now confirmed as
+`VOLSEARCH`'s own real contract rather than an assumption), and a
+`TIME`-based restamp of `FDIR^[0].DLOADTIME`.
+
+Compiles clean; `params=10` bytes exact. `locals=16` against the real
+`12` -- the one exception to this file's usual gap *direction*: named,
+distinct booleans for each phase instead of the real binary's single
+scratch word reused across all three. A deliberate readability choice,
+not a forced match, and not chased tighter. Committed to
+`PASCALSYSTEM.text`.
+
+`SCANTITLE` (`PASCALSY.33`, 353 real instructions, the largest of the
+six) and `FETCHDIR` (`PASCALSY.42`, ~234) are what remain before
+`FPOPEN`'s whole real dependency chain is closed.

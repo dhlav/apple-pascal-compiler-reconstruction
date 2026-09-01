@@ -2140,7 +2140,146 @@ PROGRAM PASCALSYSTEM;
     FWRITECHAR(GFILES[1]^, CHR(X + 32), 0)
   END;
 
-  FUNCTION VOLSEARCH; BEGIN VOLSEARCH := 0 END;
+  { `VOLSEARCH` = `PASCALSY.30` (finding 187). Finds the unit holding
+    volume `FVID`, sets `FDIR` to its directory (`NIL` for a non-block
+    device -- a valid, deliberate outcome `FPOPEN` already handles,
+    findings 182/183), and returns the unit number (`0` if not found).
+    Calls into `FETCHDIR` (`PASCALSY.42`, `FUNCTION FETCHDIR(FUNIT:
+    UNITNUM): BOOLEAN`, still a stub) to actually read a directory off
+    disk -- `FETCHDIR` is its own ~234-instruction routine, comparable
+    in size to `VOLSEARCH` itself, and is the next real target, not
+    attempted this session.
+
+    Three phases, all gated behind `LENGTH(FVID) > 0` (an empty title
+    finds nothing by name, only by the `LOOKHARD` fallback below):
+
+    1. **Parse a `"#nn"` unit-number reference.** `FVID[1] = '#'`
+       (`CHR(35)`) with a real digit run after it (`IN DIGITS`, this
+       file's own already-declared `SET OF '0'..'9'` global) parses
+       straight to a unit number, valid only for `1..20` -- confirming
+       `MAXUNIT = 20`, a real fact this project didn't have pinned down
+       before. A valid `"#nn"` forces `LOOKHARD` off (no need for the
+       thorough fallback once the caller named an exact unit).
+    2. **Otherwise, a plain named search**: units `20` downto `1`,
+       first match on `UNITABLE[unit].UVID = FVID` wins.
+    3. Whichever found a candidate unit, block-structured units get
+       verified/fetched: if `SYSCOM^.GDIRP` is already caching *this*
+       volume's directory and was loaded within the last `300` ticks
+       (the same freshness idiom `WRITEDIR` already established,
+       finding 186), trust it outright; otherwise call `FETCHDIR`, and
+       -- only for a name-matched unit, not a `"#nn"` one, which
+       doesn't need it -- re-verify the fetched directory's own `DVID`
+       against `FVID`.
+
+    If nothing panned out and `LOOKHARD` is still set, a *fourth*
+    pass -- units `20` downto `1` again, this time unconditionally
+    calling `FETCHDIR` on every block-structured one and comparing its
+    freshly-read `DVID` -- catches a volume `UNITABLE`'s own cached
+    name doesn't yet know about. On any success: the result unit
+    number, `FVID` updated to the real matched name (fills in the
+    actual name for a `"#nn"` lookup), `FDIR := SYSCOM^.GDIRP` for a
+    block device, and a `TIME`-based restamp of `FDIR^[0].DLOADTIME`
+    closing the freshness loop for next time.
+
+    Compiles clean; `params=10` bytes exact. `locals=16` against the
+    real `12` -- *longer* than real here, not shorter, the one
+    exception to this file's usual gap direction: named, distinct
+    booleans for each phase (`FOUND`/`UNITBYNUM`/`FRESH`) instead of
+    the real binary's own single scratch word reused across all three,
+    a deliberate, readable choice rather than a forced match. }
+  FUNCTION VOLSEARCH;
+    VAR
+      FOUND, UNITBYNUM, FRESH: BOOLEAN;
+      UNITNO: UNITNUM;
+      I, NUM: INTEGER;
+      HITIME, LOTIME: INTEGER;
+  BEGIN
+    VOLSEARCH := 0;
+    FDIR := NIL;
+    UNITBYNUM := FALSE;
+    FOUND := FALSE;
+    IF LENGTH(FVID) > 0 THEN
+    BEGIN
+      IF (FVID[1] = '#') AND (LENGTH(FVID) > 1) THEN
+      BEGIN
+        UNITBYNUM := TRUE;
+        NUM := 0;
+        I := 2;
+        WHILE (I <= LENGTH(FVID)) AND UNITBYNUM DO
+        BEGIN
+          IF FVID[I] IN DIGITS THEN
+            NUM := NUM * 10 + (ORD(FVID[I]) - 48)
+          ELSE
+            UNITBYNUM := FALSE;
+          I := I + 1
+        END;
+        UNITBYNUM := UNITBYNUM AND (NUM > 0) AND (NUM <= 20);
+        LOOKHARD := LOOKHARD AND NOT UNITBYNUM
+      END;
+      IF UNITBYNUM THEN
+      BEGIN
+        UNITNO := NUM;
+        FOUND := TRUE
+      END
+      ELSE
+      BEGIN
+        UNITNO := 20;
+        WHILE (UNITNO > 0) AND NOT FOUND DO
+        BEGIN
+          FOUND := FVID = UNITABLE[UNITNO].UVID;
+          IF NOT FOUND THEN UNITNO := UNITNO - 1
+        END
+      END
+    END;
+
+    IF FOUND THEN
+      IF UNITABLE[UNITNO].UISBLKD THEN
+      BEGIN
+        FRESH := FALSE;
+        IF SYSCOM^.GDIRP <> NIL THEN
+          IF FVID = SYSCOM^.GDIRP^[0].DVID THEN
+          BEGIN
+            TIME(HITIME, LOTIME);
+            FRESH := (LOTIME - SYSCOM^.GDIRP^[0].DLOADTIME) <= 300
+          END;
+        IF NOT FRESH THEN
+        BEGIN
+          FOUND := UNITBYNUM;
+          IF FETCHDIR(UNITNO) THEN
+          BEGIN
+            IF NOT UNITBYNUM THEN
+              FOUND := FVID = SYSCOM^.GDIRP^[0].DVID
+          END
+          ELSE
+            FOUND := IORESULT = 0
+        END
+      END;
+
+    IF (NOT FOUND) AND LOOKHARD THEN
+    BEGIN
+      UNITNO := 20;
+      FOUND := FALSE;
+      WHILE (UNITNO > 0) AND NOT FOUND DO
+      BEGIN
+        IF UNITABLE[UNITNO].UISBLKD THEN
+          IF FETCHDIR(UNITNO) THEN
+            FOUND := FVID = UNITABLE[UNITNO].UVID;
+        IF NOT FOUND THEN UNITNO := UNITNO - 1
+      END
+    END;
+
+    IF FOUND THEN
+    BEGIN
+      VOLSEARCH := UNITNO;
+      IF LENGTH(UNITABLE[UNITNO].UVID) > 0 THEN
+        FVID := UNITABLE[UNITNO].UVID;
+      IF UNITABLE[UNITNO].UISBLKD AND (SYSCOM^.GDIRP <> NIL) THEN
+      BEGIN
+        FDIR := SYSCOM^.GDIRP;
+        TIME(HITIME, FDIR^[0].DLOADTIME)
+      END
+    END
+  END;
 
   { `WRITEDIR` = `PASCALSY.31` (finding 186). Writes `FDIR^` back to
     `FUNIT`'s own directory block, but only after a chain of sanity

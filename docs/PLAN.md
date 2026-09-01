@@ -840,6 +840,29 @@ a route end to end; everything else is a straight read-and-rebuild.
     accepted class). Committed. `VOLSEARCH` and `SCANTITLE` -- the two
     largest of `FPOPEN`'s remaining dependencies -- are what's left.
 
+    **`VOLSEARCH` written for real (finding 187)**: found a bigger
+    dependency this project hadn't identified -- `CBP 42`, matching
+    `FETCHDIR(FUNIT): BOOLEAN`'s already-declared signature by frame
+    size, and itself a ~234-instruction routine (comparable to
+    `VOLSEARCH`'s own size). Written around it as an opaque call, the
+    same way `FPOPEN` was written around `FPRESET`/`FPNEWBLK` before
+    those existed. `VOLSEARCH`'s own logic: parse a `"#nn"` unit-number
+    reference (confirming a new fact, `MAXUNIT = 20`) or fall back to a
+    named search of `UNITABLE`; verify/fetch the found unit's directory
+    (trusting a fresh `SYSCOM^.GDIRP` cache via the same `WRITEDIR`-
+    established freshness idiom, or calling `FETCHDIR`); and, if
+    `LOOKHARD` is set and nothing panned out, one more unconditional
+    `FETCHDIR`-every-unit pass. `FDIR` comes back `NIL` for a
+    non-block unit -- confirmed as `VOLSEARCH`'s own real contract, not
+    just an assumption `FPOPEN` was already relying on (findings
+    182/183). Compiles clean, `params` exact; `locals` are *longer*
+    than real here (`16` vs `12`) -- named per-phase booleans instead
+    of the real binary's single reused scratch word, a deliberate
+    readability choice. Committed. `SCANTITLE` (353 instructions, the
+    largest of the original six) and `FETCHDIR` (~234, newly
+    surfaced) are what remain before `FPOPEN`'s whole dependency chain
+    is closed.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
