@@ -16126,3 +16126,85 @@ Committed to `PASCALSYSTEM.text`. This closes `FPOPEN`'s entire
 dependency chain -- every routine it calls, transitively
 (`VOLSEARCH`, `WRITEDIR`, `DIRSEARCH`, `SCANTITLE`, `DELENTRY`,
 `INSENTRY`, `FETCHDIR`), is now written for real rather than stubbed.
+
+## 190. `FGET`'s body decoded in full, but a real host-compiler limitation blocks writing it: a `FORWARD` can't be completed across a `SEGMENT PROCEDURE` scope boundary
+
+VERIFIED BINARY FACT for the limitation itself (isolated, minimal
+reproduction below); STRONG INFERENCE for `FGET`'s own decode.
+Nothing committed to `PASCALSYSTEM.text` this session -- the decode
+is solid but the routine can't be written as source under this host
+tool the way its real dependencies are structured.
+
+**`FGET`'s real shape, decoded end to end** (`PASCALSY.7`, `params=2
+locals=22`, 233 instructions): clear `IORSLT`; `INOTOPEN` and exit if
+`NOT F.FISOPEN`; if `F.FREPTCNT > 0`, decrement and return immediately
+if any repeats remain (no read at all, closing finding 169's own
+open question). Past that: soft-buffered files call `FPWINADV`
+(`FIOPRIMS.2`) to advance the window, jumping to the shared `EOF`
+tail on a genuine EOF/error and to shared post-processing otherwise;
+non-soft-buffered files run their own byte-at-a-time loop (remapping
+unit `1`→`2` for echo, `UNITREAD` one byte, mirroring through
+`EXECPUTCH` when `W_EXEC_FLG`, echoing back to the real unit when
+`FUNIT=1` and the byte is in the global `CONFIG_CHAR` set, and
+stopping the loop on `SYSCOM^.CRTINFO.EOF` -- a real field this
+session confirmed by probe at word `41`, offset `0`, resolving finding
+169's own "identity not determined" note). For character files
+(`FRECSIZE=1`): clear `FEOLN`, advance `FSTATE` to `FGOTCHAR` unless
+already `FJANDW`; a `CR` becomes a space, sets `FEOLN`, and returns
+immediately (skipping the shared `EOF`-setting tail entirely); past
+`FUNIT > 2`, a `DLE` (`CHR(16)`) byte asks `FPDLE` (`FIOPRIMS.3`) and,
+on `TRUE`, does a genuine non-local `EXIT(FGET)`; a non-`NUL` byte on
+a soft-buffered `TEXTFILE` calls `FPPEEK` (`FIOPRIMS.4`, confirmed a
+plain `PROCEDURE`, not a `FUNCTION`, contra an earlier assumption --
+its own real body already calls `FGET` back, a genuine mutual
+recursion via forward declaration) and returns without touching
+`EOF`/`EOLN`; otherwise the byte is blanked to a space and *does*
+fall through to the shared tail (`FEOF`/`FEOLN := TRUE`). Also
+confirmed: the real binary's own `CLP 56` (a nested helper reading
+from the `EXEC` redirect buffer, `EXBUFPTR^[EXEC_CH_NUM]`, with a
+doubled-terminator auto-close mirroring `EXECPUTCH`'s own already-
+documented behavior) and `CBP 44` (confirmed = `EXECPUTCH`, `PASCALSY.
+44`, by frame-size match against this reconstruction's own
+already-committed candidate) are both real, gated on `(F.FUNIT IN
+[1,2]) AND R_EXEC_FLG` / `W_EXEC_FLG` respectively -- the `EXEC`
+command-file-redirect feature, already flagged elsewhere in this
+project as a rare, previously-sidelined path.
+
+**The blocker**: `FPWINADV`/`FPDLE`/`FPPEEK` are declared -- correctly,
+already verified against the real binary by frame size in findings
+170/171/174 -- as ordinary (non-`SEGMENT`) procedures nested
+*textually inside* `SEGMENT PROCEDURE FIOPRIMS`'s own block. That
+placement is required to get their real `FIOPRIMS.2`/`.3`/`.4`
+procedure numbers at all (the manual's own words: nesting a
+declaration inside a `SEGMENT PROCEDURE` puts it in that one segment,
+"even though nested syntactically and the scope is nested" -- ordinary
+Pascal scope rules still apply on top of that). `FGET` is a *sibling*
+scope (a separate, outer-level forward declaration, not nested inside
+`FIOPRIMS`), so by ordinary Pascal visibility it cannot see
+`FIOPRIMS`'s own internal procedures at all. Tried the obvious fix --
+add outer-level `FORWARD` declarations for `FPWINADV`/`FPDLE`/`FPPEEK`
+matching `FGET`'s own pattern, then complete them with the short
+`FUNCTION NAME;` form inside `FIOPRIMS` the way `FGET` itself gets
+completed at the outer level -- and it doesn't work: the nested short
+form doesn't bind to the outer `FORWARD` across the scope boundary at
+all; the compiler treats it as a *new*, malformed declaration (missing
+return type, unresolved parameter names) and separately reports the
+outer `FORWARD` as never completed. Reproduced in total isolation with
+a four-line minimal case (`FUNCTION TESTINNER(X: INTEGER): BOOLEAN;
+FORWARD;` at the outer level, `FUNCTION TESTINNER; BEGIN TESTINNER :=
+X > 0 END` nested inside an unrelated `SEGMENT PROCEDURE`) -- same
+two-part failure exactly. This is a real constraint of this host
+compiler (`ucsdpsys_compile`), not a mistake in how the declarations
+are written; Apple's real 1.3 compiler evidently permitted whatever
+source shape produced the real `CXP` calls this session's decode
+found, and this host tool does not accept the same shape. Left open
+rather than forced -- not the usual "close but not exact" divergence
+class, a structural one, and worth flagging for anyone picking this up
+since it will recur for any other cross-`SEGMENT PROCEDURE` call this
+file still needs to write.
+
+Nothing changed in `PASCALSYSTEM.text` this session (all edits were
+reverted after the isolated repro confirmed the limitation).
+`FGET`'s own decode above is solid and ready to be written the moment
+a workaround is found -- candidate saved at `scratchpad/probe_fget.py`
+(this session's temp directory).

@@ -914,6 +914,28 @@ a route end to end; everything else is a straight read-and-rebuild.
     entire dependency chain**: every routine it calls, transitively,
     is now written for real.
 
+    **`FGET` decoded in full, but blocked by a real host-compiler
+    limitation (finding 190)**: a `FORWARD` declaration cannot be
+    completed by a nested declaration across a `SEGMENT PROCEDURE`
+    scope boundary under this host compiler -- confirmed with an
+    isolated four-line repro, not a mistake in how the declarations
+    were written. `FGET`'s dependencies (`FPWINADV`/`FPDLE`/`FPPEEK`,
+    `FIOPRIMS.2`/`.3`/`.4`) are correctly nested inside `SEGMENT
+    PROCEDURE FIOPRIMS` (required for their real procedure numbers,
+    already verified in findings 170/171/174), which makes them
+    invisible to `FGET`'s own sibling scope by ordinary Pascal rules;
+    adding matching outer `FORWARD`s and completing them with the
+    short form inside `FIOPRIMS` (mirroring how `FGET` itself is
+    completed at the outer level) does not work. `FGET`'s own full
+    body is decoded regardless (closes finding 169's open question:
+    `SYSCOM^.CRTINFO.EOF`, word 41 offset 0, is the terminal's
+    configured EOF character; `CBP 44` confirmed = `EXECPUTCH`;
+    `FPPEEK` confirmed a plain `PROCEDURE`, not a `FUNCTION`, and
+    calls `FGET` back -- genuine mutual recursion). Nothing committed;
+    left open as a structural blocker, not the usual close-but-
+    inexact class, worth flagging since it will recur for any other
+    cross-`SEGMENT PROCEDURE` call this file still needs.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
