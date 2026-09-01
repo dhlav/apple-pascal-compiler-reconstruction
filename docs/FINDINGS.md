@@ -16203,6 +16203,41 @@ class, a structural one, and worth flagging for anyone picking this up
 since it will recur for any other cross-`SEGMENT PROCEDURE` call this
 file still needs to write.
 
+**Root-caused in `ucsdpsys_compile`'s own source** (a later session,
+prompted to check the user's own UCSD II.0 OS source mirror,
+`github.com/dhlav/ucsd-psystem-os`, `system/system.c.text`, for a
+precedent). That source's own `FGET` confirms this reading's algorithm
+independently -- UCSD's own version is a single, self-contained
+procedure with no `FIOPRIMS`-style segment split at all (soft-buffer
+window-advance, `DLE` handling, and end-of-page handling are all
+inlined, with `DLE` handled by a direct recursive `FGET(F)` call
+rather than a separate `FPDLE`) -- confirming `FIOPRIMS` really is an
+Apple-128K-specific refactor with no UCSD precedent to crib the
+cross-segment *syntax* from.
+
+The compiler's own C++ source (`ucsdpsys_compile`, available locally
+under WSL at `~/xcbuild/ucsd-psystem-xc-0.13/`) settles *why* the
+short-form completion doesn't bind: `translator::function_scope`
+(`lib/translator.cc`) looks up the identifier via ordinary scope
+lookup (which *does* walk enclosing scopes, so the identifier itself
+is found), but only accepts it as completing that forward declaration
+when `sfp->get_lex_level() == get_lex_level() + 1` -- the forward
+symbol's own recorded lex level must be exactly one more than the
+*current* nesting depth at the completion site. For `FGET`'s own
+completion (sibling depth to its own forward declaration, both at
+`PASCALSY`'s outer level) this holds by construction. For `FPWINADV`
+completed one level deeper, inside `SEGMENT PROCEDURE FIOPRIMS`, it
+does not -- the mismatch sends execution into the `else` branch,
+which discards the found symbol (that's the exact "shadows an earlier
+symbol" warning this session's own errors carried) and starts a *new*,
+independent declaration from scratch, which is why the short form
+then fails for lacking a full signature. Nothing suggests this is
+Apple-specific behavior being deliberately excluded -- it reads as a
+straightforward nesting-depth invariant this open-source
+reimplementation enforces uniformly, with no special case for a
+`SEGMENT PROCEDURE` boundary specifically. No workaround found; this
+is as root-caused as it gets without Apple's own compiler source.
+
 Nothing changed in `PASCALSYSTEM.text` this session (all edits were
 reverted after the isolated repro confirmed the limitation).
 `FGET`'s own decode above is solid and ready to be written the moment
