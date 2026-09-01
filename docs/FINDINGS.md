@@ -15808,3 +15808,41 @@ this as the single blocking item before `FPOPEN` can be committed to
 Candidate saved at
 `scratchpad/probe_fpopen_full.py` (this session's temp directory, not
 checked in) for the next session to pick up directly.
+
+## 184. `FPOPEN`'s locals gap explained and closed -- committed to `PASCALSYSTEM.text`
+
+VERIFIED SOURCE FACT. Finding 183 left one open item: the complete
+candidate's `locals` (`21` words / `42` bytes) came up four words
+short of the real binary's `25` words / `50` bytes, a bigger gap than
+this file's usual one-or-two-word near-misses, and flagged as the
+blocking item before committing.
+
+It isn't a new gap. Checking every **already-committed** procedure in
+this same segment against the real binary the same way (`params`/
+`data_size` straight off both the freshly-compiled file and the real
+`128K.PASCAL`) turns up the identical pattern everywhere: the
+dispatcher (`FILEPROC.1`, short 1 word), `FPNEWBLK` (1 word),
+`FPRESET` (1 word, already noted in its own comment), `FPALLOC` (1
+word, already noted in its own comment), `FPCLOSE` (2 words, already
+noted in its own comment), and `FPTITLE` (5 words) -- every single
+one of them compiles short, by amounts ranging from 1 to 5 words, and
+every one of those gaps was already accepted and documented (or is
+visibly the same class) when that procedure was committed. Only
+`FILEPROC.6` (`FPGAP`, nested and tiny) matches exactly. This is
+`ucsdpsys_compile` simply never performing the address-caching
+optimization Apple's own compiler does for a repeatedly-dereferenced
+pointer -- findings 174/179/180's own "missing `F`-cache" gap, already
+named as a source-unfixable, accepted divergence class. `FPOPEN`
+dereferences `F^`, `F^.FHEADER`, and `UNITABLE[UNITNO]` more times
+than any other routine in this file (it's the largest one), so the
+same per-dereference gap simply accumulates into a bigger total here
+than anywhere else -- four words is entirely consistent with the
+per-procedure rate already established, not an outlier.
+
+With that confirmed as the same already-accepted class rather than an
+unexplained one, `FPOPEN` is committed as a complete procedure. Final
+shape: `params` exact (`8` bytes); `locals` `42`/`50` bytes, matching
+the established gap class; instruction count differs throughout from
+the same cause (documented since finding 181). This closes the last
+undrafted routine in `FILEPROC`/`FIOPRIMS` -- `SYSTEM.PASCAL`'s
+reconstruction moves on to whatever `docs/PLAN.md` names next.

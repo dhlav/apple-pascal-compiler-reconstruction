@@ -790,10 +790,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     whole routine is an explicit `GOTO` to a shared exit label, not
     implicit control flow -- `LABEL 999; ... GOTO 999 ... 999: END`
     reproduces it. Full candidate compiles clean, `params` exact
-    (`8` bytes), but `locals` is `42` words against the real `50` --
-    an unexplained 8-word gap, larger than this file's usual
-    near-misses. **Not committed** -- that gap is the single blocking
-    item before `FPOPEN` can land in `PASCALSYSTEM.text`.
+    (`8` bytes), `locals` `42`/`50` bytes (`21`/`25` words).
+
+    **Locals gap explained, `FPOPEN` committed (finding 184)**: the
+    4-word gap isn't unique to `FPOPEN` -- checking every
+    already-committed procedure in this same segment the same way
+    turns up the identical pattern everywhere (the dispatcher,
+    `FPNEWBLK`, `FPRESET`, `FPALLOC`, `FPCLOSE` short 1-2 words each,
+    `FPTITLE` short 5), the same already-documented "missing `F`-cache"
+    host-compiler gap (findings 174/179/180) simply accumulating more
+    on `FPOPEN` because it's the largest routine in the file and
+    dereferences `F^`/`F^.FHEADER`/`UNITABLE[UNITNO]` more times than
+    anywhere else. **`FPOPEN` is now committed** to
+    `PASCALSYSTEM.text` -- the last undrafted routine in
+    `FILEPROC`/`FIOPRIMS` is closed.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:

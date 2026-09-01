@@ -995,8 +995,78 @@ PROGRAM PASCALSYSTEM;
       END
     END;
 
+    { `FPOPEN` = `FILEPROC.4`, the largest routine in this file (472
+      instructions) and the last one drafted (findings 179-183, this
+      whole reconstruction spread across several sessions). Populates
+      `F^` and opens the volume/file `TITLE` names, then dispatches to
+      the already-committed `FPRESET`/`FPNEWBLK` to do the actual I/O.
+
+      Every mid-body error return (`INOFILE` from a failed `DIRSEARCH`,
+      `IDUPFILE`, `INOROOM`, and a second `INOFILE` from the no-title
+      `UNITABLE[...].UISBLKD` check) is an explicit `GOTO 999` to the
+      procedure's own tail, not implicit control flow -- confirmed by
+      every one of those four real disassembly sites ending in an
+      unconditional jump straight to the same exit address, bypassing
+      everything after (including each other).
+
+      Body, in order: an emergency swap-out (finding 181) borrows
+      `SWAPFIB`'s own memory via `MARK`/`UNITWRITE` when the heap is
+      dangerously tight and `SWAPFIB` is already open with no global
+      directory pointer set, so the volume search below has room to
+      work; `VOLSEARCH` finds the unit; `F^`'s fields get populated
+      field-by-field (finding 180); then one of two mutually exclusive
+      arms populates `F^.FHEADER` -- either a real `DIRSEARCH`/
+      `FPALLOC`/`DELENTRY` pass when a title was given (finding 182),
+      or a synthetic "whole volume" sentinel entry when it wasn't
+      (`DFIRSTBLK := 0`, `DLASTBLK := 32767` or `UNITABLE[...].
+      UEOVBLK` when the unit has one -- finding 183). Both arms are
+      siblings of the same outer `IF`, not one flowing into the
+      other -- they converge at the shared tail below via ordinary
+      Pascal fall-through, not a jump.
+
+      Shared tail (finding 183): `FMAXBLK` from `FHEADER`'s own block
+      range (or `0` for a new file); for a soft-buffered file,
+      `FNXTBYTE`/`FMAXBYTE`/`FBUFCHNGD`, and -- only for a brand-new
+      `TEXTFILE` -- `FNXTBLK := 2` plus two zero-filled `UNITWRITE`s
+      for the two header blocks UCSD text files reserve. Then the
+      `OLDOK`-gated dispatch to `FPRESET` or `FPNEWBLK` this whole
+      routine exists to set up for, a "dead file" reset
+      (`FISOPEN/FEOLN/FEOF`) if that call left an error, and finally
+      the emergency swap-out's own mirror: `RELEASE(M)` and a
+      `UNITREAD` back into `EMPTYHEAP^`, restoring the saved `IORSLT`
+      so the swap's own I/O result doesn't clobber `FPOPEN`'s real one.
+
+      Compiles clean as a complete procedure: `params` exact (`8`
+      bytes, matching `FPOPEN`'s own real signature). `locals` is `21`
+      words (`42` bytes) against the real binary's `25` (`50` bytes)
+      -- four words short, but this is the *same* already-documented
+      class as every other procedure in this file compared this way:
+      the dispatcher (`FILEPROC.1`), `FPNEWBLK`, `FPRESET`, `FPALLOC`,
+      and `FPCLOSE` are *all* short by one to five words too (checked
+      directly against the real binary alongside this finding), and
+      `FPTITLE` (`FILEPROC.8`) is short by five -- this host compiler
+      simply doesn't perform the address-caching optimization Apple's
+      real one does for a `WITH`'d or repeatedly-dereferenced pointer
+      (findings 174/179/180's own "missing `F`-cache" gap), and that
+      shows up as missing *local* words, not just extra instructions,
+      once a routine dereferences the same pointer enough times. Not
+      a new gap, not chased further -- consistent with every other
+      committed procedure in this file. }
     PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
                      JUNK: FIBP);
+      LABEL 999;
+      VAR
+        TRICK: TRICKARRAY;
+        FILEVID: VID;
+        FILETID: TID;
+        SEGS: INTEGER;
+        KIND: FILEKIND;
+        FLAG: INTEGER;
+        UNITNO: UNITNUM;
+        DIR: DIRP;
+        M: ^INTEGER;
+        DIRIDX: DIRRANGE;
+        SAVEIORSLT: IORSLTWD;
 
       { `FPALLOC` = `FILEPROC.5`, `FPOPEN`'s own nested free-space
         search (finding 175, body written per finding 176). Given a new
@@ -1116,7 +1186,176 @@ PROGRAM PASCALSYSTEM;
         FPALLOC := BESTIDX
       END;
 
-    BEGIN END;
+    BEGIN
+      SYSCOM^.IORSLT := INOERROR;
+      WITH F DO
+        IF FISOPEN THEN
+          SYSCOM^.IORSLT := INOTCLOSED
+        ELSE
+          IF SCANTITLE(TITLE, FILEVID, FILETID, SEGS, KIND) THEN
+          BEGIN
+            TRICK.BYTE[0] := ORD(OLDOK);
+            IF TRICK.WORD[0] > 1 THEN
+              TRICK.WORD[0] := ORD((TRICK.WORD[0] = 2) OR (TRICK.WORD[0] = 4));
+            FLAG := 0;
+            IF SWAPFIB^.FISOPEN AND (SYSCOM^.GDIRP = NIL) THEN
+            BEGIN
+              MARK(M);
+              IF (ORD(SYSCOM^.LASTMP) - ORD(M) > 0) AND
+                 (ORD(SYSCOM^.LASTMP) - ORD(M) <= 2028 + 400) THEN
+                IF ((ORD(M) - ORD(EMPTYHEAP) > 0) AND
+                    (ORD(M) - ORD(EMPTYHEAP) > 2028)) AND
+                   (UNITABLE[SWAPFIB^.FUNIT].UVID = SWAPFIB^.FVID) THEN
+                BEGIN
+                  UNITWRITE(SWAPFIB^.FUNIT, EMPTYHEAP^, 2028,
+                            SWAPFIB^.FHEADER.DFIRSTBLK);
+                  RELEASE(EMPTYHEAP);
+                  FLAG := 1
+                END
+            END;
+            UNITNO := VOLSEARCH(FILEVID, TRUE, DIR);
+            IF UNITNO = 0 THEN
+              SYSCOM^.IORSLT := INOUNIT
+            ELSE
+            BEGIN
+              FISOPEN := TRUE;
+              FMODIFIED := FALSE;
+              FUNIT := UNITNO;
+              FVID := FILEVID;
+              FNXTBLK := 0;
+              FISBLKD := UNITABLE[UNITNO].UISBLKD;
+              FSOFTBUF := UNITABLE[UNITNO].UISBLKD AND (FRECSIZE <> 0);
+              OLDOK := TRICK.WORD[0] <> 0;
+              IF (DIR <> NIL) AND (LENGTH(FILETID) > 0) THEN
+              BEGIN
+                DIRIDX := DIRSEARCH(FILETID, OLDOK, DIR);
+                IF OLDOK THEN
+                  IF DIRIDX = 0 THEN
+                  BEGIN
+                    SYSCOM^.IORSLT := INOFILE;
+                    GOTO 999
+                  END
+                  ELSE
+                    FHEADER := DIR^[DIRIDX]
+                ELSE
+                  IF DIRIDX > 0 THEN
+                  BEGIN
+                    SYSCOM^.IORSLT := IDUPFILE;
+                    GOTO 999
+                  END
+                  ELSE
+                  BEGIN
+                    IF KIND = UNTYPEDFILE THEN KIND := DATAFILE;
+                    DIRIDX := FPALLOC(FILETID, SEGS, KIND, DIR);
+                    IF NOT ((DIRIDX > 0) AND (KIND = TEXTFILE)) THEN
+                    BEGIN
+                      IF DIR^[DIRIDX].DLASTBLK - DIR^[DIRIDX].DFIRSTBLK <> 0 THEN
+                        DIR^[DIRIDX].DLASTBLK := DIR^[DIRIDX].DLASTBLK - 1;
+                      IF DIR^[DIRIDX].DLASTBLK - DIR^[DIRIDX].DFIRSTBLK <= 4 THEN
+                      BEGIN
+                        DELENTRY(DIRIDX, DIR);
+                        DIRIDX := 0
+                      END
+                    END;
+                    IF DIRIDX = 0 THEN
+                    BEGIN
+                      SYSCOM^.IORSLT := INOROOM;
+                      GOTO 999
+                    END
+                    ELSE
+                    BEGIN
+                      FHEADER := DIR^[DIRIDX];
+                      FMODIFIED := TRUE;
+                      WRITEDIR(UNITNO, DIR)
+                    END
+                  END
+              END
+              ELSE
+                IF (DIR = NIL) AND (LENGTH(FILETID) <> 0) THEN
+                  IF UNITABLE[UNITNO].UISBLKD THEN
+                  BEGIN
+                    SYSCOM^.IORSLT := INOFILE;
+                    GOTO 999
+                  END
+                  ELSE
+                  BEGIN
+                    FHEADER.DFIRSTBLK := 0;
+                    FHEADER.DLASTBLK := 32767;
+                    IF UNITABLE[UNITNO].UISBLKD THEN
+                      FHEADER.DLASTBLK := UNITABLE[UNITNO].UEOVBLK;
+                    FHEADER.DFKIND := KIND;
+                    FHEADER.DTID := '               ';
+                    FHEADER.DLASTBYTE := 512;
+                    FHEADER.DACCESS.MONTH := 0;
+                    FHEADER.DACCESS.DAY := 0;
+                    FHEADER.DACCESS.YEAR := 0
+                  END
+                ELSE
+                BEGIN
+                  FHEADER.DFIRSTBLK := 0;
+                  FHEADER.DLASTBLK := 32767;
+                  IF UNITABLE[UNITNO].UISBLKD THEN
+                    FHEADER.DLASTBLK := UNITABLE[UNITNO].UEOVBLK;
+                  FHEADER.DFKIND := KIND;
+                  FHEADER.DTID := '               ';
+                  FHEADER.DLASTBYTE := 512;
+                  FHEADER.DACCESS.MONTH := 0;
+                  FHEADER.DACCESS.DAY := 0;
+                  FHEADER.DACCESS.YEAR := 0
+                END;
+
+              IF OLDOK THEN
+                FMAXBLK := FHEADER.DLASTBLK - FHEADER.DFIRSTBLK
+              ELSE
+                FMAXBLK := 0;
+
+              IF FSOFTBUF THEN
+              BEGIN
+                FMAXBYTE := 512;
+                FBUFCHNGD := FALSE;
+                IF OLDOK THEN
+                  FNXTBYTE := FHEADER.DLASTBYTE
+                ELSE
+                  FNXTBYTE := 512;
+                IF FHEADER.DFKIND = TEXTFILE THEN
+                BEGIN
+                  FNXTBLK := 2;
+                  IF NOT OLDOK THEN
+                  BEGIN
+                    FILLCHAR(FBUFFER, 514, 0);
+                    UNITWRITE(FUNIT, FBUFFER, 512, FHEADER.DFIRSTBLK);
+                    UNITWRITE(FUNIT, FBUFFER, 512, FHEADER.DFIRSTBLK + 1)
+                  END
+                END
+              END;
+
+              IF OLDOK THEN
+                FPRESET(F)
+              ELSE
+                FPNEWBLK(F);
+
+              IF SYSCOM^.IORSLT <> INOERROR THEN
+              BEGIN
+                FISOPEN := FALSE;
+                FEOLN := TRUE;
+                FEOF := TRUE
+              END;
+
+              IF FLAG <> 0 THEN
+              BEGIN
+                RELEASE(M);
+                SYSCOM^.GDIRP := NIL;
+                SAVEIORSLT := SYSCOM^.IORSLT;
+                UNITREAD(SWAPFIB^.FUNIT, EMPTYHEAP^, 2028,
+                         SWAPFIB^.FHEADER.DFIRSTBLK);
+                SYSCOM^.IORSLT := SAVEIORSLT
+              END
+            END
+          END
+          ELSE
+            SYSCOM^.IORSLT := IBADTITLE;
+      999:
+    END;
 
     { `FPCLOSE` = `FILEPROC.7`, `FCLOSE`'s real target (finding 173),
       decoded from its own addressed disassembly. Guards on the file
