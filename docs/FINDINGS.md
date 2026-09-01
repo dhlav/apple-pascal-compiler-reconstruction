@@ -15710,3 +15710,101 @@ preamble through this section (`params` exact, `8` bytes, matching
 `FPOPEN`'s own real signature). Only the soft-buffer setup tail (real
 addr 1050-1358, roughly 290 instructions) remains before `FPOPEN` can
 be assembled and committed as one complete procedure.
+
+## 183. `FPOPEN`'s soft-buffer setup tail decoded -- a full candidate compiles, `params` exact, `locals` short by 8
+
+STRONG INFERENCE. Decoded real addr 1050-1358 (the last piece of the
+routine) and merged it with findings 179-182's own work into one
+complete, standalone, compiling `FPOPEN` candidate. Not yet committed
+-- the locals gap below is a real, unexplained discrepancy, not the
+usual one-or-two-word class, and this file's own convention is to
+land nothing incomplete.
+
+**Two convergence points, not a shared tail.** The DIRSEARCH-success
+arm (real addr 787-1049, finding 182) and this session's new
+"synthetic `FHEADER`" arm are siblings of the *same* outer `IF (DIR <>
+NIL) AND (LENGTH(TID) > 0) THEN ... ELSE ...`, not one flowing into
+the other. The giveaway was an instruction-count check: comparing this
+session's compiled candidate against real disassembly showed the
+`WITH F DO` cache convention (finding 174/179/180's own "missing
+F-cache" gap) shifts every local-slot number after it, which briefly
+looked like it broke the whole addr-787-onward field mapping. It
+didn't -- `INC` displacements are record-relative constants,
+unaffected by which local happens to cache the base pointer -- but
+chasing that scare down properly is what surfaced the real structure:
+addr 787 opens with `LDA 2,126; SLDL 6; IXA 6; STL 27` -- caching
+`&UNITABLE[UNITNO]` into local 27 *before* any of the `DIRSEARCH`
+work, reused unchanged all the way through addr 1041. A `SIND 4`
+straight off that same local at addr 1068 had briefly read as `DIR^[0]`
+(same arithmetic shape); it isn't -- `DIR` can genuinely be `NIL` on
+this path, and `UNITABLE`'s own `CASE UISBLKD: BOOLEAN OF TRUE:
+(UEOVBLK: INTEGER)` explains both the guarding `IF` and why the field
+being read this way is safe (never `NIL`) where a `DIR^[0]` read would
+not have been.
+
+**The real shape, addr 1050-1129 (synthetic `FHEADER`, the "open with
+no title" arm)**: `FHEADER.DFIRSTBLK := 0; FHEADER.DLASTBLK := 32767`
+(a "the whole rest of the volume" sentinel), then `IF
+UNITABLE[UNITNO].UISBLKD THEN FHEADER.DLASTBLK :=
+UNITABLE[UNITNO].UEOVBLK` (a real end-of-volume bound when one
+exists), `FHEADER.DFKIND := KIND`, `FHEADER.DTID := ` a 15-blank
+string constant (not a variable -- the real bytecode is `LSA` off the
+constant pool, not `LLA`/`SAS` off a local), `FHEADER.DLASTBYTE :=
+512` (this one, per the `dlastbyte-host-compiler-packing` memory,
+compiles as plain `STO` in the real binary and `STP` on this host
+tool -- already an accepted, documented class, not a new gap), and
+`FHEADER.DACCESS.MONTH/DAY/YEAR := 0`. This whole block is reached via
+the same address from *two* separate `FJP`s (addr 1032 and 1041) with
+no `ELSE` at either level -- exactly the "`FJP` chains that look like
+short-circuiting are nested `IF`s" reading rule: `IF (DIR = NIL) AND
+(LENGTH(TID) <> 0) THEN IF UNITABLE[UNITNO].UISBLKD THEN
+<IORSLT:=INOFILE error> {no else -- falls through}` with no explicit
+`ELSE` needed at either level, since "no `ELSE`" already means
+"continue to the next statement" in ordinary Pascal.
+
+**Confirms every early-return in this whole routine is a `GOTO`, not
+implicit.** Apple's disassembly shows every one of `FPOPEN`'s mid-body
+error sets (`INOFILE` from `DIRSEARCH`, `IDUPFILE`, `INOROOM`, and this
+session's new `INOFILE` from the `UISBLKD` check) immediately followed
+by an unconditional jump straight to the procedure's own exit,
+bypassing everything after -- including each other. Plain sequential
+Pascal can't produce that shape on its own; the candidate uses `LABEL
+999; ... GOTO 999 ... 999: END` at each of those four sites, matching.
+
+**addr 1130-1353 (shared tail, reached after either `FHEADER` source
+succeeds)**: `IF OLDOK THEN FMAXBLK := FHEADER.DLASTBLK -
+FHEADER.DFIRSTBLK ELSE FMAXBLK := 0`. Then, gated on `FSOFTBUF`:
+`FMAXBYTE := 512; FBUFCHNGD := FALSE`; `FNXTBYTE` set from
+`FHEADER.DLASTBYTE` if `OLDOK` else `512`; and, only for a *new*
+(`NOT OLDOK`) `TEXTFILE`, `FNXTBLK := 2` (UCSD text files reserve
+blocks 0-1 for the editor's own header) followed by two `UNITWRITE`
+calls zero-filling those two blocks (`FILLCHAR` the software buffer to
+514 bytes of zero first, then write it out at `FHEADER.DFIRSTBLK` and
+`FHEADER.DFIRSTBLK + 1`). Then the dispatch this session's earlier
+high-level sketch (finding 172) had already guessed at: `IF OLDOK THEN
+FPRESET(F) ELSE FPNEWBLK(F)` (`CGP 3`/`CGP 2, matching FILEPROC's own
+proc numbering). On a nonzero `IORSLT` from that call, `FISOPEN,
+FEOLN, FEOF` get reset to a "dead file" state (`FALSE, TRUE, TRUE`).
+Finally, `IF FLAG <> 0` (set back in finding 181's emergency
+swap-*out*) the routine swaps the borrowed memory back *in*:
+`RELEASE(M); SYSCOM^.GDIRP := NIL`, save `IORSLT`, `UNITREAD` 2028
+bytes from `SWAPFIB^.FHEADER.DFIRSTBLK` back into `EMPTYHEAP^` --
+exactly mirroring finding 181's own `UNITWRITE` out, confirming that
+whole gate really was "borrow `SWAPFIB`'s memory while `FPRESET`/
+`FPNEWBLK` runs, then give it back" -- and restore the saved `IORSLT`
+so the swap's own (irrelevant) I/O result doesn't clobber `FPOPEN`'s
+real one.
+
+**Open gap**: the merged candidate compiles clean, `params` exact (`8`
+bytes, matching `FPOPEN`'s real signature precisely), but `locals` is
+`42` words against the real binary's `50` -- eight words short, not
+the usual one-or-two-word class this file's other near-misses fall
+into. Nothing in this session's decode work identified a missing
+local of that size; every field/variable use found a real bytecode
+match. Left open rather than forced -- the next session should treat
+this as the single blocking item before `FPOPEN` can be committed to
+`PASCALSYSTEM.text`.
+
+Candidate saved at
+`scratchpad/probe_fpopen_full.py` (this session's temp directory, not
+checked in) for the next session to pick up directly.

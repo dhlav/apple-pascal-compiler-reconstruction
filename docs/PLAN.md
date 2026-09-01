@@ -777,6 +777,24 @@ a route end to end; everything else is a straight read-and-rebuild.
     instructions) remains before `FPOPEN` can be assembled and
     committed whole.
 
+    **Soft-buffer setup tail decoded, full candidate compiles (finding
+    183)**: the last piece. `FHEADER.DFIRSTBLK/DLASTBLK/DFKIND/DTID/
+    DLASTBYTE/DACCESS` synthesized from scratch for the "open with no
+    title" arm (a sibling of finding 182's `DIRSEARCH` arm, not a
+    continuation of it -- both converge at addr 1130); `FMAXBLK`, the
+    `FSOFTBUF`-gated `FNXTBYTE`/`FMAXBYTE`/`FBUFCHNGD` setup, a new
+    `TEXTFILE`'s two zero-filled header blocks, the `FPRESET`/
+    `FPNEWBLK` dispatch on `OLDOK`, and finding 181's emergency
+    swap-*out* finally mirrored by a swap-back-*in* (`UNITREAD`)
+    gated on `FLAG`. Confirmed every mid-body error return in the
+    whole routine is an explicit `GOTO` to a shared exit label, not
+    implicit control flow -- `LABEL 999; ... GOTO 999 ... 999: END`
+    reproduces it. Full candidate compiles clean, `params` exact
+    (`8` bytes), but `locals` is `42` words against the real `50` --
+    an unexplained 8-word gap, larger than this file's usual
+    near-misses. **Not committed** -- that gap is the single blocking
+    item before `FPOPEN` can land in `PASCALSYSTEM.text`.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
