@@ -15899,3 +15899,48 @@ three committed to `PASCALSYSTEM.text`.
 
 `VOLSEARCH`, `WRITEDIR`, and `SCANTITLE` remain stubs -- the next
 targets, in ascending order of size.
+
+## 186. `WRITEDIR` (`PASCALSY.31`) written for real -- a two-tier sanity-check chain and a 128K-ProFile-specific redundant-copy write
+
+STRONG INFERENCE. `WRITEDIR`'s guard chain is a single boolean local
+reused across three sequential decisions -- reproduced by writing the
+outer condition into `OK` directly (rather than only testing it),
+since the real disassembly reuses that same local's leftover value at
+the very end when the outer guard alone was false; a plain nested-IF
+without that initial assignment would leave the final check reading
+an undefined local on that path, a real bug this file's own compiled
+shape rules out.
+
+**The chain**: `UNITABLE[FUNIT].UVID = FDIR^[0].DVID` and `DIR[0]`'s
+own tag being `UNTYPEDFILE` or `SECUREDIR` (the only two variants the
+volume-info pseudo-entry is ever tagged as) gates everything else. If
+that holds: a write within the last `<= 300` ticks (`TIME`, `CSP 9`)
+with `SYSCOM^.MISCINFO.NOBREAK` set skips the paranoid re-check below
+outright (nothing else could plausibly have touched the volume with
+interrupts disabled that recently); otherwise, block `2` (the
+directory's own disk location) gets re-read into a scratch `DIRENTRY`
+and its `DVID` compared against `FDIR^[0]`'s, with a real `IORESULT`
+failure on that read also counting as "no match." Only once all of
+that passes does the real write happen: `FDIR^[0].DFIRSTBLK := 0`
+(a reset of an otherwise-unused shared field on this variant), then
+`UNITWRITE` of `(DNUMFILES + 1) * 26` bytes -- `DIRENTRY`'s own
+already-established 26-byte size -- to block `2`. `DIR[0].DLASTBLK =
+10`, another otherwise-unused field on this variant repurposed as a
+flag, marks a hard-disk-class volume needing a *second*, redundant
+copy written to block `6` too -- a 128K-ProFile-specific feature,
+the same theme `PRINTERROR`'s own 128K-specific error codes already
+established (finding 137). A successful write re-stamps
+`FDIR^[0].DLOADTIME` via `TIME`, closing the loop with the "was this
+written very recently" fast-path check above. Whatever the outcome,
+the very last step is unconditional on failure: `UNITABLE[FUNIT]`'s
+own cached `UVID`/`UEOVBLK` get blanked and reset to the `32767`
+sentinel (this file's own already-established "unknown/invalid"
+convention, finding 183's synthetic `FHEADER`), forcing a fresh
+`VOLSEARCH` next time rather than trusting a cache that might now be
+stale.
+
+Compiles clean; `params=4` bytes exact, `locals=32` against the real
+`36` -- two words short, the same accepted host-compiler gap class as
+everywhere else in this file. Committed to `PASCALSYSTEM.text`.
+`VOLSEARCH` and `SCANTITLE` remain stubs, the two largest of `FPOPEN`'s
+own remaining dependencies.

@@ -825,6 +825,21 @@ a route end to end; everything else is a straight read-and-rebuild.
     `SCANTITLE` remain stubs, the natural next targets in that
     ascending-size order.
 
+    **`WRITEDIR` written for real (finding 186)**: a single boolean
+    local reused across a three-tier guard chain -- volume-ID/tag
+    consistency, then either a "written very recently with interrupts
+    off" fast path or a re-read-and-compare-`DVID` paranoid check,
+    then the real `UNITWRITE` of `(DNUMFILES + 1) * 26` bytes to block
+    `2`. `DIR[0].DLASTBLK = 10` (an otherwise-unused field on this
+    variant, repurposed as a flag) triggers a second redundant copy to
+    block `6` -- a 128K-ProFile-specific feature, the same theme as
+    `PRINTERROR`'s own 128K-specific codes (finding 137). Any failure
+    anywhere in the chain invalidates `UNITABLE[FUNIT]`'s own cached
+    `UVID`/`UEOVBLK` at the end, forcing a fresh `VOLSEARCH` next time.
+    Compiles clean, `params` exact, `locals` short by 2 words (same
+    accepted class). Committed. `VOLSEARCH` and `SCANTITLE` -- the two
+    largest of `FPOPEN`'s remaining dependencies -- are what's left.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

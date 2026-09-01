@@ -2141,7 +2141,84 @@ PROGRAM PASCALSYSTEM;
   END;
 
   FUNCTION VOLSEARCH; BEGIN VOLSEARCH := 0 END;
-  PROCEDURE WRITEDIR; BEGIN END;
+
+  { `WRITEDIR` = `PASCALSY.31` (finding 186). Writes `FDIR^` back to
+    `FUNIT`'s own directory block, but only after a chain of sanity
+    checks -- and always ends by invalidating `UNITABLE[FUNIT]`'s own
+    cached volume ID/end-block if any of them failed, forcing a fresh
+    `VOLSEARCH` next time rather than trusting a stale cache:
+
+    First, `UNITABLE[FUNIT].UVID` must still match `FDIR^[0].DVID`
+    (this file's own already-established volume-consistency idiom),
+    and `FDIR^[0]`'s own tag must be `UNTYPEDFILE` or `SECUREDIR` --
+    the two `DIRENTRY` variants `DIR[0]`, the volume-info pseudo-entry,
+    is ever tagged as. If a write happened *very* recently (`<= 300`
+    ticks by `TIME`, this file's own `CSP 9`) with interrupts disabled
+    (`SYSCOM^.MISCINFO.NOBREAK`), nothing else could plausibly have
+    changed the volume in between, so the paranoid re-check below is
+    skipped outright. Otherwise: re-read block `2` (the directory's own
+    disk location) into a scratch `DIRENTRY` and compare *its* `DVID`
+    against `FDIR^[0]`'s -- confirming the directory this process has
+    cached in memory really still belongs to what's physically on the
+    unit before overwriting it (a real `IORESULT` failure on that read
+    counts as "no match" too).
+
+    Once cleared: reset `DFIRSTBLK` to `0` (`DIR[0]`'s own two shared
+    fields are otherwise unused by the volume-info variant, but this
+    keeps it a known value), `UNITWRITE` the real directory contents
+    -- `(DNUMFILES + 1) * 26` bytes, `DIRENTRY`'s own already-
+    established 26-byte size times one more than the file count for
+    `DIR[0]` itself -- to block `2`. `DIR[0].DLASTBLK = 10` (an
+    otherwise-unused field on this variant, repurposed as a flag) marks
+    a hard-disk-class volume needing a *second*, redundant copy written
+    to block `6` too -- a 128K-ProFile-specific feature, the same
+    project theme `PRINTERROR`'s own 128K-specific error codes already
+    established (finding 137). On success, `TIME` re-stamps
+    `FDIR^[0].DLOADTIME` to now, closing the loop with the "was this
+    written very recently" fast-path check above.
+
+    Compiles clean; `params=4` bytes exact, `locals=32` against the
+    real `36` -- two words short, the same accepted host-compiler gap
+    class as everywhere else in this file. }
+  PROCEDURE WRITEDIR;
+    VAR
+      OK: BOOLEAN;
+      HITIME, LOTIME: INTEGER;
+      BACKUP: DIRENTRY;
+  BEGIN
+    OK := (UNITABLE[FUNIT].UVID = FDIR^[0].DVID) AND
+          ((FDIR^[0].DFKIND = UNTYPEDFILE) OR (FDIR^[0].DFKIND = SECUREDIR));
+    IF OK THEN
+    BEGIN
+      TIME(HITIME, LOTIME);
+      OK := (LOTIME - FDIR^[0].DLOADTIME <= 300) AND
+            (LOTIME - FDIR^[0].DLOADTIME >= 0) AND
+            SYSCOM^.MISCINFO.NOBREAK;
+      IF NOT OK THEN
+      BEGIN
+        UNITREAD(FUNIT, BACKUP, 26, 2);
+        IF IORESULT = 0 THEN
+          OK := FDIR^[0].DVID = BACKUP.DVID
+        ELSE
+          OK := FALSE
+      END;
+      IF OK THEN
+      BEGIN
+        FDIR^[0].DFIRSTBLK := 0;
+        UNITWRITE(FUNIT, FDIR^, (FDIR^[0].DNUMFILES + 1) * 26, 2);
+        OK := IORESULT = 0;
+        IF FDIR^[0].DLASTBLK = 10 THEN
+          UNITWRITE(FUNIT, FDIR^, (FDIR^[0].DNUMFILES + 1) * 26, 6);
+        IF OK THEN
+          TIME(HITIME, FDIR^[0].DLOADTIME)
+      END
+    END;
+    IF NOT OK THEN
+    BEGIN
+      UNITABLE[FUNIT].UVID := '       ';
+      UNITABLE[FUNIT].UEOVBLK := 32767
+    END
+  END;
 
   { `DIRSEARCH` = `PASCALSY.32` (finding 185). Linear scan over
     `FDIR^[1..DNUMFILES]` for an entry whose `DTID` matches `FTID` and
