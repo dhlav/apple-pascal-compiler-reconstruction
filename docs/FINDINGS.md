@@ -16689,3 +16689,58 @@ depends on every one of `.2`-`.27` existing first (already true) and
 needs its own careful `CASE`-arm-by-`CASE`-arm decode (menu text
 partially matches UCSD's own literally, reordered and with `1.3`'s
 `M(ake exec`/`S(wap` options added).
+
+## 197. Three more `GETCMD` procedures written for real (`.4`/`.23`/`.26`) -- and the literal-into-`VAR STRING` divergence caught itself again, live
+
+VERIFIED BINARY FACT for the divergence recurrence; STRONG INFERENCE
+for the three procedures' own content, all verified compiling clean
+on real Apple 1.3 hardware.
+
+**`GETCMD.4` = `GETYESNO`**: a bare `REPEAT FREADCHAR(GFILES[0]^, CH)
+UNTIL CH IN ['N','Y','n','y']; GETYESNO := (CH='Y') OR (CH='y')`. No
+UCSD precedent as a separate routine -- UCSD's own menu code reads Y/N
+answers inline; Apple factored it into its own callable, matching the
+real binary calling it from more than one place. `params`/`data`
+exact (`4`/`2`); every instruction up to the `OR` expression already
+matched the real binary's own 16 exactly under the fast tier, the
+`OR` itself compiling differently only because of the already-
+documented `host-compiler-always-shortcircuits` divergence (Apple's
+own compiler uses a plain `LOR`, this host tool always expands `OR`
+into an `FJP` chain). Verified end to end on real Apple hardware.
+
+**`GETCMD.23` = `EXECOPNERR(KIND)`**: prints one of two `EXEC`-related
+error messages. **`GETCMD.26` = `SWAPMENU`**: the `S(wap` submenu 1.3
+added, confirming `SWAP_1_ON`/`SWAP_2_ON` (words 389/390) are read
+and written here exactly as already established, and reading its own
+answer from `GFILES[2]^` (`SYSTERM`) rather than `GFILES[0]^` -- read
+directly off the raw operand (`LOD 2,4`), not the lift's own
+rendering, since it looked surprising enough to double-check. Neither
+has any UCSD precedent (`EXEC` redirect and the swap-level menu are
+both Apple-only).
+
+**Both `.23` and `.26` first compiled to within one instruction of the
+real binary under the fast tier -- using string literals passed
+directly to `FWRITESTRING`'s own `VAR` parameter.** That is exactly
+the divergence finding 195 found and fixed throughout the rest of this
+file (Apple's real compiler rejects it, error 154; the fast tier
+doesn't). It recurred here, live, in the middle of this session's own
+follow-up work -- a second, independent confirmation that this class
+of bug is real and easy to reintroduce by accident, not a one-off.
+Fixed the same way: a scratch `MSG: STRING` local, assigned just
+before each call. This costs a real, unavoidable price against the
+"exact instruction match" these two candidates briefly achieved before
+the fix (`.23`: `21`→`26` instructions, `0`→`82` words of data; `.26`:
+`102`→`124` instructions, `4`→`86` words of data) -- the real binary's
+own equivalent source almost certainly does *not* pay this same cost,
+since Apple's real compiler must have accepted the literal in some
+form the source here doesn't reproduce (an open question, same as
+finding 195 left it: nothing found yet lets a literal bind to a `VAR
+STRING` parameter on real Apple 1.3). Documented as close, not exact,
+in both procedures' own comments; both re-verified compiling clean on
+real Apple hardware with the fix in place, whole file, zero errors.
+
+**Practical note for continuing `GETCMD`**: check every new
+`FWRITESTRING`/`SPOS` call against this divergence *before* running
+the emulator, not after -- it is now the single most common mistake
+this session made while adding new code to this file, not just an
+inherited one.

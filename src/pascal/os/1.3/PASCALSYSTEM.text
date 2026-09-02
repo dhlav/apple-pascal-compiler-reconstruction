@@ -1306,7 +1306,30 @@ PROGRAM PASCALSYSTEM;
 
     PROCEDURE GC02(A, B: INTEGER); BEGIN END;
     PROCEDURE GC03(A, B, C, D: INTEGER); BEGIN END;
-    PROCEDURE GC04(A, B: INTEGER); BEGIN END;
+    { `GETCMD.4`: reads one character from `GFILES[0]^` (the console
+      input file) in a loop until it's `'N'`/`'Y'`/`'n'`/`'y'`, then
+      returns whether it was yes. No UCSD precedent as a separate
+      routine -- UCSD's own `RUNWORKFILE`/menu code reads Y/N answers
+      inline; Apple factored it out (called from more than one place
+      in the real binary, matching `.1`'s own reboot-confirmation
+      arm). `params`/`data` exact against the real binary (`4`/`2`);
+      instruction count differs under the fast tier only because
+      `ucsdpsys_compile` always expands `OR` as an `FJP` short-circuit
+      chain where Apple's own compiler emits a plain `LOR` (established
+      divergence, `host-compiler-always-shortcircuits`) -- every
+      instruction up to that point already matches the real binary's
+      own `16` exactly (`LOD 2,2`/`LLA 3`/`CXP 0,16`/`SLDL 3`/`LDC 8w`/
+      `SLDC 8`/`INN`/`FJP`, the real body's own `REPEAT...UNTIL CH IN
+      [...]`). Verified compiling clean on real Apple hardware. }
+    FUNCTION GETYESNO: BOOLEAN;
+      VAR
+        CH: CHAR;
+    BEGIN
+      REPEAT
+        FREADCHAR(GFILES[0]^, CH)
+      UNTIL CH IN ['N', 'Y', 'n', 'y'];
+      GETYESNO := (CH = 'Y') OR (CH = 'y')
+    END;
     PROCEDURE GC05(A, B, C, D: INTEGER); BEGIN END;
     PROCEDURE GC06(A, B, C: INTEGER); BEGIN END;
     PROCEDURE GC07(A: INTEGER); BEGIN END;
@@ -1325,10 +1348,102 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE GC20(A: INTEGER); BEGIN END;
     PROCEDURE GC21; BEGIN END;
     PROCEDURE GC22; BEGIN END;
-    PROCEDURE GC23(A: INTEGER); BEGIN END;
+    { `GETCMD.23`: prints one of two `EXEC`-related error messages,
+      called from `.25`/`.27` with `KIND=1`/`2`. No UCSD precedent (the
+      `EXEC` command-file-redirect feature is Apple-only, already
+      flagged elsewhere in this project). Without the `MSG` scratch
+      var below, this candidate compiled to the real binary's own 21
+      instructions exactly, opcode for opcode, on the fast tier --
+      but that version used a string literal directly as
+      `FWRITESTRING`'s own `VAR` parameter, which fails on Apple's
+      real compiler (error 154, the same divergence finding 195 found
+      and fixed throughout this file). `MSG` costs an extra 41-word
+      local and a handful of extra instructions per call the real
+      binary's own body presumably doesn't pay this same way --
+      `params` still exact, `data`/instructions now close, not exact.
+      Verified compiling clean on real Apple hardware with the `MSG`
+      fix in place. }
+    PROCEDURE EXECOPNERR(KIND: INTEGER);
+      VAR
+        MSG: STRING;
+    BEGIN
+      FWRITELN(GFILES[1]^);
+      IF KIND = 1 THEN
+      BEGIN
+        MSG := 'Nested exec commands illegal';
+        FWRITESTRING(GFILES[1]^, MSG, 0);
+        FWRITELN(GFILES[1]^)
+      END
+      ELSE
+      BEGIN
+        MSG := 'Error opening exec';
+        FWRITESTRING(GFILES[1]^, MSG, 0);
+        FWRITELN(GFILES[1]^)
+      END
+    END;
     PROCEDURE GC24; BEGIN END;
     PROCEDURE GC25(A: INTEGER); BEGIN END;
-    PROCEDURE GC26; BEGIN END;
+    { `GETCMD.26` -- the `S(wap` submenu (real ordinal check confirms
+      `SWAP_1_ON`/`SWAP_2_ON`, words `389`/`390`, are read/written
+      here exactly as already established). Reads its own answer from
+      `GFILES[2]^` (`SYSTERM`), not `GFILES[0]^` -- read directly off
+      the raw operand (`LOD 2,4`), not the lift's own rendering, since
+      it looked surprising enough to double check. No UCSD precedent
+      (1.3-only feature). `params` exact against the real binary
+      (`0`); `data`/instructions no longer exact once `MSG` (below)
+      replaces each literal `FWRITESTRING` argument -- required, not
+      optional: the real compiler rejects a literal bound directly to
+      `FWRITESTRING`'s own `VAR` parameter (error 154, same divergence
+      as `.23` above and finding 195). Before that fix this candidate
+      was one instruction over the real binary's own 101 (a `LOR`
+      vs. `FJP`-chain difference, `host-compiler-always-shortcircuits`
+      -- still true, just no longer the dominant gap). Verified
+      compiling clean on real Apple hardware with the `MSG` fix in
+      place. }
+    PROCEDURE SWAPMENU;
+      VAR
+        OLDLEV: INTEGER;
+        CH: CHAR;
+        MSG: STRING;
+    BEGIN
+      OLDLEV := ORD(SWAP_2_ON) + ORD(SWAP_1_ON);
+      FWRITELN(GFILES[1]^);
+      MSG := 'Swapping levels:';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      FWRITELN(GFILES[1]^);
+      MSG := '  0 = system is not swapped';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      FWRITELN(GFILES[1]^);
+      MSG := '  1 = file open and close procedures are swapped';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      FWRITELN(GFILES[1]^);
+      MSG := '  2 = file open/close and disk get/put procedures are swapped';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      FWRITELN(GFILES[1]^);
+      FWRITELN(GFILES[1]^);
+      MSG := 'Old swapping level is ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      FWRITEINT(GFILES[1]^, OLDLEV, 0);
+      FWRITELN(GFILES[1]^);
+      MSG := 'New swapping level (<esc> to exit): ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
+      REPEAT
+        FREADCHAR(GFILES[2]^, CH)
+      UNTIL (CH = CHR(27)) OR (CH = '0') OR (CH = '1') OR (CH = '2');
+      IF CH IN ['0'..'2'] THEN
+      BEGIN
+        FWRITECHAR(GFILES[1]^, CH, 0);
+        SWAP_1_ON := (CH = '2');
+        SWAP_2_ON := (CH = '1') OR SWAP_1_ON;
+        IF SWAP_1_ON THEN
+        BEGIN
+          FWRITELN(GFILES[1]^);
+          FWRITELN(GFILES[1]^);
+          MSG := 'Warning: programs using GET or PUT to disk will be very slow';
+          FWRITESTRING(GFILES[1]^, MSG, 0)
+        END
+      END
+    END;
     PROCEDURE GC27; BEGIN END;
 
   BEGIN

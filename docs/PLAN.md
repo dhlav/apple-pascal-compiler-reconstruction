@@ -1047,6 +1047,17 @@ a route end to end; everything else is a straight read-and-rebuild.
     source to work from directly; `.11`-`.18` need a from-scratch
     decode; `GETCMD.1`'s own menu-loop body needs every other procedure
     written first and its own careful arm-by-arm decode.
+
+    **`.4`/`.23`/`.26` written for real (finding 197)** -- `GETYESNO`,
+    `EXECOPNERR`, `SWAPMENU`, all with no UCSD precedent. Caught the
+    literal-into-`VAR STRING` divergence (finding 195) recurring live,
+    mid-session, in two of the three: both first compiled to within
+    one instruction of the real binary using a literal bound directly
+    to `FWRITESTRING`'s own `VAR` parameter, which fails on real Apple
+    hardware -- fixed with a scratch `MSG` var, same as finding 195,
+    at a real and now-documented word/instruction cost against the
+    otherwise-near-exact match. All three verified compiling clean on
+    real Apple 1.3 hardware, whole file.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
