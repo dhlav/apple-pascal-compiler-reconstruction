@@ -16621,3 +16621,71 @@ alone; all four had been sitting uncaught in already-committed code
 until this session ran the *whole file* through AppleWin for the first
 time. Worth remembering for anything else in this file relying only on
 a fast-tier pass.
+
+## 196. `GETCMD` scaffolded -- 26 number-preserving stubs, real procedure sizes catalogued, mapped against UCSD's own source
+
+STRONG INFERENCE for the size/shape catalogue and the UCSD
+correspondence; nothing written for real yet. `SEGMENT FUNCTION
+GETCMD` now declares all 27 of its real nested procedures (`.2`
+through `.27`, `.1` being the segment's own outer body already in
+place) as number-preserving placeholder stubs (`FPSTUB5`'s own
+precedent) -- compiles clean under both the fast tier and, verified
+directly, Apple's real 1.3 compiler under AppleWin (3805 lines, zero
+errors, straight through to the `Command:` prompt).
+
+**Real `GETCMD` is much larger than UCSD's own** (`github.com/dhlav/
+ucsd-psystem-os`, `system/syssegs.b.text`): 27 procedures against
+UCSD's 7 (the outer body plus `ASSOCIATE`/`SYS_ASSOCIATE`/
+`STARTCOMPILE`/`FINISHCOMPILE`/`EXECUTE`/`RUNWORKFILE`). The
+correspondence is close enough to be useful but not 1:1 the way
+`INITIALIZE` was (finding 195) -- UCSD's own menu loop, `ASSOCIATE`'s
+segment-table read, and the compile/link/run dispatch chain all
+recognizably survive, but Apple added a substantial subsystem UCSD
+has no precedent for at all: real `.11`-`.18` read `SYSTEM.LIBRARY`'s
+own segment table and cross-check it against the codefile about to
+run, reporting missing `INTRINSIC` units by number ("Error: These
+required intrinsic(s) not available") -- pure 1.3 library-checking
+logic, undecoded this session.
+
+Every real procedure's own `params`/`data`/instruction count was read
+directly off `128K.PASCAL`'s `GETCMD` segment this session (not
+guessed) and is recorded in the file's own header comment for the next
+session to work from: `.2` (2/24/13, `RUNWORKFILE`-shaped -- calls
+`.19` then `.20`), `.3` (8/82, calls `.19`/`SCANTITLE`/`FETCHDIR` in a
+loop, `SYS_ASSOCIATE`-shaped but not confirmed 1:1), `.4` (4/2, a bare
+Y/N `FREADCHAR` loop), `.5` (8/2), `.6` (6/110, calls `SCANTITLE`,
+prints "Illegal filename"), `.7` (2/12), `.8` (0/0, nested in `.7`),
+`.9` (4/18), `.10` (10/6), `.11` (8/1796, huge -- the INTRINSIC
+checker's own entry), `.12`-`.18` its own nested helpers (`.17` nested
+three deep), `.19` (16/728, `ASSOCIATE`-shaped -- its own 64-entry
+segment table matches UCSD's `SEGTBL`/`SEGRANGE 0..63` almost word for
+word), `.20` (2/396, `STARTCOMPILE`-shaped), `.21` (0/0), `.22` (0/34),
+`.23` (2/0), `.24` (0/0, already identified separately as the
+EXEC-buffer-open helper), `.25` (2/174), `.26` (0/4), `.27` (0/90).
+
+All 26 stub declarations are flat, direct children of `GETCMD` itself
+(not reproducing the real binary's own nesting -- `.8` is really
+nested inside `.7`, `.12`-`.18` inside `.11`, `.17` three deep) --
+established project rule confirms numbering depends only on
+declaration *order*, not nesting depth, so this is safe for
+placeholders; real nesting will need to be reproduced when each one's
+real body is written, same as `STUB48`'s own nested pair. Named
+`GC02`..`GC27`, not the more descriptive `GETSTUB2`.. this session
+first tried: `GETSTUB2`/`GETSTUB20`..`GETSTUB27` all truncate to the
+same 8 significant characters and the compiler silently treated the
+second declaration of each as a conflicting redeclaration -- caught by
+the "conflicts with an earlier symbol" error, not a numbering surprise
+this time (compare finding 182's own 8-char collision, a different
+mechanism, same root cause).
+
+**Next steps, in likely order of tractability**: `.2` (`RUNWORKFILE`),
+`.3` (`SYS_ASSOCIATE`), `.20` (`STARTCOMPILE`), `.19` (`ASSOCIATE`,
+UCSD's own algorithm mapped closely enough to attempt despite its
+size) all have real UCSD source to work from directly. The `.11`-`.18`
+INTRINSIC-checker subsystem has no UCSD precedent and needs a real
+decode from the binary alone -- likely the largest remaining undertaking
+in this file after `GETCMD.1`'s own menu-loop body, which itself
+depends on every one of `.2`-`.27` existing first (already true) and
+needs its own careful `CASE`-arm-by-`CASE`-arm decode (menu text
+partially matches UCSD's own literally, reordered and with `1.3`'s
+`M(ake exec`/`S(wap` options added).

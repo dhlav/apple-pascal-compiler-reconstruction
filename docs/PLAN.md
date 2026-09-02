@@ -1031,6 +1031,22 @@ a route end to end; everything else is a straight read-and-rebuild.
     All four fixed; the full 3746-line file now compiles start to
     finish under AppleWin with zero fatal errors -- the first time the
     whole file has been run through the acceptance tier at once.
+
+    **`GETCMD` scaffolded -- 26 number-preserving stubs, real
+    procedure sizes catalogued (finding 196)**. Real `GETCMD` has 27
+    procedures against UCSD's own `SYSSEGS.B.TEXT` (`github.com/dhlav/
+    ucsd-psystem-os`) 7 -- the menu loop, `ASSOCIATE`/`SYS_ASSOCIATE`/
+    `STARTCOMPILE`/`FINISHCOMPILE`/`EXECUTE`/`RUNWORKFILE` chain all
+    recognizably survive, but real `.11`-`.18` are a whole
+    INTRINSIC-unit-availability checker with no UCSD precedent at all
+    (reads `SYSTEM.LIBRARY`'s own segment table, reports missing units
+    by number). Every real procedure's `params`/`data`/instruction
+    count read off the binary and recorded in the file's own header
+    comment for the next session. All 27 compile clean, verified on
+    real Apple 1.3 hardware. Next: `.2`/`.3`/`.19`/`.20` have real UCSD
+    source to work from directly; `.11`-`.18` need a from-scratch
+    decode; `GETCMD.1`'s own menu-loop body needs every other procedure
+    written first and its own careful arm-by-arm decode.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

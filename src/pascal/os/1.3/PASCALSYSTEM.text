@@ -1268,10 +1268,69 @@ PROGRAM PASCALSYSTEM;
     END
   END;
 
-  { UCSD's own GETCMD: reads and validates a Command-level keystroke,
-    returning the next CMDSTATE. Signature matches Apple's real
-    `args 1 words`; body not written yet. }
+  { UCSD's own GETCMD (`github.com/dhlav/ucsd-psystem-os`,
+    `system/syssegs.b.text`): reads and validates a Command-level
+    keystroke, returning the next CMDSTATE. Real `GETCMD` has 27
+    procedures against UCSD's own 7 (outer body + `ASSOCIATE`/
+    `SYS_ASSOCIATE`/`STARTCOMPILE`/`FINISHCOMPILE`/`EXECUTE`/
+    `RUNWORKFILE`) -- Apple added a whole INTRINSIC-unit-availability
+    checker (real `.11`-`.18`, no UCSD precedent at all: reads
+    `SYSTEM.LIBRARY`'s own segment table, cross-checks it against the
+    codefile about to run, and reports missing units by number) on top
+    of the menu loop itself growing a `?`-prefixed second menu and
+    `M(ake exec`/`S(wap` options 1.3 added. Real procedure-by-procedure
+    sizes (`params`/`data`/instructions) read directly off
+    `128K.PASCAL`'s own segment this session, not guessed:
+    `.2`=2/24/13(RUNWORKFILE-shaped, calls `.19` then `.20`), `.3`=8/82/
+    ~60 (calls `.19`/`SCANTITLE`/`FETCHDIR` in a loop -- SYS_ASSOCIATE-
+    shaped but not a confirmed 1:1), `.4`=4/2/6 (a bare Y/N `FREADCHAR`
+    loop), `.5`=8/2/~15, `.6`=6/110/~20 (calls `SCANTITLE`, prints
+    "Illegal filename"), `.7`=2/12/~20, `.8`=0/0/3 (nested in `.7`),
+    `.9`=4/18/~40, `.10`=10/6/~35, `.11`=8/1796 (huge -- the INTRINSIC
+    checker's own entry, reads `SYSTEM.LIBRARY` segment info),
+    `.12`-`.18` its own nested helpers (`.17` nested three deep), `.19`
+    =16/728 (`ASSOCIATE`-shaped: opens a codefile, reads its own
+    64-entry segment table (`SEGRANGE 0..63`, matching `MAX_SEG=63`),
+    matches UCSD's own huge `SEGTBL` local almost word for word),
+    `.20`=2/396 (`STARTCOMPILE`-shaped), `.21`=0/0, `.22`=0/34,
+    `.23`=2/0, `.24`=0/0 (already identified separately -- the
+    EXEC-buffer-open helper, `EXEC_MARK`/`EXBUFPTR`/`EXEC_TERM`, see
+    its own probe), `.25`=2/174, `.26`=0/4, `.27`=0/90. None of this is
+    written for real yet -- every one of `.2`-`.27` below is a
+    number-preserving placeholder only (`FPSTUB5`'s own precedent),
+    guessed just to hold the real procedure's slot; not Apple's real
+    content. Real work starts with whichever of these is most tractable
+    next, most likely `.24` (already decoded) or the UCSD-mapped `.2`/
+    `.3`/`.19`/`.20` group. }
   SEGMENT FUNCTION GETCMD(LASTST: CMDSTATE): CMDSTATE;
+
+    PROCEDURE GC02(A, B: INTEGER); BEGIN END;
+    PROCEDURE GC03(A, B, C, D: INTEGER); BEGIN END;
+    PROCEDURE GC04(A, B: INTEGER); BEGIN END;
+    PROCEDURE GC05(A, B, C, D: INTEGER); BEGIN END;
+    PROCEDURE GC06(A, B, C: INTEGER); BEGIN END;
+    PROCEDURE GC07(A: INTEGER); BEGIN END;
+    PROCEDURE GC08; BEGIN END;
+    PROCEDURE GC09(A, B: INTEGER); BEGIN END;
+    PROCEDURE GC10(A, B, C, D, E: INTEGER); BEGIN END;
+    PROCEDURE GC11(A, B, C, D: INTEGER); BEGIN END;
+    PROCEDURE GC12(A, B: INTEGER); BEGIN END;
+    PROCEDURE GC13; BEGIN END;
+    PROCEDURE GC14(A: INTEGER); BEGIN END;
+    PROCEDURE GC15; BEGIN END;
+    PROCEDURE GC16; BEGIN END;
+    PROCEDURE GC17; BEGIN END;
+    PROCEDURE GC18; BEGIN END;
+    PROCEDURE GC19(A, B, C, D, E, F, G, H: INTEGER); BEGIN END;
+    PROCEDURE GC20(A: INTEGER); BEGIN END;
+    PROCEDURE GC21; BEGIN END;
+    PROCEDURE GC22; BEGIN END;
+    PROCEDURE GC23(A: INTEGER); BEGIN END;
+    PROCEDURE GC24; BEGIN END;
+    PROCEDURE GC25(A: INTEGER); BEGIN END;
+    PROCEDURE GC26; BEGIN END;
+    PROCEDURE GC27; BEGIN END;
+
   BEGIN
     GETCMD := LASTST
   END;
