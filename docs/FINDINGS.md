@@ -16799,3 +16799,54 @@ real compiler (an untyped `VAR` parameter, plausible but unconfirmed),
 or `EXEC_FILE`'s own declared type needs to be reconsidered, or the
 real source manages this file some other way this project hasn't
 found yet. Left uncommitted rather than forced.
+
+## 199. `GETCMD.2` (`RUNWORKFILE`) written for real -- and a `FORWARD` really does claim its procedure number the instant it's written, inside a `SEGMENT` too
+
+VERIFIED BINARY FACT for the numbering mechanism (caught by accident,
+confirmed by direct compile-and-compare before anything was
+committed); STRONG INFERENCE for `RUNWORKFILE`'s own content. Verified
+compiling clean on real Apple 1.3 hardware, whole file, zero errors.
+
+**The mechanism, caught the hard way.** Writing `GETCMD.2`
+(`RUNWORKFILE`) for real meant it had to call `.19` (`ASSOCIATE`) and
+`.20` (`STARTCOMPILE`), both still stubs sitting later in the file --
+so it needs a `FORWARD` for each, visible before `.2`'s own
+completion. The first attempt forward-declared just `.19`/`.20`
+immediately ahead of `.2`, expecting the `FORWARD` itself to be free
+(matching an over-broad reading of this project's own "declaration
+order = numbering, no gaps" rule as "only *completed* bodies count").
+It compiled -- but comparing frame sizes against the real binary
+showed the completions for `.19`/`.20` had landed on procedure numbers
+`2`/`3` instead, shifting `RUNWORKFILE` itself to `4` and everything
+after it by two. A `FORWARD` claims its slot in a segment's own
+numbering **at the point it is written**, not at the point it is
+completed -- exactly the same rule `PASCALSY`'s own outer scope has
+been relying on all along (its 41-ish forwards, all bunched near the
+top in real declaration order, completed individually much later and
+in a different order, findings 61/126) -- this project had simply never
+had reason to add a *new* forward mid-segment before and re-derive the
+rule from scratch under pressure.
+
+**Fix, now the standing pattern for this segment**: every one of
+`GETCMD`'s `.2`-`.27` is forward-declared once, in one block, in real
+procedure order, immediately after `SEGMENT FUNCTION GETCMD`'s own
+heading -- mirroring `PASCALSY`'s own convention exactly. Completions
+(short form, `PROCEDURE NAME; BEGIN ... END;`) may then appear in any
+order in the rest of the file; only the forward block's own order sets
+the numbering. Confirmed by recompiling and checking every one of the
+26 procedures' own `params`/`data` against the real binary simultaneously
+-- all landed back on their real numbers exactly.
+
+**`GETCMD.2` = `RUNWORKFILE`**, but noticeably simplified from UCSD's
+own two-parameter `RUNWORKFILE(OKTOLINK, RUNONLY: BOOLEAN)`: real
+`params=2` (one word) is only enough for `OKTOLINK` -- the real call
+into `.19` hardcodes `RUNONLY`/`ERROR_OK` both `TRUE` (the real
+call's own two literal `1`s in argument positions 3/4), so this
+specific routine only ever handles the "Run" case, always setting
+`GETCMD := SYSPROG` on success. UCSD's own `DEBUGCALL` branch must
+live somewhere else in the real binary's own call graph -- not chased
+this session. `params` exact against the real binary (`2`); `data` is
+not (`24` real vs `166` here, once `TITLE`/`ASSSTATUS`/`MSG` locals are
+counted) -- almost certainly the same literal-into-`VAR-STRING` `MSG`
+workaround cost seen everywhere else in this file (findings 195/197);
+not yet instruction-checked (still calls into `.19`/`.20`, both stubs).

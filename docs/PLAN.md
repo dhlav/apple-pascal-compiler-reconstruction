@@ -1070,7 +1070,29 @@ a route end to end; everything else is a straight read-and-rebuild.
     attempted and reverted: its own real body calls `FOPEN` directly
     on `EXEC_FILE`, which is declared `FILE` (finding 145) not `FIB`
     -- a real type mismatch `ucsdpsys_compile` rejects outright, not
-    resolved this session. Left open rather than forced.
+    resolved this session. Left open rather than forced. Two follow-up
+    experiments on real Apple hardware ruled out the two obvious
+    fixes: an untyped `VAR F` parameter for `FOPEN` doesn't even parse
+    (error 7), and a plain `FILE`-typed actual against `FOPEN`'s own
+    `VAR F: FIB` fails with "Illegal actual parameter" (error 142) --
+    yet the real binary's own disassembly (`LDA 2,396` into `CXP 0,5`)
+    is unambiguous that this exact call really does happen. Still
+    open.
+
+    **`GETCMD.2` (`RUNWORKFILE`) written for real -- and a real
+    numbering-mechanism correction along the way (finding 199)**.
+    Discovered by accident while giving `RUNWORKFILE` forward access to
+    still-stub `.19`/`.20`: a `FORWARD` claims its procedure number the
+    instant it is *written*, not at completion, inside a `SEGMENT`'s
+    own nested scope exactly as it already does at `PASCALSY`'s own
+    outer one -- this project had just never added a *new* forward
+    mid-segment before. Every one of `GETCMD`'s `.2`-`.27` is now
+    forward-declared once, in one block, in real procedure order,
+    right after the segment's own heading (mirroring `PASCALSY`'s own
+    convention); completions may appear in any order after that.
+    `RUNWORKFILE` itself: `params` exact (`2`), `data` not (the usual
+    literal-into-`VAR-STRING` `MSG` cost). Verified compiling clean on
+    real Apple 1.3 hardware, whole file.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

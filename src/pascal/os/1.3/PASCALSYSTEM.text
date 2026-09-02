@@ -1318,8 +1318,96 @@ PROGRAM PASCALSYSTEM;
     `.3`/`.19`/`.20` group. }
   SEGMENT FUNCTION GETCMD(LASTST: CMDSTATE): CMDSTATE;
 
-    PROCEDURE GC02(A, B: INTEGER); BEGIN END;
-    PROCEDURE GC03(A, B, C, D: INTEGER); BEGIN END;
+    { Every one of `.2`-`.27` forward-declared here, in real procedure
+      order, exactly like this file's own outer `PASCALSY` scope does
+      for its own 41 forwards (finding 61/126) -- discovered the hard
+      way this session: a `FORWARD` consumes its slot in a segment's
+      own numbering *at the point it is written*, not at the point it
+      is completed (proven by accident -- forward-declaring `.19`/`.20`
+      just ahead of `.2` landed their completions on procedure numbers
+      `2`/`3` instead, shifting everything after them by two; caught
+      by recompiling and comparing frame sizes before it was ever
+      committed). Completions below may appear in any order relative
+      to each other -- only the `FORWARD` block's own order matters. }
+    PROCEDURE RUNWORKFILE(OKTOLINK: BOOLEAN); FORWARD;
+    PROCEDURE GC03(A, B, C, D: INTEGER); FORWARD;
+    FUNCTION GETYESNO: BOOLEAN; FORWARD;
+    PROCEDURE GC05(A, B, C, D: INTEGER); FORWARD;
+    FUNCTION BADTITLE(VAR TITLE: STRING): BOOLEAN; FORWARD;
+    PROCEDURE GC07(A: INTEGER); FORWARD;
+    PROCEDURE GC08; FORWARD;
+    PROCEDURE GC09(A, B: INTEGER); FORWARD;
+    PROCEDURE GC10(A, B, C, D, E: INTEGER); FORWARD;
+    PROCEDURE GC11(A, B, C, D: INTEGER); FORWARD;
+    PROCEDURE GC12(A, B: INTEGER); FORWARD;
+    PROCEDURE GC13; FORWARD;
+    PROCEDURE GC14(A: INTEGER); FORWARD;
+    PROCEDURE GC15; FORWARD;
+    PROCEDURE GC16; FORWARD;
+    PROCEDURE GC17; FORWARD;
+    PROCEDURE GC18; FORWARD;
+    FUNCTION ASSOCSTUB(VAR TITLE: STRING; OKTOLINK, RUNONLY,
+                        ERROROK: BOOLEAN; VAR STATUS: INTEGER;
+                        UNUSED: INTEGER): BOOLEAN; FORWARD;
+    PROCEDURE STARTCMPSTUB(NEXTST: INTEGER); FORWARD;
+    PROCEDURE GC21; FORWARD;
+    PROCEDURE GC22; FORWARD;
+    PROCEDURE EXECOPNERR(KIND: INTEGER); FORWARD;
+    PROCEDURE GC24; FORWARD;
+    PROCEDURE GC25(A: INTEGER); FORWARD;
+    PROCEDURE SWAPMENU; FORWARD;
+    PROCEDURE GC27; FORWARD;
+
+    { `GETCMD.2` -- `RUNWORKFILE`-shaped, but simplified from UCSD's
+      own two-parameter version (`OKTOLINK, RUNONLY: BOOLEAN`): real
+      `params=2` (one word) is only enough for `OKTOLINK` -- the real
+      call into `.19` hardcodes `RUNONLY`/`ERROR_OK` both `TRUE`
+      (`GETCMD.19(@L2, L1, 1, 1, @GATVLEV, 0)`, the two literal `1`s in
+      argument positions 3/4), so this specific routine only ever
+      handles the "Run" case, always setting `GETCMD := SYSPROG` on
+      success -- UCSD's own `DEBUGCALL` branch must live somewhere
+      else in the real binary's own call graph (not chased this
+      session). `params` exact against the real binary (`2`); `data`
+      is not (`24` real vs `166` here) -- almost certainly the same
+      literal-into-`VAR-STRING` `MSG` workaround cost seen everywhere
+      else in this file (findings 195/197); not yet instruction-checked
+      (calls into `.19`/`.20`, both still stubs). Also: every one of
+      `.2`-`.27`'s own `FORWARD` is now declared in one block right
+      after `SEGMENT FUNCTION GETCMD`'s own heading, in real procedure
+      order -- required, not stylistic (finding 199: a `FORWARD`
+      claims its numbering slot the instant it is written, not at
+      completion, inside a `SEGMENT`'s own nested scope exactly as it
+      already does at `PASCALSY`'s own outer one). }
+    PROCEDURE RUNWORKFILE;
+      VAR
+        TITLE: STRING;
+        ASSSTATUS: INTEGER;
+        MSG: STRING;
+    BEGIN
+      IF USERINFO.GOTCODE THEN
+      BEGIN
+        CLEARSCREEN;
+        FWRITELN(GFILES[1]^);
+        TITLE := '';
+        SCONCAT(7, TITLE, USERINFO.CODEVID);
+        MSG := ':';
+        SCONCAT(8, TITLE, MSG);
+        SCONCAT(23, TITLE, USERINFO.CODETID);
+        IF ASSOCSTUB(TITLE, OKTOLINK, TRUE, TRUE, ASSSTATUS, 0) THEN
+        BEGIN
+          MSG := 'Running...';
+          FWRITESTRING(GFILES[1]^, MSG, 0);
+          FWRITELN(GFILES[1]^);
+          GETCMD := SYSPROG;
+          EXIT(GETCMD)
+        END;
+        IF NOT (LASTST IN [LINKANDGO, LINKDEBUG]) THEN
+          USERINFO.GOTCODE := FALSE
+      END
+      ELSE
+        STARTCMPSTUB(6)
+    END;
+    PROCEDURE GC03; BEGIN END;
     { `GETCMD.4`: reads one character from `GFILES[0]^` (the console
       input file) in a loop until it's `'N'`/`'Y'`/`'n'`/`'y'`, then
       returns whether it was yes. No UCSD precedent as a separate
@@ -1335,7 +1423,7 @@ PROGRAM PASCALSYSTEM;
       own `16` exactly (`LOD 2,2`/`LLA 3`/`CXP 0,16`/`SLDL 3`/`LDC 8w`/
       `SLDC 8`/`INN`/`FJP`, the real body's own `REPEAT...UNTIL CH IN
       [...]`). Verified compiling clean on real Apple hardware. }
-    FUNCTION GETYESNO: BOOLEAN;
+    FUNCTION GETYESNO;
       VAR
         CH: CHAR;
     BEGIN
@@ -1344,7 +1432,7 @@ PROGRAM PASCALSYSTEM;
       UNTIL CH IN ['N', 'Y', 'n', 'y'];
       GETYESNO := (CH = 'Y') OR (CH = 'y')
     END;
-    PROCEDURE GC05(A, B, C, D: INTEGER); BEGIN END;
+    PROCEDURE GC05; BEGIN END;
     { `GETCMD.6` = `BADTITLE`: runs `SCANTITLE` purely for its `VAR`
       outputs (the real body's own boolean result is discarded too --
       `IF SCANTITLE(...) THEN ;`, this file's own established
@@ -1359,7 +1447,7 @@ PROGRAM PASCALSYSTEM;
       `VAR-STRING` workaround as `.23`/`.26`, apparently costing the
       same words a real copy would have). Verified compiling clean on
       real Apple hardware. }
-    FUNCTION BADTITLE(VAR TITLE: STRING): BOOLEAN;
+    FUNCTION BADTITLE;
       VAR
         FVID: VID;
         FTID: TID;
@@ -1378,20 +1466,39 @@ PROGRAM PASCALSYSTEM;
         BADTITLE := TRUE
       END
     END;
-    PROCEDURE GC07(A: INTEGER); BEGIN END;
+    PROCEDURE GC07; BEGIN END;
     PROCEDURE GC08; BEGIN END;
-    PROCEDURE GC09(A, B: INTEGER); BEGIN END;
-    PROCEDURE GC10(A, B, C, D, E: INTEGER); BEGIN END;
-    PROCEDURE GC11(A, B, C, D: INTEGER); BEGIN END;
-    PROCEDURE GC12(A, B: INTEGER); BEGIN END;
+    PROCEDURE GC09; BEGIN END;
+    PROCEDURE GC10; BEGIN END;
+    PROCEDURE GC11; BEGIN END;
+    PROCEDURE GC12; BEGIN END;
     PROCEDURE GC13; BEGIN END;
-    PROCEDURE GC14(A: INTEGER); BEGIN END;
+    PROCEDURE GC14; BEGIN END;
     PROCEDURE GC15; BEGIN END;
     PROCEDURE GC16; BEGIN END;
     PROCEDURE GC17; BEGIN END;
     PROCEDURE GC18; BEGIN END;
-    PROCEDURE GC19(A, B, C, D, E, F, G, H: INTEGER); BEGIN END;
-    PROCEDURE GC20(A: INTEGER); BEGIN END;
+    { `GETCMD.19` -- `ASSOCIATE`-shaped (UCSD's own `ASSOCIATE(TITLE:
+      STRING; OKTOLINK, RUNONLY, ERROR_OK: BOOLEAN; VAR ASS_STATUS:
+      STATUS_ASSOCIATE): BOOLEAN`), a large open a codefile, read/
+      check its own segment table, cross-check `SYSTEM.LIBRARY`
+      routine -- real `params`/`data` = `16`/`728`, huge, genuinely
+      new decode work, not attempted this session. Signature widened
+      to 6 args (an extra trailing `INTEGER` UCSD's own 5-arg version
+      doesn't have) to match every real call site found so far, all
+      of which pass six arguments; guessed only to preserve procedure
+      numbering and let its own callers compile -- not Apple's real
+      content. }
+    FUNCTION ASSOCSTUB;
+    BEGIN
+      ASSOCSTUB := FALSE
+    END;
+    { `GETCMD.20` -- `STARTCOMPILE`-shaped (UCSD's own
+      `STARTCOMPILE(NEXTST: CMDSTATE)`); real `params`/`data` = `2`/
+      `396`, genuinely new decode work, not attempted this session.
+      Guessed signature only to preserve procedure numbering and let
+      `.2`/`.19` compile against it; not Apple's real content. }
+    PROCEDURE STARTCMPSTUB; BEGIN END;
     PROCEDURE GC21; BEGIN END;
     PROCEDURE GC22; BEGIN END;
     { `GETCMD.23`: prints one of two `EXEC`-related error messages,
@@ -1409,7 +1516,7 @@ PROGRAM PASCALSYSTEM;
       `params` still exact, `data`/instructions now close, not exact.
       Verified compiling clean on real Apple hardware with the `MSG`
       fix in place. }
-    PROCEDURE EXECOPNERR(KIND: INTEGER);
+    PROCEDURE EXECOPNERR;
       VAR
         MSG: STRING;
     BEGIN
@@ -1428,7 +1535,7 @@ PROGRAM PASCALSYSTEM;
       END
     END;
     PROCEDURE GC24; BEGIN END;
-    PROCEDURE GC25(A: INTEGER); BEGIN END;
+    PROCEDURE GC25; BEGIN END;
     { `GETCMD.26` -- the `S(wap` submenu (real ordinal check confirms
       `SWAP_1_ON`/`SWAP_2_ON`, words `389`/`390`, are read/written
       here exactly as already established). Reads its own answer from
