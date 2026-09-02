@@ -16496,3 +16496,128 @@ since that comment is the one piece of independent evidence this whole
 question rests on. Left for a future session -- `FGET`, `FPUT`, and
 their dependents (`FREADINT`/`FWRITEINT`/`FREADCHAR`/`FWRITECHAR`/
 `FREADSTRING`/`FWRITEBYTES`) stay stubs.
+
+## 195. `INITIALIZE` written for real from UCSD's own source cross-reference -- and the whole file compiles clean under Apple's real 1.3 compiler for the first time
+
+STRONG INFERENCE for `INITIALIZE`'s own content; VERIFIED BINARY FACT
+for every compiler-behavior divergence found and fixed along the way.
+`src/pascal/os/1.3/PASCALSYSTEM.text` -- all 3746 lines, every
+procedure -- now compiles start to finish under Apple's real
+`SYSTEM.COMPILER` [1.3] with zero fatal errors, tested directly under
+AppleWin. This is the first time the whole file has gone through the
+acceptance tier at once rather than isolated fragments.
+
+**`INITIALIZE` (`INITIALI`, 11 procedures) written from a direct
+structural cross-reference against UCSD II.0's own `SYSSEGS.A.TEXT`**
+(`github.com/dhlav/ucsd-psystem-os`, `system/syssegs.a.text`), which
+turned out to hold an almost line-for-line ancestor of this segment --
+a genuinely different situation from `FIOPRIMS`/`FGET`, where UCSD had
+no equivalent split at all (finding 190). Mapping: `.1`=outer body,
+`.2`=`INITSYSCOM`, `.3`=`INIT_FILLER` (nested in `.2`), `.4`/`.5`=two
+Apple-specific helpers not in UCSD's source at all (guessed bodies
+only, real content still unknown -- UCSD's own `INITSYSCOM` does a
+plain whole-record copy from the `*SYSTEM.MISCINFO` file; Apple's own
+`.2` calls two extra nested procedures eight times each with small
+integer argument pairs immediately after reading that file, shaped
+like a per-bit OR-merge but not decoded), `.6`=`INITUNITABLE`,
+`.7`=`INIT_ENTRY` (nested in `.6`), `.8`=`INITHEAP`,
+`.9`=`INITWORKFILE`, `.10`=`TRY_OPEN` (nested in `.9`),
+`.11`=`INITFILES`. UCSD's own `INITCHARSET` has no Apple-128K
+equivalent (no Triton hi-res hardware) -- accounting for the segment's
+5 UCSD-named routines plus 2 Apple-only ones totalling 7, plus the
+outer body and 3 more nested helpers (`INIT_FILLER`/`INIT_ENTRY`/
+`TRY_OPEN`) = 11, matching the real procedure count exactly.
+
+Frame-size/instruction-count results against the real binary:
+**exact on all three of params/data/instructions** for `.7`
+(`INIT_ENTRY`) and `.8` (`INITHEAP`); **exact on data** for `.4`/`.5`
+(the two undecoded stubs -- guessed signatures alone happen to cost
+the right number of words) and `.9`/`.10`/`.11`; **exact on
+instructions** for `.11` (`INITFILES`, 70/70) despite a 24-word data
+gap (an extra local not needed by whatever the real body does
+instead); close-not-exact everywhere else, most of it explained by
+`.4`/`.5` being empty placeholders (their real bodies would add
+instructions to both themselves and `.2`, which calls them 16 times
+total) and by `.1`'s own banner section skipping the 64K/128K and
+non-1.3-`SYSTEM.APPLE` hardware-mismatch guard entirely (undecoded --
+`BYTEPTR`/`INTRACTVPTR` in the lift read fixed memory addresses this
+session didn't chase). Left as real, not stub, content throughout --
+UCSD's own algorithm shape carries real information even where exact
+bytes don't match yet.
+
+**Two real CSP calls, still unidentified.** The real binary opens and
+closes `INITIALIZE`'s whole body with `CSP 21`/`CSP 22`
+(`LoadSegment`/`UnloadSegment` in this project's own disassembler
+comments, `lib/pcode.h`) -- almost certainly pinning `FILEPROC`
+(segment 6) resident for this procedure's own heavy file traffic.
+Neither compiles as a plain identifier under Apple's real compiler
+either ("Undeclared identifier", error 104, tested directly) -- so
+whatever source syntax reaches these two CSPs is not an ordinary
+procedure call by that name, and it is not implemented as one in
+`ucsdpsys_compile` at all (present only in its disassembler, absent
+from its translator's builtin table). Left out of the committed
+source; open question for a future session.
+
+**Four real compiler-behavior divergences found and fixed while
+getting the whole file through the acceptance tier, all affecting
+code that predates this session and was previously accepted only by
+the fast tier:**
+
+1. **A string literal cannot bind to a `VAR STRING` parameter.**
+   `FWRITESTRING(GFILES[1]^, 'Welcome ', 0)`-shaped calls (`FWRITESTRING`'s
+   own second parameter is `VAR S: STRING`) compile clean under
+   `ucsdpsys_compile` but fail on real Apple 1.3 with "actual parameter
+   must be a variable" (error 154) -- a literal has no address for a
+   `VAR` parameter to bind to; the fast tier simply doesn't check this.
+   Same failure for `SPOS`'s own `VAR TARGET: STRING`. Fixed everywhere
+   found: `INITIALIZE`'s own banner (`BANNERMSG` scratch var),
+   `FPTITLE` (`SEP`, for its four `SPOS`/one-char-literal calls, already
+   committed before this session), `PRINTSPI`/`PRTXEQER`/`EXECERROR`'s
+   own outer body (`MSG`, all inside `EXECERROR`, already committed).
+   Every literal now goes through a small `STRING` scratch variable
+   assigned just before the call.
+2. **A block's own `VAR` section cannot follow its nested procedure
+   declarations.** `EXECERROR` had `PRINTSPI`/`PRTXEQER` declared
+   before its own `VAR G1, G2, G3` -- accepted by `ucsdpsys_compile`,
+   rejected by Apple's real compiler with a bare "illegal symbol" at
+   the `VAR` keyword itself (error 6). Standard Pascal declaration
+   order (`const`/`type`/`var` before any nested procedure) is not
+   optional here even though the fast tier doesn't enforce it. Moved
+   `EXECERROR`'s own `VAR` block (plus the new `MSG` from divergence 1)
+   to before `PRINTSPI`.
+3. **A niladic standard function called with empty parens is a
+   parameter-count error, not just a style warning.** `IORESULT()` and
+   `MEMAVAIL()` (both zero-argument CSPs) fail with "number of
+   parameters does not agree with declaration" (error 126) on real
+   Apple 1.3, despite the fast tier only ever warning about empty
+   parens as a general ISO-Pascal style nit ("this is Pascal, not C").
+   Every other `IORESULT` call already in this file was already bare
+   (`IORESULT`, no parens) -- these two, both in `EXECERROR`'s own
+   outer body, were the only two written with parens; fixed to match
+   the rest of the file's own established, correct style.
+4. **`@` does not bind to a `VAR` formal parameter.** `FBLOCKIO`'s own
+   real body calls `BLKXFER(F.FUNIT, @A, ...)` where `A` is `FBLOCKIO`'s
+   own `VAR A: WINDOW` parameter and `BLKXFER`'s matching parameter was
+   declared `BUFADDR: WINDOWP` -- compiles clean under the fast tier
+   (a mere "address-of operator was not present in UCSD Pascal"
+   warning, the same warning already accepted elsewhere in this file
+   for `@` on a plain global), but Apple's real compiler rejects `@A`
+   here specifically with "Error in factor (bad expression)" (error
+   58). Fixed by changing `BLKXFER`'s own `BUFADDR` from a `WINDOWP`
+   value parameter to `VAR BUFADDR: WINDOW`, matching `FBLOCKIO`'s own
+   `A` exactly and needing no address-of operator on either side (a
+   `VAR` parameter is already an address at the p-code level, so this
+   should cost no extra words and leave `BLKXFER`'s own previously-
+   established instruction-for-instruction match untouched -- not
+   independently re-verified against the real binary after the change,
+   flagged for a future session).
+
+All four are genuine gaps in `ucsdpsys_compile`'s own type/scope
+checking relative to Apple's real compiler -- not mistakes in how this
+project reads the manual. Since this project's fast tier "can only
+falsify, never accept" (project rule), none of the four should have
+been trusted as compiling correctly on the strength of the fast tier
+alone; all four had been sitting uncaught in already-committed code
+until this session ran the *whole file* through AppleWin for the first
+time. Worth remembering for anything else in this file relying only on
+a fast-tier pass.

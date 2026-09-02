@@ -865,10 +865,408 @@ PROGRAM PASCALSYSTEM;
     FWRITELN(GFILES[1]^)
   END;
 
-  { UCSD's own INITIALIZE: system startup. Signature matches Apple's
-    real `args 0 words`; body not written yet. }
+  { UCSD's own INITIALIZE: system startup (`ii0src.sdk`'s own
+    `SYSSEGS.A.TEXT`, mirrored at `github.com/dhlav/ucsd-psystem-os`,
+    `system/syssegs.a.text`). Real `INITIALI` has 11 procedures; UCSD's
+    own source has an outer body plus `INITSYSCOM`/`INIT_FILLER`
+    (nested)/`INITUNITABLE`/`INIT_ENTRY` (nested)/`INITCHARSET`/
+    `INITHEAP`/`INITWORKFILE`/`TRY_OPEN` (nested)/`INITFILES` -- nine
+    named routines, ten counting the outer body, eleven counting
+    `anachronism` (dropped: 128K.PASCAL's own banner has no equivalent
+    call). Apple's 128K binary drops `INITCHARSET` entirely (no Triton
+    hi-res hardware to initialize) and, in its place, `INITSYSCOM` gets
+    two additional nested helpers not in UCSD's source at all (real
+    `.4`/`.5`, both `lex=2`, siblings of `INIT_FILLER`) -- accounting for
+    exactly 11 real procedures either way. Every other routine's own
+    shape (call sequence, argument count, control flow) matches UCSD's
+    source closely enough that the mapping below is STRONG INFERENCE,
+    not a guess: `.2`=INITSYSCOM, `.3`=INIT_FILLER (nested in `.2`),
+    `.4`/`.5`=unidentified `.2`-nested helpers (Apple-specific, guessed
+    bodies only, not UCSD's), `.6`=INITUNITABLE, `.7`=INIT_ENTRY (nested
+    in `.6`), `.8`=INITHEAP, `.9`=INITWORKFILE, `.10`=TRY_OPEN (nested in
+    `.9`), `.11`=INITFILES. `MSYSCOMREC`'s own four fields
+    (MISCINFO/CRTTYPE/CRTCTRL/CRTINFO) mirror `SYSCOMREC`'s own
+    substructure exactly, per UCSD's own `MISCINFO := MSYSCOM.MISCINFO`
+    etc. Compiles clean under the host tool; not yet instruction-checked
+    against the real binary (that needs `.4`/`.5` identified for real
+    first) -- labelled STRONG INFERENCE throughout, not VERIFIED. }
   SEGMENT PROCEDURE INITIALIZE;
-  BEGIN END;
+    VAR
+      MONTHNAMES: ARRAY [0..15] OF STRING[3];
+      STARTUP: BOOLEAN;
+      { A `VAR STRING` parameter (`FWRITESTRING`'s own second one)
+        cannot bind directly to a string literal under Apple's real
+        1.3 compiler -- "actual parameter must be a variable", error
+        154, confirmed under AppleWin (finding: this session). Every
+        banner line goes through this one scratch var instead. }
+      BANNERMSG: STRING;
+
+    { `INITIALI.2` = INITSYSCOM: reads `*SYSTEM.MISCINFO` (if present)
+      into `SYSCOM^`'s own terminal-profile fields, seeds `IPOT`/
+      `DIGITS`, clears `SYSCOM^`'s own error/debug scratch fields. }
+    PROCEDURE INITSYSCOM;
+      VAR
+        MF: FIB;
+        MTITLE: FULL_ID;
+
+      { `INITIALI.3` = INIT_FILLER: caps `FILLCOUNT` at `FILL_LEN` and
+        rebuilds `FILLER` as that many null bytes (carriage-delay
+        padding for slow terminals). }
+      PROCEDURE INIT_FILLER;
+      BEGIN
+        IF SYSCOM^.CRTCTRL.FILLCOUNT > FILL_LEN THEN
+          SYSCOM^.CRTCTRL.FILLCOUNT := FILL_LEN;
+        FILLER[0] := CHR(SYSCOM^.CRTCTRL.FILLCOUNT);
+        FILLCHAR(FILLER[1], SYSCOM^.CRTCTRL.FILLCOUNT, CHR(0))
+      END;
+
+      { `INITIALI.4`/`.5` -- not in UCSD's own `INITSYSCOM`, Apple-
+        specific. `.2`'s own body calls each eight times with a pair of
+        small integer arguments (mostly `8`/`0`), immediately after
+        reading `*SYSTEM.MISCINFO`, then again around `CRTCTRL`'s own
+        16-entry `PREFIXED` array -- read as a per-bit OR-merge between
+        the file's saved profile and the profile already in `SYSCOM^`,
+        one for `MISCINFO`-shaped bits and one for `CRTCTRL`/`CRTINFO`-
+        shaped bits, but which specific bits is not decoded. Signatures
+        guessed only to preserve procedure numbering; not Apple's real
+        content. Named apart at more than 8 characters -- `MERGEA`/
+        `MERGEB` collided identically at 8 (finding: this session). }
+      PROCEDURE MERGEA(A, B: INTEGER);
+      BEGIN
+      END;
+      PROCEDURE MERGEB(A, B: INTEGER);
+      BEGIN
+      END;
+
+    BEGIN
+      INIT_FILLER;
+      DEBUGINFO := NIL;
+      IPOT[0] := 1;
+      IPOT[1] := 10;
+      IPOT[2] := 100;
+      IPOT[3] := 1000;
+      IPOT[4] := 10000;
+      DIGITS := ['0'..'9'];
+      SYSCOM^.XEQERR := 0;
+      SYSCOM^.IORSLT := INOERROR;
+      SYSCOM^.BUGSTATE := 0;
+      MTITLE := '*SYSTEM.MISCINFO';
+      FINIT(MF, NIL, -1);
+      FOPEN(MF, MTITLE, TRUE, NIL);
+      IF MF.FISOPEN THEN
+      BEGIN
+        { Raw block read straight into `SYSCOM^`'s own contiguous
+          MISCINFO/CRTTYPE/CRTCTRL/CRTINFO span, matching the real
+          binary's own raw `UNITREAD` (not a typed `FILE OF record`
+          read) -- avoids redeclaring those fields' own anonymous
+          record/enum types a second time just to assign whole-record,
+          which this host compiler treats as incompatible types even
+          when field-for-field identical. Byte count (480) read
+          directly off the real p-code's own operand, not derived. }
+        UNITREAD(MF.FUNIT, SYSCOM^.MISCINFO, 480, MF.FHEADER.DFIRSTBLK);
+        INIT_FILLER
+      END;
+      FCLOSE(MF, CNORMAL);
+      UNITCLEAR(1)
+    END;
+
+    { `INITIALI.6` = INITUNITABLE: seeds `FILENAME` with the five
+      system-tool titles, then walks every block-structured unit
+      looking for a directory; the boot unit's own volume ID becomes
+      `SYVID`, and any of the five system tools found there (or on any
+      other unit, if not already found) gets its real `FILENAME` entry
+      corrected to `VID:NAME`. Also opens `*SYSTEM.STARTUP` on the boot
+      volume purely to test whether it exists (`STARTUP`), and calls
+      `INITIALI.7` once per fixed console/printer/remote unit to seed
+      `UNITABLE`. }
+    PROCEDURE INITUNITABLE;
+      VAR
+        LUNIT: UNITNUM;
+        LDIR: DIRP;
+        LFIB: FIB;
+        LTITLE: FULL_ID;
+        F: SYSFILE;
+        NOT_FOUND: SET OF SYSFILE;
+
+      { `INITIALI.7` = INIT_ENTRY: clears a fixed unit and, if that
+        succeeds, seeds its `UNITABLE` volume-ID slot with a fixed
+        name (`CONSOLE`/`SYSTERM`/... -- not read off the disk, since
+        these units aren't block-structured). }
+      PROCEDURE INIT_ENTRY(LU: UNITNUM; UNAME: VID);
+      BEGIN
+        UNITCLEAR(LU);
+        IF IORESULT = 0 THEN
+          UNITABLE[LU].UVID := UNAME
+      END;
+
+    BEGIN
+      FILENAME[ASSMBLER] := ':SYSTEM.ASSMBLER';
+      FILENAME[COMPILER] := ':SYSTEM.COMPILER';
+      FILENAME[EDITOR] := ':SYSTEM.EDITOR';
+      FILENAME[FILER] := ':SYSTEM.FILER';
+      FILENAME[LINKER] := ':SYSTEM.LINKER';
+      NOT_FOUND := [ASSMBLER..LINKER];
+      FINIT(LFIB, NIL, -1);
+      FOR LUNIT := 0 TO MAXUNIT DO
+      BEGIN
+        UNITABLE[LUNIT].UVID := '';
+        UNITABLE[LUNIT].UISBLKD := LUNIT IN [4, 5, 9, 10, 11, 12];
+        IF UNITABLE[LUNIT].UISBLKD THEN
+        BEGIN
+          UNITABLE[LUNIT].UEOVBLK := MAXINT;
+          UNITCLEAR(LUNIT);
+          IF IORESULT = 0 THEN
+            IF FETCHDIR(LUNIT) THEN
+            BEGIN
+              UNITABLE[LUNIT].UVID := SYSCOM^.GDIRP^[0].DVID;
+              IF LUNIT = SYSCOM^.SYSUNIT THEN
+              BEGIN
+                SYVID := UNITABLE[LUNIT].UVID;
+                LTITLE := '*SYSTEM.STARTUP';
+                FOPEN(LFIB, LTITLE, TRUE, NIL);
+                STARTUP := LFIB.FISOPEN;
+                FCLOSE(LFIB, CNORMAL)
+              END;
+              FOR F := ASSMBLER TO LINKER DO
+                IF (LUNIT = SYSCOM^.SYSUNIT) OR (F IN NOT_FOUND) THEN
+                BEGIN
+                  LTITLE := CONCAT(UNITABLE[LUNIT].UVID, FILENAME[F]);
+                  FOPEN(LFIB, LTITLE, TRUE, NIL);
+                  IF LFIB.FISOPEN THEN
+                  BEGIN
+                    FILENAME[F] := LTITLE;
+                    NOT_FOUND := NOT_FOUND - [F]
+                  END;
+                  FCLOSE(LFIB, CNORMAL)
+                END
+            END
+        END
+      END;
+      IF JUST_BOOT THEN
+        DKVID := SYVID;
+      LUNIT := VOLSEARCH(SYVID, FALSE, LDIR);
+      IF LDIR = NIL THEN
+        HALT;
+      THEDATE := LDIR^[0].DLASTBOOT;
+      INIT_ENTRY(1, 'CONSOLE');
+      INIT_ENTRY(2, 'SYSTERM');
+      INIT_ENTRY(3, 'GRAPHIC');
+      INIT_ENTRY(6, 'PRINTER');
+      INIT_ENTRY(7, 'REMIN');
+      INIT_ENTRY(8, 'REMOUT')
+    END;
+
+    { `INITIALI.8` = INITHEAP: the very first heap/file setup, only on
+      a cold boot (`WHAT_H2`, i.e. `EMPTYHEAP = NIL`). `MARK` at the
+      end fixes the heap's low-water mark once everything above it is
+      permanently allocated. }
+    PROCEDURE INITHEAP;
+      VAR
+        LWINDOW: WINDOWP;
+    BEGIN
+      SYSCOM^.GDIRP := NIL;
+      NEW(SWAPFIB);
+      FINIT(SWAPFIB^, NIL, -1);
+      NEW(INPUTFIB);
+      NEW(LWINDOW);
+      FINIT(INPUTFIB^, LWINDOW, 0);
+      NEW(OUTPUTFIB);
+      NEW(LWINDOW);
+      FINIT(OUTPUTFIB^, LWINDOW, 0);
+      NEW(SYSTERM);
+      NEW(LWINDOW);
+      FINIT(SYSTERM^, LWINDOW, 0);
+      GFILES[0] := INPUTFIB;
+      GFILES[1] := OUTPUTFIB;
+      NEW(USERINFO.SYMFIBP);
+      FINIT(USERINFO.SYMFIBP^, NIL, -1);
+      NEW(USERINFO.CODEFIBP);
+      FINIT(USERINFO.CODEFIBP^, NIL, -1);
+      MARK(EMPTYHEAP)
+    END;
+
+    { `INITIALI.9` = INITWORKFILE: clears the compiler/editor error
+      scratch fields, seeds the scratch-file volume/title fields on a
+      cold boot, then tries to reopen each scratch workfile where the
+      last session left it (`.10`). }
+    PROCEDURE INITWORKFILE;
+
+      { `INITIALI.10` = TRY_OPEN: opens `FIRST` outright; failing that,
+        if a remembered volume/title pair is non-empty, tries
+        `SEC_VOL:SEC_NAME` instead. Either way, on success, writes the
+        file's own real volume/title back into `SEC_VOL`/`SEC_NAME` so
+        the caller remembers where it actually ended up. }
+      PROCEDURE TRY_OPEN(VAR WORK_FIB: FIB; FIRST: FULL_ID;
+                          VAR SEC_VOL: VID; VAR SEC_NAME: TID);
+        VAR
+          LTITLE: FULL_ID;
+      BEGIN
+        FOPEN(WORK_FIB, FIRST, TRUE, NIL);
+        IF NOT WORK_FIB.FISOPEN THEN
+          IF SEC_NAME <> '' THEN
+          BEGIN
+            LTITLE := CONCAT(SEC_VOL, ':', SEC_NAME);
+            FOPEN(WORK_FIB, LTITLE, TRUE, NIL)
+          END;
+        IF WORK_FIB.FISOPEN THEN
+        BEGIN
+          SEC_VOL := WORK_FIB.FVID;
+          SEC_NAME := WORK_FIB.FHEADER.DTID
+        END;
+        FCLOSE(WORK_FIB, CNORMAL)
+      END;
+
+    BEGIN
+      USERINFO.ERRNUM := 0;
+      USERINFO.ERRBLK := 0;
+      USERINFO.ERRSYM := 0;
+      IF JUST_BOOT THEN
+      BEGIN
+        USERINFO.SYMTID := '';
+        USERINFO.CODETID := '';
+        USERINFO.WORKTID := '';
+        USERINFO.SYMVID := SYVID;
+        USERINFO.CODEVID := SYVID;
+        USERINFO.WORKVID := SYVID
+      END;
+      TRY_OPEN(USERINFO.SYMFIBP^, '*SYSTEM.WRK.TEXT', USERINFO.SYMVID,
+               USERINFO.SYMTID);
+      TRY_OPEN(USERINFO.CODEFIBP^, '*SYSTEM.WRK.CODE', USERINFO.CODEVID,
+               USERINFO.CODETID);
+      USERINFO.ALTMODE := SYSCOM^.CRTINFO.ALTMODE;
+      USERINFO.SLOWTERM := SYSCOM^.MISCINFO.SLOWTERM;
+      USERINFO.STUPID := SYSCOM^.MISCINFO.STUPID
+    END;
+
+    { `INITIALI.11` = INITFILES: closes every file `INITIALI.8`/`.9`
+      opened, then reopens `INPUTFIB`/`OUTPUTFIB` on `CONSOLE:` (and
+      `SYSTERM` on `SYSTERM:`, cold boot only) and refreshes `GFILES`
+      to match. }
+    PROCEDURE INITFILES;
+      VAR
+        LTITLE: FULL_ID;
+    BEGIN
+      FCLOSE(SWAPFIB^, CNORMAL);
+      FCLOSE(USERINFO.SYMFIBP^, CNORMAL);
+      FCLOSE(USERINFO.CODEFIBP^, CNORMAL);
+      FCLOSE(INPUTFIB^, CNORMAL);
+      FCLOSE(OUTPUTFIB^, CNORMAL);
+      LTITLE := 'CONSOLE:';
+      FOPEN(INPUTFIB^, LTITLE, TRUE, NIL);
+      FOPEN(OUTPUTFIB^, LTITLE, TRUE, NIL);
+      IF JUST_BOOT THEN
+      BEGIN
+        LTITLE := 'SYSTERM:';
+        FOPEN(SYSTERM^, LTITLE, TRUE, NIL)
+      END;
+      GFILES[0] := INPUTFIB;
+      GFILES[1] := OUTPUTFIB;
+      GFILES[2] := SYSTERM;
+      GFILES[3] := NIL;
+      GFILES[4] := NIL;
+      GFILES[5] := NIL
+    END;
+
+  BEGIN
+    { The real binary opens and closes with two CSP calls (`CSP 21`/
+      `CSP 22`, `LoadSegment`/`UnloadSegment` in this project's own
+      disassembler comments, `lib/pcode.h`) bracketing this whole body,
+      almost certainly pinning `FILEPROC` (segment 6) resident for
+      `INITIALIZE`'s own heavy file traffic. Neither compiles under
+      Apple's real 1.3 compiler as a plain identifier ("Undeclared
+      identifier", error 104, tested directly under AppleWin) -- so
+      whatever Pascal-level syntax reaches them is not simply calling a
+      standard procedure by that name. Left out rather than guessed;
+      real source has no visible effect from omitting them beyond
+      segment-swap timing. }
+    WHAT_H2 := (EMPTYHEAP = NIL);
+    MONTHNAMES[0] := '???';
+    MONTHNAMES[1] := 'Jan';
+    MONTHNAMES[2] := 'Feb';
+    MONTHNAMES[3] := 'Mar';
+    MONTHNAMES[4] := 'Apr';
+    MONTHNAMES[5] := 'May';
+    MONTHNAMES[6] := 'Jun';
+    MONTHNAMES[7] := 'Jul';
+    MONTHNAMES[8] := 'Aug';
+    MONTHNAMES[9] := 'Sep';
+    MONTHNAMES[10] := 'Oct';
+    MONTHNAMES[11] := 'Nov';
+    MONTHNAMES[12] := 'Dec';
+    MONTHNAMES[13] := '???';
+    MONTHNAMES[14] := '???';
+    MONTHNAMES[15] := '???';
+    IF WHAT_H2 THEN
+      INITHEAP
+    ELSE
+      RELEASE(EMPTYHEAP);
+    RUN_VOL := '';
+    INITUNITABLE;
+    WHAT_L[1] := 0;
+    WHAT_L[2] := 0;
+    WHAT_L[3] := 0;
+    WHAT_L[4] := 0;
+    INITFILES;
+    INITSYSCOM;
+    INITWORKFILE;
+    CHAIN_NAME := '';
+    CHAIN_MSG := '';
+    EXEC_TERM := CHR(37);
+    SWAP_2_ON := FALSE;
+    SWAP_1_ON := FALSE;
+    R_EXEC_FLG := FALSE;
+    W_EXEC_FLG := FALSE;
+    JUST_BOOT := FALSE;
+    WHAT_H1 := FALSE;
+    CLEARSCREEN;
+    FWRITELN(GFILES[1]^);
+    IF WHAT_H2 THEN
+    BEGIN
+      IF NOT STARTUP THEN
+      BEGIN
+        IF SYSCOM^.MISCINFO.HASXYCRT THEN
+        BEGIN
+          FGOTOXY(0, SYSCOM^.CRTINFO.HEIGHT DIV 3);
+          IF FILL_LEN > 0 THEN
+            FWRITESTRING(GFILES[1]^, FILLER, 0)
+        END;
+        BANNERMSG := 'Welcome ';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITESTRING(GFILES[1]^, SYVID, 0);
+        BANNERMSG := ', to Apple II Pascal 1.3';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITELN(GFILES[1]^);
+        FWRITELN(GFILES[1]^);
+        BANNERMSG := 'Based on UCSD Pascal II.1';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITELN(GFILES[1]^);
+        FWRITELN(GFILES[1]^);
+        BANNERMSG := 'Current date is ';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITEINT(GFILES[1]^, THEDATE.DAY, 0);
+        FWRITECHAR(GFILES[1]^, '-', 0);
+        FWRITESTRING(GFILES[1]^, MONTHNAMES[THEDATE.MONTH], 0);
+        FWRITECHAR(GFILES[1]^, '-', 0);
+        FWRITEINT(GFILES[1]^, THEDATE.YEAR, 0);
+        FWRITELN(GFILES[1]^);
+        BANNERMSG := 'Pascal system size is 128K';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITELN(GFILES[1]^);
+        BANNERMSG := 'Copyright Apple Computer 1979,1980,1983,1984,1985';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITELN(GFILES[1]^);
+        BANNERMSG := 'Copyright U.C. Regents 1979';
+        FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+        FWRITELN(GFILES[1]^)
+      END
+    END
+    ELSE
+    BEGIN
+      BANNERMSG := 'System re-initialized';
+      FWRITESTRING(GFILES[1]^, BANNERMSG, 0);
+      FWRITELN(GFILES[1]^)
+    END
+  END;
 
   { UCSD's own GETCMD: reads and validates a Command-level keystroke,
     returning the next CMDSTATE. Signature matches Apple's real
@@ -1499,12 +1897,22 @@ PROGRAM PASCALSYSTEM;
       VAR
         P, L, I: INTEGER;
         BRACKET, SUFFIXSTR: STRING;
+        { `SPOS`'s own `TARGET` is `VAR STRING` -- a literal can't bind
+          to it directly under Apple's real compiler ("actual
+          parameter must be a variable", error 154, confirmed under
+          AppleWin, finding: this session -- a pre-existing bug in
+          this procedure's own already-committed source, not new).
+          Every single-character separator goes through this scratch
+          var instead. }
+        SEP: STRING;
     BEGIN
-      P := SPOS(' ', S);
+      SEP := ' ';
+      P := SPOS(SEP, S);
       WHILE P > 0 DO
       BEGIN
         SDELETE(1, P, S);
-        P := SPOS(' ', S)
+        SEP := ' ';
+        P := SPOS(SEP, S)
       END;
       IF LENGTH(S) > 0 THEN
         IF S[LENGTH(S)] = '.' THEN
@@ -1512,14 +1920,16 @@ PROGRAM PASCALSYSTEM;
         ELSE
         BEGIN
           BRACKET := '';
-          P := SPOS('[', S);
+          SEP := '[';
+          P := SPOS(SEP, S);
           IF P > 0 THEN
           BEGIN
             L := (LENGTH(S) - P) + 1;
             SCOPY(L, P, S, BRACKET);
             SDELETE(L, P, S)
           END;
-          IF SPOS(':', S) = 0 THEN
+          SEP := ':';
+          IF SPOS(SEP, S) = 0 THEN
           BEGIN
             IF SUFFIX THEN
               SUFFIXSTR := '.CODE'
@@ -1569,6 +1979,17 @@ PROGRAM PASCALSYSTEM;
     verified against Apple's binary). }
 
   PROCEDURE EXECERROR;
+    VAR
+      G1: INTEGER;
+      G2: ^SYSCOMREC;
+      G3: INTEGER;
+      { `VAR` must precede a block's own nested procedure declarations
+        in strict Pascal order -- this one was declared *after*
+        `PRINTSPI`/`PRTXEQER` until this session (error 6, "illegal
+        symbol", confirmed under AppleWin; the fast-tier host tool
+        accepted the wrong order without complaint). Moved up here,
+        ahead of both nested procedures, where it belongs. }
+      MSG: STRING;
 
   { PASCALSY.51/52 (finding 153) are the "S#/P#/I#" and "Execution
     error #" diagnostic printers EXECERROR calls -- VERIFIED BINARY
@@ -1609,27 +2030,43 @@ PROGRAM PASCALSYSTEM;
     ("error stuff", comment already on `INFOREC` above) that forward
     order (`ERRSYM`) would not have given. }
     PROCEDURE PRINTSPI;
-    VAR L1: ^SYSCOMREC;
+      VAR
+        L1: ^SYSCOMREC;
+        { `FWRITESTRING`'s own second parameter is `VAR STRING` -- a
+          literal can't bind to it directly under Apple's real
+          compiler ("actual parameter must be a variable", error 154,
+          confirmed under AppleWin, finding: this session -- a
+          pre-existing bug in this procedure's own already-committed
+          source, not new). Every literal goes through this scratch
+          var instead. }
+        MSG: STRING;
     BEGIN
       L1 := SYSCOM;
-      FWRITESTRING(GFILES[1]^, 'S# ', 0);
+      MSG := 'S# ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
       FWRITEINT(GFILES[1]^, L1^.SEG, 0);
-      FWRITESTRING(GFILES[1]^, ', P# ', 0);
+      MSG := ', P# ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
       FWRITEINT(GFILES[1]^, L1^.JTAB, 0);
-      FWRITESTRING(GFILES[1]^, ', I# ', 0);
+      MSG := ', I# ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
       FWRITEINT(GFILES[1]^, L1^.BOMBIPC, 0);
       FWRITELN(GFILES[1]^)
     END;
 
     PROCEDURE PRTXEQER;
-    VAR L1: ^SYSCOMREC;
+      VAR
+        L1: ^SYSCOMREC;
+        MSG: STRING;
     BEGIN
       L1 := SYSCOM;
-      FWRITESTRING(GFILES[1]^, 'Execution error # ', 0);
+      MSG := 'Execution error # ';
+      FWRITESTRING(GFILES[1]^, MSG, 0);
       FWRITEINT(GFILES[1]^, L1^.XEQERR, 0);
       FWRITELN(GFILES[1]^);
       IF L1^.XEQERR = 10 THEN BEGIN
-        FWRITESTRING(GFILES[1]^, 'I/O error # ', 0);
+        MSG := 'I/O error # ';
+        FWRITESTRING(GFILES[1]^, MSG, 0);
         FWRITEINT(GFILES[1]^, USERINFO.ERRNUM, 0);
         FWRITELN(GFILES[1]^)
       END
@@ -1687,18 +2124,14 @@ PROGRAM PASCALSYSTEM;
       `(segment, procedure)` pair, `(0, 48)`, matching `PASCALSY.1`'s
       own `REPEAT PASCALSY.48() ...` loop this exits back into) against
       hanging at `"Press CONTROL-RESET"` forever. }
-  VAR
-    G1: INTEGER;
-    G2: ^SYSCOMREC;
-    G3: INTEGER;
   BEGIN
     G2 := SYSCOM;
     GFILES[0] := INPUTFIB;
     GFILES[1] := OUTPUTFIB;
-    USERINFO.ERRNUM := IORESULT();
+    USERINFO.ERRNUM := IORESULT;
     UNITCLEAR(3);
     FWRITELN(SYSTERM^);
-    IF MEMAVAIL() <= (2028 + 50) THEN
+    IF MEMAVAIL <= (2028 + 50) THEN
       PRTXEQER
     ELSE IF NOT FETCHDIR(G2^.SYSUNIT) THEN
       PRTXEQER
@@ -1729,7 +2162,8 @@ PROGRAM PASCALSYSTEM;
         WAITSYSVOL;
         EXIT(STUB48)
       END ELSE BEGIN
-        FWRITESTRING(GFILES[1]^, 'Press CONTROL-RESET', 0);
+        MSG := 'Press CONTROL-RESET';
+        FWRITESTRING(GFILES[1]^, MSG, 0);
         FWRITELN(GFILES[1]^);
         WHILE TRUE DO
         BEGIN END
@@ -2057,7 +2491,18 @@ PROGRAM PASCALSYSTEM;
     transfer at 63 blocks per `UNITREAD`/`UNITWRITE` call (`512` bytes/
     block), retrying chunks until `NBLOCKS` reaches 0, bailing out via
     non-local `EXIT` on any nonzero `IORESULT`. }
-  PROCEDURE BLKXFER(UNITNO: INTEGER; BUFADDR: WINDOWP; BYTEOFS: INTEGER;
+  { `BUFADDR` is a `VAR` `WINDOW`, not a `WINDOWP` value pointer -- `@`
+    on a `VAR` formal parameter (`FBLOCKIO`'s own `A`) compiles clean
+    under the fast tier (a mere "address-of operator was not present
+    in UCSD Pascal" warning, already accepted elsewhere in this file
+    for plain variables) but Apple's real compiler rejects it outright
+    ("Error in factor (bad expression)", error 58, confirmed under
+    AppleWin, finding: this session). A `VAR` parameter is already an
+    address at the p-code level either way, so this changes no word
+    counts and should leave `BLKXFER`'s own already-instruction-
+    matched shape untouched -- not yet re-verified against the real
+    binary after this change. }
+  PROCEDURE BLKXFER(UNITNO: INTEGER; VAR BUFADDR: WINDOW; BYTEOFS: INTEGER;
                         NBLOCKS: INTEGER; BLOCKNUM: INTEGER; DOREAD: BOOLEAN);
     VAR
       NB, LEN: INTEGER;
@@ -2067,9 +2512,9 @@ PROGRAM PASCALSYSTEM;
     WHILE NBLOCKS <> 0 DO
     BEGIN
       IF DOREAD THEN
-        UNITREAD(UNITNO, BUFADDR^[BYTEOFS], LEN, BLOCKNUM)
+        UNITREAD(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM)
       ELSE
-        UNITWRITE(UNITNO, BUFADDR^[BYTEOFS], LEN, BLOCKNUM);
+        UNITWRITE(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM);
       IF IORESULT <> 0 THEN EXIT(BLKXFER);
       NBLOCKS := NBLOCKS - NB;
       BYTEOFS := BYTEOFS + LEN;
@@ -2120,7 +2565,7 @@ PROGRAM PASCALSYSTEM;
         F.FEOF := RBLOCK >= F.FHEADER.DLASTBLK;
         IF NOT F.FEOF THEN
         BEGIN
-          BLKXFER(F.FUNIT, @A, I, NBLOCKS, RBLOCK, DOREAD);
+          BLKXFER(F.FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
           IF IORESULT = 0 THEN
           BEGIN
             IF NOT DOREAD THEN F.FMODIFIED := TRUE;
@@ -2135,7 +2580,7 @@ PROGRAM PASCALSYSTEM;
       ELSE
       BEGIN
         FBLOCKIO := NBLOCKS;
-        BLKXFER(F.FUNIT, @A, I, NBLOCKS, RBLOCK, DOREAD);
+        BLKXFER(F.FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
         IF IORESULT <> 0 THEN
           FBLOCKIO := 0
         ELSE

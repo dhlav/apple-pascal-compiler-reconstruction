@@ -990,6 +990,47 @@ a route end to end; everything else is a straight read-and-rebuild.
     All five compile clean with **exact instruction counts against the
     real binary**. Committed.
 
+    **Five real-hardware experiments ruled out five plausible fixes for
+    the `FGET`/`FIOPRIMS` cross-segment call (finding 194)**: tested
+    directly against Apple's own 1.3 `SYSTEM.COMPILER` under AppleWin,
+    not just the fast tier. A plain outer `FORWARD` completed one level
+    inside a `SEGMENT PROCEDURE` fails identically on real hardware
+    (error 123, matching finding 190's host-tool read); marking the
+    `FORWARD` itself `SEGMENT` doesn't change that; declaring each
+    helper as its own independent top-level `SEGMENT` compiles but
+    produces three separate segments, not one shared `FIOPRIMS`;
+    repeating the full header at the nested completion site compiles
+    but silently shadows instead of binding; an inline Regular `UNIT`
+    compiles its own block but fails `USES` with "Unit not in library."
+    `FGET`/`FPUT` and their dependents stay stubs; two angles (an actual
+    library round trip for a `UNIT`-based `FIOPRIMS`, re-reading
+    `PASCALIO.text`'s own `CXP 0,7` comment) are untried.
+
+    **`INITIALIZE` written for real from UCSD's own `SYSSEGS.A.TEXT`,
+    and the whole file compiles clean under Apple's real 1.3 compiler
+    for the first time (finding 195)**. All 11 real procedures mapped
+    with high confidence against UCSD's own source (`INITSYSCOM`/
+    `INIT_FILLER`/`INITUNITABLE`/`INIT_ENTRY`/`INITHEAP`/
+    `INITWORKFILE`/`TRY_OPEN`/`INITFILES`, plus two Apple-only nested
+    helpers UCSD has no equivalent for); `.7`/`.8` match the real
+    binary exactly on params/data/instructions, most of the rest close
+    or exact on at least one axis. Two real `CSP 21`/`22` calls
+    (`LoadSegment`/`UnloadSegment`) bracket the whole body in the real
+    binary but aren't implemented as callable identifiers in either
+    compiler -- left out, open question. Getting this to compile
+    surfaced and fixed **four real Apple-compiler divergences the fast
+    tier had been silently letting through in already-committed code**:
+    a string literal can't bind to a `VAR STRING` parameter (`FPTITLE`/
+    `PRINTSPI`/`PRTXEQER`/`EXECERROR`, all pre-existing); a block's
+    `VAR` section can't follow its own nested procedure declarations
+    (`EXECERROR`); a niladic CSP called with `()` is a hard parameter-
+    count error on real Apple, not just a style warning (`IORESULT()`/
+    `MEMAVAIL()` in `EXECERROR`); `@` doesn't bind to a `VAR` formal
+    parameter (`FBLOCKIO`'s own call into `BLKXFER`, fixed by making
+    `BLKXFER`'s own `BUFADDR` a `VAR WINDOW` instead of a `WINDOWP`).
+    All four fixed; the full 3746-line file now compiles start to
+    finish under AppleWin with zero fatal errors -- the first time the
+    whole file has been run through the acceptance tier at once.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
