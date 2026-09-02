@@ -623,7 +623,32 @@ PROGRAM PASCALSYSTEM;
     BOOLEAN`, `.4` a plain `PROCEDURE(VAR F: FIB)` -- confirmed by
     argument count at `FGET`'s own three call sites, not guessed. `.5`
     isn't tied to a known caller yet (plausibly `FPUT`'s own
-    counterpart, still unwritten). }
+    counterpart, still unwritten).
+
+    **This `SEGMENT PROCEDURE` heading is known to be the wrong shape**
+    (finding 200). `FIOPRIMS`'s own `SEGKIND` in both 1.3 binaries is
+    `LINKED_INTRINS`, not `LINKED`: it is an **intrinsic unit**, and
+    the only one in the operating system. That is what explains the
+    three things this heading cannot -- why the four helpers share one
+    segment (they are one unit's `IMPLEMENTATION`), why `FIOPRIMS.1`
+    holds zero instructions (an empty unit initialization part), and
+    why `FGET` may call `FPWINADV`/`FPDLE`/`FPPEEK` by name at all
+    (they are in the unit's `INTERFACE`, visible to the host "just as
+    if they had been declared in the host program"). Findings 190 and
+    194 spent five real-hardware experiments on `SEGMENT PROCEDURE`
+    variations because of this heading; none of them could have
+    worked.
+
+    Left standing for now only because switching to the real shape --
+    `(*$U-*)`, `UNIT FIOPRIMS; INTRINSIC CODE 2;`, `INTERFACE`,
+    `IMPLEMENTATION`, terminated `BEGIN END;` -- also requires the
+    host to `USES` it, and `USES` requires a real library round trip
+    (compile the unit to a library of its own, then compile this file
+    against it, then link). `src/pascal/units/1.3/PASCALIO.text` is
+    already exactly that shape and already verified, so the template
+    is in hand; the build wiring is not. Until then these four bodies
+    stay here, compiling but structurally misfiled, and `FGET`/`FPUT`
+    stay stubs. }
   SEGMENT PROCEDURE FIOPRIMS;
 
     { `FIOPRIMS.2` -- soft-buffer window advance (finding 174, closing
@@ -2585,7 +2610,17 @@ PROGRAM PASCALSYSTEM;
     of 56 -- caught before commit, reverted). `G7`'s own real role
     (used directly as `UNITREAD`/`UNITWRITE`'s own unit-number
     argument, but reads as `F^.FISBLKD` under this file's own probed
-    `FIB` layout, findings 150/151) is also still unconfirmed. }
+    `FIB` layout, findings 150/151) is also still unconfirmed.
+
+    The other half of why this is still a stub -- `FGET` calling into
+    `FIOPRIMS` -- is no longer an open question about `FORWARD`s and
+    scope (findings 190/194). `FIOPRIMS` is an intrinsic unit (finding
+    200, `SEGKIND` = `LINKED_INTRINS`), so `FPWINADV`/`FPDLE`/`FPPEEK`
+    reach this body through the unit's own `INTERFACE`, not through
+    any cross-`SEGMENT` declaration trick. `FGET`'s decode itself
+    (finding 190, 233 instructions, read end to end) is ready to write
+    the moment the unit is built and `USES`d rather than nested here
+    as a `SEGMENT PROCEDURE`. }
   PROCEDURE FGET; BEGIN END;
   PROCEDURE FPUT; BEGIN END;
   { `XSEEK`/`XREADREAL`/`XWRITEREAL` (`PASCALSY.9`/`.14`/`.15`, finding

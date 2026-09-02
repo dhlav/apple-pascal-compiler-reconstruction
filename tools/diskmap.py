@@ -32,6 +32,10 @@ def main() -> int:
         "is a codefile older than the field. The system enforces it -- 1.3",
         "refuses a version-2 SYSTEM.COMPILER outright (finding 99).",
         "mtype is 6502 exactly when the segment holds native procedures.",
+        "segkind tells a unit from a segment procedure and nothing else",
+        "does: LINKED_INTRINS is an intrinsic unit, LINKED an ordinary",
+        "program segment. It is what says SYSTEM.PASCAL's own FIOPRIMS is",
+        "a unit, not the SEGMENT PROCEDURE it was read as (finding 200).",
         "",
     ]
     for path in sorted(DISKS.glob("*.dsk")):
@@ -52,7 +56,8 @@ def main() -> int:
                 n = len(s.native_procedures)
                 lines.append(
                     f"      slot{s.index:2d} seg{s.seg_num:<3d} {s.name:9s} "
-                    f"v{s.version} {s.mtype:10s} {s.length:6d} B  "
+                    f"v{s.version} {s.mtype:10s} {s.segkind:16s} "
+                    f"{s.length:6d} B  "
                     f"{p:3d} p-code  {n:2d} native")
         lines.append("")
     OUT.parent.mkdir(parents=True, exist_ok=True)

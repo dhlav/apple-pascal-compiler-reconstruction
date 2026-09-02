@@ -1079,6 +1079,30 @@ a route end to end; everything else is a straight read-and-rebuild.
     is unambiguous that this exact call really does happen. Still
     open.
 
+    **`FIOPRIMS` is an INTRINSIC UNIT, and that is why `FGET` would
+    never compile (finding 200)** -- the single most important result
+    in this file so far. The segment dictionary's `SEGKIND` word
+    (`0x0C0 + 2*slot`), which `codefile.py` documented from the day it
+    was written and never parsed, reads `LINKED_INTRINS` for
+    `FIOPRIMS` and `LINKED` for every other segment of both 1.3
+    operating systems. Every code segment of `SYSTEM.LIBRARY` -- units
+    this project has already reconstructed -- reads back the same way,
+    and 1.1 has no `FIOPRIMS` at all (segment 2 there is `DEBUGGER`).
+    So findings 190 and 194 spent five real-hardware experiments on
+    `SEGMENT PROCEDURE` shapes testing a premise one unread word
+    contradicts. The unit reading explains everything they could not:
+    one shared segment (one `IMPLEMENTATION`), `FIOPRIMS.1` with zero
+    instructions (an empty initialization part), and `FGET` naming
+    `FPWINADV`/`FPDLE`/`FPPEEK` at all (they are in the `INTERFACE`).
+    Now a probe (`probe_segkind.py`, in `build_all.py`) and a column
+    in `analysis/diskset-inventory.txt`. The real shape --
+    `(*$U-*)`/`UNIT FIOPRIMS; INTRINSIC CODE 2;`/`INTERFACE`/
+    `IMPLEMENTATION`/`BEGIN END;` -- is confirmed compiling on real
+    hardware, and `src/pascal/units/1.3/PASCALIO.text` is already
+    exactly that shape and already verified, so the template is in
+    hand. What remains is build wiring, not language: the host needs a
+    real `USES`, which needs the unit compiled to a library first.
+
     **`GETCMD.2` (`RUNWORKFILE`) written for real -- and a real
     numbering-mechanism correction along the way (finding 199)**.
     Discovered by accident while giving `RUNWORKFILE` forward access to

@@ -16850,3 +16850,101 @@ not (`24` real vs `166` here, once `TITLE`/`ASSSTATUS`/`MSG` locals are
 counted) -- almost certainly the same literal-into-`VAR-STRING` `MSG`
 workaround cost seen everywhere else in this file (findings 195/197);
 not yet instruction-checked (still calls into `.19`/`.20`, both stubs).
+
+## 200. `FIOPRIMS` is an INTRINSIC UNIT, not a `SEGMENT PROCEDURE` -- findings 190/194's blocker was a wrong structural premise, and the codefile said so all along
+
+VERIFIED BINARY FACT, from a field this repo's own reader documented and
+never parsed. This closes the root cause of findings 190 and 194.
+
+**The field.** The segment dictionary carries `SEGKIND` at `0x0C0 + 2 *
+slot`. `codefile.py`'s own header comment has listed it since the reader
+was written; nothing ever read it. Parsed now, across the disk set:
+
+| segment | 1.3 128K | 1.3 64K | 1.1 |
+|---|---|---|---|
+| `PASCALSY` | LINKED | LINKED | LINKED |
+| `USERPROG` | LINKED | LINKED | LINKED |
+| segment 2 | **`FIOPRIMS` LINKED_INTRINS** | **`FIOPRIMS` LINKED_INTRINS** | `DEBUGGER` LINKED |
+| `PRINTERR`/`INITIALI`/`GETCMD`/`FILEPROC` | LINKED | LINKED | LINKED |
+
+`FIOPRIMS` is the **only** segment in either 1.3 operating system that is
+not `LINKED`, and `LINKED_INTRINS` is the manual's own code 6, "an
+Intrinsic Unit properly linked with its called intrinsic units". Every
+code segment of `SYSTEM.LIBRARY` -- `LONGINTI`, `PASCALIO`, `CHAINSTU`,
+`TRANSCEN`, `TURTLEGR`, `APPLESTU`, all units this project has already
+reconstructed -- reads back `LINKED_INTRINS` too, which is what makes
+`FIOPRIMS`'s own value mean *unit* rather than merely *unusual*. And 1.1
+has no `FIOPRIMS` at all: segment 2 there is `DEBUGGER`, plain `LINKED`.
+The unit is a 1.2/1.3 addition that took the slot the debugger used to
+hold. All of it is now a probe (`probe_segkind.py`, wired into
+`build_all.py`) and a column in `analysis/diskset-inventory.txt`.
+
+**Why this is the answer to findings 190/194.** Everything those two
+findings could not explain falls out of the unit reading at once:
+
+* *Why the four helpers share one segment.* They are one unit's
+  `IMPLEMENTATION`. Separate top-level `SEGMENT` procedures produce one
+  segment each -- finding 194 experiment 2 measured exactly that, three
+  segments where one was wanted, and correctly rejected the shape without
+  seeing what it implied.
+* *Why `FIOPRIMS.1` holds zero instructions.* It is the unit's
+  initialization part, `BEGIN END`, with no statements. Every other
+  segment-1 procedure in the file (`USERPROG`, `PRINTERR`, `INITIALI`,
+  `GETCMD`, `FILEPROC`) has a real body, because every one of those really
+  is a segment procedure. This was sitting in plain sight in the sweep
+  tables and read as an oddity rather than a signature.
+* *Why `FGET` can call `FPWINADV`/`FPDLE`/`FPPEEK` by name.* They are in
+  the unit's `INTERFACE`, which the manual describes as visible to the host
+  "just as if they had been declared in the host program". No cross-scope
+  `FORWARD` is involved, which is why no arrangement of `FORWARD`s ever
+  worked.
+* *Why all five of finding 194's experiments failed.* Every one of them was
+  a `SEGMENT PROCEDURE` shape, and none of them was a unit. Experiment 5
+  did reach for an inline `UNIT` and stopped at "Unit not in library"
+  (error 190) -- one step short, and the write-up recorded a real library
+  round trip as untried. It is not untried speculation any more; it is the
+  build the binary demands.
+
+**Confirmed on real hardware, as far as it goes.** A minimal
+`(*$U-*) PROGRAM PASCALSYSTEM;` carrying an inline `UNIT FIOPRIMS;
+INTRINSIC CODE 2;` compiles under Apple's own 1.3 compiler: both interface
+procedures compile, the unit is emitted as its own segment (the compiler
+prints `FIOPRIMS` as a compiled block), `BEGIN END;` -- semicolon, not
+period -- terminates the unit, and the host program's own procedures then
+resume and compile normally after it. The one thing that does not work is
+the host *calling* those procedures: error 104, undeclared identifier. So
+the interface is not automatically in scope for text that merely follows
+the unit in the same file; the host needs a real `USES`, and `USES` needs
+the unit to exist as a library. That is the remaining build question, and
+it is a build question, not a language one.
+
+**The template already exists in this repo.** `src/pascal/units/1.3/
+PASCALIO.text` is exactly this shape and is already verified: `(*$U-*)`,
+`PROGRAM PASCALSYSTEM;`, the operating system's own `CONST`/`TYPE`/`VAR`,
+`FORWARD`s for the OS procedures the unit calls (`OSPROC45`..`OSPROC49`,
+each commented with its own `CXP 0,n`), then `UNIT PASCALIO; INTRINSIC
+CODE 31;` with `INTERFACE` and `IMPLEMENTATION`. Its own header comment
+already worked out *why* it has to be written that way -- the unit "reads
+SYSCOM at lex -1 offset 1 and it takes a FIB apart field by field, so it
+was compiled inside the operating system's own `(*$U-*)` source and needs
+a host" (finding 92a/94a). `FIOPRIMS` is the same situation with a
+different segment number: `INTRINSIC CODE 2`, in the range the language
+reference reserves ("Segments 2 through 6 are reserved for use by the
+system").
+
+**What this does not yet settle.** How Apple got the unit's code *into*
+`128K.PASCAL` rather than leaving it in `SYSTEM.LIBRARY`, which is where an
+intrinsic unit normally stays. The operating system cannot depend on
+`SYSTEM.LIBRARY` being loaded in order to boot, so something -- the
+`LIBRARY` utility, or the linker -- placed segment 2 into the OS codefile
+and stamped it `LINKED_INTRINS`. This project drives all three of Apple's
+tools already, so that is answerable at the acceptance tier rather than by
+reading.
+
+**Method note worth keeping.** Five real-hardware experiments across two
+sessions went into finding 194, all of them well-run, and every one was
+testing variations on a premise that a single unparsed word in the segment
+dictionary contradicts. The lesson is not "test more shapes" but "read
+every field the format defines before modelling what produced it" -- the
+reader's own documentation named `SEGKIND` and its absence from the parse
+was never noticed because nothing ever asked for it.

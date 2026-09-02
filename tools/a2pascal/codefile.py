@@ -62,6 +62,18 @@ MTYPES = {
     5: "z80", 6: "ga440", 7: "6502", 8: "6800", 9: "ti9900",
 }
 
+# SEGKIND, the word at 0x0C0 + 2*slot. The manual's own list (1.3 manual
+# IV, "Codefile Format"). This reader documented the field from the start
+# and never parsed it, which is how `FIOPRIMS` sat mislabelled as a
+# `SEGMENT PROCEDURE` through findings 190 and 194: it is the one segment
+# in the whole operating system that is not LINKED, and the difference is
+# the answer to why nothing shaped like a segment procedure would compile
+# (finding 200).
+SEGKINDS = {
+    0: "LINKED", 1: "HOSTSEG", 2: "SEGPROC", 3: "UNITSEG", 4: "SEPRTSEG",
+    5: "UNLINKED_INTRINS", 6: "LINKED_INTRINS", 7: "DATASEG",
+}
+
 
 def _w(b: bytes, o: int) -> int:
     return struct.unpack_from("<H", b, o)[0]
@@ -117,6 +129,7 @@ class Segment:
     seg_num_tail: int    # from the segment's own trailing word
     mtype: str
     version: int
+    segkind_raw: int = 0 # SEGKIND word, 0x0C0 + 2*index
     data: bytes = field(repr=False, default=b"")
     procedures: list[Procedure] = field(default_factory=list)
     # A split segment (finding 50) is assembled into one sparse image, so
@@ -143,6 +156,22 @@ class Segment:
     @property
     def is_split(self) -> bool:
         return len(self.chunks) > 1
+
+    @property
+    def segkind(self) -> str:
+        """What kind of segment this is, from SEGKIND (finding 200).
+
+        This is how a unit is told from a segment procedure without
+        guessing: an `INTRINSIC` unit reads back `LINKED_INTRINS`, an
+        ordinary program segment `LINKED`. It is also the only field that
+        distinguishes them -- name, SEGINFO, mtype and the procedure
+        dictionary all look identical either way.
+        """
+        return SEGKINDS.get(self.segkind_raw, f"?{self.segkind_raw}")
+
+    @property
+    def is_intrinsic_unit(self) -> bool:
+        return self.segkind_raw in (5, 6)
 
     def in_chunk(self, off: int) -> bool:
         """True if `off` is a real byte of the file rather than padding."""
@@ -195,7 +224,8 @@ class CodeFile:
                 index=i, name=name, block=addr, length=leng,
                 seg_num=info & 0xFF, seg_num_tail=tail & 0xFF,
                 mtype=MTYPES.get((info >> 8) & 0xF, f"?{(info >> 8) & 0xF}"),
-                version=info >> 13, data=raw,
+                version=info >> 13, segkind_raw=_w(d, 0x0C0 + i * 2),
+                data=raw,
                 chunks=[(0, leng, i)],
             ))
         absorbed = self._join_splits(out)

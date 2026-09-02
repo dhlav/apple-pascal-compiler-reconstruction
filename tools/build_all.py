@@ -22,6 +22,11 @@ STEPS = [
     # actually is, and a 1.3 disk has to be stamped version 6 except where
     # finding 99 says otherwise.
     ("SEGINFO version and mtype", "probes/probe_seginfo.py"),
+    # Not an artifact: SEGKIND is the one field that tells a unit from a
+    # segment procedure, and it is what says FIOPRIMS is an intrinsic unit
+    # rather than the SEGMENT PROCEDURE findings 190/194 kept failing to
+    # compile (finding 200).
+    ("SEGKIND: FIOPRIMS is a unit", "probes/probe_segkind.py"),
     # Not an artifact: the three APPLE3 utilities 1.3 shipped without
     # rebuilding differ from their 1.1 copies only inside SEGINFO.
     ("utilities 1.3 did not rebuild", "probes/probe_stale_utils.py"),
