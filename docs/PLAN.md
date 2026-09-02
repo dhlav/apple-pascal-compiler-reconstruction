@@ -1058,6 +1058,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     at a real and now-documented word/instruction cost against the
     otherwise-near-exact match. All three verified compiling clean on
     real Apple 1.3 hardware, whole file.
+
+    **`PASCALSY.43` finally named and written for real -- `TITLENORM`
+    -- and `GETCMD.6` (`BADTITLE`) with it (finding 198)**. `PASCALSY.
+    43` sat under the wrong name (`COMMAND`, ruled out by finding 51c
+    long ago but never fixed) and the wrong signature; now it's the
+    real seven-instruction forwarder into `FILEPROC` arm 4 (`FPTITLE`),
+    exact on params and instructions against the real binary.
+    `BADTITLE` (`SCANTITLE` plus an "Illegal filename" report) is
+    exact on params/data, close on instructions. `GETCMD.27`
+    attempted and reverted: its own real body calls `FOPEN` directly
+    on `EXEC_FILE`, which is declared `FILE` (finding 145) not `FIB`
+    -- a real type mismatch `ucsdpsys_compile` rejects outright, not
+    resolved this session. Left open rather than forced.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

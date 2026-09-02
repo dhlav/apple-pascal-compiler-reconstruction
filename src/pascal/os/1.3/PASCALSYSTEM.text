@@ -487,7 +487,21 @@ PROGRAM PASCALSYSTEM;
   FUNCTION SPACEWAIT(FLUSH: BOOLEAN): BOOLEAN; FORWARD;
   FUNCTION GETCHAR(FLUSH: BOOLEAN): CHAR; FORWARD;
   FUNCTION FETCHDIR(FUNIT: UNITNUM): BOOLEAN; FORWARD;
-  PROCEDURE COMMAND; FORWARD;
+  { `PASCALSY.43` -- not `COMMAND` (finding 51c already ruled that name
+    out; it sat here only to hold the procedure's number). It is the
+    seven-instruction forwarder into `FILEPROC`'s arm 4 (`FPTITLE`),
+    already independently confirmed by `probe_osproc43.py` from all
+    four disk binaries -- every `CXP 0,43` call site anywhere on the
+    disk set pushes an address, a 0/1 flag and a length, matching
+    `FPTITLE`'s own already-written `(VAR S: STRING; SUFFIX: BOOLEAN;
+    N: INTEGER)`. `params`/instructions **exact** against the real
+    binary (`6`/`7`); the one difference from the probe's own
+    reference forwarder is pushing `NIL` for the unused `ARGPTR` slot
+    where the real binary pushes another dummy buffer's address --
+    `FPTITLE` never reads that argument either way, so this is
+    inert, not forced. }
+  PROCEDURE TITLENORM(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
+    FORWARD;
 
   { Procedures 44-47: past the 41/42 UCSD-declared set (finding 136),
     genuinely new 128K/1.3 territory -- no UCSD source, no Tribby
@@ -1331,7 +1345,39 @@ PROGRAM PASCALSYSTEM;
       GETYESNO := (CH = 'Y') OR (CH = 'y')
     END;
     PROCEDURE GC05(A, B, C, D: INTEGER); BEGIN END;
-    PROCEDURE GC06(A, B, C: INTEGER); BEGIN END;
+    { `GETCMD.6` = `BADTITLE`: runs `SCANTITLE` purely for its `VAR`
+      outputs (the real body's own boolean result is discarded too --
+      `IF SCANTITLE(...) THEN ;`, this file's own established
+      bare-call idiom, finding 165) and reports "Illegal filename" if
+      the parsed volume ID comes back empty. Called from `.27` before
+      accepting a new `EXEC` filename. `params`/`data` exact against
+      the real binary (`6`/`110`); instructions close (`28` vs `30`)
+      -- the real body's own `LLA 4`/`SLDL 3`/`SAS 80` copies `TITLE`
+      into a local before calling `SCANTITLE`, which this candidate
+      doesn't reproduce explicitly, yet lands on the same total data
+      footprint regardless (`MSG`, needed for the same literal-into-
+      `VAR-STRING` workaround as `.23`/`.26`, apparently costing the
+      same words a real copy would have). Verified compiling clean on
+      real Apple hardware. }
+    FUNCTION BADTITLE(VAR TITLE: STRING): BOOLEAN;
+      VAR
+        FVID: VID;
+        FTID: TID;
+        FSEGS: INTEGER;
+        FKIND: FILEKIND;
+        MSG: STRING;
+    BEGIN
+      BADTITLE := FALSE;
+      IF SCANTITLE(TITLE, FVID, FTID, FSEGS, FKIND) THEN ;
+      IF FVID = '' THEN
+      BEGIN
+        FWRITELN(GFILES[1]^);
+        MSG := 'Illegal filename';
+        FWRITESTRING(GFILES[1]^, MSG, 0);
+        FWRITELN(GFILES[1]^);
+        BADTITLE := TRUE
+      END
+    END;
     PROCEDURE GC07(A: INTEGER); BEGIN END;
     PROCEDURE GC08; BEGIN END;
     PROCEDURE GC09(A, B: INTEGER); BEGIN END;
@@ -3530,7 +3576,12 @@ PROGRAM PASCALSYSTEM;
       SYSCOM^.GDIRP := NIL
     END
   END;
-  PROCEDURE COMMAND; BEGIN END;
+  PROCEDURE TITLENORM;
+    VAR
+      DUMMYF: FIB;
+  BEGIN
+    FILEPROC(4, DUMMYF, S, SUFFIX, NIL, N)
+  END;
 
   { PASCALSY.44: append one character to the EXEC write buffer,
     auto-flushing near the 512-byte boundary, and auto-closing on a

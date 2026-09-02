@@ -16744,3 +16744,58 @@ real Apple hardware with the fix in place, whole file, zero errors.
 the emulator, not after -- it is now the single most common mistake
 this session made while adding new code to this file, not just an
 inherited one.
+
+## 198. `PASCALSY.43` finally named and written for real (`TITLENORM`), and `GETCMD.6` (`BADTITLE`) with it
+
+VERIFIED BINARY FACT for `TITLENORM`; STRONG INFERENCE for `BADTITLE`.
+Both verified compiling clean on real Apple 1.3 hardware, whole file,
+zero errors.
+
+**`PASCALSY.43` = `TITLENORM`.** Finding 51c ruled out the name
+`COMMAND` for this procedure a long time ago but left the file
+carrying that wrong name anyway, with the wrong signature too (a
+bare, no-argument `PROCEDURE COMMAND;`), purely to hold procedure 43's
+slot in the forward-declared list. `probe_osproc43.py` already
+established the real shape from all four disk binaries: a
+seven-instruction forwarder into `FILEPROC`'s arm 4 (`FPTITLE`,
+written earlier this session), taking exactly `FPTITLE`'s own
+signature, `(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER)`. Written
+that way now, with a throwaway local `FIB` for the arm-dispatch
+signature's unused `F`/`ARGPTR` slots (matching the family of
+already-committed `FOPEN`/`FCLOSE`/`FRESET` forwarders' own style).
+**Exact match**: `params`/instructions both exact against the real
+binary (`6`/`7`); the only difference from `probe_osproc43.py`'s own
+reference disassembly is pushing `NIL` for the unused `ARGPTR` where
+the real binary pushes another dummy buffer's address -- `FPTITLE`
+never reads that argument either way, so this is inert, not forced.
+
+**`GETCMD.6` = `BADTITLE(VAR TITLE: STRING): BOOLEAN`.** Runs
+`SCANTITLE` purely for its `VAR` outputs (its own boolean result
+discarded via this file's own established bare-call idiom, `IF
+SCANTITLE(...) THEN ;`, finding 165) and reports "Illegal filename" if
+the parsed volume ID comes back empty. Called from (still-stub)
+`.27`, `New exec name` entry, before accepting a new `EXEC` filename.
+`params`/`data` exact against the real binary (`6`/`110`);
+instructions close (`28` vs `30`) -- the real body's own `LLA 4`/
+`SLDL 3`/`SAS 80` copies `TITLE` into a local before calling
+`SCANTITLE`, not reproduced explicitly here, yet landing on the exact
+same total local-word footprint regardless (the `MSG` scratch var this
+candidate needs for the same literal-into-`VAR-STRING` workaround as
+`.23`/`.26` apparently costs the same words a real copy would have).
+
+**`GETCMD.27` attempted and reverted, a real open question left for
+next time.** Its own real body (`New exec name:` prompt, `BADTITLE`
+gate, `TITLENORM` normalization, then opens the named file as the new
+`EXEC` write target and primes the `EXEC` write buffer via the
+already-real `EXECWRITEBLK`/`EXECPUTCH`) calls `PASCALSY.5` (`FOPEN`)
+directly on `EXEC_FILE` -- but `EXEC_FILE` is declared `FILE` (an
+ordinary, untyped Pascal file variable, finding 145), not `FIB`, and
+`FOPEN`'s own established signature is `VAR F: FIB`. The type
+mismatch is real (`ucsdpsys_compile` rejects it outright: "given a raw
+file variable... but declaration of F is reference to record FIB
+type"), and nothing this session tried resolves it -- either `FOPEN`
+genuinely accepts more than a strict `FIB` for this call in Apple's
+real compiler (an untyped `VAR` parameter, plausible but unconfirmed),
+or `EXEC_FILE`'s own declared type needs to be reconsidered, or the
+real source manages this file some other way this project hasn't
+found yet. Left uncommitted rather than forced.
