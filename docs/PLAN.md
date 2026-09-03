@@ -1472,20 +1472,27 @@ a route end to end; everything else is a straight read-and-rebuild.
   idle detection) -- Command-level I/O is genuinely off CONSOLE: and
   pointed at REMIN:/REMOUT:. Fully recoverable (RAM-only, a reboot
   reverts it).
-  What's still blocked: the actual byte transfer over AppleWin's SSC+TCP
-  socket. `tools/runemu.py --ssc` now wires up `-s2 ssc` + the
-  `Slot 2\Serial Port Name=TCP` registry value AppleWin itself reads.
-  `UNITSTATUS`/`UNITCLEAR` on units 7/8 both succeed (`IORESULT=0`), but
-  a plain `UNITWRITE(8,...)` -- even the manual's own documented call
-  shape -- hangs indefinitely, with or without AppleWin's `-modem`
-  switch, and `netstat` confirms port 1977 never even binds -- meaning
-  Apple Pascal's REMOUT: driver never touches the SSC's hardware
-  registers at all during the hang (confirmed by reading AppleWin's own
-  `SerialComms.cpp`: every register handler calls the bind/listen setup
-  as its first line). Root cause not yet found; see finding 131 for what
-  hasn't been tried yet (single-stepping AppleWin itself, IRQ/DIPSW
-  timing at high emulation speed). Scratch programs live outside the
-  repo for now, not moved in until the round trip actually works.
+  **No longer blocked (finding 210).** The byte transfer over AppleWin's
+  SSC+TCP socket works, both directions, and the old diagnosis was wrong:
+  the driver *was* reaching the hardware. `CheckComm()` binding port 1977
+  does not make the card report carrier -- only an accepted connection
+  does -- so with nothing connected, DSR and DCD read inactive and Apple's
+  `REMOUT:` driver waits for it forever. Since AppleWin creates the socket
+  only on the guest's first register access, the host client has to
+  poll-connect rather than connect once; that is the entire fix. The
+  status register reads `$70` unconnected and `$10` connected, measured
+  both ways.
+  Proven end to end through Apple's own code: the Filer's `L(dir` with
+  `SYSHD:,REMOUT:` delivered a whole directory listing as clean text, and
+  `tools/remote/REMTEST.text` (`UNITWRITE` to unit 8, blocking `UNITREAD`
+  from unit 7, echo back) round-tripped `PING4321` unchanged. The pieces
+  and the four things that make or break it are in `tools/remote/`.
+  What is left is the console redirect itself: `REDIRIO` was scratch and
+  has been lost, so it needs rewriting. Installed as `SYSTEM.STARTUP` it
+  would arm the channel with no keystrokes at all, giving compile output
+  as text instead of a screenshot, with no foreground-window requirement
+  and no 60ms-per-key pacing. Note that the swap is RAM-only with no way
+  back but a reboot, so a wedged run cannot be rescued from the keyboard.
 
 ## The compiler phase, kept as the record
 

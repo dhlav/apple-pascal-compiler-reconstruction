@@ -1,0 +1,38 @@
+{ REMTEST -- prove the REMIN:/REMOUT: round trip over AppleWin's SSC.
+
+  Scratch, not part of the disk-set reconstruction. Three steps, in this
+  order on purpose:
+
+    1. UNITWRITE to REMOUT: (unit 8). This is also what arms AppleWin's
+       listener -- the TCP socket is not created until the guest touches
+       an SSC register, so nothing on the host can connect before this.
+       The host client therefore has to poll-connect, not connect once.
+    2. UNITREAD from REMIN: (unit 7), blocking until 8 characters have
+       arrived. This is the direction that has never been tested.
+    3. Echo those 8 characters back out to REMOUT:, so one run proves
+       both directions and proves they carry the same bytes.
+
+  Everything it says about its own progress goes to the real CONSOLE:,
+  so the screen stays readable and the socket carries only test data. }
+
+PROGRAM REMTEST;
+  VAR
+    BUF: PACKED ARRAY [0..79] OF CHAR;
+    I: INTEGER;
+BEGIN
+  WRITELN('REMTEST 1: writing HELLO to REMOUT:');
+  BUF[0] := 'H';
+  BUF[1] := 'E';
+  BUF[2] := 'L';
+  BUF[3] := 'L';
+  BUF[4] := 'O';
+  UNITWRITE(8, BUF[0], 5);
+  WRITELN('REMTEST 2: blocking on REMIN: for 8 characters');
+  UNITREAD(7, BUF[0], 8);
+  WRITE('REMTEST 3: got [');
+  FOR I := 0 TO 7 DO
+    WRITE(BUF[I]);
+  WRITELN(']');
+  UNITWRITE(8, BUF[0], 8);
+  WRITELN('REMTEST 4: echoed back, done')
+END.

@@ -12235,6 +12235,17 @@ Scratch programs (`IOPROBE.TEXT`, `REDIRIO.TEXT`, `SSCCHECK.TEXT`,
 scratchpad) -- not part of the disk-set reconstruction, and not moved in
 until the round trip actually works end to end.
 
+**Superseded in part by finding 210.** The round trip now works, both
+directions, and the diagnosis above is wrong: the driver *was* reaching the
+hardware. `CheckComm()` binding port 1977 does not make the card report
+carrier -- only an accepted connection does -- so with nothing connected,
+DSR and DCD read inactive and the driver waits forever. The host client has
+to poll-connect, because AppleWin creates the socket only on the guest's
+first register access. Everything above about `RTPTR`/`WTPTR`, the unit
+table and `REDIRIO` itself stands; only the "never touches the hardware"
+conclusion and the "blocked" status do not. The scratch programs named here
+were indeed lost; `tools/remote/` now holds their replacements.
+
 ## 132. `SETUP.text` -- `SETUP10` (the numeric-entry reader) written for real, exact
 
 The largest remaining flat-level stub before this session, and what
@@ -17973,3 +17984,107 @@ the same either way, so nothing here can tell them apart. Left alone
 rather than renamed on a guess.
 
 **38 -> 44 exact.** `PASCALSY.1`, `.16`, `.17`, `.20`, `.54`, `.56`.
+
+## 210. The `REMIN:`/`REMOUT:` round trip works: finding 131's diagnosis was wrong, and the missing piece was a connected TCP client
+
+**VERIFIED BINARY FACT** (host side, measured live). Finding 131 left this
+blocked with the conclusion that Apple Pascal's `REMOUT:` driver "never
+executes a single SSC register access during the hang -- it's stuck in
+software, before ever reaching the hardware." That reasoning ran: every
+register handler in AppleWin's `SerialComms.cpp` calls `CheckComm()` as its
+first line, `CheckComm()` binds port 1977, `netstat` showed no bind,
+therefore no register was touched.
+
+The premise is true and the conclusion does not follow. **`CheckComm()`
+binding the port does not make the card look connected**, and it is the
+*connection*, not the bind, that the driver waits for.
+
+`CommStatus` (checked against the `v1.32.0.0` tag, which is the installed
+binary, not `master`) reports the modem lines from the accept socket:
+
+    else if (m_hCommListenSocket != INVALID_SOCKET && m_hCommAcceptSocket != INVALID_SOCKET)
+        modemStatus = MS_RLSD_ON | MS_DSR_ON | MS_CTS_ON;
+
+With the port bound but nobody connected, `m_hCommAcceptSocket` is still
+invalid, so `modemStatus` stays at the default and DSR/DCD read **inactive**
+-- they are active low, so their status bits come back *set*. Apple's
+`REMOUT:` driver waits for carrier and spins forever. Measured directly from
+Applesoft on a bare //e with no disks at all, which lands at the `]` prompt
+when every slot is empty:
+
+    PRINT PEEK(49321)   ->  112   ($70: DSR inactive, DCD inactive, TX empty)
+    ... host client connects ...
+    PRINT PEEK(49321)   ->   16   ($10: DSR active, DCD active, TX empty)
+
+That is a check that could have failed and did not: `112` before, `16`
+after, exactly what the source predicts.
+
+**The chicken-and-egg, and the fix.** AppleWin creates the listening socket
+only when the guest first touches an SSC register, so nothing can connect
+before the guest starts talking -- and the guest will not talk until
+something has connected. The way through is simply that **the host client
+must poll-connect** rather than connect once. It then attaches within a
+couple of hundred milliseconds of the first register touch, and the driver's
+next carrier poll succeeds. In practice Apple Pascal's own boot-time slot
+probe arms the listener, so a client polling from before launch is connected
+about ten seconds into a boot, long before anything needs it.
+
+**A second thing that silently eats bytes.** After reset the ACIA command
+register is `0`, which on a SY6551 means *transmitter disabled*, and
+AppleWin discards writes in that state without any error:
+
+    if ((m_uCommandByte & CMD_TX_MASK) == CMD_TX_IRQ_DIS_RTS_HIGH)
+        return 0;
+
+`POKE 49320,65` did nothing at all until `POKE 49322,11` enabled the
+transmitter; then the same poke delivered `A` to the socket. Pascal's own
+driver does this initialisation itself -- this only bites a hand-written
+probe, which is exactly what the earlier investigation was using.
+
+### 210a. Both directions, through Apple's own code
+
+Output, with no program written at all: the Filer's own `L(dir` command
+with the destination appended, `SYSHD:,REMOUT:`, delivered the whole
+directory over TCP as clean text and returned to the Filer prompt --
+
+    SYSHD:
+    SYSTEM.APPLE        32    3-Sep-85
+    ...
+    32/32 files <listed/in dir>, 1224 blocks used, 2872 unused
+
+1239 bytes, no hang, through Apple's real driver rather than any probe.
+
+Input -- the direction finding 131 never reached -- needed one small
+program, `tools/remote/REMTEST.text`: `UNITWRITE(8, ...)` `HELLO`, then a
+blocking `UNITREAD(7, BUF[0], 8)`, then echo those eight characters back
+out. Compiled clean on Apple's own compiler (37 lines) and run from the
+Command level:
+
+    REMTEST 1: writing HELLO to REMOUT:
+    REMTEST 2: blocking on REMIN: for 8 characters
+    REMTEST 3: got [PING4321]
+    REMTEST 4: echoed back, done
+
+and on the host, `HELLOPING4321` -- the guest's greeting, the host's reply
+delivered into a blocking `UNITREAD`, and the same eight bytes echoed back
+unchanged. Both directions carry bytes and they are the same bytes.
+
+**What this unblocks.** Finding 131 had already proved `REDIRIO` swaps
+`CONSOLE:`'s read and write pointers at the p-System level (page zero
+`RTPTR`=228, `WTPTR`=230) and that the system genuinely goes deaf and blind
+to the physical keyboard and screen afterwards. The only thing missing was
+an endpoint behind `REMIN:`/`REMOUT:`, and there now is one. Together they
+are a bidirectional text channel to the Command level: no foreground-window
+requirement, no 60ms-per-key pacing, and compile output as *text* rather
+than a screenshot to be read by eye.
+
+Two things are worth knowing before building on it. `SYSTEM.STARTUP` runs
+automatically at boot, so installing the redirect under that name would
+arm the channel with zero keystrokes. And the redirect is only recoverable
+by killing the emulator and rebooting, since it lives in RAM -- which is
+fine, but it means a run that wedges cannot be rescued from the keyboard.
+
+Finding 131's scratch programs were kept outside the repo "until the round
+trip actually works end to end". It does, and they had been lost by the time
+this was picked up again, so `REMTEST.text` and the host side of the
+protocol are now in `tools/remote/` instead.
