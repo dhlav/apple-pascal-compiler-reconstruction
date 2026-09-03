@@ -1292,13 +1292,27 @@ a route end to end; everything else is a straight read-and-rebuild.
     keeps it: `WITH SYSCOM^, ...` costs a word that nothing reads, and
     it is the difference between `data` 728 and 726.
 
+    **`SCANTITLE` normalizes the parameter itself (finding 206). 37 ->
+    38 exact.** The 82-byte gap that had stood for four sessions was a
+    local `T` that should never have existed: `FTITLE` is a value
+    `STRING`, the compiler has already made a private copy at word 8,
+    and Apple's body strips, upshifts and `DELETE`s *that* in place --
+    `LAO 8` is every reference to the working string in all 354
+    instructions. A value `STRING` parameter is not only a cost
+    (finding 176); it is a scratch buffer the caller already paid for.
+    Three smaller things came with it: the character is cached in a
+    `CHAR` rather than re-read from the string three times, the upshift
+    is `ORD(CH) - ORD('a') + ORD('A')` and not `- 32`, and two integers
+    do the work of the three this file declared -- `I` is reused five
+    times over and `P` holds only `POS(']')`, which is the only reason
+    the two can be told apart. The digit scan is a `REPEAT`, the fourth
+    loop in this reconstruction written as a `WHILE` that the binary
+    tests at the bottom.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
-    loops are visibly absent. `PASCALSY.33` (`SCANTITLE`) at `data` 254
-    against 172 -- and the gap is exactly 82 bytes, 41 words, one
-    `STRING` shadow copy, so the question to ask first is whether
-    `FTITLE` is a `VAR` parameter in Apple's own declaration.
+    loops are visibly absent.
     `PASCALSY.1`, the outer block, at 14 instructions against 24.
     `PASCALSY.54` and `.56`, honest number-preserving stubs now sitting
     on the right numbers with the right frame sizes but no content

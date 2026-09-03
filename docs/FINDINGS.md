@@ -17737,3 +17737,63 @@ address the segment's own frame -- the same fact that makes
 `GETCMD := LINKANDGO` compile to `SRO 1` and `LASTST` read as `SLDO 3`.
 
 **35 -> 37 exact**, `GETCMD.19` and `GETCMD.2`, none lost.
+
+## 206. `SCANTITLE` normalizes the parameter itself -- the 82-byte gap was a local that should not exist
+
+**VERIFIED BINARY FACT**, byte-exact on Apple's own compiler.
+
+`PASCALSY.33` had been reading correctly and compiling to `data` `254`
+against Apple's `172` for four sessions. The gap is **82 bytes -- 41
+words, one `STRING`, exactly** -- and a difference that lands on a round
+type size is a declaration, not a statement (finding 172's rule, and
+[[declaration-reverses-into-frame]]). The frame says where every word
+went:
+
+| words | Apple | this file, before |
+|---|---|---|
+| 8-48 | the compiler's own copy of the value `STRING` parameter | same |
+| 49-52 | four declared locals | 41-word `T`, then four locals at 90-93 |
+| 53-93 | the compiler's `STRING` temporary for `COPY` | same, at 94-134 |
+
+Apple has **no working copy**. `FTITLE` is a value `STRING` parameter, so
+the compiler has already made a private copy at word `8`, and the body
+strips, upshifts and `DELETE`s *that* in place -- `LAO 8` is every
+reference to the working string in all 354 instructions. `T := FTITLE`
+into a second 41-word local is the entire 82 bytes.
+
+That is worth stating on its own: a value `STRING` parameter is not just
+a cost (finding 176), it is a **scratch buffer the caller paid for**, and
+Apple's OS uses it that way. `GETCMD.6` had already shown the same
+compiler copy at word `4`; what was missed is that it is writable.
+
+### 206a. Two more things the same rewrite fixed
+
+  * `FTITLE[I]` is read **once per iteration into a `CHAR`** at word
+    `51`, and the three tests that follow read the variable. This file
+    re-read the string each time, which is three extra `LAO 8 / LDO 50 /
+    LDB` sequences per pass.
+  * The upshift is `CHR(ORD(CH) - ORD('a') + ORD('A'))` -- `SLDC 97 |
+    SBI | SLDC 65 | ADI`, two constants -- not `- 32`. Same arithmetic,
+    different bytes, and the binary is unambiguous about which was
+    written.
+
+### 206b. Two integers, not three, and a `REPEAT`
+
+Only `49` and `50` are ever stored to. `I` (word `50`) is the normalize
+index, then `POS(':')`, then `POS('[')`, then the length, then the digit
+index -- one variable reused five times. `P` (word `49`) holds only
+`POS(']')`, which is why the two are told apart at all: the digit loop
+compares them. This file had a third, `L`, holding what Apple keeps in
+`I`.
+
+The digit scan is a `REPEAT ... UNTIL (I = P) OR NOT OK`, tested at the
+bottom with a single `FJP` back to the top -- the fourth `REPEAT` in this
+reconstruction that had been written as a `WHILE` (finding 202g, 204).
+
+Word `53` is the compiler's own 41-word `STRING` temporary for the four
+`COPY` expressions, not a declaration -- which is why the declared locals
+stop at `52` and why the frame is 45 words wider than four scalars.
+
+**37 -> 38 exact.** `SCANTITLE` is the second-largest procedure in the
+segment and `FPOPEN`'s hardest dependency; with it and `GETCMD.19` the
+title parser and the codefile associator are both byte-exact.

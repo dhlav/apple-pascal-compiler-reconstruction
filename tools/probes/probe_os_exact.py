@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-associate" / \
+RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-scantitle" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -48,6 +48,7 @@ EXACT = [
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
     "PASCALSY.14", "PASCALSY.15", "PASCALSY.21", "PASCALSY.22",
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
+    "PASCALSY.33",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
     "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
     "PASCALSY.48", "PASCALSY.50", "PASCALSY.53", "PASCALSY.55",
@@ -61,7 +62,7 @@ EXACT = [
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
     "PASCALSY.1",    # the outer block: 14 instructions against Apple's 24
-    "PASCALSY.33",   # SCANTITLE: data 254 against Apple's 172
+    "PASCALSY.54",   # a terminal routine, 81 instructions, still a stub
     "INITIALI.1",    # data 66 against Apple's 118, two banners missing
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
 ]

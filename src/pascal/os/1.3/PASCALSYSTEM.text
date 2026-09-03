@@ -3626,13 +3626,34 @@ PROGRAM PASCALSYSTEM;
     Committed to `PASCALSYSTEM.text`, closing `FPOPEN`'s entire
     dependency chain: every routine it calls, transitively, is now
     written for real. }
+  { Rewritten against the real body (finding 206). Three things this
+    reconstruction had wrong, all of them visible in `data` before any
+    instruction was compared: `254` against Apple's `172`, and the gap
+    is 82 bytes -- 41 words, one `STRING` -- exactly.
+
+    * There is **no local working copy**. `FTITLE` is a value `STRING`
+      parameter, so the compiler has already made a private copy at
+      word `8` and the body normalizes *that* in place. `T := FTITLE`
+      into a second 41-word local is the whole of the 82 bytes.
+    * `T[I]` is read **once per iteration into a `CHAR`** (word `51`)
+      and the three tests read the variable, where this file re-read
+      the string each time.
+    * The upshift is `CHR(ORD(CH) - ORD('a') + ORD('A'))`, two
+      constants, not `- 32`.
+
+    Two integers do all the work, not three: `I` (word `50`) is the
+    normalize index, then every `POS` result and the length in turn,
+    and `P` (word `49`) holds only `POS(']')`. The digit scan is a
+    `REPEAT`, tested at the bottom. What is left at `53` is the
+    compiler's own 41-word string temporary for the four `COPY`
+    expressions -- not a declaration, which is why the four declared
+    locals stop at `52`. }
   FUNCTION SCANTITLE;
     VAR
-      T: STRING;
-      I, P, L: INTEGER;
+      I, P: INTEGER;
+      CH: CHAR;
       OK: BOOLEAN;
   BEGIN
-    T := FTITLE;
     FVID := '';
     FTID := '';
     FSEGS := 0;
@@ -3640,79 +3661,82 @@ PROGRAM PASCALSYSTEM;
     SCANTITLE := FALSE;
 
     I := 1;
-    WHILE I <= LENGTH(T) DO
-      IF T[I] <= ' ' THEN
-        DELETE(T, I, 1)
+    WHILE I <= LENGTH(FTITLE) DO
+    BEGIN
+      CH := FTITLE[I];
+      IF CH <= ' ' THEN
+        DELETE(FTITLE, I, 1)
       ELSE
       BEGIN
-        IF (T[I] >= 'a') AND (T[I] <= 'z') THEN
-          T[I] := CHR(ORD(T[I]) - 32);
+        IF (CH >= 'a') AND (CH <= 'z') THEN
+          FTITLE[I] := CHR(ORD(CH) - ORD('a') + ORD('A'));
         I := I + 1
-      END;
+      END
+    END;
 
-    IF LENGTH(T) > 0 THEN
+    IF LENGTH(FTITLE) > 0 THEN
     BEGIN
-      IF T[1] = '*' THEN
+      IF FTITLE[1] = '*' THEN
       BEGIN
         FVID := SYVID;
-        DELETE(T, 1, 1)
+        DELETE(FTITLE, 1, 1)
       END
-      ELSE IF T[1] = '%' THEN
+      ELSE IF FTITLE[1] = '%' THEN
       BEGIN
         FVID := RUN_VOL;
-        DELETE(T, 1, 1)
+        DELETE(FTITLE, 1, 1)
       END;
 
-      P := POS(':', T);
-      IF P <= 1 THEN
+      I := POS(':', FTITLE);
+      IF I <= 1 THEN
       BEGIN
         IF LENGTH(FVID) = 0 THEN
           FVID := DKVID;
-        IF P = 1 THEN
-          DELETE(T, 1, 1)
+        IF I = 1 THEN
+          DELETE(FTITLE, 1, 1)
       END
-      ELSE IF (P - 1) <= 7 THEN
+      ELSE IF (I - 1) <= 7 THEN
       BEGIN
-        FVID := COPY(T, 1, P - 1);
-        DELETE(T, 1, P)
+        FVID := COPY(FTITLE, 1, I - 1);
+        DELETE(FTITLE, 1, I)
       END;
 
       IF LENGTH(FVID) > 0 THEN
       BEGIN
-        P := POS('[', T);
-        IF P > 0 THEN
-          L := P - 1
+        I := POS('[', FTITLE);
+        IF I > 0 THEN
+          I := I - 1
         ELSE
-          L := LENGTH(T);
-        IF L <= 15 THEN
+          I := LENGTH(FTITLE);
+        IF I <= 15 THEN
         BEGIN
-          IF L > 0 THEN
+          IF I > 0 THEN
           BEGIN
-            FTID := COPY(T, 1, L);
-            DELETE(T, 1, L)
+            FTID := COPY(FTITLE, 1, I);
+            DELETE(FTITLE, 1, I)
           END;
-          IF LENGTH(T) = 0 THEN
+          IF LENGTH(FTITLE) = 0 THEN
             OK := TRUE
           ELSE
           BEGIN
             OK := FALSE;
-            P := POS(']', T);
+            P := POS(']', FTITLE);
             IF P = 2 THEN
               OK := TRUE
             ELSE IF P > 2 THEN
             BEGIN
               OK := TRUE;
               I := 2;
-              WHILE (I <> P) AND OK DO
-              BEGIN
-                IF T[I] IN DIGITS THEN
-                  FSEGS := FSEGS * 10 + (ORD(T[I]) - 48)
+              REPEAT
+                CH := FTITLE[I];
+                IF CH IN DIGITS THEN
+                  FSEGS := FSEGS * 10 + (ORD(CH) - 48)
                 ELSE
                   OK := FALSE;
                 I := I + 1
-              END;
+              UNTIL (I = P) OR NOT OK;
               IF (I = 3) AND (P = 3) THEN
-                IF T[P - 1] = '*' THEN
+                IF FTITLE[I - 1] = '*' THEN
                 BEGIN
                   FSEGS := -1;
                   OK := TRUE
@@ -3721,18 +3745,18 @@ PROGRAM PASCALSYSTEM;
             SCANTITLE := OK;
             IF OK AND (LENGTH(FTID) > 5) THEN
             BEGIN
-              T := COPY(FTID, LENGTH(FTID) - 4, 5);
-              IF T = '.TEXT' THEN
+              FTITLE := COPY(FTID, LENGTH(FTID) - 4, 5);
+              IF FTITLE = '.TEXT' THEN
                 FKIND := TEXTFILE
-              ELSE IF T = '.CODE' THEN
+              ELSE IF FTITLE = '.CODE' THEN
                 FKIND := CODEFILE
-              ELSE IF T = '.BACK' THEN
+              ELSE IF FTITLE = '.BACK' THEN
                 FKIND := TEXTFILE
-              ELSE IF T = '.INFO' THEN
+              ELSE IF FTITLE = '.INFO' THEN
                 FKIND := INFOFILE
-              ELSE IF T = '.GRAF' THEN
+              ELSE IF FTITLE = '.GRAF' THEN
                 FKIND := GRAFFILE
-              ELSE IF T = '.FOTO' THEN
+              ELSE IF FTITLE = '.FOTO' THEN
                 FKIND := FOTOFILE
             END
           END
