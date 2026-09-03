@@ -371,8 +371,27 @@ PROGRAM PASCALSYSTEM;
     EXEC_MARK: ^INTEGER;           { was Tribby's what_f[2] -- saved EMPTYHEAP }
     { Tribby's exec_ch_num -- next EXEC char in disk buffer }
     EXEC_CH_NUM: INTEGER;
-    { Tribby's what_g -- unidentified pair, EXEC-related }
-    WHAT_G: ARRAY [1..2] OF INTEGER;
+    { Tribby's what_g, and NOT an array (finding 202d): the real binary
+      reaches both words with a plain `LOD 1,384`/`LOD 1,385` and never
+      once with `LDA`+`IXA`, in any of the eleven places it touches
+      them. Two separate scalars, declared in this order so they keep
+      offsets 384 and 385.
+
+      `EXEC_BLK` is a **BOOLEAN**, stepped with `SUCC` and read as a
+      block number through `ORD`, and that is not a guess: the binary
+      uses the raw word three ways that cannot all be one type under
+      ordinary Pascal. `LOD 1,385 | LAND` and `LOD 1,385 | FJP` are a
+      BOOLEAN operand and a BOOLEAN condition with no `SLDC 0 | NEQI`
+      anywhere, and declaring it `INTEGER` and writing `AND EXEC_BLK`
+      is **error 134** on Apple's own compiler (tried, this session);
+      but `LOD 1,385 | SLDC 1 | ADI | STR 1,385` is arithmetic, and the
+      same word is `FBLOCKIO`'s own `RBLOCK` argument. `SUCC` and `ORD`
+      are the two operations that cross that line for free -- neither
+      emits an instruction -- so `EXEC_BLK := SUCC(EXEC_BLK)` and
+      `BLOCKREAD(..., ORD(EXEC_BLK))` reproduce all three uses exactly.
+      Compiling that closed `PASCALSY.44`-`.47` in one step. }
+    EXEC_END: INTEGER;             { last usable char in the buffer }
+    EXEC_BLK: BOOLEAN;             { NOT a typo -- see above }
     { Tribby's r_exec_flg -- reading an EXEC file }
     R_EXEC_FLG: BOOLEAN;
     { Tribby's w_exec_flg -- writing an EXEC file }
@@ -3754,7 +3773,7 @@ PROGRAM PASCALSYSTEM;
   BEGIN
     EXBUFPTR^[EXEC_CH_NUM] := CH;
     EXEC_CH_NUM := EXEC_CH_NUM + 1;
-    IF (EXEC_CH_NUM > 509) AND (WHAT_G[2] <> 0) THEN
+    IF (EXEC_CH_NUM > 509) AND EXEC_BLK THEN
     BEGIN
       EXBUFPTR^[EXEC_CH_NUM] := CHR(13);
       EXECWRITEBLK
@@ -3790,7 +3809,7 @@ PROGRAM PASCALSYSTEM;
         EXECPUTCH(EXEC_TERM);
         EXECPUTCH(CHR(13));
         EXECWRITEBLK;
-        IF WHAT_G[2] <> 0 THEN
+        IF EXEC_BLK THEN
           EXECWRITEBLK
       END;
       W_EXEC_FLG := FALSE;
@@ -3801,13 +3820,13 @@ PROGRAM PASCALSYSTEM;
   END;
 
   { PASCALSY.46: read the next 512-byte block into the exec buffer,
-    scanning back from the end for the last CR so `WHAT_G[1]` marks
+    scanning back from the end for the last CR so `EXEC_END` marks
     the real end of buffered text, not the block's own padding. Real
     body, `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1005-1019`. }
   PROCEDURE EXECREADBLK;
   BEGIN
-    WHAT_G[2] := WHAT_G[2] + 1;
-    IF BLOCKREAD(EXEC_FILE, EXBUFPTR^, 1, WHAT_G[2]) <> 1 THEN
+    EXEC_BLK := SUCC(EXEC_BLK);
+    IF BLOCKREAD(EXEC_FILE, EXBUFPTR^, 1, ORD(EXEC_BLK)) <> 1 THEN
     BEGIN
       WRITELN;
       WRITE('Error reading exec file');
@@ -3815,10 +3834,10 @@ PROGRAM PASCALSYSTEM;
       EXECCLOSE(TRUE)
     END ELSE BEGIN
       EXEC_CH_NUM := 0;
-      IF WHAT_G[2] <> 0 THEN
-        WHAT_G[1] := 510 + SCAN(-511, =CHR(13), EXBUFPTR^[511])
+      IF EXEC_BLK THEN
+        EXEC_END := 510 + SCAN(-511, =CHR(13), EXBUFPTR^[511])
       ELSE
-        WHAT_G[1] := 511
+        EXEC_END := 511
     END
   END;
 
@@ -3827,7 +3846,7 @@ PROGRAM PASCALSYSTEM;
     `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1021-1031`. }
   PROCEDURE EXECWRITEBLK;
   BEGIN
-    IF BLOCKWRITE(EXEC_FILE, EXBUFPTR^, 1, WHAT_G[2]) <> 1 THEN
+    IF BLOCKWRITE(EXEC_FILE, EXBUFPTR^, 1, ORD(EXEC_BLK)) <> 1 THEN
     BEGIN
       WRITELN;
       WRITE('Error writing exec file');
@@ -3836,7 +3855,7 @@ PROGRAM PASCALSYSTEM;
     END ELSE BEGIN
       FILLCHAR(EXBUFPTR^, 512, CHR(0));
       EXEC_CH_NUM := 0;
-      WHAT_G[2] := WHAT_G[2] + 1
+      EXEC_BLK := SUCC(EXEC_BLK)
     END
   END;
 

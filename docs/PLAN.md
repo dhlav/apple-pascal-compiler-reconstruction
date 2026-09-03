@@ -1171,6 +1171,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     `READ` has a defaulted file exactly as `WRITE` does, one offset lower
     -- `GFILES[0]` at 2 against `GFILES[1]` at 3.
 
+    **The EXEC-file I/O layer closed on a type nobody would have guessed
+    (finding 202d).** Tribby's `what_g` is not an array -- the binary
+    reaches globals 384 and 385 with a plain `LOD` in all eleven places
+    and never with `LDA`+`IXA` -- and `EXEC_BLK`, the second of the two,
+    is a **`BOOLEAN`** that is stepped with `SUCC` and read as a block
+    number through `ORD`. The same word is an `AND` operand, an `IF`
+    condition, an addend and `FBLOCKIO`'s `RBLOCK`, which no one
+    ordinary type covers; `SUCC` and `ORD` are the two conversions that
+    emit no instruction at all, so they are invisible in a diff and are
+    the only way all four uses reconcile. The direction was settled by a
+    *failed* compile: `INTEGER` plus `AND EXEC_BLK` is error 134 on
+    Apple's own compiler. **20 -> 24 exact**, `PASCALSY.44`-`.47` in one
+    step.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`

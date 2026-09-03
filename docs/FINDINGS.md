@@ -17240,3 +17240,55 @@ both halves: **the OS names a file explicitly only where it means a file
 other than the console** -- `GFILES[2]^` (`SYSTERM`), the EXEC-file
 handles, `FCLOSE` -- and uses bare `READ`/`WRITE`/`WRITELN` everywhere
 else.
+
+### 202d. `WHAT_G` is not an array, and `EXEC_BLK` is a `BOOLEAN` stepped with `SUCC`
+
+The EXEC-file buffered I/O layer (`PASCALSY.44`-`.47`) was carrying two
+separate modelling errors in one pair of globals, and both were decidable
+from the binary alone.
+
+**Not an array.** Tribby's `what_g` had been declared
+`ARRAY [1..2] OF INTEGER` at globals 384-385. The real binary reaches both
+words with a plain `LOD 1,384` / `LOD 1,385` and **never once** with
+`LDA`+`IXA`, in all eleven places it touches them. Two separate scalars,
+then -- `EXEC_END` (the last usable character in the buffer, where the
+backwards CR scan lands) and `EXEC_BLK` (the relative block number).
+Declared as two lines in that order they keep the same offsets, and each
+access loses the six-instruction index expansion Apple's code does not
+have.
+
+**And `EXEC_BLK` is a `BOOLEAN`.** The same word is used three ways that no
+single ordinary Pascal type covers:
+
+```
+LOD 1,385 | LAND                       { a BOOLEAN operand of AND }
+LOD 1,385 | FJP                        { a BOOLEAN condition      }
+LOD 1,385 | SLDC 1 | ADI | STR 1,385   { arithmetic               }
+LOD 1,385                              { FBLOCKIO's RBLOCK argument }
+```
+
+with no `SLDC 0 | NEQI` anywhere near the first two. Declaring it `INTEGER`
+and writing `IF ... AND EXEC_BLK` is **error 134** on Apple's own compiler
+-- tried, on hardware, and that refusal is what settles the direction: the
+variable is BOOLEAN and the *arithmetic* is what needs explaining, not the
+other way round.
+
+`SUCC` and `ORD` are exactly the two operations that cross that line for
+free. Neither emits an instruction of its own, so
+
+```pascal
+EXEC_BLK := SUCC(EXEC_BLK);
+IF BLOCKREAD(EXEC_FILE, EXBUFPTR^, 1, ORD(EXEC_BLK)) <> 1 THEN
+```
+
+reproduces all four shapes exactly. **It closed `PASCALSY.44`, `.45`, `.46`
+and `.47` in a single compile, 20 -> 24 exact.**
+
+It reads oddly, and it is still what Apple wrote. A `BOOLEAN` that gets
+`SUCC`ed past `TRUE` is only well-defined because `{$R-}` is on, which this
+project had already established. Two lessons worth keeping: an operation
+that emits **no** instruction is invisible in a diff, so when a type
+contradiction looks unresolvable, ask which free conversions could be
+standing between the two uses; and a compiler *refusal* is evidence in its
+own right -- error 134 did more to fix this than any successful compile
+did, because it eliminated the reading that had looked obvious.

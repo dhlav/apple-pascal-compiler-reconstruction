@@ -1,6 +1,6 @@
 """The OS procedures Apple's own compiler already reproduces exactly.
 
-`acceptance/2026-09-02-pascalsystem-write-sugar/PASCALSY.CODE` is what
+The kept acceptance run named by `RUN` below is what
 Apple's real 1.3 `SYSTEM.COMPILER` wrote from `PASCALSYSTEM.text` under the
 emulator. That run cannot be repeated inside `build_all.py` -- it is
 interactive -- but its *result* can be re-checked on every build, which is
@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-param-order" / \
+RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-execblk" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -47,6 +47,7 @@ EXACT = [
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
     "PASCALSY.14", "PASCALSY.15", "PASCALSY.21", "PASCALSY.22",
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
+    "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
     "PASCALSY.51", "PASCALSY.52",
     "PRINTERR.1",
     "USERPROG.1",
@@ -59,7 +60,7 @@ STILL_DIFFERS = [
     "PASCALSY.1",    # the outer block: 14 instructions against Apple's 24
     "PASCALSY.33",   # SCANTITLE: data 254 against Apple's 172
     "INITIALI.1",    # data 66 against Apple's 118, two banners missing
-    "GETCMD.2",      # RUNWORKFILE: data 166 against Apple's 24
+    "GETCMD.2",      # RUNWORKFILE: one arg is a global, not a local
 ]
 
 fail = []
