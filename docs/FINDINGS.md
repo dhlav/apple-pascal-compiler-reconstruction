@@ -17426,3 +17426,50 @@ procedures.
 lost. `.58` (`CMDDISPATCH`) is now at its real number and 20 instructions
 against 26; `.54` and `.56` are honest number-preserving stubs with the
 real frame sizes, not content.
+
+### 202g. `NEW` with variant tags, two `REPEAT`s that had been written as `WHILE`s -- and the `FIOPRIMS` blocker localised to six instructions
+
+**`INITHEAP` allocates FIBs through their variant tags.** Every
+`NEW(<some FIBP>)` in `INITIALI.8` came out `LDCI 290` where Apple has
+`SLDC 30`. A plain `NEW(p)` allocates the record's *largest* variant, and
+`FIB`'s largest carries `FBUFFER: PACKED ARRAY [0..FBLKSIZE] OF CHAR` --
+512 bytes, 256 words, hence 290. Apple's 30 is not a different record; it
+is the same record allocated through `NEW(p, TRUE, FALSE)`, which stops at
+the `FISOPEN = TRUE, FSOFTBUF = FALSE` variant.
+
+The arithmetic settles it rather than an impression, and it lands on the
+nose: `FWINDOW` 1, `FEOF`/`FEOLN` 2, `FSTATE` 1, `FRECSIZE` 1, `FISOPEN`
+1, `FISBLKD` 1, `FUNIT` 1, `FVID` 4, `FREPTCNT`/`FNXTBLK`/`FMAXBLK` 3,
+`FMODIFIED` 1, `FHEADER` 13, `FSOFTBUF` 1 = **30 words exactly**. All six
+FIB allocations use the same pair of tags; only `NEW(LWINDOW)` stays plain.
+`INITIALI.8` is identical with that change.
+
+**Two loops were `REPEAT`s, not `WHILE`s.** `PASCALSY.48` and its nested
+`.58` both read `WHILE STATE = HALTINIT DO` in this file. The binary tests
+at the bottom -- body, `LOD 1,69 | SLDC 0 | EQUI | FJP <top>` -- which is
+`REPEAT ... UNTIL STATE = HALTINIT`, and the difference is exactly the one
+instruction `.48` was over by. `.58`'s `ELSE` arm is a plain
+`EXIT(CMDDISPATCH)` (`SLDC 0 | SLDC 58 | CSP 4`), not the
+`SWAP_ON := TRUE; GOTO 999` this file had; the assignment is not in the
+binary at all.
+
+**And that leaves `.58` differing by exactly six instructions, all of them
+the compiler's own:**
+
+```
+UJP <load>            { at entry }
+...body, now identical...
+SLDC 2 | CSP 22 | UJP <ret>      { UNLOADSEGMENT(2), in the exit code }
+SLDC 2 | CSP 21 | UJP <top>      { LOADSEGMENT(2), jumped to from entry }
+```
+
+Segment 2 is `FIOPRIMS` (finding 200). This is the residency wrapper a
+compiler emits around a body that reaches into an intrinsic unit's
+segment, and no statement in the source produces it directly. So the
+`FIOPRIMS` build wiring, which has been an open item since finding 200 and
+was previously visible only as "`FGET` is a stub", now has a second, much
+sharper handle: a named procedure that is instruction-identical apart from
+a six-instruction load/unload pair, on a segment number that is already
+known. Whatever makes `FIOPRIMS` a real `USES` will show up here first.
+
+**31 -> 33 exact**, `INITIALI.8` and `PASCALSY.48`.

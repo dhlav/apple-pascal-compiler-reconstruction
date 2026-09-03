@@ -1212,6 +1212,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     it -- and the old inlined versions had the `PREFIXED` test backwards.
     **26 -> 31 exact.**
 
+    **`NEW`'s variant tags, two `REPEAT`s, and the `FIOPRIMS` blocker
+    localised (finding 202g).** `INITHEAP`'s six FIB allocations are
+    `NEW(p, TRUE, FALSE)`, not plain `NEW(p)`: a plain one takes `FIB`'s
+    largest variant, 290 words because of the 512-byte soft buffer, where
+    the tagged one stops at `FISOPEN=TRUE, FSOFTBUF=FALSE` and comes to
+    Apple's `SLDC 30` field for field. `STUB48` and `CMDDISPATCH` both
+    test at the bottom -- `REPEAT ... UNTIL STATE = HALTINIT`, not the
+    `WHILE` this file had -- and `CMDDISPATCH`'s `ELSE` is a plain
+    `EXIT`. **31 -> 33 exact.** That leaves `PASCALSY.58` identical apart
+    from six compiler-emitted instructions: a `LOADSEGMENT(2)` /
+    `UNLOADSEGMENT(2)` residency wrapper on `FIOPRIMS`'s own segment. The
+    `FIOPRIMS` wiring open since finding 200 now has a measurable handle
+    -- whatever makes it a real `USES` will show up there first.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
