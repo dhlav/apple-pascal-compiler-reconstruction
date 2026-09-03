@@ -18168,3 +18168,82 @@ weigh first: `SYSTEM.STARTUP` runs automatically at boot, so installing
 all; and the swap is RAM-only, so a run that wedges before the toggle can be
 sent has to be killed and rebooted -- cheap in itself, but every acceptance
 run would then depend on this working.
+
+## 212. The acceptance tier over the remote console: same bytes, a sixth of the time
+
+`tools/emuremote.py` compiles on Apple's own compiler with **no keystrokes
+at all**. `REDIRIO.CODE` is installed on SYSHD as `SYSTEM.STARTUP`, which
+Apple Pascal runs at the end of boot, so the console is already on the
+socket before anything needs to be typed; the driver then sends the
+`C(ompile` sequence over TCP and reads the compiler's own output back as
+text. `emucompile.ps1` is untouched and still works.
+
+### 212a. The check that could have failed
+
+Two builds of `PASCALSYSTEM.text` from the identical source, one driven by
+SendKeys and one over the socket, compared byte for byte:
+
+    differing bytes total:            555
+    differing bytes INSIDE a segment:   0
+
+All 555 differences are in the padding between segments. Every byte of
+every real segment is identical, and `oscmp.py` scores the remote-built
+codefile at **44 of 111**, the same procedures as the SendKeys build.
+
+The slack is where it is for a reason worth writing down: the SendKeys
+path's leftovers include the ASCII text `SYSHD:` from the exec file it
+types the compile command through, and the remote path never builds that
+file, so the compiler's memory holds something else when the same
+uninitialised bytes get written out. This is the "uninitialised slack, not
+content" rule (`CLAUDE.md`) showing up as a *diff between two of our own
+builds* rather than against Apple's, and it is the reason a whole-file
+`cmp` is the wrong acceptance test for a codefile.
+
+### 212b. Waiting for the real thing instead of sleeping
+
+`emucompile.ps1` takes `-Boot` and `-Compile` as fixed sleeps, so a
+`PASCALSY` run is padded to `40 + 300` seconds whether or not it needs
+them, and a compile that runs long is simply lost. The remote driver waits
+for `Smallest available space` -- the compiler's own last line -- and for
+the Command prompt after it.
+
+    PASCALSY, SendKeys:  340s of sleeps, then a screenshot to read
+    PASCALSY, remote:     57s, "compiled clean, 4690 lines"
+
+That is the same compile: 4690 lines both ways.
+
+### 212c. Failing on the compiler's own error prompt
+
+A compile error leaves Apple's compiler sitting on `<sp>(continue),
+<esc>(terminate), E(dit`, which over a socket would otherwise hang until
+the timeout. The driver matches `, error `, sends `<esc>`, waits for the
+Command prompt and exits non-zero with the numbers already extracted.
+Proved with a deliberately undeclared identifier:
+
+    BEGIN
+      WRITELN(NOSUCHVAR <<<<
+    Line 6, error 104: <sp>(continue), <esc>(terminate), E(dit
+    COMPILE FAILED: line 6, error 104        (exit status 1)
+
+The source line and the compiler's own `<<<<` marker come back as part of
+the transcript, which is the thing a screenshot could only show as pixels.
+
+### 212d. Arming, and the failure mode to respect
+
+`SYSTEM.STARTUP` is installed before launch and removed in a `finally`,
+and removed defensively on the way in as well. That matters more than it
+looks: **a SYSHD that redirects its console at boot with nobody listening
+is indistinguishable from a machine that will not boot** -- blank screen,
+dead keyboard, no error. A crashed run that left the volume armed would
+look like a broken disk image.
+
+`REDIRIO.CODE` has to exist on the volume first, and the only way to get a
+codefile onto SYSHD is to compile it there, which needs the SendKeys path.
+So `mkharddisks.py` now carries `REDIRIO.TEXT` (and `REMTEST.TEXT`, the
+transport-only diagnostic), and after every volume rebuild one bootstrap
+run is needed:
+
+    powershell -File tools/emucompile.ps1 -Name REDIRIO
+
+`emuremote.py` names that command if the codefile is missing rather than
+failing obscurely.

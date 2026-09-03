@@ -1498,14 +1498,21 @@ a route end to end; everything else is a straight read-and-rebuild.
   `SYSTERM:` when it wants no echo, so changing only unit 1 leaves a live
   keyboard behind and makes "the keyboard is dead" unfalsifiable, which is
   the hole in finding 131's own test.
-  What is left is wiring it into the acceptance tier: `emucompile.ps1`
-  still drives a compile with SendKeys and reads a screenshot. Over this
-  channel it would be text -- error and line numbers read rather than
-  eyeballed -- with no foreground-window requirement and no 60ms-per-key
-  pacing. Installed as `SYSTEM.STARTUP` the channel would arm itself at
-  boot with no keystrokes at all. Against that: the swap is RAM-only, so
-  a run that wedges before the toggle can be sent has to be killed and
-  rebooted, and every acceptance run would then depend on this working.
+  **And it is wired in (finding 212).** `tools/emuremote.py` compiles with
+  no keystrokes at all: `REDIRIO.CODE` is installed as `SYSTEM.STARTUP` so
+  the boot arms the channel, the `C(ompile` sequence goes over the socket,
+  and the driver waits for the compiler's own last line instead of a fixed
+  sleep. `PASCALSY` takes **57s against the SendKeys path's 340s** of
+  padding, comes back as text, and exits non-zero on a compile error with
+  the line and error number extracted. Two builds from identical source,
+  one each way, differ in 555 bytes and **none of them is inside a
+  segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways.
+  The slack differs because the SendKeys path leaves its own exec-file text
+  in the compiler's memory, which is a good illustration of why a
+  whole-file `cmp` is the wrong acceptance test for a codefile.
+  `emucompile.ps1` is untouched and is both the fallback and the way
+  `REDIRIO` itself gets compiled. `emuassemble.ps1`/`emulink.ps1` are still
+  SendKeys -- their own prompt sequences are a separate piece of work.
 
 ## The compiler phase, kept as the record
 

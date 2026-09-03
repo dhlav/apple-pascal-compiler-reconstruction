@@ -70,10 +70,29 @@ every build.
 
 ```
 python tools/mkharddisks.py                     # ALWAYS first — stale disks lie
+powershell -File tools/emucompile.ps1 -Name REDIRIO   # bootstrap, once per rebuild
+python tools/emuremote.py X                     # compile, no keystrokes, text back
 powershell -File tools/emucompile.ps1  -Name X -Compile 40
 powershell -File tools/emuassemble.ps1 -Name X
 powershell -File tools/emulink.ps1 -HostFile X -Lib Y -Out Z
 ```
+
+**`emuremote.py` is the compile path to prefer** (findings 210–212). The
+system's console is redirected to a TCP socket, so it needs no foreground
+window, types nothing, waits for the compiler's own completion line instead
+of a fixed sleep (`PASCALSY`: 57s against 340s), returns the output as
+**text** — error and line numbers read, not eyeballed off a PNG — and exits
+non-zero on a compile error. It produces byte-identical segments to the
+SendKeys path; only the inter-segment slack differs, which is why a
+whole-file `cmp` is the wrong test (finding 212a).
+
+It arms the channel by installing `REDIRIO.CODE` as `SYSTEM.STARTUP` and
+removes it in a `finally`. **A SYSHD left armed with nobody listening looks
+exactly like a disk that will not boot** — blank screen, dead keyboard, no
+error — so if a volume ever behaves that way, check for a stray
+`SYSTEM.STARTUP` before suspecting the image. `emucompile.ps1` still works
+and is the fallback; it is also what compiles `REDIRIO` itself, which has
+to exist on the volume before any of this runs.
 
 One 2MB Pascal hard-disk volume on a slot-5 HDC (`SYSHD` — boots, carries
 every system tool, and carries ours too) is the **default** for all four

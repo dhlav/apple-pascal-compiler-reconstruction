@@ -103,17 +103,34 @@ impossible to interpret. The two permanently-unused slots, unit 6's read and
 unit 7's write, hold the saved originals; both read back `0` on an untouched
 system, which is also how `REDIRIO` knows which way to toggle.
 
+## It is wired into the acceptance tier
+
+`tools/emuremote.py` is the compile path built on this (finding 212):
+
+```
+python tools/mkharddisks.py
+powershell -File tools/emucompile.ps1 -Name REDIRIO   # bootstrap, once per rebuild
+python tools/emuremote.py PASCALSY
+```
+
+It installs `REDIRIO.CODE` as `SYSTEM.STARTUP` so the boot arms the channel
+with nothing typed, drives `C(ompile` over the socket, waits for the
+compiler's own last line rather than a fixed sleep, writes a transcript to
+`build/acceptance/<NAME>-console.txt`, and exits non-zero on a compile
+error with the line and error number already extracted. `SYSTEM.STARTUP` is
+removed in a `finally`.
+
+**If a SYSHD ever looks like it will not boot** -- blank screen, dead
+keyboard, no error -- check for a stray `SYSTEM.STARTUP` first. A volume
+left armed with nobody listening is indistinguishable from a broken image.
+
+The bootstrap is unavoidable: the only way to get a codefile onto SYSHD is
+to compile it there, so `REDIRIO` itself has to go through the SendKeys
+path once after every volume rebuild. `mkharddisks.py` carries the source
+so that is all it takes.
+
 ## What is still not done
 
-Wiring it into the acceptance tier. `emucompile.ps1` still drives a compile
-with SendKeys and captures a screenshot. Going over this channel instead
-would give compile output as *text* -- error numbers and line numbers read
-rather than eyeballed -- with no foreground-window requirement and no
-60ms-per-key pacing.
-
-Two things to know before that. `SYSTEM.STARTUP` runs automatically at
-boot, so installing `REDIRIO.CODE` under that name would arm the channel
-with no keystrokes at all. And the swap lives in RAM, so a run that wedges
-before the toggle can be sent has to be killed and rebooted -- cheap in
-itself, but it means every acceptance run would then depend on this
-working.
+`emuassemble.ps1` and `emulink.ps1` are untouched -- still SendKeys. The
+assembler and linker have their own prompt sequences and their own
+keystroke-timing notes, so they are a separate piece of work.

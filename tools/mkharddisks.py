@@ -139,6 +139,15 @@ FILES = [
     # against is 128K.PASCAL on APPLE3, not the 64K SYSTEM.PASCAL.
     ("PASCALSY.TEXT", ROOT / "src" / "pascal" / "os" / "1.3" /
      "PASCALSYSTEM.text"),
+    # Not part of the disk set -- the two halves of the remote console
+    # (findings 210/211). They live here so the bootstrap survives a
+    # rebuild: `emuremote.py` needs REDIRIO.CODE on the volume before it
+    # can drive anything, and the only way to get a codefile onto SYSHD is
+    # to compile it there. REMTEST is the transport-only diagnostic, kept
+    # alongside so that when the channel goes quiet there is something
+    # that isolates which half broke.
+    ("REDIRIO.TEXT", ROOT / "tools" / "remote" / "REDIRIO.text"),
+    ("REMTEST.TEXT", ROOT / "tools" / "remote" / "REMTEST.text"),
 ]
 
 
