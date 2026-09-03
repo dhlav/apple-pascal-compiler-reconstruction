@@ -133,6 +133,12 @@ FILES = [
     # would overwrite it.
     ("SETUPT.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
      "SETUP.text"),
+    # PASCALSY, not SYSTEM.PASCAL: the OS reconstruction. The volume boots
+    # from its own SYSTEM.PASCAL, so compiling under that name would
+    # overwrite the running system. The shipped binary this is compared
+    # against is 128K.PASCAL on APPLE3, not the 64K SYSTEM.PASCAL.
+    ("PASCALSY.TEXT", ROOT / "src" / "pascal" / "os" / "1.3" /
+     "PASCALSYSTEM.text"),
 ]
 
 

@@ -37,6 +37,10 @@ public class EmuWin {
   [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, IntPtr pid);
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint from, uint to, bool attach);
+  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
+  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
   public struct RECT { public int L, T, R, B; }
 }
 "@
@@ -46,10 +50,34 @@ if (-not $p) { throw "AppleWin is not running (python tools/runemu.py)" }
 $h = $p.MainWindowHandle
 if ([EmuWin]::IsIconic($h)) { [EmuWin]::ShowWindow($h, 9) | Out-Null }
 # Windows refuses foreground activation to a process that does not own the
-# current foreground window, and it fails silently. Retry rather than give
-# up: the usual cause is the operator having just clicked elsewhere.
+# current foreground window, and it fails silently. Retrying alone is not
+# enough: when the operator has left a browser (or anything else) focused
+# and never touches this shell, the refusal is permanent and every retry
+# loses identically -- that is exactly how a long unattended run dies. The
+# documented way through is to attach this thread's input queue to the
+# foreground window's thread first, which makes the two threads share a
+# foreground state and lets the activation be granted. Attach, activate,
+# detach; then verify. The verification below is the safety property and is
+# untouched -- this only makes the activation itself actually succeed.
+function Set-EmuForeground($hwnd) {
+  $me = [EmuWin]::GetCurrentThreadId()
+  $fg = [EmuWin]::GetForegroundWindow()
+  $other = if ($fg -ne [IntPtr]::Zero) {
+    [EmuWin]::GetWindowThreadProcessId($fg, [IntPtr]::Zero)
+  } else { 0 }
+  $attached = $false
+  if ($other -ne 0 -and $other -ne $me) {
+    $attached = [EmuWin]::AttachThreadInput($me, $other, $true)
+  }
+  try {
+    [EmuWin]::BringWindowToTop($hwnd) | Out-Null
+    [EmuWin]::SetForegroundWindow($hwnd) | Out-Null
+  } finally {
+    if ($attached) { [EmuWin]::AttachThreadInput($me, $other, $false) | Out-Null }
+  }
+}
 for ($i = 0; $i -lt 12; $i++) {
-  [EmuWin]::SetForegroundWindow($h) | Out-Null
+  Set-EmuForeground $h
   Start-Sleep -Milliseconds ([Math]::Max(150, $Settle / 4))
   if ([EmuWin]::GetForegroundWindow() -eq $h) { break }
 }
@@ -89,6 +117,9 @@ if ($Keys -ne "") {
     Start-Sleep -Milliseconds $PerKey
   }
   Start-Sleep -Milliseconds 150
+  # No re-raise here, on purpose. Losing the foreground *during* a send means
+  # characters went somewhere else, and raising the window afterwards does
+  # not get them back -- the run is already wrong and has to say so.
   if ([EmuWin]::GetForegroundWindow() -ne $h) {
     throw "focus left AppleWin during the send of '$Keys' -- some or all of " +
           "it went to another window. Re-read the screen before continuing."
@@ -101,6 +132,18 @@ if ($Shot -ne "") {
   # window's own content. If anything is on top of AppleWin -- an editor, a
   # dialog -- the "screenshot of the emulator" is a photograph of that
   # instead, and it looks plausible enough to act on. Refuse.
+  #
+  # A long -Wait is ample time for something else to take the foreground (a
+  # browser finishing a load, a notification), and an unattended run that has
+  # already done the work should not be thrown away over that. Raise the
+  # window again first, the same way the send path does. Nothing is typed
+  # here, so re-raising costs nothing -- and the refusal below still stands
+  # if it does not take.
+  for ($i = 0; $i -lt 8; $i++) {
+    if ([EmuWin]::GetForegroundWindow() -eq $h) { break }
+    Set-EmuForeground $h
+    Start-Sleep -Milliseconds 250
+  }
   if ([EmuWin]::GetForegroundWindow() -ne $h) {
     throw "AppleWin is not the foreground window at capture time; the " +
           "screenshot would show whatever is on top of it. Not captured."

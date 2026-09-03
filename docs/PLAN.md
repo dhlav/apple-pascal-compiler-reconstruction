@@ -1117,6 +1117,50 @@ a route end to end; everything else is a straight read-and-rebuild.
     `RUNWORKFILE` itself: `params` exact (`2`), `data` not (the usual
     literal-into-`VAR-STRING` `MSG` cost). Verified compiling clean on
     real Apple 1.3 hardware, whole file.
+
+    **Console output is bare `WRITE`/`WRITELN` with no file argument, and
+    the scratch-`STRING` workaround was never needed (finding 201).** The
+    paragraph above about `WRITE`'s file argument stays true as far as it
+    goes -- a *dereference* really is rejected there, which is why
+    `USERPROGRAM` keeps its direct `FWRITELN(SYSTERM^)` -- but the
+    conclusion drawn from it was wrong. Apple's own source does not call
+    `FWRITESTRING` for console output at all; it writes `WRITE('literal')`
+    and `WRITELN` with **no file argument**, and the compiler's sugar for
+    the defaulted output file lowers to `LOD 1,3 | LSA | SLDC 0 |
+    CXP 0,19`. Error 154 never fires because the sugar builds the argument
+    list itself. Proved from this project's own byte-identical
+    `FORMATTER.text`/`FORMATTER.CODE` pair, which holds that exact
+    construct and those exact bytes, then confirmed on hardware. This also
+    retires the `LOD 1,3` note that had stood open for two sessions: it is
+    the compiler's own default-output reference, not an identifier this
+    project failed to recover. 103 call sites converted, 28 scratch pairs
+    and 7 dead declarations removed; `BADTITLE`'s parameter corrected to a
+    value `STRING` (its `LLA 4 | SLDL 3 | SAS 80` prologue is the shadow
+    copy) and its empty-test to `FTID`. **10 -> 15 procedures
+    instruction- and frame-identical, none lost.**
+
+    Two pieces of tooling came out of it and are now the standing
+    scoreboard for the rest of this item: `tools/oscmp.py` scores the
+    whole compiled codefile against shipped `128K.PASCAL` procedure by
+    procedure -- instruction text *and* `params`/`data`, because a right
+    body on a wrong frame is a declaration bug -- and names what a change
+    gained and lost; `tools/probes/probe_os_exact.py` (in `build_all.py`)
+    pins the fifteen by name against the kept acceptance run, with four
+    known-differing procedures as a discrimination control.
+    `PASCALSYSTEM.text` is also in `mkharddisks.py`'s own `FILES` list now
+    as `PASCALSY.TEXT`, so the acceptance disk is built from the working
+    tree by the one documented entry point.
+
+    **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
+    Apple's 118, 286 instructions against 354; the two
+    hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
+    loops are visibly absent. `GETCMD.2` -- `data` 166 against Apple's 24,
+    almost certainly an unreproduced value-`STRING` copy, the same
+    mechanism `GETCMD.6` turned out to be. `PASCALSY.1`, the outer block,
+    at 14 instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data`
+    254 against 172. Then the remaining stubs: `GETCMD.3`, `.5`,
+    `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu loop, `COMMAND`,
+    `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit build wiring.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a

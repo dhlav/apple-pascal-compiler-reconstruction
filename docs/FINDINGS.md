@@ -16948,3 +16948,172 @@ dictionary contradicts. The lesson is not "test more shapes" but "read
 every field the format defines before modelling what produced it" -- the
 reader's own documentation named `SEGKIND` and its absence from the parse
 was never noticed because nothing ever asked for it.
+
+## 201. Apple's OS writes `WRITE`/`WRITELN` with **no file argument** -- the scratch-variable workaround was solving a problem Apple never had, and it explains `LOD 1,3` too
+
+**VERIFIED SOURCE FACT, confirmed against a byte-identical reconstruction,
+then re-confirmed on Apple's own compiler.**
+
+Two separate puzzles in `PASCALSYSTEM.text` turn out to be the same
+question, and it has one answer.
+
+**Puzzle one: how a literal reaches a `VAR STRING` parameter.** Finding 195
+established, on real hardware, that Apple's 1.3 compiler rejects a string
+literal passed to a `VAR STRING` formal with error 154, "actual parameter
+must be a variable" -- while the fast tier accepts it silently. The
+operating system's own console output goes through
+`FWRITESTRING(F, S, LEN)`, whose `S` is `VAR`. Every one of the OS's
+banners and prompts is a literal. Both cannot be true, and the
+reconstruction had been reconciling them the wrong way: by declaring a
+scratch `STRING` local, assigning the literal to it, and passing the
+variable.
+
+That produced 28 scratch assignments across the file. It compiled, and it
+was wrong -- it costs an `LSA`/`LAO`/`SAS` triple per call site that the
+shipped binary does not have.
+
+**Puzzle two: `PASCALSY.50`'s bare `LOD 1,3`.** The shipped binary loads a
+file address as a single `LOD 1,3` in places where `GFILES[1]^` compiles to
+`LDA`/`SLDC`/`IXA`/`SIND`. `OUTPUTFIB` sits at offset 55, not 3, so no
+global in the map explains it, and the note in the source had stood open
+for two sessions as "some other identifier for the same file".
+
+**The answer.** Apple's source writes console output as bare
+`WRITE('literal')` and `WRITELN`, with **no file argument at all**. The
+compiler's own sugar for a defaulted output file lowers exactly to:
+
+```
+LOD 1,3 | LSA <literal> | SLDC 0 | CXP 0,19           { WRITE   }
+LOD 1,3 | CXP 0,22                                    { WRITELN }
+```
+
+`LOD 1,3` is the compiler's own reference to the default output file. It is
+not an identifier this project failed to recover; it is a construct with no
+identifier in the source. And error 154 never fires because the sugar
+*builds the argument list itself* -- the VAR-actual check runs on
+parameters the programmer wrote, and here the programmer wrote none.
+
+**How it was proved, without an emulator run.** This project already owns a
+matched source/bytes pair for the exact construct.
+`src/pascal/programs/1.3/FORMATTER.text` is a byte-identical reconstruction
+(finding 104) and it contains
+
+```pascal
+WRITELN('Apple Pascal Disk Formatter Program [1.3]');
+```
+
+and Apple's shipped `FORMATTER.CODE` holds precisely
+`LOD [1,3] | LSA [...] | SLDC [0] | CXP [0,19]` at that point. A verified
+reconstruction is the strongest evidence available short of the original
+listing: the source is known, the bytes are Apple's, and they are known to
+correspond.
+
+An isolated hardware probe (`VARLIT`) was still run to keep the two claims
+apart, and it behaved as it should: a literal passed to a `VAR STRING`
+formal fails with 154; the same literal passed to a **value** formal
+compiles. Finding 195 stands. It simply never applied to `WRITE`.
+
+**What changed in the source.** 103 call sites converted from
+`FWRITESTRING`/`FWRITECHAR`/`FWRITEINT(GFILES[1]^, X, 0)` to `WRITE(X)` and
+from `FWRITELN(GFILES[1]^)` to `WRITELN`; 28 scratch-variable pairs
+collapsed into the literal call; 7 now-dead scratch declarations removed
+(`EXECOPNERR`'s entire `VAR` heading went with its only local). Explicit
+`GFILES[1]^` access stays where the OS really does name a file --
+`EXECREADBLK`, `EXECWRITEBLK`, `FCLOSE` -- and `USERPROGRAM` keeps its
+direct `FWRITELN(SYSTERM^)`, which is a different file.
+
+**Measured on Apple's own compiler, against shipped `128K.PASCAL`:
+instruction-and-frame-identical procedures went 10 -> 15, none lost.**
+Gained `GETCMD.6`, `GETCMD.23`, `PASCALSY.51`, `PASCALSY.52`,
+`PRINTERR.1`. `PASCALSY.2` (`EXECERROR`) closed completely.
+
+### 201a. `GETCMD.6` (`BADTITLE`): a value `STRING` parameter, not a `VAR` one
+
+The same run closed `BADTITLE` for a second, independent reason worth
+recording separately, because the first explanation had been right by
+accident.
+
+Its real prologue is `LLA 4 | SLDL 3 | SAS 80` -- the unconditional shadow
+copy a **value** `STRING` parameter costs (finding 176), occupying locals 4
+through 44. That is why its four declared locals sit at offsets 45, 49, 57
+and 58 and its `data` is 110 bytes. The reconstruction had
+`VAR TITLE: STRING` plus a scratch `MSG` local, which happened to add up to
+the same byte total while being a different frame for a different reason.
+Removing the scratch var (above) exposed the discrepancy immediately:
+`data` fell to 28 against Apple's 110.
+
+Declaring `TITLE: STRING` by value reproduced 110 for the right reason, and
+left exactly one instruction differing: `LLA 45` where Apple has `LLA 49`.
+Those are the first two locals past the shadow copy, so the empty-string
+test is on the second, `FTID`, not the first, `FVID` -- the check is
+whether the *file* name is empty, not the volume name. With both fixed the
+procedure is identical.
+
+### 201b. Method: a controlled A/B that reports "no difference at all" is a broken harness first
+
+The before/after measurement was initially run wrong and reported that not
+one procedure had changed. That is not a plausible result for a
+103-call-site edit, and the harness was the cause: `cp2 add` **silently
+declines to overwrite** an existing file on the volume, so the "before"
+source never reached the disk and the same new source was compiled twice.
+
+The fix is `cp2 delete` before `cp2 add` -- and then *verifying the staging
+landed* by extracting the file back and grepping it, rather than trusting
+the add. The general rule: when a controlled comparison reports no
+difference whatsoever, suspect the plumbing before believing the result.
+
+The durable fix went further than the scratch script. `PASCALSYSTEM.text`
+is now in `mkharddisks.py`'s own `FILES` list as `PASCALSY.TEXT`, so the
+acceptance disk is built fresh from the working tree by the one documented
+entry point and there is no add-over-existing step left to get wrong.
+
+### 201c. The scoreboard is now a tool and a probe, not a scratch script
+
+Two pieces of tooling came out of this and are worth keeping.
+
+`tools/oscmp.py` scores the compiled `PASCALSY.CODE` against shipped
+`128K.PASCAL` procedure by procedure, comparing instruction text (with
+absolute jump targets blanked, exactly as `procbuild.py` blanks them) *and*
+`params`/`data` together. Both halves are required: a body can be
+instruction-for-instruction right on a frame of the wrong size, which is a
+declaration bug rather than a statement bug, and calling that "exact" is
+how `GETCMD.6` came to be recorded as closed one session before it actually
+was -- the session summary claimed fifteen, and re-scoring that same
+codefile on both criteria gives fourteen. `--baseline`/`--save` name what a
+change gained and, more to the point, what it lost.
+
+`tools/probes/probe_os_exact.py` pins the result. The acceptance run is
+kept verbatim in `acceptance/2026-09-02-pascalsystem-write-sugar/`, and the
+probe re-checks on every build that each of the fifteen **named**
+procedures is still identical, that the total has not fallen, and -- the
+control that keeps the other two honest -- that four procedures known to
+differ still differ. A comparison that returned "identical" for everything
+would sail through a count-only check.
+
+**Also confirmed by that run**, closing the last unverified edits: the
+three remaining `PL := 'literal'; WRITE(PL)` pairs in `EXECREADBLK`,
+`EXECWRITEBLK` and `WAITSYSVOL` each dropped their procedure by exactly
+three instructions -- `PASCALSY.46` 82 -> 79, `.47` 54 -> 51, `.50` 52 ->
+49 -- all moving toward Apple's counts (47, 36, 43), with no procedure
+lost.
+
+### 201d. The emulator's own focus guard was losing unattended runs
+
+Three consecutive acceptance attempts died before typing anything:
+`SetForegroundWindow` is refused outright to a process that does not
+already own the foreground window, and retrying in a loop loses
+identically every time. With a browser left focused and nobody at the
+keyboard, that refusal is permanent -- which is exactly the situation a
+long unattended run is meant to survive.
+
+`emukeys.ps1` now attaches its own input queue to the foreground window's
+thread before activating (`AttachThreadInput`), which is the documented way
+to make the activation be granted, and re-raises the window before the
+screenshot as well -- a 300-second compile is ample time for something else
+to take the foreground, and a run that has already done the work should not
+be thrown away at capture time.
+
+The guard itself is unchanged and stays: focus is still asserted before any
+key is sent, and losing focus *during* a send is still a hard failure with
+no re-raise, because characters that went elsewhere cannot be recovered by
+raising a window afterwards.

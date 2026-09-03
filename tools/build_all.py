@@ -55,6 +55,11 @@ STEPS = [
     # what Apple shipped.
     ("acceptance runs vs the shipped binaries",
      "probes/probe_acceptance.py"),
+    # Same idea for the operating system, which is mid-reconstruction and so
+    # has no whole-file compare to make yet: the procedures Apple's own
+    # compiler already reproduces exactly are named, and a named one going
+    # missing is a regression however the total moves (finding 201).
+    ("OS procedures already exact", "probes/probe_os_exact.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
