@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-scantitle" / \
+RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-fileprims" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -45,13 +45,17 @@ EXACT = [
     "GETCMD.2", "GETCMD.4", "GETCMD.6", "GETCMD.19", "GETCMD.23",
     "GETCMD.26",
     "INITIALI.7", "INITIALI.8",
+    "PASCALSY.1",
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
-    "PASCALSY.14", "PASCALSY.15", "PASCALSY.21", "PASCALSY.22",
+    "PASCALSY.14", "PASCALSY.15",
+    "PASCALSY.16", "PASCALSY.17", "PASCALSY.20",
+    "PASCALSY.21", "PASCALSY.22",
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
     "PASCALSY.33",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
     "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
-    "PASCALSY.48", "PASCALSY.50", "PASCALSY.53", "PASCALSY.55",
+    "PASCALSY.48", "PASCALSY.50", "PASCALSY.53",
+    "PASCALSY.54", "PASCALSY.55", "PASCALSY.56",
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
     "PRINTERR.1",
     "USERPROG.1",
@@ -61,8 +65,8 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    "PASCALSY.1",    # the outer block: 14 instructions against Apple's 24
-    "PASCALSY.54",   # a terminal routine, 81 instructions, still a stub
+    "PASCALSY.19",   # FWRITESTRING: the one FWRITEBYTES argument, finding 208
+    "PASCALSY.13",   # 1 instruction against Apple's 109, still a stub
     "INITIALI.1",    # data 66 against Apple's 118, two banners missing
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
 ]

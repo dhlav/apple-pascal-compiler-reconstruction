@@ -1309,21 +1309,54 @@ a route end to end; everything else is a straight read-and-rebuild.
     loop in this reconstruction written as a `WHILE` that the binary
     tests at the bottom.
 
+    **The file primitives and what `BASE` addresses (findings 207-209).
+    38 -> 44 exact.** `SRO 11` inside `PASCALSY.56` had been recorded as
+    an open question rather than guessed at, and it is now settled:
+    `BASE` is the activation record of the currently active *lex-0*
+    procedure, not the globals. From lex 0, `SRO`/`SLDO`/`LAO` name the
+    procedure's own frame; from a lex-1 procedure nested inside one, the
+    globals move to `LOD 2,n` and `SRO`/`SLDO` still name the parent's
+    frame. Checked so it could have failed: 1123 BASE-relative
+    references from lex-0 procedures across the whole file, not one of
+    them outside the referencing procedure's own frame, and all eight
+    lex-1 procedures that use BASE at all inside their parent's.
+
+    That let `.56` (`EXECGETCH`, the read-side twin of `EXECPUTCH`) be
+    written, along with `FGET`'s own frame, which had to be right for
+    `.56`'s two offsets to mean anything even though `FGET`'s body still
+    waits on `FIOPRIMS`. `PASCALSY.1` was four lines short of Apple's:
+    the `REPEAT STUB48; IF EMPTYHEAP <> NIL THEN INITIALIZE UNTIL
+    EMPTYHEAP = NIL` that drives the whole system. `PASCALSY.54` turned
+    out to be UCSD's own `CHECKDEL` and placed three packed-field
+    offsets straight out of finding 93a's reversal rule, with nothing
+    left over. `FREADCHAR`, `FWRITECHAR` and `FWRITEBYTES` are Apple's
+    restructured versions of UCSD's write path, which moved everything
+    out of `FWRITESTRING` and into `FWRITEBYTES`.
+
+    `FWRITESTRING` (`.19`) is the one left open on purpose. Its
+    `FWRITEBYTES` argument is the string parameter's address plus one
+    byte -- where a UCSD `STRING`'s characters start -- and Apple's own
+    compiler refused both readings tried: **error 103** for `S[1]`,
+    **error 142** for `S`. Two different error numbers is real evidence
+    about which of the two declarations is wrong; a third guess would
+    cost another acceptance run, so it is written down instead.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
     loops are visibly absent.
-    `PASCALSY.1`, the outer block, at 14 instructions against 24.
-    `PASCALSY.54` and `.56`, honest number-preserving stubs now sitting
-    on the right numbers with the right frame sizes but no content
-    (`.54` is another terminal routine, 81 instructions, called from
-    `.12`/`.18`; `.56` is 26 instructions inside `FGET`).
+    `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
+    and already half-readable in the lift.
+    `PASCALSY.42` (`FETCHDIR`) at 287 instructions against 235, and
+    `PASCALSY.30`/`.31` at 252/245 and 152/129 -- all three have real
+    bodies that are close rather than stubs, so they are diffs to read
+    rather than routines to decode.
+    `PASCALSY.19`, above: not a decoding problem, a declaration one.
     `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
     against 2, with no offset anywhere to say where the extra word sits --
     size alone is not enough to place it. `FILEPROC.1`'s own local
     declaration order, which `FILEPROC.6` reads at three wrong offsets.
-    `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the next large one
-    and already half-readable in the lift. Then the remaining stubs:
+    Then the remaining stubs: `PASCALSY.13`, `.18`, `.40`, `.41`,
     `GETCMD.3`, `.5`, `.7`-`.18`, `.21`, `.22`, `.24`, `.25`, `.27`,
     `.1`'s own menu loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s
     intrinsic-unit build wiring -- which finding 205c has now given a

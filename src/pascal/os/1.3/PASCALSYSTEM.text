@@ -2888,18 +2888,164 @@ PROGRAM PASCALSYSTEM;
     SYSCOM^.XEQERR := 11;
     EXECERROR
   END;
-  PROCEDURE FREADCHAR; BEGIN END;
-  PROCEDURE FWRITECHAR; BEGIN END;
+  { `FREADCHAR` = `PASCALSY.16` (finding 208). UCSD's II.0 ancestor
+    (`reference_source/ucsd_ii0/SYSTEM.C.TEXT`) is a different routine
+    entirely; Apple's is these 31 instructions and nothing else. The
+    `WITH F DO` pointer lands at word 3 and is set up *before* the
+    `IORSLT` clear (`SLDO 2 | SRO 3` then `LOD 1,1 | SLDC 0 | STO`),
+    which is how you know the clear is inside the `WITH` and not
+    ahead of it -- `FWRITEBYTES` below has the two the other way round
+    and so puts its own clear outside. That one word is the whole of
+    `data`; there are no declared locals. }
+  PROCEDURE FREADCHAR;
+  BEGIN
+    WITH F DO
+    BEGIN
+      SYSCOM^.IORSLT := INOERROR;
+      IF FSTATE = FNEEDCHAR THEN
+        FGET(F);
+      CH := FWINDOW^[0];
+      IF FSTATE = FJANDW THEN
+        FGET(F)
+      ELSE
+        FSTATE := FNEEDCHAR
+    END
+  END;
+
+  { `FWRITECHAR` = `PASCALSY.17` (finding 208). Pads with blanks down
+    to the last position and writes the character there, so a
+    `WRITE(CH:8)` costs eight `FPUT`s. `RLENG` is decremented in place
+    -- it is a value parameter and therefore the routine's own
+    scratch, the same habit `SCANTITLE` showed with its `STRING`
+    (finding 206). `data` is one word, the `WITH` pointer at 4. }
+  PROCEDURE FWRITECHAR;
+  BEGIN
+    WITH F DO
+      IF FISOPEN THEN
+      BEGIN
+        WHILE RLENG > 1 DO
+        BEGIN
+          FWINDOW^[0] := ' ';
+          FPUT(F);
+          RLENG := RLENG - 1
+        END;
+        FWINDOW^[0] := CH;
+        FPUT(F)
+      END
+      ELSE
+        SYSCOM^.IORSLT := INOTOPEN
+  END;
+
   PROCEDURE FREADSTRING; BEGIN END;
 
   { What WRITE(f, s) lowers to (finding 52b); UCSD's own source calls
     it directly rather than going through WRITE's own sugar (header
-    comment). }
+    comment).
+
+    `FWRITESTRING` = `PASCALSY.19`, and Apple threw UCSD's version
+    away: II.0 does the padding, the soft-buffer loop and the
+    `UNITWRITE` itself, all of which Apple moved into `FWRITEBYTES`
+    below, leaving eighteen instructions that just hand the string
+    over (finding 208).
+
+    Apple threw UCSD's version away: II.0 does the padding, the
+    soft-buffer loop and the `UNITWRITE` itself, all of which Apple
+    moved into `FWRITEBYTES` below, leaving eighteen instructions that
+    just hand the string over. Seventeen of them are settled. The
+    first statement is written; the call is not, and this is the whole
+    of what is known about it:
+
+        SLDO 3             -- F
+        SLDO 2 SLDC 1 ADI  -- A, and this is the open question
+        SLDO 1             -- RLENG
+        SLDO 2 SLDC 0 LDB  -- ALENG = LENGTH(S)
+        CBP 20
+
+    `SLDO 2` is the `VAR S: STRING` parameter's own address and
+    `SLDO 2 | SLDC 0 | LDB` on that same address is `LENGTH(S)`, so
+    the second argument is that address plus one *byte* -- this
+    p-machine's pointers are byte addresses, and a UCSD `STRING` keeps
+    its length in element 0, so `S+1` is exactly where the characters
+    start. `INC n`, which appears a line away in other routines, is
+    the one that scales by words; these two mean different things.
+
+    What is not known is what Apple wrote to get it. Two readings have
+    been tried against Apple's own compiler and both were refused:
+
+      * `FWRITEBYTES(F, S[1], RLENG, LENGTH(S))` -- **error 103**,
+        "identifier is not of the appropriate class".
+      * `FWRITEBYTES(F, S, RLENG, LENGTH(S))` -- **error 142**,
+        "illegal parameter substitution".
+
+    The host tool refuses both too, in its own words ("given a char
+    variable" / "given a string variable ... but declaration of `A` is
+    reference to packed array [0..0] of char"). Two different error
+    numbers is itself information: 142 is the type mismatch, so 103
+    for `S[1]` is a *different* complaint, and the likeliest reading of
+    it is that a `VAR` actual has to be a plain variable with no
+    selector at all -- which would mean the second formal is not a
+    `VAR` parameter and `S+1` is a value, not an address handed over.
+    That contradicts `PASCALSY.20`, which indexes the same parameter
+    (`SLDO 3 | SLDO 5 | LDB`) and so needs an array. Something in the
+    pair of declarations is still wrong, not the arithmetic.
+
+    Left open deliberately, the same way `PASCALSY.39` is: the shape
+    is measured, the source is not known, and guessing at it costs an
+    acceptance run each time. `params` (6) and `data` (0) are already
+    exact, so nothing here is holding a frame wrong. }
   PROCEDURE FWRITESTRING;
   BEGIN
+    IF RLENG <= 0 THEN
+      RLENG := LENGTH(S)
+    { FWRITEBYTES(F, <second argument unknown>, RLENG, LENGTH(S)) }
   END;
 
-  PROCEDURE FWRITEBYTES; BEGIN END;
+  { `FWRITEBYTES` = `PASCALSY.20` (finding 208), where the work
+    `FWRITESTRING` used to do now lives. Closest of the five to its
+    II.0 ancestor, with two changes: the blank padding is an inline
+    loop over its own counter rather than a call to `FWRITECHAR`, and
+    the `UNITWRITE` names an explicit block number. `data` is three
+    words: `AINX` at 5, `PADS` at 6, and the `WITH` pointer at 7 --
+    declared in separate groups so they ascend in that order, since
+    one group would make them descend (finding 93a). Here the `IORSLT`
+    clear really is ahead of the `WITH` (`LOD 1,1 | SLDC 0 | STO` at
+    instruction 1, `SLDO 4 | SRO 7` at 4). }
+  PROCEDURE FWRITEBYTES;
+    VAR
+      AINX: INTEGER;
+      PADS: INTEGER;
+  BEGIN
+    SYSCOM^.IORSLT := INOERROR;
+    WITH F DO
+      IF FISOPEN THEN
+      BEGIN
+        IF RLENG > ALENG THEN
+        BEGIN
+          PADS := RLENG - ALENG;
+          WHILE PADS > 0 DO
+          BEGIN
+            FWINDOW^[0] := ' ';
+            FPUT(F);
+            PADS := PADS - 1
+          END;
+          RLENG := ALENG
+        END;
+        IF FSOFTBUF THEN
+        BEGIN
+          AINX := 0;
+          WHILE (AINX < RLENG) AND NOT FEOF DO
+          BEGIN
+            FWINDOW^[0] := A[AINX];
+            FPUT(F);
+            AINX := AINX + 1
+          END
+        END
+        ELSE
+          UNITWRITE(FUNIT, A, RLENG, 0)
+      END
+      ELSE
+        SYSCOM^.IORSLT := INOTOPEN
+  END;
 
   { `FREADLN` = `PASCALSY.21` (finding 193). `GET`s past the rest of
     the current line (`WHILE NOT F.FEOLN DO FGET(F)`), then one more
@@ -3135,15 +3281,78 @@ PROGRAM PASCALSYSTEM;
       END
   END;
 
-  { `PASCALSY.54` -- a number-preserving stub, not Apple's content.
-    Real `params=10` (five words) and `data=4`, 81 instructions, lex 0.
-    Called from `PASCALSY.12` and `.18`, and calls `PUTCRT` itself, so
-    it is another terminal-output routine; not decoded yet. It has to
-    exist here and take five words so that `BLKXFER` below lands on
-    `55` and `GETNEXTCMD`/`CMDDISPATCH` land on `57`/`58`, which is
-    where the real binary has them (finding 202f). }
-  PROCEDURE STUB54(A, B, C, D, E: INTEGER);
+  { `PASCALSY.54` is `CHECKDEL` (finding 209), UCSD's own name and its
+    own routine -- `reference_source/ucsd_ii0/SYSTEM.A.TEXT:58` has the
+    ancestor, called from `FREADSTRING` to let a console reader take
+    back what the typist just typed. It is a `FUNCTION`, which is why
+    `params=10` covers five words for three parameters: two of them
+    are the function result at 1..2 (`SRO 1` is `CHECKDEL := ...`, and
+    `PASCALSY.49` already showed a `BOOLEAN` result costing the same
+    two). `data=4` is two `WITH` pointers and no declared locals at all.
+
+    Apple rewrote II.0's body. II.0 emits `BACKSPACE` characters one at
+    a time and guards on `BACKSPACE = CHR(0)`; Apple writes two
+    prepared global strings, `DLINE_STR` per erased character of a line
+    and `BSPACE_STR` per erased character, and only for characters that
+    are actually printable (`IF S[SINX] >= ' '`) -- so a control
+    character in the buffer takes no screen position back. It also
+    checks the line-delete key first and the character-delete key as
+    the `ELSE`, where II.0 tests both.
+
+    Three offsets in here are the reversal rule paying for itself, each
+    one a check that could have failed:
+
+      * `CRTCTRL` at `SYSCOM+31`. The record's own fields sum there
+        exactly -- `BRKPTS` 4 words, `EXPANSION` 9, `MISCINFO` and
+        `CRTTYPE` one each -- and `CRTINFO` then lands at `+37`, which
+        is where `FGOTOXY` was already independently measured.
+      * `ERASEEOL` as the high byte of `CRTCTRL`'s word 1
+        (`INC 1 | SLDC 8 | SLDC 8 | LDP`). `RLF, NDFS, ERASEEOL,
+        ERASEEOS, HOME, ESCAPE: CHAR` is one field clause, so it
+        reverses: `ESCAPE` takes byte 0 and `ERASEEOL` byte 3. And
+        `PUTCRT(2, ERASEEOL)` -- index 2, `ERASEEOL`'s own place in
+        declaration order -- is the very call `CLEARLINE`'s body
+        further down already makes.
+      * `CRTINFO.CHARDEL` at `SYSCOM+43` low byte and
+        `CRTINFO.LINEDEL` at `+44` low byte. Same reversal:
+        `BADCH, CHARDEL, STOP, BREAK, FLUSH, EOF` puts `EOF` at `+41`
+        low and `CHARDEL` at `+43` low; `ALTMODE, LINEDEL` puts
+        `LINEDEL` at `+44` low. Both offsets fall out of the
+        declaration with nothing left over.
+
+    (One thing this does *not* settle: `WIDTH, HEIGHT: INTEGER` is a
+    clause too, so the same rule would put `HEIGHT` at `+37` and
+    `WIDTH` at `+38`, where the note on `SYSCOM` above says `WIDTH`.
+    `FGOTOXY` clamps both and reads the same either way, so nothing
+    here can tell them apart. Left alone rather than renamed on a
+    guess.) }
+  FUNCTION CHECKDEL(CH: CHAR; VAR SINX: INTEGER;
+                    VAR S: STRING): BOOLEAN;
   BEGIN
+    CHECKDEL := FALSE;
+    WITH SYSCOM^, CRTCTRL DO
+      IF CH = CRTINFO.LINEDEL THEN
+      BEGIN
+        CHECKDEL := TRUE;
+        WHILE SINX > 1 DO
+        BEGIN
+          SINX := SINX - 1;
+          IF S[SINX] >= ' ' THEN
+            WRITE(DLINE_STR)
+        END;
+        PUTCRT(2, ERASEEOL)
+      END
+      ELSE
+        IF CH = CRTINFO.CHARDEL THEN
+        BEGIN
+          CHECKDEL := TRUE;
+          IF SINX > 1 THEN
+          BEGIN
+            SINX := SINX - 1;
+            IF S[SINX] >= ' ' THEN
+              WRITE(BSPACE_STR)
+          END
+        END
   END;
 
   { `FBLOCKIO`'s real body (finding 161), decoded directly from
@@ -3247,13 +3456,72 @@ PROGRAM PASCALSYSTEM;
     segment 0's block, and only the FORWARD block's order fixes numbers
     (finding 202f).
 
-    `PASCALSY.56` is a number-preserving stub, not Apple's content:
-    real `params=0`/`data=0`, 26 instructions, called from `FGET`'s own
-    body with `CLP`. `FGET` itself is still a stub too, pending the
-    `FIOPRIMS` intrinsic-unit build wiring (finding 200). }
+    `PASCALSY.56` is `EXECGETCH`, written for real (finding 207): the
+    read-side twin of `EXECPUTCH` (`PASCALSY.44`), pulling the next
+    character of an EXEC file out of the disk buffer and closing the
+    file when two terminator characters meet. `params=0`, `data=0` --
+    it has no locals at all, because the character it fetches goes
+    straight into `FGET`'s own `CH`, which it reaches as `SRO 11` and
+    `SLDO 11`.
+
+    That `SRO 11` is what had to be settled before this could be
+    written. `BASE` in this p-machine is **not** the true globals: it
+    is the activation record of the currently active *lex-0*
+    procedure. From `FGET` (lex 0) `SRO`/`SLDO`/`LAO` name its own
+    frame and the globals are `LOD 1,n`; from `EXECGETCH` (lex 1,
+    nested inside it) the globals move to `LOD 2,n` while `SRO`/`SLDO`
+    still name `FGET`'s frame. That is a claim the binary could have
+    falsified and did not: across every procedure in `128K.PASCAL`
+    there are 1123 BASE-relative references from lex-0 procedures and
+    not one lands outside the referencing procedure's own frame, while
+    all eight lex-1 procedures that use BASE at all land inside their
+    *parent's* -- including `GETCMD.19`'s already-exact `SRO 1` (its
+    function result) and `SLDO 3` (`LASTST`). Had BASE meant the
+    globals, those offsets would have ranged over a 450-word global
+    block instead of stopping dead at each parent's frame size.
+
+    `FGET` itself is still a stub. It calls `CXP 2,2`, `CXP 2,3` and
+    `CXP 2,4`, and is the only procedure in the whole OS that calls
+    into segment 2 at all, so its body cannot be written until
+    `FIOPRIMS` is built as the intrinsic unit it is (finding 200). Its
+    *frame* can be, and must be, since `EXECGETCH`'s two offsets are
+    measured from it. Apple's is `params=2`/`data=22`: `F` at word 1,
+    ten declared locals at 2..11, and at word 12 the `WITH F DO`
+    pointer the binary caches once (`SLDO 1 | SRO 12`) and then reaches
+    through with `SIND`/`INC` for all 234 instructions. Five of the ten
+    -- 3, 4, 5, 6 and 8 -- are never read or written anywhere in
+    `FGET` or in `EXECGETCH`, so the binary fixes their count and their
+    positions and says nothing whatever about their types; they are
+    declared one word each under names that claim nothing. The other
+    five it does describe: `I` (2) is a byte index into the file's own
+    window; `UNITNO` (7) is `2` when the file sits on unit 1 and
+    `F.FUNIT` otherwise -- reading the console through `SYSTERM:`
+    rather than `CONSOLE:`, so the echo is `FGET`'s own to do;
+    `ISCONSOLE` (9) is that `F.FUNIT = 1` test; `MORE` (10) is the read
+    loop's flag; `CH` (11) is the character. With no body there is no
+    `WITH`, so `data` reads 20 against Apple's 22 -- the ten declared
+    words balance exactly, and word 11 is where `EXECGETCH` needs it. }
   PROCEDURE FGET;
-    PROCEDURE STUB56;
+    VAR
+      I: INTEGER;         { byte index into F's own window       }
+      FGL3: INTEGER;      { 3, 4, 5, 6 and 8: five words Apple   }
+      FGL4: INTEGER;      { declares and never once touches.     }
+      FGL5: INTEGER;      { Count and position are evidence; the }
+      FGL6: INTEGER;      { types are not, so they claim none.   }
+      UNITNO: INTEGER;    { 2 for a unit-1 file, else F.FUNIT    }
+      FGL8: INTEGER;
+      ISCONSOLE: BOOLEAN; { F.FUNIT = 1                          }
+      MORE: BOOLEAN;      { read-loop flag                       }
+      CH: CHAR;           { the character EXECGETCH fetches      }
+
+    PROCEDURE EXECGETCH;
     BEGIN
+      CH := EXBUFPTR^[EXEC_CH_NUM];
+      EXEC_CH_NUM := EXEC_CH_NUM + 1;
+      IF EXEC_CH_NUM > EXEC_END THEN
+        EXECREADBLK;
+      IF (CH = EXEC_TERM) AND (EXBUFPTR^[EXEC_CH_NUM] = EXEC_TERM) THEN
+        EXECCLOSE(TRUE)
     END;
   BEGIN
   END;
@@ -4392,22 +4660,32 @@ PROGRAM PASCALSYSTEM;
   `CXP 0,3` at entry; `LLA 396`, `SLDC 0`, `CXP 0,6`, `XIT` at exit)
   byte for byte.
 
-  One piece remains, genuinely unresolved rather than guessed at:
+  The one piece that was missing is now written (finding 207): the
+  `REPEAT` that drives the whole system. `PASCALSY.48` was "genuinely
+  new territory" when this comment was first written, past the 41/42
+  forward-declared set (finding 136); it has since been written for
+  real (finding 192) and the loop around it is ten instructions:
 
-  * `PASCALSY.48()`. Procedure 48 is past the 41/42 forward-declared
-    set this file has (finding 136) -- genuinely new territory,
-    `analysis/lifted/128K.PASCAL-1.3-128K.pas.txt:1033-1042` shows its
-    own small body (`STATE := HALTINIT; <exec flag> := FALSE; REPEAT
-    PASCALSY.50(); PASCALSY.58(); IF <exec flag> THEN
-    USERPROG.1(NIL, NIL) UNTIL STATE = HALTINIT`-shaped, per that
-    lift), but procedures 44-58 have no source in this file at all
-    yet -- writing them is the next real step, not this one. }
+      CBP 48 | LDL 54 | LDCN | NEQI | FJP | CXP 4,1
+             | LDL 54 | LDCN | EQUI | FJP <top>
+
+  `LDL 54`, not `SLDO`/`SLDL`: at lex `255` the outer block reaches its
+  own variables -- which *are* the globals -- with `LDL`/`STL`, and
+  word 54 is `EMPTYHEAP`, the same word `EXEC_MARK` is saved from and
+  restored to. So `STUB48` returns, and if anything is left on the
+  heap the system re-`INITIALIZE`s (`CXP 4,1`) and goes round again;
+  only a clean, empty heap ends the program. `data` was already
+  `902`/`902` before this -- the whole global block was right and only
+  the four statements were short. }
 BEGIN
   EMPTYHEAP := NIL;
   UNITCLEAR(1);
   INITIALIZE;
-  { REPEAT ... UNTIL EMPTYHEAP = NIL calling PASCALSY.48: not written
-    yet, see the comment above -- FINIT/FCLOSE need no source here,
-    the compiler emits them automatically from EXEC_FILE's own
-    declaration. }
+  REPEAT
+    STUB48;
+    IF EMPTYHEAP <> NIL THEN
+      INITIALIZE
+  UNTIL EMPTYHEAP = NIL
+  { FINIT/FCLOSE need no source here: the compiler emits them
+    automatically from EXEC_FILE's own declaration. }
 END.

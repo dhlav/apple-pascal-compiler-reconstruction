@@ -17797,3 +17797,179 @@ stop at `52` and why the frame is 45 words wider than four scalars.
 **37 -> 38 exact.** `SCANTITLE` is the second-largest procedure in the
 segment and `FPOPEN`'s hardest dependency; with it and `GETCMD.19` the
 title parser and the codefile associator are both byte-exact.
+
+## 207. What `BASE` addresses, and `PASCALSY.1`'s missing four lines
+
+**VERIFIED BINARY FACT.** `PASCALSY.56` is 26 instructions, `params=0`,
+`data=0`, lex 1, nested inside `FGET`, and it stores the character it
+fetches with `SRO 11`. With no locals of its own, `SRO 11` had to be
+either its enclosing procedure's frame or the true globals, and the two
+readings could not be told apart from that procedure alone. The session
+before this one recorded it as an open question rather than guess.
+
+`BASE` is the activation record of the currently active **lex-0**
+procedure. From a lex-0 procedure, `SRO`/`SLDO`/`LAO` name its own frame
+and the globals are `LDA 1,n`/`LOD 1,n`; from a lex-1 procedure nested
+inside one, the globals move to `LOD 2,n` and `SRO`/`SLDO` still name the
+**parent's** frame. `PASCALSY.56` uses both in the same 26 instructions --
+`LOD 2,381` for `EXBUFPTR` and `SRO 11` for `FGET`'s own `CH`.
+
+The check the binary could have failed: across every procedure in
+`128K.PASCAL` there are **1123** BASE-relative references from lex-0
+procedures and **not one** lands outside the referencing procedure's own
+frame. Had `BASE` meant the globals, those offsets would have ranged over
+a 450-word global block instead of stopping dead at each frame's size.
+All eight lex-1 procedures that use BASE at all land inside their
+*parent's* frame, `GETCMD.19`'s already-exact `SRO 1` (its function
+result) and `SLDO 3` (`LASTST`) among them.
+
+### 207a. `PASCALSY.56` is `EXECGETCH`
+
+The read-side twin of `EXECPUTCH` (`PASCALSY.44`):
+
+    CH := EXBUFPTR^[EXEC_CH_NUM];
+    EXEC_CH_NUM := EXEC_CH_NUM + 1;
+    IF EXEC_CH_NUM > EXEC_END THEN EXECREADBLK;
+    IF (CH = EXEC_TERM) AND (EXBUFPTR^[EXEC_CH_NUM] = EXEC_TERM) THEN
+      EXECCLOSE(TRUE)
+
+Two terminator characters in a row end the EXEC file, which is exactly
+what `EXECPUTCH` writes on the way out.
+
+`FGET` itself stays a stub -- it is the only procedure in the whole OS
+that calls into segment 2 (`CXP 2,2`, `CXP 2,3`, `CXP 2,4`), so its body
+waits on `FIOPRIMS` being built as the intrinsic unit it is (finding
+200). Its *frame* had to be written anyway, since `EXECGETCH`'s offsets
+are measured from it: `params=2`/`data=22` is `F` at word 1, ten declared
+locals at 2..11, and the `WITH F DO` pointer the binary caches at 12.
+Five of the ten -- 3, 4, 5, 6 and 8 -- are never read or written in
+either procedure, so the binary fixes their count and position and says
+nothing about their types. The other five it does describe: `I` (2) a
+byte index into the file's window, `UNITNO` (7) which is `2` for a unit-1
+file and `F.FUNIT` otherwise (reading the console through `SYSTERM:`
+rather than `CONSOLE:`, so the echo is `FGET`'s own to do), `ISCONSOLE`
+(9), `MORE` (10), and `CH` (11).
+
+### 207b. The outer block was four lines short
+
+`PASCALSY.1` was already `data` `902`/`902` -- the entire global block
+right -- and ten instructions short:
+
+    CBP 48 | LDL 54 | LDCN | NEQI | FJP | CXP 4,1
+           | LDL 54 | LDCN | EQUI | FJP <top>
+
+which is `REPEAT STUB48; IF EMPTYHEAP <> NIL THEN INITIALIZE UNTIL
+EMPTYHEAP = NIL`. `LDL 54`, not `SLDO`: at lex `255` the outer block
+reaches its own variables -- which *are* the globals -- with `LDL`/`STL`.
+The comment standing in its place said procedure 48 was "genuinely new
+territory"; it had been written for real two sessions earlier (finding
+192) and nothing had gone back to close the loop around it.
+
+## 208. Apple rewrote UCSD's write path, and one argument is still open
+
+**VERIFIED BINARY FACT.** UCSD II.0's `FWRITESTRING` does the padding,
+the soft-buffer loop and the `UNITWRITE` itself
+(`reference_source/ucsd_ii0/SYSTEM.C.TEXT:352`). Apple moved all of it
+into `FWRITEBYTES` and left `FWRITESTRING` eighteen instructions long.
+`FWRITEBYTES` has exactly one caller in the whole OS, and no `CXP 0,20`
+anywhere -- the compiler never generates a call to it.
+
+Four of the five file primitives are now exact:
+
+  * `FREADCHAR` (`PASCALSY.16`, 31 instructions) and `FWRITECHAR`
+    (`.17`, 33) are neither of them UCSD's routine; Apple's are short
+    and self-contained. `FWRITECHAR` pads down to the last position and
+    writes the character there, decrementing its own `RLENG` value
+    parameter as scratch (finding 206's habit again).
+  * `FWRITEBYTES` (`.20`, 75) is the closest of the five to its
+    ancestor, with two changes: the blank padding is an inline loop over
+    its own counter rather than a call to `FWRITECHAR`, and the
+    `UNITWRITE` names an explicit block number.
+
+Where the `IORSLT` clear sits relative to the `WITH` pointer is what says
+whether it is inside the `WITH`: `.16` has `SLDO 2 | SRO 3` *then*
+`LOD 1,1 | SLDC 0 | STO`, so its clear is inside; `.20` has them the
+other way round, so its clear is ahead of it. Neither is a guess and the
+two really do differ.
+
+### 208a. `FWRITESTRING`'s second argument, left open
+
+The call is
+
+    SLDO 3             -- F
+    SLDO 2 SLDC 1 ADI  -- A, the open question
+    SLDO 1             -- RLENG
+    SLDO 2 SLDC 0 LDB  -- ALENG = LENGTH(S)
+    CBP 20
+
+`SLDO 2` is the `VAR S: STRING` parameter's own address, and
+`SLDO 2 | SLDC 0 | LDB` on that same address is `LENGTH(S)`, so the
+second argument is that address plus one **byte** -- this p-machine's
+pointers are byte addresses and a UCSD `STRING` keeps its length in
+element 0, so `S+1` is exactly where the characters start.
+
+Two readings were put to Apple's own compiler and both were refused:
+
+  * `FWRITEBYTES(F, S[1], RLENG, LENGTH(S))` -- **error 103**,
+    "identifier is not of the appropriate class".
+  * `FWRITEBYTES(F, S, RLENG, LENGTH(S))` -- **error 142**, "illegal
+    parameter substitution".
+
+Two *different* numbers is itself evidence. 142 is the type mismatch, so
+103 for `S[1]` is a different complaint, and the likeliest reading is
+that a `VAR` actual must be a plain variable with no selector -- which
+would mean the second formal is not a `VAR` parameter at all and `S+1`
+is a value handed over rather than an address. That contradicts
+`PASCALSY.20`, which indexes the same parameter (`SLDO 3 | SLDO 5 |
+LDB`) and so needs an array. Something in the pair of declarations is
+still wrong; the arithmetic is not.
+
+Left open deliberately, the way `PASCALSY.39` is. `params` (6) and
+`data` (0) are already exact, so nothing is holding a frame wrong. Cost
+of the two eliminations: two acceptance runs, which is why the third
+reading is not being guessed at as well.
+
+## 209. `PASCALSY.54` is `CHECKDEL`, and the reversal rule places three offsets
+
+**VERIFIED BINARY FACT.** The stub that had to exist so that `BLKXFER`
+landed on `55` is UCSD's own `CHECKDEL`
+(`reference_source/ucsd_ii0/SYSTEM.A.TEXT:58`), which lets a console
+reader take back what the typist just typed. It is a `FUNCTION`, which
+is why `params=10` covers five words for three parameters: two of them
+are the function result at 1..2, the same two `PASCALSY.49` already
+showed a `BOOLEAN` result costing. `data=4` is two `WITH` pointers and no
+declared locals at all.
+
+Apple rewrote II.0's body. II.0 emits `BACKSPACE` one character at a time
+and guards on `BACKSPACE = CHR(0)`; Apple writes two prepared global
+strings, `DLINE_STR` per erased character of a line and `BSPACE_STR` per
+erased character, and only for characters that are actually printable
+(`IF S[SINX] >= CHR(32)`), so a control character in the buffer takes no
+screen position back. It tests the line-delete key first and the
+character-delete key as the `ELSE`, where II.0 tests both.
+
+Three offsets fall out of finding 93a's reversal rule with nothing left
+over, each a check that could have failed:
+
+  * `CRTCTRL` at `SYSCOM+31`. `BRKPTS` 4 words, `EXPANSION` 9,
+    `MISCINFO` and `CRTTYPE` one each -- the record sums there exactly,
+    and `CRTINFO` then lands at `+37`, which is where `FGOTOXY` was
+    independently measured (finding 139).
+  * `ERASEEOL` as the high byte of `CRTCTRL`'s word 1. `RLF, NDFS,
+    ERASEEOL, ERASEEOS, HOME, ESCAPE: CHAR` is one field clause, so it
+    reverses: `ESCAPE` takes byte 0 and `ERASEEOL` byte 3. And the call
+    is `PUTCRT(2, ERASEEOL)` -- index 2, `ERASEEOL`'s own place in
+    declaration order -- which is the very call `CLEARLINE` already
+    makes.
+  * `CRTINFO.CHARDEL` at `SYSCOM+43` low byte and `CRTINFO.LINEDEL` at
+    `+44` low byte. Same reversal: `BADCH, CHARDEL, STOP, BREAK, FLUSH,
+    EOF` puts `EOF` at `+41` low and `CHARDEL` at `+43` low;
+    `ALTMODE, LINEDEL` puts `LINEDEL` at `+44` low.
+
+One thing this does **not** settle: `WIDTH, HEIGHT: INTEGER` is a clause
+too, so the same rule would put `HEIGHT` at `+37` and `WIDTH` at `+38`,
+where the note on `SYSCOM` says `WIDTH`. `FGOTOXY` clamps both and reads
+the same either way, so nothing here can tell them apart. Left alone
+rather than renamed on a guess.
+
+**38 -> 44 exact.** `PASCALSY.1`, `.16`, `.17`, `.20`, `.54`, `.56`.
