@@ -17117,3 +17117,126 @@ The guard itself is unchanged and stays: focus is still asserted before any
 key is sent, and losing focus *during* a send is still a hard failure with
 no re-raise, because characters that went elsewhere cannot be recovered by
 raising a window afterwards.
+
+## 202. Finding 138's parameter reordering was applied backwards -- UCSD's own declarations were right all along, and putting them back closed four procedures at once
+
+**VERIFIED BINARY FACT**, confirmed on Apple's own compiler, and
+corroborated independently by UCSD's own source.
+
+Finding 138 read `SCONCAT`/`SINSERT`/`SCOPY`/`SDELETE`'s real frames
+correctly and then wrote each frame out as the *declaration*, which is the
+wrong direction. A callee's frame gives the **last**-declared parameter
+`P1` (finding 175), so a declaration is the reverse of the frame it
+produces. `PASCALSY.23`'s frame really is `(DESTLENG, SRC, DEST)` -- and
+that frame is what `VAR DEST, SRC: STRING; DESTLENG: INTEGER` compiles to,
+which is exactly what UCSD wrote in `GLOBALS.TEXT`. Writing
+`(DESTLENG: INTEGER; VAR DEST, SRC: STRING)` instead produces the frame
+`(SRC, DEST, DESTLENG)`, which is what this project had.
+
+Reversing all four real frames gives UCSD's four declarations back
+character for character:
+
+| | this project had | Apple's frame | UCSD, and now this project |
+|---|---|---|---|
+| `SCONCAT` | `DESTLENG; VAR DEST,SRC` | `DESTLENG, SRC, DEST` | `VAR DEST,SRC: STRING; DESTLENG: INTEGER` |
+| `SINSERT` | `INSINX,DESTLENG; VAR SRC,DEST` | `INSINX, DESTLENG, DEST, SRC` | `VAR SRC,DEST: STRING; DESTLENG,INSINX: INTEGER` |
+| `SCOPY` | `COPYLENG,SRCINX; VAR SRC,DEST` | `COPYLENG, SRCINX, DEST, SRC` | `VAR SRC,DEST: STRING; SRCINX,COPYLENG: INTEGER` |
+| `SDELETE` | `DELLENG,DELINX; VAR DEST` | `DELLENG, DELINX, DEST` | `VAR DEST: STRING; DELINX,DELLENG: INTEGER` |
+
+`SPOS` was never the exception finding 138 wrote it up as. It was the one
+of the five the reversal error happened not to disturb, because its two
+parameters are both `VAR STRING` in a single group and it has no integer
+tail to move.
+
+**The binary was saying this the whole time.** Each of the four bodies had
+the right instructions in the right order reading the *wrong parameters*,
+and every call site pushed its arguments in the order the wrong declaration
+demanded. Two symptoms, one cause, and both visible in a plain instruction
+diff -- but only once the comparison covered instructions rather than frame
+sizes alone (finding 201c). All four frames were the right *size* the whole
+time, which is why finding 138 recorded them as "all five exact".
+
+**Result on Apple's own compiler**: instruction-and-frame-identical
+procedures 15 -> 20, none lost. `PASCALSY.23`/`.25`/`.26` closed on the
+declaration change alone; `PASCALSY.24` needed one more thing (below);
+`GETCMD.4` came from a separate fix in the same run.
+
+### 202a. `SINSERT`'s `ONRIGHT := 0` is a real guard, not dead code
+
+With the parameters right, `PASCALSY.24` had one difference left: six
+instructions this project had deliberately dropped. The earlier reading
+called `ONRIGHT := 0; IF ONRIGHT = 0 THEN ...` vestigial on the grounds
+that the flag is set immediately before the test it guards, so the
+`MOVELEFT` always runs.
+
+It does not always run. `ONRIGHT := 0` sits **inside** the preceding
+`IF ONRIGHT > 0` arm, so when `ONRIGHT` comes out negative -- an insertion
+index past the end of `DEST` -- the assignment never happens and the second
+`IF` fails. It is the routine's own bounds check. UCSD's `SYSTEM.C.TEXT`
+has exactly this shape; restoring it verbatim made the procedure identical.
+
+The lesson generalises past this routine: "this statement looks
+unnecessary" is a claim about the *source*, and the binary is the authority
+on what the source said. Simplifying while transcribing loses the only
+evidence there is.
+
+### 202b. `GETCMD.2` (`RUNWORKFILE`) is a `CONCAT` expression, not a built-up local
+
+`RUNWORKFILE` had `data` 166 against Apple's 24 -- the worst frame gap in
+the file -- and the previous session's note guessed at an unreproduced
+value-`STRING` shadow copy. It was the opposite: this project had *more*
+locals than Apple, not fewer.
+
+Three things in the binary say what the source really was, and none of them
+is ambiguous:
+
+  * `SLDC 0 | STL 2` clears the destination by storing a whole **word**
+    into the length position. No source-level statement compiles to that --
+    `X := ''` gives `LSA '' | SAS 80`, as `SCOPY`'s own body shows two
+    procedures away.
+  * The three `SCONCAT` calls that follow carry `7`, `8`, `23`: the
+    *running* maxima of `VIDLENG`, `+1` for the colon, `+TIDLENG`. That is
+    a compiler counting operands, not a programmer.
+  * `data=24` is exactly twelve words -- the size of a `STRING[23]`
+    temporary and nothing else. Apple's `RUNWORKFILE` declares no locals
+    at all.
+
+So the source is UCSD's own line, unchanged:
+`ASSOCIATE(CONCAT(CODEVID,':',CODETID), ...)`. It also explains, for the
+third time in two findings, how a literal reaches a `VAR` parameter:
+`SCONCAT`'s `SRC` is `VAR`, `':'` is a literal, and the sugar builds the
+argument list itself so no VAR-actual check applies (finding 201).
+
+Writing it that way took `GETCMD.2` from 58 instructions to Apple's own
+54, in Apple's own order, and `data` from 166 to 26. It also required
+`ASSOCSTUB`'s `TITLE` to become a **value** `STRING`, as UCSD declares it
+-- no `VAR` formal accepts an expression -- which costs nothing in `params`
+since either kind is one word.
+
+**One divergence left, and it is a real open question, not a rounding
+error.** Apple's fifth argument to `.19` is `LAO 6`: the address of a
+**global** at word offset 6. This project passes a local. UCSD declares its
+`DONT_CARE` in `GETCMD`'s own segment `VAR` block, which from a procedure
+nested inside `GETCMD` would be `LDA 1,n` and not `LAO` at all; and offset
+6 of this file's own global map is `GFILES[4]`, since `SYSCOM` is 1,
+`GFILES` runs 2-7 and `USERINFO` starts at 8 (which the same procedure's
+own `LDA 2,18` for `CODEVID` confirms). The real binary takes the address
+of global 6 in seven places. Until those reconcile the local stays, and it
+costs one instruction and one word of `data` (26 against 24) -- recorded,
+not forced. Decoding `GETCMD.19` is what will settle it.
+
+### 202c. `READ` has a defaulted file too, and it is `GFILES[0]`
+
+`GETCMD.4` (`GETYESNO`) opened with `LOD 2,2` where this project had
+`LDA 2,2 | SLDC 0 | IXA 1 | SIND 0` -- the array-index expansion of
+`GFILES[0]^`. That is finding 201's `LOD 1,3`/`LOD 2,3` again, one offset
+lower: a bare `READ(CH)` with no file argument compiles to the compiler's
+own reference to the default INPUT file, and `GFILES[0]` is offset 2 to
+`GFILES[1]`'s 3. The two sugars land one word apart because the two files
+sit one word apart.
+
+Writing `READ(CH)` made `GETCMD.4` identical. The general rule now has
+both halves: **the OS names a file explicitly only where it means a file
+other than the console** -- `GFILES[2]^` (`SYSTERM`), the EXEC-file
+handles, `FCLOSE` -- and uses bare `READ`/`WRITE`/`WRITELN` everywhere
+else.

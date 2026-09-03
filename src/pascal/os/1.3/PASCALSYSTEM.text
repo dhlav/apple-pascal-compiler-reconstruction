@@ -471,19 +471,28 @@ PROGRAM PASCALSYSTEM;
                         RLENG, ALENG: INTEGER); FORWARD;
   PROCEDURE FREADLN(VAR F: FIB); FORWARD;
   PROCEDURE FWRITELN(VAR F: FIB); FORWARD;
-  { These five's own real parameter ORDER (not just word count) diverges
-    from UCSD's own literal `GLOBALS.TEXT` text -- derived directly from
-    each real body's own algorithm (which argument is read from vs.
-    written to, which is compared as a plain INTEGER vs. dereferenced
-    as a STRING), not from a "just reverse the list" shortcut, which
-    turned out inconsistent across these five (`SPOS` needs no
-    reordering at all; the other four do, and not uniformly). See the
-    real bodies below, past the SEGMENT PROCEDUREs, for the evidence
-    each one's order rests on. }
-  PROCEDURE SCONCAT(DESTLENG: INTEGER; VAR DEST, SRC: STRING); FORWARD;
-  PROCEDURE SINSERT(INSINX, DESTLENG: INTEGER; VAR SRC, DEST: STRING); FORWARD;
-  PROCEDURE SCOPY(COPYLENG, SRCINX: INTEGER; VAR SRC, DEST: STRING); FORWARD;
-  PROCEDURE SDELETE(DELLENG, DELINX: INTEGER; VAR DEST: STRING); FORWARD;
+  { These five are UCSD's own `GLOBALS.TEXT` order, verbatim, and
+    finding 138 was wrong to depart from it (finding 202).
+
+    That finding read each real body correctly -- `PASCALSY.23`'s own
+    frame really is `G1=DESTLENG`, `G2=SRC`, `G3=DEST` -- and then wrote
+    that frame order out as the DECLARATION order, which is backwards.
+    A callee's frame gives the LAST-declared parameter `P1` (finding
+    175), so a declaration is the reverse of the frame it produces:
+    frame `(DESTLENG, SRC, DEST)` comes from `VAR DEST, SRC: STRING;
+    DESTLENG: INTEGER`, which is exactly what UCSD wrote. Reversing the
+    real frames of all four gives UCSD's four declarations back
+    character for character, and `SPOS` -- the one finding 138 left
+    alone -- was right for the same reason rather than as an exception.
+    The wrongness was visible in the binary the whole time: every one of
+    these four bodies had the right instructions in the right order
+    reading the wrong parameters, and every call site pushed its
+    arguments in the wrong order to match. }
+  PROCEDURE SCONCAT(VAR DEST, SRC: STRING; DESTLENG: INTEGER); FORWARD;
+  PROCEDURE SINSERT(VAR SRC, DEST: STRING; DESTLENG, INSINX: INTEGER);
+    FORWARD;
+  PROCEDURE SCOPY(VAR SRC, DEST: STRING; SRCINX, COPYLENG: INTEGER); FORWARD;
+  PROCEDURE SDELETE(VAR DEST: STRING; DELINX, DELLENG: INTEGER); FORWARD;
   FUNCTION SPOS(VAR TARGET, SRC: STRING): INTEGER; FORWARD;
   FUNCTION FBLOCKIO(VAR F: FIB; VAR A: WINDOW; I: INTEGER;
                     NBLOCKS, RBLOCK: INTEGER; DOREAD: BOOLEAN): INTEGER;
@@ -1370,7 +1379,13 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE GC16; FORWARD;
     PROCEDURE GC17; FORWARD;
     PROCEDURE GC18; FORWARD;
-    FUNCTION ASSOCSTUB(VAR TITLE: STRING; OKTOLINK, RUNONLY,
+    { `TITLE` is a VALUE `STRING`, as UCSD's own `ASSOCIATE` declares
+      it -- not `VAR`. `.2`'s only call passes a `CONCAT` expression,
+      which no `VAR` formal can accept (error 154), and a value formal
+      is still one word of `params` (the caller pushes an address and
+      the callee makes its own copy, finding 176), so this costs
+      nothing in the already-exact `params=16`. }
+    FUNCTION ASSOCSTUB(TITLE: STRING; OKTOLINK, RUNONLY,
                         ERROROK: BOOLEAN; VAR STATUS: INTEGER;
                         UNUSED: INTEGER): BOOLEAN; FORWARD;
     PROCEDURE STARTCMPSTUB(NEXTST: INTEGER); FORWARD;
@@ -1391,15 +1406,32 @@ PROGRAM PASCALSYSTEM;
       handles the "Run" case, always setting `GETCMD := SYSPROG` on
       success -- UCSD's own `DEBUGCALL` branch must live somewhere
       else in the real binary's own call graph (not chased this
-      session). `params` exact against the real binary (`2`); `data`
-      is not (`24` real vs `166` here). Finding 201's own `WRITE`
-      conversion took the instruction count from `69` to `57` against
-      the real binary's `53` but left `data` untouched, so the extra
-      words are this routine's own, not a write workaround -- most
-      likely a value `STRING` parameter or local whose shadow copy is
-      not yet reproduced (the same mechanism finding 201 confirmed for
-      `.6`). Not yet instruction-checked (calls into `.19`/`.20`, both
-      still stubs). Also: every one of
+      session).
+
+      The title it associates on is UCSD's own
+      `CONCAT(CODEVID,':',CODETID)`, passed straight into `.19` as an
+      expression rather than built in a named local (finding 202). The
+      binary says so on its own: `SLDC 0 | STL 2` clears a destination
+      by writing a whole word into the length position, which no
+      source-level statement compiles to; the three `SCONCAT`s that
+      follow carry `7`, `8`, `23` -- the *running* maxima of
+      `VIDLENG`, `+1` for the colon and `+TIDLENG`, which is a
+      compiler counting operands, not a programmer -- and `data=24` is
+      exactly twelve words, the size of the `STRING[23]` temporary
+      that expression needs and nothing else. It is also how the `':'`
+      literal reaches `SCONCAT`'s own `VAR SRC` at all, the same
+      mechanism finding 201 established for `WRITE`: sugar builds its
+      own argument list and no VAR-actual check applies to it.
+
+      `params` exact (`2`). One divergence left: the fifth argument to
+      `.19` is `LAO 6` in the real binary -- a *global* -- where this
+      has a local `ASSSTATUS`. UCSD declares its own `DONT_CARE` in
+      `GETCMD`'s segment `VAR` block, not in the global block, and
+      offset 6 of this file's own global map is `GFILES[4]`, so the
+      two do not reconcile yet and the local stays until they do. That
+      is worth exactly one instruction and one word of `data` (`26`
+      against the real `24`) -- recorded, not forced. Also: every one
+      of
       `.2`-`.27`'s own `FORWARD` is now declared in one block right
       after `SEGMENT FUNCTION GETCMD`'s own heading, in real procedure
       order -- required, not stylistic (finding 199: a `FORWARD`
@@ -1408,20 +1440,14 @@ PROGRAM PASCALSYSTEM;
       already does at `PASCALSY`'s own outer one). }
     PROCEDURE RUNWORKFILE;
       VAR
-        TITLE: STRING;
         ASSSTATUS: INTEGER;
-        MSG: STRING;
     BEGIN
       IF USERINFO.GOTCODE THEN
       BEGIN
         CLEARSCREEN;
         WRITELN;
-        TITLE := '';
-        SCONCAT(7, TITLE, USERINFO.CODEVID);
-        MSG := ':';
-        SCONCAT(8, TITLE, MSG);
-        SCONCAT(23, TITLE, USERINFO.CODETID);
-        IF ASSOCSTUB(TITLE, OKTOLINK, TRUE, TRUE, ASSSTATUS, 0) THEN
+        IF ASSOCSTUB(CONCAT(USERINFO.CODEVID, ':', USERINFO.CODETID),
+                     OKTOLINK, TRUE, TRUE, ASSSTATUS, 0) THEN
         BEGIN
           WRITE('Running...');
           WRITELN;
@@ -1449,13 +1475,20 @@ PROGRAM PASCALSYSTEM;
       instruction up to that point already matches the real binary's
       own `16` exactly (`LOD 2,2`/`LLA 3`/`CXP 0,16`/`SLDL 3`/`LDC 8w`/
       `SLDC 8`/`INN`/`FJP`, the real body's own `REPEAT...UNTIL CH IN
-      [...]`). Verified compiling clean on real Apple hardware. }
+      [...]`). The read is a bare `READ(CH)`, no file argument: that
+      `LOD 2,2` is the compiler's own reference to the default INPUT
+      file, the exact mirror of `WRITE`'s own `LOD 2,3` for OUTPUT
+      (finding 201) -- `GFILES[0]` is offset 2 and `GFILES[1]` is 3, so
+      the two sugars land one apart. Writing `FREADCHAR(GFILES[0]^,CH)`
+      instead cost four instructions of array-index expansion Apple's
+      binary does not have (finding 202). Verified compiling clean on
+      real Apple hardware. }
     FUNCTION GETYESNO;
       VAR
         CH: CHAR;
     BEGIN
       REPEAT
-        FREADCHAR(GFILES[0]^, CH)
+        READ(CH)
       UNTIL CH IN ['N', 'Y', 'n', 'y'];
       GETYESNO := (CH = 'Y') OR (CH = 'y')
     END;
@@ -2256,7 +2289,7 @@ PROGRAM PASCALSYSTEM;
       P := SPOS(SEP, S);
       WHILE P > 0 DO
       BEGIN
-        SDELETE(1, P, S);
+        SDELETE(S, P, 1);
         SEP := ' ';
         P := SPOS(SEP, S)
       END;
@@ -2271,8 +2304,8 @@ PROGRAM PASCALSYSTEM;
           IF P > 0 THEN
           BEGIN
             L := (LENGTH(S) - P) + 1;
-            SCOPY(L, P, S, BRACKET);
-            SDELETE(L, P, S)
+            SCOPY(S, BRACKET, P, L);
+            SDELETE(S, P, L)
           END;
           SEP := ':';
           IF SPOS(SEP, S) = 0 THEN
@@ -2289,8 +2322,8 @@ PROGRAM PASCALSYSTEM;
                 S[I] := '?'
             END;
             IF (N - LENGTH(S)) >= 5 THEN
-              SCONCAT(N, S, SUFFIXSTR);
-            SCONCAT(N, S, BRACKET)
+              SCONCAT(S, SUFFIXSTR, N);
+            SCONCAT(S, BRACKET, N)
           END
         END
     END;
@@ -2678,10 +2711,12 @@ PROGRAM PASCALSYSTEM;
   { What `CONCAT` lowers to (finding 52b). Real body
     (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`, `PASCALSY.23`):
     `G1=DESTLENG` (compared directly as an INTEGER), `G2=SRC` (read
-    from, the `MOVELEFT` source), `G3=DEST` (written to, grows) --
-    read off the algorithm itself, not assumed from UCSD's own
-    declared order (which is `VAR DEST,SRC:STRING;DESTLENG:INTEGER`,
-    a different order -- see the FORWARD declaration's own comment). }
+    from, the `MOVELEFT` source), `G3=DEST` (written to, grows). That
+    frame is what UCSD's own `VAR DEST, SRC: STRING; DESTLENG:
+    INTEGER` produces, since a declaration reverses into its frame
+    (finding 175). Reading the frame off the algorithm was right;
+    writing that frame out as the declaration was not, and finding 202
+    puts UCSD's own order back. }
   PROCEDURE SCONCAT;
   BEGIN
     IF (LENGTH(SRC) + LENGTH(DEST)) <= DESTLENG THEN
@@ -2693,24 +2728,31 @@ PROGRAM PASCALSYSTEM;
 
   { What `INSERT` lowers to. `PASCALSY.24`: `G1=INSINX`, `G2=DESTLENG`
     (both compared as plain INTEGERs), `G3=DEST` (shifted right, then
-    written into), `G4=SRC` (read from). The real body's own `G5:=0;
-    IF G5=0 THEN ...` is vestigial -- G5 is unconditionally reset right
-    before the check it guards, so the `MOVELEFT` always runs; written
-    here as the unconditional statement it actually is. }
+    written into), `G4=SRC` (read from). `ONRIGHT := 0` inside the
+    first arm, and the second `IF ONRIGHT = 0` that reads it, are
+    UCSD's own and are NOT vestigial: they are how a negative
+    `ONRIGHT` -- an insertion index past the end of `DEST` -- skips
+    the `MOVELEFT` entirely. An earlier reading called them dead and
+    wrote the second statement unconditionally; the real binary has
+    both, and the flag genuinely guards something (finding 202). }
   PROCEDURE SINSERT;
     VAR
-      TAIL: INTEGER;
+      ONRIGHT: INTEGER;
   BEGIN
     IF (INSINX > 0) AND (LENGTH(SRC) > 0) AND
        ((LENGTH(SRC) + LENGTH(DEST)) <= DESTLENG) THEN
     BEGIN
-      TAIL := (LENGTH(DEST) - INSINX) + 1;
-      IF TAIL > 0 THEN
+      ONRIGHT := (LENGTH(DEST) - INSINX) + 1;
+      IF ONRIGHT > 0 THEN
       BEGIN
-        MOVERIGHT(DEST[INSINX], DEST[INSINX + LENGTH(SRC)], TAIL)
+        MOVERIGHT(DEST[INSINX], DEST[INSINX + LENGTH(SRC)], ONRIGHT);
+        ONRIGHT := 0
       END;
-      MOVELEFT(SRC[1], DEST[INSINX], LENGTH(SRC));
-      DEST[0] := CHR(LENGTH(DEST) + LENGTH(SRC))
+      IF ONRIGHT = 0 THEN
+      BEGIN
+        MOVELEFT(SRC[1], DEST[INSINX], LENGTH(SRC));
+        DEST[0] := CHR(LENGTH(DEST) + LENGTH(SRC))
+      END
     END
   END;
 
@@ -2749,10 +2791,11 @@ PROGRAM PASCALSYSTEM;
     END
   END;
 
-  { What `POS` lowers to. `PASCALSY.27`, the one of these five that
-    needs *no* reordering from UCSD's own declared
-    `(VAR TARGET,SRC:STRING)` -- confirmed against the real body
-    itself, not assumed. Scans SRC one candidate start at a time,
+  { What `POS` lowers to. `PASCALSY.27` is UCSD's own declared
+    `(VAR TARGET,SRC:STRING)` unchanged -- as, since finding 202, are
+    all five: this one was never the exception it was written up as,
+    it was the only one the reversal error happened not to touch.
+    Scans SRC one candidate start at a time,
     using SCAN (a real, documented Apple Pascal built-in, "The SCAN
     Function") to skip ahead to the next position matching TARGET's
     own first character, then compares a same-length slice byte for
@@ -4014,7 +4057,7 @@ PROGRAM PASCALSYSTEM;
     WHILE UNITABLE[SYSCOM^.SYSUNIT].UVID <> SYVID DO
     BEGIN
       PL := 'Put in :';
-      SINSERT(8, 80, SYVID, PL);
+      SINSERT(SYVID, PL, 80, 8);
       PROMPT;
       WRITELN;
       CLEARLINE;

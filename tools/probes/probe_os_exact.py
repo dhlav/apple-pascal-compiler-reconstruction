@@ -35,17 +35,18 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-write-sugar" / \
+RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-param-order" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
 # Grows as the reconstruction does; it must never shrink without a finding
 # saying why.
 EXACT = [
-    "GETCMD.6", "GETCMD.23",
+    "GETCMD.4", "GETCMD.6", "GETCMD.23",
     "INITIALI.7",
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
     "PASCALSY.14", "PASCALSY.15", "PASCALSY.21", "PASCALSY.22",
+    "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
     "PASCALSY.51", "PASCALSY.52",
     "PRINTERR.1",
     "USERPROG.1",

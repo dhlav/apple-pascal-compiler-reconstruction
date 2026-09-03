@@ -1151,16 +1151,39 @@ a route end to end; everything else is a straight read-and-rebuild.
     as `PASCALSY.TEXT`, so the acceptance disk is built from the working
     tree by the one documented entry point.
 
+    **The four string primitives' parameter lists were reversed, and
+    UCSD's own declarations were right all along (finding 202).** Finding
+    138 read each real frame correctly and then wrote that frame out as
+    the declaration, which is the wrong direction -- a declaration
+    reverses into its frame (finding 175). Reversing all four real frames
+    gives UCSD's `GLOBALS.TEXT` declarations back character for
+    character, and `SPOS` was never the exception it was written up as,
+    only the one the error happened not to disturb. Every one of the four
+    bodies had the right instructions reading the wrong parameters, and
+    every call site pushed in the wrong order to match; both were
+    invisible while the comparison looked at frame *sizes* alone, which
+    were right throughout. **15 -> 20 exact, none lost.** With it:
+    `SINSERT`'s `ONRIGHT := 0` is a real bounds guard, not the dead code
+    it had been simplified away as; `RUNWORKFILE` is UCSD's own
+    `ASSOCIATE(CONCAT(CODEVID,':',CODETID), ...)` expression rather than
+    a locally built title (the binary's `SLDC 0 | STL 2`, its running
+    `7`/`8`/`23` maxima and its twelve-word `data` all say so); and
+    `READ` has a defaulted file exactly as `WRITE` does, one offset lower
+    -- `GFILES[0]` at 2 against `GFILES[1]` at 3.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
-    loops are visibly absent. `GETCMD.2` -- `data` 166 against Apple's 24,
-    almost certainly an unreproduced value-`STRING` copy, the same
-    mechanism `GETCMD.6` turned out to be. `PASCALSY.1`, the outer block,
-    at 14 instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data`
-    254 against 172. Then the remaining stubs: `GETCMD.3`, `.5`,
-    `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu loop, `COMMAND`,
-    `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit build wiring.
+    loops are visibly absent. `GETCMD.19` (`ASSOCIATE`), 259 instructions
+    and still a stub -- decoding it is also what settles `GETCMD.2`'s last
+    divergence, where Apple passes the address of global 6 and this passes
+    a local (finding 202b). `PASCALSY.1`, the outer block, at 14
+    instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data` 254
+    against 172. `FILEPROC.1`'s own local declaration order, which
+    `FILEPROC.6` reads at three wrong offsets. Then the remaining stubs:
+    `GETCMD.3`, `.5`, `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu
+    loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit
+    build wiring.
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
