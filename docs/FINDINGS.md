@@ -17292,3 +17292,59 @@ contradiction looks unresolvable, ask which free conversions could be
 standing between the two uses; and a compiler *refusal* is evidence in its
 own right -- error 134 did more to fix this than any successful compile
 did, because it eliminated the reading that had looked obvious.
+
+### 202e. `KEYBOARD` is a third predeclared file, at global 4 -- and `INSERT`/`EOLN` are sugar like `WRITE` is
+
+`PASCALSY.50` (`WAITSYSVOL`) and `GETCMD.26` (`SWAPMENU`) both read the
+console through a file this project had been calling `GFILES[2]^`
+("`SYSTERM`"). Apple's binary reaches it as a bare `LOD 1,4` / `LOD 2,4`,
+and writing `GFILES[2]^` gives the four-instruction array-index expansion
+instead, so the two are not the same identifier.
+
+The obvious next thought -- that `GFILES` is not really an array, as
+`WHAT_G` turned out not to be (202d) -- is wrong, and a check settles it
+rather than an impression. Inside segment `PASCALSY`, `GFILES` is indexed
+with `LDA 1,2` + constant + `IXA` in exactly one procedure, `PASCALSY.2`,
+and with exactly two constants, `0` and `1`: the `GFILES[0] := INPUTFIB;
+GFILES[1] := OUTPUTFIB` reset. Globals 5, 6 and 7 are never referenced from
+`PASCALSY` at all (the `LAO 5`/`LAO 6`/`LAO 7` a flat grep finds are other
+procedures' *own frames*, which is what `LAO` means inside a lex-0
+segment-0 body -- finding 150). Global 2 is loaded directly in `PASCALSY.40`
+and `.41`, global 3 in ten procedures, global 4 in one.
+
+Those direct loads are already explained: `LOD <lex>,3` is `WRITE`'s
+defaulted OUTPUT and `LOD <lex>,2` is `READ`'s defaulted INPUT (findings
+201, 202c). Global 4 is the same thing one slot further on --
+**`KEYBOARD`**, Apple Pascal's third predeclared file, the unbuffered
+console input a program uses to take a keystroke without echo. Which is
+precisely what "put in the volume, then press RETURN" and a one-key menu
+want.
+
+Writing `READ(KEYBOARD, DUMMY)` and `EOLN(KEYBOARD)` produced `LOD 1,4`
+exactly, in both segments. `INSERT(SYVID, PL, 8)` in place of the direct
+`SINSERT` call produced `CXP 0,24` where the hand-written call had emitted
+`CBP 24` -- the same routine reached as the compiler's own fixed entry
+point rather than as an ordinary local procedure, which is what
+distinguishes sugar from a call at the p-code level and is worth
+recognising on sight.
+
+Two local-frame divergences went with them, both read off offsets rather
+than sizes:
+
+  * `SWAPMENU` declares `CH` **before** `OLDLEV`. Apple reads the answer
+    through `LLA 1` and keeps the level in `2`; this project had them the
+    other way round. Same `data`, different offsets -- invisible to any
+    frame-size check, which is the same blind spot 202 opened with.
+  * `WAITSYSVOL` has one word at offset 1 that it never touches: its
+    character is read through `LAO 2`, so something is ahead of it, and
+    `data=4` says that something is one word wide. Declared and left
+    unused. That is reproducing a measurement, not padding a total -- the
+    *offset* is the evidence, and the name is not recoverable.
+
+**24 -> 26 exact**, `PASCALSY.50` and `GETCMD.26`.
+
+`PASCALSY.39` (`PROMPT`) is the same shape and is deliberately **not**
+closed: its instructions are already identical and only `data` differs
+(0 against 2), with no offset anywhere to say where the extra word sits.
+Size alone is not enough, so it stays on the open list beside
+`LIBMAP.text`'s `NEEDSSWAP`/`SWAPALL`.

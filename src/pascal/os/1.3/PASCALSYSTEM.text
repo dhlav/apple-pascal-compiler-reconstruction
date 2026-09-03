@@ -1631,8 +1631,12 @@ PROGRAM PASCALSYSTEM;
       the last real gap here, not a write-shape artifact. }
     PROCEDURE SWAPMENU;
       VAR
-        OLDLEV: INTEGER;
+        { CH first, OLDLEV second: the real binary reads the answer
+          through `LLA 1` and keeps the level in `2`, and declaration
+          groups ascend (finding 93a), so this order is the binary's,
+          not a preference. }
         CH: CHAR;
+        OLDLEV: INTEGER;
     BEGIN
       OLDLEV := ORD(SWAP_2_ON) + ORD(SWAP_1_ON);
       WRITELN;
@@ -1650,7 +1654,7 @@ PROGRAM PASCALSYSTEM;
       WRITELN;
       WRITE('New swapping level (<esc> to exit): ');
       REPEAT
-        FREADCHAR(GFILES[2]^, CH)
+        READ(KEYBOARD, CH)
       UNTIL (CH = CHR(27)) OR (CH = '0') OR (CH = '1') OR (CH = '2');
       IF CH IN ['0'..'2'] THEN
       BEGIN
@@ -4070,20 +4074,28 @@ PROGRAM PASCALSYSTEM;
   END;
 
   PROCEDURE WAITSYSVOL;
-  VAR DUMMY: CHAR;
+  VAR
+    { One word Apple's own frame has and this procedure never touches.
+      It is not a size fudge: the real body reads its character through
+      `LAO 2`, so something occupies offset 1 ahead of it, and `data=4`
+      says that something is one word wide. The name is not recoverable
+      -- names never are -- so it is declared and left unused, which is
+      exactly what the binary shows. }
+    UNUSED1: INTEGER;
+    DUMMY: CHAR;
   BEGIN
     RELEASE(EMPTYHEAP);
     WHILE UNITABLE[SYSCOM^.SYSUNIT].UVID <> SYVID DO
     BEGIN
       PL := 'Put in :';
-      SINSERT(SYVID, PL, 80, 8);
+      INSERT(SYVID, PL, 8);
       PROMPT;
       WRITELN;
       CLEARLINE;
       WRITE('then press RETURN');
       REPEAT
-        FREADCHAR(GFILES[2]^, DUMMY)
-      UNTIL FEOLN(GFILES[2]^);
+        READ(KEYBOARD, DUMMY)
+      UNTIL EOLN(KEYBOARD);
       IF FETCHDIR(SYSCOM^.SYSUNIT) THEN
       BEGIN
       END

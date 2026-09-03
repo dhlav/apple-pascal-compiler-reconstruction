@@ -1185,6 +1185,19 @@ a route end to end; everything else is a straight read-and-rebuild.
     Apple's own compiler. **20 -> 24 exact**, `PASCALSY.44`-`.47` in one
     step.
 
+    **`KEYBOARD` is a third predeclared file, at global 4 (finding
+    202e).** `WAITSYSVOL` and `SWAPMENU` read the console through a bare
+    `LOD 1,4`/`LOD 2,4` that `GFILES[2]^` cannot produce. `GFILES` is
+    still genuinely an array, unlike `WHAT_G` -- inside `PASCALSY` it is
+    indexed in exactly one procedure with exactly the constants 0 and 1 --
+    so global 4 is the compiler's own hardwired third file, one slot past
+    `READ`'s INPUT at 2 and `WRITE`'s OUTPUT at 3. `INSERT` and `EOLN` are
+    sugar too, and emit `CXP 0,24`/`CXP 0,11` where a hand-written
+    `SINSERT`/`FEOLN` call emits `CBP`: that opcode difference is what
+    tells sugar from an ordinary call at the p-code level. With two
+    local-frame corrections read off *offsets* rather than sizes, **24 ->
+    26 exact**.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
@@ -1193,8 +1206,17 @@ a route end to end; everything else is a straight read-and-rebuild.
     divergence, where Apple passes the address of global 6 and this passes
     a local (finding 202b). `PASCALSY.1`, the outer block, at 14
     instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data` 254
-    against 172. `FILEPROC.1`'s own local declaration order, which
-    `FILEPROC.6` reads at three wrong offsets. Then the remaining stubs:
+    against 172. `PASCALSY.36`/`.37`/`.38`, where Apple factors the
+    control-character write into `PASCALSY.53` (`SLDC <idx> | <the CRT
+    control char> | CBP 53`) and this file inlines it at each site -- that
+    one is blocked on the `.53`-`.58` numbering, since this file's `.53`
+    is `BLKXFER` and Apple's is the control-character writer, and Apple
+    has 58 procedures in the segment where this has 55. `PASCALSY.39`
+    (`PROMPT`), instructions already identical and `data` 0 against 2,
+    with no offset anywhere to say where the extra word sits -- size alone
+    is not enough to place it. `FILEPROC.1`'s own local declaration order,
+    which `FILEPROC.6` reads at three wrong offsets. Then the remaining
+    stubs:
     `GETCMD.3`, `.5`, `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu
     loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit
     build wiring.
