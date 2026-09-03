@@ -1240,6 +1240,21 @@ a route end to end; everything else is a straight read-and-rebuild.
     follow declaration order -- is error 273. **33 -> 34 exact**, closing
     the last non-stub procedure in the segment-0 command loop.
 
+    **`CMDSTATE` has eleven members, not UCSD's ten (finding 204), and
+    the whole segment-0 command loop is now byte-exact.** `GETNEXTCMD`
+    dispatches with `XJP 2..10` and tests membership against the set
+    constant `2044` -- bits 2 through 10 -- and neither can come from a
+    type ending at ordinal 9. The extra member is appended, which the
+    binary's other set constants confirm independently (`224` is bits 5-7,
+    `12` is bits 2-3, both exactly right on the existing ordinals). Its
+    name is not recoverable; UCSD's own `CONST ASSEMONLY = LINKANDGO`
+    and 1.3 putting `A(ssem` on the command line make an assemble state
+    the obvious guess, but a guess is not a name. With it, `GETNEXTCMD`
+    came out exact -- **34 -> 35** -- and `PASCALSY.48`, `.50`, `.53`,
+    `.55`, `.57`, `.58` are all identical: the outer command loop, its two
+    nested helpers, the volume wait, the CRT control writer and the
+    block-transfer routine.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`

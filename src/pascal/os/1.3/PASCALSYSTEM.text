@@ -120,10 +120,25 @@ PROGRAM PASCALSYSTEM;
                 ISTRGOVFL);
 
     { command states -- see GETCMD }
+    { Eleven members, not UCSD's ten (finding 204). `GETNEXTCMD`'s own
+      real body dispatches with `XJP 2..10` -- a nine-arm jump table
+      whose highest label is ordinal **10** -- and tests membership with
+      the set constant `2044`, which is bits 2 through 10. Ten members
+      would stop at ordinal 9 and neither would be legal. Every other
+      ordinal this file already relies on still checks out against the
+      binary's own set constants: `224` is bits 5-7 (`COMPONLY`
+      through `COMPDEBUG`) and `12` is bits 2-3 (`UPROGNOU`,
+      `UPROGUOK`), so the extra member is appended at the end rather
+      than inserted. Its NAME is not recoverable -- names never are --
+      so it carries a placeholder. UCSD's own `GETCMD` has
+      `CONST ASSEMONLY = LINKANDGO;`, and 1.3 is the release that put
+      the assembler on the command line, which makes a real assemble
+      state the obvious guess; a guess is not a name, so it stays
+      `CMDST10` until something says otherwise. }
     CMDSTATE = (HALTINIT, DEBUGCALL,
                 UPROGNOU, UPROGUOK, SYSPROG,
                 COMPONLY, COMPANDGO, COMPDEBUG,
-                LINKANDGO, LINKDEBUG);
+                LINKANDGO, LINKDEBUG, CMDST10);
 
     { code files used in GETCMD }
     SYSFILE = (ASSMBLER, COMPILER, EDITOR, FILER, LINKER);
@@ -3943,40 +3958,46 @@ PROGRAM PASCALSYSTEM;
     { `(*$R FILEPROC*)` -- segment 6 resident for this body, same
       mechanism as `CMDDISPATCH`'s own (finding 203). }
     PROCEDURE GETNEXTCMD;
-      LABEL 999;
-      VAR DUMMY: BOOLEAN;
+      VAR IORSLT: INTEGER;
     BEGIN (*$R FILEPROC*)
-      WHILE STATE = HALTINIT DO
-      BEGIN
-        IF SWAP_ON THEN
+      REPEAT
+        IF NOT SWAP_ON THEN
         BEGIN
           WAITSYSVOL;
           STATE := GETCMD(STATE);
           CHAIN_NAME := '';
-          IF STATE >= UPROGNOU THEN
-            IF SWAP_2_ON AND NOT WHAT_H1 THEN
-            BEGIN
-              WHAT_H1 := FALSE;
-              USERPROGRAM(NIL, NIL)
-            END
-            ELSE
-            BEGIN
-              SWAP_ON := TRUE;
-              GOTO 999
-            END
+          CASE STATE OF
+            UPROGNOU, UPROGUOK, SYSPROG, COMPONLY, COMPANDGO,
+            COMPDEBUG, LINKANDGO, LINKDEBUG, CMDST10:
+              IF NOT SWAP_2_ON OR WHAT_H1 THEN
+              BEGIN
+                WHAT_H1 := FALSE;
+                USERPROGRAM(NIL, NIL)
+              END
+              ELSE
+              BEGIN
+                SWAP_ON := TRUE;
+                EXIT(GETNEXTCMD)
+              END
+          END
         END;
-        IF STATE >= UPROGNOU THEN
+        IF STATE IN [UPROGNOU..CMDST10] THEN
         BEGIN
           SWAP_ON := FALSE;
           UNITCLEAR(3);
-          DUMMY := FETCHDIR(SYSCOM^.SYSUNIT)
+          IF FETCHDIR(SYSCOM^.SYSUNIT) THEN ;
         END;
         IF STATE IN [COMPONLY..COMPDEBUG] THEN
           IF USERINFO.ERRNUM = 0 THEN
           BEGIN
             FCLOSE(USERINFO.CODEFIBP^, CLOCK);
             IF IORESULT <> 0 THEN
-              PRINTERROR(10, IORESULT)
+            BEGIN
+              IORSLT := IORESULT;
+              WRITELN;
+              CLEARLINE;
+              PRINTERROR(10, IORSLT)
+            END
           END;
         IF STATE IN [UPROGNOU, UPROGUOK] THEN
         BEGIN
@@ -3985,8 +4006,7 @@ PROGRAM PASCALSYSTEM;
         END;
         IF UNITBUSY(1) OR UNITBUSY(2) THEN
           UNITCLEAR(1)
-      END;
-      999:
+      UNTIL STATE = HALTINIT
     END;
 
     { `(*$R FIOPRIMS*)` makes segment 2 resident for this body: the

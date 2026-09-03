@@ -17562,3 +17562,55 @@ Worth noting how cheap this was to catch: `oscmp.py --baseline` reported
 `33 -> 0, lost: [every procedure]`, which is not a plausible source
 regression and reads immediately as a failed compile rather than a subtle
 one. A count-only check would have said the same thing far less loudly.
+
+## 204. `CMDSTATE` has eleven members, not UCSD's ten -- and `GETNEXTCMD` reads it with a `CASE`
+
+**VERIFIED BINARY FACT**, confirmed by a byte-exact compile.
+
+`PASCALSY.57` (`GETNEXTCMD`) dispatches on `STATE` with `XJP 2..10` -- a
+nine-arm jump table whose highest label is ordinal **10** -- and tests
+membership twice against the set constant `2044`, which is bits 2 through
+10. `CMDSTATE` as this project had it, straight from UCSD's own
+`GLOBALS.TEXT`, has ten members ending at `LINKDEBUG` = 9. Ordinal 10 does
+not exist in that type, so neither the jump table nor the set constant
+could be generated from it. Apple's 1.3 `CMDSTATE` has an eleventh member.
+
+It is appended rather than inserted, and the binary's other set constants
+prove that independently: `224` is bits 5-7, which is exactly
+`[COMPONLY..COMPDEBUG]` on this file's existing ordinals, and `12` is bits
+2-3, exactly `[UPROGNOU, UPROGUOK]`. Every name this project already had
+keeps its ordinal.
+
+The **name** is not recoverable, as names never are, so it carries a
+placeholder (`CMDST10`). Worth recording what makes it interesting anyway:
+UCSD's own `GETCMD` opens with `CONST ASSEMONLY = LINKANDGO;` -- an alias,
+not a state of its own -- and 1.3 is the release that put `A(ssem` on the
+command line. A real assemble state is the obvious guess. A guess is not a
+name, so it stays a placeholder.
+
+### 204a. `GETNEXTCMD` written for real
+
+With the eleventh member in place the whole procedure came out exact, and
+five separate things about it had been wrong:
+
+  * The dispatch is a **`CASE`** over those nine states, all nine labels
+    sharing one arm, not the `IF STATE >= UPROGNOU` this file had. That is
+    what `XJP 2..10` is; an ordinal comparison compiles to `SLDC 2 | GEQI`.
+  * The outer loop is `REPEAT ... UNTIL STATE = HALTINIT`, not a `WHILE` --
+    the third such loop in this segment (finding 202g).
+  * Two conditions were inverted: the guard is `IF NOT SWAP_ON THEN`, and
+    the inner test is `IF NOT SWAP_2_ON OR WHAT_H1`, not
+    `IF SWAP_2_ON AND NOT WHAT_H1`.
+  * The escape is `EXIT(GETNEXTCMD)`, not a `GOTO` to a label at the end.
+    That removes the `LABEL` declaration entirely.
+  * `FETCHDIR`'s result is discarded with the bare-call idiom
+    `IF FETCHDIR(...) THEN ;` (finding 165), not assigned to a `DUMMY`
+    local -- and the one word of `data` this procedure does have is a real
+    local holding `IORESULT`, read once and passed to `PRINTERROR` after a
+    `WRITELN` and a `CLEARLINE` this file had been missing.
+
+**34 -> 35 exact.** With `PASCALSY.48`, `.50`, `.53`, `.55`, `.57` and
+`.58` all identical, the operating system's whole segment-0 command loop
+is now byte-exact end to end -- the outer `STUB48` loop, its two nested
+helpers, the volume wait, the CRT control writer and the block-transfer
+routine.
