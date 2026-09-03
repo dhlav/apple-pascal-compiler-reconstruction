@@ -17348,3 +17348,81 @@ closed: its instructions are already identical and only `data` differs
 (0 against 2), with no offset anywhere to say where the extra word sits.
 Size alone is not enough, so it stays on the open list beside
 `LIBMAP.text`'s `NEEDSSWAP`/`SWAPALL`.
+
+### 202f. `PASCALSY.53`-`.58`'s real numbering, recovered from who calls what -- and the "can't add a helper" blocker was never real
+
+Three of segment 0's terminal routines had a note standing over them
+saying a shared helper could not be factored out, because a new top-level
+`FORWARD` shifts every procedure number after it and `PASCALSY.53`'s own
+position was unknown. The premise was right and the conclusion was wrong:
+the binary says exactly where `.53` goes, and nothing had asked it.
+
+**The call graph is the answer.** Every `CBP`/`CLP`/`CGP` in the segment
+names its target, and `CLP` in particular means "a procedure nested inside
+me", which pins nesting without any guesswork:
+
+| | called from | so it is |
+|---|---|---|
+| `.53` | `.36`, `.37`, `.38`, `.54` (`CBP`) | lex 0, the shared control-character writer |
+| `.54` | `.12`, `.18` (`CBP`) | lex 0, another terminal routine, calls `.53` |
+| `.55` | `.28` (`CLP`) | nested inside `FBLOCKIO` -- this is `BLKXFER` |
+| `.56` | `.7` (`CLP`) | nested inside `FGET` |
+| `.57` | `.58` (`CGP`) | a sibling of `.58` |
+| `.58` | `.48` (`CLP`) | nested inside `STUB48` -- `CMDDISPATCH` |
+
+So the tail of Apple's declaration order is: `.53`'s header, `.54`'s
+header and body, `FBLOCKIO`'s body (`.55` inside it), `FGET`'s body (`.56`
+inside it), then `.48`'s body (`.57` and `.58` inside it). This project had
+`BLKXFER` as a *top-level* procedure claiming `53`, which is what had
+pushed `GETNEXTCMD`/`CMDDISPATCH` onto `54`/`55` instead of `57`/`58` --
+the "pre-existing numbering drift in this range" earlier notes had recorded
+without a cause.
+
+Restoring it needed no renumbering machinery, only moving bodies:
+`PUTCRT` and a five-word `STUB54` declared at top level where `BLKXFER`
+used to be; `BLKXFER` moved inside `FBLOCKIO`'s body; `FGET`'s completion
+moved down past `FBLOCKIO`'s with a nested `STUB56`. A completion may sit
+anywhere -- only the `FORWARD` block's order fixes numbers (finding 199) --
+so all of that is free.
+
+**`PUTCRT` itself** is 33 instructions and reads straight off:
+
+```pascal
+PROCEDURE PUTCRT(IDX: INTEGER; CH: CHAR);
+BEGIN
+  WITH SYSCOM^ DO
+    IF CH <> CHR(0) THEN
+    BEGIN
+      IF CRTCTRL.PREFIXED[IDX] THEN WRITE(CRTCTRL.ESCAPE);
+      WRITE(CH);
+      IF FILL_LEN > 0 THEN WRITE(FILLER)
+    END
+END;
+```
+
+`params=4` is `(IDX, CH)` -- the call sites push the index first, so the
+frame gives `CH` P1 and `IDX` P2. `data=2` is the one hidden word a `WITH`
+costs; there are no declared locals. And the inlined versions had the
+`PREFIXED` sense **backwards**: the binary tests `LDP` then a bare `FJP`
+with no `LNOT`, so a TRUE entry means this control character *is* prefixed
+and the escape goes out ahead of it.
+
+`CLEARSCREEN` and `CLEARLINE` came with it. Both open `WITH SYSCOM^,
+CRTCTRL DO` -- two hidden words, which is their whole `data` (4) and
+`CLEARLINE`'s first two of four. `CLEARLINE`'s remaining pair is a
+declared counter and a `FOR` limit temp: `FOR I := 2 TO CRTINFO.WIDTH DO
+WRITE(' ')`, not the `WHILE` this file had, which is why the limit lands
+in its own word.
+
+Reading the packed `CRTCTRL` fields depended on finding 93a's allocation
+rule and confirmed it again: `RLF, NDFS, ERASEEOL, ERASEEOS, HOME,
+ESCAPE: CHAR` is one declaration group, so the identifiers *descend* --
+`ESCAPE` at word 0 bits 0-7, `HOME` at bits 8-15, and so on. `PUTCRT`'s
+own `INC 31 | SLDC 8 | SLDC 0` (ESCAPE) against `HOMECURSOR`'s
+`INC 31 | SLDC 8 | SLDC 8` (HOME) is that rule, visible in two adjacent
+procedures.
+
+**26 -> 31 exact**: `PASCALSY.36`, `.37`, `.38`, `.53` and `.55`, none
+lost. `.58` (`CMDDISPATCH`) is now at its real number and 20 instructions
+against 26; `.54` and `.56` are honest number-preserving stubs with the
+real frame sizes, not content.

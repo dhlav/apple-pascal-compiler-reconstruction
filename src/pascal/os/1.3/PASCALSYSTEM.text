@@ -2655,7 +2655,6 @@ PROGRAM PASCALSYSTEM;
     (finding 190, 233 instructions, read end to end) is ready to write
     the moment the unit is built and `USES`d rather than nested here
     as a `SEGMENT PROCEDURE`. }
-  PROCEDURE FGET; BEGIN END;
   PROCEDURE FPUT; BEGIN END;
   { `XSEEK`/`XREADREAL`/`XWRITEREAL` (`PASCALSY.9`/`.14`/`.15`, finding
     193) -- UCSD's own `SEEK`/`READ(REAL)`/`WRITE(REAL)` support, never
@@ -2908,27 +2907,43 @@ PROGRAM PASCALSYSTEM;
     counts and should leave `BLKXFER`'s own already-instruction-
     matched shape untouched -- not yet re-verified against the real
     binary after this change. }
-  PROCEDURE BLKXFER(UNITNO: INTEGER; VAR BUFADDR: WINDOW; BYTEOFS: INTEGER;
-                        NBLOCKS: INTEGER; BLOCKNUM: INTEGER; DOREAD: BOOLEAN);
-    VAR
-      NB, LEN: INTEGER;
+  { `PASCALSY.53` -- the CRT control-character writer the cursor and
+    screen routines all go through. Real body, read straight off
+    `PASCALSY.53`'s own 33 instructions (finding 202f).
+
+    `params=4` is `(IDX: INTEGER; CH: CHAR)` -- the call sites push the
+    index first, so the frame gives `CH` P1 and `IDX` P2, which is what
+    the body reads. `data=2` is the single hidden word a `WITH SYSCOM^
+    DO` costs; there are no declared locals.
+
+    The `PREFIXED` test runs the way the binary has it -- `LDP` then a
+    bare `FJP`, no `LNOT` -- so a TRUE entry means this control
+    character *is* prefixed and the escape goes out ahead of it. The
+    three call sites that used to inline this had the sense inverted. }
+  PROCEDURE PUTCRT(IDX: INTEGER; CH: CHAR);
   BEGIN
-    IF NBLOCKS > 63 THEN NB := 63 ELSE NB := NBLOCKS;
-    LEN := NB * 512;
-    WHILE NBLOCKS <> 0 DO
-    BEGIN
-      IF DOREAD THEN
-        UNITREAD(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM)
-      ELSE
-        UNITWRITE(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM);
-      IF IORESULT <> 0 THEN EXIT(BLKXFER);
-      NBLOCKS := NBLOCKS - NB;
-      BYTEOFS := BYTEOFS + LEN;
-      BLOCKNUM := BLOCKNUM + NB;
-      IF NBLOCKS < NB THEN NB := NBLOCKS;
-      LEN := NB * 512
-    END
+    WITH SYSCOM^ DO
+      IF CH <> CHR(0) THEN
+      BEGIN
+        IF CRTCTRL.PREFIXED[IDX] THEN
+          WRITE(CRTCTRL.ESCAPE);
+        WRITE(CH);
+        IF FILL_LEN > 0 THEN
+          WRITE(FILLER)
+      END
   END;
+
+  { `PASCALSY.54` -- a number-preserving stub, not Apple's content.
+    Real `params=10` (five words) and `data=4`, 81 instructions, lex 0.
+    Called from `PASCALSY.12` and `.18`, and calls `PUTCRT` itself, so
+    it is another terminal-output routine; not decoded yet. It has to
+    exist here and take five words so that `BLKXFER` below lands on
+    `55` and `GETNEXTCMD`/`CMDDISPATCH` land on `57`/`58`, which is
+    where the real binary has them (finding 202f). }
+  PROCEDURE STUB54(A, B, C, D, E: INTEGER);
+  BEGIN
+  END;
+
   { `FBLOCKIO`'s real body (finding 161), decoded directly from
     `PASCALSY.28`'s addressed disassembly and cross-checked against a
     standalone probe compile of this file's own real `FIB` declaration
@@ -2956,6 +2971,27 @@ PROGRAM PASCALSYSTEM;
     not verified, until the acceptance tier or a resolved quirk says
     otherwise. }
   FUNCTION FBLOCKIO;
+    PROCEDURE BLKXFER(UNITNO: INTEGER; VAR BUFADDR: WINDOW; BYTEOFS: INTEGER;
+                          NBLOCKS: INTEGER; BLOCKNUM: INTEGER; DOREAD: BOOLEAN);
+      VAR
+        NB, LEN: INTEGER;
+    BEGIN
+      IF NBLOCKS > 63 THEN NB := 63 ELSE NB := NBLOCKS;
+      LEN := NB * 512;
+      WHILE NBLOCKS <> 0 DO
+      BEGIN
+        IF DOREAD THEN
+          UNITREAD(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM)
+        ELSE
+          UNITWRITE(UNITNO, BUFADDR[BYTEOFS], LEN, BLOCKNUM);
+        IF IORESULT <> 0 THEN EXIT(BLKXFER);
+        NBLOCKS := NBLOCKS - NB;
+        BYTEOFS := BYTEOFS + LEN;
+        BLOCKNUM := BLOCKNUM + NB;
+        IF NBLOCKS < NB THEN NB := NBLOCKS;
+        LEN := NB * 512
+      END
+    END;
   BEGIN
     FBLOCKIO := 0;
     IF F.FISOPEN AND (NBLOCKS >= 0) THEN
@@ -2999,6 +3035,25 @@ PROGRAM PASCALSYSTEM;
             F.FEOF := RBLOCK < NBLOCKS
           END
       END
+  END;
+
+  { `FGET`'s completion sits here, after `FBLOCKIO`'s, because the real
+    binary's numbering says so: its own nested helper is `PASCALSY.56`,
+    one past `BLKXFER`'s `55`, and a body's nested procedures claim
+    their numbers where the body is written (finding 199). Moving this
+    completion is free -- `FGET` is forward-declared with the rest of
+    segment 0's block, and only the FORWARD block's order fixes numbers
+    (finding 202f).
+
+    `PASCALSY.56` is a number-preserving stub, not Apple's content:
+    real `params=0`/`data=0`, 26 instructions, called from `FGET`'s own
+    body with `CLP`. `FGET` itself is still a stub too, pending the
+    `FIOPRIMS` intrinsic-unit build wiring (finding 200). }
+  PROCEDURE FGET;
+    PROCEDURE STUB56;
+    BEGIN
+    END;
+  BEGIN
   END;
 
   { Positions the cursor, clamped to the terminal's own declared
@@ -3528,35 +3583,21 @@ PROGRAM PASCALSYSTEM;
     FDIR^[FINX] := FENTRY;
     FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES + 1
   END;
-  { These four (findings 191) all share a real helper (`PASCALSY.53`)
-    that writes a control character -- `SYSCOM^.CRTCTRL.ESCAPE` first
-    unless `CRTCTRL.PREFIXED[idx]` says this particular one doesn't
-    need the prefix, then the character itself, then `FILLER`'s
-    padding nulls if `FILL_LEN > 0` (a real, if tautological, guard
-    against the manifest constant, reproduced literally) -- for
-    slow-terminal carriage delay. Not factored into a shared
-    procedure here: a new top-level `FORWARD` declaration shifts every
-    procedure number declared after it (this project's own "no gaps"
-    numbering rule -- confirmed the hard way, by trying it and
-    watching `HOMECURSOR`'s own real `36` shift to `37`), and
-    `PASCALSY.53`'s own true position in this file's declaration
-    order isn't independently pinned down this session. Inlined at
-    each of the three call sites instead -- a deliberate
-    simplification, not an oversight. }
+  { These three all go through `PUTCRT` (`PASCALSY.53`), which is now
+    declared for real further up (finding 202f). They used to inline it
+    -- the note that stood here said a shared helper could not be added
+    without shifting every later procedure number, which was true only
+    for as long as `PASCALSY.53`'s own position was unknown. The real
+    binary settles it: `.53` is called from `.36`, `.37`, `.38` and
+    `.54`, and sits at lex 0 between `.52` and `FBLOCKIO`'s own body.
+    Inlining also had the `PREFIXED` sense backwards -- see `PUTCRT`. }
 
   { `HOMECURSOR` = `PASCALSY.36` (finding 191). Writes the terminal's
-    `HOME` control character. Compiles clean, `params=0` exact against
-    the real binary. }
+    `HOME` control character through `PUTCRT`, whose own `CH <> CHR(0)`
+    guard is why nothing is tested here. `params=0`/`data=0` exact. }
   PROCEDURE HOMECURSOR;
   BEGIN
-    IF SYSCOM^.CRTCTRL.HOME <> CHR(0) THEN
-    BEGIN
-      IF NOT SYSCOM^.CRTCTRL.PREFIXED[4] THEN
-        WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-      WRITE(SYSCOM^.CRTCTRL.HOME);
-      IF FILL_LEN > 0 THEN
-        WRITE(FILLER)
-    END
+    PUTCRT(4, SYSCOM^.CRTCTRL.HOME)
   END;
 
   { `CLEARSCREEN` = `PASCALSY.37` (finding 191). `HOMECURSOR`s first,
@@ -3568,22 +3609,13 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE CLEARSCREEN;
   BEGIN
     HOMECURSOR;
-    UNITCLEAR(3);
-    IF SYSCOM^.CRTCTRL.ERASEEOS <> CHR(0) THEN
+    WITH SYSCOM^, CRTCTRL DO
     BEGIN
-      IF NOT SYSCOM^.CRTCTRL.PREFIXED[3] THEN
-        WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-      WRITE(SYSCOM^.CRTCTRL.ERASEEOS);
-      IF FILL_LEN > 0 THEN
-        WRITE(FILLER)
-    END
-    ELSE
-    BEGIN
-      IF NOT SYSCOM^.CRTCTRL.PREFIXED[6] THEN
-        WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-      WRITE(SYSCOM^.CRTCTRL.CLEARSCREEN);
-      IF FILL_LEN > 0 THEN
-        WRITE(FILLER)
+      UNITCLEAR(3);
+      IF ERASEEOS <> CHR(0) THEN
+        PUTCRT(3, ERASEEOS)
+      ELSE
+        PUTCRT(6, CLEARSCREEN)
     END
   END;
 
@@ -3598,39 +3630,20 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE CLEARLINE;
     VAR I: INTEGER;
   BEGIN
-    IF SYSCOM^.CRTCTRL.ERASEEOL <> CHR(0) THEN
-    BEGIN
-      IF NOT SYSCOM^.CRTCTRL.PREFIXED[2] THEN
-        WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-      WRITE(SYSCOM^.CRTCTRL.ERASEEOL);
-      IF FILL_LEN > 0 THEN
-        WRITE(FILLER)
-    END
-    ELSE
-      IF SYSCOM^.CRTCTRL.CLEARLINE <> CHR(0) THEN
-      BEGIN
-        IF NOT SYSCOM^.CRTCTRL.PREFIXED[7] THEN
-          WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-        WRITE(SYSCOM^.CRTCTRL.CLEARLINE);
-        IF FILL_LEN > 0 THEN
-          WRITE(FILLER)
-      END
+    WITH SYSCOM^, CRTCTRL DO
+      IF ERASEEOL <> CHR(0) THEN
+        PUTCRT(2, ERASEEOL)
       ELSE
-        IF SYSCOM^.CRTCTRL.RLF <> CHR(0) THEN
-        BEGIN
-          I := 2;
-          WHILE I <= SYSCOM^.CRTINFO.WIDTH DO
+        IF CLEARLINE <> CHR(0) THEN
+          PUTCRT(7, CLEARLINE)
+        ELSE
+          IF RLF <> CHR(0) THEN
           BEGIN
-            WRITE(' ');
-            I := I + 1
-          END;
-          WRITELN;
-          IF NOT SYSCOM^.CRTCTRL.PREFIXED[0] THEN
-            WRITE(SYSCOM^.CRTCTRL.ESCAPE);
-          WRITE(SYSCOM^.CRTCTRL.RLF);
-          IF FILL_LEN > 0 THEN
-            WRITE(FILLER)
-        END
+            FOR I := 2 TO CRTINFO.WIDTH DO
+              WRITE(' ');
+            WRITELN;
+            PUTCRT(0, RLF)
+          END
   END;
 
   { `PROMPT` = `PASCALSY.39` (finding 191). `HOMECURSOR`, `CLEARLINE`,

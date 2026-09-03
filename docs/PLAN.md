@@ -1198,6 +1198,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     local-frame corrections read off *offsets* rather than sizes, **24 ->
     26 exact**.
 
+    **`PASCALSY.53`-`.58`'s numbering came out of the call graph (finding
+    202f).** A `CLP` names a procedure nested inside its caller, so `.55`
+    is `FBLOCKIO`'s, `.56` is `FGET`'s and `.58` is `STUB48`'s -- which
+    is why `GETNEXTCMD`/`CMDDISPATCH` belong on `57`/`58`, not the
+    `54`/`55` this file had them on, and why `BLKXFER` had been sitting at
+    top level on `53` where Apple has a shared CRT control-character
+    writer. Fixing it needed no renumbering machinery, only moving bodies:
+    a completion may sit anywhere, since only the `FORWARD` block's order
+    fixes numbers (finding 199). The note claiming a shared helper could
+    not be factored out without shifting later numbers was answerable all
+    along. `PUTCRT` is written for real, `CLEARSCREEN`/`CLEARLINE` with
+    it -- and the old inlined versions had the `PREFIXED` test backwards.
+    **26 -> 31 exact.**
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
@@ -1206,17 +1220,16 @@ a route end to end; everything else is a straight read-and-rebuild.
     divergence, where Apple passes the address of global 6 and this passes
     a local (finding 202b). `PASCALSY.1`, the outer block, at 14
     instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data` 254
-    against 172. `PASCALSY.36`/`.37`/`.38`, where Apple factors the
-    control-character write into `PASCALSY.53` (`SLDC <idx> | <the CRT
-    control char> | CBP 53`) and this file inlines it at each site -- that
-    one is blocked on the `.53`-`.58` numbering, since this file's `.53`
-    is `BLKXFER` and Apple's is the control-character writer, and Apple
-    has 58 procedures in the segment where this has 55. `PASCALSY.39`
-    (`PROMPT`), instructions already identical and `data` 0 against 2,
-    with no offset anywhere to say where the extra word sits -- size alone
-    is not enough to place it. `FILEPROC.1`'s own local declaration order,
-    which `FILEPROC.6` reads at three wrong offsets. Then the remaining
-    stubs:
+    against 172. `PASCALSY.54` and `.56`, honest number-preserving stubs
+    now sitting on the right numbers with the right frame sizes but no
+    content (`.54` is another terminal routine, 81 instructions, called
+    from `.12`/`.18`; `.56` is 26 instructions inside `FGET`).
+    `PASCALSY.58` (`CMDDISPATCH`) at 20 instructions against 26.
+    `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
+    against 2, with no offset anywhere to say where the extra word sits --
+    size alone is not enough to place it. `FILEPROC.1`'s own local
+    declaration order, which `FILEPROC.6` reads at three wrong offsets.
+    Then the remaining stubs:
     `GETCMD.3`, `.5`, `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu
     loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit
     build wiring.
