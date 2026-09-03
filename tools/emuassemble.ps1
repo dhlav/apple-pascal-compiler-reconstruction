@@ -1,5 +1,11 @@
 # Assemble one file with Apple's own SYSTEM.ASSMBLER, start to finish.
 #
+# PREFER `python tools/emuremote.py assemble X` (findings 210-213). It runs
+# the same assembler over the redirected console: no foreground window, no
+# keystrokes, no fixed sleeps, the listing back as text, and a non-zero exit
+# on a non-zero "Errors flagged" count or on the assembler's own
+# <sp>(continue) halt. This script remains the fallback and is unchanged.
+#
 # The acceptance tier for everything in src/native/ (findings 44e, 98e).
 # tools/asm6502.py is only the fast tier: it can falsify a source, but the
 # assembler that shipped is what decides. This is emucompile.ps1's twin and

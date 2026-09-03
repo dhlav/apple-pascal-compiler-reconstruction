@@ -1511,8 +1511,15 @@ a route end to end; everything else is a straight read-and-rebuild.
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
   `emucompile.ps1` is untouched and is both the fallback and the way
-  `REDIRIO` itself gets compiled. `emuassemble.ps1`/`emulink.ps1` are still
-  SendKeys -- their own prompt sequences are a separate piece of work.
+  `REDIRIO` itself gets compiled. **The assembler and linker followed
+  (finding 213)**: `emuremote.py compile|assemble|link`, proved end to
+  end by compiling `FORMATTR`, assembling `FMTNATIV` and linking them
+  entirely over the socket to a codefile byte-identical to Apple's
+  shipped `FORMATTER.CODE`. `emulink.ps1`'s own "that race is not fully
+  solved" is solved by not racing -- the Linker's prompt sequence
+  depends on the data, so answers wait for the prompt they answer -- and
+  a link is verified by segment dictionary (`HOSTSEG` means it did not
+  work) rather than by the output file existing, which proves nothing.
 
 ## The compiler phase, kept as the record
 

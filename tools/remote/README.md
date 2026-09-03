@@ -105,20 +105,28 @@ system, which is also how `REDIRIO` knows which way to toggle.
 
 ## It is wired into the acceptance tier
 
-`tools/emuremote.py` is the compile path built on this (finding 212):
+`tools/emuremote.py` drives all three of Apple's tools on this channel
+(findings 212, 213):
 
 ```
 python tools/mkharddisks.py
 powershell -File tools/emucompile.ps1 -Name REDIRIO   # bootstrap, once per rebuild
-python tools/emuremote.py PASCALSY
+python tools/emuremote.py compile  PASCALSY
+python tools/emuremote.py assemble SEARCH
+python tools/emuremote.py link --host FORMATTR --lib FMTNATIV --out FORMATTR
+python tools/emuremote.py observe "L" --seconds 40    # capture a tool's prompts
 ```
 
 It installs `REDIRIO.CODE` as `SYSTEM.STARTUP` so the boot arms the channel
-with nothing typed, drives `C(ompile` over the socket, waits for the
-compiler's own last line rather than a fixed sleep, writes a transcript to
-`build/acceptance/<NAME>-console.txt`, and exits non-zero on a compile
-error with the line and error number already extracted. `SYSTEM.STARTUP` is
-removed in a `finally`.
+with nothing typed, waits for each tool's own completion text rather than a
+fixed sleep, writes a transcript to
+`build/acceptance/<LABEL>-console.txt` **even when a run fails or times
+out**, and exits non-zero with the tool's own message extracted.
+`SYSTEM.STARTUP` is removed in a `finally`.
+
+Proved end to end against Apple's own bytes: `FORMATTR` compiled,
+`FMTNATIV` assembled and the two linked, all over the socket, give a
+segment byte-identical to shipped `FORMATTER.CODE`.
 
 **If a SYSHD ever looks like it will not boot** -- blank screen, dead
 keyboard, no error -- check for a stray `SYSTEM.STARTUP` first. A volume
@@ -129,8 +137,26 @@ to compile it there, so `REDIRIO` itself has to go through the SendKeys
 path once after every volume rebuild. `mkharddisks.py` carries the source
 so that is all it takes.
 
+## Three things learned driving the tools
+
+**All three halt the same way.** Compiler, assembler and Linker all stop on
+`<sp>(continue), <esc>(terminate)` when they cannot go on, and wait for a
+keystroke -- over a socket that is a hang until the timeout. The message
+shares the prompt's line (`Line 6, error 104: <sp>(continue)...`), so it is
+recovered by splitting on `<sp>(continue)`, not on `(continue)`.
+
+**The Linker's prompts depend on its data.** The first library prompt and
+the later ones are worded differently, and a host with no unresolved
+`EXTERNAL` skips the list entirely -- so answers must wait for the prompt
+they answer. It also halts *after* the output filename, because that is
+when it does the work.
+
+**Reaching the end of the prompts is not success.** A failed link still
+writes an output file, so the driver parses the result: a segment still
+marked `HOSTSEG` means the link did not do its job.
+
 ## What is still not done
 
-`emuassemble.ps1` and `emulink.ps1` are untouched -- still SendKeys. The
-assembler and linker have their own prompt sequences and their own
-keystroke-timing notes, so they are a separate piece of work.
+Nothing in the acceptance tier's compile/assemble/link loop. The `emu*.ps1`
+scripts remain as the fallback, and `emucompile.ps1` is still what compiles
+`REDIRIO` itself.

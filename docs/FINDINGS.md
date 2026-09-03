@@ -18247,3 +18247,92 @@ run is needed:
 
 `emuremote.py` names that command if the codefile is missing rather than
 failing obscurely.
+
+## 213. The assembler and the linker over the remote console too, and `emulink.ps1`'s unsolved race solved
+
+All three of Apple's tools now run with no keystrokes: `emuremote.py
+compile|assemble|link`. The end-to-end proof is the strongest one available
+-- `FORMATTR` compiled, `FMTNATIV` assembled and the two linked, entirely
+over the socket, produce a codefile whose segment is **byte-identical to
+Apple's shipped `FORMATTER.CODE`**:
+
+    apple: 3584  ours: 3584
+    FORMATTE   kind LINKED/LINKED   len 2672/2672 IDENTICAL
+
+Each step takes 13-20 seconds against the `emu*.ps1` scripts' fixed sleeps.
+
+### 213a. Why the Linker needed this most
+
+`emulink.ps1`'s own module note ends: *"this script is racing the boot on a
+timer with no way to confirm the prompt actually arrived, and that race is
+not fully solved."* It is solved by not racing. The reason it was hard is
+in the data, not the timing: **the Linker's prompt sequence depends on what
+it finds.** Captured live:
+
+    Link what host codefile? SYSHD:FORMATTR.CODE
+    Opening SYSHD:FORMATTR.CODE
+    Using what library file? SYSHD:FMTNATIV.CODE
+    Opening SYSHD:FMTNATIV.CODE
+    Another library file (<ret> for none) ?
+    Map file (<ret> for none) ?
+    Reading FORMATTE
+    Reading FORMATDI
+    Output file (<ret> for workfile) ? SYSHD:FMTLINK.CODE[*]
+    Linking FORMATTE # 1
+       Copying func FORMATDI
+
+The first library prompt and the later ones are worded **differently**
+(`Using what library file?` then `Another library file`), and a host with no
+unresolved `EXTERNAL` skips the list entirely. A fixed script of answers
+lands on whatever came instead -- which is exactly how an output filename
+became `NK.CODE`. Waiting for each prompt makes the sequence self-timing.
+
+### 213b. All three tools halt the same way
+
+Apple's compiler, assembler and linker all stop on
+`<sp>(continue), <esc>(terminate)` when they cannot go on, and wait for a
+keystroke -- which over a socket means hanging until the timeout. Answering
+`<esc>` uniformly turned a 200-second timeout with a misleading message into
+a 13-second failure with the right one. The message is on the *same line* as
+the prompt (`Line 6, error 104: <sp>(continue)...`), so it is recovered by
+splitting on the prompt's own start rather than on `(continue)`, which
+otherwise leaves `<sp>` behind as the "last line".
+
+    COMPILE FAILED: line 6, error 104          (undeclared identifier)
+    ASSEMBLY FAILED: invalid structure         (not an opcode)
+    LINK FAILED: Func FORMATDI undefined       (library omitted)
+
+The Linker's is the one that would have been missed by reasoning alone: it
+halts **after** the output filename, because that is when it does the work.
+
+### 213c. A check that can fail, for the link
+
+Reaching the end of the prompts proves nothing: a failed link still writes
+an output file, sized to whatever was free (finding 91). What discriminates
+is the segment dictionary -- a compile alone leaves any segment with an
+unresolved `EXTERNAL` marked `HOSTSEG`, and only the Linker turns it into
+`LINKED` (finding 91 again). So the driver extracts the result and checks.
+Verified in both directions: with the library, `FORMATTE=LINKED`; without
+it, the run fails before that on `Func FORMATDI undefined`.
+
+### 213d. A regex that could not match is a check that is not there
+
+The assembler's count reads `0   Errors flagged on this Assembly`. The
+first version of this looked for lowercase `errors`, never matched, and
+fell through to "assembled clean" -- it would have called **every** broken
+assembly clean. Caught only by running a deliberately broken source, which
+is the point of running one. A `None` match is now a failure in its own
+right rather than a silent pass, on the grounds that a count this depends
+on going missing means the wording changed and the check is no longer
+doing anything.
+
+### 213e. `observe`
+
+Converting each tool needs its exact prompt strings, and guessing them
+costs one five-minute run per guess. `emuremote.py observe "<keys>"` sends
+a string and logs whatever comes back. Over the socket there is no
+keystroke race, so a whole prompt sequence can be sent as type-ahead and
+the system consumes each answer as its prompt appears -- which is how the
+Linker's five prompts above were captured in a single run. Transcripts are
+written even when a run fails or times out, which makes this rarely
+necessary: a missed pattern leaves the real text on disk to read.

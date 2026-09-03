@@ -1,5 +1,15 @@
 # Link one compiled program against its assembled native half.
 #
+# PREFER `python tools/emuremote.py link --host X --lib Y --out Z` (findings
+# 210-213). The race this script's own note below calls "not fully solved"
+# -- prompts answered on a timer, which scrambled an output filename into
+# "NK.CODE" more than once -- is solved there by not racing: every answer
+# waits for the prompt it answers, which the Linker needs more than the
+# other two tools because its prompt sequence depends on the data. It also
+# verifies the result by segment dictionary rather than trusting that the
+# prompts went by, since a failed link writes an output file anyway. This
+# script remains the fallback and is unchanged.
+#
 # The last step of a reconstruction that has both: the compiler leaves an
 # EXTERNAL procedure as a stub, and only SYSTEM.LINKER puts the 6502 in its
 # place. Same shape as emucompile.ps1 and emuassemble.ps1 -- boot, type the
