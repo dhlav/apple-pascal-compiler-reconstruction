@@ -501,7 +501,7 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE FWRITECHAR(VAR F: FIB; CH: CHAR; RLENG: INTEGER); FORWARD;
   PROCEDURE FREADSTRING(VAR F: FIB; VAR S: STRING; SLENG: INTEGER); FORWARD;
   PROCEDURE FWRITESTRING(VAR F: FIB; VAR S: STRING; RLENG: INTEGER); FORWARD;
-  PROCEDURE FWRITEBYTES(VAR F: FIB; VAR A: WINDOW;
+  PROCEDURE FWRITEBYTES(VAR F: FIB; VAR A: BYTESTREAM;
                         RLENG, ALENG: INTEGER); FORWARD;
   PROCEDURE FREADLN(VAR F: FIB); FORWARD;
   PROCEDURE FWRITELN(VAR F: FIB); FORWARD;
@@ -2948,56 +2948,42 @@ PROGRAM PASCALSYSTEM;
     below, leaving eighteen instructions that just hand the string
     over (finding 208).
 
-    Apple threw UCSD's version away: II.0 does the padding, the
-    soft-buffer loop and the `UNITWRITE` itself, all of which Apple
-    moved into `FWRITEBYTES` below, leaving eighteen instructions that
-    just hand the string over. Seventeen of them are settled. The
-    first statement is written; the call is not, and this is the whole
-    of what is known about it:
+    The one open instruction was the second argument (finding 214):
 
         SLDO 3             -- F
-        SLDO 2 SLDC 1 ADI  -- A, and this is the open question
+        SLDO 2 SLDC 1 ADI  -- S[1], and this is the interesting one
         SLDO 1             -- RLENG
-        SLDO 2 SLDC 0 LDB  -- ALENG = LENGTH(S)
+        SLDO 2 SLDC 0 LDB  -- LENGTH(S)
         CBP 20
 
-    `SLDO 2` is the `VAR S: STRING` parameter's own address and
-    `SLDO 2 | SLDC 0 | LDB` on that same address is `LENGTH(S)`, so
-    the second argument is that address plus one *byte* -- this
-    p-machine's pointers are byte addresses, and a UCSD `STRING` keeps
-    its length in element 0, so `S+1` is exactly where the characters
-    start. `INC n`, which appears a line away in other routines, is
-    the one that scales by words; these two mean different things.
+    `S[1]` is a component of a *packed* variable, which ISO Pascal
+    forbids as a `VAR` actual and Apple's compiler rejects with error
+    103 -- `IF GATTR.ACCESS = BYTE THEN ... ERROR(103)`, this repo's
+    own `BODYPART.text` line 947. The line above it is the exception:
 
-    What is not known is what Apple wrote to get it. Two readings have
-    been tried against Apple's own compiler and both were refused:
+        IF GATTR.ACCESS = BYTE THEN
+          IF LSP = BYTEPTR THEN
+            BEGIN GEN0(2(*ADI*)); GATTR.ACCESS := INDRCT; ... END
+          ELSE ERROR(103);
 
-      * `FWRITEBYTES(F, S[1], RLENG, LENGTH(S))` -- **error 103**,
-        "identifier is not of the appropriate class".
-      * `FWRITEBYTES(F, S, RLENG, LENGTH(S))` -- **error 142**,
-        "illegal parameter substitution".
+    A `BYTEPTR` formal -- spelled **`BYTESTREAM`** in source, and new
+    in 1.3 (manual III-4, "BYTESTREAM and WORDSTREAM") -- takes a
+    byte-addressed actual and folds base and index into one address
+    with `ADI`. That instruction *is* the argument, and it exists
+    only because 1.3 added the type: 1.1's `PASCALSY.19` is still
+    II.0's whole body, doing its own `UNITWRITE(FUNIT, S[1], RLENG)`,
+    which needed no such formal because a CSP takes base and offset
+    as two separate pushes (`SLDO 2 | SLDC 1`, no `ADI`).
 
-    The host tool refuses both too, in its own words ("given a char
-    variable" / "given a string variable ... but declaration of `A` is
-    reference to packed array [0..0] of char"). Two different error
-    numbers is itself information: 142 is the type mismatch, so 103
-    for `S[1]` is a *different* complaint, and the likeliest reading of
-    it is that a `VAR` actual has to be a plain variable with no
-    selector at all -- which would mean the second formal is not a
-    `VAR` parameter and `S+1` is a value, not an address handed over.
-    That contradicts `PASCALSY.20`, which indexes the same parameter
-    (`SLDO 3 | SLDO 5 | LDB`) and so needs an array. Something in the
-    pair of declarations is still wrong, not the arithmetic.
-
-    Left open deliberately, the same way `PASCALSY.39` is: the shape
-    is measured, the source is not known, and guessing at it costs an
-    acceptance run each time. `params` (6) and `data` (0) are already
-    exact, so nothing here is holding a frame wrong. }
+    The manual's own rule for the other half: "The first character of
+    any string passed to BYTESTREAM has index number 1; index number 0
+    accesses the string's length byte." `FWRITEBYTES` indexes `A` from
+    0, so the caller must pass `S[1]`, not `S`. }
   PROCEDURE FWRITESTRING;
   BEGIN
     IF RLENG <= 0 THEN
-      RLENG := LENGTH(S)
-    { FWRITEBYTES(F, <second argument unknown>, RLENG, LENGTH(S)) }
+      RLENG := LENGTH(S);
+    FWRITEBYTES(F, S[1], RLENG, LENGTH(S))
   END;
 
   { `FWRITEBYTES` = `PASCALSY.20` (finding 208), where the work
@@ -3009,7 +2995,13 @@ PROGRAM PASCALSYSTEM;
     declared in separate groups so they ascend in that order, since
     one group would make them descend (finding 93a). Here the `IORSLT`
     clear really is ahead of the `WITH` (`LOD 1,1 | SLDC 0 | STO` at
-    instruction 1, `SLDO 4 | SRO 7` at 4). }
+    instruction 1, `SLDO 4 | SRO 7` at 4).
+
+    `A` is `VAR A: BYTESTREAM`, not the `WINDOW` this had first. The
+    body cannot tell the two apart -- `A[AINX]` is `SLDO 3 | SLDO 5 |
+    LDB` and `UNITWRITE(FUNIT, A, ...)` is `SLDO 3` either way, so
+    this procedure stayed exact through the change. Its only caller
+    is what needs it: see `FWRITESTRING` above (finding 214). }
   PROCEDURE FWRITEBYTES;
     VAR
       AINX: INTEGER;

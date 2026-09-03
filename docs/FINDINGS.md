@@ -18336,3 +18336,131 @@ the system consumes each answer as its prompt appears -- which is how the
 Linker's five prompts above were captured in a single run. Transcripts are
 written even when a run fails or times out, which makes this rarely
 necessary: a missed pattern leaves the real text on disk to read.
+
+## 214. `BYTESTREAM`: how Apple passes a byte address to a procedure, and `PASCALSY.19` closed
+
+`PASCALSY.19` (`FWRITESTRING`) had one instruction left open since finding
+208, and it had already cost two acceptance runs guessing at it. The
+argument is:
+
+```
+SLDO 3             -- F
+SLDO 2 SLDC 1 ADI  -- the open one
+SLDO 1             -- RLENG
+SLDO 2 SLDC 0 LDB  -- LENGTH(S)
+CBP 20             -- FWRITEBYTES
+```
+
+`SLDO 2` is `VAR S: STRING`'s own address, so the second argument is that
+address **plus one byte** -- `S[1]`, where a UCSD string keeps its length
+in element 0. Writing that literally is what had been refused.
+
+**The answer is a type, not an expression: `BYTESTREAM`.** VERIFIED SOURCE
+FACT, and the source is this repo's own -- `SYSTEM.COMPILER` is
+reconstructed and all 147 of its procedures are verified, so
+`src/pascal/1.3/phases/BODYPART.text` is Apple's 1.3 compiler and can be
+read as evidence about what it accepts. Line 947, in the actual-parameter
+loop, on the `VAR` formal branch:
+
+```pascal
+IF GATTR.ACCESS = BYTE THEN
+  IF LSP = BYTEPTR THEN
+    BEGIN GEN0(2(*ADI*));
+      GATTR.ACCESS := INDRCT; GATTR.IDPLMT := 0
+    END
+  ELSE ERROR(103);
+LOADADDRESS;
+```
+
+A byte-addressed actual -- a component of a packed array of char -- is
+error 103 for every `VAR` formal **except** one whose type is `BYTEPTR`,
+where instead the compiler folds base and index together with an `ADI` and
+carries on. That `ADI` is the instruction. `BYTEPTR` is spelled
+`BYTESTREAM` in source: `COMPINIT.text` line 157 enters it in the symbol
+table as `'BYTESTRE'`, and the 1.3 manual documents it (III-4,
+"BYTESTREAM and WORDSTREAM"), a type **new in 1.3**.
+
+So:
+
+```pascal
+PROCEDURE FWRITEBYTES(VAR F: FIB; VAR A: BYTESTREAM;
+                      RLENG, ALENG: INTEGER); FORWARD;
+...
+FWRITEBYTES(F, S[1], RLENG, LENGTH(S))
+```
+
+`S[1]` and not `S`, per the manual's own rule -- "The first character of
+any string passed to BYTESTREAM has index number 1; index number 0 accesses
+the string's length byte" -- and `FWRITEBYTES` indexes `A` from 0.
+
+`PASCALSY.19` is now instruction- and frame-identical, **45 of 111**.
+`PASCALSY.20` did not move: its body cannot tell the two formals apart
+(`A[AINX]` is `SLDO 3 | SLDO 5 | LDB` and `UNITWRITE(FUNIT, A, ...)` is
+`SLDO 3` whether `A` is a `VAR` packed array or a `BYTESTREAM`), which is
+exactly why the wrong declaration survived there for so long. Acceptance
+run kept in `acceptance/2026-09-03-pascalsystem-bytestream/`.
+
+### 214a. Why 1.1 did not need it
+
+1.1's own `PASCALSY.19` is still II.0's whole `FWRITESTRING` -- padding,
+soft-buffer loop and `UNITWRITE(FUNIT, S[1], RLENG)` -- and that call
+compiles to `SLDO 2 | SLDC 1 | SLDO 1 | ...`, base and offset as **two
+separate pushes with no `ADI`**, because a CSP takes them that way and
+never goes through the `VAR`-actual check at all. Apple could only factor
+the shared body out into a *user* procedure in 1.3, once `BYTESTREAM`
+existed to receive the address. The refactor and the new type are one
+change, not two.
+
+### 214b. Four compiler facts established on real hardware
+
+All VERIFIED BINARY FACT, from `emuremote.py compile` on isolated probe
+programs rather than reasoning:
+
+* **A component of a packed variable cannot be a `VAR` actual** -- error
+  103. Proved discriminating: in the same program `C(U[1])` with
+  `U: ARRAY [0..3] OF CHAR` compiles and `C(G[1])` with `G: STRING` does
+  not, against the same `PROCEDURE C(VAR X: CHAR)`. So 103 is packedness,
+  not "a selector", and not a type complaint.
+* **`@` does not exist in Apple Pascal 1.3** -- error **400, "illegal
+  character in text"**, from the scanner. This **corrects** the
+  `fast-tier-accepts-apple-rejects` note, which recorded error 58 for `@`
+  on a `VAR` formal and read it as "`@` works, but not there". It does not
+  work anywhere; 58 is just what the parser says next about a factor that
+  is not there. Any lifter output rendering an address as `@X` is the
+  lifter's notation, never Apple's source.
+* **Pointers are strictly typed**: `Q := P + 1` and `B(P + 1, ...)` are
+  error 134, `Q := N` is 129, and `B(N, ...)` and `B(ORD(P) + 1, ...)` are
+  142. `ORD(P)` on the other hand compiles fine. There is a pointer ->
+  integer conversion and no way back, so a pointer cannot be built by
+  arithmetic -- which is what left `BYTESTREAM` as the only door.
+* **A `STRING` actual does not bind to a `PACKED ARRAY OF CHAR` `VAR`
+  formal** -- error 142 at `PACKED ARRAY [0..79]`, `[1..80]` and
+  `[0..0] OF CHAR` alike. The one direction that does convert is a string
+  *constant*, and only for a **value** parameter (`STRGTOPA`, guarded by
+  `GATTR.KIND = CST`).
+
+### 214c. The method that found it, which is the reusable part
+
+Six emulator runs went into eliminating candidate source shapes one at a
+time, and the seventh only happened because the search moved off the
+language and onto **the compiler this project has already reconstructed**.
+`SYSTEM.COMPILER` is not just a deliverable; it is a *reference for what
+1.3 accepts*, and grepping `ERROR(103)` in `BODYPART.text` answered in
+seconds a question six hardware runs had not. When Apple's compiler rejects
+something the shipped binary demonstrably contains, read Apple's compiler.
+
+It also cost nothing to check the ancestor: II.0's own `bodypart.c.text`
+has the same actual-parameter loop with `IF GATTR.ACCESS = BYTE THEN
+ERROR(103)` and **no `BYTEPTR` arm at all**, so the diff between the two
+sources names the feature by itself.
+
+Two habits are worth keeping from the six runs that did not find it. The
+first is that the compiler continues past an error on `<sp>`, so
+`emuremote.py observe` with a run of spaces typed ahead compiles a probe
+holding a dozen independent candidate statements and reports the fate of
+**every** one in a single run -- that is how the pointer facts above were
+collected. The second is that a probe should be read for its *code*, not
+only for whether it compiled: the packed-record candidate compiled clean
+and was still wrong, and only disassembling it (`SLDL 1 | INC 1` for the
+field, `SIND 0` for the length) showed that a packed record aligns an array
+field to a word and can never produce a one-byte offset.

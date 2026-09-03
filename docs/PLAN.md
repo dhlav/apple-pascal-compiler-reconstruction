@@ -1333,13 +1333,17 @@ a route end to end; everything else is a straight read-and-rebuild.
     restructured versions of UCSD's write path, which moved everything
     out of `FWRITESTRING` and into `FWRITEBYTES`.
 
-    `FWRITESTRING` (`.19`) is the one left open on purpose. Its
-    `FWRITEBYTES` argument is the string parameter's address plus one
-    byte -- where a UCSD `STRING`'s characters start -- and Apple's own
-    compiler refused both readings tried: **error 103** for `S[1]`,
-    **error 142** for `S`. Two different error numbers is real evidence
-    about which of the two declarations is wrong; a third guess would
-    cost another acceptance run, so it is written down instead.
+    `FWRITESTRING` (`.19`) closed after that, and it took a type rather
+    than an expression (finding 214). Its `FWRITEBYTES` argument is the
+    string parameter's address plus one byte, which is `S[1]` -- a
+    component of a *packed* variable, and so illegal as a `VAR` actual
+    (error 103) for every formal but one. `BYTESTREAM`, new in 1.3, is
+    the exception: Apple's compiler folds base and index into one
+    address with the `ADI` that had been the open instruction. That was
+    read out of `src/pascal/1.3/phases/BODYPART.text`, this project's
+    own reconstruction of the 1.3 compiler, after six acceptance runs
+    had failed to guess it -- `SYSTEM.COMPILER` is a reference for what
+    1.3 accepts, not only a deliverable. **45 of 111.**
 
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
@@ -1351,7 +1355,6 @@ a route end to end; everything else is a straight read-and-rebuild.
     `PASCALSY.30`/`.31` at 252/245 and 152/129 -- all three have real
     bodies that are close rather than stubs, so they are diffs to read
     rather than routines to decode.
-    `PASCALSY.19`, above: not a decoding problem, a declaration one.
     `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
     against 2, with no offset anywhere to say where the extra word sits --
     size alone is not enough to place it. `FILEPROC.1`'s own local
@@ -1506,7 +1509,8 @@ a route end to end; everything else is a straight read-and-rebuild.
   padding, comes back as text, and exits non-zero on a compile error with
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
-  segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways.
+  segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
+  (45 as of finding 214).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
