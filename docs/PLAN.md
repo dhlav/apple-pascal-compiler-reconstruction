@@ -1487,12 +1487,25 @@ a route end to end; everything else is a straight read-and-rebuild.
   `tools/remote/REMTEST.text` (`UNITWRITE` to unit 8, blocking `UNITREAD`
   from unit 7, echo back) round-tripped `PING4321` unchanged. The pieces
   and the four things that make or break it are in `tools/remote/`.
-  What is left is the console redirect itself: `REDIRIO` was scratch and
-  has been lost, so it needs rewriting. Installed as `SYSTEM.STARTUP` it
-  would arm the channel with no keystrokes at all, giving compile output
-  as text instead of a screenshot, with no foreground-window requirement
-  and no 60ms-per-key pacing. Note that the swap is RAM-only with no way
-  back but a reboot, so a wedged run cannot be rescued from the keyboard.
+  **And the console redirect itself now works (finding 211).** `REDIRIO`
+  rewritten from finding 131's page-zero facts and run: the Command level,
+  the Filer, its prompts, its echo and a full directory listing all came
+  out of the socket, and the host's keystrokes all went in, with the
+  screen blank and the physical keyboard dead. It is a toggle, and the
+  second run was sent over the socket through the redirect it was undoing.
+  Units 1 *and* 2 have to be swapped -- `CONSOLE:` and `SYSTERM:` share
+  the same routines but are separate entries, and the system reads through
+  `SYSTERM:` when it wants no echo, so changing only unit 1 leaves a live
+  keyboard behind and makes "the keyboard is dead" unfalsifiable, which is
+  the hole in finding 131's own test.
+  What is left is wiring it into the acceptance tier: `emucompile.ps1`
+  still drives a compile with SendKeys and reads a screenshot. Over this
+  channel it would be text -- error and line numbers read rather than
+  eyeballed -- with no foreground-window requirement and no 60ms-per-key
+  pacing. Installed as `SYSTEM.STARTUP` the channel would arm itself at
+  boot with no keystrokes at all. Against that: the swap is RAM-only, so
+  a run that wedges before the toggle can be sent has to be killed and
+  rebooted, and every acceptance run would then depend on this working.
 
 ## The compiler phase, kept as the record
 

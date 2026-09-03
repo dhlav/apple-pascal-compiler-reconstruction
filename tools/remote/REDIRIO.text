@@ -1,0 +1,98 @@
+{ REDIRIO -- point the system console at REMIN:/REMOUT: and back again.
+
+  Apple Pascal dispatches every character-device read and write through
+  two page-zero tables of eight 2-byte routine addresses, one entry per
+  unit 1..8. Page zero 228 (RTPTR) holds the read table's base, 230
+  (WTPTR) the write table's; entry for unit N is base + 2*(N-1). This is
+  D.M.T.'s CHANGEIO trick from 1983, extended to the read side (finding
+  131, re-proved live by the table this program prints before it acts).
+
+  Swapping CONSOLE:'s entries for REMIN:'s and REMOUT:'s makes the whole
+  system -- Command level, Filer, compiler, everything -- read and write
+  over the serial card instead of the keyboard and screen, with no
+  cooperation from any of them.
+
+  Units 1 and 2 both get swapped. The probe shows CONSOLE: and SYSTERM:
+  sharing the same two routines, but they are separate table entries and
+  the system uses SYSTERM: for unechoed reads, so leaving unit 2 alone
+  would leave a live keyboard behind and make the result impossible to
+  interpret. Changing both is what makes "the keyboard is dead" mean
+  something.
+
+  Saving the originals costs no storage of its own: unit 6 is PRINTER:,
+  write-only, so its *read* slot is permanently unused and holds the
+  saved console read address; unit 7 is REMIN:, read-only, so its
+  *write* slot holds the saved console write address. Both read back 0
+  on an untouched system, which is also how this program knows which way
+  to toggle.
+
+  Everything lives in RAM, so a reboot undoes it unconditionally. That
+  is the only recovery if the input half does not work -- run it once
+  more, over the socket, to put the console back. }
+
+PROGRAM REDIRIO;
+  CONST
+    RTPTRLOC = 228;         { page zero: base of the read-routine table }
+    WTPTRLOC = 230;         { page zero: base of the write-routine table }
+  TYPE
+    WORDP = ^INTEGER;
+    { Apple Pascal has no PEEK/POKE. A free-union record whose variants
+      are an INTEGER and a pointer is the standard way to build one: set
+      the integer, read through the pointer. }
+    CASTREC = RECORD
+                CASE BOOLEAN OF
+                  TRUE:  (ADDR: INTEGER);
+                  FALSE: (PTR: WORDP)
+              END;
+  VAR
+    RT, WT: INTEGER;        { the two table base addresses }
+    U: INTEGER;
+    SAVER, SAVEW: INTEGER;
+
+  FUNCTION PEEKW(A: INTEGER): INTEGER;
+    VAR C: CASTREC;
+  BEGIN
+    C.ADDR := A;
+    PEEKW := C.PTR^
+  END;
+
+  PROCEDURE POKEW(A, V: INTEGER);
+    VAR C: CASTREC;
+  BEGIN
+    C.ADDR := A;
+    C.PTR^ := V
+  END;
+
+BEGIN
+  RT := PEEKW(RTPTRLOC);
+  WT := PEEKW(WTPTRLOC);
+  WRITELN('REDIRIO: RTPTR=', RT, ' WTPTR=', WT);
+  FOR U := 1 TO 8 DO
+    WRITELN('  unit ', U:1, ' read=', PEEKW(RT + 2 * (U - 1)):7,
+            ' write=', PEEKW(WT + 2 * (U - 1)):7);
+
+  IF PEEKW(RT + 10) = 0 THEN
+  BEGIN
+    { Announce first: after the swap this writes to the socket. }
+    WRITELN('REDIRIO: console -> REMIN:/REMOUT: now');
+    POKEW(RT + 10, PEEKW(RT));          { unit 6 read slot := saved read }
+    POKEW(WT + 12, PEEKW(WT));          { unit 7 write slot := saved write }
+    POKEW(RT, PEEKW(RT + 12));          { unit 1 read := REMIN: }
+    POKEW(RT + 2, PEEKW(RT + 12));      { unit 2 read := REMIN: }
+    POKEW(WT, PEEKW(WT + 14));          { unit 1 write := REMOUT: }
+    POKEW(WT + 2, PEEKW(WT + 14))       { unit 2 write := REMOUT: }
+  END
+  ELSE
+  BEGIN
+    SAVER := PEEKW(RT + 10);
+    SAVEW := PEEKW(WT + 12);
+    POKEW(RT, SAVER);
+    POKEW(RT + 2, SAVER);
+    POKEW(WT, SAVEW);
+    POKEW(WT + 2, SAVEW);
+    POKEW(RT + 10, 0);
+    POKEW(WT + 12, 0);
+    { Announce last: this one goes back to the real screen. }
+    WRITELN('REDIRIO: console restored to keyboard/screen')
+  END
+END.

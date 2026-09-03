@@ -1,22 +1,40 @@
 # `REMIN:`/`REMOUT:` over AppleWin's Super Serial Card
 
 A bidirectional text channel between the host and Apple Pascal running under
-AppleWin, proven end to end (finding 210). Not wired into anything yet --
-these are the two halves of the proof, kept so the next attempt starts from
-a working round trip instead of from scratch.
+AppleWin. **The whole system -- Command level, Filer, compiler -- can be
+driven over it, with the keyboard and screen dead** (findings 210, 211). Not
+wired into the acceptance tier yet; `emucompile.ps1` and the screenshot path
+are untouched.
 
 ```
-python tools/remote/remresp.py 200      # host, start it FIRST
-python tools/runemu.py --ssc            # guest, boots SYSHD with an SSC in slot 2
-                                        # then X(ecute REMTEST at the Command level
+python tools/remote/remdrive.py 170 "Command:" "F" "Filer:" "L" ...   # host, FIRST
+python tools/runemu.py --ssc                                          # guest
+                                                                      # then X REDIRIO
 ```
 
-`REMTEST.text` is the guest side: writes `HELLO` to `REMOUT:` (unit 8),
-blocks on `UNITREAD` from `REMIN:` (unit 7) for eight characters, echoes
-them back. `remresp.py` is the host side: waits for `HELLO`, replies
-`PING4321`, checks the echo. Stage the source on `SYSHD:` with
-`python tools/stagefile.py tools/remote/REMTEST.text REMTEST.TEXT` and
-compile it with `emucompile.ps1 -Name REMTEST`.
+`REDIRIO.text` is the one that matters: it swaps `CONSOLE:`'s and
+`SYSTERM:`'s entries in the system's page-zero device tables for
+`REMIN:`'s and `REMOUT:`'s, so everything the system prints goes to the
+socket and everything the host sends arrives as keystrokes. It is a
+**toggle** -- running it a second time, over the socket, puts the console
+back, which is the only recovery short of a reboot. It prints the whole
+unit table before acting, so every run re-probes the addresses it depends
+on rather than trusting them.
+
+`remdrive.py` is the host end: poll-connects, logs everything with control
+characters visible, and walks pattern/send pairs expect-style. An empty
+pattern fires immediately, which is how you answer a prompt that was
+already on screen before you connected.
+
+`REMTEST.text` is the smaller proof underneath: writes `HELLO` to `REMOUT:`
+(unit 8), blocks on `UNITREAD` from `REMIN:` (unit 7), echoes the eight
+characters back. `remresp.py` drives it. Worth keeping because it isolates
+the transport from the redirect -- if `REDIRIO` ever goes quiet, run this
+first to find out which half broke.
+
+Stage either source on `SYSHD:` with
+`python tools/stagefile.py tools/remote/REDIRIO.text REDIRIO.TEXT` and
+compile it with `emucompile.ps1 -Name REDIRIO`.
 
 ## The four things that make or break it
 
@@ -58,17 +76,44 @@ POKE 49322,11         command: DTR on, RX IRQ off, transmitter ENABLED
 POKE 49320,65         transmit 'A'
 ```
 
+## The device tables, re-probed on every run
+
+Page zero `228` (`RTPTR`) and `230` (`WTPTR`) hold the base addresses of two
+tables of eight 2-byte routine addresses, one entry per unit, so unit N sits
+at `base + 2*(N-1)`. `REDIRIO` prints the whole thing before it acts, so
+every run re-measures what it is about to change. Unchanged from finding
+131:
+
+```
+RTPTR=-2850  WTPTR=-2866
+  unit 1 read=-256  write=-253   CONSOLE:
+  unit 2 read=-256  write=-253   SYSTERM:   same routines, separate entries
+  unit 3 read=   0  write=-223   GRAPHIC:
+  unit 4 read=   0  write=   0   DISK1:     block device, not in this table
+  unit 5 read=   0  write=   0   DISK2:
+  unit 6 read=   0  write=-247   PRINTER:   write-only, so its read slot is free
+  unit 7 read=-232  write=   0   REMIN:     read-only, so its write slot is free
+  unit 8 read=   0  write=-229   REMOUT:
+```
+
+Units 1 and 2 share the same two routines but are separate entries, and the
+system uses `SYSTERM:` for unechoed reads, so **both have to be swapped** --
+changing only unit 1 leaves a live keyboard behind and makes the result
+impossible to interpret. The two permanently-unused slots, unit 6's read and
+unit 7's write, hold the saved originals; both read back `0` on an untouched
+system, which is also how `REDIRIO` knows which way to toggle.
+
 ## What is still not done
 
-The console redirect itself. Finding 131 proved `REDIRIO` swaps `CONSOLE:`'s
-read and write pointers through page zero (`RTPTR`=228, `WTPTR`=230) and
-that the system really does go deaf and blind to the keyboard and screen
-afterwards -- but that program was scratch and has been lost, so it needs
-rewriting. With it, everything the system prints becomes text on the socket
-and everything the host sends becomes keystrokes.
+Wiring it into the acceptance tier. `emucompile.ps1` still drives a compile
+with SendKeys and captures a screenshot. Going over this channel instead
+would give compile output as *text* -- error numbers and line numbers read
+rather than eyeballed -- with no foreground-window requirement and no
+60ms-per-key pacing.
 
-Two things to know before building that. `SYSTEM.STARTUP` runs
-automatically at boot, so installing the redirect under that name arms the
-channel with no keystrokes at all. And the swap lives in RAM with no way
-back except killing the emulator and rebooting, so a run that wedges cannot
-be rescued from the keyboard.
+Two things to know before that. `SYSTEM.STARTUP` runs automatically at
+boot, so installing `REDIRIO.CODE` under that name would arm the channel
+with no keystrokes at all. And the swap lives in RAM, so a run that wedges
+before the toggle can be sent has to be killed and rebooted -- cheap in
+itself, but it means every acceptance run would then depend on this
+working.

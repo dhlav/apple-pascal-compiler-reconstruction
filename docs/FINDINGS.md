@@ -18088,3 +18088,83 @@ Finding 131's scratch programs were kept outside the repo "until the round
 trip actually works end to end". It does, and they had been lost by the time
 this was picked up again, so `REMTEST.text` and the host side of the
 protocol are now in `tools/remote/` instead.
+
+## 211. The console redirect works: the whole system driven over TCP with the keyboard and screen dead
+
+**VERIFIED, live.** `REDIRIO` rewritten from the page-zero facts in finding
+131 (the original was scratch and had been lost), compiled on Apple's own
+compiler, and run: the Command level, the Filer, its prompts, its character
+echo and a full directory listing all came out of the socket, and `F`, `L`,
+`SYSHD:` and a space typed by the host all went in. The screen showed
+nothing after the swap and the physical keyboard did nothing. Toggling the
+program a second time -- sent over the socket, by the host, through the
+redirect it was undoing -- put the console back, and `F` on the real
+keyboard opened the Filer on the real screen again.
+
+`tools/remote/REDIRIO.text`, `remdrive.py`, and the transport proof
+underneath them (`REMTEST.text`, `remresp.py`, finding 210) are in
+`tools/remote/`.
+
+### 211a. The table, re-measured
+
+`REDIRIO` prints the whole unit table before it acts, so every run
+re-probes the addresses it is about to change rather than trusting a note.
+It came out **identical to finding 131's**, three sessions and one
+diagnosis later:
+
+    RTPTR=-2850  WTPTR=-2866
+      unit 1 read=-256  write=-253   CONSOLE:
+      unit 2 read=-256  write=-253   SYSTERM:
+      unit 3 read=   0  write=-223   GRAPHIC:
+      unit 4 read=   0  write=   0   DISK1:
+      unit 5 read=   0  write=   0   DISK2:
+      unit 6 read=   0  write=-247   PRINTER:
+      unit 7 read=-232  write=   0   REMIN:
+      unit 8 read=   0  write=-229   REMOUT:
+
+Two tables of eight 2-byte routine addresses, unit N at `base + 2*(N-1)`.
+
+### 211b. Both of units 1 and 2, not just CONSOLE:
+
+`CONSOLE:` and `SYSTERM:` hold the *same* two routine addresses but they are
+separate table entries, and the system reads through `SYSTERM:` when it does
+not want an echo. Swapping only unit 1 would leave a live keyboard behind
+and make "the keyboard is dead" unfalsifiable -- which is exactly the hole
+in finding 131's own test, where the screen was already redirected, so
+"typing produced zero change on screen" could not distinguish a dead
+keyboard from an invisible one. Changing all four entries makes the claim
+mean something, and it is what the run above demonstrates.
+
+Saving the originals needs no storage of its own. Unit 6 is `PRINTER:`,
+write-only, so its *read* slot is permanently unused; unit 7 is `REMIN:`,
+read-only, so its *write* slot is. Both read back `0` untouched, which is
+also how the program knows which way to toggle. That is D.M.T.'s 1983
+`CHANGEIO` trick, extended to the read side.
+
+### 211c. What the channel actually carries
+
+Screen control bytes come through as data -- `<19>` and `<1D>` lead the
+prompt redraws -- so a host reading this is reading a terminal stream, not
+clean lines. `remdrive.py` prints them visibly for that reason. Character
+echo happens on the way back, so a host that sends `F` sees `F` returned;
+that is the system echoing, not a loopback, and it is a usable
+acknowledgement that a keystroke was taken.
+
+One practical trap: the Filer paginates a long listing with `Press <space>
+to continue`, and a pattern-driven script that does not expect it simply
+stops. Reconnecting does not help -- the prompt was consumed before the
+disconnect and the guest is blocked in a read -- so the driver needs a way
+to send unconditionally. An empty pattern does that, since an empty
+bytestring is in everything.
+
+### 211d. Not wired into the acceptance tier
+
+`emucompile.ps1` still uses SendKeys and a screenshot; nothing about the
+existing path changed. Doing a compile over this channel would give the
+compiler's output as text rather than a PNG to be read by eye, with no
+foreground-window requirement and no 60ms-per-key pacing. Two things to
+weigh first: `SYSTEM.STARTUP` runs automatically at boot, so installing
+`REDIRIO.CODE` under that name would arm the channel with no keystrokes at
+all; and the swap is RAM-only, so a run that wedges before the toggle can be
+sent has to be killed and rebooted -- cheap in itself, but every acceptance
+run would then depend on this working.
