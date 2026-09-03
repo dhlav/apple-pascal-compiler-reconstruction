@@ -17614,3 +17614,126 @@ five separate things about it had been wrong:
 is now byte-exact end to end -- the outer `STUB48` loop, its two nested
 helpers, the volume wait, the CRT control writer and the block-transfer
 routine.
+
+## 205. `GETCMD.19` = `ASSOCIATE`, written for real -- 259 instructions, the largest procedure decoded for this file
+
+**VERIFIED BINARY FACT**, byte-exact on Apple's own compiler.
+
+`ASSOCIATE` opens a codefile by title, reads its block 0, checks what it
+finds there and binds the file's segments into `SYSCOM^.SEGTABLE`. UCSD
+II.0 has a routine of the same shape and it is recognisably the ancestor:
+the `ASS_STATUS := NOT_FOUND` / `FOUND_BAD` / `FOUND_OK` progression, the
+`GOTO 1` to a single `FCLOSE` at the bottom, the `'No file '`,
+`' not code'`, `'Bad block #0'`, `'Linking...'` and `'Must L(ink first'`
+messages, and the `EXIT(GETCMD)` after a successful link all survive
+unchanged. What Apple added is where the work was.
+
+### 205a. The signature: six parameters, and the sixth is a BOOLEAN
+
+`params` is `16` -- eight words, two of them the function result, six
+parameters. UCSD declares five. This file had already widened the
+declaration to six to satisfy the call sites, but guessed the extra one
+`INTEGER`; the body reads it with `SLDL 3` twice, once plain and once
+under `LNOT`, so it is a BOOLEAN. It gates the version check, and is
+called `CHECKVER` here for what it does. The real name is not
+recoverable.
+
+Reversal (finding 175) places the whole list, and the placement is what
+identified the parameters rather than the other way round:
+
+| word | parameter | how the body uses it |
+|---|---|---|
+| 3 | `CHECKVER` | gates the version check; its inverse gates `.7` |
+| 4 | `VAR ASS_STATUS` | `STO`-ed three times, with 2, 1, 0 |
+| 5 | `ERROROK` | guards the two open-failure messages |
+| 6 | `RUNONLY` | picks `LINKANDGO` over `LINKDEBUG` |
+| 7 | `OKTOLINK` | guards the whole `'Linking...'` arm |
+| 8 | `TITLE` | value `STRING`; `LLA 9 / SLDL 8 / SAS 80` copies it |
+
+`ERROROK` on word `5` is the one that settles the order: it is the
+*third* of three BOOLEANs declared in one group, and a group reverses
+along with everything else.
+
+### 205b. `RUN_VOL` -- the `%` volume, declared in this file all along
+
+`ASSOCIATE` **saves global word `444` on entry, sets it to the volume
+`SCANTITLE` parses out of the title, and restores it at label 1**. A
+failed associate therefore leaves it alone and a successful one does not:
+the success path does its own `FCLOSE` and then `EXIT(ASSOCIATE)`, which
+jumps straight past the restore. That is not a leak, it is the point --
+it is what makes 1.3's `%` volume prefix mean "wherever the code file
+came from".
+
+Word `444` is `RUN_VOL`, and this file had **already declared it, at the
+right offset, with Tribby's own "run (%) volume" comment beside it**.
+Both places that read it -- `SCANTITLE`'s `'%'` arm and this one -- wrote
+`DKVID` (word `59`) instead, and `SCANTITLE`'s own note beside the line
+said in as many words that the real offset was `444` and that `DKVID` was
+standing in for something not yet identified. The name was three hundred
+lines further down the same `VAR` block.
+
+The mistake was worth exactly one byte per reference and it showed up as
+something else entirely: `LDA 2,59` is a byte shorter than `LDA 2,444`,
+three of them come before the first string literal, and an odd number of
+bytes flips the parity of every alignment `NOP` after it. The first diff
+of this procedure read as *ten* differences -- every `NOP` on the wrong
+side of its `LSA` -- plus three global offsets. There was one error.
+
+### 205c. Intrinsic units: the four-word set at `0x120`
+
+Three things here have no UCSD precedent at all, and two of them are the
+1.3 intrinsic-unit support:
+
+  * `SEGINFO[1].VERSION <> 6` is the SEGINFO version field -- 1.1 writes
+    `2`, 1.3 writes `6` -- and beside it sits an escape hatch:
+    `POS('SYSTEM.COMPILER', TITLE) <> 0` **and**
+    `SEGNAME[1] = 'FORTRAN:'`. Apple FORTRAN ships as a
+    `SYSTEM.COMPILER` whose segment 1 is named `FORTRAN:`, and this lets
+    it past a check aimed at 1.1 binaries. The two are joined with
+    `LAND`, not an `FJP` chain -- one more instance of the compiler not
+    short-circuiting.
+  * `INTRINSSEGS`, the **four-word set at `0x120`** of the segment
+    dictionary, is intersected with the set `.10` builds out of the
+    file's own segments; non-empty is `'Conflict between intrinsic and
+    user segment(s)'`. Non-empty `INTRINSSEGS` on its own sends the file
+    through `.11` (`data` `1796` -- it reads `SYSTEM.LIBRARY`'s own
+    dictionary).
+
+The set is confirmed twice over. The OS reads it four words wide and
+compares it with `NEQ SET`, which no array type can do; and
+`128K.PASCAL`'s own dictionary word at `0x120` is `0004` -- bit 2, and
+segment 2 is `FIOPRIMS`, the one segment of the operating system whose
+`SEGKIND` is `LINKED_INTRINS` (finding 200). `SYSTEM.LIBRARY`'s own is
+zero, as it must be: it provides intrinsics rather than requiring them.
+
+This also closes the last field of the dictionary this project had never
+parsed. `SEGDICT` as declared here places every part by an offset the
+binary carries -- `SEGNAME` at `LLA 82` with `IXA 4`, `SEGKIND` at
+`0x0C0`, `SEGINFO` at `LLA 178` with `IXA 1` and a packed `VERSION` at
+bit 13 width 3, `INTRINSSEGS` at `LLA 194` -- and the seven parts sum to
+exactly 256 words, the block.
+
+### 205d. Three `WITH` pointers, the first of them dead
+
+`WITH SYSCOM^, USERINFO.CODEFIBP^, FHEADER DO` allocates three words at
+`370`/`371`/`372`, and **nothing in the body ever reads `370`**. UCSD's
+own `WITH USERINFO,SYSCOM^ DO` needed `SYSCOM^` for `SYSCOM^.IORSLT`;
+1.3 calls `IORESULT` instead and the `WITH` element stayed behind. It is
+one word of `data` and it is the difference between `728` and `726`, so
+it is not optional -- the fast tier drops an unused `WITH` pointer and
+Apple's compiler does not, which is the first time that particular
+divergence has shown up.
+
+### 205e. `GETCMD`'s own `VAR` block, and `.2` closed with it
+
+`GETCMD.1` has `data` `6`: three words, and UCSD's
+`CH` / `BADCMD` / `DONT_CARE` accounts for all three. Groups ascend, so
+`DONT_CARE` lands on word `6` -- which is exactly the `LAO 6` that was
+`GETCMD.2`'s last remaining divergence (finding 202's own note left a
+local `ASSSTATUS` there and said the two did not reconcile yet). They
+reconcile: the variable is not a global and not a local, it is the
+*segment's*, and inside a segment's nested procedure `LAO`/`SRO`/`SLDO`
+address the segment's own frame -- the same fact that makes
+`GETCMD := LINKANDGO` compile to `SRO 1` and `LASTST` read as `SLDO 3`.
+
+**35 -> 37 exact**, `GETCMD.19` and `GETCMD.2`, none lost.

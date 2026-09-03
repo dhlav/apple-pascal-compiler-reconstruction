@@ -1396,6 +1396,52 @@ PROGRAM PASCALSYSTEM;
     `.3`/`.19`/`.20` group. }
   SEGMENT FUNCTION GETCMD(LASTST: CMDSTATE): CMDSTATE;
 
+    { The segment's own TYPE block. `STATUS_ASSOC` is UCSD's own
+      `STATUS_ASSOCIATE` unchanged. `SEGDICT` is the 1.3 codefile
+      segment dictionary as `.19` reads it -- every field is placed by
+      an offset the real binary carries, not by guesswork (finding
+      205): `SEGNAME` at `LLA 82` with `IXA 4`, `SEGINFO` at `LLA 178`
+      with `IXA 1`, `INTRINSSEGS` at `LLA 194` read four words wide as
+      a set. That last one is confirmed twice over -- `128K.PASCAL`'s
+      own dictionary word at `0x120` is `0004`, bit 2, and segment 2 is
+      `FIOPRIMS`, the one segment of the OS whose `SEGKIND` is
+      `LINKED_INTRINS` (finding 200). `DICTFILL` is what is left of
+      the block, and the seven parts sum to exactly 256 words. }
+    TYPE
+      STATUS_ASSOC = (FOUND_OK, FOUND_BAD, NOT_FOUND);
+      SEGSET = SET OF SEG_RANGE;
+      DICTRANGE = 0..15;
+      SEGKINDTYPE = (LINKED, HOSTSEG, SEGPROC, UNITSEG, SEPRTSEG,
+                     UNLINKED_INTRINS, LINKED_INTRINS, DATASEG);
+      KINDSET = SET OF SEGKINDTYPE;
+      SEGDICT = RECORD
+                  DISKINFO: ARRAY [DICTRANGE] OF SEG_DESC;
+                  SEGNAME: ARRAY [DICTRANGE] OF
+                             PACKED ARRAY [0..7] OF CHAR;
+                  SEGKIND: ARRAY [DICTRANGE] OF SEGKINDTYPE;
+                  SEGDATA: ARRAY [DICTRANGE] OF INTEGER;
+                  SEGINFO: ARRAY [DICTRANGE] OF
+                             PACKED RECORD
+                               SEGNUM: 0..255;
+                               MTYPE: 0..15;
+                               SIFILLER: 0..1;
+                               VERSION: 0..7
+                             END;
+                  INTRINSSEGS: SEGSET;
+                  DICTFILL: ARRAY [0..107] OF INTEGER
+                END;
+
+    { GETCMD's own three words of `data` -- real `6`, and UCSD's own
+      `CH`/`BADCMD`/`DONT_CARE` accounts for all three. Declaration
+      groups ascend, so `DONT_CARE` lands on word `6`, which is what
+      `.2` passes to `.19` as `LAO 6`: the last divergence in an
+      otherwise exact `.2` was that this file had a local there
+      (finding 205a). }
+    VAR
+      CH: CHAR;
+      BADCMD: BOOLEAN;
+      DONT_CARE: STATUS_ASSOC;
+
     { Every one of `.2`-`.27` forward-declared here, in real procedure
       order, exactly like this file's own outer `PASCALSY` scope does
       for its own 41 forwards (finding 61/126) -- discovered the hard
@@ -1408,15 +1454,17 @@ PROGRAM PASCALSYSTEM;
       committed). Completions below may appear in any order relative
       to each other -- only the `FORWARD` block's own order matters. }
     PROCEDURE RUNWORKFILE(OKTOLINK: BOOLEAN); FORWARD;
-    PROCEDURE GC03(A, B, C, D: INTEGER); FORWARD;
+    FUNCTION SYSASSOC(SYS_NAME: SYSFILE;
+                      ALLOWLINK: BOOLEAN): BOOLEAN; FORWARD;
     FUNCTION GETYESNO: BOOLEAN; FORWARD;
     PROCEDURE GC05(A, B, C, D: INTEGER); FORWARD;
     FUNCTION BADTITLE(TITLE: STRING): BOOLEAN; FORWARD;
-    PROCEDURE GC07(A: INTEGER); FORWARD;
+    PROCEDURE GC07(VAR ST: SEGDICT); FORWARD;
     PROCEDURE GC08; FORWARD;
-    PROCEDURE GC09(A, B: INTEGER); FORWARD;
-    PROCEDURE GC10(A, B, C, D, E: INTEGER); FORWARD;
-    PROCEDURE GC11(A, B, C, D: INTEGER); FORWARD;
+    PROCEDURE GC09(VAR ST: SEGDICT; F: FIBP); FORWARD;
+    FUNCTION GC10(VAR ST: SEGDICT; VAR SEGS: SEGSET;
+                  KINDS: KINDSET): BOOLEAN; FORWARD;
+    FUNCTION GC11(TITLE: STRING; VAR ST: SEGDICT): BOOLEAN; FORWARD;
     PROCEDURE GC12(A, B: INTEGER); FORWARD;
     PROCEDURE GC13; FORWARD;
     PROCEDURE GC14(A: INTEGER); FORWARD;
@@ -1430,9 +1478,9 @@ PROGRAM PASCALSYSTEM;
       is still one word of `params` (the caller pushes an address and
       the callee makes its own copy, finding 176), so this costs
       nothing in the already-exact `params=16`. }
-    FUNCTION ASSOCSTUB(TITLE: STRING; OKTOLINK, RUNONLY,
-                        ERROROK: BOOLEAN; VAR STATUS: INTEGER;
-                        UNUSED: INTEGER): BOOLEAN; FORWARD;
+    FUNCTION ASSOCIATE(TITLE: STRING; OKTOLINK, RUNONLY,
+                       ERROROK: BOOLEAN; VAR ASS_STATUS: STATUS_ASSOC;
+                       CHECKVER: BOOLEAN): BOOLEAN; FORWARD;
     PROCEDURE STARTCMPSTUB(NEXTST: INTEGER); FORWARD;
     PROCEDURE GC21; FORWARD;
     PROCEDURE GC22; FORWARD;
@@ -1484,15 +1532,13 @@ PROGRAM PASCALSYSTEM;
       completion, inside a `SEGMENT`'s own nested scope exactly as it
       already does at `PASCALSY`'s own outer one). }
     PROCEDURE RUNWORKFILE;
-      VAR
-        ASSSTATUS: INTEGER;
     BEGIN
       IF USERINFO.GOTCODE THEN
       BEGIN
         CLEARSCREEN;
         WRITELN;
-        IF ASSOCSTUB(CONCAT(USERINFO.CODEVID, ':', USERINFO.CODETID),
-                     OKTOLINK, TRUE, TRUE, ASSSTATUS, 0) THEN
+        IF ASSOCIATE(CONCAT(USERINFO.CODEVID, ':', USERINFO.CODETID),
+                     OKTOLINK, TRUE, TRUE, DONT_CARE, FALSE) THEN
         BEGIN
           WRITE('Running...');
           WRITELN;
@@ -1505,7 +1551,7 @@ PROGRAM PASCALSYSTEM;
       ELSE
         STARTCMPSTUB(6)
     END;
-    PROCEDURE GC03; BEGIN END;
+    FUNCTION SYSASSOC; BEGIN SYSASSOC := FALSE END;
     { `GETCMD.4`: reads one character from `GFILES[0]^` (the console
       input file) in a loop until it's `'N'`/`'Y'`/`'n'`/`'y'`, then
       returns whether it was yes. No UCSD precedent as a separate
@@ -1583,8 +1629,8 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE GC07; BEGIN END;
     PROCEDURE GC08; BEGIN END;
     PROCEDURE GC09; BEGIN END;
-    PROCEDURE GC10; BEGIN END;
-    PROCEDURE GC11; BEGIN END;
+    FUNCTION GC10; BEGIN GC10 := FALSE END;
+    FUNCTION GC11; BEGIN GC11 := FALSE END;
     PROCEDURE GC12; BEGIN END;
     PROCEDURE GC13; BEGIN END;
     PROCEDURE GC14; BEGIN END;
@@ -1592,20 +1638,150 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE GC16; BEGIN END;
     PROCEDURE GC17; BEGIN END;
     PROCEDURE GC18; BEGIN END;
-    { `GETCMD.19` -- `ASSOCIATE`-shaped (UCSD's own `ASSOCIATE(TITLE:
-      STRING; OKTOLINK, RUNONLY, ERROR_OK: BOOLEAN; VAR ASS_STATUS:
-      STATUS_ASSOCIATE): BOOLEAN`), a large open a codefile, read/
-      check its own segment table, cross-check `SYSTEM.LIBRARY`
-      routine -- real `params`/`data` = `16`/`728`, huge, genuinely
-      new decode work, not attempted this session. Signature widened
-      to 6 args (an extra trailing `INTEGER` UCSD's own 5-arg version
-      doesn't have) to match every real call site found so far, all
-      of which pass six arguments; guessed only to preserve procedure
-      numbering and let its own callers compile -- not Apple's real
-      content. }
-    FUNCTION ASSOCSTUB;
+    { `GETCMD.19` = `ASSOCIATE`, UCSD's own routine carried into 1.3
+      and extended: open a codefile by title, read block 0, check what
+      it finds there, and bind its segments into `SYSCOM^.SEGTABLE`.
+      259 instructions, `params`/`data` `16`/`728`, the largest
+      procedure decoded for this file so far.
+
+      The parameter list is UCSD's five plus one, and the sixth is a
+      BOOLEAN, not the INTEGER this file guessed: the body reads it
+      with `SLDL 3` twice, once as a plain condition and once under
+      `LNOT`. It gates the version check, so it is named `CHECKVER`
+      here for what it does; the real name is not recoverable.
+      Reversal puts it on word `3` and `TITLE` on word `8`, and the
+      three BOOLEANs land `7`/`6`/`5` in declaration order -- which is
+      how `ERROROK` was identified, since word `5` is what guards the
+      two error messages (finding 175, and finding 205 for the rest).
+
+      Three things here have no UCSD precedent at all:
+
+      * `RUN_VOL` (global word `444`) is **saved on entry, set to the
+        volume `SCANTITLE` parses out of the title, and restored at
+        label 1** -- so a failed associate leaves it alone and a
+        successful one does not, because the success path does its own
+        `FCLOSE` and then `EXIT(ASSOCIATE)` straight past the restore.
+        That is deliberate, not a leak: it is what makes 1.3's own
+        `%` volume prefix mean "wherever the code file came from",
+        and `SCANTITLE`'s own `'%'` arm reads the very same word --
+        which is how the two were finally connected (finding 205b).
+        This file had declared `RUN_VOL` all along, at the right
+        offset, with Tribby's own "run (%) volume" comment beside it,
+        and still wrote `DKVID` in both places that use it.
+      * The version check. `SEGINFO[1].VERSION <> 6` is the SEGINFO
+        version field -- 1.1 writes `2`, 1.3 writes `6` -- and the
+        `SYSTEM.COMPILER`/`FORTRAN:` escape beside it is Apple letting
+        the Apple FORTRAN compiler, which ships as a `SYSTEM.COMPILER`
+        whose segment 1 is named `FORTRAN:`, past a check aimed at
+        1.1 binaries.
+      * Intrinsic units. `INTRINSSEGS`, the four-word set at `0x120`
+        of the dictionary, is intersected with the set `.10` builds
+        out of the file's own segments; a non-empty intersection is
+        "Conflict between intrinsic and user segment(s)", and a
+        non-empty `INTRINSSEGS` alone sends the file through `.11`
+        (`data` `1796` -- it reads `SYSTEM.LIBRARY`'s own dictionary).
+        None of this exists in UCSD II.0.
+
+      The `WITH` is three deep and its first element is never read:
+      `LOD 2,1 | STL 370` opens `SYSCOM^` and nothing in the body
+      touches it. UCSD's own `WITH USERINFO,SYSCOM^ DO` needed it for
+      `SYSCOM^.IORSLT`; 1.3 calls `IORESULT` instead and the `WITH`
+      stayed behind. }
+    FUNCTION ASSOCIATE;
+      LABEL 1;
+      VAR
+        SEGTBL: SEGDICT;
+        LSEGS: SEGSET;
+        TTITLE: STRING;
+        SAVEVID: VID;
+        TVID: VID;
+        TTID: TID;
+        TSEGS: INTEGER;
+        TKIND: FILEKIND;
+        OK: BOOLEAN;
     BEGIN
-      ASSOCSTUB := FALSE
+      ASS_STATUS := NOT_FOUND;
+      ASSOCIATE := FALSE;
+      SAVEVID := RUN_VOL;
+      TTITLE := TITLE;
+      OK := SCANTITLE(TTITLE, TVID, TTID, TSEGS, TKIND);
+      RUN_VOL := TVID;
+      IF NOT OK THEN
+        RUN_VOL := '';
+      FOPEN(USERINFO.CODEFIBP^, TITLE, TRUE, NIL);
+      IF IORESULT <> 0 THEN
+      BEGIN
+        IF ERROROK THEN
+          IF IORESULT = 7 THEN
+            WRITE('Illegal file name')
+          ELSE
+            WRITE('No file ', TITLE);
+        GOTO 1
+      END;
+      ASS_STATUS := FOUND_BAD;
+      WITH SYSCOM^, USERINFO.CODEFIBP^, FHEADER DO
+        IF DFKIND <> CODEFILE THEN
+        BEGIN
+          WRITE(TITLE, ' not code');
+          GOTO 1
+        END
+        ELSE
+        BEGIN
+          UNITREAD(FUNIT, SEGTBL, SIZEOF(SEGTBL), DFIRSTBLK);
+          IF IORESULT <> 0 THEN
+          BEGIN
+            WRITE('Bad block #0');
+            GOTO 1
+          END;
+          IF CHECKVER THEN
+            IF SEGTBL.SEGINFO[1].VERSION <> 6 THEN
+              IF NOT ((POS('SYSTEM.COMPILER', TITLE) <> 0) AND
+                      (SEGTBL.SEGNAME[1] = 'FORTRAN:')) THEN
+              BEGIN
+                WRITELN;
+                WRITE(TITLE, ' is not version 1.3');
+                GOTO 1
+              END;
+          IF NOT CHECKVER THEN
+            GC07(SEGTBL);
+          IF NOT GC10(SEGTBL, LSEGS, [LINKED]) THEN
+          BEGIN
+            IF OKTOLINK THEN
+            BEGIN
+              WRITE('Linking...');
+              WRITELN;
+              FCLOSE(USERINFO.CODEFIBP^, CNORMAL);
+              IF SYSASSOC(LINKER, TRUE) THEN
+              BEGIN
+                IF RUNONLY THEN
+                  GETCMD := LINKANDGO
+                ELSE
+                  GETCMD := LINKDEBUG;
+                EXIT(GETCMD)
+              END
+            END
+            ELSE
+              IF NOT (LASTST IN [LINKANDGO, LINKDEBUG]) THEN
+                WRITE('Must L(ink first');
+            GOTO 1
+          END;
+          IF (LSEGS * SEGTBL.INTRINSSEGS) <> [] THEN
+          BEGIN
+            WRITE('Conflict between intrinsic and user segment(s)');
+            GOTO 1
+          END;
+          IF SEGTBL.INTRINSSEGS <> [] THEN
+            IF NOT GC11(TITLE, SEGTBL) THEN
+              GOTO 1;
+          GC09(SEGTBL, USERINFO.CODEFIBP)
+        END;
+      ASS_STATUS := FOUND_OK;
+      ASSOCIATE := TRUE;
+      FCLOSE(USERINFO.CODEFIBP^, CNORMAL);
+      EXIT(ASSOCIATE);
+    1:
+      FCLOSE(USERINFO.CODEFIBP^, CNORMAL);
+      RUN_VOL := SAVEVID
     END;
     { `GETCMD.20` -- `STARTCOMPILE`-shaped (UCSD's own
       `STARTCOMPILE(NEXTST: CMDSTATE)`); real `params`/`data` = `2`/
@@ -3379,10 +3555,11 @@ PROGRAM PASCALSYSTEM;
     2. **Volume prefix.** `T[1] = '*'` sets `FVID := SYVID` (the boot
        unit's own volume -- global word `63`, confirmed by an isolated
        probe) and deletes the `'*'`; `T[1] = '%'` sets `FVID` from a
-       second global (STRONG INFERENCE only -- real word offset `444`,
-       not identified by name; `DKVID` used as a documented
-       placeholder, see below) and deletes the `'%'`. Then `POS(':',
-       T)`: no colon at all, or one right at the very front, falls
+       second global -- `RUN_VOL`, real word offset `444`, which this
+       file had already declared and documented as Tribby's own
+       "run (%) volume" without ever connecting the two (finding
+       205b) -- and deletes the `'%'`. Then `POS(':', T)`: no colon
+       at all, or one right at the very front, falls
        back to `FVID := DKVID` ("default volid," global word `59`,
        also probe-confirmed) only if nothing set `FVID` already, and
        eats a leading `':'` if that's what was found; a colon `1..7`
@@ -3482,7 +3659,7 @@ PROGRAM PASCALSYSTEM;
       END
       ELSE IF T[1] = '%' THEN
       BEGIN
-        FVID := DKVID;
+        FVID := RUN_VOL;
         DELETE(T, 1, 1)
       END;
 

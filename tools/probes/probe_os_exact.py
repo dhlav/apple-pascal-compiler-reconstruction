@@ -35,14 +35,15 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-cmdstate" / \
+RUN = ROOT / "acceptance" / "2026-09-02-pascalsystem-associate" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
 # Grows as the reconstruction does; it must never shrink without a finding
 # saying why.
 EXACT = [
-    "GETCMD.4", "GETCMD.6", "GETCMD.23", "GETCMD.26",
+    "GETCMD.2", "GETCMD.4", "GETCMD.6", "GETCMD.19", "GETCMD.23",
+    "GETCMD.26",
     "INITIALI.7", "INITIALI.8",
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
     "PASCALSY.14", "PASCALSY.15", "PASCALSY.21", "PASCALSY.22",
@@ -62,7 +63,7 @@ STILL_DIFFERS = [
     "PASCALSY.1",    # the outer block: 14 instructions against Apple's 24
     "PASCALSY.33",   # SCANTITLE: data 254 against Apple's 172
     "INITIALI.1",    # data 66 against Apple's 118, two banners missing
-    "GETCMD.2",      # RUNWORKFILE: one arg is a global, not a local
+    "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
 ]
 
 fail = []

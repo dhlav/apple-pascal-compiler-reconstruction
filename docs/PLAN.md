@@ -1255,27 +1255,67 @@ a route end to end; everything else is a straight read-and-rebuild.
     nested helpers, the volume wait, the CRT control writer and the
     block-transfer routine.
 
+    **`GETCMD.19` (`ASSOCIATE`) written for real (finding 205), 259
+    instructions -- the largest procedure decoded for this file, and
+    `GETCMD.2` closed alongside it. 35 -> 37 exact.** The sixth
+    parameter is the BOOLEAN that gates the version check, not the
+    `INTEGER` this file had guessed; reversal then places all six, and
+    `ERROROK` on word `5` -- third of three BOOLEANs in one group -- is
+    what fixed the order. Global word `444` turned out to be `RUN_VOL`,
+    the `%` volume, **declared in this file all along at the right
+    offset with its own comment beside it** while both routines that
+    read it wrote `DKVID`; `ASSOCIATE` saves it, sets it to the volume
+    of the code file it just opened, and restores it only on the
+    failure path, which is exactly what makes `%` mean "wherever the
+    code file came from". That one wrong offset encodes a byte shorter,
+    and an odd number of bytes flips the parity of every alignment
+    `NOP` after it, so a single error read as thirteen differences.
+
+    The four-word set at `0x120` of the segment dictionary is now
+    parsed: it is the **intrinsic units a codefile requires**.
+    `128K.PASCAL`'s own is `0004`, bit 2, and segment 2 is `FIOPRIMS`,
+    the one segment of the OS whose `SEGKIND` is `LINKED_INTRINS`
+    (finding 200); `SYSTEM.LIBRARY`'s is zero, since it provides
+    intrinsics rather than requiring them. `ASSOCIATE` intersects it
+    with the set `.10` builds from the file's own segments and reports
+    "Conflict between intrinsic and user segment(s)". `SEGDICT` as
+    declared now places every part of the block by an offset the binary
+    carries, and the seven parts sum to exactly 256 words.
+
+    Two smaller facts came out of the same run. `GETCMD.1`'s three
+    words of `data` are UCSD's `CH`/`BADCMD`/`DONT_CARE`, and
+    `DONT_CARE` on word `6` is the `LAO 6` that had been `GETCMD.2`'s
+    last divergence -- inside a segment's nested procedure
+    `LAO`/`SRO`/`SLDO` address the *segment's* frame, which is the same
+    fact that makes `GETCMD := LINKANDGO` compile to `SRO 1`. And the
+    fast tier drops an unused `WITH` pointer where Apple's compiler
+    keeps it: `WITH SYSCOM^, ...` costs a word that nothing reads, and
+    it is the difference between `data` 728 and 726.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
-    loops are visibly absent. `GETCMD.19` (`ASSOCIATE`), 259 instructions
-    and still a stub -- decoding it is also what settles `GETCMD.2`'s last
-    divergence, where Apple passes the address of global 6 and this passes
-    a local (finding 202b). `PASCALSY.1`, the outer block, at 14
-    instructions against 24. `PASCALSY.33` (`SCANTITLE`) at `data` 254
-    against 172. `PASCALSY.54` and `.56`, honest number-preserving stubs
-    now sitting on the right numbers with the right frame sizes but no
-    content (`.54` is another terminal routine, 81 instructions, called
-    from `.12`/`.18`; `.56` is 26 instructions inside `FGET`).
-    `PASCALSY.58` (`CMDDISPATCH`) at 20 instructions against 26.
+    loops are visibly absent. `PASCALSY.33` (`SCANTITLE`) at `data` 254
+    against 172 -- and the gap is exactly 82 bytes, 41 words, one
+    `STRING` shadow copy, so the question to ask first is whether
+    `FTITLE` is a `VAR` parameter in Apple's own declaration.
+    `PASCALSY.1`, the outer block, at 14 instructions against 24.
+    `PASCALSY.54` and `.56`, honest number-preserving stubs now sitting
+    on the right numbers with the right frame sizes but no content
+    (`.54` is another terminal routine, 81 instructions, called from
+    `.12`/`.18`; `.56` is 26 instructions inside `FGET`).
     `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
     against 2, with no offset anywhere to say where the extra word sits --
     size alone is not enough to place it. `FILEPROC.1`'s own local
     declaration order, which `FILEPROC.6` reads at three wrong offsets.
-    Then the remaining stubs:
-    `GETCMD.3`, `.5`, `.7`-`.22`, `.24`, `.25`, `.27`, `.1`'s own menu
-    loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s intrinsic-unit
-    build wiring.
+    `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the next large one
+    and already half-readable in the lift. Then the remaining stubs:
+    `GETCMD.3`, `.5`, `.7`-`.18`, `.21`, `.22`, `.24`, `.25`, `.27`,
+    `.1`'s own menu loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s
+    intrinsic-unit build wiring -- which finding 205c has now given a
+    concrete acceptance test of its own, since our codefile's `0x120`
+    must come out `0004` too.
+
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
