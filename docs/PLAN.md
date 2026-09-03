@@ -1226,6 +1226,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     `FIOPRIMS` wiring open since finding 200 now has a measurable handle
     -- whatever makes it a real `USES` will show up there first.
 
+    **The `$R` "resident" option is what emits `LOADSEGMENT` /
+    `UNLOADSEGMENT`, and the answer was already in this repository
+    (finding 203).** Three procedures of `128K.PASCAL` carry a
+    compiler-generated wrapper whose segment number is not derived from
+    anything the body calls -- `PASCALSY.58` loads segment 2 while
+    calling only segment 1 -- and it is not automatic either. The
+    construct is `(*$R <unit-or-segment>*)`, placed right after `BEGIN`,
+    and `SYSTEM.COMPILER`'s own byte-identical `BODYPART` had been using
+    it in `HOLDRTN` and `HOLDSTMT` for months. The manual documents both
+    an identifier and a number form; `INITIALIZE` must use the number,
+    since naming `FILEPROC` -- declared later, because segment numbers
+    follow declaration order -- is error 273. **33 -> 34 exact**, closing
+    the last non-stub procedure in the segment-0 command loop.
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`

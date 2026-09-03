@@ -17473,3 +17473,92 @@ a six-instruction load/unload pair, on a segment number that is already
 known. Whatever makes `FIOPRIMS` a real `USES` will show up here first.
 
 **31 -> 33 exact**, `INITIALI.8` and `PASCALSY.48`.
+
+## 203. The `$R` "resident" compiler option -- what emits `LOADSEGMENT`/`UNLOADSEGMENT`, and the answer was already in this repository
+
+**VERIFIED SOURCE FACT**, from a byte-identical reconstruction, then
+confirmed on Apple's own compiler in three separate procedures, and
+documented in the manual once it was clear what to look for.
+
+Three procedures of `128K.PASCAL` -- and only three -- carry a
+compiler-generated wrapper: a `UJP` at entry into a `LOADSEGMENT(n)` stub
+placed past the body, and `UNLOADSEGMENT(n)` in the exit code.
+`PASCALSY.57` and `INITIALI.1` wrap segment 6 (`FILEPROC`); `PASCALSY.58`
+wraps segment 2 (`FIOPRIMS`). A note in `PASCALSYSTEM.text` had recorded
+the shape and given up on it: writing `LOADSEGMENT` as an identifier is
+error 104, so "whatever Pascal-level syntax reaches them is not simply
+calling a standard procedure by that name."
+
+**The number is not derived from what the body calls**, which is what made
+this hard to guess at. `PASCALSY.58` calls only `CXP 1,1` (segment 1) yet
+loads segment 2; `PASCALSY.57` calls segments 5, 3 and 1 yet loads 6. And
+it is not automatic: this project's own `GETNEXTCMD` calls `GETCMD` --
+a real `SEGMENT FUNCTION`, `CXP 5,1` -- and Apple's compiler emitted no
+wrapper for it.
+
+**The answer was two directories away.** `SYSTEM.COMPILER`'s own
+reconstruction is byte-identical, and `BODYPART` contains:
+
+```pascal
+    PROCEDURE HOLDSTMT;
+    BEGIN (*$R STATEMENT*)
+      BODY2
+    END (*HOLDSTMT*) ;
+...
+  PROCEDURE HOLDRTN;
+  BEGIN (*$R ROUTINE*)
+    BODY
+  END (*HOLDRTN*) ;
+```
+
+Those two produce exactly this shape against Apple's own bytes --
+`BODYPART.27` and `.38`, nine instructions each, a single call wrapped in
+`LOADSEGMENT`/`UNLOADSEGMENT` of segments 11 and 10. The construct had
+been reconstructed, verified and committed months ago in another file, and
+nothing had connected it to the operating system's own three uses.
+
+The manual (Part III ch. 15, "The Resident Compiler Option") then confirms
+it in full: the option is `{$R identifier}` or `{$R number}`, placed
+"at the beginning of the body of a procedure or function (after the
+BEGIN)", naming a unit or a `SEGMENT` procedure to be kept in memory for
+as long as that procedure is active. It is a different directive from the
+range-check `{$R+}`/`{$R-}` that shares the letter.
+
+**Result**: `(*$R FIOPRIMS*)` in `CMDDISPATCH` made `PASCALSY.58`
+identical -- **33 -> 34 exact**, and it closes the last non-stub procedure
+in the segment-0 command loop. `(*$R FILEPROC*)` in `GETNEXTCMD` and
+`(*$R 6*)` in `INITIALIZE` produce Apple's wrapper exactly too; both of
+those procedures still differ in their bodies for unrelated reasons
+(`.57` uses a `CASE` where this file has an `IF` chain; `INITIALI.1` is
+still missing its banners).
+
+### 203a. Why `INITIALIZE` has to use the number
+
+`(*$R FILEPROC*)` inside `INITIALIZE` is **error 273, "No such unit or
+segment"** -- confirmed under AppleWin. The option resolves its argument
+where it is written, and `FILEPROC` is declared *after* `INITIALIZE`: it
+has to be, because segment numbers follow declaration order and `FILEPROC`
+is segment 6 while `INITIALIZE` is segment 4.
+
+So `(*$R 6*)` is not a shortcut, it is the only form writable at that
+point. Both forms compile to the same bytes, so the binary cannot say
+which Apple wrote -- that is a genuine ambiguity, recorded rather than
+papered over.
+
+### 203b. A closing brace inside a comment ends the comment
+
+Two acceptance runs were lost to this and it is worth writing down.
+Apple's compiler ends a `{`-comment at the **first** `}` it sees, with no
+nesting and no escape. A comment in `PASCALSYSTEM.text` that quoted the
+brace form of the option terminated itself, and the remainder was parsed
+as code: **error 400**. The rewrite that warned about the hazard quoted
+the character while doing so and failed identically.
+
+The rule for this file, which uses `{ }` comments throughout: never write
+a closing brace inside a comment, not even in quotes. Describe the
+construct in words instead.
+
+Worth noting how cheap this was to catch: `oscmp.py --baseline` reported
+`33 -> 0, lost: [every procedure]`, which is not a plausible source
+regression and reads immediately as a failed compile rather than a subtle
+one. A count-only check would have said the same thing far less loudly.

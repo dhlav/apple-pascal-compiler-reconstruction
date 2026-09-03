@@ -1241,18 +1241,29 @@ PROGRAM PASCALSYSTEM;
       GFILES[5] := NIL
     END;
 
-  BEGIN
-    { The real binary opens and closes with two CSP calls (`CSP 21`/
-      `CSP 22`, `LoadSegment`/`UnloadSegment` in this project's own
-      disassembler comments, `lib/pcode.h`) bracketing this whole body,
-      almost certainly pinning `FILEPROC` (segment 6) resident for
-      `INITIALIZE`'s own heavy file traffic. Neither compiles under
-      Apple's real 1.3 compiler as a plain identifier ("Undeclared
-      identifier", error 104, tested directly under AppleWin) -- so
-      whatever Pascal-level syntax reaches them is not simply calling a
-      standard procedure by that name. Left out rather than guessed;
-      real source has no visible effect from omitting them beyond
-      segment-swap timing. }
+  BEGIN (*$R 6*)
+    { The real binary brackets this whole body with `LOADSEGMENT(6)` /
+      `UNLOADSEGMENT(6)`, pinning `FILEPROC` resident for
+      `INITIALIZE`'s own heavy file traffic. The syntax that reaches
+      them is the "resident" option above -- not a call, which is why
+      writing `LOADSEGMENT` as an identifier was error 104 when this
+      note was first written (finding 203).
+
+      **The number, not the name, and for a reason.** The manual gives
+      both forms -- the option takes either an identifier or a segment
+      number. `FILEPROC` is declared after `INITIALIZE` (it has to be:
+      segment numbers follow declaration order and `FILEPROC` is
+      segment 6), so naming it here is **error 273, "No such unit or
+      segment"**, confirmed under AppleWin. Both forms compile to the
+      same bytes, so the binary cannot say which Apple wrote; the
+      numeric one is the only one writable at this point.
+
+      Never write a closing-brace character inside a comment in this
+      file, not even quoting one. Apple's compiler ends a comment at
+      the first one it sees, so the rest of the comment is parsed as
+      code -- error 400. This note cost two acceptance runs: the first
+      quoting the brace form of the option, the second quoting the
+      character while warning about it. }
     WHAT_H2 := (EMPTYHEAP = NIL);
     MONTHNAMES[0] := '???';
     MONTHNAMES[1] := 'Jan';
@@ -3929,10 +3940,12 @@ PROGRAM PASCALSYSTEM;
     this range, not something newly introduced here. }
   PROCEDURE STUB48;
 
+    { `(*$R FILEPROC*)` -- segment 6 resident for this body, same
+      mechanism as `CMDDISPATCH`'s own (finding 203). }
     PROCEDURE GETNEXTCMD;
       LABEL 999;
       VAR DUMMY: BOOLEAN;
-    BEGIN
+    BEGIN (*$R FILEPROC*)
       WHILE STATE = HALTINIT DO
       BEGIN
         IF SWAP_ON THEN
@@ -3976,8 +3989,18 @@ PROGRAM PASCALSYSTEM;
       999:
     END;
 
+    { `(*$R FIOPRIMS*)` makes segment 2 resident for this body: the
+      compiler emits `LOADSEGMENT(2)` in the entry stub and
+      `UNLOADSEGMENT(2)` in the exit code, which is the six-instruction
+      wrapper the real `PASCALSY.58` carries and nothing else here
+      could produce. The directive is a VERIFIED SOURCE FACT, not a
+      guess -- this project's own byte-identical `SYSTEM.COMPILER`
+      reconstruction uses exactly it, `BEGIN (*$R ROUTINE*) BODY END`
+      in `BODYPART`'s `HOLDRTN` and `(*$R STATEMENT*)` in `HOLDSTMT`,
+      and those two produce the same shape against Apple's own bytes
+      (finding 203). }
     PROCEDURE CMDDISPATCH;
-    BEGIN
+    BEGIN (*$R FIOPRIMS*)
       REPEAT
         WAITSYSVOL;
         GETNEXTCMD;
