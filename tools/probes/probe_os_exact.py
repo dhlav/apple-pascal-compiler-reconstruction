@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-dummylocals" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-closetype" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -62,7 +62,9 @@ EXACT = [
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
     "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
     "PASCALSY.43",
-    "FILEPROC.3", "FILEPROC.7",
+    "PASCALSY.27",
+    "FILEPROC.1", "FILEPROC.3", "FILEPROC.5", "FILEPROC.6",
+    "FILEPROC.7",
     "FIOPRIMS.2", "FIOPRIMS.3",
     "PRINTERR.1",
     "USERPROG.1",

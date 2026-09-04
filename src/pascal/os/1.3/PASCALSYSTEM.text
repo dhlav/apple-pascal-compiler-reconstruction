@@ -2016,6 +2016,14 @@ PROGRAM PASCALSYSTEM;
   SEGMENT PROCEDURE FILEPROC(OP: INTEGER; VAR F: FIB; VAR ARGSTR: STRING;
                              ARGBOOL: BOOLEAN; ARGPTR: FIBP;
                              ARGINT: INTEGER);
+    { Arm 3's `INTEGER`-to-`CLOSETYPE` conversion temp, used by the
+      dispatcher at the bottom of this segment and by nothing else.
+      It is declared up here because a block's `VAR` section must
+      precede its nested procedure declarations (error 6 otherwise),
+      and declared *first* because Apple's dispatcher reads it at
+      word 7, immediately after the six parameter words. }
+    VAR
+      FTYPE: CLOSETYPE;
 
     { The four arms themselves (finding 166): still stubs. `FPRESET`
       needs `FIOPRIMS.2`/`FGET` (`FPRESET`'s own real work, per
@@ -2224,19 +2232,30 @@ PROGRAM PASCALSYSTEM;
         gap to one word. `FPGAP`'s own three parameters, decoded from
         its real call sites, follow the parameter-list reversal rule
         (finding 175's own new memory) rather than naive push order.
-        Compiles clean: `params` exact for both, **instruction count
-        exact** (`177`/`25`) against the real binary for both -- the
-        closest match anywhere in this whole forward-declared-far-
-        from-body class of routine; `locals` exact for `FPGAP`, one
-        word short for `FPALLOC` (the `NEWENTRY` `DACCESS`/`DTID`
-        packed-field group almost certainly accounts for it, same
-        class of gap as everywhere else in this file, not chased
-        further). }
+        The one `data` word that had been guessed at as a
+        `NEWENTRY` packing artefact is nothing of the kind: it is a
+        `FOR` loop's limit temp (finding 217's rule), and the loop it
+        belongs to is the gap scan, not the first-fit scan. Which of
+        the two arms is which comes from the `FJP`'s fall-through --
+        Apple tests `FSIZE <= 0` and the reconstruction tested
+        `FSIZE > 0`, same condition, arms exchanged. And 22
+        instructions were missing outright: with an explicit size and
+        no interior gap wide enough, the file goes after the last one
+        if the volume has room. `FPGAP`'s own three offsets into this
+        frame (`SECONDIDX` 7, `BESTIDX` 8, `SECONDSIZE` 12) are what
+        fixed the declaration order -- a nested procedure reading its
+        parent is a second, independent measurement of the parent's
+        `VAR` block. }
       FUNCTION FPALLOC(VAR FTID: TID; FSIZE: INTEGER; FKIND: FILEKIND;
                         FDIR: DIRP): DIRRANGE;
         VAR
-          NUMFILES, I, BESTIDX, SECONDIDX, SECONDSIZE: INTEGER;
+          { Offsets, not size, name these: `FPGAP` reads
+            `SECONDIDX` at 7, `BESTIDX` at 8 and `SECONDSIZE` at 12,
+            so the four-name group runs 7-10 (descending) and
+            `SECONDSIZE` sits past `NEG` in a group of its own. }
+          I, NUMFILES, BESTIDX, SECONDIDX: INTEGER;
           NEG: BOOLEAN;
+          SECONDSIZE: INTEGER;
           NEWENTRY: DIRENTRY;
 
         PROCEDURE FPGAP(GAPIDX, GAPEND, GAPSTART: INTEGER);
@@ -2258,11 +2277,30 @@ PROGRAM PASCALSYSTEM;
         END;
 
       BEGIN
-        NUMFILES := FDIR^[0].DNUMFILES;
         BESTIDX := 0;
+        NUMFILES := FDIR^[0].DNUMFILES;
         SECONDIDX := 0;
         SECONDSIZE := 0;
-        IF FSIZE > 0 THEN
+        IF FSIZE <= 0 THEN
+        BEGIN
+          NEG := FSIZE < 0;
+          { A `FOR`, not a `WHILE` -- `SLDL 9 | STL 26` is the limit
+            temp, and it is the 20th `data` word. The first-fit scan
+            below really is a `WHILE`: it assigns its own index to
+            break out, which a `FOR` control variable may not do. }
+          FOR I := 1 TO NUMFILES DO
+            FPGAP(I, FDIR^[I - 1].DLASTBLK, FDIR^[I].DFIRSTBLK);
+          FPGAP(NUMFILES + 1, FDIR^[NUMFILES].DLASTBLK, FDIR^[0].DEOVBLK);
+          IF NEG THEN
+            IF (FSIZE DIV 2) <= SECONDSIZE THEN
+            BEGIN
+              FSIZE := SECONDSIZE;
+              BESTIDX := SECONDIDX
+            END
+            ELSE
+              FSIZE := (FSIZE + 1) DIV 2
+        END
+        ELSE
         BEGIN
           I := 1;
           WHILE I <= NUMFILES DO
@@ -2273,26 +2311,14 @@ PROGRAM PASCALSYSTEM;
               I := NUMFILES
             END;
             I := I + 1
-          END
-        END
-        ELSE
-        BEGIN
-          NEG := FSIZE < 0;
-          I := 1;
-          WHILE I <= NUMFILES DO
-          BEGIN
-            FPGAP(I, FDIR^[I - 1].DLASTBLK, FDIR^[I].DFIRSTBLK);
-            I := I + 1
           END;
-          FPGAP(NUMFILES + 1, FDIR^[NUMFILES].DLASTBLK, FDIR^[0].DEOVBLK);
-          IF NEG THEN
-            IF (FSIZE DIV 2) <= SECONDSIZE THEN
-            BEGIN
-              FSIZE := SECONDSIZE;
-              BESTIDX := SECONDIDX
-            END
-            ELSE
-              FSIZE := (FSIZE + 1) DIV 2
+          { The gap after the last file, which the loop above never
+            looks at: with an explicit size and no interior gap wide
+            enough, the file goes on the end if the volume has room.
+            22 instructions the reconstruction simply did not have. }
+          IF BESTIDX = 0 THEN
+            IF (FDIR^[0].DEOVBLK - FDIR^[NUMFILES].DLASTBLK) >= FSIZE THEN
+              BESTIDX := NUMFILES + 1
         END;
         IF NUMFILES = 77 THEN BESTIDX := 0;
         IF BESTIDX > 0 THEN
@@ -2549,7 +2575,7 @@ PROGRAM PASCALSYSTEM;
       interchangeable in the output, so the binary reads the source's
       own punctuation back. `VOLSEARCH` is handed `FVID`, the FIB's
       own volume name, not `FHEADER.DVID`. }
-    PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: INTEGER);
+    PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: CLOSETYPE);
       LABEL 1;
       VAR
         I, J: INTEGER;
@@ -2564,16 +2590,17 @@ PROGRAM PASCALSYSTEM;
             WITH FHEADER DO
               IF LENGTH(DVID) > 0 THEN
               BEGIN
-                IF FTYPE = 3 THEN
+                IF FTYPE = CCRUNCH THEN
                 BEGIN
                   FMAXBLK := FNXTBLK;
                   DACCESS.YEAR := 100;
-                  FTYPE := 1;
+                  FTYPE := CLOCK;
                   IF FSOFTBUF THEN
                     FMAXBYTE := FNXTBYTE
                 END;
                 FPNEWBLK(F);
-                IF FMODIFIED OR (DACCESS.YEAR = 100) OR (FTYPE = 2) THEN
+                IF FMODIFIED OR (DACCESS.YEAR = 100)
+                   OR (FTYPE = CPURGE) THEN
                 BEGIN
                   IF FUNIT <> VOLSEARCH(FVID, FALSE, DIR) THEN
                   BEGIN
@@ -2594,8 +2621,9 @@ PROGRAM PASCALSYSTEM;
                     GOTO 1
                   END;
                   I := I - 1;
-                  IF ((FTYPE = 0) AND (DIR^[I].DACCESS.YEAR = 100))
-                     OR (FTYPE = 2) THEN
+                  IF ((FTYPE = CNORMAL)
+                      AND (DIR^[I].DACCESS.YEAR = 100))
+                     OR (FTYPE = CPURGE) THEN
                     DELENTRY(I, DIR)
                   ELSE
                   BEGIN
@@ -2625,7 +2653,7 @@ PROGRAM PASCALSYSTEM;
                   WRITEDIR(FUNIT, DIR)
                 END
               END;
-          IF FTYPE = 2 THEN
+          IF FTYPE = CPURGE THEN
             IF LENGTH(FHEADER.DTID) = 0 THEN
               UNITABLE[FUNIT].UVID := '';
       1:
@@ -2662,13 +2690,18 @@ PROGRAM PASCALSYSTEM;
       VAR
         P, L, I: INTEGER;
         BRACKET, SUFFIXSTR: STRING;
-        { `SPOS`'s own `TARGET` is `VAR STRING` -- a literal can't bind
-          to it directly under Apple's real compiler ("actual
-          parameter must be a variable", error 154, confirmed under
-          AppleWin, finding: this session -- a pre-existing bug in
-          this procedure's own already-committed source, not new).
-          Every single-character separator goes through this scratch
-          var instead. }
+        { `SPOS`'s own `TARGET` is `VAR STRING`, and a literal will
+          not bind to it under the shipped 1.3 compiler: error 154,
+          "actual parameter must be a variable", re-confirmed under
+          AppleWin this session at this exact call. Apple's own
+          `FILEPROC.8` nonetheless pushes `NOP | LSA ' '` here -- a
+          string constant straight into that `VAR` formal. It is the
+          same class of fact as finding 218b's `IND 13 | FJP`: the
+          shipped compiler will not compile what the shipped OS
+          contains. See finding 220. Until that is answered, every
+          single-character separator goes through this scratch var,
+          which is also where this procedure's `data` overshoot
+          comes from. }
         SEP: STRING;
     BEGIN
       SEP := ' ';
@@ -2715,24 +2748,29 @@ PROGRAM PASCALSYSTEM;
     END;
 
   { `FILEPROC.1`'s own real dispatch (finding 166), read directly from
-    finding 156b's per-arm word mapping. Written as a plain `CASE OP
-    OF` rather than reproducing the real binary's own inner `XJP 0..3`
-    on `ARGINT` for arm 3 (finding 156b): that inner dispatch only
-    exists because Apple's real `ARGINT`-equivalent parameter is
-    plausibly typed as `CLOSETYPE` there, not the plain `INTEGER` this
-    reconstruction settled on for the *caller* side (finding 157) --
-    `ARGINT` already arrives holding `ORD(FTYPE)`'s own value by the
-    time `FCLOSE` calls in, so re-deriving it via a second dispatch
-    would be redundant here regardless of whether Apple's own compiler
-    needed to for type reasons. Same behavior, simpler shape -- not
-    forced to match instruction-for-instruction, consistent with this
-    whole procedure's own already-documented small, non-forced gaps
-    (finding 157). }
+    finding 156b's per-arm word mapping. The inner `XJP 0..3` on
+    `ARGINT` in arm 3 *is* Apple's, and an earlier note here guessed
+    why correctly before dropping it as redundant: `FPCLOSE`'s second
+    parameter is typed `CLOSETYPE`, and there is no way in Pascal to
+    turn an `INTEGER` back into an enumeration, so the conversion has
+    to be written out as a four-arm `CASE` whose every arm is the
+    identity. It costs the one `data` word (`SRO 7`) this procedure
+    was missing. Behaviour is the same either way -- the point is that
+    the shape is not a stylistic choice, it is what the type forces,
+    and the frame said so. }
   BEGIN
     CASE OP OF
       1: FPRESET(F);
       2: FPOPEN(F, ARGSTR, ARGBOOL, ARGPTR);
-      3: FPCLOSE(F, ARGINT);
+      3: BEGIN
+           CASE ARGINT OF
+             0: FTYPE := CNORMAL;
+             1: FTYPE := CLOCK;
+             2: FTYPE := CPURGE;
+             3: FTYPE := CCRUNCH
+           END;
+           FPCLOSE(F, FTYPE)
+         END;
       4: FPTITLE(ARGSTR, ARGBOOL, ARGINT)
     END
   END;
@@ -3345,9 +3383,16 @@ PROGRAM PASCALSYSTEM;
     and default `STRING` is exactly 41. A first attempt guessed
     `STRING[72]`, accidentally subtracting the params/result/gap a
     second time, and came out 4 words short. }
+  { Apple's own offsets put `TARGETCHAR` at 7, `I` at 6 and `J` at 5,
+    so the declaration group runs the other way from the one this had.
+    And the loop does not fake its own exit by setting the index past
+    the limit: both early outs are a `UJP` straight to the `RBP`, so
+    they are a `GOTO` to a label at the very end of the body. Setting
+    `I := J + 1` reaches the same place and compiles differently. }
   FUNCTION SPOS;
+    LABEL 1;
     VAR
-      I, J, TARGETCHAR: INTEGER;
+      TARGETCHAR, I, J: INTEGER;
       CANDIDATE: STRING;
   BEGIN
     SPOS := 0;
@@ -3360,25 +3405,18 @@ PROGRAM PASCALSYSTEM;
       WHILE I <= J DO
       BEGIN
         I := I + SCAN(J - I, =CHR(TARGETCHAR), SRC[I]);
-        IF I <= J THEN
+        IF I > J THEN
+          GOTO 1;
+        MOVELEFT(SRC[I], CANDIDATE[1], LENGTH(TARGET));
+        IF CANDIDATE = TARGET THEN
         BEGIN
-          MOVELEFT(SRC[I], CANDIDATE[1], LENGTH(TARGET));
-          IF CANDIDATE = TARGET THEN
-          BEGIN
-            SPOS := I;
-            I := J + 1
-          END
-          ELSE
-          BEGIN
-            I := I + 1
-          END
-        END
-        ELSE
-        BEGIN
-          I := J + 1
-        END
+          SPOS := I;
+          GOTO 1
+        END;
+        I := I + 1
       END
-    END
+    END;
+  1:
   END;
   { `FBLOCKIO`'s own body is still not written -- its frame-word-to-
     parameter mapping isn't resolved (finding 158). Its nested helper

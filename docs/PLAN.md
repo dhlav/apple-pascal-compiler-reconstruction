@@ -1382,11 +1382,35 @@ a route end to end; everything else is a straight read-and-rebuild.
     `ELSE`. `FIOPRIMS.3` and `FILEPROC.3` simply had their `THEN` and
     `ELSE` exchanged. **66 of 111.**
 
-    Two more are as close as the shipped compiler allows: `FIOPRIMS.4`
-    and `FILEPROC.2` are frame-identical and differ only by the two
-    instructions finding 218b's `FNXTBLK <> 0` stand-in costs. They
-    sit in `probe_os_exact`'s `STILL_DIFFERS` list as the control for
-    that gap -- if either ever reports exact, 218b has been answered.
+    Four more followed (finding 220), all in `FILEPROC`, and three of
+    them were locked together: `FILEPROC.6` had been frame-exact at
+    26/26 for some time while reading its *parent's* frame at three
+    wrong offsets, so it could only move when `FILEPROC.5` did, and
+    `.5`'s declaration order could only be fixed from `.6`'s operands.
+    A nested procedure is a second, independent measurement of its
+    parent's `VAR` block. `FILEPROC.1`'s missing word turned out to be
+    forced by a type: `FPCLOSE` takes a `CLOSETYPE`, Pascal cannot
+    turn an integer back into an enumeration, so the conversion is
+    written out as a four-arm `CASE` whose every arm is the identity.
+    `PASCALSY.27` (`SPOS`) exits with a `GOTO` to a label at the end
+    of its body rather than by setting its index past the limit.
+    **70 of 111.**
+
+    **And the shipped compiler will not compile the shipped OS**
+    (finding 220). Two unrelated constructs now, in two different
+    segments: an `INTEGER` FIB field used directly as a Boolean
+    (error 135) and a string constant passed to a `VAR STRING` formal
+    (error 154), both confirmed rejected on real hardware, both
+    present in `128K.PASCAL`'s own bytes. The economical reading is
+    that Apple built the OS with a different, looser compiler than
+    the one on the disk -- and it is testable, since every further
+    case should also be a relaxation. Three procedures are pinned
+    short by it: `FIOPRIMS.4` (45/43) and `FILEPROC.2` (163/161) are
+    frame-identical and differ only by the `SLDC 0 | NEQI` the
+    stand-in adds, and `FILEPROC.8` needs a scratch `STRING` per
+    separator, which is its whole `data` overshoot. The first two are
+    in `probe_os_exact`'s `STILL_DIFFERS` list as the control: if
+    either ever reports exact, 218b has been answered.
 
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
@@ -1395,12 +1419,11 @@ a route end to end; everything else is a straight read-and-rebuild.
     `PASCALSY.31` at 152/129 -- both have real bodies that are close
     rather than stubs, so they are diffs to read rather than routines to
     decode.
-    `FILEPROC.1`'s own local declaration order, which `FILEPROC.6`
-    reads at three wrong offsets -- `FILEPROC.6` is otherwise
-    frame-exact at 26/26, so it moves the moment `.1` does.
-    `FILEPROC.4` (`FPOPEN`) at 563/473, `FILEPROC.5` at 156/178 and
-    `.8` at 168/203 -- real bodies, close, diffs to read rather than
-    routines to decode. `FIOPRIMS.5` is still a stub at 3/275.
+    `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
+    at 168/203 -- real bodies, close, diffs to read rather than
+    routines to decode; `.8` also carries finding 220's error-154
+    gap, so it can get closer but probably not exact.
+    `FIOPRIMS.5` is still a stub at 3/275.
     Then the remaining stubs: `PASCALSY.13`, `.18`, `.40`, `.41`,
     `GETCMD.3`, `.5`, `.7`-`.18`, `.21`, `.22`, `.24`, `.25`, `.27`,
     `.1`'s own menu loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s
@@ -1552,7 +1575,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (66 as of finding 219).
+  (70 as of finding 220).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

@@ -18859,3 +18859,97 @@ byte at or below `' '` is a spurious `DLE`.
 
 `FPRESET`: `FSTATE = FJANDW` is the `FGET` case, and everything else
 just flags `FNEEDCHAR` -- the opposite of the obvious reading.
+
+## 220. The shipped 1.3 compiler will not compile the shipped 1.3 OS
+
+**VERIFIED BINARY FACT** plus **VERIFIED SOURCE FACT** (both sides
+checked on real hardware). Two constructs now, found independently,
+where `128K.PASCAL` contains bytes that Apple's own shipped
+`SYSTEM.COMPILER` refuses to emit:
+
+1. **Finding 218b.** `IND 13 | FJP`, `IND 13 | LAND`,
+   `IND 13 | LNOT | LAND` -- an `INTEGER` FIB field used directly as
+   a Boolean at three soft-buffer sites. `IF FNXTBLK THEN` is error
+   **135**, straight out of `GENFJP`'s `GATTR.TYPTR <> BOOLPTR` test.
+2. **`FILEPROC.8` (`FPTITLE`)** pushes `NOP | LSA ' '` -- a string
+   *constant* -- into `SPOS`'s first formal, which is
+   `VAR TARGET: STRING`. Compiling `P := SPOS(' ', S)` under Apple's
+   own 1.3 compiler gives error **154**, "actual parameter must be a
+   variable", re-confirmed under AppleWin this session at that exact
+   call.
+
+`SPOS`'s formal really is `VAR`, and the frame proves it rather than
+assuming it: `PASCALSY.27`'s `data` is 88 bytes = 44 words, which is
+exactly `TARGETCHAR`/`I`/`J` plus a 41-word `STRING[80]`
+`CANDIDATE`. A *value* `STRING` parameter would have added its
+unconditional shadow copy on top of that (the finding-176 rule), and
+there is no room for one.
+
+So this is not one odd routine. Two unrelated constructs, in two
+different segments, both rejected by the compiler that shipped on the
+same disk. The most economical reading is that **the OS was built
+with a different compiler than the one Apple shipped** -- an in-house
+or earlier build with looser type checking -- and that reading is
+testable: every further construct of this kind should also be a
+*relaxation*, never something the shipped compiler accepts and the OS
+avoids.
+
+Consequence for the reconstruction. Both sites cost real instructions
+and cannot be closed by writing better Pascal:
+
+* `FIOPRIMS.4` (45 against 43) and `FILEPROC.2` (163 against 161) are
+  frame-identical and differ *only* by the `SLDC 0 | NEQI` the
+  `FNXTBLK <> 0` stand-in adds. They are `probe_os_exact`'s controls
+  for this gap.
+* `FILEPROC.8` needs a scratch `STRING` for every single-character
+  separator, which is where its `data` overshoot (254 against 180)
+  comes from.
+
+Forcing either -- declaring `FNXTBLK` a `BOOLEAN`, or `SPOS`'s
+`TARGET` a value parameter -- would break the integer uses and the
+frame respectively. Recorded, not absorbed.
+
+### 220a. FILEPROC.1's CASE is what the type forces
+
+`FPCLOSE`'s second parameter is `CLOSETYPE`, not `INTEGER`, and
+Pascal has no way to turn an integer back into an enumeration. So
+`FILEPROC`'s dispatcher writes the conversion out as a four-arm
+`CASE` whose every arm is the identity (`SLDC k | SRO 7`), and that
+temp is the one `data` word `FILEPROC.1` was missing. An earlier note
+in the source had guessed this correctly and then dropped it as
+redundant -- it is not redundant, it is unavoidable. The `VAR` has to
+be declared at the top of the segment's own block, before its nested
+procedures (error 6 otherwise), and first, because Apple reads it at
+word 7 right after the six parameter words.
+
+### 220b. FILEPROC.5: a nested procedure measures its parent's VAR block
+
+`FPGAP` (`FILEPROC.6`) is lex 3 and reads `FPALLOC`'s frame at three
+offsets: `SECONDIDX` 7, `BESTIDX` 8, `SECONDSIZE` 12. That is a
+second, independent measurement of the parent's declaration order,
+and it fixed it: the four-name integer group runs `I, NUMFILES,
+BESTIDX, SECONDIDX` (7-10 descending) with `SECONDSIZE` in a group of
+its own past `NEG`. `FILEPROC.6` was already frame-exact at 26/26 and
+became exact the moment its parent did -- neither could be fixed
+alone.
+
+Two more things in `FPALLOC`. Its 20th `data` word had been guessed
+at as a `NEWENTRY` packed-field artefact; it is a `FOR` loop's limit
+temp (`SLDL 9 | STL 26`, finding 217's rule), belonging to the gap
+scan -- and the first-fit scan really is a `WHILE`, because it
+assigns its own index to break out, which a `FOR` control variable
+may not do. And 22 instructions were missing outright: with an
+explicit size and no interior gap wide enough, the file goes after
+the last one if the volume has room.
+
+Apple tests `FSIZE <= 0` where the reconstruction tested `FSIZE > 0`
+-- same condition, arms exchanged, which only the `FJP`'s
+fall-through settles.
+
+### 220c. SPOS exits with a GOTO, not by faking its index
+
+`PASCALSY.27`'s two early outs are a `UJP` straight to the `RBP`, so
+they are a `GOTO` to a label at the very end of the body. The
+reconstruction reached the same place by setting `I := J + 1`, which
+is behaviourally identical and compiles differently. Its own three
+integers are declared `TARGETCHAR, I, J`, from the offsets.
