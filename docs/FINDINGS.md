@@ -19106,3 +19106,67 @@ source's own: `INITIALI.2`'s `CONCAT(BSPACE_STR, BSPACE_STR)` passes
 `7` then `30` (= 7 + `FULL_ID`'s 23). Useful for reading any
 `CONCAT` back out of p-code: the second number minus the first is the
 second argument's declared maximum.
+
+## 223. INITSYSCOM, and INITIALIZE is the first whole segment of the OS
+
+`INITIALI.2` is exact -- 317 instructions, a 581-word frame -- and
+with it every one of `INITIALIZE`'s eleven procedures. **76 of 111.**
+
+### 223a. It reads the profile into a whole local SYSCOMREC
+
+`*SYSTEM.MISCINFO` holds an image of a `SYSCOMREC`, and Apple reads
+480 bytes of it into a 240-word local of exactly that type, then
+copies four spans out: `MISCINFO` (`MOV 1`), `CRTTYPE` (a plain
+`STO`), `CRTCTRL` (`MOV 6`) and `CRTINFO` (`MOV 11`). The offsets the
+copies use -- `+29`, `+30`, `+31`, `+37` -- are `SYSCOMREC`'s own
+layout, which is how the buffer's type was identified: nothing else
+would put those four spans at those four places.
+
+The reconstruction had read straight into `SYSCOM^.MISCINFO` and a
+note here explained that whole-record assignment was impossible
+without redeclaring the anonymous record types. With a local of the
+real type the four assignments are between *the same* anonymous
+types, so they are legal and they are what Apple wrote.
+
+`SYSCOMREC` comes to exactly 240 words -- 48 through `CRTINFO`, plus
+`SEGTABLE`'s 64 three-word entries -- which is another arithmetic
+check that nothing about the record is out by a word.
+
+### 223b. Reading a packed field is reading it in both directions
+
+The first attempt at the sixteen `MERGEA`/`MERGEB` calls got every
+character wrong while getting the structure exactly right: 318
+instructions against 317, with the calls in the correct order and
+only the packed-field operands differing. The mistake was deriving
+the layout and the argument names from each other.
+
+The fix was to derive the layout *only* from our own compiled output
+(where the names are known because we wrote them) and then read
+Apple's operands against that. `reference_source/ucsd_ii0/GLOBALS.TEXT`
+confirmed the declaration order was already right, which is what
+made the circularity visible -- if the declaration is right and the
+compiler is the same, then the layout is right and the *names* were
+the error.
+
+Corrected, it reads coherently, which is the real check:
+`CONFIG_CHAR` starts as `[PREFIX]`, the keyboard's own lead-in, and
+takes each key whose `PREFIXED` flag is *clear* -- a prefixed key
+arrives as two characters and is recognised by its lead-in instead.
+Then the screen's lead-in `ESCAPE` and all of `CHR(0)..CHR(31)`
+except carriage return and bell.
+
+Two independent confirmations fall out of the corrected reading:
+`PREFIXED[5]` gates whether `ESCAPE` leads `BSPACE_STR`, and
+`MERGEA(5, BACKSPACE)` is what says 5 is backspace's own index -- the
+same number arrived at from two unrelated statements. And
+`DLINE_STR` is cut from five characters to two exactly when
+`ERASEEOL <> CHR(0)`, i.e. when the screen can erase to end of line
+and does not need the long form.
+
+### 223c. One more declared word nothing touches
+
+`SYSBUF` ends at 281 and `MF` starts at 283. Every reading of word
+282 that would emit code is excluded by the instruction count already
+matching, so what is left is a declaration the body never uses --
+the same conclusion `PROMPT` reached in finding 217, and the second
+time this file has produced one.

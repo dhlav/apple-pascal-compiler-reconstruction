@@ -472,9 +472,9 @@ PROGRAM PASCALSYSTEM;
                                       file variable (see above) }
 
     { Tribby's dline_str -- printed per char to delete line }
-    DLINE_STR: STRING[VIDLENG];
+    DLINE_STR: STRING[6];
     { Tribby's bspace_str -- printed to backspace/blank a char }
-    BSPACE_STR: STRING[VIDLENG];
+    BSPACE_STR: STRING[6];
     { Tribby's run_vol -- run (%) volume; did not exist before 1.2 }
     RUN_VOL: VID;
     { Tribby's what_l -- unidentified, and a SET rather than the four
@@ -1085,8 +1085,23 @@ PROGRAM PASCALSYSTEM;
       `DIGITS`, clears `SYSCOM^`'s own error/debug scratch fields. }
     PROCEDURE INITSYSCOM;
       VAR
+        { `SAS 80` on the title says a plain `STRING`, not `FULL_ID`.
+          `SYSBUF` is the whole 240-word `SYSCOMREC` -- `*SYSTEM.
+          MISCINFO` holds an image of one, and the four spans copied
+          out of it land at `+29`/`+30`/`+31`/`+37`, which is
+          `SYSCOMREC`'s own layout and not a coincidence. Reading into
+          a local of the real type also makes the four assignments
+          legal without redeclaring the anonymous record types, which
+          an earlier note here had given up on. }
+        MTITLE: STRING;
+        SYSBUF: SYSCOMREC;
+        { One declared word at 282 that nothing in the body touches --
+          `SYSBUF` ends at 281 and `MF` starts at 283. Same situation
+          as `PROMPT`'s own spare word (finding 217): every reading
+          that would emit code has been excluded, so what is left is a
+          declaration the body never uses. }
+        UNUSED2: INTEGER;
         MF: FIB;
-        MTITLE: FULL_ID;
 
       { `INITIALI.3` = INIT_FILLER: caps `FILLCOUNT` at `FILL_LEN` and
         rebuilds `FILLER` as that many null bytes (carriage-delay
@@ -1141,27 +1156,80 @@ PROGRAM PASCALSYSTEM;
       IPOT[3] := 1000;
       IPOT[4] := 10000;
       DIGITS := ['0'..'9'];
-      SYSCOM^.XEQERR := 0;
-      SYSCOM^.IORSLT := INOERROR;
-      SYSCOM^.BUGSTATE := 0;
       MTITLE := '*SYSTEM.MISCINFO';
       FINIT(MF, NIL, -1);
       FOPEN(MF, MTITLE, TRUE, NIL);
       IF MF.FISOPEN THEN
       BEGIN
-        { Raw block read straight into `SYSCOM^`'s own contiguous
-          MISCINFO/CRTTYPE/CRTCTRL/CRTINFO span, matching the real
-          binary's own raw `UNITREAD` (not a typed `FILE OF record`
-          read) -- avoids redeclaring those fields' own anonymous
-          record/enum types a second time just to assign whole-record,
-          which this host compiler treats as incompatible types even
-          when field-for-field identical. Byte count (480) read
-          directly off the real p-code's own operand, not derived. }
-        UNITREAD(MF.FUNIT, SYSCOM^.MISCINFO, 480, MF.FHEADER.DFIRSTBLK);
+        UNITREAD(MF.FUNIT, SYSBUF, 480, MF.FHEADER.DFIRSTBLK);
+        WITH SYSCOM^ DO
+        BEGIN
+          MISCINFO := SYSBUF.MISCINFO;
+          CRTTYPE := SYSBUF.CRTTYPE;
+          CRTCTRL := SYSBUF.CRTCTRL;
+          CRTINFO := SYSBUF.CRTINFO
+        END;
         INIT_FILLER(FILLER)
       END;
       FCLOSE(MF, CNORMAL);
-      UNITCLEAR(1)
+      UNITCLEAR(1);
+      WITH SYSCOM^ DO
+      BEGIN
+        XEQERR := 0;
+        IORSLT := INOERROR;
+        BUGSTATE := 0;
+        { `CONFIG_CHAR` collects every control character the console
+          driver has to notice. It starts as the keyboard's own lead-in
+          and takes each key whose `PREFIXED` flag is *clear* -- a
+          prefixed key arrives as two characters and is recognised by
+          its lead-in instead. Then the screen's lead-in and the whole
+          of `CHR(0)..CHR(31)` except carriage return and bell. }
+        WITH CRTINFO DO
+        BEGIN
+          CONFIG_CHAR := [PREFIX];
+          MERGEB(0, RIGHT);
+          MERGEB(1, LEFT);
+          MERGEB(3, DOWN);
+          MERGEB(2, UP);
+          MERGEB(11, CHARDEL);
+          MERGEB(8, EOF);
+          MERGEB(9, ALTMODE);
+          MERGEB(10, LINEDEL);
+          MERGEB(13, ALPHA_LOCK);
+          MERGEB(12, ETX)
+        END;
+        WITH CRTCTRL DO
+        BEGIN
+          MERGEA(0, RLF);
+          MERGEA(1, NDFS);
+          MERGEA(2, ERASEEOL);
+          MERGEA(4, HOME);
+          MERGEA(3, ERASEEOS);
+          MERGEA(5, BACKSPACE);
+          MERGEA(6, CLEARSCREEN);
+          MERGEA(7, CLEARLINE);
+          CONFIG_CHAR := CONFIG_CHAR + [ESCAPE] + [CHR(0)..CHR(31)]
+                         - [CHR(13)] - [CHR(7)];
+          { The backspace sequence, built once here: lead-in (only if
+            the backspace key is itself prefixed -- `PREFIXED[5]`, and
+            `MERGEA(5, BACKSPACE)` above is what says 5 is backspace's
+            own index), then the key, doubled by `CONCAT` and cut to
+            five. `DLINE_STR` is the same sequence cut to two when the
+            screen can erase to end of line and does not need the
+            long form. }
+          BSPACE_STR := '   ';
+          IF PREFIXED[5] THEN
+            BSPACE_STR[1] := ESCAPE
+          ELSE
+            BSPACE_STR[1] := CHR(0);
+          BSPACE_STR[2] := BACKSPACE;
+          BSPACE_STR := CONCAT(BSPACE_STR, BSPACE_STR);
+          BSPACE_STR[0] := CHR(5);
+          DLINE_STR := BSPACE_STR;
+          IF ERASEEOL <> CHR(0) THEN
+            DLINE_STR[0] := CHR(2)
+        END
+      END
     END;
 
     { `INITIALI.6` = INITUNITABLE: seeds `FILENAME` with the five

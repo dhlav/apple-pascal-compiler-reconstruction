@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-initunit" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-initsyscom" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -44,7 +44,8 @@ RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-initunit" / \
 EXACT = [
     "GETCMD.2", "GETCMD.4", "GETCMD.6", "GETCMD.19", "GETCMD.23",
     "GETCMD.26",
-    "INITIALI.1", "INITIALI.3", "INITIALI.4", "INITIALI.5",
+    # INITIALIZE is complete: all 11 of its procedures.
+    "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",
     "INITIALI.9", "INITIALI.10", "INITIALI.11",
     "PASCALSY.1",
@@ -78,7 +79,7 @@ EXACT = [
 STILL_DIFFERS = [
     "PASCALSY.13",   # 1 instruction against Apple's 109, still a stub
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
-    "INITIALI.2",    # data 604 against Apple's 1162
+    "FIOPRIMS.5",    # 3 instructions against Apple's 275, still a stub
     "FILEPROC.4",    # FPOPEN: 563 against Apple's 473; see finding 220
     # Frame-identical, and every instruction matches but the two the
     # finding-218b stand-in costs. These two are the control for that

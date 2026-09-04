@@ -1450,14 +1450,31 @@ a route end to end; everything else is a straight read-and-rebuild.
     BOOLEAN/INTEGER typing in whatever compiler built the OS, not a
     scattering of odd constructs. `FILEPROC.4` cannot be made exact.
 
+    `INITSYSCOM` closed last (finding 223) and with it **every one of
+    `INITIALIZE`'s eleven procedures** -- the first whole
+    multi-procedure segment of the OS. It reads `*SYSTEM.MISCINFO`
+    into a 240-word local `SYSCOMREC` and copies four spans out; the
+    reconstruction had read straight into `SYSCOM^` because
+    whole-record assignment looked impossible without redeclaring the
+    anonymous record types, and with a local of the *real* type it is
+    both legal and what Apple wrote. **76 of 111.**
+
+    The first attempt at its sixteen `MERGEA`/`MERGEB` calls got the
+    structure exactly right and every character name wrong -- 318
+    instructions against 317, only the packed-field operands
+    differing. The mistake was deriving the record layout and the
+    argument names from each other. Deriving the layout only from our
+    own output, where the names are known because we wrote them, and
+    reading Apple's operands against *that*, fixed it in one pass and
+    produced two independent cross-checks (`PREFIXED[5]` and
+    `MERGEA(5, BACKSPACE)` agreeing on backspace's index).
+
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
-    `INITIALI.2` (`INITSYSCOM`, 77/317) -- the last one in that
-    segment, fully decoded in finding 222 but not yet written: it
-    reads `*SYSTEM.MISCINFO` into a whole 240-word local `SYSCOMREC`
-    and copies four spans out of it, then makes sixteen `MERGEA`/
-    `MERGEB` calls and builds `BSPACE_STR`/`DLINE_STR`.
+    `GETCMD` is now the weakest segment by far -- 6 of its 27
+    procedures -- and `GETCMD.20` (`STARTCOMPILE`, 342 instructions)
+    is the largest single body left anywhere in the file.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1614,7 +1631,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (75 as of finding 222).
+  (76 as of finding 223).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
