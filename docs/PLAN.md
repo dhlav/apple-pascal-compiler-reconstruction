@@ -1345,16 +1345,23 @@ a route end to end; everything else is a straight read-and-rebuild.
     had failed to guess it -- `SYSTEM.COMPILER` is a reference for what
     1.3 accepts, not only a deliverable. **45 of 111.**
 
+    `VOLSEARCH` (`.30`), the file-extension routine (`.49`) and
+    `FPWINADV` (`FIOPRIMS.2`) followed it the same day (finding 215),
+    and all three were *shapes* rather than offsets: a frame four words
+    too long because two of Apple's locals do double duty, an `IF`/
+    `ELSE` written as a `BEGIN ... END`, and a `GOTO` that jumps out of
+    two levels and past the statement after them. **48 of 111.**
+
     **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
     Apple's 118, 286 instructions against 354; the two
     hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
     loops are visibly absent.
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
-    `PASCALSY.42` (`FETCHDIR`) at 287 instructions against 235, and
-    `PASCALSY.30`/`.31` at 252/245 and 152/129 -- all three have real
-    bodies that are close rather than stubs, so they are diffs to read
-    rather than routines to decode.
+    `PASCALSY.42` (`FETCHDIR`) at 287 instructions against 235 and
+    `PASCALSY.31` at 152/129 -- both have real bodies that are close
+    rather than stubs, so they are diffs to read rather than routines to
+    decode.
     `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
     against 2, with no offset anywhere to say where the extra word sits --
     size alone is not enough to place it. `FILEPROC.1`'s own local
@@ -1510,7 +1517,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (45 as of finding 214).
+  (48 as of finding 215).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

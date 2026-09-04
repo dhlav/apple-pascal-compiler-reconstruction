@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-bytestream" / \
+RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-volsearch" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -51,12 +51,14 @@ EXACT = [
     "PASCALSY.16", "PASCALSY.17", "PASCALSY.19", "PASCALSY.20",
     "PASCALSY.21", "PASCALSY.22",
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
+    "PASCALSY.30",
     "PASCALSY.33",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
     "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
-    "PASCALSY.48", "PASCALSY.50", "PASCALSY.53",
+    "PASCALSY.48", "PASCALSY.49", "PASCALSY.50", "PASCALSY.53",
     "PASCALSY.54", "PASCALSY.55", "PASCALSY.56",
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
+    "FIOPRIMS.2",
     "PRINTERR.1",
     "USERPROG.1",
 ]

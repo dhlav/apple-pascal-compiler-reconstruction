@@ -18464,3 +18464,102 @@ only for whether it compiled: the packed-record candidate compiled clean
 and was still wrong, and only disassembling it (`SLDL 1 | INC 1` for the
 field, `SIND 0` for the length) showed that a packed record aligns an array
 field to a word and can never produce a one-byte offset.
+
+## 215. Three more exact, and all three were shapes rather than offsets
+
+`PASCALSY.30` (`VOLSEARCH`), `PASCALSY.49` (the file-extension routine)
+and `FIOPRIMS.2` (`FPWINADV`) all went instruction- and frame-identical in
+one sitting. **48 of 111.** None of them needed a new fact about the
+machine; all three needed the *statement structure* Apple actually wrote,
+read off the addressed disassembly rather than the lifted pseudocode.
+
+### 215a. `PASCALSY.30`: five words doing seven jobs
+
+The frame was 16 bytes against Apple's 12, and the earlier note called the
+gap "a deliberate, readable choice rather than a forced match". It was not
+a choice; it was a wrong reading. Apple has five declared words plus one
+for the `WITH`s, and the reversal rule places them with nothing left over:
+
+```pascal
+UNITNO: UNITNUM;             { 6  }
+FOUND, UNITBYNUM: BOOLEAN;   { 8, 7 -- one clause descends }
+I, LOTIME: INTEGER;          { 10, 9 }
+```
+
+Two of those do double duty, and the binary says so plainly: offset 6 holds
+both the parsed `"#nn"` number and the unit index; offset 8 is the only
+boolean besides `UNITBYNUM`, serving as the digit-run flag, then `FOUND`,
+then the directory-freshness flag; offset 10 is both the parse loop's index
+and the high word `TIME` writes and nothing ever reads. Declaring `FRESH`
+and `NUM` separately is what made the frame four words too long.
+
+Three shape corrections came with it. Both search loops are `REPEAT`, not
+`WHILE` -- the fifth and sixth instance in this file, and by now the
+default assumption. The digit accumulator is
+`UNITNO * 10 + ORD(FVID[I]) - 48` with **no inner parentheses**, since
+Apple's `ADI` precedes its `SBI`. And a valid `"#nn"` assigns nothing at
+all: it leaves `UNITNO` and the flag as the parse left them and simply
+skips the named search, so there is no
+`IF UNITBYNUM THEN BEGIN UNITNO := NUM; FOUND := TRUE END` anywhere.
+Three `WITH`s share the single pointer word -- `SYSCOM^` over the
+freshness/fetch block and `UNITABLE[UNITNO]` over each of the last two.
+
+### 215b. Two consecutive `UJP`s mean a missing `ELSE`
+
+`FIOPRIMS.2` was **one instruction** short, and `PASCALSY.19` had been one
+short of the same thing earlier in the day. In both cases Apple had two
+`UJP`s in a row where the reconstruction had one, and in both cases the
+cause was the same: Apple wrote an `IF`/`ELSE` where this had written a
+`BEGIN ... ; ... END`.
+
+```pascal
+IF FNXTBLK >= FMAXBLK THEN            { Apple }        IF ... THEN     { was }
+  IF (FNXTBYTE + RECSIZE) > FMAXBYTE THEN              BEGIN
+    GOTO 1                                               IF ... THEN GOTO 1;
+  ELSE                                                   ROOM := ...
+    ROOM := DLASTBYTE - FNXTBYTE                       END
+ELSE                                                   ELSE
+  ROOM := 512 - FNXTBYTE                                 ROOM := ...
+```
+
+Both are correct Pascal and mean the same thing; only the `ELSE` emits the
+second `UJP`. **Two consecutive `UJP`s are the signature of a branch whose
+other arm is empty or exited** -- look for a missing `ELSE`, not a missing
+statement. Apple writes them freely, including with a wholly empty arm
+(`IF c THEN s ELSE` before an `END`), which is the same II.0 idiom as
+`IF CHECKDEL(CH,SINX) THEN ELSE BEGIN ... END` in `FREADSTRING`.
+
+### 215c. `PASCALSY.49`: the addresses were the evidence, not the mnemonics
+
+This one could not be read from the mnemonic listing at all. Two forward
+jumps went to `$0FC3` and `$0FC6`, three bytes apart, and the whole
+structure turns on which instruction each is: `$0FC3` is `DONE := TRUE`
+and `$0FC6` is the `IF NOT DONE` after it. `oscmp`'s listing blanks
+absolute targets by design (an `FJP $092A` and an `FJP $0417` are the same
+instruction placed differently), so this needed a disassembly *with*
+addresses -- `disassemble(seg.data, p.code_start, p.code_end, p.jtab)`.
+Once the two labels were placed, four things followed:
+
+* `WITH F DO WITH FHEADER DO` opens the whole body, **ahead of** the
+  `LENGTH(DVID) > 0` guard, so both pointer words are live before the
+  first test. Every later field then picks its own `WITH` by which record
+  actually has it: bare `FEOF` is `SLDO 9 | INC 2`, bare `DLASTBLK` is
+  `SLDO 10 | INC 1`.
+* `VOLSEARCH`'s first argument is `FVID`, the FIB's own cached volume name
+  at word 8 -- not `FHEADER.DVID` at word 19. Reading `SLDO 9 | INC 8` as
+  "the volume name" and not checking *which* volume name is what hid it.
+  And the comparison is `FUNIT <> VOLSEARCH(...)`, unit first.
+* The extend test runs its body when the condition is **true**
+  (`(DLASTBLK < NEWLAST) OR (DLASTBYTE < 512)` means there is room), with
+  `DONE := TRUE` following the whole `IF` rather than sitting in a branch
+  of it. The earlier reading had the two branches swapped, which compiles
+  the identical expression and a different shape -- so the expression
+  matching proved nothing.
+* `IF IORESULT <> 0 THEN GOTO 1` is a real `GOTO`, jumping out of two
+  levels *and* past the following `DONE := TRUE`. No arrangement of
+  `IF`/`ELSE` can do that, which is what makes the label forced rather
+  than stylistic -- and it is why the tail reads `IF NOT DONE`, not
+  `IF DONE`: a failed `WRITEDIR` leaves `DONE` false and the file gets
+  marked at end-of-file.
+
+Acceptance run kept in `acceptance/2026-09-03-pascalsystem-volsearch/`.

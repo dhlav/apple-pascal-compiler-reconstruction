@@ -748,7 +748,15 @@ PROGRAM PASCALSYSTEM;
       saves nothing -- a real compiler-behavior divergence from this
       host tool, not a source-level choice available to fix. Any other
       already-written `DLASTBYTE` reference in this file (`STUB49`,
-      `FPCLOSE`) carries the same latent, previously-undetected gap. }
+      `FPCLOSE`) carries the same latent, previously-undetected gap.
+
+      **Exact** since finding 215, and the one thing left was a shape,
+      not an offset: the `FNXTBLK >= FMAXBLK` test's `THEN` part is
+      `IF ... THEN GOTO 1 ELSE ROOM := ...`, an `IF`/`ELSE` where this
+      had a `BEGIN ... ; ... END`. Both are correct Pascal and mean the
+      same thing; only the `ELSE` emits the second `UJP` Apple has.
+      Two consecutive `UJP`s are the signature -- look for a missing
+      `ELSE`, not for a missing statement. }
     FUNCTION FPWINADV(VAR F: FIB): BOOLEAN;
       LABEL 1;
       VAR
@@ -763,10 +771,10 @@ PROGRAM PASCALSYSTEM;
           WINOFS := 0;
           REPEAT
             IF FNXTBLK >= FMAXBLK THEN
-            BEGIN
-              IF (FNXTBYTE + RECSIZE) > FMAXBYTE THEN GOTO 1;
-              ROOM := DLASTBYTE - FNXTBYTE
-            END
+              IF (FNXTBYTE + RECSIZE) > FMAXBYTE THEN
+                GOTO 1
+              ELSE
+                ROOM := DLASTBYTE - FNXTBYTE
             ELSE
               ROOM := 512 - FNXTBYTE;
             NEED := RECSIZE;
@@ -3593,104 +3601,117 @@ PROGRAM PASCALSYSTEM;
     block device, and a `TIME`-based restamp of `FDIR^[0].DLOADTIME`
     closing the freshness loop for next time.
 
-    Compiles clean; `params=10` bytes exact. `locals=16` against the
-    real `12` -- *longer* than real here, not shorter, the one
-    exception to this file's usual gap direction: named, distinct
-    booleans for each phase (`FOUND`/`UNITBYNUM`/`FRESH`) instead of
-    the real binary's own single scratch word reused across all three,
-    a deliberate, readable choice rather than a forced match. }
+    Rewritten off Apple's own 245 instructions (finding 215). The
+    frame is five declared words plus one for the `WITH`s, and the
+    reversal rule places them with nothing left over: `UNITNO` alone
+    (6), then `FOUND, UNITBYNUM` (7 and 8 descending), then
+    `I, LOTIME` (9 and 10). Two of those do double duty, and that is
+    Apple's economy, not a guess -- offset 6 holds both the parsed
+    `"#nn"` number and the unit index, offset 8 is the *only* boolean
+    besides `UNITBYNUM` and serves as the digit-run flag, `FOUND` and
+    the directory-freshness flag in turn, and offset 10 is both the
+    parse loop's index and the high word `TIME` writes and nothing
+    reads. An earlier version declared `FRESH` and `NUM` separately
+    and came out four words too long, which was the tell.
+
+    Three shape corrections came with it: both search loops are
+    `REPEAT`, not `WHILE` (the file's own habit, and the fifth and
+    sixth instance of it); the digit accumulator is
+    `UNITNO * 10 + ORD(FVID[I]) - 48` with no inner parentheses,
+    since Apple's `ADI` precedes its `SBI`; and a valid `"#nn"` does
+    not assign anything -- it simply leaves `UNITNO` and `FOUND` as
+    the parse left them and skips the named search, which is why
+    there is no `IF UNITBYNUM THEN BEGIN UNITNO := NUM; ... END`
+    anywhere. Three `WITH`s share the one pointer word: `SYSCOM^`
+    over the freshness/fetch block, and `UNITABLE[UNITNO]` over each
+    of the last two. }
   FUNCTION VOLSEARCH;
     VAR
-      FOUND, UNITBYNUM, FRESH: BOOLEAN;
-      UNITNO: UNITNUM;
-      I, NUM: INTEGER;
-      HITIME, LOTIME: INTEGER;
+      UNITNO: UNITNUM;         { and the parsed "#nn" number too      }
+      FOUND, UNITBYNUM: BOOLEAN;
+      I, LOTIME: INTEGER;      { I doubles as TIME's high word        }
   BEGIN
     VOLSEARCH := 0;
     FDIR := NIL;
-    UNITBYNUM := FALSE;
     FOUND := FALSE;
+    UNITBYNUM := FALSE;
     IF LENGTH(FVID) > 0 THEN
     BEGIN
       IF (FVID[1] = '#') AND (LENGTH(FVID) > 1) THEN
       BEGIN
-        UNITBYNUM := TRUE;
-        NUM := 0;
+        FOUND := TRUE;
+        UNITNO := 0;
         I := 2;
-        WHILE (I <= LENGTH(FVID)) AND UNITBYNUM DO
-        BEGIN
+        REPEAT
           IF FVID[I] IN DIGITS THEN
-            NUM := NUM * 10 + (ORD(FVID[I]) - 48)
+            UNITNO := UNITNO * 10 + ORD(FVID[I]) - 48
           ELSE
-            UNITBYNUM := FALSE;
+            FOUND := FALSE;
           I := I + 1
-        END;
-        UNITBYNUM := UNITBYNUM AND (NUM > 0) AND (NUM <= 20);
+        UNTIL (I > LENGTH(FVID)) OR NOT FOUND;
+        UNITBYNUM := FOUND AND (UNITNO > 0) AND (UNITNO <= 20);
         LOOKHARD := LOOKHARD AND NOT UNITBYNUM
       END;
-      IF UNITBYNUM THEN
+      IF NOT UNITBYNUM THEN
       BEGIN
-        UNITNO := NUM;
-        FOUND := TRUE
-      END
-      ELSE
-      BEGIN
+        FOUND := FALSE;
         UNITNO := 20;
-        WHILE (UNITNO > 0) AND NOT FOUND DO
-        BEGIN
+        REPEAT
           FOUND := FVID = UNITABLE[UNITNO].UVID;
-          IF NOT FOUND THEN UNITNO := UNITNO - 1
-        END
+          IF NOT FOUND THEN
+            UNITNO := UNITNO - 1
+        UNTIL FOUND OR (UNITNO = 0)
       END
     END;
 
     IF FOUND THEN
       IF UNITABLE[UNITNO].UISBLKD THEN
-      BEGIN
-        FRESH := FALSE;
-        IF SYSCOM^.GDIRP <> NIL THEN
-          IF FVID = SYSCOM^.GDIRP^[0].DVID THEN
-          BEGIN
-            TIME(HITIME, LOTIME);
-            FRESH := (LOTIME - SYSCOM^.GDIRP^[0].DLOADTIME) <= 300
-          END;
-        IF NOT FRESH THEN
+        WITH SYSCOM^ DO
         BEGIN
-          FOUND := UNITBYNUM;
-          IF FETCHDIR(UNITNO) THEN
+          FOUND := FALSE;
+          IF GDIRP <> NIL THEN
+            IF FVID = GDIRP^[0].DVID THEN
+            BEGIN
+              TIME(I, LOTIME);
+              FOUND := (LOTIME - GDIRP^[0].DLOADTIME) <= 300
+            END;
+          IF NOT FOUND THEN
           BEGIN
-            IF NOT UNITBYNUM THEN
-              FOUND := FVID = SYSCOM^.GDIRP^[0].DVID
+            FOUND := UNITBYNUM;
+            IF FETCHDIR(UNITNO) THEN
+              IF NOT UNITBYNUM THEN
+                FOUND := FVID = GDIRP^[0].DVID
+              ELSE
+            ELSE
+              FOUND := IORESULT = 0
           END
-          ELSE
-            FOUND := IORESULT = 0
-        END
-      END;
+        END;
 
     IF (NOT FOUND) AND LOOKHARD THEN
     BEGIN
       UNITNO := 20;
-      FOUND := FALSE;
-      WHILE (UNITNO > 0) AND NOT FOUND DO
-      BEGIN
-        IF UNITABLE[UNITNO].UISBLKD THEN
-          IF FETCHDIR(UNITNO) THEN
-            FOUND := FVID = UNITABLE[UNITNO].UVID;
-        IF NOT FOUND THEN UNITNO := UNITNO - 1
-      END
+      REPEAT
+        WITH UNITABLE[UNITNO] DO
+          IF UISBLKD THEN
+            IF FETCHDIR(UNITNO) THEN
+              FOUND := FVID = UVID;
+        IF NOT FOUND THEN
+          UNITNO := UNITNO - 1
+      UNTIL FOUND OR (UNITNO = 0)
     END;
 
     IF FOUND THEN
-    BEGIN
-      VOLSEARCH := UNITNO;
-      IF LENGTH(UNITABLE[UNITNO].UVID) > 0 THEN
-        FVID := UNITABLE[UNITNO].UVID;
-      IF UNITABLE[UNITNO].UISBLKD AND (SYSCOM^.GDIRP <> NIL) THEN
+      WITH UNITABLE[UNITNO] DO
       BEGIN
-        FDIR := SYSCOM^.GDIRP;
-        TIME(HITIME, FDIR^[0].DLOADTIME)
+        VOLSEARCH := UNITNO;
+        IF LENGTH(UVID) > 0 THEN
+          FVID := UVID;
+        IF UISBLKD AND (SYSCOM^.GDIRP <> NIL) THEN
+        BEGIN
+          FDIR := SYSCOM^.GDIRP;
+          TIME(I, FDIR^[0].DLOADTIME)
+        END
       END
-    END
   END;
 
   { `WRITEDIR` = `PASCALSY.31` (finding 186). Writes `FDIR^` back to
@@ -4517,24 +4538,49 @@ PROGRAM PASCALSYSTEM;
     and on success updates `F`'s own cached fields to match (clearing
     `FEOF`/`FEOLN`, `FSTATE`, and stamping `DACCESS.YEAR := 100` --
     `DATEREC`'s own documented "temp-disk flag" sentinel) before
-    returning `FALSE`. Compiles clean and matches the decode closely
-    (`locals=14` bytes here vs. the real `16` -- close, not exact; see
-    finding 161's own note on why exact instruction-for-instruction
-    verification isn't available for this whole forward-declared-far-
-    from-its-body group of routines in this file). }
+    returning `FALSE`. **Exact** since finding 215; four things had to
+    change and each was read off the addressed disassembly:
+
+      * The `WITH F DO WITH FHEADER DO` pair opens the whole body,
+        ahead of the `LENGTH(DVID) > 0` guard, so both pointer words
+        (9 and 10) are live before the first test. Every later field
+        then picks its own `WITH`: bare `FEOF` is `SLDO 9 | INC 2`
+        because `DIRENTRY` has no such field, bare `DLASTBLK` is
+        `SLDO 10 | INC 1` because `FHEADER` does.
+      * `VOLSEARCH`'s first argument is `FVID` (`F` word 8), not
+        `FHEADER.DVID` (word 19) -- the FIB's own cached volume name,
+        not the directory entry's copy. And the comparison reads
+        `FUNIT <> VOLSEARCH(...)`, unit first.
+      * The extend test runs its body when the condition is **true**
+        (`(DLASTBLK < NEWLAST) OR (DLASTBYTE < 512)` means there is
+        room), with `DONE := TRUE` following the whole `IF` rather
+        than sitting in a branch of it. An earlier reading had the
+        branches swapped, which compiles to the same expression and a
+        different shape.
+      * `IF IORESULT <> 0 THEN GOTO 1` -- a real `GOTO` past
+        `DONE := TRUE` to the tail, which is why `DONE` is left
+        `FALSE` on a failed `WRITEDIR` and the tail reads
+        `IF NOT DONE`, not `IF DONE`. No `IF`/`ELSE` nesting can jump
+        out of two levels *and* past a following statement, so the
+        label is not optional: it is what the two `UJP`s to the same
+        address say.
+
+    `FOUND, DONE: BOOLEAN` in that order, since one clause descends:
+    `DONE` at 5, `FOUND` at 6. }
   FUNCTION STUB49;
+    LABEL 1;
     VAR
       I: INTEGER;
-      DONE, FOUND: BOOLEAN;
+      FOUND, DONE: BOOLEAN;
       NEWLAST: INTEGER;
       DIR: DIRP;
   BEGIN
     STUB49 := TRUE;
     DONE := FALSE;
     WITH F DO
-      IF LENGTH(FHEADER.DVID) > 0 THEN
-        WITH FHEADER DO
-          IF VOLSEARCH(DVID, FALSE, DIR) <> FUNIT THEN
+      WITH FHEADER DO
+        IF LENGTH(DVID) > 0 THEN
+          IF FUNIT <> VOLSEARCH(FVID, FALSE, DIR) THEN
             SYSCOM^.IORSLT := ILOSTUNIT
           ELSE
           BEGIN
@@ -4555,28 +4601,29 @@ PROGRAM PASCALSYSTEM;
               ELSE
                 NEWLAST := DIR^[I].DFIRSTBLK;
               IF (DLASTBLK < NEWLAST) OR (DLASTBYTE < 512) THEN
-                DONE := TRUE
-              ELSE
+              BEGIN
                 WITH DIR^[I - 1] DO
                 BEGIN
                   DLASTBLK := NEWLAST;
-                  DLASTBYTE := 512;
-                  WRITEDIR(F.FUNIT, DIR);
-                  IF IORESULT = 0 THEN
-                  BEGIN
-                    F.FEOF := FALSE;
-                    F.FEOLN := FALSE;
-                    IF F.FSTATE <> FJANDW THEN F.FSTATE := FNEEDCHAR;
-                    F.FHEADER.DLASTBLK := NEWLAST;
-                    F.FHEADER.DLASTBYTE := 512;
-                    F.FHEADER.DACCESS.YEAR := 100;
-                    STUB49 := FALSE;
-                    DONE := TRUE
-                  END
-                END
+                  DLASTBYTE := 512
+                END;
+                WRITEDIR(FUNIT, DIR);
+                IF IORESULT <> 0 THEN
+                  GOTO 1;
+                FEOF := FALSE;
+                FEOLN := FALSE;
+                IF FSTATE <> FJANDW THEN
+                  FSTATE := FNEEDCHAR;
+                DLASTBLK := NEWLAST;
+                DLASTBYTE := 512;
+                DACCESS.YEAR := 100;
+                STUB49 := FALSE
+              END;
+              DONE := TRUE
             END
           END;
-    IF DONE THEN
+  1:
+    IF NOT DONE THEN
     BEGIN
       F.FEOF := TRUE;
       F.FEOLN := TRUE
