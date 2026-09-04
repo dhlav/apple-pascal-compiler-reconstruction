@@ -466,8 +466,11 @@ PROGRAM PASCALSYSTEM;
     BSPACE_STR: STRING[VIDLENG];
     { Tribby's run_vol -- run (%) volume; did not exist before 1.2 }
     RUN_VOL: VID;
-    { Tribby's what_l -- unidentified 4-word block }
-    WHAT_L: ARRAY [1..4] OF INTEGER;
+    { Tribby's what_l -- unidentified, and a SET rather than the four
+      words it was first read as: `INITIALIZE` clears it with
+      `LDA 1,448 | SLDC 0 | ADJ 4 | STM 4`, which is `WHAT_L := []`
+      adjusted to four words, not four element stores (finding 216). }
+    WHAT_L: SET OF 0..63;
 
   { Segment 0's own 41 forward-declared procedures, in `GLOBALS.TEXT`'s
     own order -- 27 "fixed" (addressed directly by object code, so the
@@ -990,13 +993,66 @@ PROGRAM PASCALSYSTEM;
     `.9`), `.11`=INITFILES. `MSYSCOMREC`'s own four fields
     (MISCINFO/CRTTYPE/CRTCTRL/CRTINFO) mirror `SYSCOMREC`'s own
     substructure exactly, per UCSD's own `MISCINFO := MSYSCOM.MISCINFO`
-    etc. Compiles clean under the host tool; not yet instruction-checked
-    against the real binary (that needs `.4`/`.5` identified for real
-    first) -- labelled STRONG INFERENCE throughout, not VERIFIED. }
+    etc.
+
+    **`INITIALI.1` is exact** since finding 216 -- 361 instructions and
+    a 59-word frame, the largest procedure in this file to match. Five
+    things were missing or wrong, and the frame named four of them
+    before any of the code was read: `MONTHNAMES` at `LAO 23` rather
+    than `LAO 1` says 22 words are declared ahead of it, and the two
+    hardware-version banners the body visibly lacked need somewhere to
+    put a fabricated pointer.
+
+      * The 21 words at offsets 1-21 are a `STRING[40]` that
+        `INITIALIZE` itself never touches -- `INITUNITABLE` and
+        `INITFILES` build their file titles in it through `LAO 1`, and
+        `SAS 40` gives its width.
+      * `I` at 22 is the index of two `FOR I := 1 TO 3 DO WRITELN`
+        loops in the banner, one before each copyright block.
+      * `LOWMEM` at 57 is the free union that makes a pointer out of a
+        literal address, since 1.3 has no `@`. `-16607` byte 0 is the
+        interpreter's version and must be 4; `-16606` bit 6 is its
+        128K flag. Either check failing prints its banner and then
+        spins forever on `REPEAT UNTIL FALSE`, which is the whole of
+        `SLDC 0 | FJP <its own address>`.
+      * `WITH SYSCOM^ DO` wraps the entire `IF NOT STARTUP` banner, not
+        just the `HASXYCRT` test -- that is what keeps its pointer word
+        live at 58 and pushes the `FOR` limit temp to 59, and it is the
+        difference between `data=116` and Apple's `118`.
+      * That same `IF NOT STARTUP` carries an empty `ELSE`, for the
+        second `UJP` (finding 215b again, third time in two days).
+
+    The other ten procedures are still STRONG INFERENCE, not VERIFIED;
+    `.4`/`.5` in particular remain guessed bodies. }
   SEGMENT PROCEDURE INITIALIZE;
+    { `LOWMEM` is the only way to reach a fixed address at all: 1.3 has
+      no `@` (finding 214b), so a pointer can only be built by writing
+      the integer into one arm of a free union and reading another.
+      The two arms this needs are a byte array and a bit array, since
+      the interpreter's version byte and its 128K flag sit one address
+      apart and are read differently. }
+    TYPE
+      BITARRAY = PACKED ARRAY [0..15] OF BOOLEAN;
+      BITARRP = ^BITARRAY;
+      ADDRCAST = RECORD
+                   CASE INTEGER OF
+                     0: (ADDR: INTEGER);
+                     1: (BYTES: WINDOWP);
+                     2: (BITS: BITARRP)
+                 END;
     VAR
+      { Offsets 1-21. Not `INITIALIZE`'s own -- nothing in its body
+        touches it. `INITUNITABLE` (`.6`) and `INITFILES` (`.11`) both
+        build their file titles in it through `LAO 1`, which is how a
+        lex-1 procedure names its lex-0 parent's frame (finding 207),
+        and it is why Apple's `INITFILES` has `data=0`. `SAS 40` gives
+        the width. }
+      FTITLE: STRING[40];
+      I: INTEGER;
       MONTHNAMES: ARRAY [0..15] OF STRING[3];
       STARTUP: BOOLEAN;
+      IS128K: BOOLEAN;
+      LOWMEM: ADDRCAST;
 
     { `INITIALI.2` = INITSYSCOM: reads `*SYSTEM.MISCINFO` (if present)
       into `SYSCOM^`'s own terminal-profile fields, seeds `IPOT`/
@@ -1310,10 +1366,7 @@ PROGRAM PASCALSYSTEM;
       RELEASE(EMPTYHEAP);
     RUN_VOL := '';
     INITUNITABLE;
-    WHAT_L[1] := 0;
-    WHAT_L[2] := 0;
-    WHAT_L[3] := 0;
-    WHAT_L[4] := 0;
+    WHAT_L := [];
     INITFILES;
     INITSYSCOM;
     INITWORKFILE;
@@ -1327,40 +1380,66 @@ PROGRAM PASCALSYSTEM;
     JUST_BOOT := FALSE;
     WHAT_H1 := FALSE;
     CLEARSCREEN;
+    LOWMEM.ADDR := -16607;
+    IF ORD(LOWMEM.BYTES^[0]) <> 4 THEN
+    BEGIN
+      WRITELN;
+      WRITELN;
+      WRITE('Version 1.3 of SYSTEM.PASCAL cannot run');
+      WRITELN;
+      WRITE('with a non-1.3 version of SYSTEM.APPLE');
+      WRITELN;
+      REPEAT UNTIL FALSE
+    END;
+    LOWMEM.ADDR := -16606;
+    IS128K := LOWMEM.BITS^[6];
+    IF NOT IS128K THEN
+    BEGIN
+      WRITELN;
+      WRITELN;
+      WRITE('The 128K version of SYSTEM.PASCAL cannot ');
+      WRITELN;
+      WRITE('run with the 64K version of SYSTEM.APPLE');
+      WRITELN;
+      REPEAT UNTIL FALSE
+    END;
     WRITELN;
     IF WHAT_H2 THEN
-    BEGIN
       IF NOT STARTUP THEN
-      BEGIN
-        IF SYSCOM^.MISCINFO.HASXYCRT THEN
+        WITH SYSCOM^ DO
         BEGIN
-          FGOTOXY(0, SYSCOM^.CRTINFO.HEIGHT DIV 3);
-          IF FILL_LEN > 0 THEN
-            WRITE(FILLER)
-        END;
-        WRITE('Welcome ');
-        WRITE(SYVID);
-        WRITE(', to Apple II Pascal 1.3');
-        WRITELN;
-        WRITELN;
-        WRITE('Based on UCSD Pascal II.1');
-        WRITELN;
-        WRITELN;
-        WRITE('Current date is ');
-        WRITE(THEDATE.DAY);
-        WRITE('-');
-        WRITE(MONTHNAMES[THEDATE.MONTH]);
-        WRITE('-');
-        WRITE(THEDATE.YEAR);
-        WRITELN;
-        WRITE('Pascal system size is 128K');
-        WRITELN;
-        WRITE('Copyright Apple Computer 1979,1980,1983,1984,1985');
-        WRITELN;
-        WRITE('Copyright U.C. Regents 1979');
-        WRITELN
-      END
-    END
+          IF MISCINFO.HASXYCRT THEN
+          BEGIN
+            FGOTOXY(0, CRTINFO.HEIGHT DIV 3);
+            IF FILL_LEN > 0 THEN
+              WRITE(FILLER)
+          END;
+          WRITE('Welcome ');
+          WRITE(SYVID);
+          WRITE(', to Apple II Pascal 1.3');
+          WRITELN;
+          WRITELN;
+          WRITE('Based on UCSD Pascal II.1');
+          WRITELN;
+          WRITELN;
+          WRITE('Current date is ');
+          WRITE(THEDATE.DAY);
+          WRITE('-');
+          WRITE(MONTHNAMES[THEDATE.MONTH]);
+          WRITE('-');
+          WRITE(THEDATE.YEAR);
+          FOR I := 1 TO 3 DO
+            WRITELN;
+          WRITE('Pascal system size is 128K');
+          WRITELN;
+          FOR I := 1 TO 3 DO
+            WRITELN;
+          WRITE('Copyright Apple Computer 1979,1980,1983,1984,1985');
+          WRITELN;
+          WRITE('Copyright U.C. Regents 1979');
+          WRITELN
+        END
+      ELSE
     ELSE
     BEGIN
       WRITE('System re-initialized');

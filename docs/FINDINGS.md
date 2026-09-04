@@ -18563,3 +18563,72 @@ Once the two labels were placed, four things followed:
   marked at end-of-file.
 
 Acceptance run kept in `acceptance/2026-09-03-pascalsystem-volsearch/`.
+
+## 216. `INITIALI.1` exact: the frame named four of the five missing pieces
+
+`INITIALIZE`'s outer body is the largest procedure in `SYSTEM.PASCAL` to
+match so far -- 361 instructions on a 59-word frame -- and it had been the
+top of the open list for three sessions, with `data` 66 against Apple's 118
+and two hardware-version banners visibly absent. **49 of 111.**
+
+The useful part is that almost none of it was decoded from the code. The
+*frame* said what was missing, and the code only confirmed it:
+
+* `MONTHNAMES` is at `LAO 23`, not `LAO 1`. Twenty-two words are declared
+  ahead of it, and `INITIALI.1` itself touches only one of them (offset 22).
+  The other twenty-one turn up in the **nested** procedures: `INITUNITABLE`
+  (`.6`) and `INITFILES` (`.11`) both write their file titles through
+  `LAO 1` with `SAS 40`, which is a lex-1 procedure naming its lex-0
+  parent's frame (finding 207). So it is a shared `STRING[40]` scratch --
+  and it is why Apple's `INITFILES` has `data=0` where a reconstruction
+  would naturally give it a local of its own.
+* Offset 22 is a `FOR` index: `SLDC 1 | SRO 22 | SLDC 3 | SRO 59 | ...` is
+  `FOR I := 1 TO 3 DO WRITELN`, twice, one before each copyright block.
+* Offset 57 is the free union that makes a pointer out of a literal
+  address. It has to exist because **1.3 has no `@`** (finding 214b), so
+  `LDCI 16607 | NGI | SRO 57` followed by `LDO 57 | SLDC 0 | LDB` can only
+  be an integer written into one arm of a variant record and a pointer read
+  out of another. Two arms are needed, because the two things checked are
+  read differently: `-16607` byte 0 is the interpreter's version (`LDB`,
+  must be 4) and `-16606` bit 6 is its 128K flag (`IXP 16,1 | LDP`).
+
+### 216a. `REPEAT UNTIL FALSE` is `SLDC 0 | FJP <its own address>`
+
+Each failed check prints its banner and then **hangs on purpose**:
+
+```
+169 $0979 SLDC 0
+170 $097A FJP $0979 (jtab-10)
+```
+
+The `FJP` targets the `SLDC 0` that feeds it, so it is a `REPEAT` with an
+empty body and a constant-false test -- two instructions that stop the
+machine dead rather than boot a system whose interpreter does not match.
+Both banners end that way.
+
+### 216b. A `WITH` that outlives what it obviously covers
+
+With everything above in, `data` came out **116 against 118** and the `FOR`
+limit temp landed at 58 where Apple has it at 59. One word, and it is not a
+declaration: Apple's `WITH SYSCOM^ DO` wraps the *entire* `IF NOT STARTUP`
+banner, not just the `MISCINFO.HASXYCRT` test that visibly needs it. Its
+pointer word stays live at 58 and pushes the `FOR` temp to 59. A `WITH`
+that is only read at the top of a long block still holds its word to the
+bottom of it, so **`data` being one word short is evidence about a `WITH`'s
+extent**, which nothing in the instruction stream shows directly.
+
+The last difference was a missing `ELSE` on that same `IF NOT STARTUP` --
+finding 215b's two-consecutive-`UJP`s signature, now hit three times in two
+days. It is the single most common shape error in this file.
+
+### 216c. `WHAT_L` is a set
+
+`LDA 1,448 | SLDC 0 | ADJ 4 | STM 4` is not four element stores; it is
+`WHAT_L := []` on a set adjusted to four words. The global had been
+declared `ARRAY [1..4] OF INTEGER` from its size alone, which is the same
+size and the wrong type. `ADJ` never appears for an array, so it names the
+type by itself.
+
+Acceptance run kept in `acceptance/2026-09-03-pascalsystem-initialize/`.
+`probe_os_exact.py` now pins 49 by name and carries `INITIALI.6` as a
+fourth discrimination control in place of the one that closed.

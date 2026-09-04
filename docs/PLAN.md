@@ -1352,10 +1352,15 @@ a route end to end; everything else is a straight read-and-rebuild.
     `ELSE` written as a `BEGIN ... END`, and a `GOTO` that jumps out of
     two levels and past the statement after them. **48 of 111.**
 
-    **Open, in rough order of value.** `INITIALI.1` -- `data` 66 against
-    Apple's 118, 286 instructions against 354; the two
-    hardware-version-mismatch banners and two `FOR I := 1 TO 3 DO WRITELN`
-    loops are visibly absent.
+    `INITIALI.1` closed next (finding 216) -- 361 instructions and a
+    59-word frame, the largest procedure in the file to match. Its
+    *frame* named four of the five missing pieces before any code was
+    read: a `STRING[40]` at offsets 1-21 that the body never touches
+    (the nested procedures use it through `LAO 1`), a `FOR` index at
+    22, and a free union at 57 that fabricates a pointer from a
+    literal address, since 1.3 has no `@`. **49 of 111.**
+
+    **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
     `PASCALSY.42` (`FETCHDIR`) at 287 instructions against 235 and
@@ -1517,7 +1522,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (48 as of finding 215).
+  (49 as of finding 216).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
