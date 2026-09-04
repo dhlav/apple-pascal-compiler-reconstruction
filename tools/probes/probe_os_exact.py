@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-withwords" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-dummylocals" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -44,7 +44,7 @@ RUN = ROOT / "acceptance" / "2026-09-03-pascalsystem-withwords" / \
 EXACT = [
     "GETCMD.2", "GETCMD.4", "GETCMD.6", "GETCMD.19", "GETCMD.23",
     "GETCMD.26",
-    "INITIALI.1", "INITIALI.7", "INITIALI.8",
+    "INITIALI.1", "INITIALI.3", "INITIALI.7", "INITIALI.8",
     "INITIALI.9", "INITIALI.10", "INITIALI.11",
     "PASCALSY.1",
     "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
@@ -60,7 +60,10 @@ EXACT = [
     "PASCALSY.48", "PASCALSY.49", "PASCALSY.50", "PASCALSY.53",
     "PASCALSY.54", "PASCALSY.55", "PASCALSY.56",
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
-    "FIOPRIMS.2",
+    "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
+    "PASCALSY.43",
+    "FILEPROC.3", "FILEPROC.7",
+    "FIOPRIMS.2", "FIOPRIMS.3",
     "PRINTERR.1",
     "USERPROG.1",
 ]
@@ -72,7 +75,13 @@ STILL_DIFFERS = [
     "PASCALSY.13",   # 1 instruction against Apple's 109, still a stub
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
     "PASCALSY.42",   # FETCHDIR: 287 instructions against Apple's 235
-    "INITIALI.6",    # INITUNITABLE: data 648 against Apple's 746
+    "INITIALI.6",    # INITUNITABLE: data 624 against Apple's 746
+    # Frame-identical, and every instruction matches but the two the
+    # finding-218b stand-in costs. These two are the control for that
+    # gap: if either ever reports exact, `IF FNXTBLK THEN` started
+    # compiling and 218b has been answered.
+    "FIOPRIMS.4",    # FPPEEK: 45 instructions against Apple's 43
+    "FILEPROC.2",    # FPNEWBLK: 163 against Apple's 161
 ]
 
 fail = []

@@ -38,6 +38,7 @@ Usage:
 import argparse
 import difflib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -53,9 +54,21 @@ from procbuild import listing, strip_targets
 APPLE3 = ROOT / "evidence" / "disks" / \
     "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"
 SHIPPED = "128K.PASCAL"
-# Where the acceptance tier leaves its output. cp2 extracts from HD1.hdv;
-# this is only the default, and --ours overrides it.
-OURS = ROOT / "build" / "acceptance" / "PASCALSY.CODE"
+# The default "ours" is whatever compile probe_os_exact currently pins,
+# read out of the probe rather than repeated here: the two used to be
+# separate constants, and oscmp's went stale against a scratch extract
+# while the probe had moved on -- a bare `oscmp` then reported 15 exact
+# where the probe reported 57. One place to update, so they cannot drift.
+# `--ours` overrides for scoring a fresh, not-yet-kept extract.
+def _pinned_run() -> Path:
+    src = (ROOT / "tools" / "probes" / "probe_os_exact.py").read_text()
+    ns: dict = {"ROOT": ROOT, "Path": Path}
+    for stmt in re.findall(r"^RUN = .*(?:\n\s+.*)*", src, re.M):
+        exec(stmt, ns)
+    return ns["RUN"]
+
+
+OURS = _pinned_run()
 
 
 def shipped_codefile() -> CodeFile:

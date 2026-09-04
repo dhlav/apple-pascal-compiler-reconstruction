@@ -18702,3 +18702,160 @@ matching. Apple's `.11` and `.6` both build their file titles in a
 finding 216 had just identified. A nested procedure using its parent's
 scratch instead of its own is invisible in the instruction text (`LAO 1`
 and `LLA 6` read the same way) and obvious in the frame.
+
+## 218. Soft-buffer byte fields were swapped, and Apple treats FNXTBLK as a Boolean
+
+Two independent facts, both **VERIFIED BINARY FACT** against shipped
+`128K.PASCAL`. Found in a review pass over the finding-217 tree; 218a
+and 218c are closed here, 218b stays open.
+
+### 218a. `FNXTBYTE` is FIB offset 31, `FMAXBYTE` is offset 30
+
+`FIB`'s soft-buffer variant declares `FNXTBYTE, FMAXBYTE: INTEGER`.
+Finding 93a's within-group *descending* rule gives the first name the
+higher offset, so Apple's `INC 31`/`IND 31` is `FNXTBYTE` and
+`INC 30`/`IND 30` is `FMAXBYTE`. Four soft-buffer bodies had the two
+reversed:
+
+| site | Apple's bytes | reads as | was |
+| --- | --- | --- | --- |
+| `FIOPRIMS.4` (`FPPEEK`) | `INC 31 \| LDCI 512 \| STO` | `FNXTBYTE := 512` | `FMAXBYTE` |
+| `FILEPROC.2` (`FPNEWBLK`) | `INC 30 \| IND 31 \| STO`; later `INC 31 := 512` | `FMAXBYTE := FNXTBYTE`; `FNXTBYTE := 512` | reversed |
+| `FILEPROC.4` (`FPOPEN`) | `INC 31 := 512`, then `INC 30 := IND 27` or `512` | `FNXTBYTE := 512`; `FMAXBYTE := DLASTBYTE` or `512` | reversed |
+| `FILEPROC.7` (`FPCLOSE`) | `INC 30 \| IND 31 \| STO` | `FMAXBYTE := FNXTBYTE` | reversed |
+
+The swap is invisible in a frame comparison and invisible in an
+instruction *count* -- both readings emit the same five opcodes. Only
+the operand of `INC` separates them, which is why this survived a run
+that had already declared `FIOPRIMS.4` frame-exact.
+
+Adding `WITH F DO` to `.2` and `.4` is the other half of their
+one-word `data` gaps, finding 217's rule applied again.
+
+### 218b. Apple emits `IND 13` straight into a Boolean operator
+
+At three soft-buffer sites Apple loads `FNXTBLK` (FIB offset 13, an
+`INTEGER`) and feeds it to a Boolean operator with **no** comparison:
+
+* `FIOPRIMS.4 @6`: `IND 13 | FJP`
+* `FILEPROC.2 @108`: `IND 13 | LAND` (the textfile-boundary guard)
+* `FIOPRIMS.5 @255`: `IND 13 | LNOT | LAND`
+
+`IF FNXTBLK THEN` is error **135** ("type of operand must be Boolean")
+under the shipped 1.3 compiler -- `GENFJP` tests
+`GATTR.TYPTR <> BOOLPTR` before it will emit an `FJP`, and the same
+word is used with `GEQI`/`GRTI`/`ADI` as an integer elsewhere in the
+very same procedures, so it is not a `BOOLEAN` field misread. The
+reconstruction writes `FNXTBLK <> 0` and pays two instructions
+(`SLDC 0 | NEQI`) at each site. That is the *entire* remaining
+difference in `FIOPRIMS.4` (45/43) and in `FILEPROC.2` (163/161):
+both are otherwise instruction- and frame-identical.
+
+How Apple produced those bytes is **open**. Candidates: a variant or
+overlay in Apple's own `FIB` declaration that this project has not
+recovered; an in-house compiler that accepted the construct when the
+OS was built. Forcing the count by declaring the field `BOOLEAN`
+would break the integer uses and is not on the table -- the two extra
+instructions are recorded as a known, explained gap, not silently
+absorbed.
+
+### 218c. `INIT_FILLER` takes `VAR FSTR: FILL_STR`
+
+`INITIALI.3` is `params=2` / `data=2`: a `VAR` string parameter plus
+one `WITH SYSCOM^.CRTCTRL DO` pointer. A `VAR` formal needs a type
+*identifier*, so `VAR FSTR: STRING[FILL_LEN]` written inline is error
+7 -- the alias `FILL_STR = STRING[FILL_LEN]` in the outer `TYPE`
+block is what the parameter list can name. With both, `INITIALI.3` is
+exact.
+
+## 219. Apple fills a don't-care argument with an uninitialised local
+
+**VERIFIED BINARY FACT.** Four of the OS's `FILEPROC` forwarders
+(`PASCALSY.4` `FRESET`, `.5` `FOPEN`, `.6` `FCLOSE`, `.43`
+`TITLENORM`) call one six-parameter `SEGMENT PROCEDURE` and only use
+some of its slots. The reconstruction passed literals for the rest --
+`FALSE`, `NIL`, `0`, and in `FRESET`'s case the global scratch string
+`PL`. Apple passes **a local variable that is never assigned**:
+
+| forwarder | Apple | ours was | `data` |
+| --- | --- | --- | --- |
+| `PASCALSY.4` | `LAO 2 \| SLDO 4 \| SLDO 5 \| SLDO 6` | `LDA 1,70 \| SLDC 0 \| LDCN \| SLDC 0` | 10 vs 0 |
+| `PASCALSY.5` | `SLDO 5` | `SLDC 0` | 2 vs 0 |
+| `PASCALSY.6` | `LAO 3 \| SLDO 5 \| SLDO 6` | `LDA 1,70 \| SLDC 0 \| LDCN` | 8 vs 0 |
+| `PASCALSY.43` | `LDO 294` | `LDCN` | 582 vs 580 |
+
+This is not a stylistic difference that happens to cost a word. A
+literal and a variable are *different instructions*, so the frame gap
+and the instruction gap are the same fact seen twice -- which is why
+`PASCALSY.4` had been recorded as "5 words undocumented, plausibly
+Apple's don't-care value came from somewhere else". It did: it came
+from a variable declared for no other purpose.
+
+The operands say how many dummies there are and how wide each is.
+`FRESET`'s string dummy sits at words 2-3, so it is two words --
+`STRING[2]`, not the `STRING[80]` a fresh scratch string would be
+(that was the earlier 36-word overshoot, and swapping in the global
+`PL` had only hidden it). `FCLOSE` declares three, not four, because
+its own `FTYPE` parameter fills `ARGINT`. `TITLENORM`'s 291st word is
+an unassigned `FIBP` sitting after its 290-word dummy `FIB`.
+
+Reading a passed argument you never wrote is undefined, and Apple
+plainly did not care: the callee's arm never touches those slots.
+Worth remembering as a shape -- **an argument the callee ignores is
+still some variable, and which variable is visible in the operand.**
+
+Closing these four, plus finding 218a's swaps, plus `WITH` pointers in
+`FILEPROC.3`/`FIOPRIMS.3`/`PASCALSY.3`, plus `FILEPROC.7` below took
+`SYSTEM.PASCAL` from 57 to **66 of 111**.
+
+### 219a. FILEPROC.7 (FPCLOSE), 292 instructions, from its jump targets
+
+The instruction text alone had this procedure's shape wrong in four
+places, and every correction came from a jump *target*:
+
+* The `FISOPEN` guard's `FJP` goes to the **`RNP`**, not to the tail.
+  A file that was never open leaves `FEOF`/`FEOLN`/`FISOPEN`
+  untouched -- the whole body, tail included, is inside the guard.
+* The two `IORSLT` failure arms `UJP` *past* the `FTYPE = 2` block
+  straight to the tail. That is a `GOTO 1`, not an `ELSE`.
+* `DELENTRY`'s arm `UJP`s to `WRITEDIR`, so the directory write is a
+  sibling of the `IF`, not the last statement of its `ELSE`.
+* Two consecutive `UJP`s at `$0676`/`$0678` are finding 215's empty
+  `ELSE` once more.
+
+Two more facts fell out of it. The crunch arm **rewrites its own
+`FTYPE` parameter to `CLOCK`** (`SLDC 1 | STL 1`), which is why every
+later test reads `0` or `2` and never `3`. And `VOLSEARCH` is handed
+`FVID`, the FIB's own volume name, not `FHEADER.DVID`.
+
+Which references are bare and which are qualified is also readable
+off the operands: bare `DLASTBYTE` goes through the inner `WITH`
+pointer (`SLDL 8 | INC 11`) while `FHEADER.FILLER2` and
+`DIR^[I] := FHEADER` name the record itself and so resolve through
+the *outer* one (`SLDL 7 | INC 18`, `INC 16`). Both forms are legal,
+they are not interchangeable in the output, and the binary reads the
+source's own punctuation back.
+
+### 219b. DIRENTRY word 2 is one 12-bit filler, not 11 bits plus STATUS
+
+`FPCLOSE`'s `FHEADER.FILLER2 := 0` is `SLDC 12 | SLDC 4 | SLDC 0 |
+STP` -- twelve bits at right bit 4, one field, filling word 2 above
+the four-bit `DFKIND`. The reconstruction had `FILLER2: 0..1024` (11
+bits) plus `STATUS: BOOLEAN` "for FILER wildcards", which compiles to
+`SLDC 11`. `STATUS` was declared and never referenced anywhere in the
+OS; the wildcard bit lives inside the filler but Apple's own OS source
+does not name it. `FILLER2: 0..2048` -- exactly `FILLER1`'s shape in
+the other variant -- is what the binary says.
+
+### 219c. FIOPRIMS.3 and FILEPROC.3 had their arms the wrong way round
+
+Both bodies matched Apple instruction for instruction with the `THEN`
+and `ELSE` contents exchanged, which the `FJP`'s fall-through settles
+and a matching condition does not (finding 215 again).
+
+`FPDLE`: a real DLE-blank count byte is always at least `32`, so
+`FWINDOW^[0] > ' '` is the **decode** arm, not the rejection. Only a
+byte at or below `' '` is a spurious `DLE`.
+
+`FPRESET`: `FSTATE = FJANDW` is the `FGET` case, and everything else
+just flags `FNEEDCHAR` -- the opposite of the obvious reading.

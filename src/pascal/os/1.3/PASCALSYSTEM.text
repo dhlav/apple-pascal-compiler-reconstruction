@@ -158,6 +158,10 @@ PROGRAM PASCALSYSTEM;
     DIRRANGE = 0..MAXDIR;
     TID = STRING[TIDLENG];
     FULL_ID = STRING[NAME_LEN];
+    { `INIT_FILLER` takes `FILLER` as a `VAR` parameter, and a `VAR`
+      formal needs a type *identifier* -- `STRING[FILL_LEN]` written
+      out in a parameter list is error 7 (finding 218). }
+    FILL_STR = STRING[FILL_LEN];
 
     FILE_TABLE = ARRAY [SYSFILE] OF FULL_ID;
 
@@ -178,8 +182,15 @@ PROGRAM PASCALSYSTEM;
                       DLASTBOOT: DATEREC);
                    XDSKFILE, CODEFILE, TEXTFILE, INFOFILE,
                    DATAFILE, GRAFFILE, FOTOFILE:
-                     (FILLER2: 0..1024;
-                      STATUS: BOOLEAN;   { for FILER wildcards }
+                     { One 12-bit filler, not `0..1024` plus a
+                       `STATUS: BOOLEAN` wildcard flag: `FPCLOSE`'s
+                       own `FHEADER.FILLER2 := 0` is `SLDC 12 |
+                       SLDC 4 | SLDC 0 | STP` -- twelve bits at
+                       right bit 4, one field, filling word 2 above
+                       `DFKIND`. Exactly `FILLER1`'s shape in the
+                       other variant. The Filer's wildcard bit lives
+                       in here but the OS never names it. }
+                     (FILLER2: 0..2048;
                       DTID: TID;
                       DLASTBYTE: 1..FBLKSIZE;
                       DACCESS: DATEREC)
@@ -324,7 +335,7 @@ PROGRAM PASCALSYSTEM;
     STATE: CMDSTATE;                 { for GETCOMMAND }
     PL: STRING;                      { prompt-line string, see PROMPT }
     IPOT: ARRAY [0..4] OF INTEGER;   { integer powers of ten }
-    FILLER: STRING[FILL_LEN];        { nulls for carriage delay }
+    FILLER: FILL_STR;                { nulls for carriage delay }
     DIGITS: SET OF '0'..'9';
     UNITABLE: ARRAY [UNITNUM] OF     { 0 not used }
                 RECORD
@@ -563,12 +574,10 @@ PROGRAM PASCALSYSTEM;
     four disk binaries -- every `CXP 0,43` call site anywhere on the
     disk set pushes an address, a 0/1 flag and a length, matching
     `FPTITLE`'s own already-written `(VAR S: STRING; SUFFIX: BOOLEAN;
-    N: INTEGER)`. `params`/instructions **exact** against the real
-    binary (`6`/`7`); the one difference from the probe's own
-    reference forwarder is pushing `NIL` for the unused `ARGPTR` slot
-    where the real binary pushes another dummy buffer's address --
-    `FPTITLE` never reads that argument either way, so this is
-    inert, not forced. }
+    N: INTEGER)`. The real binary pushes `LDO 294` for the unused
+    `ARGPTR` slot, not `LDCN`: an uninitialised `FIBP` local declared
+    after the 290-word dummy `FIB`, which is the 291st `data` word
+    (finding 219). }
   PROCEDURE TITLENORM(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
     FORWARD;
 
@@ -745,7 +754,7 @@ PROGRAM PASCALSYSTEM;
       total isolation) -- but the real binary's own `FHEADER.DLASTBYTE`
       read here is a plain unpacked `IND`/`STO`, no `LDP` anywhere
       nearby. `DLASTBYTE` doesn't share a word with any neighboring
-      field in this variant (`STATUS` and `DACCESS` are packed
+      field in this variant (`FILLER2` and `DACCESS` are packed
       separately), so Apple's own compiler evidently doesn't bother
       packing a subrange into fewer than its natural word when doing so
       saves nothing -- a real compiler-behavior divergence from this
@@ -814,31 +823,33 @@ PROGRAM PASCALSYSTEM;
       `FGET` only right after reading a literal `DLE` (`16`) byte, per
       `FGET`'s own gate. Reads the *next* byte (the two-byte DLE code's
       count, `+32`, this file's own already-quoted manual comment on
-      `DLE`-blank codes); if it's a real character (`> ' '`) rather
-      than a valid count byte, treats the `DLE` as spurious, reads past
-      it, and reports `FALSE` (no compression applied). Otherwise loads
-      `F.FREPTCNT` with the decoded blank count and replaces the window
-      byte with a space -- `FGET`'s own opening guard (`IF F.FREPTCNT >
+      `DLE`-blank codes). A real count byte is always at least `32`
+      and in practice `> ' '`, so that is the *decode* arm, not the
+      rejection: it loads `FREPTCNT` with the decoded blank count and
+      replaces the window byte with a space. Only a byte at or below
+      `' '` is a spurious `DLE` -- read past it and report `FALSE`, no
+      compression applied. An earlier reading had the two arms the
+      wrong way round; the binary puts the decode where the `FJP`
+      falls through -- `FGET`'s own opening guard (`IF F.FREPTCNT >
       0 THEN` decrement and return early, no real read) is exactly what
       consumes this: each of the next `FREPTCNT` `GET`s just replays
-      the cached space with no further I/O. Compiles clean, `params=6`
-      bytes exact; `locals=0` against the real `2` -- one word short
-      (the real body caches `F` into a local, this one dereferences
-      `F.FWINDOW` directly instead), documented not forced. }
+      the cached space with no further I/O. `params=6` bytes exact;
+      the one `data` word is the `WITH F DO` (finding 217). }
     FUNCTION FPDLE(VAR F: FIB): BOOLEAN;
     BEGIN
       FGET(F);
-      IF F.FWINDOW^[0] > ' ' THEN
-      BEGIN
-        FGET(F);
-        FPDLE := FALSE
-      END
-      ELSE
-      BEGIN
-        F.FREPTCNT := ORD(F.FWINDOW^[0]) - 32;
-        F.FWINDOW^[0] := ' ';
-        FPDLE := TRUE
-      END
+      WITH F DO
+        IF FWINDOW^[0] > ' ' THEN
+        BEGIN
+          FREPTCNT := ORD(FWINDOW^[0]) - 32;
+          FWINDOW^[0] := ' ';
+          FPDLE := TRUE
+        END
+        ELSE
+        BEGIN
+          FGET(F);
+          FPDLE := FALSE
+        END
     END;
 
     { `FIOPRIMS.4` -- speculative lookahead `GET` with rollback
@@ -846,31 +857,45 @@ PROGRAM PASCALSYSTEM;
       assignment compiles to exactly the real binary's own `MOV 290`
       -- confirmed by an isolated probe before trusting it, not assumed
       from the locals count alone), advances `FNXTBLK` and sets
-      `FMAXBYTE` to look one record ahead, then calls `FGET` for real.
-      If that hits real `EOF`, rolls the whole `FIB` back to the
-      snapshot (undoing the speculative advance) and marks
-      `FEOF`/`FEOLN` true with `FMAXBYTE` backed off by one -- a
+      `FNXTBYTE` to 512 to look one record ahead, then calls `FGET`
+      for real. If that hits real `EOF`, rolls the whole `FIB` back
+      to the snapshot (undoing the speculative advance) and marks
+      `FEOF`/`FEOLN` true with `FNXTBYTE` backed off by one -- a
       lookahead specifically for `TEXTFILE` `EOLN` detection (matches
       `FGET`'s own gate: `FSOFTBUF AND (DFKIND = TEXTFILE)`). Compiles
       clean, `params=2` bytes exact; `locals` is dominated by the
-      290-word `FIB` snapshot itself, matching the real binary's own
-      huge `locals=582` almost exactly (`580` here, two bytes short --
-      the same one-word-ish gap class as this file's other close
-      matches). }
+      290-word `FIB` snapshot itself, and the `WITH F DO` below is the
+      word that closed the last gap -- `582/582`, frame exact. The
+      only instructions left differing are the two the finding-218b
+      stand-in costs. }
     PROCEDURE FPPEEK(VAR F: FIB);
       VAR
         SAVE: FIB;
     BEGIN
       SAVE := F;
-      IF F.FNXTBLK <> 0 THEN F.FNXTBLK := F.FNXTBLK + 1;
-      F.FMAXBYTE := 512;
-      FGET(F);
-      IF F.FEOF THEN
+      WITH F DO
       BEGIN
-        F := SAVE;
-        F.FEOF := TRUE;
-        F.FEOLN := TRUE;
-        F.FMAXBYTE := F.FMAXBYTE - 1
+        { Apple's own bytes here are `IND 13 | FJP`, with no
+          comparison at all -- `FNXTBLK` used directly as a truth
+          value. The shipped 1.3 compiler refuses to compile that
+          (`IF FNXTBLK THEN` is error 135, "type of operand must be
+          Boolean", straight out of `GENFJP`), so this writes the
+          comparison and costs two instructions. See finding 218:
+          the same shape appears at three soft-buffer sites
+          (`FIOPRIMS.4`'s `FJP`, `FILEPROC.2`'s `LAND`, and
+          `FIOPRIMS.5`'s `LNOT|LAND`), and no reading of the `FIB`
+          this project has yet accounts for it. }
+        IF FNXTBLK <> 0 THEN
+          FNXTBLK := FNXTBLK + 1;
+        FNXTBYTE := 512;
+        FGET(F);
+        IF FEOF THEN
+        BEGIN
+          F := SAVE;
+          FEOF := TRUE;
+          FEOLN := TRUE;
+          FNXTBYTE := FNXTBYTE - 1
+        END
       END
     END;
 
@@ -1066,12 +1091,15 @@ PROGRAM PASCALSYSTEM;
       { `INITIALI.3` = INIT_FILLER: caps `FILLCOUNT` at `FILL_LEN` and
         rebuilds `FILLER` as that many null bytes (carriage-delay
         padding for slow terminals). }
-      PROCEDURE INIT_FILLER;
+      PROCEDURE INIT_FILLER(VAR FSTR: FILL_STR);
       BEGIN
-        IF SYSCOM^.CRTCTRL.FILLCOUNT > FILL_LEN THEN
-          SYSCOM^.CRTCTRL.FILLCOUNT := FILL_LEN;
-        FILLER[0] := CHR(SYSCOM^.CRTCTRL.FILLCOUNT);
-        FILLCHAR(FILLER[1], SYSCOM^.CRTCTRL.FILLCOUNT, CHR(0))
+        WITH SYSCOM^.CRTCTRL DO
+        BEGIN
+          IF FILLCOUNT > FILL_LEN THEN
+            FILLCOUNT := FILL_LEN;
+          FSTR[0] := CHR(FILLCOUNT);
+          FILLCHAR(FSTR[1], FILLCOUNT, CHR(0))
+        END
       END;
 
       { `INITIALI.4`/`.5` -- not in UCSD's own `INITSYSCOM`, Apple-
@@ -1093,7 +1121,7 @@ PROGRAM PASCALSYSTEM;
       END;
 
     BEGIN
-      INIT_FILLER;
+      INIT_FILLER(FILLER);
       DEBUGINFO := NIL;
       IPOT[0] := 1;
       IPOT[1] := 10;
@@ -1118,7 +1146,7 @@ PROGRAM PASCALSYSTEM;
           when field-for-field identical. Byte count (480) read
           directly off the real p-code's own operand, not derived. }
         UNITREAD(MF.FUNIT, SYSCOM^.MISCINFO, 480, MF.FHEADER.DFIRSTBLK);
-        INIT_FILLER
+        INIT_FILLER(FILLER)
       END;
       FCLOSE(MF, CNORMAL);
       UNITCLEAR(1)
@@ -2018,44 +2046,50 @@ PROGRAM PASCALSYSTEM;
       VAR
         ATBOUNDARY: BOOLEAN;
     BEGIN
-      F.FREPTCNT := 0;
-      F.FEOLN := FALSE;
-      F.FEOF := FALSE;
-      IF F.FISBLKD THEN
+      WITH F DO
       BEGIN
-        ATBOUNDARY := F.FNXTBLK > F.FMAXBLK;
-        IF ATBOUNDARY THEN F.FMAXBLK := F.FNXTBLK;
-        IF F.FSOFTBUF THEN
+        FREPTCNT := 0;
+        FEOLN := FALSE;
+        FEOF := FALSE;
+        IF FISBLKD THEN
         BEGIN
+          ATBOUNDARY := FNXTBLK > FMAXBLK;
           IF ATBOUNDARY THEN
-            F.FNXTBYTE := F.FMAXBYTE
-          ELSE IF (F.FNXTBLK = F.FMAXBLK) AND (F.FMAXBYTE >= F.FNXTBYTE) THEN
+            FMAXBLK := FNXTBLK;
+          IF FSOFTBUF THEN
           BEGIN
-            ATBOUNDARY := TRUE;
-            F.FNXTBYTE := F.FMAXBYTE
-          END;
-          IF F.FBUFCHNGD THEN
-          BEGIN
-            F.FBUFCHNGD := FALSE;
-            F.FMODIFIED := TRUE;
             IF ATBOUNDARY THEN
-              FILLCHAR(F.FBUFFER[F.FMAXBYTE], 512 - F.FMAXBYTE, CHR(0));
-            UNITWRITE(F.FUNIT, F.FBUFFER[0], 512,
-                      (F.FHEADER.DFIRSTBLK + F.FNXTBLK) - 1);
-            IF ATBOUNDARY AND (F.FHEADER.DFKIND = TEXTFILE) AND
-               (F.FNXTBLK <> 0) THEN
+              FMAXBYTE := FNXTBYTE
+            ELSE
+              IF FNXTBLK = FMAXBLK THEN
+                IF FNXTBYTE >= FMAXBYTE THEN
+                BEGIN
+                  ATBOUNDARY := TRUE;
+                  FMAXBYTE := FNXTBYTE
+                END;
+            IF FBUFCHNGD THEN
             BEGIN
-              F.FMAXBLK := F.FMAXBLK + 1;
-              FILLCHAR(F.FBUFFER[0], 512, CHR(0));
-              UNITWRITE(F.FUNIT, F.FBUFFER[0], 512,
-                        F.FHEADER.DFIRSTBLK + F.FNXTBLK)
-            END
+              FBUFCHNGD := FALSE;
+              FMODIFIED := TRUE;
+              IF ATBOUNDARY THEN
+                FILLCHAR(FBUFFER[FNXTBYTE], 512 - FNXTBYTE, CHR(0));
+              UNITWRITE(FUNIT, FBUFFER[0], 512,
+                        (FHEADER.DFIRSTBLK + FNXTBLK) - 1);
+              IF ATBOUNDARY AND (FHEADER.DFKIND = TEXTFILE) AND
+                 (FNXTBLK <> 0) THEN
+              BEGIN
+                FMAXBLK := FMAXBLK + 1;
+                FILLCHAR(FBUFFER[0], 512, CHR(0));
+                UNITWRITE(FUNIT, FBUFFER[0], 512,
+                          FHEADER.DFIRSTBLK + FNXTBLK)
+              END
+            END;
+            FNXTBYTE := 512
           END;
-          F.FMAXBYTE := 512
-        END;
-        F.FNXTBLK := 0;
-        IF F.FSOFTBUF AND (F.FHEADER.DFKIND = TEXTFILE) THEN
-          F.FNXTBLK := 2
+          FNXTBLK := 0;
+          IF FSOFTBUF AND (FHEADER.DFKIND = TEXTFILE) THEN
+            FNXTBLK := 2
+        END
       END
     END;
 
@@ -2065,20 +2099,24 @@ PROGRAM PASCALSYSTEM;
       or calls `FGET` (still a stub) to actually prime the first
       record -- no `FIOPRIMS` dependency at all, contrary to an
       earlier session's assumption before this procedure was actually
-      disassembled. Compiles clean; `params=2` bytes exact, `locals=0`
-      against the real `2` -- one word short, documented not forced. }
+      disassembled. Which arm is which comes from the binary and is
+      the opposite of the obvious reading: `FSTATE = FJANDW` is the
+      `FGET` case, and everything else just flags `FNEEDCHAR`.
+      `params=2` bytes exact; the one `data` word is the `WITH F DO`
+      (finding 217). }
     PROCEDURE FPRESET(VAR F: FIB);
     BEGIN
       SYSCOM^.IORSLT := INOERROR;
-      IF F.FISOPEN THEN
-      BEGIN
-        FPNEWBLK(F);
-        IF F.FRECSIZE > 0 THEN
-          IF F.FSTATE = FJANDW THEN
-            F.FSTATE := FNEEDCHAR
-          ELSE
-            FGET(F)
-      END
+      WITH F DO
+        IF FISOPEN THEN
+        BEGIN
+          FPNEWBLK(F);
+          IF FRECSIZE > 0 THEN
+            IF FSTATE = FJANDW THEN
+              FGET(F)
+            ELSE
+              FSTATE := FNEEDCHAR
+        END
     END;
 
     { `FPOPEN` = `FILEPROC.4`, the largest routine in this file (472
@@ -2400,12 +2438,16 @@ PROGRAM PASCALSYSTEM;
 
               IF FSOFTBUF THEN
               BEGIN
-                FMAXBYTE := 512;
+                { Apple's stores: INC 31 := 512, then either
+                  INC 30 := DLASTBYTE or INC 30 := 512. Offset 31 is
+                  `FNXTBYTE`, 30 is `FMAXBYTE` (declaration order --
+                  finding 218a). }
+                FNXTBYTE := 512;
                 FBUFCHNGD := FALSE;
                 IF OLDOK THEN
-                  FNXTBYTE := FHEADER.DLASTBYTE
+                  FMAXBYTE := FHEADER.DLASTBYTE
                 ELSE
-                  FNXTBYTE := 512;
+                  FMAXBYTE := 512;
                 IF FHEADER.DFKIND = TEXTFILE THEN
                 BEGIN
                   FNXTBLK := 2;
@@ -2454,8 +2496,12 @@ PROGRAM PASCALSYSTEM;
       `STUB49` uses) do real work:
 
       `CCRUNCH` (`FTYPE = 3`) shrinks the file to its current position
-      first (`FMAXBLK := FNXTBLK`) and marks the header temp (`DACCESS.
-      YEAR := 100`, `DATEREC`'s own documented sentinel). `FPNEWBLK`
+      first (`FMAXBLK := FNXTBLK`), marks the header temp (`DACCESS.
+      YEAR := 100`, `DATEREC`'s own documented sentinel) and then
+      *rewrites its own `FTYPE` parameter to `CLOCK`* (`SLDC 1 |
+      STL 1`) -- from here on a crunch close behaves as a lock close,
+      which is why every later test reads `0` or `2` and never `3`.
+      `FPNEWBLK`
       flushes any pending soft-buffer write. If anything actually
       changed (`FMODIFIED`, the temp mark, or `CPURGE`), re-`VOLSEARCH`
       the file's volume (bailing `ILOSTUNIT` on a unit mismatch, the
@@ -2480,86 +2526,114 @@ PROGRAM PASCALSYSTEM;
       Global word 67 (`THEDATE`, "today -- set in FILER or sign-on",
       already declared in this file) confirmed by an isolated probe
       before trusting it, not assumed from the comment alone
-      (`probe_thedate_offset.py`, scratch). Compiles clean; `params=4`
-      bytes exact against the real binary; `locals=8` against the real
-      `12` -- two words short, documented not forced, same class as
-      this file's other close-not-exact matches. }
+      (`probe_thedate_offset.py`, scratch).
+
+      The shape came out of the jump targets, which said four things
+      the instruction text alone did not. The `FISOPEN` guard's `FJP`
+      goes to the **`RNP`**, not to the tail -- a file that was never
+      open leaves `FEOF`/`FEOLN`/`FISOPEN` untouched, so the whole
+      body including that tail sits inside the guard. The two `IORSLT`
+      failure arms `UJP` *past* the `FTYPE = 2` block to the tail,
+      which is a `GOTO 1`, not an `ELSE`. `DELENTRY`'s arm `UJP`s to
+      `WRITEDIR`, so the write is a sibling of the `IF`, not the last
+      statement of its `ELSE`. And two consecutive `UJP`s at `$0676`/
+      `$0678` are finding 215's empty `ELSE` again. The two `data`
+      words the earlier reading was missing are the `WITH F DO` and
+      `WITH FHEADER DO` pointers -- finding 217's rule.
+
+      Note which references are bare and which are qualified: bare
+      `DLASTBYTE` compiles through the inner `WITH` (`SLDL 8 | INC
+      11`) while `FHEADER.FILLER2` and `DIR^[I] := FHEADER` name the
+      record itself and so go through the *outer* one (`SLDL 7 | INC
+      18`, `INC 16`). Both forms are legal and they are not
+      interchangeable in the output, so the binary reads the source's
+      own punctuation back. `VOLSEARCH` is handed `FVID`, the FIB's
+      own volume name, not `FHEADER.DVID`. }
     PROCEDURE FPCLOSE(VAR F: FIB; FTYPE: INTEGER);
+      LABEL 1;
       VAR
-        DIR: DIRP;
         I, J: INTEGER;
+        DIR: DIRP;
         FOUND: BOOLEAN;
     BEGIN
-      IF F.FISOPEN AND (F.FWINDOW <> SYSTERM^.FWINDOW) THEN
-        IF F.FISBLKD THEN
-          IF LENGTH(F.FHEADER.DVID) > 0 THEN
-          BEGIN
-            IF FTYPE = 3 THEN
-            BEGIN
-              F.FMAXBLK := F.FNXTBLK;
-              F.FHEADER.DACCESS.YEAR := 100;
-              IF F.FSOFTBUF THEN
-                F.FNXTBYTE := F.FMAXBYTE
-            END;
-            FPNEWBLK(F);
-            IF F.FMODIFIED OR (F.FHEADER.DACCESS.YEAR = 100) OR (FTYPE = 2) THEN
-              IF VOLSEARCH(F.FHEADER.DVID, FALSE, DIR) <> F.FUNIT THEN
-                SYSCOM^.IORSLT := ILOSTUNIT
-              ELSE
+      SYSCOM^.IORSLT := INOERROR;
+      WITH F DO
+        IF FISOPEN AND (FWINDOW <> SYSTERM^.FWINDOW) THEN
+        BEGIN
+          IF FISBLKD THEN
+            WITH FHEADER DO
+              IF LENGTH(DVID) > 0 THEN
               BEGIN
-                FOUND := FALSE;
-                I := 1;
-                WHILE (I <= DIR^[0].DNUMFILES) AND NOT FOUND DO
+                IF FTYPE = 3 THEN
                 BEGIN
-                  FOUND := (DIR^[I].DFIRSTBLK = F.FHEADER.DFIRSTBLK) AND
-                           (DIR^[I].DLASTBLK = F.FHEADER.DLASTBLK);
-                  I := I + 1
+                  FMAXBLK := FNXTBLK;
+                  DACCESS.YEAR := 100;
+                  FTYPE := 1;
+                  IF FSOFTBUF THEN
+                    FMAXBYTE := FNXTBYTE
                 END;
-                IF NOT FOUND THEN
-                  SYSCOM^.IORSLT := ILOSTFILE
-                ELSE
+                FPNEWBLK(F);
+                IF FMODIFIED OR (DACCESS.YEAR = 100) OR (FTYPE = 2) THEN
                 BEGIN
+                  IF FUNIT <> VOLSEARCH(FVID, FALSE, DIR) THEN
+                  BEGIN
+                    SYSCOM^.IORSLT := ILOSTUNIT;
+                    GOTO 1
+                  END;
+                  I := 1;
+                  FOUND := FALSE;
+                  WHILE (I <= DIR^[0].DNUMFILES) AND NOT FOUND DO
+                  BEGIN
+                    FOUND := (DIR^[I].DFIRSTBLK = DFIRSTBLK) AND
+                             (DIR^[I].DLASTBLK = DLASTBLK);
+                    I := I + 1
+                  END;
+                  IF NOT FOUND THEN
+                  BEGIN
+                    SYSCOM^.IORSLT := ILOSTFILE;
+                    GOTO 1
+                  END;
                   I := I - 1;
                   IF ((FTYPE = 0) AND (DIR^[I].DACCESS.YEAR = 100))
                      OR (FTYPE = 2) THEN
                     DELENTRY(I, DIR)
                   ELSE
                   BEGIN
-                    J := DIRSEARCH(F.FHEADER.DTID, TRUE, DIR);
+                    J := DIRSEARCH(DTID, TRUE, DIR);
                     IF (J <> 0) AND (J <> I) THEN
                     BEGIN
                       DELENTRY(J, DIR);
-                      IF J < I THEN I := I - 1
+                      IF J < I THEN
+                        I := I - 1
                     END;
                     IF DIR^[I].DACCESS.YEAR = 100 THEN
-                    BEGIN
-                      IF F.FHEADER.DACCESS.YEAR = 100 THEN
-                        F.FHEADER.DACCESS := THEDATE
-                    END
-                    ELSE
-                      IF F.FMODIFIED AND (THEDATE.MONTH <> 0) THEN
-                        F.FHEADER.DACCESS := THEDATE
+                      IF DACCESS.YEAR = 100 THEN
+                        DACCESS := THEDATE
                       ELSE
-                        F.FHEADER.DACCESS := DIR^[I].DACCESS;
-                    F.FHEADER.DLASTBLK := F.FHEADER.DFIRSTBLK + F.FMAXBLK;
-                    IF F.FSOFTBUF THEN
-                      F.FHEADER.DLASTBYTE := F.FNXTBYTE;
-                    F.FHEADER.FILLER2 := 0;
-                    F.FMODIFIED := FALSE;
-                    DIR^[I] := F.FHEADER;
-                    WRITEDIR(F.FUNIT, DIR)
-                  END
+                    ELSE
+                      IF FMODIFIED AND (THEDATE.MONTH <> 0) THEN
+                        DACCESS := THEDATE
+                      ELSE
+                        DACCESS := DIR^[I].DACCESS;
+                    DLASTBLK := DFIRSTBLK + FMAXBLK;
+                    IF FSOFTBUF THEN
+                      DLASTBYTE := FMAXBYTE;
+                    FHEADER.FILLER2 := 0;
+                    FMODIFIED := FALSE;
+                    DIR^[I] := FHEADER
+                  END;
+                  WRITEDIR(FUNIT, DIR)
                 END
-              END
-          END;
-      IF FTYPE = 2 THEN
-        IF LENGTH(F.FHEADER.DTID) = 0 THEN
-          UNITABLE[F.FUNIT].UVID := '';
-      F.FEOF := TRUE;
-      F.FEOLN := TRUE;
-      F.FISOPEN := FALSE
+              END;
+          IF FTYPE = 2 THEN
+            IF LENGTH(FHEADER.DTID) = 0 THEN
+              UNITABLE[FUNIT].UVID := '';
+      1:
+          FEOF := TRUE;
+          FEOLN := TRUE;
+          FISOPEN := FALSE
+        END
     END;
-
     { `FPTITLE` = `FILEPROC.8`, the file-title normalizer (finding
       167), decoded from its own addressed disassembly
       (`SYSTEM.PASCAL` 1.3) and independently already confirmed real
@@ -2864,62 +2938,75 @@ PROGRAM PASCALSYSTEM;
     (words to bytes). }
   PROCEDURE FINIT;
   BEGIN
-    F.FSTATE := FJANDW;
-    F.FISOPEN := FALSE;
-    F.FEOF := TRUE;
-    F.FEOLN := TRUE;
-    F.FWINDOW := WINDOW;
-    IF (RECWORDS = 0) OR (RECWORDS = -2) THEN
+    WITH F DO
     BEGIN
-      F.FWINDOW^[1] := CHR(0);
-      F.FRECSIZE := 1;
-      IF RECWORDS = 0 THEN
-        F.FSTATE := FNEEDCHAR
-    END ELSE BEGIN
-      IF RECWORDS < 0 THEN
+      FSTATE := FJANDW;
+      FISOPEN := FALSE;
+      FEOF := TRUE;
+      FEOLN := TRUE;
+      FWINDOW := WINDOW;
+      IF (RECWORDS = 0) OR (RECWORDS = -2) THEN
       BEGIN
-        F.FWINDOW := NIL;
-        F.FRECSIZE := 0
-      END ELSE
-        F.FRECSIZE := RECWORDS + RECWORDS
+        FWINDOW^[1] := CHR(0);
+        FRECSIZE := 1;
+        IF RECWORDS = 0 THEN
+          FSTATE := FNEEDCHAR
+      END ELSE BEGIN
+        IF RECWORDS < 0 THEN
+        BEGIN
+          FWINDOW := NIL;
+          FRECSIZE := 0
+        END ELSE
+          FRECSIZE := RECWORDS + RECWORDS
+      END
     END
   END;
   { PASCALSY.4 = FRESET. Real body is a one-line forward into
     `FILEPROC` arm 1 (finding 156b), which reads only `F` -- the other
-    `FILEPROC` slots are don't-cares here. `PL` (the global scratch
-    string, finding 137's own established reuse pattern) fills the
-    `VAR ARGSTR: STRING` slot instead of a fresh local -- a fresh
-    local compiled to `params=1/data=41` against the real binary's
-    `1/5`, a 36-word gap; reusing `PL` closes it to `1/0` against `1/5`
-    (5 words undocumented -- plausibly Apple's own real don't-care
-    value came from somewhere else entirely, not chased further). }
+    `FILEPROC` slots are don't-cares here. Apple fills them with
+    *uninitialised locals*, one per slot, and passes those: `LAO 2`
+    for the `VAR ARGSTR: STRING` and `SLDO 4`/`5`/`6` for the three
+    scalars. That is the whole of the frame (5 words, `data=10`), and
+    it is why a literal cannot reproduce this body -- an argument
+    Apple never reads still has to be *some variable*, and which one
+    is visible in the operand. The string dummy occupies words 2-3,
+    so it is two words: `STRING[2]`. See finding 219. }
   PROCEDURE FRESET;
+    VAR
+      DUMMYS: STRING[2];
+      DUMMYB: BOOLEAN;
+      DUMMYP: FIBP;
+      DUMMYI: INTEGER;
   BEGIN
-    FILEPROC(1, F, PL, FALSE, NIL, 0)
+    FILEPROC(1, F, DUMMYS, DUMMYB, DUMMYP, DUMMYI)
   END;
 
   { PASCALSY.5 = FOPEN. Real body forwards into `FILEPROC` arm 2
     (finding 156b), which reads `F, FTITLE, FOPENOLD, JUNK` -- FOPEN's
     own four parameters, straight through in their own declared
-    order. `params=4/data=0` against the real binary's `4/1`, one
-    word short, documented not forced (matches this project's own
-    established "close" pattern elsewhere). }
+    order -- with one uninitialised local for the unused `ARGINT`
+    slot, the one `data` word (finding 219). }
   PROCEDURE FOPEN;
+    VAR
+      DUMMYI: INTEGER;
   BEGIN
-    FILEPROC(2, F, FTITLE, FOPENOLD, JUNK, 0)
+    FILEPROC(2, F, FTITLE, FOPENOLD, JUNK, DUMMYI)
   END;
 
   { PASCALSY.6 = FCLOSE. Real body forwards into `FILEPROC` arm 3
     (finding 156b), which reads `F` and `ORD(FTYPE)` (`FILEPROC`'s
     shared `ARGINT` slot can't be typed `CLOSETYPE` -- it also carries
     a plain length for a different arm -- so the ordinal is converted
-    at the call site, finding 156c). `params=2/data=0` against the
-    real binary's `2/4` -- four words undocumented, same "don't-care
-    value came from somewhere else" gap as `FRESET`'s own, not chased
-    further this session. }
+    at the call site, finding 156c). The four `data` words are the
+    same uninitialised-local dummies `FRESET` uses, minus the integer
+    one -- `FTYPE` itself fills `ARGINT` here (finding 219). }
   PROCEDURE FCLOSE;
+    VAR
+      DUMMYS: STRING[2];
+      DUMMYB: BOOLEAN;
+      DUMMYP: FIBP;
   BEGIN
-    FILEPROC(3, F, PL, FALSE, NIL, ORD(FTYPE))
+    FILEPROC(3, F, DUMMYS, DUMMYB, DUMMYP, ORD(FTYPE))
   END;
   { PASCALSY.7 = FGET (confirmed by PASCALIO.text's own "CXP 0,7"
     comment on its matching forward declaration, finding 151). Not
@@ -4369,8 +4456,9 @@ PROGRAM PASCALSYSTEM;
   PROCEDURE TITLENORM;
     VAR
       DUMMYF: FIB;
+      DUMMYP: FIBP;
   BEGIN
-    FILEPROC(4, DUMMYF, S, SUFFIX, NIL, N)
+    FILEPROC(4, DUMMYF, S, SUFFIX, DUMMYP, N)
   END;
 
   { PASCALSY.44: append one character to the EXEC write buffer,

@@ -1367,6 +1367,27 @@ a route end to end; everything else is a straight read-and-rebuild.
     declaring the one word its body never touches, every other reading
     of that word having been excluded. **57 of 111.**
 
+    Nine more in one pass (findings 218-219), from three separate
+    causes. `FNXTBYTE` and `FMAXBYTE` were swapped at five soft-buffer
+    sites -- a swap invisible in a frame comparison *and* in an
+    instruction count, since both readings emit the same five opcodes
+    and only the `INC` operand separates them. Four `FILEPROC`
+    forwarders passed literals where Apple passes an uninitialised
+    local it never assigns; the frame gap and the instruction gap
+    there were the same fact seen twice. And `FILEPROC.7` (`FPCLOSE`,
+    292 instructions) came out whole once its *jump targets* were read
+    rather than its instruction text -- the `FISOPEN` guard jumps to
+    the `RNP`, two failure arms are a `GOTO` and not an `ELSE`, and
+    `WRITEDIR` is a sibling of the `IF` rather than the tail of its
+    `ELSE`. `FIOPRIMS.3` and `FILEPROC.3` simply had their `THEN` and
+    `ELSE` exchanged. **66 of 111.**
+
+    Two more are as close as the shipped compiler allows: `FIOPRIMS.4`
+    and `FILEPROC.2` are frame-identical and differ only by the two
+    instructions finding 218b's `FNXTBLK <> 0` stand-in costs. They
+    sit in `probe_os_exact`'s `STILL_DIFFERS` list as the control for
+    that gap -- if either ever reports exact, 218b has been answered.
+
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
@@ -1374,10 +1395,12 @@ a route end to end; everything else is a straight read-and-rebuild.
     `PASCALSY.31` at 152/129 -- both have real bodies that are close
     rather than stubs, so they are diffs to read rather than routines to
     decode.
-    `PASCALSY.39` (`PROMPT`), instructions already identical and `data` 0
-    against 2, with no offset anywhere to say where the extra word sits --
-    size alone is not enough to place it. `FILEPROC.1`'s own local
-    declaration order, which `FILEPROC.6` reads at three wrong offsets.
+    `FILEPROC.1`'s own local declaration order, which `FILEPROC.6`
+    reads at three wrong offsets -- `FILEPROC.6` is otherwise
+    frame-exact at 26/26, so it moves the moment `.1` does.
+    `FILEPROC.4` (`FPOPEN`) at 563/473, `FILEPROC.5` at 156/178 and
+    `.8` at 168/203 -- real bodies, close, diffs to read rather than
+    routines to decode. `FIOPRIMS.5` is still a stub at 3/275.
     Then the remaining stubs: `PASCALSY.13`, `.18`, `.40`, `.41`,
     `GETCMD.3`, `.5`, `.7`-`.18`, `.21`, `.22`, `.24`, `.25`, `.27`,
     `.1`'s own menu loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s
@@ -1529,7 +1552,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (57 as of finding 217).
+  (66 as of finding 219).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
