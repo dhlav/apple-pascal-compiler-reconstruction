@@ -1046,8 +1046,9 @@ PROGRAM PASCALSYSTEM;
         build their file titles in it through `LAO 1`, which is how a
         lex-1 procedure names its lex-0 parent's frame (finding 207),
         and it is why Apple's `INITFILES` has `data=0`. `SAS 40` gives
-        the width. }
-      FTITLE: STRING[40];
+        the width. Not spelled `FTITLE`: `FOPEN` and `SCANTITLE`
+        both already have a formal of that name. }
+      TITLEBUF: STRING[40];
       I: INTEGER;
       MONTHNAMES: ARRAY [0..15] OF STRING[3];
       STARTUP: BOOLEAN;
@@ -1137,7 +1138,6 @@ PROGRAM PASCALSYSTEM;
         LUNIT: UNITNUM;
         LDIR: DIRP;
         LFIB: FIB;
-        LTITLE: FULL_ID;
         F: SYSFILE;
         NOT_FOUND: SET OF SYSFILE;
 
@@ -1175,19 +1175,19 @@ PROGRAM PASCALSYSTEM;
               IF LUNIT = SYSCOM^.SYSUNIT THEN
               BEGIN
                 SYVID := UNITABLE[LUNIT].UVID;
-                LTITLE := '*SYSTEM.STARTUP';
-                FOPEN(LFIB, LTITLE, TRUE, NIL);
+                TITLEBUF := '*SYSTEM.STARTUP';
+                FOPEN(LFIB, TITLEBUF, TRUE, NIL);
                 STARTUP := LFIB.FISOPEN;
                 FCLOSE(LFIB, CNORMAL)
               END;
               FOR F := ASSMBLER TO LINKER DO
                 IF (LUNIT = SYSCOM^.SYSUNIT) OR (F IN NOT_FOUND) THEN
                 BEGIN
-                  LTITLE := CONCAT(UNITABLE[LUNIT].UVID, FILENAME[F]);
-                  FOPEN(LFIB, LTITLE, TRUE, NIL);
+                  TITLEBUF := CONCAT(UNITABLE[LUNIT].UVID, FILENAME[F]);
+                  FOPEN(LFIB, TITLEBUF, TRUE, NIL);
                   IF LFIB.FISOPEN THEN
                   BEGIN
-                    FILENAME[F] := LTITLE;
+                    FILENAME[F] := TITLEBUF;
                     NOT_FOUND := NOT_FOUND - [F]
                   END;
                   FCLOSE(LFIB, CNORMAL)
@@ -1250,7 +1250,8 @@ PROGRAM PASCALSYSTEM;
         file's own real volume/title back into `SEC_VOL`/`SEC_NAME` so
         the caller remembers where it actually ended up. }
       PROCEDURE TRY_OPEN(VAR WORK_FIB: FIB; FIRST: FULL_ID;
-                          VAR SEC_VOL: VID; VAR SEC_NAME: TID);
+                          VAR SEC_VOL: VID; VAR SEC_NAME: TID;
+                          VAR GOT: BOOLEAN);
         VAR
           LTITLE: FULL_ID;
       BEGIN
@@ -1261,7 +1262,8 @@ PROGRAM PASCALSYSTEM;
             LTITLE := CONCAT(SEC_VOL, ':', SEC_NAME);
             FOPEN(WORK_FIB, LTITLE, TRUE, NIL)
           END;
-        IF WORK_FIB.FISOPEN THEN
+        GOT := WORK_FIB.FISOPEN;
+        IF GOT THEN
         BEGIN
           SEC_VOL := WORK_FIB.FVID;
           SEC_NAME := WORK_FIB.FHEADER.DTID
@@ -1273,7 +1275,7 @@ PROGRAM PASCALSYSTEM;
       USERINFO.ERRNUM := 0;
       USERINFO.ERRBLK := 0;
       USERINFO.ERRSYM := 0;
-      IF JUST_BOOT THEN
+      IF WHAT_H2 THEN
       BEGIN
         USERINFO.SYMTID := '';
         USERINFO.CODETID := '';
@@ -1283,9 +1285,9 @@ PROGRAM PASCALSYSTEM;
         USERINFO.WORKVID := SYVID
       END;
       TRY_OPEN(USERINFO.SYMFIBP^, '*SYSTEM.WRK.TEXT', USERINFO.SYMVID,
-               USERINFO.SYMTID);
+               USERINFO.SYMTID, USERINFO.GOTSYM);
       TRY_OPEN(USERINFO.CODEFIBP^, '*SYSTEM.WRK.CODE', USERINFO.CODEVID,
-               USERINFO.CODETID);
+               USERINFO.CODETID, USERINFO.GOTCODE);
       USERINFO.ALTMODE := SYSCOM^.CRTINFO.ALTMODE;
       USERINFO.SLOWTERM := SYSCOM^.MISCINFO.SLOWTERM;
       USERINFO.STUPID := SYSCOM^.MISCINFO.STUPID
@@ -1296,21 +1298,19 @@ PROGRAM PASCALSYSTEM;
       `SYSTERM` on `SYSTERM:`, cold boot only) and refreshes `GFILES`
       to match. }
     PROCEDURE INITFILES;
-      VAR
-        LTITLE: FULL_ID;
     BEGIN
       FCLOSE(SWAPFIB^, CNORMAL);
       FCLOSE(USERINFO.SYMFIBP^, CNORMAL);
       FCLOSE(USERINFO.CODEFIBP^, CNORMAL);
       FCLOSE(INPUTFIB^, CNORMAL);
       FCLOSE(OUTPUTFIB^, CNORMAL);
-      LTITLE := 'CONSOLE:';
-      FOPEN(INPUTFIB^, LTITLE, TRUE, NIL);
-      FOPEN(OUTPUTFIB^, LTITLE, TRUE, NIL);
-      IF JUST_BOOT THEN
+      TITLEBUF := 'CONSOLE:';
+      FOPEN(INPUTFIB^, TITLEBUF, TRUE, NIL);
+      FOPEN(OUTPUTFIB^, TITLEBUF, TRUE, NIL);
+      IF WHAT_H2 THEN
       BEGIN
-        LTITLE := 'SYSTERM:';
-        FOPEN(SYSTERM^, LTITLE, TRUE, NIL)
+        TITLEBUF := 'SYSTERM:';
+        FOPEN(SYSTERM^, TITLEBUF, TRUE, NIL)
       END;
       GFILES[0] := INPUTFIB;
       GFILES[1] := OUTPUTFIB;
@@ -3610,33 +3610,30 @@ PROGRAM PASCALSYSTEM;
     `GFILES[1]` (finding 139): it clamps its two arguments against a
     pointer set to `SYSCOM+37`, landing exactly on `CRTINFO.WIDTH`
     (`HEIGHT`, the next field, clamps the other axis), then writes the
-    GOTOXY escape (ASCII 30) followed by row and column, each offset
+    GOTOXY escape (ASCII 30) followed by column and row, each offset
     by 32, through the same `GFILES[1]` every other segment-0 body
-    writes through. Apple's own real body caches `SYSCOM+37` in a
-    1-word local rather than re-reaching `SYSCOM^.CRTINFO` each time --
-    a real, documented, not-forced 1-word gap (`data`), not attempted
-    to close since it changes nothing observable. }
+    writes through. **Exact** since finding 217. The 1-word `data` gap
+    that stood here was `WITH SYSCOM^.CRTINFO DO` -- and once written
+    that way the field names settle the rest: `WIDTH, HEIGHT` share one
+    clause so they descend, `HEIGHT` at `SIND 0` and `WIDTH` at
+    `SIND 1`, and Apple clamps and writes **X before Y** where this had
+    both the other way round. }
   PROCEDURE FGOTOXY;
   BEGIN
-    IF Y < 0 THEN
+    WITH SYSCOM^.CRTINFO DO
     BEGIN
-      Y := 0
-    END;
-    IF Y > SYSCOM^.CRTINFO.HEIGHT THEN
-    BEGIN
-      Y := SYSCOM^.CRTINFO.HEIGHT
-    END;
-    IF X < 0 THEN
-    BEGIN
-      X := 0
-    END;
-    IF X > SYSCOM^.CRTINFO.WIDTH THEN
-    BEGIN
-      X := SYSCOM^.CRTINFO.WIDTH
+      IF X < 0 THEN
+        X := 0;
+      IF X > WIDTH THEN
+        X := WIDTH;
+      IF Y < 0 THEN
+        Y := 0;
+      IF Y > HEIGHT THEN
+        Y := HEIGHT
     END;
     WRITE(CHR(30));
-    WRITE(CHR(Y + 32));
-    WRITE(CHR(X + 32))
+    WRITE(CHR(X + 32));
+    WRITE(CHR(Y + 32))
   END;
 
   { `VOLSEARCH` = `PASCALSY.30` (finding 187). Finds the unit holding
@@ -3893,15 +3890,16 @@ PROGRAM PASCALSYSTEM;
     FOUND := FALSE;
     I := 1;
     WHILE (I <= FDIR^[0].DNUMFILES) AND NOT FOUND DO
-    BEGIN
-      IF (FDIR^[I].DTID = FTID) AND
-         (FINDPERM = (FDIR^[I].DACCESS.YEAR <> 100)) THEN
+      WITH FDIR^[I] DO
       BEGIN
-        DIRSEARCH := I;
-        FOUND := TRUE
-      END;
-      I := I + 1
-    END
+        IF DTID = FTID THEN
+          IF FINDPERM = (DACCESS.YEAR <> 100) THEN
+          BEGIN
+            DIRSEARCH := I;
+            FOUND := TRUE
+          END;
+        I := I + 1
+      END
   END;
 
   { `SCANTITLE` = `PASCALSY.33` (finding 189), the largest of the six
@@ -4132,23 +4130,22 @@ PROGRAM PASCALSYSTEM;
     in `LAST` -- reproduced literally, not simplified to reusing
     `LAST + 1`) and decrements `DNUMFILES`. `FPOPEN` calls this when a
     freshly-`FPALLOC`'d entry turns out too small to keep (finding
-    182). Compiles clean; `params=4` bytes exact, `locals=2` against
-    the real `6` -- two words short, same accepted class; the real
-    binary's own `IND 8` (an *unpacked* read of `DNUMFILES`) instead of
-    this host compiler's `LDP` is the `DLASTBYTE`-packing divergence
-    (finding 174) recurring for a different subrange field that also
-    happens to have its whole word to itself. }
+    182). **Exact** since finding 217. The two-word `data` gap was not
+    a gap: `WITH FDIR^[0] DO` is one word and a `FOR` loop's limit is
+    the other, and `WHILE`/`FOR` are told apart by exactly that word
+    (a `FOR` evaluates its limit once into a temp; a `WHILE` re-reads
+    the condition). The blank written into the vacated slot is `''`,
+    not fifteen spaces -- `LSA '' | SAS 15` pads it. }
   PROCEDURE DELENTRY;
-    VAR LAST: DIRRANGE;
+    VAR I: DIRRANGE;
   BEGIN
-    LAST := FDIR^[0].DNUMFILES - 1;
-    WHILE FINX <= LAST DO
+    WITH FDIR^[0] DO
     BEGIN
-      FDIR^[FINX] := FDIR^[FINX + 1];
-      FINX := FINX + 1
-    END;
-    FDIR^[FDIR^[0].DNUMFILES].DTID := '               ';
-    FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES - 1
+      FOR I := FINX TO DNUMFILES - 1 DO
+        FDIR^[I] := FDIR^[I + 1];
+      FDIR^[DNUMFILES].DTID := '';
+      DNUMFILES := DNUMFILES - 1
+    END
   END;
 
   { `INSENTRY` = `PASCALSY.35` (finding 185). `DELENTRY`'s mirror image:
@@ -4156,19 +4153,18 @@ PROGRAM PASCALSYSTEM;
     one to open a gap, copies `FENTRY` into the vacated slot, and
     increments `DNUMFILES`. `FPOPEN`'s own `FPALLOC` (finding 176)
     calls this with a freshly-built entry once free space is found.
-    Compiles clean; `params=6` bytes exact, `locals=2` against the real
-    `6` -- two words short, same accepted class. }
+    **Exact** since finding 217, the same two words as `DELENTRY`
+    above: a `WITH FDIR^[0] DO` and a `FOR ... DOWNTO` limit. }
   PROCEDURE INSENTRY;
     VAR I: DIRRANGE;
   BEGIN
-    I := FDIR^[0].DNUMFILES;
-    WHILE I >= FINX DO
+    WITH FDIR^[0] DO
     BEGIN
-      FDIR^[I + 1] := FDIR^[I];
-      I := I - 1
-    END;
-    FDIR^[FINX] := FENTRY;
-    FDIR^[0].DNUMFILES := FDIR^[0].DNUMFILES + 1
+      FOR I := DNUMFILES DOWNTO FINX DO
+        FDIR^[I + 1] := FDIR^[I];
+      FDIR^[FINX] := FENTRY;
+      DNUMFILES := DNUMFILES + 1
+    END
   END;
   { These three all go through `PUTCRT` (`PASCALSY.53`), which is now
     declared for real further up (finding 202f). They used to inline it
@@ -4235,9 +4231,17 @@ PROGRAM PASCALSYSTEM;
 
   { `PROMPT` = `PASCALSY.39` (finding 191). `HOMECURSOR`, `CLEARLINE`,
     then writes `PL` (the prompt-line string, `GETCOMMAND`'s own
-    scratch, global word `70`) to the console. Compiles clean,
-    `params=0` exact. }
+    scratch, global word `70`) to the console. **Exact** since finding
+    217, and it is the one procedure here closed by declaring
+    something rather than by writing a statement: see the `VAR` below. }
   PROCEDURE PROMPT;
+  VAR
+    { `data=2` with all seven instructions matching and not one of them
+      naming an offset. One declared word this body never touches, the
+      same shape `WAITSYSVOL` already carries -- the alternative
+      readings (a `WITH`, a `FOR` limit, a value-`STRING` shadow) all
+      emit code, and there is none. }
+    UNUSED1: INTEGER;
   BEGIN
     HOMECURSOR;
     CLEARLINE;

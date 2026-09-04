@@ -18632,3 +18632,73 @@ type by itself.
 Acceptance run kept in `acceptance/2026-09-03-pascalsystem-initialize/`.
 `probe_os_exact.py` now pins 49 by name and carries `INITIALI.6` as a
 fourth discrimination control in place of the one that closed.
+
+## 217. Eight more in two batches: the missing word is nearly always a `WITH`
+
+49 -> **57 of 111**, and the eight that closed shared one shape. Finding
+216b had just established that a `data` count one or two words short is
+evidence about a `WITH`'s presence and extent rather than about a
+declaration; run down the scoreboard with that in mind and the same answer
+keeps coming back.
+
+| procedure | was | what it needed |
+| --- | --- | --- |
+| `INITIALI.9` | 60/62 | the flag is `WHAT_H2`, and `TRY_OPEN` takes a fifth argument |
+| `INITIALI.10` | 55/59, `params` 8/10 | `VAR GOT: BOOLEAN`, written before it is tested |
+| `INITIALI.11` | 71/71, `data` 24/0 | the title buffer belongs to the *parent* |
+| `PASCALSY.29` | 45/48, `data` 0/2 | `WITH SYSCOM^.CRTINFO DO`, and X before Y |
+| `PASCALSY.32` | 45/45, `data` 4/6 | `WITH FDIR^[I] DO`, and nested `IF`s not `AND` |
+| `PASCALSY.34` | 47/45, `data` 2/6 | `WITH FDIR^[0] DO` plus a `FOR` limit |
+| `PASCALSY.35` | 40/40, `data` 2/6 | the same two words |
+| `PASCALSY.39` | 7/7, `data` 0/2 | one declared word nothing touches |
+
+### 217a. `WHILE` and `FOR` differ by exactly one word
+
+`DELENTRY` and `INSENTRY` were each recorded as "two words short, same
+accepted class". Neither word was a declaration. One is a `WITH FDIR^[0]`
+pointer; the other is a **`FOR` loop's limit temp**, and that is the useful
+part: a `FOR` evaluates its bound once into a frame word, a `WHILE`
+re-reads its condition every pass. So a body that reads as a counted loop
+and comes out one word light is a `WHILE` that should be a `FOR`, and the
+frame says so before the instructions do. Both are now exact, `FOR ... TO`
+in one and `FOR ... DOWNTO` in the other.
+
+`DELENTRY` also blanks the vacated slot with `''`, not fifteen spaces:
+`LSA '' | SAS 15` pads it, and writing the spaces out was the same
+instruction count and the wrong constant.
+
+### 217b. `PASCALSY.39` closed by declaring, not by writing
+
+`PROMPT` is seven instructions, all seven matched, and `data` 0 against 2
+with **no offset named anywhere in the body**. That had been left open on
+purpose since finding 208a on the grounds that size alone cannot place a
+variable. It still cannot -- but by now every other reading is excluded:
+a `WITH`, a `FOR` limit and a value-`STRING` shadow copy all emit code, and
+there is none. What is left is a declared word the body never touches,
+which this file already has a precedent for in `WAITSYSVOL`. Declared and
+documented as unused, and it is now exact.
+
+### 217c. `INITIALI.10`'s fifth parameter, found in the caller's arguments
+
+`TRY_OPEN` had `params` 8 against Apple's 10 and its callers were pushing
+one argument fewer. The extra actuals are `LDA 2,17` and `LDA 2,16`, and
+`USERINFO`'s own field offsets -- already pinned by the surrounding code --
+name them exactly: `GOTSYM` and `GOTCODE`, the two booleans of `INFOREC`
+that nothing else in the OS had ever been seen to write. So the formal is
+`VAR GOT: BOOLEAN`, and the body assigns it before testing it
+(`GOT := WORK_FIB.FISOPEN; IF GOT THEN ...`), which is why Apple reads
+`SLDL 1 | SIND 0` where a direct test would re-read `FISOPEN`.
+
+That call also fixed `INITIALI.9` and `.11`: both branch on `WHAT_H2`
+(`LOD 2,393`, cold boot) where this had `JUST_BOOT` (`LOD 2,391`). Two
+globals one word apart and both booleans -- the kind of thing only an
+offset comparison catches.
+
+### 217d. A local that belongs to the parent
+
+`INITFILES` had `data=24` against Apple's **0**, with all 71 instructions
+matching. Apple's `.11` and `.6` both build their file titles in a
+`STRING[40]` at `LAO 1` -- offsets 1-21 of `INITIALIZE`'s frame, the block
+finding 216 had just identified. A nested procedure using its parent's
+scratch instead of its own is invisible in the instruction text (`LAO 1`
+and `LLA 6` read the same way) and obvious in the frame.

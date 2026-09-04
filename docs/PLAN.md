@@ -1360,6 +1360,13 @@ a route end to end; everything else is a straight read-and-rebuild.
     22, and a free union at 57 that fabricates a pointer from a
     literal address, since 1.3 has no `@`. **49 of 111.**
 
+    Eight more followed immediately (finding 217), all of them the same
+    shape: a `data` count one or two words short is evidence about a
+    `WITH` (or a `FOR` loop's limit temp), not about a declaration.
+    `PASCALSY.39` closed too -- not by writing a statement but by
+    declaring the one word its body never touches, every other reading
+    of that word having been excluded. **57 of 111.**
+
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
@@ -1522,7 +1529,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (49 as of finding 216).
+  (57 as of finding 217).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
