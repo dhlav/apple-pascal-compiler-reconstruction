@@ -1412,13 +1412,27 @@ a route end to end; everything else is a straight read-and-rebuild.
     in `probe_os_exact`'s `STILL_DIFFERS` list as the control: if
     either ever reports exact, 218b has been answered.
 
+    Then `WRITEDIR` and `FETCHDIR` (finding 221), the file's two
+    directory routines, both held open by one misreading. Their
+    `data` gaps had been written up as a "missing address-cache"
+    class of their own -- the real binary caches `SYSCOM^`,
+    `UNITABLE[FUNIT]` and `GDIRP^[...]` into scratch locals where the
+    reconstruction recomputed each one fresh, and that was taken as a
+    compiler difference nothing in the source could reach. It is
+    reachable, and it is `WITH`: six pointers across the two
+    routines, one per open `WITH`. The note was right about what the
+    binary does and wrong about why it was out of reach. Also from
+    the offsets: `WRITEDIR`'s freshness test reads `HASCLOCK`, not
+    `NOBREAK` -- bit 0, the *last* name of the seven-boolean group,
+    and the only reading that makes sense, since a "written in the
+    last 300 ticks" test says nothing on a machine with no clock.
+    **72 of 111.**
+
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
-    `PASCALSY.42` (`FETCHDIR`) at 287 instructions against 235 and
-    `PASCALSY.31` at 152/129 -- both have real bodies that are close
-    rather than stubs, so they are diffs to read rather than routines to
-    decode.
+    `INITIALI.2` (77/317) and `INITIALI.6` (`data` 624 against 746) --
+    the two largest remaining frame gaps.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1575,7 +1589,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (70 as of finding 220).
+  (72 as of finding 221).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

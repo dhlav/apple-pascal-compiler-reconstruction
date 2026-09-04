@@ -3929,7 +3929,14 @@ PROGRAM PASCALSYSTEM;
     ticks by `TIME`, this file's own `CSP 9`) with interrupts disabled
     (`SYSCOM^.MISCINFO.NOBREAK`), nothing else could plausibly have
     changed the volume in between, so the paranoid re-check below is
-    skipped outright. Otherwise: re-read block `2` (the directory's own
+    skipped outright. That third conjunct is `HASCLOCK`, not
+    `NOBREAK`: Apple reads bit 0 of `MISCINFO`, which the field
+    group's own reversal makes the *last* of the seven booleans, and
+    it is the reading the code wants anyway -- a `TIME` comparison
+    says nothing on a machine with no clock. The offsets caught a
+    semantic error, not just a spelling.
+
+    Otherwise: re-read block `2` (the directory's own
     disk location) into a scratch `DIRENTRY` and compare *its* `DVID`
     against `FDIR^[0]`'s -- confirming the directory this process has
     cached in memory really still belongs to what's physically on the
@@ -3950,46 +3957,50 @@ PROGRAM PASCALSYSTEM;
     `FDIR^[0].DLOADTIME` to now, closing the loop with the "was this
     written very recently" fast-path check above.
 
-    Compiles clean; `params=4` bytes exact, `locals=32` against the
-    real `36` -- two words short, the same accepted host-compiler gap
-    class as everywhere else in this file. }
+    The two missing `data` words are `WITH UNITABLE[FUNIT], FDIR^[0]
+    DO`, one pointer each, spanning the whole body -- finding 217's
+    rule. Two smaller things came from the bytes as well: the failed
+    re-read has no `ELSE OK := FALSE` (it is already `FALSE` there,
+    and Apple does not write it), and the invalidating store is the
+    *empty* string, not seven spaces. }
   PROCEDURE WRITEDIR;
     VAR
-      OK: BOOLEAN;
       HITIME, LOTIME: INTEGER;
+      OK: BOOLEAN;
       BACKUP: DIRENTRY;
   BEGIN
-    OK := (UNITABLE[FUNIT].UVID = FDIR^[0].DVID) AND
-          ((FDIR^[0].DFKIND = UNTYPEDFILE) OR (FDIR^[0].DFKIND = SECUREDIR));
-    IF OK THEN
+    WITH UNITABLE[FUNIT], FDIR^[0] DO
     BEGIN
-      TIME(HITIME, LOTIME);
-      OK := (LOTIME - FDIR^[0].DLOADTIME <= 300) AND
-            (LOTIME - FDIR^[0].DLOADTIME >= 0) AND
-            SYSCOM^.MISCINFO.NOBREAK;
-      IF NOT OK THEN
-      BEGIN
-        UNITREAD(FUNIT, BACKUP, 26, 2);
-        IF IORESULT = 0 THEN
-          OK := FDIR^[0].DVID = BACKUP.DVID
-        ELSE
-          OK := FALSE
-      END;
+      OK := (UVID = DVID) AND
+            ((DFKIND = UNTYPEDFILE) OR (DFKIND = SECUREDIR));
       IF OK THEN
       BEGIN
-        FDIR^[0].DFIRSTBLK := 0;
-        UNITWRITE(FUNIT, FDIR^, (FDIR^[0].DNUMFILES + 1) * 26, 2);
-        OK := IORESULT = 0;
-        IF FDIR^[0].DLASTBLK = 10 THEN
-          UNITWRITE(FUNIT, FDIR^, (FDIR^[0].DNUMFILES + 1) * 26, 6);
+        TIME(HITIME, LOTIME);
+        OK := (LOTIME - DLOADTIME <= 300) AND
+              (LOTIME - DLOADTIME >= 0) AND
+              SYSCOM^.MISCINFO.HASCLOCK;
+        IF NOT OK THEN
+        BEGIN
+          UNITREAD(FUNIT, BACKUP, 26, 2);
+          IF IORESULT = 0 THEN
+            OK := DVID = BACKUP.DVID
+        END;
         IF OK THEN
-          TIME(HITIME, FDIR^[0].DLOADTIME)
+        BEGIN
+          DFIRSTBLK := 0;
+          UNITWRITE(FUNIT, FDIR^, (DNUMFILES + 1) * 26, 2);
+          OK := IORESULT = 0;
+          IF DLASTBLK = 10 THEN
+            UNITWRITE(FUNIT, FDIR^, (DNUMFILES + 1) * 26, 6);
+          IF OK THEN
+            TIME(HITIME, DLOADTIME)
+        END
+      END;
+      IF NOT OK THEN
+      BEGIN
+        UVID := '';
+        UEOVBLK := 32767
       END
-    END;
-    IF NOT OK THEN
-    BEGIN
-      UNITABLE[FUNIT].UVID := '       ';
-      UNITABLE[FUNIT].UEOVBLK := 32767
     END
   END;
 
@@ -4414,81 +4425,86 @@ PROGRAM PASCALSYSTEM;
     blanked, `UEOVBLK := 32767`) plus `RELEASE(SYSCOM^.GDIRP)` and
     `SYSCOM^.GDIRP := NIL`, giving back the heap space.
 
-    Compiles clean; `params=6` bytes exact (`FUNIT` plus this file's
-    own established 2-word function-result reservation). `locals=6`
-    against the real `14` -- a larger gap than usual, but explained by
-    the same already-accepted "missing address-cache" class (findings
-    174/179/180/183): this routine dereferences `SYSCOM^`,
-    `UNITABLE[FUNIT]`, and `SYSCOM^.GDIRP^[...]` more times than
-    almost anything else in this file, and the real binary caches each
-    of those addresses into its own scratch local where this host
-    compiler always recomputes them fresh. }
+    The eight-byte `data` gap was read as a "missing address-cache"
+    class of its own (findings 174/179/180/183). It is not a class of
+    its own: it is four `WITH` pointers, finding 217's rule, one each
+    for `SYSCOM^`, `UNITABLE[FUNIT]`, `GDIRP^[0]` and `GDIRP^[I]`.
+    That guess was right about *what the binary does* -- it does cache
+    those four addresses -- and wrong about why it was unreachable.
+    `WITH` is exactly how a Pascal programmer asks for the cache, and
+    writing the dereferences out longhand is what stopped the compiler
+    emitting it.
+
+    The bytes also say the scan is conditional in a way the prose here
+    already suspected: the whole per-entry validation runs only when
+    `DVID <> UVID`, so re-reading a volume that is still the one
+    `UNITABLE` remembers costs a `UNITREAD` and four comparisons and
+    nothing more. And the invalidating store is the empty string, not
+    seven spaces -- same as `WRITEDIR`. }
   FUNCTION FETCHDIR;
     VAR
-      OK: BOOLEAN;
       I: DIRRANGE;
+      OK: BOOLEAN;
       HITIME: INTEGER;
   BEGIN
     FETCHDIR := FALSE;
-    IF SYSCOM^.GDIRP = NIL THEN
-      NEW(SYSCOM^.GDIRP);
-    UNITREAD(FUNIT, SYSCOM^.GDIRP^, 2028, 2);
-    OK := SYSCOM^.IORSLT = INOERROR;
-    IF OK THEN
+    WITH SYSCOM^, UNITABLE[FUNIT] DO
     BEGIN
-      OK := FALSE;
-      IF (SYSCOM^.GDIRP^[0].DFIRSTBLK = 0) AND
-         ((SYSCOM^.MISCINFO.USERKIND = BOOKER) OR
-          ((SYSCOM^.MISCINFO.USERKIND IN [AQUIZ, PQUIZ]) AND
-           (SYSCOM^.GDIRP^[0].DFKIND = SECUREDIR)) OR
-          ((SYSCOM^.MISCINFO.USERKIND = NORMAL) AND
-           (SYSCOM^.GDIRP^[0].DFKIND = UNTYPEDFILE))) THEN
-        IF (LENGTH(SYSCOM^.GDIRP^[0].DVID) > 0) AND
-           (LENGTH(SYSCOM^.GDIRP^[0].DVID) <= 7) AND
-           (SYSCOM^.GDIRP^[0].DNUMFILES >= 0) AND
-           (SYSCOM^.GDIRP^[0].DNUMFILES <= 77) THEN
+      IF GDIRP = NIL THEN
+        NEW(GDIRP);
+      UNITREAD(FUNIT, GDIRP^, 2028, 2);
+      OK := IORSLT = INOERROR;
+      IF OK THEN
+        WITH GDIRP^[0] DO
         BEGIN
-          OK := TRUE;
-          IF SYSCOM^.GDIRP^[0].DVID <> UNITABLE[FUNIT].UVID THEN
-          BEGIN
-            I := 1;
-            WHILE I <= SYSCOM^.GDIRP^[0].DNUMFILES DO
+          OK := FALSE;
+          IF (DFIRSTBLK = 0) AND
+             ((MISCINFO.USERKIND = BOOKER) OR
+              ((MISCINFO.USERKIND IN [AQUIZ, PQUIZ]) AND
+               (DFKIND = SECUREDIR)) OR
+              ((MISCINFO.USERKIND = NORMAL) AND
+               (DFKIND = UNTYPEDFILE))) THEN
+            IF (LENGTH(DVID) > 0) AND (LENGTH(DVID) <= 7) AND
+               (DNUMFILES >= 0) AND (DNUMFILES <= 77) THEN
             BEGIN
-              IF (LENGTH(SYSCOM^.GDIRP^[I].DTID) <= 0) OR
-                 (LENGTH(SYSCOM^.GDIRP^[I].DTID) > 15) OR
-                 (SYSCOM^.GDIRP^[I].DLASTBLK < SYSCOM^.GDIRP^[I].DFIRSTBLK) OR
-                 (SYSCOM^.GDIRP^[I].DLASTBYTE > 512) OR
-                 (SYSCOM^.GDIRP^[I].DLASTBYTE <= 0) OR
-                 (SYSCOM^.GDIRP^[I].DACCESS.YEAR >= 100) THEN
+              OK := TRUE;
+              IF DVID <> UVID THEN
               BEGIN
-                OK := FALSE;
-                DELENTRY(I, SYSCOM^.GDIRP)
+                I := 1;
+                WHILE I <= DNUMFILES DO
+                  WITH GDIRP^[I] DO
+                    IF (LENGTH(DTID) <= 0) OR (LENGTH(DTID) > 15) OR
+                       (DLASTBLK < DFIRSTBLK) OR
+                       (DLASTBYTE > 512) OR (DLASTBYTE <= 0) OR
+                       (DACCESS.YEAR >= 100) THEN
+                    BEGIN
+                      OK := FALSE;
+                      DELENTRY(I, GDIRP)
+                    END
+                    ELSE
+                      I := I + 1;
+                IF NOT OK THEN
+                BEGIN
+                  UNITWRITE(FUNIT, GDIRP^, (DNUMFILES + 1) * 26, 2);
+                  OK := IORSLT = INOERROR
+                END
               END
-              ELSE
-                I := I + 1
             END;
-            IF NOT OK THEN
-            BEGIN
-              UNITWRITE(FUNIT, SYSCOM^.GDIRP^,
-                        (SYSCOM^.GDIRP^[0].DNUMFILES + 1) * 26, 2);
-              OK := SYSCOM^.IORSLT = INOERROR
-            END
+          IF OK THEN
+          BEGIN
+            UVID := DVID;
+            UEOVBLK := DEOVBLK;
+            TIME(HITIME, DLOADTIME)
           END
-        END
-    END;
-    FETCHDIR := OK;
-    IF OK THEN
-    BEGIN
-      UNITABLE[FUNIT].UVID := SYSCOM^.GDIRP^[0].DVID;
-      UNITABLE[FUNIT].UEOVBLK := SYSCOM^.GDIRP^[0].DEOVBLK;
-      TIME(HITIME, SYSCOM^.GDIRP^[0].DLOADTIME)
-    END
-    ELSE
-    BEGIN
-      UNITABLE[FUNIT].UVID := '       ';
-      UNITABLE[FUNIT].UEOVBLK := 32767;
-      RELEASE(SYSCOM^.GDIRP);
-      SYSCOM^.GDIRP := NIL
+        END;
+      FETCHDIR := OK;
+      IF NOT OK THEN
+      BEGIN
+        UVID := '';
+        UEOVBLK := 32767;
+        RELEASE(GDIRP);
+        GDIRP := NIL
+      END
     END
   END;
   PROCEDURE TITLENORM;

@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-closetype" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-dirwith" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -52,7 +52,8 @@ EXACT = [
     "PASCALSY.16", "PASCALSY.17", "PASCALSY.19", "PASCALSY.20",
     "PASCALSY.21", "PASCALSY.22",
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
-    "PASCALSY.29", "PASCALSY.30", "PASCALSY.32",
+    "PASCALSY.29", "PASCALSY.30", "PASCALSY.31", "PASCALSY.32",
+    "PASCALSY.42",
     "PASCALSY.34", "PASCALSY.35", "PASCALSY.39",
     "PASCALSY.33",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
@@ -76,7 +77,7 @@ EXACT = [
 STILL_DIFFERS = [
     "PASCALSY.13",   # 1 instruction against Apple's 109, still a stub
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
-    "PASCALSY.42",   # FETCHDIR: 287 instructions against Apple's 235
+    "INITIALI.2",    # data 604 against Apple's 1162
     "INITIALI.6",    # INITUNITABLE: data 624 against Apple's 746
     # Frame-identical, and every instruction matches but the two the
     # finding-218b stand-in costs. These two are the control for that

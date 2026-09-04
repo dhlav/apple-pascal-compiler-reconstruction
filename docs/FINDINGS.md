@@ -18953,3 +18953,61 @@ they are a `GOTO` to a label at the very end of the body. The
 reconstruction reached the same place by setting `I := J + 1`, which
 is behaviourally identical and compiles differently. Its own three
 integers are declared `TARGETCHAR, I, J`, from the offsets.
+
+## 221. WITH is how a Pascal programmer asks for an address cache
+
+**VERIFIED BINARY FACT.** `WRITEDIR` (`PASCALSY.31`, 129
+instructions) and `FETCHDIR` (`PASCALSY.42`, 235) are both exact now,
+and both were held open by the same misreading. Their `data` gaps had
+been written up as a "missing address-cache" class of their own
+(findings 174/179/180/183): the real binary caches `SYSCOM^`,
+`UNITABLE[FUNIT]` and `GDIRP^[...]` into scratch locals where the
+reconstruction recomputed each one fresh, and that was taken as a
+compiler difference nothing in the source could reach.
+
+It is reachable. It is `WITH`. Six pointers across the two routines,
+one per open `WITH`, and writing the dereferences out longhand is
+precisely what stopped the compiler emitting them:
+
+| routine | Apple's temps | what each holds |
+| --- | --- | --- |
+| `PASCALSY.31` | 19, 20 | `UNITABLE[FUNIT]`, `FDIR^[0]` |
+| `PASCALSY.42` | 7, 8, 9, 10 | `SYSCOM^`, `UNITABLE[FUNIT]`, `GDIRP^[0]`, `GDIRP^[I]` |
+
+The earlier note was right about *what the binary does* and wrong
+about why it was out of reach. That is worth keeping as a shape: a
+`data` gap explained as "the real compiler caches an address" is
+almost always a `WITH` that has not been written, not a compiler
+difference -- and `FETCHDIR`'s eight bytes were the largest such gap
+in the file.
+
+### 221a. FETCHDIR's scan is conditional, and both routines blank with ''
+
+Three more things the bytes settled:
+
+* The whole per-entry directory validation runs only when
+  `DVID <> UVID`. Re-reading a volume that is still the one
+  `UNITABLE` remembers costs a `UNITREAD` and four comparisons and
+  nothing else.
+* Both routines' cache-invalidating store is `UVID := ''`, the
+  *empty* string (`LSA '' | NOP | SAS 7`), not the seven spaces the
+  reconstruction wrote.
+* `WRITEDIR`'s failed re-read has no `ELSE OK := FALSE`. `OK` is
+  already `FALSE` there -- the branch is only reached from inside
+  `IF NOT OK` -- and Apple does not write the redundant arm.
+
+### 221b. The freshness check is HASCLOCK, not NOBREAK
+
+`WRITEDIR`'s fast path reads bit 0 of `SYSCOM^.MISCINFO`
+(`SLDC 1 | SLDC 0 | LDP`). The reconstruction named `NOBREAK`, which
+the seven-boolean group's own reversal puts at bit **6**; bit 0 is the
+last name in the group, `HASCLOCK`. It is also the only reading that
+makes sense of the surrounding code -- a "was this written in the last
+300 ticks" test says nothing at all on a machine with no clock. An
+offset comparison caught a semantic error, not a spelling.
+
+`PASCALSY.31`'s own local order came from the same place: `HITIME,
+LOTIME: INTEGER` then `OK: BOOLEAN` then `BACKUP`, because `TIME`'s
+two arguments are at 3 and 4 and the `SRO 5 | SLDO 5` boolean temp is
+at 5. `FETCHDIR` is `I` then `OK` then `HITIME`, by the same
+measurement.
