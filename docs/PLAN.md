@@ -1428,11 +1428,36 @@ a route end to end; everything else is a straight read-and-rebuild.
     last 300 ticks" test says nothing on a machine with no clock.
     **72 of 111.**
 
+    Then three in `INITIALIZE` (finding 222), taking that segment to
+    10 of its 11. `INITIALI.4`/`.5` are seventeen instructions each,
+    identical but for `INC 36` against `INC 47` -- `CRTCTRL.PREFIXED`
+    and `CRTINFO.PREFIXED`, both landing exactly where `SYSCOMREC`'s
+    packed-field count puts them -- and they add a character to
+    `CONFIG_CHAR` when the flag is clear. `LDA 3,312` with `ADJ 16`
+    also gives the first independent check of the Parker/Tribby global
+    offsets past `FILENAME` against Apple's own bytes: they are right.
+    `INITIALI.6`'s 61 missing words are a private 60-word copy of the
+    title table -- needed, because `FILENAME[F]` is overwritten the
+    moment a tool is found -- plus one `WITH`. **75 of 111.**
+
+    `FILEPROC.4` (`FPOPEN`) then settled finding 220's status. Its
+    third parameter is compared `> 1`, `= 2`, `= 4` *and* driven
+    straight into `FJP` five times, in the same procedure; error 129
+    and error 135 respectively under the shipped compiler, both
+    confirmed on hardware. Together with 218b's `FNXTBLK` that is the
+    same variable used as integer and Boolean inside one procedure,
+    twice, in unrelated segments -- a systematic relaxation of
+    BOOLEAN/INTEGER typing in whatever compiler built the OS, not a
+    scattering of odd constructs. `FILEPROC.4` cannot be made exact.
+
     **Open, in rough order of value.**
     `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
     and already half-readable in the lift.
-    `INITIALI.2` (77/317) and `INITIALI.6` (`data` 624 against 746) --
-    the two largest remaining frame gaps.
+    `INITIALI.2` (`INITSYSCOM`, 77/317) -- the last one in that
+    segment, fully decoded in finding 222 but not yet written: it
+    reads `*SYSTEM.MISCINFO` into a whole 240-word local `SYSCOMREC`
+    and copies four spans out of it, then makes sixteen `MERGEA`/
+    `MERGEB` calls and builds `BSPACE_STR`/`DLINE_STR`.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1589,7 +1614,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (72 as of finding 221).
+  (75 as of finding 222).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

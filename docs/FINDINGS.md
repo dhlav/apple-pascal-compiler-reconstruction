@@ -19011,3 +19011,98 @@ LOTIME: INTEGER` then `OK: BOOLEAN` then `BACKUP`, because `TIME`'s
 two arguments are at 3 and 4 and the `SRO 5 | SLDO 5` boolean temp is
 at 5. `FETCHDIR` is `I` then `OK` then `HITIME`, by the same
 measurement.
+
+## 222. INITIALIZE is 10 of 11, and FPOPEN proves finding 220 is systematic
+
+Three more exact (`INITIALI.4`, `.5`, `.6`), taking `SYSTEM.PASCAL` to
+**75 of 111** and the `INITIALIZE` segment to 10 of its 11
+procedures. Plus the strongest evidence yet for finding 220.
+
+### 222a. FPOPEN uses one parameter as both INTEGER and BOOLEAN
+
+`FILEPROC.4`'s third parameter is compared `> 1`, `= 2` and `= 4`
+(`0x0284`-`0x028f`) and is *also* driven straight into `FJP` five
+times and through `LNOT` once, in the same procedure. No Pascal type
+permits both. `IF OLDOK > 1 THEN` with `OLDOK: BOOLEAN` is error
+**129**, "type conflict of operands", confirmed on real hardware with
+an isolated probe; `IF OLDOK THEN` with `OLDOK: INTEGER` is error
+135. `FILEPROC.8` closes the ring: it takes the same slot from the
+same dispatcher and uses it as `SLDL 2 | FJP`.
+
+Finding 220 said two unrelated constructs. This is a third, and it is
+different in kind: 218b's `FNXTBLK` and this are both *the same
+variable used as an integer and as a Boolean inside one procedure*.
+That is not an odd construct here and there -- it is a systematic
+relaxation of BOOLEAN/INTEGER typing in whatever compiler built the
+OS. `FILEPROC.4` therefore cannot be made exact, and the reason is
+recorded rather than papered over with the `TRICKARRAY` the
+reconstruction currently uses.
+
+Its frame is decoded anyway, for whoever closes the rest: four `WITH`
+temps (26 `F`, 27 reused for `SWAPFIB^` and then `UNITABLE[UNITNO]`,
+28 and 29 for `DIR^[DIRIDX]`/`F.FHEADER`/`FHEADER.DACCESS`), and
+`SCANTITLE`'s own locals at `SEGS` 9, `KIND` 10, `FILEVID` 14-17,
+`FILETID` 18-25. Apple also keeps the heap-size difference in a
+scratch integer at 8 instead of recomputing it, and tests
+`< 2028 + 400`, not `<=`.
+
+### 222b. INITIALI.4/.5 are CRTCTRL.PREFIXED and CRTINFO.PREFIXED
+
+Seventeen instructions each, identical but for one operand: `INC 36`
+against `INC 47`. Counting `SYSCOMREC`'s packed fields puts
+`CRTCTRL.PREFIXED` at `SYSCOM+36` (CRTCTRL starts at 31; its ten
+8-bit items fill five words) and `CRTINFO.PREFIXED` at `SYSCOM+47`
+(CRTINFO starts at 37 -- already fixed by `FGOTOXY` -- with two
+`INTEGER`s and fifteen `CHAR`s ahead of its flag word). Each takes an
+index into one of those arrays and, when the flag is *clear*, adds a
+character to `CONFIG_CHAR`:
+
+```pascal
+PROCEDURE MERGEA(IX: INTEGER; CH: CHAR);
+BEGIN
+  IF NOT SYSCOM^.CRTCTRL.PREFIXED[IX] THEN
+    CONFIG_CHAR := CONFIG_CHAR + [CH]
+END;
+```
+
+`LDA 3,312` with `ADJ 16`/`STM 16` confirms `CONFIG_CHAR` is at global
+312 and is a full 16-word `SET OF CHAR` -- the first independent check
+of the Parker/Tribby global offsets past `FILENAME` (finding 141's
+block) against Apple's own bytes. They land exactly where this file
+already had them.
+
+The earlier reading -- "a per-bit OR-merge between the file's saved
+profile and the profile already in `SYSCOM^`" -- had the direction and
+both operands wrong. The names `MERGEA`/`MERGEB` describe that guess,
+not this, and are left alone until something says what Apple called
+them.
+
+### 222c. INITUNITABLE keeps a private copy of the title table
+
+`INITIALI.6`'s 61 missing `data` words are a 60-word local
+`FILE_TABLE` (`LLA 294 | LDA 2,252 | MOV 60`) plus a `WITH
+UNITABLE[LUNIT]` pointer. The copy is not redundancy: `FILENAME[F]` is
+*overwritten* with `VID:NAME` the moment a tool is found, so the
+search has to build its candidates from a pristine copy or the second
+unit would look for `MYVOL:MYVOL:SYSTEM.EDITOR`.
+
+Two smaller corrections from the same disassembly. The block-device
+set is `[4, 5, 9..20]`, not `[4, 5, 9..12]` -- and that is visible
+without decoding the constant at all, because Apple's `LDC` is *two*
+words (`$FE30 $001F`) where a set topping out at 12 needs one. And the
+`DKVID := SYVID` guard is `WHAT_H2` (global 393), not `JUST_BOOT`
+(391) -- finding 217c's pair of adjacent booleans, caught a second
+time.
+
+### 222d. CONCAT's third argument is a running cumulative maximum
+
+`CONCAT(a, b)` compiles to a temp, `temp := ''`, one `SCONCAT` per
+argument, and an `SAS` into the destination -- whose address is pushed
+*before* the temp is built, which is why a `LAO`/`LDA` appears thirty
+instructions ahead of the store that consumes it. The third argument
+to each `SCONCAT` is the cumulative maximum length so far, not the
+source's own: `INITIALI.2`'s `CONCAT(BSPACE_STR, BSPACE_STR)` passes
+`6` then `12`, and `INITIALI.6`'s `CONCAT(UVID, LOCALNAMES[F])` passes
+`7` then `30` (= 7 + `FULL_ID`'s 23). Useful for reading any
+`CONCAT` back out of p-code: the second number minus the first is the
+second argument's declared maximum.

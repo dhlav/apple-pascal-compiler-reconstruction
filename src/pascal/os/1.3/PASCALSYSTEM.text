@@ -1103,21 +1103,33 @@ PROGRAM PASCALSYSTEM;
       END;
 
       { `INITIALI.4`/`.5` -- not in UCSD's own `INITSYSCOM`, Apple-
-        specific. `.2`'s own body calls each eight times with a pair of
-        small integer arguments (mostly `8`/`0`), immediately after
-        reading `*SYSTEM.MISCINFO`, then again around `CRTCTRL`'s own
-        16-entry `PREFIXED` array -- read as a per-bit OR-merge between
-        the file's saved profile and the profile already in `SYSCOM^`,
-        one for `MISCINFO`-shaped bits and one for `CRTCTRL`/`CRTINFO`-
-        shaped bits, but which specific bits is not decoded. Signatures
-        guessed only to preserve procedure numbering; not Apple's real
-        content. Named apart at more than 8 characters -- `MERGEA`/
-        `MERGEB` collided identically at 8 (finding: this session). }
-      PROCEDURE MERGEA(A, B: INTEGER);
+        specific, and now decoded. They are the same seventeen
+        instructions apart from one operand: `INC 36` against
+        `INC 47`. Counting `SYSCOMREC`'s own packed fields puts
+        `CRTCTRL.PREFIXED` at `SYSCOM+36` and `CRTINFO.PREFIXED` at
+        `SYSCOM+47` -- `CRTCTRL` starts at 31 and its ten 8-bit items
+        fill five words; `CRTINFO` starts at 37 (already fixed by
+        `FGOTOXY`) with two `INTEGER`s and fifteen `CHAR`s ahead of
+        its own flag word. So each takes an index into one of the two
+        `PREFIXED` arrays and, when that flag is *clear*, adds a
+        character to `CONFIG_CHAR` (`LDA 3,312`, sixteen words, which
+        is a `SET OF CHAR` exactly). The earlier reading -- "a per-bit
+        OR-merge between the file's profile and `SYSCOM^`'s" -- had
+        the direction and the operands wrong.
+
+        The names stay `MERGEA`/`MERGEB` for now: they describe the
+        old guess, not this, but renaming twice is worse than renaming
+        late and nothing yet says what Apple called them. They also
+        collide at 8 characters if shortened. }
+      PROCEDURE MERGEA(IX: INTEGER; CH: CHAR);
       BEGIN
+        IF NOT SYSCOM^.CRTCTRL.PREFIXED[IX] THEN
+          CONFIG_CHAR := CONFIG_CHAR + [CH]
       END;
-      PROCEDURE MERGEB(A, B: INTEGER);
+      PROCEDURE MERGEB(IX: INTEGER; CH: CHAR);
       BEGIN
+        IF NOT SYSCOM^.CRTINFO.PREFIXED[IX] THEN
+          CONFIG_CHAR := CONFIG_CHAR + [CH]
       END;
 
     BEGIN
@@ -1167,6 +1179,14 @@ PROGRAM PASCALSYSTEM;
         LDIR: DIRP;
         LFIB: FIB;
         F: SYSFILE;
+        { A whole second copy of the five titles, 60 words of frame
+          (`LLA 294 | LDA 2,252 | MOV 60`). `FILENAME[F]` is
+          *overwritten* with `VID:NAME` the moment a tool is found, so
+          the search below has to build its candidates from a pristine
+          copy or the second unit would look for
+          `MYVOL:MYVOL:SYSTEM.EDITOR`. The frame said 60 words before
+          the reason was clear. }
+        LOCALNAMES: FILE_TABLE;
         NOT_FOUND: SET OF SYSFILE;
 
       { `INITIALI.7` = INIT_ENTRY: clears a fixed unit and, if that
@@ -1186,44 +1206,46 @@ PROGRAM PASCALSYSTEM;
       FILENAME[EDITOR] := ':SYSTEM.EDITOR';
       FILENAME[FILER] := ':SYSTEM.FILER';
       FILENAME[LINKER] := ':SYSTEM.LINKER';
+      LOCALNAMES := FILENAME;
       NOT_FOUND := [ASSMBLER..LINKER];
       FINIT(LFIB, NIL, -1);
       FOR LUNIT := 0 TO MAXUNIT DO
-      BEGIN
-        UNITABLE[LUNIT].UVID := '';
-        UNITABLE[LUNIT].UISBLKD := LUNIT IN [4, 5, 9, 10, 11, 12];
-        IF UNITABLE[LUNIT].UISBLKD THEN
+        WITH UNITABLE[LUNIT] DO
         BEGIN
-          UNITABLE[LUNIT].UEOVBLK := MAXINT;
-          UNITCLEAR(LUNIT);
-          IF IORESULT = 0 THEN
-            IF FETCHDIR(LUNIT) THEN
-            BEGIN
-              UNITABLE[LUNIT].UVID := SYSCOM^.GDIRP^[0].DVID;
-              IF LUNIT = SYSCOM^.SYSUNIT THEN
+          UVID := '';
+          UISBLKD := LUNIT IN [4, 5, 9..20];
+          IF UISBLKD THEN
+          BEGIN
+            UEOVBLK := MAXINT;
+            UNITCLEAR(LUNIT);
+            IF IORESULT = 0 THEN
+              IF FETCHDIR(LUNIT) THEN
               BEGIN
-                SYVID := UNITABLE[LUNIT].UVID;
-                TITLEBUF := '*SYSTEM.STARTUP';
-                FOPEN(LFIB, TITLEBUF, TRUE, NIL);
-                STARTUP := LFIB.FISOPEN;
-                FCLOSE(LFIB, CNORMAL)
-              END;
-              FOR F := ASSMBLER TO LINKER DO
-                IF (LUNIT = SYSCOM^.SYSUNIT) OR (F IN NOT_FOUND) THEN
+                UVID := SYSCOM^.GDIRP^[0].DVID;
+                IF LUNIT = SYSCOM^.SYSUNIT THEN
                 BEGIN
-                  TITLEBUF := CONCAT(UNITABLE[LUNIT].UVID, FILENAME[F]);
+                  SYVID := UVID;
+                  TITLEBUF := '*SYSTEM.STARTUP';
                   FOPEN(LFIB, TITLEBUF, TRUE, NIL);
-                  IF LFIB.FISOPEN THEN
-                  BEGIN
-                    FILENAME[F] := TITLEBUF;
-                    NOT_FOUND := NOT_FOUND - [F]
-                  END;
+                  STARTUP := LFIB.FISOPEN;
                   FCLOSE(LFIB, CNORMAL)
-                END
-            END
-        END
-      END;
-      IF JUST_BOOT THEN
+                END;
+                FOR F := ASSMBLER TO LINKER DO
+                  IF (LUNIT = SYSCOM^.SYSUNIT) OR (F IN NOT_FOUND) THEN
+                  BEGIN
+                    TITLEBUF := CONCAT(UVID, LOCALNAMES[F]);
+                    FOPEN(LFIB, TITLEBUF, TRUE, NIL);
+                    IF LFIB.FISOPEN THEN
+                    BEGIN
+                      FILENAME[F] := TITLEBUF;
+                      NOT_FOUND := NOT_FOUND - [F]
+                    END;
+                    FCLOSE(LFIB, CNORMAL)
+                  END
+              END
+          END
+        END;
+      IF WHAT_H2 THEN
         DKVID := SYVID;
       LUNIT := VOLSEARCH(SYVID, FALSE, LDIR);
       IF LDIR = NIL THEN
