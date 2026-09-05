@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-freadint" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-getcmd-nesting" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -44,6 +44,11 @@ RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-freadint" / \
 EXACT = [
     "GETCMD.2", "GETCMD.4", "GETCMD.6", "GETCMD.19", "GETCMD.23",
     "GETCMD.26",
+    # Finding 225's nesting pass: .8 is inside .7, .12 inside .11,
+    # .21 inside .20. Half of these could not be written at all until
+    # that was established, because they read their parent's frame.
+    "GETCMD.5", "GETCMD.7", "GETCMD.8", "GETCMD.10", "GETCMD.12",
+    "GETCMD.24",
     # INITIALIZE is complete: all 11 of its procedures.
     "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",

@@ -19285,3 +19285,100 @@ procedure's own first instruction: the `REPEAT` wraps the entire
 body. A backward branch is a loop condition before it is anything
 else, and the loop top being statement one is not an obstacle to
 that reading -- it is the reading.
+
+## 225. `GETCMD`'s nesting, and the six procedures that fall out of it
+
+VERIFIED BINARY FACT (acceptance tier, Apple's own 1.3
+`SYSTEM.COMPILER`, `acceptance/2026-09-04-pascalsystem-getcmd-nesting/`):
+**88 of 111**, from 82. `GETCMD` goes from 6 of 27 to **12 of 27**,
+and it was one structural fact that did it.
+
+### 225a. Seven of `GETCMD`'s procedures are not where they were written
+
+Every one of `.2`-`.27` had been written flat, one level inside the
+segment. Seven of them are two or three levels in, and the binary says
+so three separate ways:
+
+* **`RBP` against `RNP`.** Only `.1` is a base procedure.
+* **Which `lex` a global reference uses.** A procedure one level
+  inside the segment body reaches the program's globals with
+  `LOD 2,n`; two levels in, `LOD 3,n` -- and `LOD 1,n` then names its
+  own *parent's* frame instead. `.12`, `.13` and `.14` use `LOD 1,n`
+  and `LOD 3,n` in the same body, which pins them without any other
+  evidence.
+* **Which call opcode reaches it.** `CLP` calls a child, `CGP` a
+  procedure one level inside the segment body, `CIP` a sibling. `.7`
+  reaches `.8` with `CLP`; `.11` reaches `.12`, `.14`, `.16` and `.18`
+  with `CLP`; `.16` reaches `.13` and `.15` with `CIP` and `.17` with
+  `CLP`; `.20` reaches `.21` with `CLP`.
+
+The tree: `.7` contains `.8`; `.11` contains `.12` `.13` `.14` `.15`
+`.16` `.18`, and `.16` contains `.17`; `.20` contains `.21`.
+
+**The numbering survives untouched**, which is what makes the change
+free: `.8` follows `.7` and `.12`-`.18` follow `.11` in declaration
+order whether they are nested or not. What it costs is the one big
+`FORWARD` block -- a `FORWARD` cannot carry a child, so `.7`, `.11`
+and `.20` have to be written out in full where their headers belong,
+in the middle of the forwards, and only the childless ones stay
+forward-declared.
+
+### 225b. Half of them could not have been written before
+
+`.8`, `.17` and `.21` have no frame of their own at all (`params` and
+`data` both zero for `.8` and `.21`) and read nothing but their
+parent's locals. `.8` is `LDA 1,4` and `LOD 1,1` and nothing else.
+Flat, those operands name the segment body's three words and mean
+nothing; nested, they name `GC07`'s `ISEGS` and its `VAR ST`, and the
+body writes itself. This is [[nested-proc-measures-parent-frame]] in
+the other direction: there a child's operands *measured* a parent
+whose declarations were being derived; here the parent had to be
+found before the child could be read at all.
+
+`.17` and `.21` are still stubs for exactly this reason, and that is
+now a statement about `.16`'s and `.20`'s `VAR` blocks rather than
+about them.
+
+### 225c. Two views of one storage is a variant record
+
+`.7` and `.8` both copy `SEGDICT.INTRINSSEGS` into the same four-word
+local and then read two of its words back as plain integers. No
+single type does that. The copy is a set -- `LDM 4 | SLDC 4 | ADJ 4 |
+STM 4`, and `ADJ` never appears for an array (finding 216c) -- while
+the reads are `LLA 4 | SLDC 2 | IXA 1 | SIND 0`, an indexed load off
+the same base. A tagless variant record is the only construct that
+gives both, and it is the idiom `TRICKARRAY` already uses in this
+file.
+
+### 225d. `GETCMD.5` is a function, and `SEGINFO` names its own fields
+
+`.5` had been declared `PROCEDURE GC05(A, B, C, D: INTEGER)` from its
+`params=8` alone. `RNP 1` says it returns a word, so eight bytes is
+*two* result words plus two parameters, not four parameters. Its body
+answers "what segment number is dictionary entry `SEGIX`?", and the
+packed-field operands name themselves against `SEGINFO`'s own already
+established declaration: `SLDC 3 | SLDC 13` is a 3-bit field at bit
+13, which is `VERSION`, and `SLDC 8 | SLDC 0` is `SEGNUM`. Before 1.3
+the dictionary carried no `SEGNUM` at all, so `VERSION = 0` returns
+the index unchanged -- which is also what `.7` is checking for when it
+clears the top half of `INTRINSSEGS` on a 1.1 or 1.2 codefile.
+
+### 225e. `NEW`'s size operand types the pointer
+
+`GETCMD.24` is ten instructions and no frame, and one of them settled
+a type: `LDA 2,381 | LDCI 256 | CSP 1` allocates **256 words**, and
+`NEW`'s size comes from the pointed-to type with nothing else able to
+set it. `EXBUFPTR` had been declared `WINDOWP`, and a `WINDOW` is one
+word. Widening `WINDOW` itself was not available -- `INITIALIZE`'s
+three `NEW(LWINDOW)` calls are exact and would have moved -- so the
+EXEC buffer gets a type of its own. Nothing needed the two to be
+assignment-compatible: every use of `EXBUFPTR^` is an index or an
+argument to a built-in (`BLOCKREAD`, `BLOCKWRITE`, `FILLCHAR`,
+`SCAN`), and a built-in takes any variable.
+
+### 225f. A `}` inside a brace comment, again
+
+The first compile of the nesting note failed with error 6 at the line
+after `.7  { .8 }` in a comment drawing the tree. The `}` closed the
+comment. This is the second time (finding 203) and the note is in
+`CLAUDE.md`'s memory already; write the tree with words.

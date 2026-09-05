@@ -1490,12 +1490,17 @@ a route end to end; everything else is a straight read-and-rebuild.
     opcode, and it says the shape is wrong rather than the body.
     Finding 205c gives the wiring an acceptance test of its own, since
     our codefile's `0x120` must come out `0004` too.
-    `GETCMD` is now the weakest segment by a wide margin -- 6 of its
-    27 procedures -- and `GETCMD.20` (`STARTCOMPILE`, 342
-    instructions) is the largest single body left anywhere in the
-    file. Most of the rest of `GETCMD` is stubs whose nesting is not
-    established; that wants one structural pass over the segment's lex
-    operands, not twenty incremental attempts.
+    `GETCMD` had that structural pass (finding 225) and went 6 of 27
+    to **12 of 27**: seven of its procedures are two or three levels
+    inside the segment rather than one, which `RBP`/`RNP`, the `lex`
+    of a global reference, and the call opcode all agree on. `.8`,
+    `.17` and `.21` have no frame of their own and read only their
+    parent's locals, so nesting them is what makes their operands mean
+    anything -- `.17` and `.21` are now waiting on `.16`'s and `.20`'s
+    `VAR` blocks specifically, not on decoding.
+    `GETCMD.20` (`STARTCOMPILE`, 342 instructions) is the largest
+    single body left anywhere in the file, and `.11` (138 instructions
+    over a 1796-byte frame) is the parent of six more.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1645,7 +1650,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (82 as of finding 224).
+  (88 as of finding 225).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

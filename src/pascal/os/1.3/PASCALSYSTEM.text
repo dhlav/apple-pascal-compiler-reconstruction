@@ -204,6 +204,19 @@ PROGRAM PASCALSYSTEM;
     WINDOWP = ^WINDOW;
     WINDOW = PACKED ARRAY [0..0] OF CHAR;
 
+    { The EXEC buffer is a type of its own and not a `WINDOW`, because
+      `GETCMD.24`'s `NEW` says so: `LDA 2,381 | LDCI 256 | CSP 1`
+      allocates **256 words**, and `NEW`'s size comes from the
+      pointed-to type with nothing else to set it (finding 225). A
+      `WINDOW` is one word -- widening `WINDOW` itself would change
+      `INITIALIZE`'s own three `NEW(LWINDOW)` calls, which are exact.
+      Nothing needs the two to be assignment-compatible: every use of
+      `EXBUFPTR^` is either an index or an argument to a built-in
+      (`BLOCKREAD`, `BLOCKWRITE`, `FILLCHAR`, `SCAN`), and a built-in
+      takes any variable. }
+    EXBUFP = ^EXBUF;
+    EXBUF = PACKED ARRAY [0..511] OF CHAR;
+
 
     FIBP = ^FIB;
 
@@ -393,7 +406,7 @@ PROGRAM PASCALSYSTEM;
       this whole file). Not a `VAR`-declared array -- the pointer to
       it is the only static storage; the buffer itself lives on the
       heap. }
-    EXBUFPTR: WINDOWP;             { was Tribby's what_f[1] }
+    EXBUFPTR: EXBUFP;              { was Tribby's what_f[1] }
     EXEC_MARK: ^INTEGER;           { was Tribby's what_f[2] -- saved EMPTYHEAP }
     { Tribby's exec_ch_num -- next EXEC char in disk buffer }
     EXEC_CH_NUM: INTEGER;
@@ -1636,6 +1649,20 @@ PROGRAM PASCALSYSTEM;
                   DICTFILL: ARRAY [0..107] OF INTEGER
                 END;
 
+      { `.7` and `.8` both copy `SEGDICT.INTRINSSEGS` into a local
+        four-word slot and then read two of those words back as plain
+        integers, which no single type allows: the copy is a set
+        (`LDM 4 | SLDC 4 | ADJ 4 | STM 4` -- `ADJ` never appears for
+        an array, finding 216c), and the reads are `LLA 4 | SLDC 2 |
+        IXA 1 | SIND 0`, an indexed load off the same base. Two views
+        of one storage is a tagless variant record, the idiom
+        `TRICKARRAY` already uses in this file. }
+      SEGSETWORDS = RECORD
+                      CASE BOOLEAN OF
+                        TRUE: (S: SEGSET);
+                        FALSE: (W: ARRAY [0..3] OF INTEGER)
+                    END;
+
     { GETCMD's own three words of `data` -- real `6`, and UCSD's own
       `CH`/`BADCMD`/`DONT_CARE` accounts for all three. Declaration
       groups ascend, so `DONT_CARE` lands on word `6`, which is what
@@ -1658,25 +1685,122 @@ PROGRAM PASCALSYSTEM;
       by recompiling and comparing frame sizes before it was ever
       committed). Completions below may appear in any order relative
       to each other -- only the `FORWARD` block's own order matters. }
+
+    { **The segment's nesting, read out of the binary** (finding 225).
+      Every one of these had been written flat, one level deep, and
+      seven of them are not. Three signals agree, and each of them is
+      a fact the binary could have contradicted:
+
+        * `RBP` against `RNP` -- only `.1` is a base procedure.
+        * which `lex` a global reference uses. A procedure one level
+          inside the segment body reaches the program's globals with
+          `LOD 2,n`; two levels in, `LOD 3,n`, and `LOD 1,n` then
+          names its own parent's frame instead.
+        * which call opcode reaches it. `CLP` is a call into a child,
+          `CGP` a call to a procedure one level inside the segment
+          body, `CIP` a call to a sibling.
+
+      `.12`, `.13` and `.14` use `LOD 1,n` *and* `LOD 3,n` in the same
+      body, which pins them at two levels in on its own; `.8`, `.15`,
+      `.16`, `.17`, `.18` and `.21` use only `LOD 1,n`, and each is
+      the target of a `CLP` or `CIP` from a procedure whose own depth
+      is already fixed. The tree:
+
+        .7  contains .8
+        .11 contains .12 .13 .14 .15 .16 .18, and .16 contains .17
+        .20 contains .21
+
+      and everything else sits directly in the segment body. The
+      numbering survives the change untouched, which is the point:
+      `.8` follows `.7` and `.12`-`.18` follow `.11` in declaration
+      order either way, so nesting them costs nothing and is what
+      makes their `LOD 1,n` operands mean anything at all. It also
+      says why `.8`, `.17` and `.21` are still stubs: each is fully
+      decoded and each reads its parent's frame, so none of them can
+      be written before that parent's own `VAR` block is. }
     PROCEDURE RUNWORKFILE(OKTOLINK: BOOLEAN); FORWARD;
     FUNCTION SYSASSOC(SYS_NAME: SYSFILE;
                       ALLOWLINK: BOOLEAN): BOOLEAN; FORWARD;
     FUNCTION GETYESNO: BOOLEAN; FORWARD;
-    PROCEDURE GC05(A, B, C, D: INTEGER); FORWARD;
+    FUNCTION GC05(VAR ST: SEGDICT; SEGIX: INTEGER): INTEGER; FORWARD;
     FUNCTION BADTITLE(TITLE: STRING): BOOLEAN; FORWARD;
-    PROCEDURE GC07(VAR ST: SEGDICT); FORWARD;
-    PROCEDURE GC08; FORWARD;
+    { `.7` is written out here rather than forward-declared, and so
+      are `.11` and `.20` below, because each of them has children and
+      a `FORWARD` cannot carry them: `.8` is nested *inside* `.7`, and
+      a procedure number is claimed where its header is read (finding
+      199). `GC08` inside a segment-level forward block would take
+      number 8 at the wrong depth; inside `GC07`'s own declaration
+      part it takes the same number at the right one. The nesting is
+      read straight out of the binary and is not a guess -- see the
+      note above `GETCMD.1`'s body. }
+    PROCEDURE GC07(VAR ST: SEGDICT);
+      VAR
+        I, VERS: INTEGER;
+        ISEGS: SEGSETWORDS;
+
+      { `GETCMD.8` (finding 225) -- reachable only through `.7`'s own
+        frame: `LDA 1,4` is `ISEGS` and `LOD 1,1` is `.7`'s `VAR ST`.
+        Nothing about it could be written before `.7`'s `VAR` block
+        was, which is the whole argument for doing the nesting first. }
+      PROCEDURE GC08;
+      BEGIN
+        ISEGS.W[2] := 0;
+        ISEGS.W[3] := 0;
+        ST.INTRINSSEGS := ISEGS.S
+      END;
+
+    { `GETCMD.7` (finding 225): find the dictionary entry whose
+      segment number is 1 -- the host's own outer segment -- and take
+      its `VERSION`. On a 1.1 codefile (`VERSION = 1`) trust nothing
+      and clear the high half of `INTRINSSEGS`; on a 1.2 one
+      (`VERSION = 2`) do the same, but only for the two specific
+      images whose words 2 and 3 match. }
+    BEGIN
+      I := 0;
+      WHILE GC05(ST, I) <> 1 DO
+        I := I + 1;
+      VERS := ST.SEGINFO[I].VERSION;
+      IF VERS = 1 THEN
+        GC08
+      ELSE
+        IF VERS = 2 THEN
+        BEGIN
+          ISEGS.S := ST.INTRINSSEGS;
+          IF (ISEGS.W[2] = 42) AND
+             ((ISEGS.W[3] = 1566) OR (ISEGS.W[3] = 1567)) THEN
+            GC08
+        END
+    END;
     PROCEDURE GC09(VAR ST: SEGDICT; F: FIBP); FORWARD;
     FUNCTION GC10(VAR ST: SEGDICT; VAR SEGS: SEGSET;
                   KINDS: KINDSET): BOOLEAN; FORWARD;
-    FUNCTION GC11(TITLE: STRING; VAR ST: SEGDICT): BOOLEAN; FORWARD;
-    PROCEDURE GC12(A, B: INTEGER); FORWARD;
-    PROCEDURE GC13; FORWARD;
-    PROCEDURE GC14(A: INTEGER); FORWARD;
-    PROCEDURE GC15; FORWARD;
-    PROCEDURE GC16; FORWARD;
-    PROCEDURE GC17; FORWARD;
-    PROCEDURE GC18; FORWARD;
+    FUNCTION GC11(TITLE: STRING; VAR ST: SEGDICT): BOOLEAN;
+
+      { `GETCMD.12` (finding 225): `params=4` is two words with no
+        parameters at all -- a `BOOLEAN` function's result slot -- and
+        `RNP 1` confirms it returns one. `LOD 1,3` is `GC11`'s own
+        `VAR ST`, `INC 144` is `SEGDICT.INTRINSSEGS` (the seven parts
+        of `SEGDICT` sum to 256 words and put it at 144, finding 205),
+        and `LDA 3,448` is `WHAT_L`, already known to be a four-word
+        set from its own `ADJ 4` (finding 216c). `NEQ SET` then an
+        `FJP` and two separate stores, not a single store of the
+        comparison: written as an `IF`/`ELSE`, not as an assignment of
+        the Boolean expression. }
+      FUNCTION GC12: BOOLEAN;
+      BEGIN
+        IF ST.INTRINSSEGS <> WHAT_L THEN
+          GC12 := TRUE
+        ELSE
+          GC12 := FALSE
+      END;
+      PROCEDURE GC13; BEGIN END;
+      PROCEDURE GC14(A: INTEGER); BEGIN END;
+      PROCEDURE GC15; BEGIN END;
+      PROCEDURE GC16;
+        PROCEDURE GC17; BEGIN END;
+      BEGIN END;
+      PROCEDURE GC18; BEGIN END;
+    BEGIN GC11 := FALSE END;
     { `TITLE` is a VALUE `STRING`, as UCSD's own `ASSOCIATE` declares
       it -- not `VAR`. `.2`'s only call passes a `CONCAT` expression,
       which no `VAR` formal can accept (error 154), and a value formal
@@ -1686,8 +1810,9 @@ PROGRAM PASCALSYSTEM;
     FUNCTION ASSOCIATE(TITLE: STRING; OKTOLINK, RUNONLY,
                        ERROROK: BOOLEAN; VAR ASS_STATUS: STATUS_ASSOC;
                        CHECKVER: BOOLEAN): BOOLEAN; FORWARD;
-    PROCEDURE STARTCMPSTUB(NEXTST: INTEGER); FORWARD;
-    PROCEDURE GC21; FORWARD;
+    PROCEDURE STARTCMPSTUB(NEXTST: INTEGER);
+      PROCEDURE GC21; BEGIN END;
+    BEGIN END;
     PROCEDURE GC22; FORWARD;
     PROCEDURE EXECOPNERR(KIND: INTEGER); FORWARD;
     PROCEDURE GC24; FORWARD;
@@ -1788,7 +1913,26 @@ PROGRAM PASCALSYSTEM;
       UNTIL CH IN ['N', 'Y', 'n', 'y'];
       GETYESNO := (CH = 'Y') OR (CH = 'y')
     END;
-    PROCEDURE GC05; BEGIN END;
+    { `GETCMD.5` (finding 225) -- a `FUNCTION`, not the procedure this
+      file had: `RNP 1` returns a word and `params=8` is two result
+      words plus two parameters. It answers "what segment number is
+      dictionary entry `SEGIX`?": before 1.3 the dictionary carried no
+      `SEGNUM` at all (`VERSION = 0`) and the index *was* the number,
+      so that case returns `SEGIX` unchanged. The packed-field
+      operands name themselves against `SEGINFO`'s own declaration --
+      `SLDC 3 | SLDC 13` is a 3-bit field at bit 13, which is
+      `VERSION`, and `SLDC 8 | SLDC 0` is `SEGNUM`. }
+    FUNCTION GC05;
+    BEGIN
+      WITH ST.SEGINFO[SEGIX] DO
+        IF VERSION < 1 THEN
+          GC05 := SEGIX
+        ELSE
+          IF SEGNUM > 63 THEN
+            GC05 := 0
+          ELSE
+            GC05 := SEGNUM
+    END;
     { `GETCMD.6` = `BADTITLE`: runs `SCANTITLE` purely for its `VAR`
       outputs (the real body's own boolean result is discarded too --
       `IF SCANTITLE(...) THEN ;`, this file's own established
@@ -1831,18 +1975,26 @@ PROGRAM PASCALSYSTEM;
         BADTITLE := TRUE
       END
     END;
-    PROCEDURE GC07; BEGIN END;
-    PROCEDURE GC08; BEGIN END;
     PROCEDURE GC09; BEGIN END;
-    FUNCTION GC10; BEGIN GC10 := FALSE END;
-    FUNCTION GC11; BEGIN GC11 := FALSE END;
-    PROCEDURE GC12; BEGIN END;
-    PROCEDURE GC13; BEGIN END;
-    PROCEDURE GC14; BEGIN END;
-    PROCEDURE GC15; BEGIN END;
-    PROCEDURE GC16; BEGIN END;
-    PROCEDURE GC17; BEGIN END;
-    PROCEDURE GC18; BEGIN END;
+    { `GETCMD.10` (finding 225): collect the segment numbers of every
+      non-empty dictionary entry into `SEGS`, and answer whether every
+      one of them was of an acceptable `SEGKIND`. `data=3` is one
+      declared word: `I`, then the `WITH ST` pointer, then the `FOR`
+      limit temp, in that order. }
+    FUNCTION GC10;
+      VAR
+        I: INTEGER;
+    BEGIN
+      SEGS := [];
+      GC10 := TRUE;
+      WITH ST DO
+        FOR I := 0 TO 15 DO
+          IF DISKINFO[I].CODELENG <> 0 THEN
+            IF SEGKIND[I] IN KINDS THEN
+              SEGS := SEGS + [GC05(ST, I)]
+            ELSE
+              GC10 := FALSE
+    END;
     { `GETCMD.19` = `ASSOCIATE`, UCSD's own routine carried into 1.3
       and extended: open a codefile by title, read block 0, check what
       it finds there, and bind its segments into `SYSCOM^.SEGTABLE`.
@@ -1993,8 +2145,6 @@ PROGRAM PASCALSYSTEM;
       `396`, genuinely new decode work, not attempted this session.
       Guessed signature only to preserve procedure numbering and let
       `.2`/`.19` compile against it; not Apple's real content. }
-    PROCEDURE STARTCMPSTUB; BEGIN END;
-    PROCEDURE GC21; BEGIN END;
     PROCEDURE GC22; BEGIN END;
     { `GETCMD.23`: prints one of two `EXEC`-related error messages,
       called from `.25`/`.27` with `KIND=1`/`2`. No UCSD precedent (the
@@ -2023,7 +2173,19 @@ PROGRAM PASCALSYSTEM;
         WRITELN
       END
     END;
-    PROCEDURE GC24; BEGIN END;
+    { `GETCMD.24` (finding 225) -- open the EXEC write buffer. Ten
+      instructions and no frame at all; every operand is a global.
+      `LDCI 256` in the `NEW` is what forced `EXBUF` to be a type of
+      its own (see its declaration). `MARK` after `NEW`, not before:
+      the buffer is allocated below the mark so a later `RELEASE`
+      keeps it. }
+    PROCEDURE GC24;
+    BEGIN
+      EXEC_IN_CH := ' ';
+      EXEC_MARK := EMPTYHEAP;
+      NEW(EXBUFPTR);
+      MARK(EMPTYHEAP)
+    END;
     PROCEDURE GC25; BEGIN END;
     { `GETCMD.26` -- the `S(wap` submenu (real ordinal check confirms
       `SWAP_1_ON`/`SWAP_2_ON`, words `389`/`390`, are read/written
