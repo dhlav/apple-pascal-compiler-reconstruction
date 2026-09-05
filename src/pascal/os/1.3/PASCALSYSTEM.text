@@ -1771,7 +1771,14 @@ PROGRAM PASCALSYSTEM;
             GC08
         END
     END;
-    PROCEDURE GC09(VAR ST: SEGDICT; F: FIBP); FORWARD;
+    { `.9`'s second formal is `VAR F: FIB`, not the `F: FIBP` this had.
+      Both call sites decide it and only that reading satisfies both:
+      `.19` passes `LOD 2,8`, a pointer *value*, which is what
+      `USERINFO.CODEFIBP^` compiles to for a `VAR` formal; `.13`
+      passes `LDA 1,612`, the address of its own 290-word local `FIB`,
+      which a by-value `FIBP` could not be given at all -- 1.3 has no
+      address-of operator (finding 225 note, and the `@` finding). }
+    PROCEDURE GC09(VAR ST: SEGDICT; VAR F: FIB); FORWARD;
     FUNCTION GC10(VAR ST: SEGDICT; VAR SEGS: SEGSET;
                   KINDS: KINDSET): BOOLEAN; FORWARD;
     FUNCTION GC11(TITLE: STRING; VAR ST: SEGDICT): BOOLEAN;
@@ -1881,7 +1888,62 @@ PROGRAM PASCALSYSTEM;
       ELSE
         STARTCMPSTUB(6)
     END;
-    FUNCTION SYSASSOC; BEGIN SYSASSOC := FALSE END;
+    { `GETCMD.3` = `SYSASSOC` (finding 226): bind one of the five
+      system files, and if its recorded pathname no longer finds it,
+      hunt for the same *file name* on every mounted block device and
+      rewrite `FILENAME` with wherever it turned up.
+
+      `data=41` accounts word for word, and the last twelve are the
+      compiler's own: `CONCAT` builds into a hidden `FULL_ID`
+      temporary, one `SCONCAT` per argument with a running cumulative
+      maximum for the third argument (`7`, `8`, `23` -- not each
+      piece's own length), then assigns it out. `LLA 34` is that
+      temporary and `LLA 20` is `TRYTITLE`; the `WITH UNITABLE[UNITNO]`
+      pointer at 33 sits between them, after every declaration and
+      before the temporary, which is what allocation order predicts.
+
+      The trailing `ASSOCIATE` is called for its side effect only --
+      it reports the error -- and the result is discarded with the
+      same `IF <call> THEN` shape `FBLOCKIO` uses for `STUB49`. }
+    FUNCTION SYSASSOC;
+      VAR
+        FVID: VID;
+        FTID: TID;
+        FSEGS: INTEGER;
+        FKIND: FILEKIND;
+        UNITNO: INTEGER;
+        TRYTITLE: FULL_ID;
+        ASTAT: STATUS_ASSOC;
+    BEGIN
+      SYSASSOC := ASSOCIATE(FILENAME[SYS_NAME], FALSE, FALSE, FALSE,
+                            ASTAT, ALLOWLINK);
+      IF ASTAT = NOT_FOUND THEN
+        IF SCANTITLE(FILENAME[SYS_NAME], FVID, FTID, FSEGS, FKIND) THEN
+        BEGIN
+          UNITNO := 0;
+          REPEAT
+            UNITNO := UNITNO + 1;
+            WITH UNITABLE[UNITNO] DO
+              IF UISBLKD THEN
+              BEGIN
+                UVID := '';
+                IF FETCHDIR(UNITNO) THEN
+                BEGIN
+                  UVID := SYSCOM^.GDIRP^[0].DVID;
+                  TRYTITLE := CONCAT(UVID, ':', FTID);
+                  IF TRYTITLE <> FILENAME[SYS_NAME] THEN
+                    IF ASSOCIATE(TRYTITLE, FALSE, FALSE, FALSE, ASTAT,
+                                 ALLOWLINK) THEN
+                      FILENAME[SYS_NAME] := TRYTITLE
+                END
+              END
+          UNTIL (UNITNO = 20) OR (ASTAT IN [FOUND_OK, FOUND_BAD]);
+          SYSASSOC := ASTAT = FOUND_OK;
+          IF ASTAT = NOT_FOUND THEN
+            IF ASSOCIATE(FILENAME[SYS_NAME], FALSE, FALSE, TRUE, ASTAT,
+                         FALSE) THEN
+        END
+    END;
     { `GETCMD.4`: reads one character from `GFILES[0]^` (the console
       input file) in a loop until it's `'N'`/`'Y'`/`'n'`/`'y'`, then
       returns whether it was yes. No UCSD precedent as a separate
@@ -1975,7 +2037,42 @@ PROGRAM PASCALSYSTEM;
         BADTITLE := TRUE
       END
     END;
-    PROCEDURE GC09; BEGIN END;
+    { `GETCMD.9` (finding 226): bind every non-empty segment of a
+      just-opened codefile into `SYSCOM^.SEGTABLE`, converting each
+      entry's file-relative `DISKADDR` to an absolute block by adding
+      the file's own `DFIRSTBLK`. A data segment gets `0` instead --
+      it has no code to load.
+
+      The `IN` test's four-word constant is `$FF82 $FFFF $FFFF $FFFF`,
+      which is `[1, 7..63]`: segment 1 is the user program's own slot
+      and 7 upward are its own segments, while 0 and 2-6 are this
+      operating system's and are never rebound.
+
+      `data=9` accounts exactly: `I` and `SEGNO` declared, then the
+      four `WITH` pointers, then the `FOR` limit temp, then the two
+      `WITH`s opened inside the loop -- allocation follows the text. }
+    PROCEDURE GC09;
+      VAR
+        SEGNO, I: INTEGER;
+    BEGIN
+      WITH SYSCOM^, ST, F, FHEADER DO
+        FOR I := 0 TO 15 DO
+          WITH DISKINFO[I] DO
+            IF CODELENG <> 0 THEN
+            BEGIN
+              SEGNO := GC05(ST, I);
+              IF SEGNO IN [1, 7..MAX_SEG] THEN
+                WITH SEGTABLE[SEGNO] DO
+                BEGIN
+                  CODEUNIT := FUNIT;
+                  CODEDESC.CODELENG := CODELENG;
+                  IF SEGKIND[I] = DATASEG THEN
+                    CODEDESC.DISKADDR := 0
+                  ELSE
+                    CODEDESC.DISKADDR := DISKADDR + DFIRSTBLK
+                END
+            END
+    END;
     { `GETCMD.10` (finding 225): collect the segment numbers of every
       non-empty dictionary entry into `SEGS`, and answer whether every
       one of them was of an acceptable `SEGKIND`. `data=3` is one
@@ -2130,7 +2227,7 @@ PROGRAM PASCALSYSTEM;
           IF SEGTBL.INTRINSSEGS <> [] THEN
             IF NOT GC11(TITLE, SEGTBL) THEN
               GOTO 1;
-          GC09(SEGTBL, USERINFO.CODEFIBP)
+          GC09(SEGTBL, USERINFO.CODEFIBP^)
         END;
       ASS_STATUS := FOUND_OK;
       ASSOCIATE := TRUE;
@@ -2145,7 +2242,75 @@ PROGRAM PASCALSYSTEM;
       `396`, genuinely new decode work, not attempted this session.
       Guessed signature only to preserve procedure numbering and let
       `.2`/`.19` compile against it; not Apple's real content. }
-    PROCEDURE GC22; BEGIN END;
+    { `GETCMD.22` (finding 226) -- what happens after a compile
+      finishes. Close the symbol workfile and the swap file; on an
+      error, purge the code workfile and, if the error carries a
+      block number, go straight into the Editor by exiting the whole
+      segment with `GETCMD := SYSPROG`. On success, promote the
+      compiler's output title into `USERINFO`'s workfile fields,
+      stripping a trailing `.CODE`, and run it if the command asked
+      for that.
+
+      Two `COPY`s and no declared locals: `LLA 2` and `LLA 10` are the
+      compiler's own result temporaries for `COPY`, which is `SCOPY`
+      into a hidden variable followed by an assignment out of it
+      (`CXP 0,25` bracketed by the destination address and a `SAS`).
+      `USERINFO`'s field offsets fall out of the same within-clause
+      reversal as everywhere else -- `LOD 2,8` is `CODEFIBP` and
+      `LOD 2,9` is `SYMFIBP` because they were declared
+      `SYMFIBP, CODEFIBP`.
+
+      `data=17` against sixteen words of temporary: both `COPY` temps
+      sit one word higher than the compiler puts them unaided (`LLA 2`
+      and `LLA 10` against `LLA 1` and `LLA 9`), with every instruction
+      otherwise identical. Temporaries are allocated after declared
+      variables, so one declared word stands ahead of them and nothing
+      in the body touches it -- the third time this file has produced
+      one, after `PROMPT` (finding 217) and `INITSYSCOM`'s word 282
+      (finding 223c). }
+    PROCEDURE GC22;
+      VAR
+        UNUSED3: INTEGER;
+    BEGIN
+      FCLOSE(USERINFO.SYMFIBP^, CNORMAL);
+      FCLOSE(SWAPFIB^, CNORMAL);
+      IF USERINFO.ERRNUM > 0 THEN
+      BEGIN
+        USERINFO.GOTCODE := FALSE;
+        FCLOSE(USERINFO.CODEFIBP^, CPURGE);
+        IF USERINFO.ERRBLK > 0 THEN
+        BEGIN
+          CLEARSCREEN;
+          WRITELN;
+          IF SYSASSOC(EDITOR, TRUE) THEN
+          BEGIN
+            GETCMD := SYSPROG;
+            EXIT(GETCMD)
+          END
+        END
+      END
+      ELSE
+      BEGIN
+        IF USERINFO.CODETID <> 'SYSTEM.WRK.CODE' THEN
+        BEGIN
+          USERINFO.CODEVID := USERINFO.CODEFIBP^.FVID;
+          USERINFO.CODETID := USERINFO.CODEFIBP^.FHEADER.DTID;
+          IF USERINFO.CODETID <> 'SYSTEM.WRK.CODE' THEN
+          BEGIN
+            USERINFO.WORKVID := USERINFO.CODEVID;
+            IF LENGTH(USERINFO.CODETID) > 5 THEN
+              IF COPY(USERINFO.CODETID,
+                      LENGTH(USERINFO.CODETID) - 4, 5) = '.CODE' THEN
+                USERINFO.WORKTID :=
+                  COPY(USERINFO.CODETID, 1,
+                       LENGTH(USERINFO.CODETID) - 5)
+          END
+        END;
+        USERINFO.GOTCODE := TRUE;
+        IF LASTST IN [COMPANDGO, COMPDEBUG] THEN
+          RUNWORKFILE(TRUE)
+      END
+    END;
     { `GETCMD.23`: prints one of two `EXEC`-related error messages,
       called from `.25`/`.27` with `KIND=1`/`2`. No UCSD precedent (the
       `EXEC` command-file-redirect feature is Apple-only, already

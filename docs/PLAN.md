@@ -1491,7 +1491,7 @@ a route end to end; everything else is a straight read-and-rebuild.
     Finding 205c gives the wiring an acceptance test of its own, since
     our codefile's `0x120` must come out `0004` too.
     `GETCMD` had that structural pass (finding 225) and went 6 of 27
-    to **12 of 27**: seven of its procedures are two or three levels
+    to **15 of 27** (finding 226 added `SYSASSOC`, `.9` and `.22`): seven of its procedures are two or three levels
     inside the segment rather than one, which `RBP`/`RNP`, the `lex`
     of a global reference, and the call opcode all agree on. `.8`,
     `.17` and `.21` have no frame of their own and read only their
@@ -1650,7 +1650,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (88 as of finding 225).
+  (91 as of finding 226).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

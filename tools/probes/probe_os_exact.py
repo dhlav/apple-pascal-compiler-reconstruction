@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-getcmd-nesting" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-sysassoc" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -49,6 +49,8 @@ EXACT = [
     # that was established, because they read their parent's frame.
     "GETCMD.5", "GETCMD.7", "GETCMD.8", "GETCMD.10", "GETCMD.12",
     "GETCMD.24",
+    # Finding 226.
+    "GETCMD.3", "GETCMD.9", "GETCMD.22",
     # INITIALIZE is complete: all 11 of its procedures.
     "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",

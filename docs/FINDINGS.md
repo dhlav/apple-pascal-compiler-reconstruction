@@ -19382,3 +19382,84 @@ The first compile of the nesting note failed with error 6 at the line
 after `.7  { .8 }` in a comment drawing the tree. The `}` closed the
 comment. This is the second time (finding 203) and the note is in
 `CLAUDE.md`'s memory already; write the tree with words.
+
+## 226. Three more, and a `data` count that named a declaration nothing uses
+
+VERIFIED BINARY FACT (acceptance tier, Apple's own 1.3
+`SYSTEM.COMPILER`, `acceptance/2026-09-04-pascalsystem-sysassoc/`):
+**91 of 111**, from 88. `GETCMD` is **15 of 27**. All three are
+procedures finding 225's nesting pass left directly readable.
+
+### 226a. `SYSASSOC` (`GETCMD.3`), 125 instructions, exact first try
+
+Bind one of the five system files; if its recorded pathname no longer
+finds it, take the file *name* apart with `SCANTITLE` and hunt for it
+on every mounted block device, rewriting `FILENAME` with wherever it
+turned up. Its `data=41` accounts word for word --
+`VID`(4) `TID`(8) two integers, a `FULL_ID`(12), a `STATUS_ASSOC`,
+then the `WITH UNITABLE[UNITNO]` pointer, then twelve more words that
+are not a declaration at all.
+
+Those twelve are `CONCAT`'s. `CONCAT(UVID, ':', FTID)` builds into a
+hidden `FULL_ID` temporary -- one `SCONCAT` per argument, the third
+argument a **running cumulative maximum** (`7`, `8`, `23`, not each
+piece's own length) -- and then assigns it out. The temporary lands
+after the `WITH` pointer, which is after every declaration, and that
+ordering is what let the seven real declarations be placed with no
+freedom left over.
+
+### 226b. `VAR F: FIB` against `F: FIBP`, decided by two call sites
+
+`GETCMD.9`'s second formal had been written `F: FIBP` from its size
+alone -- one word either way. Two call sites decide it and only one
+reading satisfies both. `.19` passes `LOD 2,8`, a pointer *value*,
+which is what `USERINFO.CODEFIBP^` compiles to for a `VAR` formal.
+`.13` passes `LDA 1,612`, the address of its own 290-word local `FIB`,
+which a by-value `FIBP` could not be handed at all: 1.3 has no
+address-of operator (`@` is error 400). So it is `VAR F: FIB`, and
+`.19` -- already exact -- keeps compiling to the same byte with `^`
+added, because that is what the deref of a pointer as a `VAR` actual
+has always meant.
+
+`.9` itself binds a codefile's segments into `SYSCOM^.SEGTABLE`,
+converting each file-relative `DISKADDR` to absolute by adding the
+file's own `DFIRSTBLK`. Its `IN` test carries the four-word constant
+`$FF82 $FFFF $FFFF $FFFF`, which is `[1, 7..63]`: segment 1 is the
+user program's own slot and 7 upward are its own segments, while 0 and
+2-6 belong to this operating system and are never rebound.
+
+### 226c. A third declared word that emits nothing
+
+`GETCMD.22` came back instruction-for-instruction identical with
+`data` 32 against Apple's 34, and the only difference in the listing
+was that both `COPY` temporaries sat one word lower -- `LLA 1` and
+`LLA 9` against `LLA 2` and `LLA 10`. Temporaries are allocated after
+declared variables, so exactly one declared word stands ahead of them
+and nothing in the body touches it.
+
+That is the third instance in this file, after `PROMPT` (finding 217)
+and `INITSYSCOM`'s word 282 (finding 223c), and the first where a
+*temporary's* offset rather than a variable's is what exposed it.
+Every competing reading emits code: a `WITH` emits its cache, a `FOR`
+limit emits its store, a value-`STRING` shadow emits its copy. When
+the listing matches completely and only the base offsets shift, a
+declaration is all that is left.
+
+`.22` is also where `COPY` shows its shape: `COPY(S, I, N)` is
+`SCOPY` into a hidden variable bracketed by the destination address
+and a `SAS`, which is why a procedure call appears in the middle of
+what reads as one assignment.
+
+### 226d. A note on tooling, not on the binary
+
+Two of this session's ad-hoc disassembly snippets called
+`disassemble(seg.data, p.code_start, p.code_end, p.jtab)`. The bounds
+are `p.enter_ic` and `p.exit_ic` -- what `procbuild.listing` uses. On
+most procedures the wrong pair terminates anyway; on `GETCMD.3` the
+decoder ran past the procedure and allocated until it exhausted the
+machine's memory. Every `disassemble` call site in `tools/` was
+checked afterwards and all of them already use `enter_ic`/`exit_ic`,
+so there is nothing to fix in the repository -- but a scratch snippet
+that reads a procedure is worth writing once as a file rather than
+retyped, and it needs the same hard stop at the return opcode that
+`listing` has.
