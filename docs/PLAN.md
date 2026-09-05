@@ -1469,23 +1469,37 @@ a route end to end; everything else is a straight read-and-rebuild.
     produced two independent cross-checks (`PREFIXED[5]` and
     `MERGEA(5, BACKSPACE)` agreeing on backspace's index).
 
+    Six more followed (finding 224), taking it to **82 of 111** and
+    `PASCALSY` itself to **56 of 58**: `FBLOCKIO`, `FREADINT`,
+    `FWRITEINT`, `FREADSTRING`, `SPACEWAIT`, `GETCHAR`. Five of the
+    six are UCSD II.0's own procedures with visible 1.3 edits, and
+    what closed them was taking UCSD's `VAR` lines *verbatim* --
+    three frames agreed on the first compile with no reordering at
+    all. `reference_source/ucsd_ii0/` had been read for structure
+    since finding 195; its declarations were the part going unused.
+
     **Open, in rough order of value.**
-    `GETCMD.20` (`STARTCOMPILE`), 342 instructions, the largest one left
-    and already half-readable in the lift.
-    `GETCMD` is now the weakest segment by far -- 6 of its 27
-    procedures -- and `GETCMD.20` (`STARTCOMPILE`, 342 instructions)
-    is the largest single body left anywhere in the file.
+    **`FIOPRIMS`'s intrinsic-unit build wiring is now the single
+    largest blocked item** (finding 224c). Four procedures sit behind
+    it and nothing else: `FGET` (`PASCALSY.7`, 234 instructions,
+    decoded since finding 190), `FPUT` (`PASCALSY.8`, 46, decoded in
+    full and written out in the source as a comment), `FIOPRIMS.5`
+    (275, `FPUT`'s own callee) and `FIOPRIMS.1`, whose only difference
+    from ours is `RNP 0` against `RBP 0`. That last one is the
+    cheapest confirmation finding 200 could have asked for: one
+    opcode, and it says the shape is wrong rather than the body.
+    Finding 205c gives the wiring an acceptance test of its own, since
+    our codefile's `0x120` must come out `0004` too.
+    `GETCMD` is now the weakest segment by a wide margin -- 6 of its
+    27 procedures -- and `GETCMD.20` (`STARTCOMPILE`, 342
+    instructions) is the largest single body left anywhere in the
+    file. Most of the rest of `GETCMD` is stubs whose nesting is not
+    established; that wants one structural pass over the segment's lex
+    operands, not twenty incremental attempts.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
     gap, so it can get closer but probably not exact.
-    `FIOPRIMS.5` is still a stub at 3/275.
-    Then the remaining stubs: `PASCALSY.13`, `.18`, `.40`, `.41`,
-    `GETCMD.3`, `.5`, `.7`-`.18`, `.21`, `.22`, `.24`, `.25`, `.27`,
-    `.1`'s own menu loop, `COMMAND`, `INITIALI.4`/`.5`, and `FIOPRIMS`'s
-    intrinsic-unit build wiring -- which finding 205c has now given a
-    concrete acceptance test of its own, since our codefile's `0x120`
-    must come out `0004` too.
 
 11. **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
@@ -1631,7 +1645,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (76 as of finding 223).
+  (82 as of finding 224).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

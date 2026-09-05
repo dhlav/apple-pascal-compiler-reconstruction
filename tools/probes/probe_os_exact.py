@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-initsyscom" / \
+RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-freadint" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -66,6 +66,10 @@ EXACT = [
     "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
     "PASCALSY.43",
     "PASCALSY.27",
+    # PASCALSY is 56 of 58 now: only FGET and FPUT are left, and both are
+    # behind FIOPRIMS's intrinsic-unit shape (findings 200, 224).
+    "PASCALSY.12", "PASCALSY.13", "PASCALSY.18",
+    "PASCALSY.28", "PASCALSY.40", "PASCALSY.41",
     "FILEPROC.1", "FILEPROC.3", "FILEPROC.5", "FILEPROC.6",
     "FILEPROC.7",
     "FIOPRIMS.2", "FIOPRIMS.3",
@@ -77,10 +81,14 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    "PASCALSY.13",   # 1 instruction against Apple's 109, still a stub
     "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
     "FIOPRIMS.5",    # 3 instructions against Apple's 275, still a stub
     "FILEPROC.4",    # FPOPEN: 563 against Apple's 473; see finding 220
+    # The two procedures FIOPRIMS's shape blocks. FPUT's body is decoded
+    # in full and written out in the source as a comment; it needs the
+    # CXP 2,5 only an intrinsic unit can give it (finding 224).
+    "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
+    "PASCALSY.8",    # FPUT: 1 against Apple's 46, blocked not unknown
     # Frame-identical, and every instruction matches but the two the
     # finding-218b stand-in costs. These two are the control for that
     # gap: if either ever reports exact, `IF FNXTBLK THEN` started

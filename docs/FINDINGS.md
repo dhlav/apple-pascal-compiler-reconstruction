@@ -19170,3 +19170,118 @@ and does not need the long form.
 matching, so what is left is a declaration the body never uses --
 the same conclusion `PROMPT` reached in finding 217, and the second
 time this file has produced one.
+
+## 224. UCSD's own source closes six, and names the one wall that is left
+
+VERIFIED BINARY FACT (acceptance tier, Apple's own 1.3
+`SYSTEM.COMPILER`, `acceptance/2026-09-04-pascalsystem-freadint/`):
+**82 of 111** procedures are now instruction- and frame-identical,
+from 76. `PASCALSY` itself is **56 of 58**.
+
+The six are `FBLOCKIO` (`PASCALSY.28`), `FREADINT` (`.12`),
+`FWRITEINT` (`.13`), `FREADSTRING` (`.18`), `SPACEWAIT` (`.40`) and
+`GETCHAR` (`.41`). Five of the six are UCSD II.0's own procedures
+with small, individually visible 1.3 edits; the sixth was already
+written and needed two `WITH`s.
+
+### 224a. Where UCSD's source is usable, its *declarations* are the
+### part worth taking
+
+`reference_source/ucsd_ii0/` has been in the tree since finding 195
+and has been read for structure before. What was not being used is
+its `VAR` lines. Three of these six landed exact with UCSD's
+declaration list copied verbatim, unreordered, and the frames agreed
+on the first compile:
+
+* `FWRITEINT`: `POT, COL: INTEGER; CH: CHAR; SUPPRESSING: BOOLEAN;
+  S: STRING[10]` puts `COL` at 4 and `POT` at 5 (the within-clause
+  reversal, finding 93a), `CH` at 6, `SUPPRESSING` at 7, `S` at
+  8..13, and the `FOR POT := 4 DOWNTO 0` limit temp at 14 -- Apple's
+  `data` is 11 words and every operand in the body lands on the right
+  name.
+* `FREADSTRING`: `SINX: INTEGER; CH: CHAR` plus one `WITH` = 3 words,
+  Apple's exactly.
+* `FREADINT`: UCSD's `CH: CHAR; NEG, IVALID: BOOLEAN; SINX: INTEGER`
+  gives `CH`=3, `IVALID`=4, `NEG`=5, `SINX`=6 -- and the binary
+  stores `FALSE` to 5 then 4 for `NEG := FALSE; IVALID := FALSE`,
+  which is the reversal confirming itself.
+
+This is the same lesson as finding 223b from the other side. There,
+deriving a layout and its names from each other went wrong; here, the
+layout came from a source that could not have been fitted to the
+answer, and the names fell out.
+
+### 224b. `FPUT` is decoded in full and cannot be compiled
+
+`PASCALSY.8`'s 46 instructions are UCSD's own `FPUT` with the entire
+`FSOFTBUF` arm replaced by one call: `CXP 2,5`, one `VAR F` argument,
+a `BOOLEAN` result standing for UCSD's `GOTO 1` out of that arm. The
+`LABEL 1` target sits inside the `ELSE` arm after
+`IORSLT := INOTOPEN`, exactly where UCSD writes it, and the binary
+agrees -- index 33's `UJP` clears the whole `INOTOPEN`-plus-tail
+block, so the success paths jump over a tail the failure paths reach
+by falling into it.
+
+The frame is the part worth recording. Apple's `data` is **6** words
+against a body that touches exactly one of them -- the `WITH F`
+pointer. UCSD declares `LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER;
+DONE: BOOLEAN` for the work that used to happen there: **five words**.
+Apple moved the statements into `FIOPRIMS` and left the `VAR` line
+where it was. Five declared words emitting no code is not slack to be
+padded around; it is a specific line of somebody else's source,
+identifiable, and it balances.
+
+It is written out in full in `PASCALSYSTEM.text` as a comment, and it
+stays a comment, because `FPSTUB5` lives inside `SEGMENT PROCEDURE
+FIOPRIMS` and nothing outside that segment can name it.
+
+### 224c. `FIOPRIMS` is now the single largest blocked item
+
+Four procedures are behind it and nothing else: `FGET`
+(`PASCALSY.7`, 234 instructions, decoded since finding 190), `FPUT`
+(46, decoded above), `FIOPRIMS.5` (275, `FPUT`'s own callee), and
+`FIOPRIMS.1`, whose only difference from ours is `RNP 0` against
+`RBP 0` -- a unit's initialization part is not a base procedure. That
+last one is the cheapest possible confirmation of finding 200: one
+opcode, and it says the shape is wrong rather than the body.
+
+`PASCALSY` is 56 of 58 and both of the two are on this list.
+
+### 224d. Where a body is written is free; where it is *declared* is not
+
+`CHECKDEL` is `PASCALSY.54` and returns `RBP`, so it is lex 0 and
+callable by name -- but it is not in the forward block, so nothing
+before declaration position 54 can see it. `FREADINT` and
+`FREADSTRING` are 12 and 18 and both call it with `CBP 54`. The only
+arrangement that satisfies both is the one Apple used: `FORWARD`
+fixes the number at 12 and 18, and the *bodies* are written below
+`CHECKDEL`'s definition. Moving them there cost nothing and shifted
+no other number, because a body completing a `FORWARD` claims no new
+slot (finding 202f).
+
+`CHECKDEL`'s third argument is also why `FREADINT` carries an
+80-character string it never reads. `CHECKDEL` echoes a backspace
+only for `S[SINX] >= ' '`, and a numeric read has no string of its
+own to offer, so `FREADINT` manufactures one:
+`FILLCHAR(NUMBUF, 81, CHR(80))` -- `LAO 7 | SLDC 0 | SLDC 81 |
+SLDC 80 | CSP 10` -- setting the length byte to `CHR(80)` and all 80
+characters to something printable in a single call. Those 41 words
+are the whole difference between UCSD's frame and Apple's 46.
+
+### 224e. Two more instances of rules already written down
+
+`FBLOCKIO` was 13 instructions and 2 frame words short with an
+existing comment calling the gap a compiler difference. It was
+`WITH F DO` and `WITH FHEADER DO` -- finding 221 again, in a
+procedure whose comment had been read past for several sessions.
+Its general-file branch also had the `IORESULT` test inverted:
+Apple writes `IF IORESULT = 0 THEN IF DOREAD THEN ... ELSE ELSE
+FBLOCKIO := 0`, the empty-`ELSE` idiom finding 219a already needed,
+and the tell is the pair of `UJP`s at indices 172 and 173 (finding
+215).
+
+`SPACEWAIT`'s `UNTIL` is an `FJP` to `jtab-10`, which is the
+procedure's own first instruction: the `REPEAT` wraps the entire
+body. A backward branch is a loop condition before it is anything
+else, and the loop top being statement one is not an obstacle to
+that reading -- it is the reading.

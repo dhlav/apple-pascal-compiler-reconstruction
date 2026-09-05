@@ -3159,7 +3159,60 @@ PROGRAM PASCALSYSTEM;
     (finding 190, 233 instructions, read end to end) is ready to write
     the moment the unit is built and `USES`d rather than nested here
     as a `SEGMENT PROCEDURE`. }
+  { `FPUT` = `PASCALSY.8` (finding 224). UCSD's own `FPUT` with its
+    whole soft-buffer arm lifted out into `FIOPRIMS.5` -- `CXP 2,5`,
+    one `VAR F` argument, a `BOOLEAN` result standing for UCSD's own
+    `GOTO 1` out of that arm. What is left is the frame: UCSD declares
+    `LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER; DONE: BOOLEAN` for
+    work that no longer happens here, and Apple's `data` is **6** words
+    against a body that touches exactly one of them (the `WITH F`
+    pointer). Five declared words that emit no code is not a
+    coincidence to be padded around: it is UCSD's own `VAR` line,
+    carried into 1.3 unchanged after the statements under it moved
+    away. Kept in UCSD's order, though only the total is observable.
+
+    The `LABEL 1` target sits *inside* the `ELSE` arm, after
+    `IORSLT := INOTOPEN` -- UCSD writes it that way and the binary
+    agrees: index 33's `UJP` clears the whole `INOTOPEN`-plus-tail
+    block, so the success paths skip a tail the failure paths reach by
+    falling into it. }
   PROCEDURE FPUT; BEGIN END;
+  { Still a stub only because of that `CXP 2,5`: `FPSTUB5` lives
+    inside `SEGMENT PROCEDURE FIOPRIMS` and nothing outside that
+    segment can name it. This is the same wall `FGET` is behind
+    (findings 190/194/200), and it is now the single largest blocked
+    item in the file -- `FGET` (234), `FIOPRIMS.5` (275), `FPUT` (46)
+    and `FIOPRIMS.1`'s `RNP`/`RBP` all come free the moment `FIOPRIMS`
+    is built as the intrinsic unit it really is. The decoded body is
+    written out in full below so that switching costs one paste:
+
+      PROCEDURE FPUT;
+        LABEL 1;
+        VAR
+          LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER;
+          DONE: BOOLEAN;
+      BEGIN
+        SYSCOM^.IORSLT := INOERROR;
+        WITH F DO
+          IF FISOPEN THEN
+            IF FSOFTBUF THEN
+            BEGIN
+              IF FPSTUB5(F) THEN
+                GOTO 1
+            END
+            ELSE
+            BEGIN
+              UNITWRITE(FUNIT, FWINDOW^, FRECSIZE);
+              IF IORESULT <> 0 THEN
+                GOTO 1
+            END
+          ELSE
+          BEGIN
+            SYSCOM^.IORSLT := INOTOPEN;
+        1:  FEOF := TRUE;
+            FEOLN := TRUE
+          END
+      END; }
   { `XSEEK`/`XREADREAL`/`XWRITEREAL` (`PASCALSY.9`/`.14`/`.15`, finding
     193) -- UCSD's own `SEEK`/`READ(REAL)`/`WRITE(REAL)` support, never
     implemented for the Apple II's own software floating point (no
@@ -3178,8 +3231,6 @@ PROGRAM PASCALSYSTEM;
     result slot. Nothing else. }
   FUNCTION FEOF; BEGIN FEOF := F.FEOF END;
   FUNCTION FEOLN; BEGIN FEOLN := F.FEOLN END;
-  PROCEDURE FREADINT; BEGIN END;
-  PROCEDURE FWRITEINT; BEGIN END;
   PROCEDURE XREADREAL;
   BEGIN
     SYSCOM^.XEQERR := 11;
@@ -3237,8 +3288,6 @@ PROGRAM PASCALSYSTEM;
       ELSE
         SYSCOM^.IORSLT := INOTOPEN
   END;
-
-  PROCEDURE FREADSTRING; BEGIN END;
 
   { What WRITE(f, s) lowers to (finding 52b); UCSD's own source calls
     it directly rather than going through WRITE's own sugar (header
@@ -3649,6 +3698,186 @@ PROGRAM PASCALSYSTEM;
         END
   END;
 
+  { The three `CHECKDEL` callers live here, after it, because they have
+    to: `CHECKDEL` is `PASCALSY.54` and is *not* forward-declared --
+    nothing in the binary's numbering leaves room for it in the
+    forward block, and it returns `RBP`, so it is lex 0 and reachable
+    by name. `FREADINT`/`FREADSTRING` are numbers 12 and 18 and call it
+    with `CBP 54`, which is only legal if their *bodies* sit below its
+    definition. `FORWARD` already fixed their numbers; where the body
+    is written after that costs nothing (finding 202f). `FWRITEINT`
+    comes along because it belongs with its pair.
+
+    `CHECKDEL`'s third argument is the reason `FREADINT` carries an
+    80-character string it never reads: `CHECKDEL` echoes a backspace
+    only for `S[SINX] >= ' '`, and a numeric read has no string of its
+    own to offer. `FILLCHAR(NUMBUF, 81, CHR(80))` fills all 81 bytes
+    with `'P'` -- which sets the length byte to `CHR(80)` and every
+    character to something printable in one call. That is `LAO 7 |
+    SLDC 0 | SLDC 81 | SLDC 80 | CSP 10` exactly, and the 41 words it
+    occupies are what take `FREADINT`'s `data` to Apple's 46. }
+
+  { `FREADINT` = `PASCALSY.12` (finding 224) -- UCSD's own body plus
+    the `NUMBUF` argument above, and with `SINX`'s initialisation split
+    into the sign test's two arms (`2` when a sign was consumed, `1`
+    when not) instead of UCSD's single `SINX := 1` inside the digit
+    branch. }
+  PROCEDURE FREADINT;
+    LABEL 1;
+    VAR
+      CH: CHAR;
+      NEG, IVALID: BOOLEAN;
+      SINX: INTEGER;
+      NUMBUF: STRING;
+  BEGIN
+    WITH F DO
+    BEGIN
+      IF FUNIT = 1 THEN
+        FILLCHAR(NUMBUF, 81, CHR(80));
+      I := 0;
+      NEG := FALSE;
+      IVALID := FALSE;
+      IF FSTATE = FNEEDCHAR THEN
+        FGET(F);
+      WHILE (FWINDOW^[0] = ' ') AND NOT FEOF DO
+        FGET(F);
+      IF FEOF THEN
+        GOTO 1;
+      CH := FWINDOW^[0];
+      IF (CH = '+') OR (CH = '-') THEN
+      BEGIN
+        SINX := 2;
+        NEG := CH = '-';
+        FGET(F);
+        CH := FWINDOW^[0]
+      END
+      ELSE
+        SINX := 1;
+      IF CH IN DIGITS THEN
+      BEGIN
+        IVALID := TRUE;
+        REPEAT
+          I := I * 10 + ORD(CH) - ORD('0');
+          FGET(F);
+          CH := FWINDOW^[0];
+          SINX := SINX + 1;
+          IF FUNIT = 1 THEN
+            WHILE CHECKDEL(CH, SINX, NUMBUF) DO
+            BEGIN
+              IF SINX = 1 THEN
+                I := 0
+              ELSE
+                I := I DIV 10;
+              FGET(F);
+              CH := FWINDOW^[0]
+            END
+        UNTIL NOT (CH IN DIGITS) OR FEOLN
+      END;
+      IF IVALID OR FEOF THEN
+        IF NEG THEN
+          I := -I
+        ELSE
+      ELSE
+        SYSCOM^.IORSLT := IBADFORMAT
+    END;
+  1:
+  END;
+
+  { `FWRITEINT` = `PASCALSY.13` (finding 224) -- UCSD's own body with
+    the `-32768` special case rewritten. UCSD negates first and then
+    notices `ABS(-32768)` came back negative; 1.3 tests
+    `I = -MAXINT - 1` *before* touching `I`, as an `IF`/`ELSE` around
+    the sign handling. The constant is not folded: `LDCI 32767 | NGI |
+    SLDC 1 | SBI` is four instructions for one compile-time value, so
+    it has to be written as an expression, not as `-32768`.
+
+    `S`'s `STRING[10]` is fixed by the `SAS 10`, and the declaration
+    order is UCSD's untouched: `COL` at 4 and `POT` at 5 is the
+    within-clause reversal of `POT, COL: INTEGER`, and the `FOR`
+    limit temp lands past `S` at word 14. }
+  PROCEDURE FWRITEINT;
+    LABEL 1;
+    VAR
+      POT, COL: INTEGER;
+      CH: CHAR;
+      SUPPRESSING: BOOLEAN;
+      S: STRING[10];
+  BEGIN
+    COL := 1;
+    S[0] := CHR(10);
+    SUPPRESSING := TRUE;
+    IF I < 0 THEN
+      IF I = -MAXINT - 1 THEN
+      BEGIN
+        S := '-32768';
+        GOTO 1
+      END
+      ELSE
+      BEGIN
+        I := ABS(I);
+        S[1] := '-';
+        COL := 2
+      END;
+    FOR POT := 4 DOWNTO 0 DO
+    BEGIN
+      CH := CHR(I DIV IPOT[POT] + ORD('0'));
+      IF (CH = '0') AND (POT > 0) AND SUPPRESSING THEN
+      ELSE
+      BEGIN
+        SUPPRESSING := FALSE;
+        S[COL] := CH;
+        COL := COL + 1;
+        IF CH <> '0' THEN
+          I := I MOD IPOT[POT]
+      END
+    END;
+    S[0] := CHR(COL - 1);
+  1:
+    IF RLENG < LENGTH(S) THEN
+      RLENG := LENGTH(S);
+    FWRITESTRING(F, S, RLENG)
+  END;
+
+  { `FREADSTRING` = `PASCALSY.18` (finding 224) -- UCSD's own body
+    unchanged apart from `CHECKDEL`'s third argument, which here is the
+    caller's own `S`. The `IF CHECKDEL(...) THEN ELSE BEGIN ... END`
+    with the empty `THEN` arm is UCSD's own and the binary's: index 42
+    is an `FJP` into the `ELSE` and 43 a `UJP` over it, from a `THEN`
+    that emits nothing at all. }
+  PROCEDURE FREADSTRING;
+    VAR
+      SINX: INTEGER;
+      CH: CHAR;
+  BEGIN
+    WITH F DO
+    BEGIN
+      SINX := 1;
+      IF FSTATE = FNEEDCHAR THEN
+        FGET(F);
+      S[0] := CHR(SLENG);
+      WHILE (SINX <= SLENG) AND NOT (FEOLN OR FEOF) DO
+      BEGIN
+        CH := FWINDOW^[0];
+        IF FUNIT = 1 THEN
+          IF CHECKDEL(CH, SINX, S) THEN
+          ELSE
+          BEGIN
+            S[SINX] := CH;
+            SINX := SINX + 1
+          END
+        ELSE
+        BEGIN
+          S[SINX] := CH;
+          SINX := SINX + 1
+        END;
+        FGET(F)
+      END;
+      S[0] := CHR(SINX - 1);
+      WHILE NOT FEOLN DO
+        FGET(F)
+    END
+  END;
+
   { `FBLOCKIO`'s real body (finding 161), decoded directly from
     `PASCALSY.28`'s addressed disassembly and cross-checked against a
     standalone probe compile of this file's own real `FIB` declaration
@@ -3699,47 +3928,56 @@ PROGRAM PASCALSYSTEM;
     END;
   BEGIN
     FBLOCKIO := 0;
-    IF F.FISOPEN AND (NBLOCKS >= 0) THEN
-      IF F.FISBLKD THEN
-      BEGIN
-        IF RBLOCK < 0 THEN RBLOCK := F.FNXTBLK;
-        RBLOCK := RBLOCK + F.FHEADER.DFIRSTBLK;
-        IF RBLOCK + NBLOCKS > F.FHEADER.DLASTBLK THEN
-          IF NOT DOREAD THEN
-            IF STUB49(F) THEN ;
-        IF RBLOCK + NBLOCKS > F.FHEADER.DLASTBLK THEN
-          NBLOCKS := F.FHEADER.DLASTBLK - RBLOCK;
-        F.FEOF := RBLOCK >= F.FHEADER.DLASTBLK;
-        IF NOT F.FEOF THEN
-        BEGIN
-          BLKXFER(F.FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
-          IF IORESULT = 0 THEN
+    SYSCOM^.IORSLT := INOERROR;
+    WITH F DO
+      IF FISOPEN AND (NBLOCKS >= 0) THEN
+        IF FISBLKD THEN
+          WITH FHEADER DO
           BEGIN
-            IF NOT DOREAD THEN F.FMODIFIED := TRUE;
-            FBLOCKIO := NBLOCKS;
-            RBLOCK := RBLOCK + NBLOCKS;
-            F.FEOF := RBLOCK = F.FHEADER.DLASTBLK;
-            F.FNXTBLK := RBLOCK - F.FHEADER.DFIRSTBLK;
-            IF F.FNXTBLK > F.FMAXBLK THEN F.FMAXBLK := F.FNXTBLK
+            IF RBLOCK < 0 THEN
+              RBLOCK := FNXTBLK;
+            RBLOCK := DFIRSTBLK + RBLOCK;
+            IF RBLOCK + NBLOCKS > DLASTBLK THEN
+              IF NOT DOREAD THEN
+                IF STUB49(F) THEN ;
+            IF RBLOCK + NBLOCKS > DLASTBLK THEN
+              NBLOCKS := DLASTBLK - RBLOCK;
+            FEOF := RBLOCK >= DLASTBLK;
+            IF NOT FEOF THEN
+            BEGIN
+              BLKXFER(FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
+              IF IORESULT = 0 THEN
+              BEGIN
+                IF NOT DOREAD THEN
+                  FMODIFIED := TRUE;
+                FBLOCKIO := NBLOCKS;
+                RBLOCK := RBLOCK + NBLOCKS;
+                FEOF := RBLOCK = DLASTBLK;
+                FNXTBLK := RBLOCK - DFIRSTBLK;
+                IF FNXTBLK > FMAXBLK THEN
+                  FMAXBLK := FNXTBLK
+              END
+            END
           END
-        END
-      END
-      ELSE
-      BEGIN
-        FBLOCKIO := NBLOCKS;
-        BLKXFER(F.FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
-        IF IORESULT <> 0 THEN
-          FBLOCKIO := 0
         ELSE
-          IF DOREAD THEN
-          BEGIN
-            RBLOCK := NBLOCKS * 512;
-            RBLOCK := RBLOCK + SCAN(-RBLOCK, <>CHR(0), A[I + RBLOCK - 1]);
-            RBLOCK := (RBLOCK + 512 - 1) DIV 512;
-            FBLOCKIO := RBLOCK;
-            F.FEOF := RBLOCK < NBLOCKS
-          END
-      END
+        BEGIN
+          FBLOCKIO := NBLOCKS;
+          BLKXFER(FUNIT, A, I, NBLOCKS, RBLOCK, DOREAD);
+          IF IORESULT = 0 THEN
+            IF DOREAD THEN
+            BEGIN
+              RBLOCK := NBLOCKS * 512;
+              RBLOCK := RBLOCK + SCAN(-RBLOCK, <>CHR(0), A[I + RBLOCK - 1]);
+              RBLOCK := (RBLOCK + 512 - 1) DIV 512;
+              FBLOCKIO := RBLOCK;
+              FEOF := RBLOCK < NBLOCKS
+            END
+            ELSE
+          ELSE
+            FBLOCKIO := 0
+        END
+      ELSE
+        SYSCOM^.IORSLT := INOTOPEN
   END;
 
   { `FGET`'s completion sits here, after `FBLOCKIO`'s, because the real
@@ -4473,8 +4711,53 @@ PROGRAM PASCALSYSTEM;
     CLEARLINE;
     WRITE(PL)
   END;
-  FUNCTION SPACEWAIT; BEGIN SPACEWAIT := TRUE END;
-  FUNCTION GETCHAR; BEGIN GETCHAR := ' ' END;
+  { `SPACEWAIT` = `PASCALSY.40` (finding 224). UCSD's own
+    `SYSTEM.A.TEXT` has this procedure almost verbatim; 1.3 dropped
+    the `SLOWTERM` split (UCSD writes `'Type <space>'` and then, only
+    on a fast terminal, `' to continue'`) for one unconditional
+    literal, and hard-coded the ESC test that UCSD reads out of
+    `SYSCOM^.CRTINFO.ALTMODE`. Both are visible in the binary rather
+    than assumed: there is one `LSA`, and the second `EQUI` compares
+    against `SLDC 27`, not against a field load.
+
+    The `FJP` at the `UNTIL` goes to `jtab-10`, i.e. back to this
+    procedure's own first instruction -- a backward branch is a loop
+    condition before it is anything else, and here the loop top *is*
+    the body's first statement, so the `REPEAT` wraps everything. }
+  FUNCTION SPACEWAIT;
+    VAR
+      CH: CHAR;
+  BEGIN
+    REPEAT
+      WRITE('Press <space> to continue');
+      CH := GETCHAR(FLUSH);
+      IF NOT EOLN THEN
+        WRITELN;
+      CLEARLINE
+    UNTIL (CH = ' ') OR (CH = CHR(27));
+    SPACEWAIT := CH <> ' '
+  END;
+
+  { `GETCHAR` = `PASCALSY.41` (finding 224) -- UCSD's own body with one
+    substitution: `EXIT(COMMAND)` becomes `EXIT(STUB48)`, because 1.3
+    has no `COMMAND` (finding 51c) and the `CSP 4` operand pair here is
+    `(0, 48)`, the same pair `STUB48`'s own warm-reboot path already
+    uses. `LOD 1,58` is `INPUTFIB`, not `SYSTERM`: `STUB48` is exact
+    and its `GFILES[0] := INPUTFIB` compiles to that very load. }
+  FUNCTION GETCHAR;
+    VAR
+      CH: CHAR;
+  BEGIN
+    IF FLUSH THEN
+      UNITCLEAR(1);
+    IF INPUTFIB^.FEOF THEN
+      EXIT(STUB48);
+    INPUTFIB^.FSTATE := FNEEDCHAR;
+    READ(CH);
+    IF (CH >= 'a') AND (CH <= 'z') THEN
+      CH := CHR(ORD(CH) - ORD('a') + ORD('A'));
+    GETCHAR := CH
+  END;
   { `FETCHDIR` = `PASCALSY.42` (finding 188). Reads a unit's directory
     off disk into `SYSCOM^.GDIRP` (lazily allocated on first use --
     the real binary passes an explicit `1014`-word size to `NEW` here,
