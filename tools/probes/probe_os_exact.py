@@ -118,8 +118,9 @@ STILL_DIFFERS = [
     # and both of ANDOP/OROP demand BOOLPTR unconditionally, so these
     # three bytes-for-bytes cannot be produced by the shipped 1.3
     # compiler from any source that compiles. They are a permanent
-    # discrimination control, not a temporary one -- and the count they
-    # hold back, 107, is the real ceiling for the shipped tools.
+    # discrimination control, not a temporary one. 104 exact + 4 still
+    # reachable (the FIOPRIMS four) + these 3 = 111, so 108 is the real
+    # ceiling for the shipped tools.
     "FIOPRIMS.4",    # FPPEEK: 45 instructions against Apple's 43
     "FILEPROC.2",    # FPNEWBLK: 163 against Apple's 161
     "FILEPROC.4",    # FPOPEN: 475 against Apple's 473 (finding 229b)

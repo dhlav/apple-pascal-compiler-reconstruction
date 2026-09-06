@@ -19773,5 +19773,9 @@ rather than a temporary one.
 
 That leaves `FIOPRIMS`'s intrinsic-unit build wiring as the only open
 work in the whole file that can still move the count: `PASCALSY.7`
-(`FGET`), `PASCALSY.8` (`FPUT`), `FIOPRIMS.5` and `FIOPRIMS.1`. 104 of
-111 exact, 107 reachable, and the last four are one job.
+(`FGET`), `PASCALSY.8` (`FPUT`), `FIOPRIMS.5` and `FIOPRIMS.1`.
+
+The file balances exactly, which is the point of writing it down:
+**104 exact + 4 reachable + 3 unreachable = 111**. So the ceiling for
+the shipped tools is **108**, and every one of the four between here and
+it is the same single job.
