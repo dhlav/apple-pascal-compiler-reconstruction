@@ -591,7 +591,7 @@ PROGRAM PASCALSYSTEM;
     `ARGPTR` slot, not `LDCN`: an uninitialised `FIBP` local declared
     after the 290-word dummy `FIB`, which is the 291st `data` word
     (finding 219). }
-  PROCEDURE TITLENORM(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
+  PROCEDURE TITLENORM(VAR S: STRING; WANTTEXT: BOOLEAN; N: INTEGER);
     FORWARD;
 
   { Procedures 44-47: past the 41/42 UCSD-declared set (finding 136),
@@ -3374,19 +3374,24 @@ PROGRAM PASCALSYSTEM;
       committed procedure in this file. }
     PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
                      JUNK: FIBP);
-      LABEL 999;
+      LABEL 1, 2, 999;
+      { Offsets, from Apple's own operands: `DIR` 5, `UNITNO` 6,
+        `DIRIDX` 7, `HOLE` 8, `SEGS` 9, `KIND` 10, `M` 11, `FLAG` 12,
+        `SAVEIORSLT` 13, `FILEVID` 14, `FILETID` 18. Words 26-29 past
+        them are the four `WITH` pointers, nested that deep at
+        `DACCESS` (finding 229b). }
       VAR
-        TRICK: TRICKARRAY;
-        FILEVID: VID;
-        FILETID: TID;
+        DIR: DIRP;
+        UNITNO: UNITNUM;
+        DIRIDX: DIRRANGE;
+        HOLE: INTEGER;
         SEGS: INTEGER;
         KIND: FILEKIND;
-        FLAG: INTEGER;
-        UNITNO: UNITNUM;
-        DIR: DIRP;
         M: ^INTEGER;
-        DIRIDX: DIRRANGE;
+        FLAG: BOOLEAN;
         SAVEIORSLT: IORSLTWD;
+        FILEVID: VID;
+        FILETID: TID;
 
       { `FPALLOC` = `FILEPROC.5`, `FPOPEN`'s own nested free-space
         search (finding 175, body written per finding 176). Given a new
@@ -3527,179 +3532,169 @@ PROGRAM PASCALSYSTEM;
     BEGIN
       SYSCOM^.IORSLT := INOERROR;
       WITH F DO
+      BEGIN
         IF FISOPEN THEN
-          SYSCOM^.IORSLT := INOTCLOSED
-        ELSE
-          IF SCANTITLE(TITLE, FILEVID, FILETID, SEGS, KIND) THEN
-          BEGIN
-            TRICK.BYTE[0] := ORD(OLDOK);
-            IF TRICK.WORD[0] > 1 THEN
-              TRICK.WORD[0] := ORD((TRICK.WORD[0] = 2) OR (TRICK.WORD[0] = 4));
-            FLAG := 0;
-            IF SWAPFIB^.FISOPEN AND (SYSCOM^.GDIRP = NIL) THEN
+        BEGIN
+          SYSCOM^.IORSLT := INOTCLOSED;
+          GOTO 999
+        END;
+        IF SCANTITLE(TITLE, FILEVID, FILETID, SEGS, KIND) THEN
+        BEGIN
+          IF ORD(OLDOK) > 1 THEN
+            OLDOK := (ORD(OLDOK) = 2) OR (ORD(OLDOK) = 4);
+          FLAG := FALSE;
+          WITH SWAPFIB^ DO
+            IF FISOPEN AND (SYSCOM^.GDIRP = NIL) THEN
             BEGIN
               MARK(M);
-              IF (ORD(SYSCOM^.LASTMP) - ORD(M) > 0) AND
-                 (ORD(SYSCOM^.LASTMP) - ORD(M) <= 2028 + 400) THEN
-                IF ((ORD(M) - ORD(EMPTYHEAP) > 0) AND
-                    (ORD(M) - ORD(EMPTYHEAP) > 2028)) AND
-                   (UNITABLE[SWAPFIB^.FUNIT].UVID = SWAPFIB^.FVID) THEN
-                BEGIN
-                  UNITWRITE(SWAPFIB^.FUNIT, EMPTYHEAP^, 2028,
-                            SWAPFIB^.FHEADER.DFIRSTBLK);
-                  RELEASE(EMPTYHEAP);
-                  FLAG := 1
-                END
-            END;
-            UNITNO := VOLSEARCH(FILEVID, TRUE, DIR);
-            IF UNITNO = 0 THEN
-              SYSCOM^.IORSLT := INOUNIT
-            ELSE
-            BEGIN
-              FISOPEN := TRUE;
-              FMODIFIED := FALSE;
-              FUNIT := UNITNO;
-              FVID := FILEVID;
-              FNXTBLK := 0;
-              FISBLKD := UNITABLE[UNITNO].UISBLKD;
-              FSOFTBUF := UNITABLE[UNITNO].UISBLKD AND (FRECSIZE <> 0);
-              OLDOK := TRICK.WORD[0] <> 0;
-              IF (DIR <> NIL) AND (LENGTH(FILETID) > 0) THEN
+              HOLE := ORD(SYSCOM^.LASTMP) - ORD(M);
+              IF (HOLE > 0) AND (HOLE < 2028 + 400) THEN
               BEGIN
-                DIRIDX := DIRSEARCH(FILETID, OLDOK, DIR);
-                IF OLDOK THEN
-                  IF DIRIDX = 0 THEN
-                  BEGIN
-                    SYSCOM^.IORSLT := INOFILE;
-                    GOTO 999
-                  END
-                  ELSE
-                    FHEADER := DIR^[DIRIDX]
+                HOLE := ORD(M) - ORD(EMPTYHEAP);
+                IF (HOLE > 0) AND (HOLE > 2028) AND
+                   (UNITABLE[FUNIT].UVID = FVID) THEN
+                BEGIN
+                  UNITWRITE(FUNIT, EMPTYHEAP^, 2028,
+                            FHEADER.DFIRSTBLK);
+                  RELEASE(EMPTYHEAP);
+                  FLAG := TRUE
+                END
+              END
+            END;
+          UNITNO := VOLSEARCH(FILEVID, TRUE, DIR);
+          IF UNITNO = 0 THEN
+          BEGIN
+            SYSCOM^.IORSLT := INOUNIT;
+            GOTO 2
+          END;
+          WITH UNITABLE[UNITNO] DO
+          BEGIN
+            FISOPEN := TRUE;
+            FMODIFIED := FALSE;
+            FUNIT := UNITNO;
+            FVID := FILEVID;
+            FNXTBLK := 0;
+            FISBLKD := UISBLKD;
+            FSOFTBUF := UISBLKD AND (FRECSIZE <> 0);
+            IF (DIR <> NIL) AND (LENGTH(FILETID) > 0) THEN
+            BEGIN
+              DIRIDX := DIRSEARCH(FILETID, OLDOK, DIR);
+              IF OLDOK THEN
+                IF DIRIDX = 0 THEN
+                BEGIN
+                  SYSCOM^.IORSLT := INOFILE;
+                  GOTO 1
+                END
                 ELSE
-                  IF DIRIDX > 0 THEN
-                  BEGIN
-                    SYSCOM^.IORSLT := IDUPFILE;
-                    GOTO 999
-                  END
-                  ELSE
-                  BEGIN
-                    IF KIND = UNTYPEDFILE THEN KIND := DATAFILE;
-                    DIRIDX := FPALLOC(FILETID, SEGS, KIND, DIR);
-                    IF NOT ((DIRIDX > 0) AND (KIND = TEXTFILE)) THEN
+                  FHEADER := DIR^[DIRIDX]
+              ELSE
+                IF DIRIDX > 0 THEN
+                BEGIN
+                  SYSCOM^.IORSLT := IDUPFILE;
+                  GOTO 1
+                END
+                ELSE
+                BEGIN
+                  IF KIND = UNTYPEDFILE THEN
+                    KIND := DATAFILE;
+                  DIRIDX := FPALLOC(FILETID, SEGS, KIND, DIR);
+                  IF (DIRIDX > 0) AND (KIND = TEXTFILE) THEN
+                    WITH DIR^[DIRIDX] DO
                     BEGIN
-                      IF DIR^[DIRIDX].DLASTBLK
-                         - DIR^[DIRIDX].DFIRSTBLK <> 0 THEN
-                        DIR^[DIRIDX].DLASTBLK :=
-                          DIR^[DIRIDX].DLASTBLK - 1;
-                      IF DIR^[DIRIDX].DLASTBLK
-                         - DIR^[DIRIDX].DFIRSTBLK <= 4 THEN
+                      IF (DLASTBLK - DFIRSTBLK) <> 0 THEN
+                        DLASTBLK := DLASTBLK - 1;
+                      IF DLASTBLK - DFIRSTBLK < 4 THEN
                       BEGIN
                         DELENTRY(DIRIDX, DIR);
                         DIRIDX := 0
                       END
                     END;
-                    IF DIRIDX = 0 THEN
-                    BEGIN
-                      SYSCOM^.IORSLT := INOROOM;
-                      GOTO 999
-                    END
-                    ELSE
-                    BEGIN
-                      FHEADER := DIR^[DIRIDX];
-                      FMODIFIED := TRUE;
-                      WRITEDIR(UNITNO, DIR)
-                    END
-                  END
-              END
-              ELSE
-                IF (DIR = NIL) AND (LENGTH(FILETID) <> 0) THEN
-                  IF UNITABLE[UNITNO].UISBLKD THEN
+                  IF DIRIDX = 0 THEN
                   BEGIN
-                    SYSCOM^.IORSLT := INOFILE;
-                    GOTO 999
-                  END
-                  ELSE
-                  BEGIN
-                    FHEADER.DFIRSTBLK := 0;
-                    FHEADER.DLASTBLK := 32767;
-                    IF UNITABLE[UNITNO].UISBLKD THEN
-                      FHEADER.DLASTBLK := UNITABLE[UNITNO].UEOVBLK;
-                    FHEADER.DFKIND := KIND;
-                    FHEADER.DTID := '               ';
-                    FHEADER.DLASTBYTE := 512;
-                    FHEADER.DACCESS.MONTH := 0;
-                    FHEADER.DACCESS.DAY := 0;
-                    FHEADER.DACCESS.YEAR := 0
-                  END
-                ELSE
+                    SYSCOM^.IORSLT := INOROOM;
+                    GOTO 1
+                  END;
+                  FHEADER := DIR^[DIRIDX];
+                  FMODIFIED := TRUE;
+                  WRITEDIR(UNITNO, DIR)
+                END
+            END
+            ELSE
+            BEGIN
+              IF (DIR = NIL) AND (LENGTH(FILETID) <> 0) THEN
+                IF UNITABLE[UNITNO].UISBLKD THEN
                 BEGIN
-                  FHEADER.DFIRSTBLK := 0;
-                  FHEADER.DLASTBLK := 32767;
-                  IF UNITABLE[UNITNO].UISBLKD THEN
-                    FHEADER.DLASTBLK := UNITABLE[UNITNO].UEOVBLK;
-                  FHEADER.DFKIND := KIND;
-                  FHEADER.DTID := '               ';
-                  FHEADER.DLASTBYTE := 512;
-                  FHEADER.DACCESS.MONTH := 0;
-                  FHEADER.DACCESS.DAY := 0;
-                  FHEADER.DACCESS.YEAR := 0
+                  SYSCOM^.IORSLT := INOFILE;
+                  GOTO 1
                 END;
-
-              IF OLDOK THEN
-                FMAXBLK := FHEADER.DLASTBLK - FHEADER.DFIRSTBLK
-              ELSE
-                FMAXBLK := 0;
-
-              IF FSOFTBUF THEN
+              WITH FHEADER DO
               BEGIN
-                { Apple's stores: INC 31 := 512, then either
-                  INC 30 := DLASTBYTE or INC 30 := 512. Offset 31 is
-                  `FNXTBYTE`, 30 is `FMAXBYTE` (declaration order --
-                  finding 218a). }
-                FNXTBYTE := 512;
-                FBUFCHNGD := FALSE;
-                IF OLDOK THEN
-                  FMAXBYTE := FHEADER.DLASTBYTE
-                ELSE
-                  FMAXBYTE := 512;
-                IF FHEADER.DFKIND = TEXTFILE THEN
+                DFIRSTBLK := 0;
+                DLASTBLK := 32767;
+                IF UISBLKD THEN
+                  DLASTBLK := UEOVBLK;
+                DFKIND := KIND;
+                DTID := '';
+                DLASTBYTE := 512;
+                WITH DACCESS DO
+                BEGIN
+                  MONTH := 0;
+                  DAY := 0;
+                  YEAR := 0
+                END
+              END
+            END;
+            IF OLDOK THEN
+              FMAXBLK := FHEADER.DLASTBLK - FHEADER.DFIRSTBLK
+            ELSE
+              FMAXBLK := 0;
+            IF FSOFTBUF THEN
+            BEGIN
+              FNXTBYTE := 512;
+              FBUFCHNGD := FALSE;
+              IF OLDOK THEN
+                FMAXBYTE := FHEADER.DLASTBYTE
+              ELSE
+                FMAXBYTE := 512;
+              WITH FHEADER DO
+                IF DFKIND = TEXTFILE THEN
                 BEGIN
                   FNXTBLK := 2;
                   IF NOT OLDOK THEN
                   BEGIN
-                    FILLCHAR(FBUFFER, 514, 0);
-                    UNITWRITE(FUNIT, FBUFFER, 512, FHEADER.DFIRSTBLK);
-                    UNITWRITE(FUNIT, FBUFFER, 512, FHEADER.DFIRSTBLK + 1)
+                    FILLCHAR(FBUFFER, 514, CHR(0));
+                    UNITWRITE(FUNIT, FBUFFER, 512, DFIRSTBLK);
+                    UNITWRITE(FUNIT, FBUFFER, 512, DFIRSTBLK + 1)
                   END
                 END
-              END;
-
-              IF OLDOK THEN
-                FPRESET(F)
-              ELSE
-                FPNEWBLK(F);
-
-              IF SYSCOM^.IORSLT <> INOERROR THEN
-              BEGIN
-                FISOPEN := FALSE;
-                FEOLN := TRUE;
-                FEOF := TRUE
-              END;
-
-              IF FLAG <> 0 THEN
-              BEGIN
-                RELEASE(M);
-                SYSCOM^.GDIRP := NIL;
-                SAVEIORSLT := SYSCOM^.IORSLT;
-                UNITREAD(SWAPFIB^.FUNIT, EMPTYHEAP^, 2028,
-                         SWAPFIB^.FHEADER.DFIRSTBLK);
-                SYSCOM^.IORSLT := SAVEIORSLT
-              END
             END
-          END
+          END;
+          IF OLDOK THEN
+            FPRESET(F)
           ELSE
-            SYSCOM^.IORSLT := IBADTITLE;
-      999:
+            FPNEWBLK(F);
+        1:
+          IF SYSCOM^.IORSLT <> INOERROR THEN
+          BEGIN
+            FISOPEN := FALSE;
+            FEOF := TRUE;
+            FEOLN := TRUE
+          END;
+        2:
+          IF FLAG THEN
+          BEGIN
+            RELEASE(M);
+            SYSCOM^.GDIRP := NIL;
+            SAVEIORSLT := SYSCOM^.IORSLT;
+            UNITREAD(SWAPFIB^.FUNIT, EMPTYHEAP^, 2028,
+                     SWAPFIB^.FHEADER.DFIRSTBLK);
+            SYSCOM^.IORSLT := SAVEIORSLT
+          END
+        END
+        ELSE
+          SYSCOM^.IORSLT := IBADTITLE
+      END;
+    999:
     END;
 
     { `FPCLOSE` = `FILEPROC.7`, `FCLOSE`'s real target (finding 173),
@@ -3850,89 +3845,93 @@ PROGRAM PASCALSYSTEM;
           FISOPEN := FALSE
         END
     END;
-    { `FPTITLE` = `FILEPROC.8`, the file-title normalizer (finding
-      167), decoded from its own addressed disassembly
-      (`SYSTEM.PASCAL` 1.3) and independently already confirmed real
-      by `probe_osproc43.py` (blank deletion, a trailing `.`, the
-      `[...]` size spec, `.TEXT`/`.CODE`, `ORD(c) - 32` upshifting, the
-      1.3-only control-character clamp -- all present here, this is
-      the transcription of what that probe already established
-      structurally). Deletes every blank via a `SPOS`/`SDELETE` loop;
-      if the name already ends in `.`, just truncates that dot and
-      stops (no suffix appended). Otherwise: cuts any trailing `[...]`
-      size specification aside (`SPOS`/`SCOPY`/`SDELETE`, `BRACKET`),
-      and -- only if the name has no `:` (a volume-name prefix is left
-      completely alone) -- upshifts every letter and clamps control
-      characters to `?`, appends `.TEXT`/`.CODE` per `SUFFIX` if `N`
-      leaves room, then re-appends the saved `BRACKET` suffix.
-      `SCONCAT`'s own already-written body (this file, above) does its
-      own bounds check against `N`, so this doesn't reproduce the real
-      binary's separate `SLDL 1 / SLDC 5 / SBI / LEQI` guard
-      instruction-for-instruction -- same-shaped simplification as
-      `FILEPROC.1`'s own arm 3 (finding 166). Compiles clean:
-      `params=12` bytes exact against the real binary; `locals=170`
-      bytes against the real `180` -- ten bytes (five words) short,
-      documented not forced, the same class of small gap already
-      accepted elsewhere in this file. }
-    PROCEDURE FPTITLE(VAR S: STRING; SUFFIX: BOOLEAN; N: INTEGER);
+    { `FPTITLE` = `FILEPROC.8`, the file-title normalizer -- what
+      `TITLENORM` (`PASCALSY.43`) forwards into and what every
+      `CXP 0,43` on the disk set ends up in (finding 219).
+
+      Rewritten whole against Apple's own disassembly (finding 229).
+      The version this replaces was written before finding 201 and
+      routed every single-character separator through a scratch
+      `SEP: STRING`, because `SPOS`'s `TARGET` is a `VAR STRING` and a
+      literal will not bind to it (error 154). That was the wrong
+      conclusion from a true fact: `POS`/`COPY`/`DELETE`/`CONCAT` are
+      *sugar*, the compiler builds their argument lists itself, and no
+      VAR-actual check applies to what it builds -- exactly as
+      finding 201 established for `WRITE`. Written as `POS(' ', S)` it
+      compiles, and it compiles to Apple's own `NOP | LSA ' '`. The
+      scratch variable was also the whole of the `data` overshoot.
+
+      `SUFFIX` was backwards, and the call sites say so as loudly as
+      the binary does: `SLDL 2 | FJP` falls through to `'.TEXT'` when
+      the flag is set, and `STARTCOMPILE` passes `TRUE` for the source
+      textfile while `XECUTE` passes `FALSE` for a program it is about
+      to run. Renamed `WANTTEXT`, here and in `TITLENORM`'s own
+      heading, because "suffix" named the wrong thing twice over.
+
+      Two details are Apple's and not what a rewrite would pick:
+      the volume-prefix escape tests only the *last* character for
+      `':'` rather than searching the whole title, and `LAST5` is
+      initialised by assigning `BRACKET` (just set to `''`) rather
+      than by a second literal.
+
+      `data=180` is 90 words: `L` at 4, `P` at 5 (which the `FOR` also
+      uses as its counter), `BRACKET` 6-26, `SUFX` 27-29, `LAST5`
+      30-32, and 61 words of temporary at 33 -- `STRING[120]`, which
+      is what `CONCAT(S, BRACKET)`'s running maxima `80` and `120`
+      come to. }
+    PROCEDURE FPTITLE(VAR S: STRING; WANTTEXT: BOOLEAN; N: INTEGER);
       VAR
-        P, L, I: INTEGER;
-        BRACKET, SUFFIXSTR: STRING;
-        { `SPOS`'s own `TARGET` is `VAR STRING`, and a literal will
-          not bind to it under the shipped 1.3 compiler: error 154,
-          "actual parameter must be a variable", re-confirmed under
-          AppleWin this session at this exact call. Apple's own
-          `FILEPROC.8` nonetheless pushes `NOP | LSA ' '` here -- a
-          string constant straight into that `VAR` formal. It is the
-          same class of fact as finding 218b's `IND 13 | FJP`: the
-          shipped compiler will not compile what the shipped OS
-          contains. See finding 220. Until that is answered, every
-          single-character separator goes through this scratch var,
-          which is also where this procedure's `data` overshoot
-          comes from. }
-        SEP: STRING;
+        P, L: INTEGER;
+        BRACKET: STRING[40];
+        LAST5, SUFX: STRING[5];
     BEGIN
-      SEP := ' ';
-      P := SPOS(SEP, S);
+      P := POS(' ', S);
       WHILE P > 0 DO
       BEGIN
-        SDELETE(S, P, 1);
-        SEP := ' ';
-        P := SPOS(SEP, S)
+        DELETE(S, P, 1);
+        P := POS(' ', S)
       END;
-      IF LENGTH(S) > 0 THEN
-        IF S[LENGTH(S)] = '.' THEN
-          S[0] := CHR(LENGTH(S) - 1)
-        ELSE
+      L := LENGTH(S);
+      IF L > 0 THEN
+        IF S[L] <> '.' THEN
         BEGIN
           BRACKET := '';
-          SEP := '[';
-          P := SPOS(SEP, S);
+          LAST5 := BRACKET;
+          P := POS('[', S);
           IF P > 0 THEN
           BEGIN
-            L := (LENGTH(S) - P) + 1;
-            SCOPY(S, BRACKET, P, L);
-            SDELETE(S, P, L)
+            L := LENGTH(S) - P + 1;
+            BRACKET := COPY(S, P, L);
+            DELETE(S, P, L)
           END;
-          SEP := ':';
-          IF SPOS(SEP, S) = 0 THEN
-          BEGIN
-            IF SUFFIX THEN
-              SUFFIXSTR := '.CODE'
-            ELSE
-              SUFFIXSTR := '.TEXT';
-            FOR I := 1 TO LENGTH(S) DO
+          L := LENGTH(S);
+          IF L > 0 THEN
+            IF S[L] <> ':' THEN
             BEGIN
-              IF (S[I] >= 'a') AND (S[I] <= 'z') THEN
-                S[I] := CHR(ORD(S[I]) - 32);
-              IF S[I] < ' ' THEN
-                S[I] := '?'
+              IF WANTTEXT THEN
+                SUFX := '.TEXT'
+              ELSE
+                SUFX := '.CODE';
+              FOR P := 1 TO L DO
+              BEGIN
+                IF S[P] IN ['a'..'z'] THEN
+                  S[P] := CHR(ORD(S[P]) - 32);
+                IF S[P] < ' ' THEN
+                  S[P] := '?'
+              END;
+              IF L > 5 THEN
+                LAST5 := COPY(S, L - 5 + 1, 5);
+              IF (LAST5 <> SUFX) AND
+                 (L + LENGTH(BRACKET) <= N - 5) THEN
+              BEGIN
+                MOVELEFT(SUFX[1], S[L + 1], 5);
+                S[0] := CHR(L + 5)
+              END
             END;
-            IF (N - LENGTH(S)) >= 5 THEN
-              SCONCAT(S, SUFFIXSTR, N);
-            SCONCAT(S, BRACKET, N)
-          END
+          S := CONCAT(S, BRACKET)
         END
+        ELSE
+          S[0] := CHR(L - 1)
     END;
 
   { `FILEPROC.1`'s own real dispatch (finding 166), read directly from
@@ -5983,7 +5982,7 @@ PROGRAM PASCALSYSTEM;
       DUMMYF: FIB;
       DUMMYP: FIBP;
   BEGIN
-    FILEPROC(4, DUMMYF, S, SUFFIX, DUMMYP, N)
+    FILEPROC(4, DUMMYF, S, WANTTEXT, DUMMYP, N)
   END;
 
   { PASCALSY.44: append one character to the EXEC write buffer,

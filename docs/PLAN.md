@@ -1502,9 +1502,14 @@ a route end to end; everything else is a straight read-and-rebuild.
     parent's locals, so nesting them is what makes their operands mean
     anything -- `.17` and `.21` are now waiting on `.16`'s and `.20`'s
     `VAR` blocks specifically, not on decoding.
-    Nothing is left in `GETCMD`. Everything still open in the whole
-    file is `FIOPRIMS`'s shape (`PASCALSY.7`/`.8`, `FIOPRIMS.5`,
-    `FIOPRIMS.1`) plus finding 218b's pair and `FILEPROC`'s three.
+    Nothing is left in `GETCMD`, and `FILEPROC` closed too (finding
+    229): `FPTITLE` exact, `FPOPEN` frame-exact and two instructions
+    out. What the whole file still owes is exactly two things --
+    `FIOPRIMS`'s intrinsic-unit shape (`PASCALSY.7`/`.8`,
+    `FIOPRIMS.5`, `FIOPRIMS.1`) and finding 218b, which is now worth
+    three procedures rather than two (`FIOPRIMS.4`, `FILEPROC.2`,
+    `FILEPROC.4`) and is *not* a `FIB` declaration question --
+    finding 229c rules that out.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1654,7 +1659,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (103 as of finding 228).
+  (104 as of finding 229).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

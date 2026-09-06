@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-getcmd-complete" / \
+RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-fileproc" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -92,6 +92,11 @@ EXACT = [
     "PASCALSY.28", "PASCALSY.40", "PASCALSY.41",
     "FILEPROC.1", "FILEPROC.3", "FILEPROC.5", "FILEPROC.6",
     "FILEPROC.7",
+    # Finding 229: FPTITLE, once POS/COPY were written as sugar instead
+    # of as direct SPOS/SCOPY calls -- the sugar builds its own argument
+    # list, so the VAR-actual check that forced a scratch variable never
+    # applied.
+    "FILEPROC.8",
     "FIOPRIMS.2", "FIOPRIMS.3",
     "PRINTERR.1",
     "USERPROG.1",
@@ -102,18 +107,20 @@ EXACT = [
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
     "FIOPRIMS.5",    # 3 instructions against Apple's 275, still a stub
-    "FILEPROC.4",    # FPOPEN: 563 against Apple's 473; see finding 220
     # The two procedures FIOPRIMS's shape blocks. FPUT's body is decoded
     # in full and written out in the source as a comment; it needs the
     # CXP 2,5 only an intrinsic unit can give it (finding 224).
     "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
     "PASCALSY.8",    # FPUT: 1 against Apple's 46, blocked not unknown
     # Frame-identical, and every instruction matches but the two the
-    # finding-218b stand-in costs. These two are the control for that
-    # gap: if either ever reports exact, `IF FNXTBLK THEN` started
-    # compiling and 218b has been answered.
+    # finding-218b stand-in costs. These THREE are the control for that
+    # gap: if any of them ever reports exact, an integer expression has
+    # started reaching a Boolean operator and 218b is answered. They
+    # are worth three procedures between them, which is as much as the
+    # entire rest of this file still owes.
     "FIOPRIMS.4",    # FPPEEK: 45 instructions against Apple's 43
     "FILEPROC.2",    # FPNEWBLK: 163 against Apple's 161
+    "FILEPROC.4",    # FPOPEN: 475 against Apple's 473 (finding 229b)
 ]
 
 fail = []

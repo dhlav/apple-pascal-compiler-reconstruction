@@ -19630,3 +19630,92 @@ finding 227d's rule predicts twenty. Apple's compiler produces it from
 this source and the bytes match, so it is not a reconstruction error;
 it is a gap in the temporary-sizing rule, recorded rather than papered
 over.
+
+## 229. `FILEPROC`'s last two, and what finding 218b is really about
+
+103 -> **104 of 111**. `FPTITLE` (`FILEPROC.8`) is exact and `FPOPEN`
+(`FILEPROC.4`) went from 563/473 instructions on a wrong frame to
+475/473 on the right one -- everything in it matches except finding
+218b's two instructions. Every procedure in the file is now either
+exact, blocked on `FIOPRIMS`, or one of 218b's three.
+
+### 229a. The sugar bypasses the VAR-actual check, and that was worth a whole procedure
+
+`FPTITLE` had been written with a scratch `SEP: STRING` at every
+single-character separator, on the reasoning that `SPOS`'s `TARGET` is
+a `VAR STRING` and a literal will not bind to it -- error 154, which is
+true and was retested on real hardware. The conclusion was wrong
+anyway. `POS`/`COPY`/`DELETE`/`CONCAT` are sugar: the compiler builds
+their argument lists itself and never applies the check to what it
+builds, exactly as finding 201 established for `WRITE`. Written
+`POS(' ', S)` it compiles, and it compiles to Apple's own
+`NOP | LSA ' '`. The scratch variable was also the entire `data`
+overshoot (254 against 180).
+
+`SUFFIX` was also backwards -- `SLDL 2 | FJP` falls through to
+`'.TEXT'` when the flag is set -- and every call site agrees:
+`STARTCOMPILE` passes `TRUE` for the source textfile it is about to
+read, `XECUTE` passes `FALSE` for a program it is about to run.
+Renamed `WANTTEXT`.
+
+Two details in it are Apple's and are not what a rewrite would choose:
+the volume-prefix escape tests only the *last* character for `':'`
+instead of searching the title, and `LAST5` is initialised by assigning
+`BRACKET` (just set to `''`) rather than by a second literal.
+
+### 229b. `FPOPEN`: a `BOOLEAN` parameter carrying five values
+
+`FPOPEN`'s `OLDOK` is declared `BOOLEAN` and the body opens by testing
+it against `1`, `2` and `4`:
+
+```
+IF ORD(OLDOK) > 1 THEN
+  OLDOK := (ORD(OLDOK) = 2) OR (ORD(OLDOK) = 4);
+```
+
+`ORD` emits no instruction, so this is `SLDL 2 | SLDC 1 | GRTI | ...`
+with nothing wasted -- the same free-conversion trick finding 143 found
+for `EXEC_BLK`, used here to smuggle a five-valued open mode through a
+one-bit formal and collapse it to a real `BOOLEAN` on arrival. The
+reconstruction had been faking it with a `TRICKARRAY` variant, which
+cost six words of frame and thirty instructions.
+
+The rest was `WITH`. Apple's frame has 25 words: 21 of declarations and
+**four** `WITH` pointers at 26-29, and four is the nesting depth at
+`DACCESS` (`F`, `UNITABLE[UNITNO]`, `FHEADER`, `DACCESS`). Getting the
+depth right at every point is what fixed the frame, and one `WITH`'s
+*extent* was the last instruction-level difference before 218b: the
+`WITH UNITABLE[UNITNO]` runs on past the directory work to cover the
+soft-buffer block, which is the only reason the `WITH FHEADER` inside
+it lands on word 28 rather than 27. A `WITH` pointer's slot number is a
+measurement of how many `WITH`s are open at that point, and it is
+readable straight off the operand.
+
+Also settled from its operands: `SYSCOMREC`'s `LASTMP, STKBASE, BOMBP`
+clause reverses to `BOMBP` 5, `STKBASE` 6, `LASTMP` 7; `FIB`'s
+`FREPTCNT, FNXTBLK, FMAXBLK` to `FMAXBLK` 12, `FNXTBLK` 13; and
+`FNXTBYTE, FMAXBYTE` to `FMAXBYTE` 30, `FNXTBYTE` 31 -- all the same
+within-clause rule as finding 228a.
+
+### 229c. Finding 218b is not about the `FIB`'s declaration
+
+`FPOPEN` supplies a fourth site for 218b's construct, and it is a
+different shape from the other three:
+
+```
+LDL 28 | SIND 1 | LDL 28 | SIND 0 | SBI | FJP
+```
+
+That is `DLASTBLK - DFIRSTBLK` -- an arithmetic *expression*, not a
+field -- fed straight to `FJP`. 218b's first candidate was "a variant
+or overlay in Apple's own `FIB` declaration that this project has not
+recovered". This rules it out: no declaration can make the difference
+of two `INTEGER`s a `BOOLEAN`. What is left is the second candidate,
+that the OS was built by a compiler whose `GENFJP` did not test
+`GATTR.TYPTR <> BOOLPTR`.
+
+That matters more than it did, because 218b is now worth three
+procedures -- `FIOPRIMS.4`, `FILEPROC.2` and `FILEPROC.4`, each of them
+frame-identical and each of them exactly two instructions away. Those
+three plus `FIOPRIMS`'s four are the whole of what this file still
+owes.
