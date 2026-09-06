@@ -19963,3 +19963,63 @@ which nothing in the compiler produces. `SEGSUSED` bit 2 is set, and
 line that sets it, so a `USES` did run. **128K.PASCAL was not written
 by one compile**, and `FGET` is where that stops being a curiosity
 about the dictionary and starts costing a procedure.
+
+## 233. `FGET` is written, and all 111 procedures have now been Apple's
+
+**VERIFIED BINARY FACT.** `FGET` (`PASCALSY.7`) compiles to all 234 of
+Apple's instructions on Apple's `params=2`/`data=22` frame, first
+attempt, under Apple's own 1.3 compiler. The run is kept whole --
+codefile, console, and the exact `PASCALSYSTEM.text` that produced it
+-- in `acceptance/2026-09-06-pascalsystem-fget/`, and
+`probe_os_exact.py` re-checks it on every build.
+
+It is the last procedure in the file and it cannot be shipped in the
+same compile as the rest (finding 232b), so the honest statement is
+this: **every one of `128K.PASCAL`'s 111 procedures has now been
+produced byte-for-byte by Apple's own compiler from this
+reconstruction; no single compile holds all of them.** The probe
+asserts exactly that, by taking the union of the two runs and
+requiring it to be 111 -- a check that fails the moment either half
+regresses.
+
+The kept run also pins the *cost*, which is what turns finding 232b
+from an argument into a measurement: `PASCALSY.7` exact, and
+`PASCALSY.2`, `.3`, `.4`, `.5` -- `EXECERROR`, `FINIT`, `FRESET`,
+`FOPEN` -- emptied, those four and no others.
+
+### 233a. What the body says
+
+Structure, once the jump addresses are read rather than the
+instruction list:
+
+* The `DLE`-blank replay comes first: `IF FREPTCNT > 0 THEN BEGIN
+  FREPTCNT := FREPTCNT - 1; IF FREPTCNT > 0 THEN GOTO 1 END` -- two
+  tests on the same field, and the second one falls *through* on the
+  last replayed blank so the real read happens then.
+* `IF FSOFTBUF THEN BEGIN IF FPWINADV(F) THEN GOTO 2; GOTO 3 END` is
+  **not** an `IF`/`ELSE`. Three jumps at 33/34/35 where an `IF`/`ELSE`
+  needs four (finding 215's rule, applied in reverse): a `THEN` with
+  two `GOTO`s and no `ELSE` anywhere, with the console-read block
+  simply following it and label 3 after that.
+* The console read is `WHILE (I < FRECSIZE) AND MORE DO`, and the two
+  gates around `EXECGETCH` are written twice over rather than as an
+  `IF`/`ELSE`: `IF (UNITNO IN [1,2]) AND R_EXEC_FLG THEN EXECGETCH;`
+  then `IF NOT (UNITNO IN [1,2]) OR NOT R_EXEC_FLG THEN BEGIN
+  UNITREAD(...) ... END`. The set literal `[1,2]` is the one-word
+  bitmask 6, and `LNOT|LNOT|LOR` on the second is De Morgan written
+  out, not short-circuiting.
+* `UNITNO` is `2` for a unit-1 file and `F.FUNIT` otherwise: the
+  console is read through `SYSTERM:` rather than `CONSOLE:`, which is
+  why the echo -- `IF ISCONSOLE THEN IF NOT (CH IN CONFIG_CHAR) THEN
+  UNITWRITE(FUNIT, CH, 1)` -- is `FGET`'s own to do. `CONFIG_CHAR` is
+  the 16-word `SET OF CHAR` at global 312 (`LDA 1,312 | LDM 16`).
+* `IF CH = SYSCOM^.CRTINFO.EOF` is the loop's terminator, and the
+  field falls out of the reversal rule with nothing left over:
+  `BADCH, CHARDEL, STOP, BREAK, FLUSH, EOF: CHAR` is one clause, so
+  `EOF` takes the *lowest* position -- word 41's low byte, which is
+  what `INC 41 | SLDC 8 | SLDC 0 | LDP` addresses -- and `CHARDEL`
+  lands on 43 low, matching finding 207's independently-probed
+  placement exactly.
+* `SLDC 0 | SLDC 7 | CSP 4` is `EXIT(FGET)` -- `CSP 4` with the
+  callee's own (segment, procedure) pair, the same non-local exit
+  `STUB48` already uses (finding 205), and `(0, 7)` is `FGET` itself.

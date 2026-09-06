@@ -121,18 +121,31 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    # One left, and finding 232b says it cannot be reached in a single
-    # compilation of a single file. FGET needs USES FIOPRIMS to name
-    # the four helpers it calls with CXP 2,n; GETTEXT re-parses the
-    # interface with NEXTPROC := 2, zeroing PROCTABLE[2..5] of the
-    # current segment, so the USES has to precede segment 0's
-    # procedures 2-5 -- and FGET's own completion cannot move there,
-    # because its nested EXECGETCH must claim procedure 56 and that
-    # fixes its position after FBLOCKIO's. EXECERROR (procedure 2)
-    # would have to be both before FGET, for its own nested 51/52,
-    # and after it, to survive the zeroing.
-    "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
+    # One left in RUN, and finding 232b says no single compilation of
+    # a single file can hold it alongside the rest. FGET needs
+    # USES FIOPRIMS to name the four helpers it calls with CXP 2,n;
+    # GETTEXT re-parses the interface with NEXTPROC := 2, zeroing
+    # PROCTABLE[2..5] of the current segment, so the USES has to
+    # precede segment 0's procedures 2-5 -- and FGET's own completion
+    # cannot move there, because its nested EXECGETCH must claim
+    # procedure 56 and that fixes its position after FBLOCKIO's.
+    # EXECERROR (procedure 2) would have to be both before FGET, for
+    # its own nested 51/52, and after it, to survive the zeroing.
+    "PASCALSY.7",    # FGET: 1 against Apple's 234, a stub in RUN
 ]
+
+# The other half of that trade, kept as its own run: the same file
+# with FGET's real body and its USES, compiled by the same tool the
+# same day. FGET comes out exact and the four procedures the zeroing
+# lands on come out empty -- so the claim is not "FGET is probably
+# right", it is "Apple's compiler wrote Apple's 234 instructions from
+# this source", and the cost is exactly the four the finding names and
+# no others. The directory keeps the source that produced it, so the
+# run is reproducible rather than merely archived.
+FGET_RUN = (ROOT / "acceptance" / "2026-09-06-pascalsystem-fget"
+            / "PASCALSY.CODE")
+FGET_EXACT = ["PASCALSY.7"]
+FGET_LOST = ["PASCALSY.2", "PASCALSY.3", "PASCALSY.4", "PASCALSY.5"]
 
 fail = []
 
@@ -164,6 +177,26 @@ def main() -> int:
         r = rows.get(key)
         check(bool(r) and not r["exact"],
               f"{key} still differs, as the reconstruction says it should")
+
+    print("=== the FGET run, and what it costs (finding 232b) ===")
+    if not FGET_RUN.exists():
+        check(False, f"{FGET_RUN} is missing")
+    else:
+        frows = compare(CodeFile(FGET_RUN.read_bytes()), shipped_codefile())
+        for key in FGET_EXACT:
+            r = frows.get(key)
+            check(bool(r) and r["exact"],
+                  f"{key} instruction- and frame-identical in the FGET run")
+        for key in FGET_LOST:
+            r = frows.get(key)
+            check(bool(r) and not r["exact"],
+                  f"{key} emptied by that run's USES, as finding 232b says")
+        ours = {k for k, r in rows.items() if r["exact"]}
+        theirs = {k for k, r in frows.items() if r["exact"]}
+        both = ours | theirs
+        check(len(both) == len(rows),
+              f"{len(both)} of {len(rows)} procedures exact across the two "
+              f"runs together")
 
     print()
     if fail:

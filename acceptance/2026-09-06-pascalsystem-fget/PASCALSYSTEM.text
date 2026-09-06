@@ -5283,6 +5283,8 @@ PROGRAM PASCALSYSTEM;
     `WITH`, so `data` reads 20 against Apple's 22 -- the ten declared
     words balance exactly, and word 11 is where `EXECGETCH` needs it. }
   PROCEDURE FGET;
+  USES FIOPRIMS;
+    LABEL 1, 2, 3;
     VAR
       I: INTEGER;         { byte index into F's own window       }
       FGL3: INTEGER;      { 3, 4, 5, 6 and 8: five words Apple   }
@@ -5304,110 +5306,87 @@ PROGRAM PASCALSYSTEM;
       IF (CH = EXEC_TERM) AND (EXBUFPTR^[EXEC_CH_NUM] = EXEC_TERM) THEN
         EXECCLOSE(TRUE)
     END;
-  { The body below is `FGET`'s, verified: compiled by Apple's own
-    1.3 compiler on 2026-09-06 to all 234 of Apple's instructions on
-    Apple's `params=2`/`data=22` frame, first attempt. The whole run
-    is kept -- codefile, console and the exact source that produced
-    it -- in `acceptance/2026-09-06-pascalsystem-fget/`, and
-    `probe_os_exact.py` re-checks it on every build.
-
-    It cannot be *shipped* here, and finding 232b is the proof rather
-    than an excuse. `FPWINADV`/`FPDLE`/`FPPEEK` are only nameable
-    through `USES FIOPRIMS;`, a `USES` zeroes `PROCTABLE[2..5]` of the
-    current segment, and this completion is pinned after `FBLOCKIO`'s
-    because its nested `EXECGETCH` must claim procedure 56 -- so the
-    zeroing lands after `EXECERROR`, `FINIT`, `FRESET` and `FOPEN`
-    have already filled those four entries. The kept run shows exactly
-    that trade: `PASCALSY.7` exact, `PASCALSY.2`-`.5` emptied. Both
-    halves of the file have now been produced by Apple's compiler;
-    no single compile holds them at once. The heading it wants is
-    `PROCEDURE FGET; USES FIOPRIMS; LABEL 1, 2, 3;` ahead of the `VAR`
-    block above; everything else here is verbatim.
-
+  BEGIN
+    SYSCOM^.IORSLT := INOERROR;
+    WITH F DO
+      IF FISOPEN THEN
       BEGIN
-      SYSCOM^.IORSLT := INOERROR;
-      WITH F DO
-        IF FISOPEN THEN
+        IF FREPTCNT > 0 THEN
         BEGIN
+          FREPTCNT := FREPTCNT - 1;
           IF FREPTCNT > 0 THEN
+            GOTO 1
+        END;
+        IF FSOFTBUF THEN
+        BEGIN
+          IF FPWINADV(F) THEN
+            GOTO 2;
+          GOTO 3
+        END;
+        ISCONSOLE := FUNIT = 1;
+        IF ISCONSOLE THEN
+          UNITNO := 2
+        ELSE
+          UNITNO := FUNIT;
+        MORE := TRUE;
+        CH := ' ';
+        I := 0;
+        WHILE (I < FRECSIZE) AND MORE DO
+        BEGIN
+          IF (UNITNO IN [1, 2]) AND R_EXEC_FLG THEN
+            EXECGETCH;
+          IF NOT (UNITNO IN [1, 2]) OR NOT R_EXEC_FLG THEN
           BEGIN
-            FREPTCNT := FREPTCNT - 1;
-            IF FREPTCNT > 0 THEN
-              GOTO 1
+            UNITREAD(UNITNO, CH, 1);
+            IF IORESULT <> 0 THEN
+              GOTO 2
           END;
-          IF FSOFTBUF THEN
-          BEGIN
-            IF FPWINADV(F) THEN
-              GOTO 2;
-            GOTO 3
-          END;
-          ISCONSOLE := FUNIT = 1;
+          IF W_EXEC_FLG THEN
+            EXECPUTCH(CH);
           IF ISCONSOLE THEN
-            UNITNO := 2
-          ELSE
-            UNITNO := FUNIT;
-          MORE := TRUE;
-          CH := ' ';
-          I := 0;
-          WHILE (I < FRECSIZE) AND MORE DO
+            IF NOT (CH IN CONFIG_CHAR) THEN
+              UNITWRITE(FUNIT, CH, 1);
+          IF CH = SYSCOM^.CRTINFO.EOF THEN
           BEGIN
-            IF (UNITNO IN [1, 2]) AND R_EXEC_FLG THEN
-              EXECGETCH;
-            IF NOT (UNITNO IN [1, 2]) OR NOT R_EXEC_FLG THEN
-            BEGIN
-              UNITREAD(UNITNO, CH, 1);
-              IF IORESULT <> 0 THEN
-                GOTO 2
-            END;
-            IF W_EXEC_FLG THEN
-              EXECPUTCH(CH);
-            IF ISCONSOLE THEN
-              IF NOT (CH IN CONFIG_CHAR) THEN
-                UNITWRITE(FUNIT, CH, 1);
-            IF CH = SYSCOM^.CRTINFO.EOF THEN
-            BEGIN
-              IF FUNIT = 1 THEN
-                CH := CHR(0);
-              MORE := FALSE
-            END;
-            FWINDOW^[I] := CH;
-            I := I + 1
+            IF FUNIT = 1 THEN
+              CH := CHR(0);
+            MORE := FALSE
           END;
-      3:  IF FRECSIZE = 1 THEN
+          FWINDOW^[I] := CH;
+          I := I + 1
+        END;
+    3:  IF FRECSIZE = 1 THEN
+        BEGIN
+          FEOLN := FALSE;
+          IF FSTATE <> FJANDW THEN
+            FSTATE := FGOTCHAR;
+          IF FWINDOW^[0] = CHR(EOL) THEN
           BEGIN
-            FEOLN := FALSE;
-            IF FSTATE <> FJANDW THEN
-              FSTATE := FGOTCHAR;
-            IF FWINDOW^[0] = CHR(EOL) THEN
+            FWINDOW^[0] := ' ';
+            FEOLN := TRUE;
+            GOTO 1
+          END;
+          IF FUNIT > 2 THEN
+            IF FWINDOW^[0] = CHR(DLE) THEN
+              IF FPDLE(F) THEN
+                EXIT(FGET);
+          IF FWINDOW^[0] = CHR(0) THEN
+            IF FSOFTBUF AND (FHEADER.DFKIND = TEXTFILE) THEN
+              FPPEEK(F)
+            ELSE
             BEGIN
               FWINDOW^[0] := ' ';
-              FEOLN := TRUE;
-              GOTO 1
-            END;
-            IF FUNIT > 2 THEN
-              IF FWINDOW^[0] = CHR(DLE) THEN
-                IF FPDLE(F) THEN
-                  EXIT(FGET);
-            IF FWINDOW^[0] = CHR(0) THEN
-              IF FSOFTBUF AND (FHEADER.DFKIND = TEXTFILE) THEN
-                FPPEEK(F)
-              ELSE
-              BEGIN
-                FWINDOW^[0] := ' ';
-                GOTO 2
-              END
-          END
+              GOTO 2
+            END
         END
-        ELSE
-        BEGIN
-          SYSCOM^.IORSLT := INOTOPEN;
-      2:  FEOF := TRUE;
-          FEOLN := TRUE
-        END;
-      1:
+      END
+      ELSE
+      BEGIN
+        SYSCOM^.IORSLT := INOTOPEN;
+    2:  FEOF := TRUE;
+        FEOLN := TRUE
       END;
-  }
-  BEGIN
+  1:
   END;
 
   { Positions the cursor, clamped to the terminal's own declared
