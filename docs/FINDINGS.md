@@ -19463,3 +19463,92 @@ so there is nothing to fix in the repository -- but a scratch snippet
 that reads a procedure is worth writing once as a file rather than
 retyped, and it needs the same hard stop at the return opcode that
 `listing` has.
+
+## 227. `GETCMD.11` and its whole nested family, in one compile
+
+`GETCMD` is 22 of 27. `.11` and every one of `.13`-`.18` came out
+instruction- and frame-identical on the first real-hardware compile,
+taking the file from **91 to 98 of 111**. They had to land together:
+`.13`-`.18` have almost no frame of their own and reach into `.11`'s
+with `LDA 1,<n>`, so none of them could be written before `.11`'s
+`VAR` block, and `.11`'s `VAR` block is only readable *from* those
+operands. Neither half is evidence on its own.
+
+### 227a. What the procedure is
+
+Given the codefile's title, `.11` derives `vol:name.LIB`, opens it,
+and merges what it finds into `WHAT_L`, the global set of intrinsic
+segments something has actually supplied. A `.LIB` file may be either
+a library codefile or a text file whose first line is
+`LIBRARY FILES:` followed by up to five further titles; `.16` decides
+which by reading the second text block and upshifting fourteen
+characters, `.15` splits the list, `.14` opens each one. `.13` does
+the merge itself and `.18` builds the title. What the host asked for
+and nobody supplied is printed by segment number at the end.
+
+That answers what `WHAT_L` is for -- finding 216c had it as a
+four-word set at global 448 and nothing more.
+
+### 227b. The frame, and how it was read
+
+`params=8` is four words: two for the `BOOLEAN` result, `3` for
+`VAR ST` and `4` for `TITLE`. `data=1796` is 898 and accounts word
+for word:
+
+```
+  5    the value STRING parameter's shadow copy (41 words)
+  46   FVID   50 FTID   58 MISSING   62 FKIND   63 GOTLIB
+  64   NPRINT 65 SEGNO  66 NLIBS     67 LX
+  68   LIBLIST, five STRINGs at 41 words
+  273  BLK (256 words)               529 USEDIT
+  530  SYSLIB   571 LIBTITLE          (41 words each)
+  612  F, a whole 290-word FIB
+  902  the FOR limit temporary, shared by both loops
+```
+
+Every one of those offsets is named by an instruction in a *child*.
+`.14` and `.16` load `LDA 1,612`, `LOD 1,619` and `LOD 1,628`, which
+against the already-written `FIB` are `F`, `F.FUNIT` and
+`F.FHEADER.DFIRSTBLK` -- three fields at their right distances apart
+is not a coincidence, and it is what fixes `F` at 612. `.13` loads
+`LDA 1,369`, and 369 - 273 = 96, which is exactly where finding 205's
+own field sum puts `SEGDICT.SEGKIND`. `.15` writes `LIBLIST[LX][0]`
+with `LDA 1,68 | IXA 41`, giving both the base and the element size.
+
+### 227c. `BLK` is a second tagless variant record
+
+`.13` passes `LDA 1,273` straight into `GC05`'s `VAR ST: SEGDICT`
+while `.15` reads the same 273 with `LDB` and hands it to `MOVELEFT`.
+One 512-byte buffer, read as a segment dictionary by one child and as
+raw text by another, is the same idiom `SEGSETWORDS` needed in finding
+225c and `TRICKARRAY` has used all along.
+
+### 227d. A hidden temporary lives for one statement, not one procedure
+
+`.18` does two `COPY`s and one `CONCAT` and all three build at
+`LLA 2`; `GETCMD.22`'s two `COPY`s needed separate slots at 2 and 10.
+The difference is that `.22`'s pair are both live inside a single
+statement (`IF ... THEN IF COPY(...) = ... THEN X := COPY(...)`) while
+`.18`'s three are three separate statements. So the temporary is
+allocated per statement and reused afterwards, and a procedure's
+temporary space is the largest single statement's, not the sum.
+
+`.18`'s `data=30` says so exactly: fifteen words, one of them the
+declared `I` and fourteen the `CONCAT` temporary. Fourteen words is
+`STRING[27]`, and 27 is what `SCONCAT`'s own running maxima
+(`7`, `8`, `23`, `27`) count up to -- `VIDLENG`, a colon, `TIDLENG`,
+`'.LIB'`. Had the three temporaries each had their own slot the frame
+would have been more than twice that.
+
+### 227e. Two smaller confirmations
+
+`CSP 11` (`SCAN`) encodes `=` as `0` and `<>` as `1` in its second
+pushed word: `FBLOCKIO`'s already-exact `<>CHR(0)` is `SLDC 1` and
+`.15`'s `SLDC 0` is therefore `=CHR(13)`, which is what scanning for
+the end of a title in a text block has to be.
+
+`TITLENORM` (`PASCALSY.43`) accepts a `TID` on its `VAR S: STRING`
+formal. `.18` calls it with `FTID` and a length of `15`, and Apple's
+own compiler took it without complaint -- the explicit length
+parameter finding 219 read off the call sites is there precisely
+because the formal cannot know the actual's size.

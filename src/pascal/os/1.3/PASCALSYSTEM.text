@@ -1663,6 +1663,16 @@ PROGRAM PASCALSYSTEM;
                         FALSE: (W: ARRAY [0..3] OF INTEGER)
                     END;
 
+      { `.13` passes `LDA 1,273` straight into `GC05`'s own `VAR ST`
+        while `.15` reads the same 273 with `LDB` and `MOVELEFT`: one
+        512-byte buffer read both as a segment dictionary and as raw
+        text, which is a tagless variant record (finding 227). }
+      LIBBLOCK = RECORD
+                   CASE BOOLEAN OF
+                     TRUE: (D: SEGDICT);
+                     FALSE: (C: PACKED ARRAY [0..511] OF CHAR)
+                 END;
+
     { GETCMD's own three words of `data` -- real `6`, and UCSD's own
       `CH`/`BADCMD`/`DONT_CARE` accounts for all three. Declaration
       groups ascend, so `DONT_CARE` lands on word `6`, which is what
@@ -1781,7 +1791,61 @@ PROGRAM PASCALSYSTEM;
     PROCEDURE GC09(VAR ST: SEGDICT; VAR F: FIB); FORWARD;
     FUNCTION GC10(VAR ST: SEGDICT; VAR SEGS: SEGSET;
                   KINDS: KINDSET): BOOLEAN; FORWARD;
+    { `GETCMD.11` -- the library-file pass, and the parent of `.12`
+      through `.18`. Given the codefile's own title it derives
+      `vol:name.LIB`, reads that file's first text block, and if it
+      begins `LIBRARY FILES:` treats the rest as a list of up to five
+      library titles; each one is opened in turn and its segment
+      dictionary merged. What the merge is *for* is the intrinsic-unit
+      set: `WHAT_L` accumulates every intrinsic segment some library
+      actually supplies, and what the host codefile asked for and
+      nobody supplied is reported by number at the end.
+
+      `params=8` is four words -- two for the `BOOLEAN` result, `3` for
+      `VAR ST` and `4` for `TITLE` -- and `data=1796` is 898, which
+      accounts word for word:
+
+        5    the value `STRING` parameter's own shadow copy, 41 words,
+             made by the `LLA 5 | SLDL 4 | SAS 80` this body opens with
+             (finding 176); allocated ahead of every declaration
+        46   `FVID`, 50 `FTID`, 58 `MISSING`, 62 `FKIND`, 63 `GOTLIB`,
+             64 `NPRINT`, 65 `SEGNO`, 66 `NLIBS`, 67 `LX`
+        68   `LIBLIST`, five `STRING`s at 41 words each
+        273  `BLK`, 256 words, and 529 `USEDIT`
+        530  `SYSLIB`, 571 `LIBTITLE`, 41 words each
+        612  `F`, a whole 290-word `FIB`
+        902  the `FOR` limit temporary, shared by both loops
+
+      `BLK` is read two ways by two different children -- as a
+      `SEGDICT` by `.13` (which passes `LDA 1,273` straight into
+      `GC05`'s own `VAR ST`) and as 512 plain characters by `.15`
+      (`LDB` and `MOVELEFT` off the same base) -- so it is a tagless
+      variant record, the same idiom `SEGSETWORDS` above needed and for
+      the same reason (finding 216c/225c).
+
+      The offsets are what pin the children, not the reverse: `.14`,
+      `.16` and `.13` all reach this frame with `LDA 1,<n>`, so
+      `612`/`619`/`628` name `F`, `F.FUNIT` and `F.FHEADER.DFIRSTBLK`
+      against the already-written `FIB`, and 273+96 = 369 lands on
+      `SEGDICT.SEGKIND` exactly where finding 205's own field sum puts
+      it. }
     FUNCTION GC11(TITLE: STRING; VAR ST: SEGDICT): BOOLEAN;
+      VAR
+        FVID: VID;
+        FTID: TID;
+        MISSING: SEGSET;
+        FKIND: FILEKIND;
+        GOTLIB: BOOLEAN;
+        NPRINT: INTEGER;
+        SEGNO: INTEGER;
+        NLIBS: INTEGER;
+        LX: INTEGER;
+        LIBLIST: ARRAY [1..5] OF STRING;
+        BLK: LIBBLOCK;
+        USEDIT: BOOLEAN;
+        SYSLIB: STRING;
+        LIBTITLE: STRING;
+        F: FIB;
 
       { `GETCMD.12` (finding 225): `params=4` is two words with no
         parameters at all -- a `BOOLEAN` function's result slot -- and
@@ -1800,14 +1864,224 @@ PROGRAM PASCALSYSTEM;
         ELSE
           GC12 := FALSE
       END;
-      PROCEDURE GC13; BEGIN END;
-      PROCEDURE GC14(A: INTEGER); BEGIN END;
-      PROCEDURE GC15; BEGIN END;
+
+      { `.13` -- merge one library's dictionary into `WHAT_L`. A
+        segment survives only if it is an intrinsic or a data segment,
+        nobody has already supplied it, and the host actually asked for
+        it; everything else has its `CODELENG` zeroed so `GC09` will
+        not enter it in `SEGTABLE`. The three tests are `LAND`ed, not
+        an `FJP` chain, so they are one `AND` expression. }
+      PROCEDURE GC13;
+        VAR
+          SNO: INTEGER;
+          I: INTEGER;
+      BEGIN
+        FOR I := 0 TO 15 DO
+        BEGIN
+          SNO := GC05(BLK.D, I);
+          IF (BLK.D.SEGKIND[I] IN [LINKED_INTRINS, DATASEG]) AND
+             NOT (SNO IN WHAT_L) AND (SNO IN ST.INTRINSSEGS) THEN
+          BEGIN
+            WHAT_L := WHAT_L + [SNO];
+            USEDIT := TRUE
+          END
+          ELSE
+            BLK.D.DISKINFO[I].CODELENG := 0
+        END;
+        GC09(BLK.D, F)
+      END;
+
+      { `.14` -- open one named library and merge it. `data=82` is 41
+        words and it has no declarations at all: that is the value
+        `STRING` parameter's shadow copy on its own, which is also why
+        `LLA 2` is both the parameter as `.14` reads it and the string
+        `WRITE` prints back in either warning. }
+      PROCEDURE GC14(LTITLE: STRING);
+      BEGIN
+        FINIT(F, NIL, -1);
+        FOPEN(F, LTITLE, TRUE, NIL);
+        USEDIT := FALSE;
+        IF IORESULT = 0 THEN
+        BEGIN
+          GOTLIB := TRUE;
+          UNITREAD(F.FUNIT, BLK, 512, F.FHEADER.DFIRSTBLK);
+          IF IORESULT = 0 THEN
+            GC13;
+          IF NOT USEDIT THEN
+          BEGIN
+            WRITE('Warning: ');
+            WRITE(LTITLE);
+            WRITE(' is not used');
+            WRITELN
+          END
+        END
+        ELSE
+        BEGIN
+          WRITE('Warning: Cannot open the library file ');
+          WRITE(LTITLE);
+          WRITELN
+        END;
+        FCLOSE(F, CNORMAL)
+      END;
+
+      { `.15` -- split the `LIBRARY FILES:` text block into up to five
+        titles. `IX` starts at 15, one past the heading and its own
+        carriage return; `CHR(16)` is a text file's own DLE blank
+        compression, whose count byte has to be stepped over as well;
+        `$` ends the list. `data=8` is four words -- three variables
+        and the `FOR` limit -- so the two `EXIT(GC15)` paths are the
+        real control flow, not a flag. }
+      PROCEDURE GC15;
+        VAR
+          NAMELEN: INTEGER;
+          IX: INTEGER;
+          LIBX: INTEGER;
+      BEGIN
+        IX := 15;
+        IF BLK.C[IX] = CHR(16) THEN
+          IX := IX + 2;
+        NAMELEN := 0;
+        IF NOT ((BLK.C[IX] = '$') AND (BLK.C[IX + 1] = '$')) THEN
+        BEGIN
+          FOR LIBX := 1 TO 5 DO
+          BEGIN
+            NAMELEN := SCAN(80, =CHR(13), BLK.C[IX]);
+            MOVELEFT(BLK.C[IX], LIBLIST[LIBX][1], NAMELEN);
+            LIBLIST[LIBX][0] := CHR(NAMELEN);
+            IX := IX + NAMELEN + 1;
+            IF BLK.C[IX] = CHR(16) THEN
+              IX := IX + 2;
+            IF BLK.C[IX] = '$' THEN
+            BEGIN
+              NLIBS := LIBX;
+              EXIT(GC15)
+            END
+          END;
+          NLIBS := 5
+        END
+        ELSE
+          NLIBS := 0
+      END;
+
+      { `.16` -- open `LIBTITLE` itself. A `.LIB` file is allowed to be
+        either a codefile or a text file listing other libraries, and
+        the second text block decides: `MOVELEFT` fourteen characters
+        out of it, upshift them in `.17`, and if they read
+        `LIBRARY FILES:` hand the block to `.15` and leave. Otherwise
+        it is an ordinary library codefile, so its own dictionary block
+        is read instead and merged by `.13`.
+
+        `S[1] = 'L'` and `S[2] = 'I'` are tested before the length byte
+        is set, so the full string compare only runs on a block that
+        already looks right -- Apple's own short-circuit, written by
+        hand because the compiler does not do it. }
       PROCEDURE GC16;
-        PROCEDURE GC17; BEGIN END;
-      BEGIN END;
-      PROCEDURE GC18; BEGIN END;
-    BEGIN GC11 := FALSE END;
+        VAR S: STRING[14];
+
+        { `.17` -- upshift `.16`'s own fourteen characters in place.
+          `LDA 1,1` is the parent's `S`, which is what places it three
+          levels inside the segment and makes its globals `lex 3`. }
+        PROCEDURE GC17;
+          VAR I: INTEGER;
+        BEGIN
+          FOR I := 1 TO 13 DO
+            IF S[I] >= 'a' THEN
+              S[I] := CHR(ORD(S[I]) - 32)
+        END;
+
+      BEGIN
+        FINIT(F, NIL, -1);
+        FOPEN(F, LIBTITLE, TRUE, NIL);
+        IF IORESULT = 0 THEN
+        BEGIN
+          UNITREAD(F.FUNIT, BLK, 512, F.FHEADER.DFIRSTBLK + 2);
+          IF IORESULT = 0 THEN
+          BEGIN
+            MOVELEFT(BLK.C[0], S[1], 14);
+            GC17;
+            IF (S[1] = 'L') AND (S[2] = 'I') THEN
+            BEGIN
+              S[0] := CHR(14);
+              IF S = 'LIBRARY FILES:' THEN
+              BEGIN
+                GC15;
+                FCLOSE(F, CNORMAL);
+                EXIT(GC16)
+              END
+            END
+          END;
+          GOTLIB := TRUE;
+          USEDIT := FALSE;
+          UNITREAD(F.FUNIT, BLK, 512, F.FHEADER.DFIRSTBLK);
+          GC13
+        END;
+        FCLOSE(F, CNORMAL)
+      END;
+
+      { `.18` -- turn the codefile's own title into its library's.
+        `SCANTITLE`'s result is discarded with the same
+        `IF <call> THEN ;` shape `FBLOCKIO` uses for `STUB49`, and its
+        fourth argument is this procedure's one declared word, reused
+        immediately afterwards as the length scratch. `data=30` is
+        fifteen words: that one, plus fourteen for the `CONCAT`
+        temporary -- `STRING[27]`, which is what `7`, `8`, `23`, `27`
+        add up to (finding 226's running cumulative maximum). The two
+        `COPY`s land on the same offset because each is its own
+        statement; `GETCMD.22`'s two needed separate slots only
+        because both were live inside one statement. }
+      PROCEDURE GC18;
+        VAR I: INTEGER;
+      BEGIN
+        IF SCANTITLE(LIBTITLE, FVID, FTID, I, FKIND) THEN ;
+        TITLENORM(FTID, FALSE, 15);
+        I := LENGTH(FTID);
+        IF I > 5 THEN
+          IF COPY(FTID, I - 4, 5) = '.CODE' THEN
+            DELETE(FTID, I - 4, 5);
+        IF LENGTH(FTID) > 11 THEN
+          FTID := COPY(FTID, 1, 11);
+        LIBTITLE := CONCAT(FVID, ':', FTID, '.LIB')
+      END;
+
+    BEGIN
+      NLIBS := 0;
+      GC11 := FALSE;
+      GOTLIB := FALSE;
+      WHAT_L := [];
+      LIBTITLE := TITLE;
+      GC18;
+      GC16;
+      IF GC12 AND (NLIBS > 0) THEN
+        FOR LX := 1 TO NLIBS DO
+          GC14(LIBLIST[LX]);
+      IF GC12 THEN
+      BEGIN
+        SYSLIB := '*SYSTEM.LIBRARY';
+        GC14(SYSLIB)
+      END;
+      GC11 := TRUE;
+      IF NOT GOTLIB THEN
+      BEGIN
+        WRITE('Error: Required library files are not present');
+        GC11 := FALSE
+      END;
+      IF GC12 AND GOTLIB THEN
+      BEGIN
+        GC11 := FALSE;
+        WRITE('Error: These required intrinsic(s) not available:  ');
+        NPRINT := 0;
+        MISSING := ST.INTRINSSEGS - WHAT_L;
+        FOR SEGNO := 1 TO MAX_SEG DO
+          IF NOT (SEGNO IN [2..6]) AND (SEGNO IN MISSING) THEN
+          BEGIN
+            WRITE(SEGNO);
+            WRITE('  ');
+            NPRINT := NPRINT + 1;
+            IF NPRINT = 7 THEN
+              WRITELN
+          END
+      END
+    END;
     { `TITLE` is a VALUE `STRING`, as UCSD's own `ASSOCIATE` declares
       it -- not `VAR`. `.2`'s only call passes a `CONCAT` expression,
       which no `VAR` formal can accept (error 154), and a value formal

@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-04-pascalsystem-sysassoc" / \
+RUN = ROOT / "acceptance" / "2026-09-05-pascalsystem-getcmd-libs" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -51,6 +51,13 @@ EXACT = [
     "GETCMD.24",
     # Finding 226.
     "GETCMD.3", "GETCMD.9", "GETCMD.22",
+    # Finding 227: GETCMD.11 and the whole of its nested family. The
+    # frame was mapped from the offsets its own children reach into it
+    # with (LDA 1,<n>), so all seven landed together on the first
+    # compile -- .11 could not be written before the children and the
+    # children could not be written before .11.
+    "GETCMD.13", "GETCMD.14", "GETCMD.15", "GETCMD.16", "GETCMD.17",
+    "GETCMD.18", "GETCMD.11",
     # INITIALIZE is complete: all 11 of its procedures.
     "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",
