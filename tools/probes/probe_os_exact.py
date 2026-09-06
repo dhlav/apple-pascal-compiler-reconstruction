@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-fileproc" / \
+RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-odd" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -98,6 +98,15 @@ EXACT = [
     # applied.
     "FILEPROC.8",
     "FIOPRIMS.2", "FIOPRIMS.3",
+    # Finding 231. ODD and CHR are the two standard functions the
+    # compiler emits no instruction for, so ODD(<integer>) is a free
+    # cast to BOOLEAN -- which is what the four "unreachable"
+    # procedures of finding 230 were each two instructions short of.
+    # FIOPRIMS.5 (FPWINOUT, 275 instructions) was written from the
+    # disassembly in the same pass and landed exact on the first
+    # compile; FILEPROC is now complete, all 8.
+    "FIOPRIMS.4", "FIOPRIMS.5",
+    "FILEPROC.2", "FILEPROC.4",
     "PRINTERR.1",
     "USERPROG.1",
 ]
@@ -106,24 +115,17 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    "FIOPRIMS.5",    # 3 instructions against Apple's 275, still a stub
-    # The two procedures FIOPRIMS's shape blocks. FPUT's body is decoded
-    # in full and written out in the source as a comment; it needs the
-    # CXP 2,5 only an intrinsic unit can give it (finding 224).
+    # The three procedures FIOPRIMS's *shape* blocks, and nothing else
+    # is left. FIOPRIMS is an intrinsic unit (SEGKIND 6 in the shipped
+    # dictionary, finding 200), so its body is a UNIT initialisation
+    # part at PFLEV 1 and ends RNP 0 where a SEGMENT PROCEDURE ends
+    # RBP 0; and FGET/FPUT reach FPWINADV/FPDLE/FPPEEK/FPWINOUT by
+    # CXP 2,n, which needs those four names visible outside the
+    # segment. FPUT's body is decoded in full and kept in the source
+    # as a comment (finding 224).
+    "FIOPRIMS.1",    # 1 instruction, RBP 0 where Apple has RNP 0
     "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
     "PASCALSY.8",    # FPUT: 1 against Apple's 46, blocked not unknown
-    # Frame-identical, and every instruction matches but the two the
-    # finding-218b stand-in costs. Finding 230 closed that question by
-    # reading this project's own byte-verified SYSTEM.COMPILER: GENFJP
-    # and both of ANDOP/OROP demand BOOLPTR unconditionally, so these
-    # three bytes-for-bytes cannot be produced by the shipped 1.3
-    # compiler from any source that compiles. They are a permanent
-    # discrimination control, not a temporary one. 104 exact + 4 still
-    # reachable (the FIOPRIMS four) + these 3 = 111, so 108 is the real
-    # ceiling for the shipped tools.
-    "FIOPRIMS.4",    # FPPEEK: 45 instructions against Apple's 43
-    "FILEPROC.2",    # FPNEWBLK: 163 against Apple's 161
-    "FILEPROC.4",    # FPOPEN: 475 against Apple's 473 (finding 229b)
 ]
 
 fail = []

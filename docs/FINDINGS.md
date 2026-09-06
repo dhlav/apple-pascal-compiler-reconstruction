@@ -19779,3 +19779,93 @@ The file balances exactly, which is the point of writing it down:
 **104 exact + 4 reachable + 3 unreachable = 111**. So the ceiling for
 the shipped tools is **108**, and every one of the four between here and
 it is the same single job.
+
+## 231. `ODD` is a free cast to `BOOLEAN`, and finding 230 was wrong
+
+**VERIFIED SOURCE FACT**, from the same reconstructed `SYSTEM.COMPILER`
+that produced finding 230 -- one line further into the same phase.
+**VERIFIED BINARY FACT** for the consequence: all four procedures 230
+declared unreachable now compile to Apple's exact bytes.
+
+`ENTSTDPROCS` (`COMPINIT.text`) enters `ODD` as a `STANDARD` function
+with one `INTEGER` parameter and result type `BOOLPTR`, and gives it
+`CSPNUM := 21`. `CALLNONSPECIAL` (`BODYPART.text`) then ends:
+
+```
+      ELSE
+	IF (CSPNUM <> 21) AND (CSPNUM <> 22) THEN
+	  GEN1(30(*CSP*),CSPNUM);
+      GATTR.TYPTR := FCP^.IDTYPE
+```
+
+21 is `ODD` and 22 is `CHR`. They are the two standard functions the
+compiler generates **no instruction at all** for: the argument is loaded
+and then simply reinterpreted, `GATTR.TYPTR` becoming `BOOLPTR` for
+`ODD` and `CHARPTR` for `CHR`. So `ODD(<integer expression>)` is a
+zero-cost `INTEGER` -> `BOOLEAN` cast, and it hands `GENFJP`, `ANDOP`
+and `NOTSY` exactly the `BOOLPTR` each of them insists on.
+
+Finding 230's reasoning was sound and its conclusion was wrong. It
+proved the three *operators* cannot be reached with a non-Boolean
+operand -- which is true -- and then inferred that Apple's own bytes
+could not be produced. What it did not do was ask how a source gets an
+integer to *be* Boolean before the operator sees it. The lesson is
+narrow and worth keeping: exhausting one path is not exhausting the
+question, and "the compiler refuses X" is only an answer once the ways
+of not asking for X have been counted too.
+
+### 231a. All four sites close
+
+Each was frame-identical and exactly two instructions long, and each
+was a comparison written where Apple wrote a cast:
+
+| procedure | Apple | this file had | now |
+|---|---|---|---|
+| `FIOPRIMS.4` `FPPEEK` | `IND 13 \| FJP` | `IF FNXTBLK <> 0 THEN` | `IF ODD(FNXTBLK) THEN` |
+| `FILEPROC.2` `FPNEWBLK` | `IND 13 \| LAND` | `AND (FNXTBLK <> 0)` | `AND ODD(FNXTBLK)` |
+| `FILEPROC.4` `FPOPEN` | `SIND 1 \| SIND 0 \| SBI \| FJP` | `IF (DLASTBLK - DFIRSTBLK) <> 0` | `IF ODD(DLASTBLK - DFIRSTBLK)` |
+| `FIOPRIMS.5` `FPWINOUT` | `IND 13 \| LNOT \| LAND` | (unwritten) | `AND NOT ODD(FNXTBLK)` |
+
+`ODD` is not a paraphrase of `<> 0` -- the two mean different things --
+but it is what Apple's compiler turns into the byte Apple shipped, and
+byte-identical output is the target. Whether Apple's own source said
+`ODD(FNXTBLK)` or said `FNXTBLK` and was compiled by a laxer in-house
+compiler is not decidable from here, and does not need to be.
+
+### 231b. `FIOPRIMS.5` is `FPWINOUT`, and its caller was in the binary
+
+Written from the addressed disassembly in the same pass, 275
+instructions, **exact on the first compile**. It is `FPWINADV`'s write
+counterpart: same frame (`params=6`, `data=14`), same five variables in
+the same order, same two `WITH` pointers at 9 and 10, and its first
+twelve instructions are `FPWINADV`'s byte for byte -- which is what
+pinned the local numbering before a line of it was written.
+
+Finding 170 had it as "not tied to any known caller". It is: `FPUT`
+(`PASCALSY.8`) calls `CXP 2,5` and `FPWINOUT` calls `CXP 0,8` straight
+back, so the two are mutually recursive across the segment boundary.
+
+Two structural things came off the jump addresses rather than the
+instruction list, and neither is visible without them:
+
+* The `UNTIL` jumps to `$0186`, which is instruction **12** -- the same
+  offset as `FPWINADV`'s loop top. So the `STUB49` call that grows the
+  file when the write would run past `DLASTBLK` is *inside* the
+  `REPEAT`, retried every pass, not a one-time check ahead of it.
+* `UJP $026C` out of the `UNITREAD` arm lands on the `CSP 34`, not past
+  it, so the `IF IORESULT <> 0` belongs to neither arm of the
+  `UNITREAD`/`FILLCHAR` choice but follows the whole `IF`.
+
+### 231c. Where the file stands
+
+**108 of 111 exact**, and the three that are left are one job, not
+three: `FIOPRIMS.1` (1 instruction, `RBP 0` where Apple has `RNP 0`),
+`PASCALSY.7` (`FGET`) and `PASCALSY.8` (`FPUT`). All three want
+`FIOPRIMS` built as the intrinsic unit its `SEGKIND` says it is
+(finding 200) -- the body then compiles at `PFLEV 1` and returns `RNP`,
+and the four helpers become nameable from segment 0 for the `CXP 2,n`
+calls `FGET` and `FPUT` make.
+
+`FILEPROC` is complete, all 8. `GETCMD` is complete, all 27.
+`INITIALI` complete, all 11. `PASCALSY` is 56 of 58 and `FIOPRIMS` 4
+of 5.

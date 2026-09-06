@@ -878,9 +878,9 @@ PROGRAM PASCALSYSTEM;
       `FGET`'s own gate: `FSOFTBUF AND (DFKIND = TEXTFILE)`). Compiles
       clean, `params=2` bytes exact; `locals` is dominated by the
       290-word `FIB` snapshot itself, and the `WITH F DO` below is the
-      word that closed the last gap -- `582/582`, frame exact. The
-      only instructions left differing are the two the finding-218b
-      stand-in costs. }
+      word that closed the last gap -- `582/582`, frame exact.
+      **Exact** since finding 231, once `ODD` was recognised as a free
+      cast rather than a call. }
     PROCEDURE FPPEEK(VAR F: FIB);
       VAR
         SAVE: FIB;
@@ -890,15 +890,16 @@ PROGRAM PASCALSYSTEM;
       BEGIN
         { Apple's own bytes here are `IND 13 | FJP`, with no
           comparison at all -- `FNXTBLK` used directly as a truth
-          value. The shipped 1.3 compiler refuses to compile that
-          (`IF FNXTBLK THEN` is error 135, "type of operand must be
-          Boolean", straight out of `GENFJP`), so this writes the
-          comparison and costs two instructions. See finding 218:
-          the same shape appears at three soft-buffer sites
-          (`FIOPRIMS.4`'s `FJP`, `FILEPROC.2`'s `LAND`, and
-          `FIOPRIMS.5`'s `LNOT|LAND`), and no reading of the `FIB`
-          this project has yet accounts for it. }
-        IF FNXTBLK <> 0 THEN
+          value. `ODD` is how a source says that: it and `CHR` are
+          the only two standard functions `CALLNONSPECIAL` skips the
+          `CSP` for (`IF (CSPNUM <> 21) AND (CSPNUM <> 22) THEN
+          GEN1(30(*CSP*),CSPNUM)`), so `ODD(<integer>)` costs nothing
+          and hands `GENFJP` the `BOOLPTR` it insists on. Findings
+          218/230 had read the same four sites -- this one,
+          `FIOPRIMS.5`'s `LNOT|LAND`, `FILEPROC.2`'s `LAND` and
+          `FILEPROC.4`'s `SBI|FJP` -- as bytes the shipped compiler
+          could not emit at all. It can (finding 231). }
+        IF ODD(FNXTBLK) THEN
           FNXTBLK := FNXTBLK + 1;
         FNXTBYTE := 512;
         FGET(F);
@@ -912,12 +913,126 @@ PROGRAM PASCALSYSTEM;
       END
     END;
 
-    { `FIOPRIMS.5` -- not yet tied to any known caller (finding 170).
-      Signature guessed only to preserve procedure numbering; not
-      Apple's real content. }
-    FUNCTION FPSTUB5(VAR F: FIB): BOOLEAN;
+    { `FIOPRIMS.5` -- the *write* counterpart of `FPWINADV`, and its
+      caller is now known: `FPUT` (`PASCALSY.8`) calls `CXP 2,5`, and
+      this body calls `CXP 0,8` (`FPUT`) straight back, so the two are
+      mutually recursive across the segment boundary. Decoded from the
+      addressed disassembly; the frame is `FPWINADV`'s exactly
+      (`params=6`, `data=14`, same five variables and the same two
+      `WITH` pointers at 9 and 10), and the first twelve instructions
+      are byte-for-byte `FPWINADV`'s, which is what pinned the local
+      numbering before a line of it was written.
+
+      It copies `FRECSIZE` bytes the other way -- out of the user's
+      window (`F^`) into the soft buffer -- flushing and refilling as
+      it crosses block boundaries. Three things differ from
+      `FPWINADV` and each is in the binary:
+
+        * The loop opens by *growing the file* when the write would
+          run past the last allocated block: `(DFIRSTBLK + FNXTBLK) =
+          DLASTBLK` and the record would overrun `DLASTBYTE` calls
+          `STUB49` (`CXP 0,49`, the extend-allocation routine), and
+          only if that fails does it report `INOROOM` and give up.
+          The `FJP` to the loop top is `jtab-10` at `$0186`, which is
+          instruction 12 -- the same offset as `FPWINADV`'s -- so this
+          test is *inside* the `REPEAT`, retried on every pass, not a
+          one-time check ahead of it.
+        * `FBUFCHNGD := TRUE` before the `MOVELEFT`, since this is the
+          side that dirties the buffer.
+        * Past the loop it maintains the high-water mark
+          (`FMAXBLK`/`FMAXBYTE`) and then, for a single-byte
+          `TEXTFILE` window holding a carriage return near the end of
+          the first block, backs `FNXTBYTE` up to `512 - 1`, blanks
+          the window byte and recurses into `FPUT` -- the line-crossing
+          case that keeps a `TEXTFILE` line from straddling the
+          two-block page the editor reads.
+
+      `NOT ODD(FNXTBLK)` is not a paraphrase: `ODD` and `CHR` are the
+      two standard functions the compiler generates *no instruction*
+      for (`BODYPART.text`'s own `IF (CSPNUM <> 21) AND (CSPNUM <> 22)
+      THEN GEN1(30(*CSP*),CSPNUM)`), so `ODD(<integer>)` is a free
+      cast to `BOOLEAN` and `IND 13 | LNOT` is exactly what it emits.
+      See finding 231 -- that one line reopened all four procedures
+      finding 230 had written off as unreachable. }
+    FUNCTION FPWINOUT(VAR F: FIB): BOOLEAN;
+      LABEL 1;
+      VAR
+        RECSIZE, WINOFS, ROOM, NEED: INTEGER;
+        FILLED: BOOLEAN;
     BEGIN
-      FPSTUB5 := FALSE
+      FPWINOUT := TRUE;
+      WITH F DO
+        WITH FHEADER DO
+        BEGIN
+          RECSIZE := FRECSIZE;
+          WINOFS := 0;
+          REPEAT
+            IF ((DFIRSTBLK + FNXTBLK) = DLASTBLK) AND
+               ((FNXTBYTE + RECSIZE) > DLASTBYTE) THEN
+              IF STUB49(F) THEN
+              BEGIN
+                SYSCOM^.IORSLT := INOROOM;
+                GOTO 1
+              END;
+            IF (DFIRSTBLK + FNXTBLK) = DLASTBLK THEN
+              IF (FNXTBYTE + RECSIZE) > DLASTBYTE THEN
+              BEGIN
+                SYSCOM^.IORSLT := INOROOM;
+                GOTO 1
+              END
+              ELSE
+                ROOM := DLASTBYTE - FNXTBYTE
+            ELSE
+              ROOM := 512 - FNXTBYTE;
+            NEED := RECSIZE;
+            IF NEED > ROOM THEN NEED := ROOM;
+            IF NEED > 0 THEN
+            BEGIN
+              FBUFCHNGD := TRUE;
+              MOVELEFT(FWINDOW^[WINOFS], FBUFFER[FNXTBYTE], NEED);
+              FNXTBYTE := FNXTBYTE + NEED;
+              WINOFS := WINOFS + NEED;
+              RECSIZE := RECSIZE - NEED
+            END;
+            FILLED := RECSIZE = 0;
+            IF NOT FILLED THEN
+            BEGIN
+              IF FBUFCHNGD THEN
+              BEGIN
+                FBUFCHNGD := FALSE;
+                FMODIFIED := TRUE;
+                UNITWRITE(FUNIT, FBUFFER[0], 512, DFIRSTBLK + FNXTBLK - 1)
+              END;
+              IF IORESULT <> 0 THEN GOTO 1;
+              IF FNXTBLK < FMAXBLK THEN
+                UNITREAD(FUNIT, FBUFFER[0], 512, DFIRSTBLK + FNXTBLK)
+              ELSE
+                FILLCHAR(FBUFFER[0], 512, CHR(0));
+              IF IORESULT <> 0 THEN GOTO 1;
+              FNXTBLK := FNXTBLK + 1;
+              FNXTBYTE := 0
+            END
+          UNTIL FILLED;
+          IF FNXTBLK > FMAXBLK THEN
+          BEGIN
+            FMAXBYTE := FNXTBYTE;
+            FMAXBLK := FNXTBLK
+          END
+          ELSE
+            IF (FNXTBLK = FMAXBLK) AND (FNXTBYTE > FMAXBYTE) THEN
+              FMAXBYTE := FNXTBYTE;
+          IF FRECSIZE = 1 THEN
+            IF FWINDOW^[0] = CHR(13) THEN
+              IF DFKIND = TEXTFILE THEN
+                IF (FNXTBYTE >= 512 - 127) AND NOT ODD(FNXTBLK) THEN
+                BEGIN
+                  FNXTBYTE := 512 - 1;
+                  FWINDOW^[0] := CHR(0);
+                  FPUT(F)
+                END;
+          FPWINOUT := FALSE
+        END;
+      1: ;
     END;
 
   BEGIN END;
@@ -3235,9 +3350,10 @@ PROGRAM PASCALSYSTEM;
       `TEXTFILE`) at the end either way. `IORSLT`-style bookkeeping and
       absolute-block arithmetic (`FHEADER.DFIRSTBLK + FNXTBLK`, `-1`
       for the just-finished block vs. none for the new one) mirror the
-      same idiom `STUB49` already established (finding 165). Compiles
-      clean; `params=2` bytes exact, `locals=2` against the real `4` --
-      two bytes (one word) short, documented not forced. }
+      same idiom `STUB49` already established (finding 165).
+      **Exact** since finding 231: the last two instructions were the
+      `<> 0` written where Apple wrote `ODD(FNXTBLK)`, the free cast
+      described at `FPPEEK` above. }
     PROCEDURE FPNEWBLK(VAR F: FIB);
       VAR
         ATBOUNDARY: BOOLEAN;
@@ -3272,7 +3388,7 @@ PROGRAM PASCALSYSTEM;
               UNITWRITE(FUNIT, FBUFFER[0], 512,
                         (FHEADER.DFIRSTBLK + FNXTBLK) - 1);
               IF ATBOUNDARY AND (FHEADER.DFKIND = TEXTFILE) AND
-                 (FNXTBLK <> 0) THEN
+                 ODD(FNXTBLK) THEN
               BEGIN
                 FMAXBLK := FMAXBLK + 1;
                 FILLCHAR(FBUFFER[0], 512, CHR(0));
@@ -3356,22 +3472,14 @@ PROGRAM PASCALSYSTEM;
       `UNITREAD` back into `EMPTYHEAP^`, restoring the saved `IORSLT`
       so the swap's own I/O result doesn't clobber `FPOPEN`'s real one.
 
-      Compiles clean as a complete procedure: `params` exact (`8`
-      bytes, matching `FPOPEN`'s own real signature). `locals` is `21`
-      words (`42` bytes) against the real binary's `25` (`50` bytes)
-      -- four words short, but this is the *same* already-documented
-      class as every other procedure in this file compared this way:
-      the dispatcher (`FILEPROC.1`), `FPNEWBLK`, `FPRESET`, `FPALLOC`,
-      and `FPCLOSE` are *all* short by one to five words too (checked
-      directly against the real binary alongside this finding), and
-      `FPTITLE` (`FILEPROC.8`) is short by five -- this host compiler
-      simply doesn't perform the address-caching optimization Apple's
-      real one does for a `WITH`'d or repeatedly-dereferenced pointer
-      (findings 174/179/180's own "missing `F`-cache" gap), and that
-      shows up as missing *local* words, not just extra instructions,
-      once a routine dereferences the same pointer enough times. Not
-      a new gap, not chased further -- consistent with every other
-      committed procedure in this file. }
+      **Exact** since finding 231. The frame closed first (finding
+      229b: the four `WITH` pointers at words 26-29, and the
+      `WITH UNITABLE[UNITNO]` reaching past the directory work to
+      cover the soft-buffer block, which is what puts the inner
+      `WITH FHEADER` on word 28 rather than 27); the last two
+      instructions were `(DLASTBLK - DFIRSTBLK) <> 0` written where
+      Apple wrote `ODD(DLASTBLK - DFIRSTBLK)`, the free cast
+      described at `FPPEEK` above. }
     PROCEDURE FPOPEN(VAR F: FIB; VAR TITLE: STRING; OLDOK: BOOLEAN;
                      JUNK: FIBP);
       LABEL 1, 2, 999;
@@ -3601,7 +3709,7 @@ PROGRAM PASCALSYSTEM;
                   IF (DIRIDX > 0) AND (KIND = TEXTFILE) THEN
                     WITH DIR^[DIRIDX] DO
                     BEGIN
-                      IF (DLASTBLK - DFIRSTBLK) <> 0 THEN
+                      IF ODD(DLASTBLK - DFIRSTBLK) THEN
                         DLASTBLK := DLASTBLK - 1;
                       IF DLASTBLK - DFIRSTBLK < 4 THEN
                       BEGIN

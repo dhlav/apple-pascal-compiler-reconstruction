@@ -1659,7 +1659,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (104 as of finding 229).
+  (108 as of finding 231).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.
