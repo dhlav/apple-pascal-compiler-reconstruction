@@ -20023,3 +20023,34 @@ instruction list:
 * `SLDC 0 | SLDC 7 | CSP 4` is `EXIT(FGET)` -- `CSP 4` with the
   callee's own (segment, procedure) pair, the same non-local exit
   `STUB48` already uses (finding 205), and `(0, 7)` is `FGET` itself.
+
+## 234. Six files had no listing at all: the `SYSTEM.*` stem collision
+
+**VERIFIED BINARY FACT**, and a tooling bug rather than a discovery about
+Apple -- but it is the reason `SYSTEM.ASSMBLER` could not be started
+before now, so it belongs in the ledger.
+
+`disasm_utils.py` and `lift_utils.py` named their output
+`{stem}-{tag}`, where `stem` was `e.name.rsplit(".", 1)[0]`. Six of the
+codefiles on these disks are `SYSTEM.something`, so on each disk they
+all resolved to the same name and each overwrote the last:
+
+| disk | codefiles | what survived |
+|---|---|---|
+| 1.3 APPLE1 | `SYSTEM.PASCAL`, `SYSTEM.EDITOR`, `SYSTEM.FILER` | `SYSTEM.FILER`'s |
+| 1.3 APPLE2 | `SYSTEM.ASSMBLER`, `SYSTEM.LINKER` | `SYSTEM.LINKER`'s |
+
+No error and no gap in any count: the lift *ran* on all of them, so the
+coverage line said `95/95 tracked` for the assembler while the listing
+that number described was sitting on disk with the linker's contents.
+`analysis/` is generated, nothing referenced the colliding names, and
+the fix is to keep the full filename wherever a stem is shared --
+`FORMATTER.CODE` still reads as `FORMATTER`, `128K.PASCAL` still as
+`128K`, and the six now have listings of their own.
+
+The lesson is the one CLAUDE.md already states and this repository's own
+tooling still managed to violate: **prefer a check the binary can fail,
+and check it can fail for the property you care about.** The coverage
+figure could fail on a procedure the lifter could not follow. It could
+not fail on a file the writer had silently thrown away, because it was
+counted before it was written.

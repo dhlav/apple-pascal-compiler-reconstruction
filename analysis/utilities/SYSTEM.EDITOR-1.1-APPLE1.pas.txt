@@ -1,0 +1,3333 @@
+Apple Pascal 1.1-APPLE1 SYSTEM.EDITOR -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 EDITOR
+======================================================================
+
+procedure EDITOR.1(args 2 words);  { locals 1662 words, lex 0 }
+  FINIT(@G591, @G891, -(1));
+  INITIALI.1();
+  EDITOR.26();
+  G3 := EDITOR.13(G3, G5);
+  repeat
+    EDITOR.22(@G452, ((G14 div 2)+1), 1);
+    G282 := 1;
+    if (I1,11 > 0) then begin
+      PUTSYNTA.1();
+    end;
+    repeat
+      EDITOR.18();
+      EDITOR.7(0);
+      EDITCORE.1();
+      if (G15 = 12) then begin
+        ENVIRONM.1();
+      end else begin
+        if (G15 = 2) then begin
+          COPYFILE.1();
+          @G1440^ := ' Be sure original SYSTEM.EDITOR disk is in same drive: {RETURN to continue}'  {string};
+          EDITOR.10();
+          FREADLN(I1,2);
+        end;
+      end;
+    until (G15 = 10);
+  until OUT.1();
+  { unmodelled packed store of 0 }
+  FCLOSE(@G591, 0);
+  { left on stack: (I1,1+29) }
+  { left on stack: 1 }
+
+procedure EDITOR.2(args 2 words);  { locals 41 words, lex 1 }
+  @L3^ := L2  {string};
+  UNITCLEAR(1);
+  if (L1 = 0) then begin
+    EDITOR.20(1);
+  end else begin
+    EDITOR.18();
+    EDITOR.7(0);
+  end;
+  FWRITESTRING(I2,3, 'ERROR: ', 0);
+  FWRITESTRING(I2,3, @L3, 0);
+  if (L1 = 0) then begin
+    EXIT(1, 1);
+  end else begin
+    FWRITESTRING(I2,3, '  Please press <spacebar> to continue.', 0);
+L0384:
+    if not ((EDITOR.4() = 32)) then goto L0384;
+    G282 := 1;
+  end;
+
+procedure EDITOR.3(args 2 words);  { locals 1 words, lex 1 }
+  if EDITOR.14(2) then begin
+    EDITOR.16(2);
+  end else begin
+    if (L1 = G14) then begin
+      UNITWRITE(2, @G1481, 0, (G13-L2), 0, 0);
+    end else begin
+      UNITWRITE(2, @G1481, 0, ((G13-L2)+1), 0, 0);
+    end;
+    FGOTOXY(L2, L1);
+  end;
+
+function EDITOR.4(args 0 words) : <1 word result>;  { locals 1 words, lex 1 }
+  FREADCHAR(I2,4, @L3);
+  if FEOLN(I2,4) then begin
+    L3 := 13;
+  end;
+  L1 := L3;
+
+procedure EDITOR.5(args 0 words);  { locals 1 words, lex 1 }
+  if EDITOR.14(4) then begin
+    EDITOR.16(4);
+  end else begin
+    EDITOR.18();
+    EDITOR.6(0, 0);
+  end;
+
+procedure EDITOR.6(args 2 words);  { locals 2 words, lex 1 }
+  if EDITOR.14(1) then begin
+    EDITOR.16(1);
+  end else begin
+    EDITOR.3(L2, L1);
+    L3 := (L1+1);
+    L4 := G14;
+    while (L3 <= L4) do begin
+      FWRITELN(I2,3);
+      EDITOR.7(L3);
+      L3 := (L3+1);
+    end;
+    FGOTOXY(L2, L1);
+  end;
+
+procedure EDITOR.7(args 1 words);  { locals 1 words, lex 1 }
+  if EDITOR.14(3) then begin
+    EDITOR.16(3);
+  end else begin
+    FGOTOXY(0, L1);
+    EDITOR.3(0, L1);
+  end;
+
+function EDITOR.8(args 1 words) : <1 word result>;  { locals 1 words, lex 1 }
+  if ((L3 = G1615) and (L3 <> 0)) then begin
+    L4 := EDITOR.35(@L3);
+    if (960 in 1) then begin
+      case L4 of   { table 6..9 }
+        6: begin
+          L1 := 18;
+        end;
+        7: begin
+          L1 := 19;
+        end;
+        8: begin
+          L1 := 20;
+        end;
+        9: begin
+          L1 := 21;
+        end;
+      end;
+    end;
+  end else begin
+    L1 := @G631[L3]^;
+  end;
+  { paths disagree on stack depth here }
+
+function EDITOR.9(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+  if (L3 in {97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122}) then begin
+    L1 := (L3-32);
+  end else begin
+    L1 := L3;
+  end;
+
+procedure EDITOR.10(args 0 words);  { locals 0 words, lex 1 }
+  @G1440^[1] := G10;
+  @G1566^ := @G1440  {string};
+  EDITOR.16(0);
+  EDITOR.7(0);
+  FWRITESTRING(I2,3, @G1440, 0);
+
+procedure EDITOR.11(args 0 words);  { locals 47 words, lex 1 }
+  EDITOR.20(1);
+  L1 := 1;
+  L4 := G280;
+  repeat
+    G7 := EDITOR.12(EDITOR.21(L4, @G8), G13);
+    FGOTOXY(G7, L1);
+    L4 := (L4+G8);
+    L2 := SCAN(1023, 0, 13, G17, L4, 0);
+    L3 := EDITOR.13(0, EDITOR.12(L2, ((G13-G7)+1)));
+    MOVELEFT(G17, L4, @L5, 0, L3);
+    if (G17^[(L4+L3)] <> 13) then begin
+      @L5^[EDITOR.13(0, (L3-1))] := 33;
+    end;
+    FWRITEBYTES(I2,3, @L5, L3, 85);
+    L4 := ((L4+L2)+1);
+    L1 := (L1+1);
+  until ((L1 > G14) or (L4 >= G4));
+
+function EDITOR.12(args 2 words) : <1 word result>;  { locals 0 words, lex 1 }
+  if (L4 < L3) then begin
+    L1 := L4;
+  end else begin
+    L1 := L3;
+  end;
+
+function EDITOR.13(args 2 words) : <1 word result>;  { locals 0 words, lex 1 }
+  if (L4 > L3) then begin
+    L1 := L4;
+  end else begin
+    L1 := L3;
+  end;
+
+function EDITOR.14(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := (@G1610^[L3] <> 0);
+
+function EDITOR.15(args 1 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := (@G1617^[L3] <> 0);
+
+procedure EDITOR.16(args 1 words);  { locals 0 words, lex 1 }
+  if @G1609~[L1]{16per word,1 bits} then begin
+    FWRITECHAR(8, 0, 0);
+  end;
+  { paths disagree on stack depth here }
+  FWRITECHAR(I2,3, @G1610^[L1], 0);
+  FWRITESTRING(I2,3, @G18, 0);
+
+procedure EDITOR.17(args 0 words);  { locals 0 words, lex 1 }
+  EDITOR.16(0);
+  EDITOR.7(0);
+  @G1566^ := @G1399  {string};
+  FWRITESTRING(I2,3, @G1399, 0);
+
+procedure EDITOR.18(args 0 words);  { locals 0 words, lex 1 }
+  if EDITOR.14(0) then begin
+    EDITOR.16(0);
+  end else begin
+    FGOTOXY(0, 0);
+  end;
+
+procedure EDITOR.19(args 0 words);  { locals 0 words, lex 1 }
+  FWRITECHAR(I2,3, 7, 0);
+  EDITOR.10();
+
+procedure EDITOR.20(args 1 words);  { locals 0 words, lex 1 }
+  if EDITOR.14(1) then begin
+    FGOTOXY(0, L1);
+    EDITOR.16(1);
+  end else begin
+    if (L1 = 1) then begin
+      EDITOR.5();
+      FWRITESTRING(I2,3, @G1566, 0);
+      FWRITELN(I2,3);
+    end else begin
+      FGOTOXY(0, L1);
+      EDITOR.6(0, L1);
+    end;
+  end;
+
+function EDITOR.21(args 2 words) : <1 word result>;  { locals 2 words, lex 1 }
+  L5 := L4;
+  L6 := 0;
+  while (G17^[L4] in {9,16,32}) do begin
+    if (G17^[L4] = 16) then begin
+      L4 := (L4+1);
+      L6 := ((L6+G17^[L4])-32);
+    end else begin
+      if (G17^[L4] = 32) then begin
+        L6 := (L6+1);
+      end else begin
+        L6 := (((L6 div 8)+1)*8);
+      end;
+    end;
+    L4 := (L4+1);
+  end;
+  L3^ := (L4-L5);
+  L1 := L6;
+
+procedure EDITOR.22(args 3 words);  { locals 2 words, lex 1 }
+  if (G17^[G3] = 13) then begin
+    L5 := G3;
+  end else begin
+    L5 := (G3+1);
+  end;
+  L3^ := 0;
+  repeat
+    L5 := (L5-1);
+    L5 := (SCAN(-(1023), 0, 13, G17, L5, 0)+L5);
+    L3^ := (L3^+1);
+    if (L3^ = L2) then begin
+      L4 := L5;
+    end;
+  until (((L3^ > G14) or ((G280 = (L5+1)) and not (L1))) or (L5 < 1));
+  if (L3^ > G14) then begin
+    G280 := (L4+1);
+    EDITOR.11();
+    L3^ := L2;
+  end else begin
+    if (G280 = (L5+1)) then begin
+      if L1 then begin
+        EDITOR.11();
+      end;
+    end else begin
+      G280 := 1;
+      EDITOR.11();
+    end;
+  end;
+
+procedure EDITOR.23(args 2 words);  { locals 4 words, lex 1 }
+  L1^ := 1;
+  L6 := G280;
+  L5 := (SCAN(1023, 0, 13, G17, L6, 0)+L6);
+  while (L5 < G3) do begin
+    L1^ := (L1^+1);
+    L6 := (L5+1);
+    L5 := (SCAN(1023, 0, 13, G17, L6, 0)+L6);
+  end;
+  L3 := EDITOR.21(L6, @L4);
+  L2^ := EDITOR.12(G13, ((L3-L4)+(G3-L6)));
+
+procedure EDITOR.24(args 0 words);  { locals 2 words, lex 1 }
+  EDITOR.23(@L2, @L1);
+  FGOTOXY(L2, L1);
+
+function EDITOR.25(args 0 words) : <1 word result>;  { locals 2 words, lex 1 }
+  L3 := 0;
+  L4 := 0;
+  if not ((G9 in {48,49,50,51,52,53,54,55,56,57})) then begin
+    L3 := 1;
+  end else begin
+    repeat
+      if (L3 > 1000) then begin
+        L4 := 1;
+      end else begin
+        L3 := (((L3*10)+G9)-48);
+        G9 := EDITOR.4();
+      end;
+    until (not ((G9 in {48,49,50,51,52,53,54,55,56,57})) or L4);
+  end;
+  if L4 then begin
+    EDITOR.2('Repeatfactor > 10,000', 1);
+    L1 := 0;
+  end else begin
+    L1 := L3;
+  end;
+  G15 := EDITOR.8(G9);
+
+procedure EDITOR.26(args 0 words);  { locals 0 words, lex 1 }
+  G6 := G3;
+  if (G17^[G6] = 13) then begin
+    G6 := (G6-1);
+  end;
+  G6 := ((SCAN(-(1023), 0, 13, G17, G6, 0)+G6)+1);
+  G7 := EDITOR.21(G6, @G8);
+  G5 := (G6+G8);
+
+function EDITOR.27(args 2 words) : <1 word result>;  { locals 0 words, lex 1 }
+  if (abs((L4-L3)) > ((G12-G4)+10)) then begin
+    @G1399^ := 'There is no room to copy the deletion.  Do you wish to delete anyway? (y/n)'  {string};
+    EDITOR.17();
+    if (EDITOR.9(EDITOR.4()) = 89) then begin
+      L1 := 1;
+    end else begin
+      L1 := 0;
+    end;
+  end else begin
+    G587 := 1;
+    G586 := abs((L4-L3));
+    G585 := ((G12-G586)+1);
+    MOVELEFT(G17, EDITOR.12(L4, L3), G17, G585, G586);
+    L1 := 1;
+  end;
+
+procedure EDITOR.28(args 4 words);  { locals 45 words, lex 1 }
+  FGOTOXY(L2, L1);
+  L4^ := (L4^+L3);
+  L5 := SCAN(1023, 0, 13, G17, L4^, 0);
+  L6 := EDITOR.13(0, EDITOR.12(L5, ((G13-L2)+1)));
+  MOVELEFT(G17, L4^, @L7, 0, L6);
+  if (G17^[(L4^+L6)] <> 13) then begin
+    L6 := EDITOR.13(L6, 1);
+    @L7^[(L6-1)] := 33;
+  end;
+  FWRITEBYTES(I2,3, @L7, L6, 85);
+  L4^ := ((L4^+L5)+1);
+
+procedure EDITOR.29(args 3 words);  { locals 1 words, lex 1 }
+  if L3 then begin
+    EDITOR.26();
+    FGOTOXY(0, L1);
+    EDITOR.3(0, L1);
+    EDITOR.28(@G6, G8, G7, L1);
+  end else begin
+    if L2 then begin
+      EDITOR.22(@G452, G281, 1);
+    end else begin
+      FGOTOXY(0, L1);
+      EDITOR.6(0, L1);
+      EDITOR.26();
+      L4 := G6;
+L0799:
+      G7 := EDITOR.12(EDITOR.21(L4, @G8), G13);
+      EDITOR.28(@L4, G8, G7, L1);
+      L1 := (L1+1);
+      if not (((L1 > G14) or (L4 >= G4))) then goto L0799;
+    end;
+  end;
+
+procedure EDITOR.30(args 2 words);  { locals 2 words, lex 1 }
+  L3 := 0;
+  L4 := (G888-1);
+  while (L3 <= L4) do begin
+    if (@G934[L3]^ >= L2) then begin
+      @G934[L3]^ := EDITOR.13((@G934[L3]^+L1), L2);
+    end;
+    L3 := (L3+1);
+  end;
+  if ((G585 >= L2) and (G585 < G4)) then begin
+    G585 := EDITOR.13((G585+L1), L2);
+  end;
+
+procedure EDITOR.31(args 3 words);  { locals 11 words, lex 1 }
+  L6 := G3;
+  G3 := L3;
+  EDITOR.26();
+  if (G17^[G5] in ([13] + [G950])) then begin
+    EXIT(1, 31);
+  end;
+  if L1 then begin
+L0845:
+    G3 := (G6-1);
+    EDITOR.26();
+    if not (((G6 <= 1) or (G17^[G5] in ([G950] + [13])))) then goto L0845;
+    if (G17^[G5] in ([G950] + [13])) then begin
+      L5 := (G3+1);
+    end else begin
+      L5 := 1;
+    end;
+    L7 := G949;
+  end else begin
+    L5 := G6;
+    if (G7 = G949) then begin
+      L7 := G949;
+    end else begin
+      L7 := G947;
+    end;
+  end;
+  G3 := ((G12-(G4-L5))+1);
+  MOVERIGHT(G17, L5, G17, G3, (G4-L5));
+  G17^[L5] := 16;
+  G17^[(L5+1)] := (L7+32);
+  L5 := (L5+2);
+  G17^[(G3-1)] := 13;
+  L12 := 0;
+  L11 := 0;
+  L13 := 1;
+L08CA:
+  repeat
+L08CA:
+    if not ((G17^[G3] in (([9] + [32]) + [16]))) then goto L08EF;
+    if (G17^[G3] = 16) then begin
+      G3 := (G3+2);
+    end else begin
+      G3 := (G3+1);
+    end;
+    goto L08CA;
+L08EF:
+    L4 := G3;
+    while not ((G17^[G3] in ([13] + {32}))) do begin
+      G3 := (G3+1);
+    end;
+    L8 := (G3-L4);
+    if (L8 > 0) then begin
+      if ((((L7+L8) >= G948) or (((G948-G947)+1) <= L8)) and not (L13)) then begin
+        L9 := 1;
+        L14 := 2;
+        while (L9 <= L14) do begin
+          if ((G17^[(L5-1)] = 32) and (G17^[(L5-2)] <> 16)) then begin
+            L5 := (L5-1);
+          end;
+          L9 := (L9+1);
+        end;
+        G17^[L5] := 13;
+        G17^[(L5+1)] := 16;
+        G17^[(L5+2)] := (G947+32);
+        L5 := (L5+3);
+        L7 := G947;
+      end;
+      L13 := 0;
+      G3 := (G3+1);
+      MOVELEFT(G17, L4, G17, L5, L8);
+      L5 := (L5+L8);
+      L7 := (L7+L8);
+      G17^[L5] := 32;
+      if ((G17^[(G3-2)] in {33,46,58,63}) or ((G17^[(G3-3)] in {33,46,58,63}) and (G17^[(G3-2)] in {34,39,41}))) then begin
+        G17^[(L5+1)] := 32;
+        L11 := 2;
+      end else begin
+        L11 := 1;
+      end;
+      L5 := (L5+L11);
+      L7 := (L7+L11);
+    end else begin
+      G3 := (G3+1);
+    end;
+    if (G17^[(G3-1)] = 13) then begin
+      if (G17^[G3] = 0) then begin
+        L12 := 1;
+      end else begin
+        EDITOR.26();
+        L12 := ((G17^[G5] = 13) or (G17^[G5] = G950));
+      end;
+      if L12 then begin
+        L5 := (L5-L11);
+        G17^[L5] := 13;
+        L5 := (L5+1);
+      end;
+    end;
+  until L12;
+  EDITOR.30(L3, ((((G12-G3)+L5)+1)-G4));
+  G4 := (((G12-G3)+L5)+1);
+  MOVELEFT(G17, G3, G17, L5, ((G12-G3)+1));
+  G17^[G4] := 0;
+  G3 := EDITOR.12((G4-1), L6);
+  EDITOR.26();
+  G3 := EDITOR.13(G3, G5);
+
+procedure EDITOR.32(args 2 words);  { locals 84 words, lex 1 }
+  @L3^ := L2  {string};
+  G282 := 1;
+  EDITOR.18();
+  EDITOR.7(0);
+  FWRITESTRING(I2,3, @L3, 0);
+  FWRITESTRING(I2,3, ' what marker? ', 0);
+  FREADSTRING(I2,2, @L45, 80);
+  FREADLN(I2,2);
+  EDITOR.34();
+  L44 := 1;
+  L86 := @L45^[0];
+  while (L44 <= L86) do begin
+    @L45^[L44] := EDITOR.9(@L45^[L44]);
+    L44 := (L44+1);
+  end;
+  MOVELEFT(@L45, 1, L1, 0, EDITOR.12(8, @L45^[0]));
+  FILLCHAR(L1, @L45^[0], EDITOR.13(0, (8-@L45^[0])), 32);
+
+procedure EDITOR.33(args 1 words);  { locals 1 words, lex 1 }
+  L2 := -(SCAN(-(80), 1, 32, G17, (L1^-1), 0));
+  if (G17^[((L1^-L2)-2)] = 16) then begin
+    L2 := (L2+2);
+  end else begin
+    if (G17^[((L1^-L2)-1)] = 16) then begin
+      L2 := (L2+1);
+    end;
+  end;
+  if (G17^[((L1^-L2)-1)] = 13) then begin
+    L1^ := (L1^-L2);
+  end else begin
+    L2 := 0;
+  end;
+
+procedure EDITOR.34(args 0 words);  { locals 0 words, lex 1 }
+  if FEOF(I2,2) then begin
+    FRESET(I2,2);
+  end;
+
+function EDITOR.35(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
+  if ((L3^ = G1615) and (G1615 <> 0)) then begin
+    L5 := 1;
+    FREADCHAR(I2,4, L3);
+  end else begin
+    L5 := 0;
+  end;
+  L4 := 0;
+  while ((L4 <> 10) and not (((@G1617^[L4] = L3^) and (L5 = @G1616~[L4]{16per word,1 bits})))) do begin
+    L4 := (L4+1);
+  end;
+  L1 := L4;
+
+======================================================================
+SEGMENT 7 INITIALI
+======================================================================
+
+procedure INITIALI.1(args 0 words);  { locals 576 words, lex 1 }
+  INITIALI.5();
+  FILLCHAR(@G631, 0, 512, 0);
+  INITIALI.2(65, 1);
+  INITIALI.2(67, 2);
+  INITIALI.2(68, 3);
+  INITIALI.2(70, 4);
+  INITIALI.2(73, 5);
+  INITIALI.2(74, 6);
+  INITIALI.2(76, 7);
+  INITIALI.2(77, 8);
+  INITIALI.2(80, 9);
+  INITIALI.2(81, 10);
+  INITIALI.2(82, 11);
+  INITIALI.2(83, 12);
+  INITIALI.2(86, 13);
+  INITIALI.2(88, 14);
+  INITIALI.2(90, 15);
+  INITIALI.2(44, 16);
+  INITIALI.2(62, 17);
+  INITIALI.2(46, 17);
+  INITIALI.2(43, 17);
+  INITIALI.2(45, 16);
+  INITIALI.2(63, 24);
+  INITIALI.2(47, 28);
+  INITIALI.2(61, 27);
+  INITIALI.2(60, 16);
+  INITIALI.6(6, 18);
+  INITIALI.6(7, 19);
+  INITIALI.6(8, 20);
+  INITIALI.6(9, 21);
+  INITIALI.2(13, 25);
+  INITIALI.2(9, 22);
+  INITIALI.2(32, 26);
+  L5 := 48;
+  L565 := 57;
+  while (L5 <= L565) do begin
+    INITIALI.2(L5, 23);
+    L5 := (L5+1);
+  end;
+  L10 := (10512+512);
+  MARK(@G17);
+  L8 := 0;
+L06C9:
+  NEW(@L1, 256);
+  L8 := (L8+1);
+  L9 := (MEMAVAIL()+MEMAVAIL());
+  if not ((((L9 > 0) and (L9 < L10)) or (L8 = 63))) then goto L06C9;
+  G12 := ((L8*512)-1);
+  NEW(@L2, 1);
+  L2^ := 0;
+  FILLCHAR(@G18, 0, 12, 0);
+  if (8 <= 11) then begin
+    (I2,1+34)^[8] := 8;
+  end else begin
+    @G18^[0] := 11;
+  end;
+  { paths disagree on stack depth here }
+  FILLCHAR(G17, 0, (G12+1), 0);
+  G17^[0] := 13;
+  G4 := 1;
+  G3 := 1;
+  EDITOR.5();
+  FWRITESTRING(I2,3, '>Edit:', 0);
+  FWRITELN(I2,3);
+  G1664 := 1;
+  if not (I2,17) then goto L07A9;
+  L565 := 0;
+  SCONCAT(@L565, @I2,22, 7);
+  SCONCAT(@L565, ':', 8);
+  SCONCAT(@L565, @I2,38, 23);
+  @G1623^ := @L565  {string};
+  FOPEN(@G591, @G1623, 1, 0);
+  if (IORESULT() <> 0) then begin
+    EDITOR.2('Workfile lost.', 0);
+  end;
+  goto L08C6;
+L07A9:
+  @G1399^ := 'No workfile is present. File? ( <ret> for no file <esc-ret> to exit ) '  {string};
+L07F7:
+  { paths disagree on stack depth here }
+  FWRITESTRING(I2,3, @G1399, 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, ': ', 0);
+  FREADSTRING(I2,2, @L12, 80);
+  FREADLN(I2,2);
+  EDITOR.34();
+  if not ((@L12^[0] = 0)) then goto L0855;
+  G1664 := 0;
+  @G1623^ := '*SYSTEM.WRK.TEXT'  {string};
+  FILLCHAR(@G887, 0, 1024, 0);
+  goto L08C8;
+L0855:
+  if (8 = 8) then begin
+    EXIT(1, 1);
+  end;
+  L11 := 1;
+  L565 := @L12^[0];
+  while (L11 <= L565) do begin
+    @L12^[L11] := EDITOR.9(@L12^[L11]);
+    L11 := (L11+1);
+  end;
+  OS.43(@L12, 1, 80);
+  FOPEN(@G591, @L12, 1, 0);
+  @G1399^ := 'Not present. File? '  {string};
+  if not ((IORESULT() = 0)) then goto L07F7;
+  @G1623^ := @L12  {string};
+L08C6:
+  { paths disagree on stack depth here }
+  INITIALI.4();
+L08C8:
+  if ((G17^[(G4-1)] <> 13) or (G4 = 1)) then begin
+    G17^[G4] := 13;
+    G4 := (G4+1);
+  end;
+  G10 := 62;
+  G16 := 1;
+  G587 := 0;
+  G590 := 0;
+  G280 := 1;
+  L565 := (I2,1+37);
+  G284 := 8;
+  G286 := 0;
+  G285 := 0;
+  G13 := (L565^.f1-1);
+  G14 := (L565^-1);
+  G281 := ((G14 div 2)+1);
+  G287 := @G1617^[3];
+  INITIALI.2(G286, 20);
+  { unmodelled packed store of 1 }
+  INITIALI.3();
+  G584 := 0;
+  G583 := 0;
+  if not (G887) then begin
+    FILLCHAR(@G887, 0, 1024, 0);
+    move(@G951, @I2,67, 1 words);
+    move(@G952, @I2,67, 1 words);
+    G946 := 1;
+    G945 := 0;
+    G944 := 1;
+    G950 := 94;
+    G947 := 0;
+    G949 := 5;
+    G948 := G13;
+    G887 := 1;
+  end;
+  L5 := 0;
+  L565 := 255;
+  while (L5 <= L565) do begin
+    @G24[L5]^ := L5;
+    L5 := (L5+1);
+  end;
+  L5 := 65;
+  L565 := 90;
+  while (L5 <= L565) do begin
+    @G24[L5]^ := 65;
+    L5 := (L5+1);
+  end;
+  L5 := 97;
+  L565 := 122;
+  while (L5 <= L565) do begin
+    @G24[L5]^ := 65;
+    L5 := (L5+1);
+  end;
+  L5 := 48;
+  L565 := 57;
+  while (L5 <= L565) do begin
+    @G24[L5]^ := 65;
+    L5 := (L5+1);
+  end;
+  @G24[13]^ := 32;
+  @G24[9]^ := 32;
+  FILLCHAR(@G1481, 0, 170, 32);
+  @G1566^ := ''  {string};
+  { left on stack: (L565+7) }
+  { left on stack: 8 }
+  { left on stack: (L565+6) }
+  { left on stack: 8 }
+  { left on stack: (L565+7) }
+  { left on stack: 8 }
+  { left on stack: (I2,1+29) }
+  { left on stack: 1 }
+
+procedure INITIALI.2(args 2 words);  { locals 0 words, lex 2 }
+  @G631[L2]^ := L1;
+  if (L2 in {65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90}) then begin
+    @G631[(32+L2)]^ := L1;
+  end;
+
+procedure INITIALI.3(args 0 words);  { locals 0 words, lex 2 }
+  @G288^ := ' Edit: A(djst C(py D(lete F(ind I(nsrt J(mp R(place Q(uit X(chng Z(ap  [1.1]'  {string};
+  @G370^ := ' Insert: Text {<bs> a char,<del> a line}  [<etx> accepts, <esc> escapes]'  {string};
+  @G329^ := ' Delete: < > <Moving commmands> {<etx> to delete, <esc> to abort}'  {string};
+  @G411^ := ' Adjust: L(just R(just C(enter <left,right,up,down-arrows> {<etx> to leave}'  {string};
+  if ((G13+1) < @G288^[0]) then begin
+    @G370^ := ' Insrt: {<bs>,<del>} [<etx> accepts, <esc> aborts]'  {string};
+    @G329^ := ' Delete: <vector keys> {<etx> deletes, <esc> aborts}'  {string};
+    @G411^ := ' Adjst: L(ft R(ght C(ntr <vector keys> <etx> to leave'  {string};
+    @G288^ := ' Edit: A, C, D, F, I, J, R, Q, X, Z  [1.1]'  {string};
+  end;
+
+procedure INITIALI.4(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.5();
+  FWRITESTRING(I3,3, '>Edit:', 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, 'Reading', 0);
+  if (FBLOCKIO(@G591, @G887, 0, 2, -(1), 1) <> 2) then begin
+    EDITOR.2('Reading file', 0);
+  end;
+  FWRITECHAR(I3,3, 46, 0);
+  I1,7 := 1;
+  I1,4 := 0;
+  I1,3 := 0;
+  while not ((I1,4 or I1,3)) do begin
+    I1,4 := (FBLOCKIO(@G591, @I1,53, 0, 2, -(1), 1) = 0);
+    if not (I1,4) then begin
+      FWRITECHAR(I3,3, 46, 0);
+      I1,6 := (SCAN(-(1024), 1, 0, @I1,53, 1023, 0)+1024);
+      I1,3 := ((I1,6+G4) >= (G12-10));
+      if I1,3 then begin
+        I1,6 := 0;
+      end;
+      MOVELEFT(@I1,53, 0, G17, G4, I1,6);
+      if ((I1,7+I1,7) = I3,11) then begin
+        G3 := (G4+I3,12);
+      end;
+      G4 := (G4+I1,6);
+      I1,7 := (I1,7+1);
+    end;
+  end;
+  if (IORESULT() <> 0) then begin
+    EDITOR.2('Disk error', 1);
+  end else begin
+    if not (I1,4) then begin
+      EDITOR.2('Buffer overflow.', 1);
+    end;
+  end;
+
+procedure INITIALI.5(args 0 words);  { locals 1 words, lex 2 }
+  L1 := I3,1;
+  { unmodelled packed store of 0 }
+  { unmodelled packed store of (L1^.f37-1) }
+  { unmodelled packed store of (L1^.f38-1) }
+  { unmodelled packed store of 1 }
+  { unmodelled packed store of 0 }
+  G1615 := 0;
+  (L1+31)^[8] := 8;
+  @G1609~[0]{16per word,1 bits} := (L1+36)~[4]{16per word,1 bits};
+  (L1+32)^[8] := 0;
+  @G1609~[1]{16per word,1 bits} := (L1+36)~[3]{16per word,1 bits};
+  (L1+32)^[8] := 8;
+  @G1609~[2]{16per word,1 bits} := (L1+36)~[2]{16per word,1 bits};
+  (L1+35)^[8] := 0;
+  @G1609~[3]{16per word,1 bits} := (L1+36)~[7]{16per word,1 bits};
+  (L1+35)^[8] := 8;
+  @G1609~[4]{16per word,1 bits} := (L1+36)~[6]{16per word,1 bits};
+  (L1+33)^[8] := 8;
+  @G1609~[5]{16per word,1 bits} := (L1+36)~[0]{16per word,1 bits};
+  @G1610^[6] := 10;
+  @G1609~[6]{16per word,1 bits} := 0;
+  (L1+34)^[8] := 0;
+  @G1609~[7]{16per word,1 bits} := (L1+36)~[1]{16per word,1 bits};
+  (L1+33)^[8] := 0;
+  @G1609~[8]{16per word,1 bits} := (L1+36)~[8]{16per word,1 bits};
+  @G1617^[0] := L1^.f46;
+  @G1616~[0]{16per word,1 bits} := (L1+47)~[12]{16per word,1 bits};
+  @G1617^[1] := 17;
+  @G1616~[1]{16per word,1 bits} := 0;
+  (L1+41)^[8] := 0;
+  @G1616~[2]{16per word,1 bits} := (L1+47)~[9]{16per word,1 bits};
+  (L1+45)^[8] := 8;
+  @G1616~[3]{16per word,1 bits} := (L1+47)~[13]{16per word,1 bits};
+  (L1+44)^[8] := 8;
+  @G1616~[4]{16per word,1 bits} := (L1+47)~[10]{16per word,1 bits};
+  (L1+44)^[8] := 0;
+  @G1616~[5]{16per word,1 bits} := (L1+47)~[11]{16per word,1 bits};
+  (L1+39)^[8] := 0;
+  @G1616~[6]{16per word,1 bits} := (L1+47)~[3]{16per word,1 bits};
+  (L1+39)^[8] := 8;
+  @G1616~[7]{16per word,1 bits} := (L1+47)~[2]{16per word,1 bits};
+  (L1+40)^[8] := 0;
+  @G1616~[8]{16per word,1 bits} := (L1+47)~[1]{16per word,1 bits};
+  (L1+40)^[8] := 8;
+  @G1616~[9]{16per word,1 bits} := (L1+47)~[0]{16per word,1 bits};
+  G283 := L1^.f46;
+  if (G283 = 0) then begin
+    G283 := 8;
+  end;
+  if (@G1617^[3] = 0) then begin
+    @G1617^[3] := 3;
+  end;
+  { left on stack: @G1607 }
+  { left on stack: 8 }
+  { left on stack: 0 }
+  { left on stack: (L1+31) }
+  { left on stack: @G1608 }
+  { left on stack: 8 }
+  { left on stack: @G1607 }
+  { left on stack: 8 }
+  { left on stack: @G1608 }
+  { left on stack: 1 }
+  { left on stack: @G1608 }
+  { left on stack: 1 }
+  { left on stack: (L1+45) }
+  { left on stack: 8 }
+  { left on stack: @G1610 }
+  { left on stack: 0 }
+  { left on stack: @G1610 }
+  { left on stack: 1 }
+  { left on stack: @G1610 }
+  { left on stack: 2 }
+  { left on stack: @G1610 }
+  { left on stack: 3 }
+  { left on stack: @G1610 }
+  { left on stack: 4 }
+  { left on stack: @G1610 }
+  { left on stack: 5 }
+  { left on stack: @G1610 }
+  { left on stack: 7 }
+  { left on stack: @G1610 }
+  { left on stack: 8 }
+  { left on stack: @G1617 }
+  { left on stack: 2 }
+  { left on stack: @G1617 }
+  { left on stack: 3 }
+  { left on stack: @G1617 }
+  { left on stack: 4 }
+  { left on stack: @G1617 }
+  { left on stack: 5 }
+  { left on stack: @G1617 }
+  { left on stack: 6 }
+  { left on stack: @G1617 }
+  { left on stack: 7 }
+  { left on stack: @G1617 }
+  { left on stack: 8 }
+  { left on stack: @G1617 }
+  { left on stack: 9 }
+
+procedure INITIALI.6(args 2 words);  { locals 0 words, lex 2 }
+  if not (@G1616~[L2]{16per word,1 bits}) then begin
+    INITIALI.2(@G1617^[L2], L1);
+  end;
+
+======================================================================
+SEGMENT 8 OUT
+======================================================================
+
+function OUT.1(args 0 words) : <1 word result>;  { locals 557 words, lex 1 }
+  L1 := 0;
+L01DB:
+  OUT.4();
+  if not ((G9 in {69,82,83,85,87})) then goto L01DB;
+  if (G9 = 82) then begin
+  end else begin
+    if (G9 = 69) then begin
+      EDITOR.20(1);
+      if G590 then begin
+        FWRITESTRING(I2,3, 'Throw away changes since last update?', 0);
+        if OUT.3() then begin
+          L1 := 1;
+          EDITOR.5();
+        end;
+      end else begin
+        L1 := 1;
+        EDITOR.5();
+      end;
+    end else begin
+      FCLOSE(@G591, 0);
+      L3 := G3;
+      if not ((G9 = 87)) then goto L0364;
+      EDITOR.20(1);
+      FWRITESTRING(I2,3, 'Name of output file (<cr> to return)  -->', 0);
+      FREADSTRING(I2,2, @L517, 80);
+      FREADLN(I2,2);
+      EDITOR.34();
+      if (@L517^[0] = 0) then begin
+      end else begin
+        L4 := 1;
+        L559 := @L517^[0];
+        while (L4 <= L559) do begin
+          @L517^[L4] := EDITOR.9(@L517^[L4]);
+          L4 := (L4+1);
+        end;
+        if (@L517^[@L517^[0]] = 58) then begin
+          EDITOR.2('This is not an editor function', 1);
+        end else begin
+          OS.43(@L517, 1, 80);
+          FOPEN(@G591, @L517, 1, 0);
+          if (IORESULT() = 0) then begin
+            FCLOSE(@G591, 0);
+            EDITOR.20(1);
+            FWRITESTRING(I2,3, 'Remove old ', 0);
+            FWRITESTRING(I2,3, @L517, 0);
+            FWRITESTRING(I2,3, ' ?', 0);
+            if not (not (OUT.3())) then goto L0362;
+          end else begin
+L0362:
+            goto L0437;
+L0364:
+            if not ((G9 = 83)) then goto L041F;
+            @L517^ := @G1623  {string};
+            if not (G1664) then goto L041D;
+            EDITOR.20(1);
+            FWRITESTRING(I2,3, 'Purge old ', 0);
+            FWRITESTRING(I2,3, @L517, 0);
+            FWRITESTRING(I2,3, ' before S(ave?', 0);
+            FWRITELN(I2,3);
+            FWRITESTRING(I2,3, '(<cr> to return)  -->', 0);
+L03D5:
+            L558 := EDITOR.9(EDITOR.4());
+            if not ((L558 in ([13] + {78,89}))) then goto L03D5;
+            if (L558 = 13) then begin
+            end else begin
+              if (L558 = 89) then begin
+                FOPEN(@G591, @L517, 1, 0);
+                FCLOSE(@G591, 2);
+              end;
+L041D:
+              goto L0437;
+L041F:
+              @L517^ := '*SYSTEM.WRK.TEXT'  {string};
+L0437:
+              @G1623^ := @L517  {string};
+              EDITOR.20(1);
+              FWRITESTRING(I2,3, 'Writing', 0);
+              FOPEN(@G591, @L517, 0, 0);
+              move(@G952, @I2,67, 1 words);
+              if not ((FBLOCKIO(@G591, @G887, 0, 2, -(1), 0) <> 2)) then goto L047F;
+              goto L0616;
+L047F:
+              FWRITECHAR(I2,3, 46, 0);
+              G3 := 1;
+              if (G17^[(G4-1)] <> 13) then begin
+                G17^[G4] := 13;
+                G4 := (G4+1);
+              end;
+L049E:
+              if not ((G3 < (G4-1023))) then goto L04FE;
+              L4 := SCAN(-(1022), 0, 13, G17, (G3+1022), 0);
+              MOVELEFT(G17, G3, @L5, 0, (1023+L4));
+              FILLCHAR(@L5, (1023+L4), (abs(L4)+1), 0);
+              if not ((FBLOCKIO(@G591, @L5, 0, 2, -(1), 0) <> 2)) then goto L04EB;
+              goto L0616;
+L04EB:
+              G3 := ((G3+1023)+L4);
+              FWRITECHAR(I2,3, 46, 0);
+              goto L049E;
+L04FE:
+              if not ((G3 < G4)) then goto L0536;
+              FILLCHAR(@L5, 0, 1024, 0);
+              MOVELEFT(G17, G3, @L5, 0, (G4-G3));
+              if not ((FBLOCKIO(@G591, @L5, 0, 2, -(1), 0) <> 2)) then goto L052E;
+              goto L0616;
+L052E:
+              FWRITECHAR(I2,3, 46, 0);
+L0536:
+              FCLOSE(@G591, 1);
+              FWRITELN(I2,3);
+              FWRITESTRING(I2,3, 'Your file is ', 0);
+              FWRITEINT(I2,3, G4, 0);
+              FWRITESTRING(I2,3, ' bytes long.', 0);
+              FWRITELN(I2,3);
+              if (G9 = 85) then begin
+                OUT.2();
+              end else begin
+                if ((G9 = 83) and (@G1623 = '*SYSTEM.WRK.TEXT')) then begin
+                  OUT.2();
+                end;
+                FWRITESTRING(I2,3, 'Do you want to E(xit from or R(eturn to the editor? ', 0);
+L05E5:
+                G9 := EDITOR.9(EDITOR.4());
+                if not ((G9 in {69,82})) then goto L05E5;
+                G1664 := 1;
+                L1 := (G9 = 69);
+                G3 := L3;
+              end;
+              EDITOR.20(1);
+              goto L0634;
+L0616:
+              G3 := L3;
+              EDITOR.2('Writing out the file', 1);
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+L0634:
+
+procedure OUT.2(args 0 words);  { locals 0 words, lex 2 }
+  @I3,22^ := @I3,63  {string};
+  @I3,38^ := 'SYSTEM.WRK.TEXT'  {string};
+  I3,17 := 1;
+  FOPEN(@G591, '*SYSTEM.WRK.CODE', 1, 0);
+  FCLOSE(@G591, 2);
+  I3,16 := 0;
+  @I3,30^ := ''  {string};
+  I1,1 := 1;
+
+function OUT.3(args 0 words) : <1 word result>;  { locals 0 words, lex 2 }
+L0062:
+  I1,558 := EDITOR.9(EDITOR.4());
+  if not ((I1,558 in {78,89})) then goto L0062;
+  L1 := (I1,558 = 89);
+
+procedure OUT.4(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.5();
+  @G1566^ := '>Quit:'  {string};
+  FWRITESTRING(I3,3, @G1566, 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, '     U(pdate the workfile and leave', 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, '     E(xit without updating', 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, '     R(eturn to the editor without updating', 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, '     W(rite to a file name and return', 0);
+  FWRITELN(I3,3);
+  FWRITESTRING(I3,3, '     S(ave with same name and return', 0);
+  FWRITELN(I3,3);
+  G9 := EDITOR.9(EDITOR.4());
+
+======================================================================
+SEGMENT 9 COPYFILE
+======================================================================
+
+procedure COPYFILE.1(args 0 words);  { locals 612 words, lex 1 }
+  FINIT(@L573, @L873, -(1));
+  @G1440^ := ' Copy: From what file[marker,marker]? '  {string};
+  repeat
+    EDITOR.10();
+    FREADSTRING(I2,2, @L532, 80);
+    FREADLN(I2,2);
+    EDITOR.34();
+    if (@L532^[0] = 0) then begin
+      EXIT(9, 1);
+    end;
+    COPYFILE.6();
+    FOPEN(@L573, @L532, 1, 0);
+    @G1440^ := ' Copy: File not present. Filename? '  {string};
+  until (IORESULT() = 0);
+  @G1440^ := ' Copy'  {string};
+  EDITOR.10();
+  COPYFILE.5();
+  COPYFILE.10();
+  L4 := L9;
+  COPYFILE.8();
+  while ((L7 >= L3) and not (L11)) do begin
+    COPYFILE.9();
+    L7 := (L7-L3);
+    COPYFILE.8();
+  end;
+  if (@L12^[L7] = 16) then begin
+    if (G17^[L5] <> 13) then begin
+      L7 := (L7+2);
+    end;
+  end;
+  if ((L8 < L4) and (L6 < L3)) then begin
+    COPYFILE.7(L7, EDITOR.12((L3-1), (L6-1)));
+  end else begin
+    COPYFILE.7(L7, (L3-1));
+  end;
+  while (((L8 >= L4) or (L6 >= L3)) and not (L11)) do begin
+    COPYFILE.9();
+    COPYFILE.8();
+    if ((L8 < L4) and (L6 < L3)) then begin
+      COPYFILE.7(0, EDITOR.12((L3-1), (L6-1)));
+    end else begin
+      COPYFILE.7(0, (L3-1));
+    end;
+  end;
+  if (IORESULT() <> 0) then begin
+    EDITOR.2('Disk Error.', 1);
+  end;
+  COPYFILE.3();
+  EDITOR.22(@G452, G281, 1);
+  FCLOSE(@L573, 0);
+  FCLOSE(@L573, 0);
+
+procedure COPYFILE.2(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.2('Improper marker specification.', 1);
+  EXIT(9, 1);
+
+procedure COPYFILE.3(args 0 words);  { locals 1 words, lex 2 }
+  L1 := 1;
+  if (G17^[I1,2] = 16) then begin
+    if (G17^[(G3-1)] <> 13) then begin
+      I1,2 := (I1,2+2);
+      I1,1 := (I1,1-2);
+      L1 := (L1+2);
+    end;
+  end;
+  MOVELEFT(G17, I1,2, G17, G3, I1,1);
+  EDITOR.30((I1,5+1), (G3-(I1,5+L1)));
+  G4 := ((G4+G3)-(I1,5+L1));
+  G3 := (I1,5+1);
+
+procedure COPYFILE.4(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.2('Marker exceeds file bounds.', 1);
+  COPYFILE.3();
+  EDITOR.22(@G452, G281, 1);
+  EXIT(9, 1);
+
+procedure COPYFILE.5(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.33(@G3);
+  I1,2 := (G12-(G4-G3));
+  I1,1 := ((G4-G3)+1);
+  I1,5 := (G3-1);
+  MOVERIGHT(G17, G3, G17, I1,2, I1,1);
+
+procedure COPYFILE.6(args 0 words);  { locals 86 words, lex 2 }
+  L3 := SPOS('[', @I1,532);
+  if (L3 = 0) then begin
+    move(@I1,528, @'        ', 4 words);
+    move(@I1,524, @'        ', 4 words);
+  end else begin
+    L2 := SPOS(']', @I1,532);
+    if (((L2 = 0) or (L2 < L3)) or (L2 <> @I1,532^[0])) then begin
+      COPYFILE.2();
+    end;
+    SCOPY(@I1,532, @L46, (L3+1), ((L2-L3)-1));
+    @L5^ := @L46  {string};
+    SCOPY(@I1,532, @L46, 1, (L3-1));
+    @I1,532^ := @L46  {string};
+    L1 := SPOS(',', @L5);
+    if (L1 = 0) then begin
+      COPYFILE.2();
+    end;
+    L4 := (@L5^[0]-L1);
+    MOVELEFT(@L5, 1, @I1,528, 0, EDITOR.12(8, (L1-1)));
+    FILLCHAR(@I1,528, (L1-1), EDITOR.13(0, (8-(L1-1))), 32);
+    MOVELEFT(@L5, (L1+1), @I1,524, 0, EDITOR.12(L4, 8));
+    FILLCHAR(@I1,524, L4, EDITOR.13(0, (8-L4)), 32);
+  end;
+  L4 := 0;
+  L46 := 7;
+  while (L4 <= L46) do begin
+    @I1,528^[L4] := EDITOR.9(@I1,528^[L4]);
+    L4 := (L4+1);
+  end;
+  L4 := 0;
+  L46 := 7;
+  while (L4 <= L46) do begin
+    @I1,524^[L4] := EDITOR.9(@I1,524^[L4]);
+    L4 := (L4+1);
+  end;
+  L4 := 1;
+  L46 := @I1,532^[0];
+  while (L4 <= L46) do begin
+    @I1,532^[L4] := EDITOR.9(@I1,532^[L4]);
+    L4 := (L4+1);
+  end;
+  OS.43(@I1,532, 1, 80);
+
+procedure COPYFILE.7(args 2 words);  { locals 1 words, lex 2 }
+  if (L2 <= L1) then begin
+    L3 := ((L1-L2)+1);
+    if (((G3+L3)+250) >= I1,2) then begin
+      EDITOR.2('Buffer overflow.', 1);
+      COPYFILE.3();
+      EDITOR.22(@G452, G281, 1);
+      EXIT(9, 1);
+    end else begin
+      MOVELEFT(@I1,12, L2, G17, G3, L3);
+      G3 := (G3+L3);
+    end;
+  end;
+
+procedure COPYFILE.8(args 0 words);  { locals 0 words, lex 2 }
+  I1,11 := (FBLOCKIO(@I1,573, @I1,12, 0, 2, (I1,4+I1,4), 1) <> 2);
+  FWRITECHAR(I3,3, 46, 0);
+  if not (I1,11) then begin
+    I1,3 := (SCAN(-(1024), 1, 0, @I1,12, 1023, 0)+1024);
+  end else begin
+    I1,3 := 0;
+  end;
+  I1,4 := (I1,4+1);
+
+procedure COPYFILE.9(args 0 words);  { locals 0 words, lex 2 }
+  if ((I1,6 >= I1,3) and (I1,8 < I1,4)) then begin
+    I1,8 := (I1,8+1);
+    I1,6 := (I1,6-I1,3);
+  end;
+
+procedure COPYFILE.10(args 0 words);  { locals 512 words, lex 2 }
+  I1,9 := 1;
+  I1,7 := 0;
+  I1,8 := 32767;
+  I1,6 := 32767;
+  if ((@I1,528 <> @'        ') or (@I1,524 <> @'        ')) then begin
+    if (FBLOCKIO(@I1,573, @L1, 0, 2, 0, 1) <> 2) then begin
+      COPYFILE.4();
+    end;
+    if (@I1,528 <> @'        ') then begin
+      COPYFILE.11(@I1,528, @I1,7, @I1,9);
+    end;
+    if (@I1,524 <> @'        ') then begin
+      COPYFILE.11(@I1,524, @I1,6, @I1,8);
+    end;
+  end;
+
+procedure COPYFILE.11(args 3 words);  { locals 5 words, lex 3 }
+  move(@L4, L3, 4 words);
+  L8 := 0;
+  while ((L8 < I1,2) and (@L4 <> @I1,3[L8*4w])) do begin
+    L8 := (L8+1);
+  end;
+  if (@L4 <> @I1,3[L8*4w]) then begin
+    EDITOR.2('Marker not there.', 1);
+    COPYFILE.3();
+    EXIT(9, 1);
+  end;
+  L2^ := @I1,48[L8]^;
+  L1^ := @I1,43^[L8];
+  if (L1^ = 0) then begin
+    L2^ := (L2^-1);
+    L1^ := 1;
+  end;
+
+======================================================================
+SEGMENT 10 ENVIRONM
+======================================================================
+
+procedure ENVIRONM.1(args 0 words);  { locals 2 words, lex 1 }
+  EDITOR.5();
+  @G1440^ := ' Environment: {options} <etx> or <sp> to leave'  {string};
+  EDITOR.10();
+  G282 := 1;
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    A(uto indent  ', 0);
+  ENVIRONM.3(G944);
+  FWRITESTRING(I2,3, '    F(illing      ', 0);
+  ENVIRONM.3(G945);
+  FWRITESTRING(I2,3, '    L(eft margin  ', 0);
+  FWRITEINT(I2,3, G947, 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    R(ight margin ', 0);
+  FWRITEINT(I2,3, G948, 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    P(ara margin  ', 0);
+  FWRITEINT(I2,3, G949, 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    C(ommand ch   ', 0);
+  FWRITECHAR(I2,3, G950, 0);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    T(oken def    ', 0);
+  ENVIRONM.3(G946);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    ', 0);
+  FWRITEINT(I2,3, G4, 0);
+  FWRITESTRING(I2,3, ' bytes used, ', 0);
+  FWRITEINT(I2,3, ((G12-G4)+1), 0);
+  FWRITESTRING(I2,3, ' available.', 0);
+  FWRITELN(I2,3);
+  FWRITELN(I2,3);
+  if (G584 or G583) then begin
+    FWRITESTRING(I2,3, '    Patterns:', 0);
+    FWRITELN(I2,3);
+    if G583 then begin
+      FWRITESTRING(I2,3, "      <target>= '", 0);
+      FWRITEBYTES(I2,3, @G453, G581, 128);
+      FWRITECHAR(I2,3, 39, 0);
+    end;
+    if G584 then begin
+      FWRITESTRING(I2,3, ", <subst>=  '", 0);
+      FWRITEBYTES(I2,3, @G517, G582, 128);
+      FWRITECHAR(I2,3, 39, 0);
+    end;
+    FWRITELN(I2,3);
+    FWRITELN(I2,3);
+  end;
+  if (G888 > 0) then begin
+    FWRITESTRING(I2,3, '    Markers:', 0);
+    FWRITELN(I2,3);
+  end;
+  FWRITESTRING(I2,3, '  ', 0);
+  L1 := 0;
+  L2 := (G888-1);
+  while (L1 <= L2) do begin
+    FWRITECHAR(I2,3, 32, 6);
+    FWRITEBYTES(I2,3, @G889[L1*4w], 8, 8);
+    if (((L1+4) mod 3) = 0) then begin
+      FWRITELN(I2,3);
+      FWRITESTRING(I2,3, '  ', 0);
+    end;
+    L1 := (L1+1);
+  end;
+  FWRITELN(I2,3);
+  FWRITELN(I2,3);
+  FWRITESTRING(I2,3, '    Date Created: ', 0);
+  FWRITEINT(4, 0, 0);
+  FWRITECHAR(I2,3, 45, 0);
+  FWRITEINT(5, 4, 0);
+  FWRITECHAR(I2,3, 45, 0);
+  FWRITEINT(7, 9, 0);
+  FWRITESTRING(I2,3, '   Last Used: ', 0);
+  FWRITEINT(4, 0, 0);
+  FWRITECHAR(I2,3, 45, 0);
+  FWRITEINT(5, 4, 0);
+  FWRITECHAR(I2,3, 45, 0);
+  FWRITEINT(7, 9, 0);
+  FWRITELN(I2,3);
+  FGOTOXY(@G1440^[0], 0);
+  repeat
+    { paths disagree on stack depth here }
+    G9 := EDITOR.9(EDITOR.4());
+    if not ((G9 in (([G287] + [13]) + {32,65,67,70,76,80,82,84}))) then begin
+      EDITOR.2('Not option', 1);
+      EDITOR.10();
+    end else begin
+      case G9 of   { table 65..84 }
+        65: begin
+          FGOTOXY(18, 1);
+          G944 := ENVIRONM.4();
+        end;
+        70: begin
+          FGOTOXY(18, 2);
+          G945 := ENVIRONM.4();
+        end;
+        76: begin
+          FGOTOXY(18, 3);
+          G947 := ENVIRONM.5();
+        end;
+        82: begin
+          FGOTOXY(18, 4);
+          G948 := ENVIRONM.5();
+        end;
+        80: begin
+          FGOTOXY(18, 5);
+          G949 := ENVIRONM.5();
+        end;
+        67: begin
+          FGOTOXY(18, 6);
+          FREADCHAR(I2,2, @G950);
+        end;
+        84: begin
+          FGOTOXY(18, 7);
+          G946 := ENVIRONM.4();
+        end;
+      end;
+    end;
+    FGOTOXY(@G1440^[0], 0);
+  until (G9 in (([G287] + [13]) + {32}));
+  EDITOR.11();
+
+procedure ENVIRONM.2(args 0 words);  { locals 2 words, lex 2 }
+  FWRITECHAR(I3,3, 32, 10);
+  L1 := 1;
+  L2 := 10;
+  while (L1 <= L2) do begin
+    FWRITECHAR(I3,3, G286, 0);
+    L1 := (L1+1);
+  end;
+
+procedure ENVIRONM.3(args 1 words);  { locals 0 words, lex 2 }
+  if L1 then begin
+    FWRITESTRING(I3,3, 'True', 0);
+  end else begin
+    FWRITESTRING(I3,3, 'False', 0);
+  end;
+  FWRITELN(I3,3);
+
+function ENVIRONM.4(args 0 words) : <1 word result>;  { locals 2 words, lex 2 }
+  ENVIRONM.2();
+  L3 := EDITOR.9(EDITOR.4());
+  while not ((L3 in {70,84})) do begin
+    FWRITESTRING(I3,3, 'T or F', 0);
+    G452 := 0;
+    L4 := 5;
+    while (G452 <= L4) do begin
+      FWRITECHAR(I3,3, G286, 0);
+      G452 := (G452+1);
+    end;
+    L3 := EDITOR.9(EDITOR.4());
+  end;
+  if (L3 = 84) then begin
+    FWRITESTRING(I3,3, 'True  ', 0);
+    L1 := 1;
+  end else begin
+    FWRITESTRING(I3,3, 'False ', 0);
+    L1 := 0;
+  end;
+
+function ENVIRONM.5(args 0 words) : <1 word result>;  { locals 2 words, lex 2 }
+  ENVIRONM.2();
+  L4 := 0;
+L010B:
+  repeat
+L010B:
+    L3 := EDITOR.4();
+    if not ((L3 in (([32] + [13]) + {48,49,50,51,52,53,54,55,56,57}))) then begin
+      FWRITECHAR(I3,3, 35, 0);
+      FWRITECHAR(I3,3, 7, 0);
+      FWRITECHAR(I3,3, G286, 0);
+    end;
+    if not ((L3 in (([32] + [13]) + {48,49,50,51,52,53,54,55,56,57}))) then goto L010B;
+    if (L3 in {48,49,50,51,52,53,54,55,56,57}) then begin
+      FWRITECHAR(I3,3, L3, 0);
+      if (L4 < 1000) then begin
+        L4 := (((L4*10)+L3)-48);
+      end;
+    end;
+  until (L3 in ([32] + [13]));
+  L1 := L4;
+  FWRITESTRING(I3,3, '  ', 0);
+
+======================================================================
+SEGMENT 11 PUTSYNTA
+======================================================================
+
+procedure PUTSYNTA.1(args 0 words);  { locals 562 words, lex 1 }
+  FINIT(@L523, @L823, -(1));
+  FOPEN(@L523, '*SYSTEM.SYNTAX', 1, 0);
+  if (IORESULT() <> 0) then begin
+    PUTSYNTA.2();
+  end else begin
+    if (I2,10 <= 104) then begin
+      L3 := 2;
+    end else begin
+      if (I2,10 <= 126) then begin
+        L3 := 4;
+      end else begin
+        if (I2,10 <= 151) then begin
+          L3 := 6;
+        end else begin
+          if (I2,10 <= 185) then begin
+            L3 := 8;
+          end else begin
+            if (I2,10 <= 302) then begin
+              L3 := 10;
+            end else begin
+              L3 := 12;
+            end;
+          end;
+        end;
+      end;
+    end;
+    if (FBLOCKIO(@L523, @L11, 0, 2, L3, 1) <> 2) then begin
+      PUTSYNTA.2();
+    end else begin
+      if (@L11^[0] = 16) then begin
+        L2 := 2;
+      end else begin
+        L2 := 0;
+      end;
+      L6 := (I2,10 div 100);
+      L5 := ((I2,10-(L6*100)) div 10);
+      L4 := (I2,10 mod 10);
+      @L9^[0] := (L6+48);
+      @L9^[1] := (L5+48);
+      @L9^[2] := (L4+48);
+L010D:
+      FILLCHAR(@L7, 0, 3, 48);
+      L1 := SCAN(1023, 0, 58, @L11, L2, 0);
+      MOVELEFT(@L11, L2, @L7, (3-L1), L1);
+      L1 := (L1+L2);
+      L2 := ((SCAN(1023, 0, 13, @L11, L2, 0)+L2)+3);
+      if not (((@L9 = @L7) or (@L11^[L2] = 0))) then goto L010D;
+      if ((@L9 <> @L7) and (@L11^[L2] = 0)) then begin
+        PUTSYNTA.2();
+      end else begin
+        MOVELEFT(@L11, (L1+1), @G1399, 1, ((L2-L1)-4));
+        @G1399^[0] := EDITOR.12(68, ((L2-L1)-4));
+        EDITOR.18();
+        EDITOR.7(0);
+        FWRITESTRING(I2,3, @G1399, 0);
+        FWRITESTRING(I2,3, '.  Type <sp>', 0);
+      end;
+    end;
+  end;
+  EDITOR.24();
+L01B0:
+  if not ((EDITOR.4() = 32)) then goto L01B0;
+  I2,11 := 0;
+  I2,12 := 0;
+  I2,10 := 0;
+  FCLOSE(@L523, 0);
+
+procedure PUTSYNTA.2(args 0 words);  { locals 0 words, lex 2 }
+  @G1399^ := 'Syntax Error #'  {string};
+  EDITOR.17();
+  FWRITEINT(I3,3, I3,10, 0);
+  FWRITESTRING(I3,3, '. Type <sp>', 0);
+
+======================================================================
+SEGMENT 12 EDITCORE
+======================================================================
+
+procedure EDITCORE.1(args 0 words);  { locals 0 words, lex 1 }
+  EDITCORE.2();
+  while (G15 <> 10) do begin
+    EDITCORE.60();
+  end;
+
+procedure EDITCORE.2(args 0 words);  { locals 0 words, lex 2 }
+  if G282 then begin
+    @G1440^ := @G288  {string};
+    EDITOR.10();
+    G282 := 0;
+    EDITOR.24();
+  end;
+  G9 := EDITOR.4();
+  G15 := EDITOR.8(G9);
+
+procedure EDITCORE.3(args 0 words);  { locals 0 words, lex 2 }
+  if (G15 = 17) then begin
+    G10 := 62;
+  end else begin
+    G10 := 60;
+  end;
+  EDITOR.18();
+  FWRITECHAR(I3,3, G10, 0);
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.4(args 0 words);  { locals 1 words, lex 2 }
+  @G1440^ := ' Copy: B(uffer  F(rom file  <esc>'  {string};
+  EDITOR.10();
+  G282 := 1;
+L005A:
+  G9 := EDITOR.9(EDITOR.4());
+  if not ((G9 in ([G284] + {66,70}))) then goto L005A;
+  if (G9 = 66) then begin
+    if (not (G587) or ((((G4+G586)+10) > G585) and (G585 >= G4))) then begin
+      EDITOR.2('Invalid copy.', 1);
+    end else begin
+      if ((G4+G586) >= G12) then begin
+        EDITOR.2('No room', 1);
+      end else begin
+        L1 := 0;
+        EDITOR.33(@G3);
+        if (G17^[G585] = 16) then begin
+          if (G17^[(G3-1)] <> 13) then begin
+            L1 := 1;
+            G585 := (G585+2);
+            G586 := (G586-2);
+          end;
+        end;
+        if (G17^[G3] = 16) then begin
+          if (G17^[((G585+G586)-1)] <> 13) then begin
+            if (G17^[G585] <> 16) then begin
+              EDITOR.26();
+              G3 := G5;
+            end else begin
+              if ((G585 >= G3) and (G585 < G4)) then begin
+                G585 := (G585-2);
+              end;
+              G4 := (G4-2);
+              MOVELEFT(G17, (G3+2), G17, G3, ((G4-G3)+1));
+            end;
+          end;
+        end;
+        MOVERIGHT(G17, G3, G17, (G3+G586), ((G4-G3)+1));
+        if ((G585 >= G3) and (G585 < G4)) then begin
+          MOVELEFT(G17, (G585+G586), G17, G3, G586);
+        end else begin
+          MOVELEFT(G17, G585, G17, G3, G586);
+        end;
+        G4 := (G4+G586);
+        if L1 then begin
+          G585 := (G585-2);
+        end;
+        EDITOR.30(G3, G586);
+        if L1 then begin
+          G586 := (G586+2);
+        end;
+        EDITOR.26();
+        G3 := EDITOR.13(G3, G5);
+        EDITOR.22(@G452, G281, 1);
+      end;
+    end;
+  end else begin
+    if (G9 = 70) then begin
+      EXIT(12, 1);
+    end;
+  end;
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.5(args 0 words);  { locals 0 words, lex 2 }
+  EDITCORE.2();
+
+procedure EDITCORE.6(args 0 words);  { locals 147 words, lex 2 }
+  L15 := 1;
+  L145 := 0;
+  L144 := 0;
+  L146 := 0;
+  if G946 then begin
+    L12 := 1;
+  end else begin
+    L12 := 0;
+  end;
+  if (G15 = 4) then begin
+    EDITCORE.58(' Find', ' <target>  =>', G11, 1);
+  end else begin
+    EDITCORE.58(' Replace', ' V(fy <targ> <sub>  =>', G11, 1);
+  end;
+  G282 := 1;
+  EDITCORE.46();
+  EDITCORE.47();
+  EDITCORE.48();
+  if not (L145) then begin
+    EDITCORE.49(@G453, @G581);
+    G583 := 1;
+  end;
+  if (G15 = 11) then begin
+    EDITCORE.46();
+    EDITCORE.47();
+    L145 := 0;
+    EDITCORE.48();
+    if not (L145) then begin
+      EDITCORE.49(@G517, @G582);
+      G584 := 1;
+    end;
+  end;
+  EDITOR.18();
+  EDITOR.7(0);
+  if (((G15 = 4) and G583) or (((G15 = 11) and G584) and G583)) then begin
+    L13 := 1;
+    L2 := 1;
+    L10 := G3;
+    while (((L13 <= G11) or G589) and L2) do begin
+      EDITCORE.55();
+      L13 := (L13+1);
+      if L2 then begin
+        G3 := (L10+L7);
+        G16 := L8;
+        if (G15 = 11) then begin
+          EDITCORE.59();
+        end;
+        if (G10 = 60) then begin
+          L10 := (L8-1);
+        end else begin
+          L10 := G3;
+        end;
+      end;
+    end;
+    if not (L2) then begin
+      if not ((G589 and (L13 > 2))) then begin
+        EDITOR.2('Pattern not in the file', 1);
+      end;
+    end;
+  end else begin
+    EDITOR.2('No old pattern.', 1);
+  end;
+  EDITOR.22(@L9, G281, not (L15));
+  EDITOR.26();
+  G3 := EDITOR.13(G5, G3);
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.7(args 0 words);  { locals 79 words, lex 2 }
+  L9 := 0;
+  L11 := SCAN(1023, 0, 13, G17, G3, 0);
+  MOVELEFT(G17, G3, @L16, 0, L11);
+  L10 := (G13-L11);
+  EDITCORE.16();
+  L1 := G4;
+  @G1440^ := @G370  {string};
+  EDITOR.10();
+  L5 := 0;
+  G282 := 1;
+  L2 := (G3-1);
+  L6 := 0;
+  EDITOR.23(@L13, @L12);
+  FGOTOXY(L13, L12);
+  EDITOR.3(L13, L12);
+  L4 := 1;
+  if (L11 <> 0) then begin
+    if (L10 > L13) then begin
+      FGOTOXY(L10, L12);
+      FWRITEBYTES(I3,3, @L16, L11, 128);
+      FGOTOXY(L13, L12);
+    end else begin
+      L4 := 0;
+      EDITOR.6(L13, L12);
+      FWRITELN(I3,3);
+      if (L12 = G14) then begin
+        L12 := (G14-1);
+        L5 := 1;
+      end;
+      FGOTOXY(L10, (L12+1));
+      FWRITEBYTES(I3,3, @L16, L11, 128);
+      FGOTOXY(L13, L12);
+    end;
+  end;
+  repeat
+    EDITCORE.23();
+    if not ((G9 in ((([G287] + [G284]) + [G285]) + {13,17}))) then begin
+      if (@G631[G9]^ = 20) then begin
+        if (L13 <= G13) then begin
+          FWRITECHAR(I3,3, G286, 0);
+          FWRITECHAR(I3,3, 32, 0);
+          FWRITECHAR(I3,3, G286, 0);
+        end;
+        L13 := (L13-1);
+      end else begin
+        if (G9 = 9) then begin
+          EDITCORE.25(32, L15);
+        end else begin
+          if (G945 and ((L13+1) >= G948)) then begin
+            EDITCORE.27();
+          end else begin
+            EDITCORE.25(G9, 1);
+          end;
+        end;
+      end;
+      if ((not (G945) and (L13 = (G13-8))) and (G9 <> G286)) then begin
+        FWRITECHAR(I3,3, 7, 0);
+      end;
+      if (((L11 <> 0) and (L13 >= L10)) and L4) then begin
+        EDITCORE.24();
+        FGOTOXY(L13, L12);
+      end;
+    end else begin
+      if (G9 = 13) then begin
+        EDITCORE.26();
+        L13 := G7;
+        FGOTOXY(L13, L12);
+      end else begin
+        if (G9 = G285) then begin
+          if (L12 <= 1) then begin
+            G4 := (G3+1);
+            G17^[G3] := 13;
+            EDITOR.22(@L12, G281, 1);
+            if (L11 <> 0) then begin
+              EDITCORE.24();
+            end;
+            if L5 then begin
+              EDITOR.10();
+              L5 := 0;
+            end;
+          end else begin
+            FGOTOXY(0, L12);
+            L9 := 0;
+            EDITOR.3(0, L12);
+            L12 := (L12-1);
+          end;
+          EDITOR.26();
+          L13 := (((G7-G8)+G3)-G6);
+          FGOTOXY(L13, L12);
+        end else begin
+          if (G9 = 17) then begin
+            L13 := 0;
+            FGOTOXY(L13, L12);
+            EDITOR.3(L13, L12);
+          end;
+        end;
+      end;
+    end;
+  until (G9 in ([G287] + [G284]));
+  if (G9 = G284) then begin
+    G3 := (L2+1);
+  end;
+  G4 := L1;
+  EDITCORE.17();
+
+procedure EDITCORE.8(args 0 words);  { locals 1 words, lex 2 }
+  @G1440^ := ' JUMP: B(eginning E(nd M(arker <esc>'  {string};
+  EDITOR.10();
+  G282 := 1;
+  repeat
+    L1 := EDITOR.9(EDITOR.4());
+    if (L1 = 66) then begin
+      G3 := 1;
+      EDITOR.26();
+      G3 := G5;
+      EDITOR.22(@G452, 1, 0);
+    end else begin
+      if (L1 = 69) then begin
+        G3 := (G4-1);
+        EDITOR.22(@G452, (G14-1), 0);
+      end else begin
+        if (L1 = 77) then begin
+          EDITCORE.9();
+        end else begin
+          if (L1 <> G284) then begin
+            EDITOR.19();
+          end;
+        end;
+      end;
+    end;
+  until (L1 in ([G284] + {66,69,77}));
+  EDITCORE.2();
+
+procedure EDITCORE.9(args 0 words);  { locals 5 words, lex 3 }
+  EDITOR.32('Jump to', @L2);
+  if (@L2 <> @'        ') then begin
+    L1 := 0;
+    while ((L1 < G888) and (@L2 <> @G889[L1*4w])) do begin
+      L1 := (L1+1);
+    end;
+    if (@L2 <> @G889[L1*4w]) then begin
+      EDITOR.2('Not there.', 1);
+    end else begin
+      G3 := @G934[L1]^;
+      EDITOR.26();
+      G3 := EDITOR.13(G3, G5);
+      EDITOR.22(@G452, G281, 0);
+    end;
+  end;
+
+procedure EDITCORE.10(args 0 words);  { locals 0 words, lex 2 }
+  if (G945 and not (G944)) then begin
+    EDITOR.20(1);
+    EDITOR.31(G3, G11, 1);
+    EDITOR.22(@G452, G281, 1);
+  end else begin
+    EDITOR.2('Inappropriate environment', 1);
+  end;
+  G587 := 0;
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.11(args 0 words);  { locals 7 words, lex 2 }
+  G282 := 1;
+  G888 := EDITOR.12(10, G888);
+  if not ((G888 = 10)) then goto L0432;
+  EDITOR.20(1);
+  L2 := 0;
+  L7 := (G888-1);
+  while (L2 <= L7) do begin
+    FWRITEINT(I3,3, L2, 0);
+    FWRITESTRING(I3,3, ') ', 0);
+    FWRITEBYTES(I3,3, @G889[L2*4w], 8, 8);
+    FWRITELN(I3,3);
+    L2 := (L2+1);
+  end;
+  @G1399^ := 'Marker ovflw.  Which one to replace?'  {string};
+  EDITOR.17();
+  G9 := EDITOR.4();
+  EDITOR.22(@G452, G281, 1);
+  if not ((G9 in {48,49,50,51,52,53,54,55,56,57})) then begin
+  end else begin
+    L1 := (G9-48);
+    goto L0437;
+L0432:
+    L1 := G888;
+L0437:
+    EDITOR.32('Set', @L3);
+    if (@L3 <> @'        ') then begin
+      L2 := 0;
+      L7 := (G888-1);
+      while (L2 <= L7) do begin
+        if (@G889[L2*4w] = @L3) then begin
+          L1 := L2;
+        end;
+        L2 := (L2+1);
+      end;
+      move(@G889[L1*4w], @L3, 4 words);
+      @G934[L1]^ := G3;
+      if (L1 = G888) then begin
+        G888 := (G888+1);
+      end;
+    end;
+  end;
+
+procedure EDITCORE.12(args 0 words);  { locals 1 words, lex 2 }
+  @G1440^ := ' Set: E(nvironment M(arker <esc>'  {string};
+  EDITOR.10();
+  G282 := 1;
+  repeat
+    L1 := EDITOR.9(EDITOR.4());
+    if (L1 = 69) then begin
+      EXIT(12, 1);
+    end else begin
+      if (L1 = 77) then begin
+        EDITCORE.11();
+      end else begin
+        if (L1 <> G284) then begin
+          EDITOR.19();
+        end;
+      end;
+    end;
+  until (L1 in ([G284] + {69,77}));
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.13(args 0 words);  { locals 0 words, lex 2 }
+  EDITOR.22(@G452, G281, 1);
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.14(args 0 words);  { locals 66 words, lex 2 }
+  @G1440^ := ' eXchange: TEXT {<bs> a char} [<esc> escapes; <etx> accepts]'  {string};
+  EDITOR.10();
+  G282 := 1;
+  EDITOR.24();
+  L2 := G3;
+  L1 := 0;
+  repeat
+    G9 := EDITOR.4();
+    if (EDITOR.8(G9) = 20) then begin
+      if (G3 > L2) then begin
+        L1 := (L1-1);
+        G3 := (G3-1);
+        G17^[G3] := @L3^[L1];
+        FWRITECHAR(I3,3, G286, 0);
+        FWRITECHAR(I3,3, G17^[G3], 0);
+        FWRITECHAR(I3,3, G286, 0);
+      end;
+    end else begin
+      if (G9 = 13) then begin
+        EDITOR.19();
+        EDITOR.24();
+      end else begin
+        if (not ((G9 in ([G287] + [G284]))) and (G17^[G3] <> 13)) then begin
+          if not ((G9 in {32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126})) then begin
+            G9 := 63;
+          end;
+          @L3^[L1] := G17^[G3];
+          G17^[G3] := G9;
+          L1 := (L1+1);
+          G3 := (G3+1);
+          FWRITECHAR(I3,3, G9, 0);
+        end;
+      end;
+    end;
+  until (G9 in ([G287] + [G284]));
+  if (G9 = G284) then begin
+    G3 := L2;
+    MOVELEFT(@L3, 0, G17, G3, L1);
+    EDITOR.24();
+    FWRITEBYTES(I3,3, @L3, L1, 128);
+    EDITOR.24();
+  end;
+  EDITCORE.2();
+
+procedure EDITCORE.15(args 0 words);  { locals 0 words, lex 2 }
+  if (abs((G16-G3)) > 80) then begin
+    @G1440^ := ' WARNING! You are about to zap more than 80 chars, do you wish to zap? (y/n)'  {string};
+    EDITOR.10();
+    G282 := 1;
+    if (EDITOR.9(EDITOR.4()) <> 89) then begin
+      EDITOR.24();
+      EDITCORE.2();
+      EXIT(12, 15);
+    end;
+  end;
+  if EDITOR.27(EDITOR.12(G3, G16), EDITOR.13(G3, G16)) then begin
+    G588 := 0;
+    EDITOR.30(EDITOR.12(G3, G16), -(abs((G3-G16))));
+    if (G3 > G16) then begin
+      MOVELEFT(G17, G3, G17, G16, (G4-G3));
+    end else begin
+      MOVELEFT(G17, G16, G17, G3, (G4-G16));
+    end;
+    G4 := (G4-abs((G3-G16)));
+    G3 := G16;
+    EDITOR.22(@G452, G281, 1);
+  end;
+  EDITOR.24();
+  EDITCORE.2();
+
+procedure EDITCORE.16(args 0 words);  { locals 0 words, lex 3 }
+  EDITOR.26();
+  I1,3 := (G12-(G4-G3));
+  I1,14 := ((G4-G3)+1);
+  MOVERIGHT(G17, G3, G17, I1,3, I1,14);
+  EDITOR.26();
+  if ((I1,3-G3) < 127) then begin
+    EDITOR.2('No room to insert.', 1);
+    MOVELEFT(G17, I1,3, G17, G3, I1,14);
+    EDITOR.24();
+    EDITCORE.2();
+    EXIT(12, 7);
+  end;
+  G17^[(I1,3-2)] := 16;
+  G17^[(I1,3-1)] := (G7+32);
+
+procedure EDITCORE.17(args 0 words);  { locals 2 words, lex 3 }
+  if (((I1,6 and not (I1,4)) and (not (G945) or G944)) and (G9 <> G284)) then begin
+    G4 := (G4+2);
+    I1,3 := (I1,3-2);
+    I1,14 := (I1,14+2);
+    G3 := (SCAN(-(1023), 0, 13, G17, (G3-1), 0)+G3);
+  end;
+  MOVELEFT(G17, I1,3, G17, G3, I1,14);
+  EDITOR.30((I1,2+1), (G3-(I1,2+1)));
+  G4 := ((G4+G3)-(I1,2+1));
+  if ((G945 and not (G944)) and (G9 = G287)) then begin
+    EDITOR.31(G3, 1, 0);
+    I1,4 := 0;
+    EDITOR.23(@I1,13, @I1,12);
+  end;
+  EDITOR.29(I1,4, (I1,5 or (G9 = G284)), I1,12);
+  EDITOR.26();
+  G3 := EDITOR.13(G3, G5);
+  G16 := (I1,2+1);
+  G587 := 1;
+  G585 := G16;
+  G586 := (G3-G16);
+  EDITCORE.2();
+
+function EDITCORE.18(args 1 words) : <1 word result>;  { locals 0 words, lex 3 }
+  L1 := 1;
+  if (L3 <= I1,2) then begin
+    I1,7 := 0;
+    L1 := 0;
+    EDITOR.2('No insertion to back over.', 1);
+    EDITOR.10();
+    FGOTOXY(I1,13, I1,12);
+  end else begin
+    if (L3 >= (I1,3-1023)) then begin
+      if not (I1,8) then begin
+        EDITOR.2('Please finish up the insertion', 1);
+        EDITOR.10();
+        FGOTOXY(I1,13, I1,12);
+        I1,8 := 1;
+      end;
+      if (L3 > (I1,3-10)) then begin
+        EDITOR.2('Buffer Overflow!!!!', 1);
+        EDITCORE.17();
+        EXIT(12, 7);
+      end;
+    end;
+  end;
+
+procedure EDITCORE.19(args 0 words);  { locals 0 words, lex 3 }
+  if (G9 = 9) then begin
+    I1,15 := ((8-I1,13)+(I1,13 and 248));
+  end else begin
+    I1,15 := 1;
+  end;
+  if EDITCORE.18((G3+I1,15)) then begin
+    FILLCHAR(G17, G3, I1,15, 32);
+    G3 := (G3+I1,15);
+  end;
+
+procedure EDITCORE.20(args 0 words);  { locals 0 words, lex 3 }
+  G17^[G3] := 13;
+  EDITOR.26();
+  if (G8 >= 2) then begin
+    MOVELEFT(G17, G5, G17, (G6+2), (G3-G5));
+  end else begin
+    if EDITCORE.18(((G3+2)-G8)) then begin
+      MOVERIGHT(G17, G5, G17, ((G5+2)-G8), (G3-G5));
+    end else begin
+      I1,7 := 0;
+      EXIT(12, 20);
+    end;
+  end;
+  G3 := (G3-(G8-2));
+  G17^[G6] := 16;
+  G17^[(G6+1)] := (32+G7);
+
+procedure EDITCORE.21(args 0 words);  { locals 0 words, lex 3 }
+  if I1,6 then begin
+    EDITCORE.20();
+  end;
+  G17^[G3] := 13;
+  if G944 then begin
+    EDITOR.26();
+  end else begin
+    if G945 then begin
+      EDITOR.26();
+      if (G17^[G5] = 13) then begin
+        G7 := G949;
+      end else begin
+        G7 := G947;
+      end;
+    end else begin
+      G7 := 0;
+    end;
+  end;
+  if EDITCORE.18(((G3+G7)+1)) then begin
+    FILLCHAR(G17, (G3+1), G7, 32);
+    G3 := ((G3+G7)+1);
+  end;
+  I1,6 := 1;
+
+procedure EDITCORE.22(args 0 words);  { locals 1 words, lex 3 }
+  if (G9 = 17) then begin
+    EDITOR.26();
+    if EDITCORE.18(G6) then begin
+      G3 := G6;
+    end;
+  end else begin
+    if ((G9 = G286) and not (((G17^[(G3-2)] = 16) or (G17^[(G3-1)] = 13)))) then begin
+      if (G3 < (I1,2+2)) then begin
+        I1,7 := 0;
+      end else begin
+        G3 := (G3-1);
+      end;
+    end else begin
+      G9 := G285;
+      EDITOR.26();
+      if EDITCORE.18((G6-1)) then begin
+        G3 := (G6-1);
+      end;
+      I1,6 := 0;
+    end;
+  end;
+
+procedure EDITCORE.23(args 0 words);  { locals 0 words, lex 3 }
+  repeat
+    I1,7 := 1;
+    G9 := EDITOR.4();
+    if (EDITOR.8(G9) = 20) then begin
+      G9 := G286;
+    end;
+    if (G9 in (((([G286] + [G285]) + [G287]) + [G284]) + {9,13,17,32})) then begin
+      if (G9 in {9,32}) then begin
+        EDITCORE.19();
+      end else begin
+        if (G9 = 13) then begin
+          EDITCORE.21();
+        end else begin
+          if (G9 in (([G286] + [G285]) + {17})) then begin
+            EDITCORE.22();
+          end;
+        end;
+      end;
+    end else begin
+      if ((G9 < 33) or (G9 > 126)) then begin
+        G9 := 63;
+      end;
+      if I1,6 then begin
+        EDITCORE.20();
+      end;
+      if (EDITCORE.18((G3+1)) and I1,7) then begin
+        I1,6 := 0;
+        G17^[G3] := G9;
+        G3 := (G3+1);
+      end;
+    end;
+  until I1,7;
+
+procedure EDITCORE.24(args 0 words);  { locals 0 words, lex 3 }
+  if I1,9 then begin
+    EDITOR.3(I1,13, I1,12);
+  end else begin
+    I1,9 := 1;
+    EDITOR.6(I1,13, I1,12);
+  end;
+  FGOTOXY(I1,10, I1,12);
+  EDITOR.3(I1,10, I1,12);
+  FWRITECHAR(I4,3, 10, 0);
+  if (I1,12 = G14) then begin
+    I1,5 := 1;
+    I1,12 := (G14-1);
+  end;
+  FWRITEBYTES(I4,3, @I1,16, I1,11, 128);
+  I1,4 := 0;
+
+procedure EDITCORE.25(args 2 words);  { locals 0 words, lex 3 }
+  if ((I1,13+L1) <= G13) then begin
+    FWRITECHAR(I4,3, L2, L1);
+  end;
+  if ((I1,13+L1) >= G13) then begin
+    FGOTOXY(G13, I1,12);
+    if ((I1,13+L1) > G13) then begin
+      FWRITECHAR(I4,3, 33, 0);
+      FGOTOXY(G13, I1,12);
+    end;
+  end;
+  I1,13 := EDITOR.12(G13, (I1,13+L1));
+
+procedure EDITCORE.26(args 0 words);  { locals 0 words, lex 3 }
+  I1,4 := 0;
+  if I1,9 then begin
+    if (I1,13 < G13) then begin
+      EDITOR.3(I1,13, I1,12);
+    end;
+  end else begin
+    I1,9 := 1;
+    EDITOR.6(I1,13, I1,12);
+  end;
+  I1,12 := (I1,12+1);
+  if (I1,12 > G14) then begin
+    I1,12 := (I1,12-1);
+    FWRITELN(I4,3);
+    I1,5 := 1;
+  end;
+  if (I1,11 <> 0) then begin
+    EDITCORE.24();
+  end;
+
+procedure EDITCORE.27(args 0 words);  { locals 46 words, lex 3 }
+  if I1,6 then begin
+    EDITCORE.20();
+  end;
+  L2 := (SCAN(-(1023), 0, 32, G17, (G3-1), 0)+G3);
+  L1 := (G3-L2);
+  if (L1 >= (G948-G947)) then begin
+    EDITCORE.25(G9, 1);
+    EXIT(12, 27);
+  end;
+  FGOTOXY(((I1,13-L1)+1), I1,12);
+  EDITOR.3(((I1,13-L1)+1), I1,12);
+  MOVERIGHT(G17, L2, G17, (L2+3), L1);
+  MOVELEFT(G17, (L2+3), @L4, 0, L1);
+  G3 := (G3+3);
+  G17^[L2] := 13;
+  G17^[(L2+1)] := 16;
+  if G944 then begin
+    L3 := G3;
+    G3 := L2;
+    EDITOR.26();
+    G3 := L3;
+  end else begin
+    G7 := G947;
+  end;
+  G17^[(L2+2)] := (G7+32);
+  EDITCORE.26();
+  I1,13 := G7;
+  FGOTOXY(I1,13, I1,12);
+  FWRITEBYTES(I4,3, @L4, L1, 85);
+  I1,13 := (I1,13+L1);
+  I1,6 := 0;
+
+procedure EDITCORE.28(args 0 words);  { locals 16 words, lex 2 }
+  if (G15 = 3) then begin
+    EDITCORE.45();
+  end else begin
+    if (G15 = 1) then begin
+      EDITCORE.39();
+      EDITCORE.2();
+    end else begin
+      EDITCORE.42();
+    end;
+  end;
+
+procedure EDITCORE.29(args 2 words);  { locals 2 words, lex 3 }
+  L4 := 0;
+  L3 := ((SCAN(1023, 0, 13, G17, G280, 0)+G280)+1);
+  while ((L4 < L1) and (L3 < G4)) do begin
+    G280 := L3;
+    L3 := ((SCAN(1023, 0, 13, G17, L3, 0)+L3)+1);
+    L4 := (L4+1);
+  end;
+  L4 := 0;
+  FGOTOXY(0, G14);
+L0FA1:
+  L4 := (L4+1);
+  G7 := EDITOR.21(L2, @G8);
+  FWRITECHAR(I4,3, 10, 0);
+  EDITOR.28(@L2, G8, G7, G14);
+  I1,2 := (I1,2-1);
+  if not (((L4 >= L1) or (L2 >= (G4-1)))) then goto L0FA1;
+  I1,5 := 1;
+
+procedure EDITCORE.30(args 4 words);  { locals 3 words, lex 3 }
+  FGOTOXY(L4, L3);
+  L6 := L4;
+  L5 := L3;
+  L7 := (L1-1);
+  while (L5 <= L7) do begin
+    if (L5 <> 0) then begin
+      EDITOR.3(L6, L5);
+    end;
+    L6 := 0;
+    FWRITELN(I4,3);
+    L5 := (L5+1);
+  end;
+  if (L3 <> L1) then begin
+    L5 := 0;
+    L7 := L2;
+    while (L5 <= L7) do begin
+      FWRITECHAR(I4,3, 32, 0);
+      L5 := (L5+1);
+    end;
+  end else begin
+    L5 := L4;
+    L7 := L2;
+    while (L5 <= L7) do begin
+      FWRITECHAR(I4,3, 32, 0);
+      L5 := (L5+1);
+    end;
+  end;
+
+procedure EDITCORE.31(args 0 words);  { locals 0 words, lex 3 }
+  if I1,10 then begin
+    if (I1,2 >= G14) then begin
+      EDITOR.22(@I1,2, 2, 1);
+      if (abs((G3-I1,15)) > abs(I1,8)) then begin
+        EDITCORE.30(0, 1, EDITOR.13((I1,3-1), 0), I1,2);
+      end;
+    end else begin
+      EDITOR.22(@I1,2, (G14-1), 1);
+      FGOTOXY(I1,3, I1,2);
+      if (abs((G3-I1,15)) > abs(I1,8)) then begin
+        FWRITECHAR(I4,3, 11, 0);
+      end;
+    end;
+    I1,13 := 1;
+  end else begin
+    if ((G15 = 9) and ((G10 = 60) or ((I1,2 mod G14) = I1,7))) then begin
+      EDITOR.22(@I1,2, I1,7, 1);
+    end else begin
+      EDITOR.22(@I1,2, G281, 1);
+    end;
+  end;
+  if (I1,5 and (G15 <> 10)) then begin
+    EDITOR.10();
+    I1,5 := 0;
+  end;
+  I1,7 := I1,2;
+  I1,6 := I1,3;
+
+procedure EDITCORE.32(args 0 words);  { locals 1 words, lex 3 }
+  L1 := 1;
+  EDITOR.26();
+  while ((L1 <= G11) and (G6 > 1)) do begin
+    G3 := (G6-1);
+    EDITOR.26();
+    I1,2 := (I1,2-1);
+    L1 := (L1+1);
+  end;
+  G3 := EDITOR.13(1, EDITOR.13(G5, EDITOR.12((((I1,3-G7)+G8)+G6), (SCAN(1023, 0, 13, G17, G3, 0)+G3))));
+  if (I1,2 < 1) then begin
+    EDITCORE.31();
+  end;
+
+procedure EDITCORE.33(args 0 words);  { locals 2 words, lex 3 }
+  L1 := 1;
+  L2 := (SCAN(1023, 0, 13, G17, G3, 0)+G3);
+  while ((L2 < (G4-1)) and (L1 <= G11)) do begin
+    G3 := (L2+1);
+    L2 := (SCAN(1023, 0, 13, G17, G3, 0)+G3);
+    if (L2 < G4) then begin
+      I1,2 := (I1,2+1);
+      L1 := (L1+1);
+      if (I1,2 = (G14+1)) then begin
+        I1,4 := G3;
+      end;
+    end;
+  end;
+  if (I1,2 > G14) then begin
+    if (((I1,2-G14) >= G14) or I1,10) then begin
+      EDITCORE.31();
+    end else begin
+      EDITCORE.29(I1,4, (I1,2-G14));
+    end;
+  end;
+  EDITOR.26();
+  G3 := EDITOR.12((G4-1), EDITOR.13(G5, EDITOR.12((((I1,3-G7)+G8)+G6), (SCAN(1023, 0, 13, G17, G3, 0)+G3))));
+
+procedure EDITCORE.34(args 0 words);  { locals 0 words, lex 3 }
+  EDITOR.26();
+  while ((G5 > (G3-G11)) and (G3 > G11)) do begin
+    G11 := (G11-((G3-G5)+1));
+    if (G17^[G3] = 13) then begin
+      G3 := (G3-1);
+    end;
+    G3 := EDITOR.13((SCAN(-(1023), 0, 13, G17, G3, 0)+G3), 1);
+    I1,2 := (I1,2-1);
+    EDITOR.26();
+  end;
+  G3 := EDITOR.13(G5, EDITOR.13((G3-G11), 1));
+  if (I1,2 < 1) then begin
+    EDITCORE.31();
+  end;
+  EDITOR.23(@I1,3, @I1,2);
+
+procedure EDITCORE.35(args 0 words);  { locals 1 words, lex 3 }
+  L1 := (SCAN(1023, 0, 13, G17, G3, 0)+G3);
+  while ((L1 < (G3+G11)) and (L1 < (G4-1))) do begin
+    G11 := (G11-((L1-G3)+1));
+    G3 := (L1+1);
+    EDITOR.26();
+    G3 := G5;
+    I1,2 := (I1,2+1);
+    if (I1,2 = (G14+1)) then begin
+      I1,4 := G6;
+    end;
+    L1 := (SCAN(1023, 0, 13, G17, G3, 0)+G3);
+  end;
+  if (I1,2 > G14) then begin
+    if (((I1,2-G14) >= G14) or I1,10) then begin
+      EDITCORE.31();
+    end else begin
+      EDITCORE.29(I1,4, (I1,2-G14));
+    end;
+  end;
+  G3 := EDITOR.12((G4-1), (G3+G11));
+  EDITOR.23(@I1,3, @I1,2);
+
+procedure EDITCORE.36(args 1 words);  { locals 1 words, lex 3 }
+  L2 := 1;
+  if (G10 = 60) then begin
+    while ((L2 <= L1) and (G3 > 1)) do begin
+      if (G17^[G3] = 13) then begin
+        G3 := (G3-1);
+      end;
+      G3 := (SCAN(-(1023), 0, 13, G17, G3, 0)+G3);
+      if (G3 >= 1) then begin
+        I1,2 := (I1,2-1);
+        L2 := (L2+1);
+      end;
+    end;
+    G3 := EDITOR.13(1, G3);
+    I1,12 := (G3 = 1);
+    if (I1,2 < 1) then begin
+      EDITCORE.31();
+    end;
+  end else begin
+    while ((L2 <= L1) and (G3 < (G4-1))) do begin
+      G3 := ((SCAN(1023, 0, 13, G17, G3, 0)+G3)+1);
+      if (G3 < G4) then begin
+        L2 := (L2+1);
+        I1,2 := (I1,2+1);
+        if (I1,2 = (G14+1)) then begin
+          I1,4 := G3;
+        end;
+      end;
+    end;
+    I1,12 := (G3 >= (G4-1));
+    if (I1,2 > G14) then begin
+      if (((((I1,2-G14) >= G14) or (G15 = 9)) or I1,11) or I1,10) then begin
+        EDITCORE.31();
+      end else begin
+        EDITCORE.29(I1,4, (I1,2-G14));
+      end;
+    end;
+    G3 := EDITOR.12(G3, (G4-1));
+  end;
+  EDITOR.26();
+  G3 := G5;
+  I1,3 := G7;
+
+procedure EDITCORE.37(args 0 words);  { locals 0 words, lex 3 }
+  G3 := 1;
+  EDITOR.22(@G452, 1, 0);
+
+procedure EDITCORE.38(args 0 words);  { locals 0 words, lex 3 }
+  G3 := (G4-1);
+  EDITOR.22(@G452, G14, 0);
+
+procedure EDITCORE.39(args 0 words);  { locals 5 words, lex 3 }
+  L4 := G10;
+  I1,5 := 0;
+  I1,10 := 0;
+  G16 := G3;
+  I1,11 := 1;
+  @G1440^ := @G411  {string};
+  EDITOR.10();
+  G282 := 1;
+  L5 := 0;
+  EDITOR.24();
+  EDITOR.23(@I1,3, @I1,2);
+  L2 := 0;
+  repeat
+    G9 := EDITOR.4();
+    G15 := EDITOR.8(G9);
+    G589 := 0;
+    if (G15 = 28) then begin
+      G11 := 1;
+      G589 := 1;
+      G9 := EDITOR.4();
+      G15 := @G631[G9]^;
+    end else begin
+      if (G15 = 23) then begin
+        G11 := EDITOR.25();
+      end else begin
+        G11 := 1;
+      end;
+    end;
+    if (G15 in {18,19}) then begin
+      if (G15 = 18) then begin
+        G10 := 60;
+      end else begin
+        G10 := 62;
+      end;
+      L1 := 1;
+      I1,12 := 0;
+      while (not (I1,12) and ((L1 <= G11) or G589)) do begin
+        L1 := (L1+1);
+        EDITCORE.36(1);
+        if not (I1,12) then begin
+          if (L5 = 0) then begin
+            EDITCORE.40(L2);
+          end else begin
+            L3 := SCAN(1023, 0, 13, G17, G5, 0);
+            case L5 of   { table 1..3 }
+              1: begin
+                EDITCORE.40((G947-G7));
+              end;
+              2: begin
+                EDITCORE.40((((G948-L3)+1)-G7));
+              end;
+              3: begin
+                EDITCORE.40(((((((G948-G947)+1)-L3) div 2)-G7)+G947));
+              end;
+            end;
+          end;
+        end;
+      end;
+    end else begin
+      if (G15 = 20) then begin
+        EDITCORE.40(-(G11));
+        L2 := (L2-G11);
+        L5 := 0;
+      end else begin
+        if (G15 = 21) then begin
+          EDITCORE.40(G11);
+          L2 := (L2+G11);
+          L5 := 0;
+        end else begin
+          if (2180 in 1) then begin
+            EDITOR.26();
+            L3 := SCAN(1023, 0, 13, G17, G5, 0);
+            if (G15 = 7) then begin
+              L5 := 1;
+              EDITCORE.40((G947-G7));
+            end else begin
+              if (G15 = 11) then begin
+                L5 := 2;
+                EDITCORE.40((((G948-L3)+1)-G7));
+              end else begin
+                L5 := 3;
+                EDITCORE.40(((((((G948-G947)+1)-L3) div 2)-G7)+G947));
+              end;
+            end;
+          end else begin
+            if (G9 <> G287) then begin
+              EDITOR.19();
+              EDITOR.24();
+            end;
+          end;
+        end;
+      end;
+    end;
+    { paths disagree on stack depth here }
+  until (G9 = G287);
+  G10 := L4;
+
+procedure EDITCORE.40(args 1 words);  { locals 65 words, lex 4 }
+  EDITOR.26();
+  if ((G7+L1) < 0) then begin
+    L1 := -(G7);
+  end;
+  if ((G17^[G6] = 16) and ((G5-G6) = 2)) then begin
+    I2,3 := ((G17^[(G6+1)]+L1)-32);
+  end else begin
+    if ((G5-G6) > 2) then begin
+      MOVELEFT(G17, G5, G17, (G6+2), (G4-G5));
+    end else begin
+      if (G4 > (G12-100)) then begin
+        EDITOR.2('Buffer overflow', 1);
+        EXIT(12, 39);
+      end else begin
+        MOVERIGHT(G17, G5, G17, (G6+2), (G4-G5));
+      end;
+    end;
+    if ((G6+2) <> G5) then begin
+      EDITOR.30(G6, ((G6+2)-G5));
+      G4 := (((G4+G6)+2)-G5);
+    end;
+    G17^[G6] := 16;
+    I2,3 := (G7+L1);
+  end;
+  G17^[(G6+1)] := (I2,3+32);
+  G3 := (G6+2);
+  EDITOR.26();
+  FGOTOXY(0, I2,2);
+  EDITOR.3(0, I2,2);
+  EDITOR.28(@G6, G8, G7, I2,2);
+  FGOTOXY(I2,3, I2,2);
+
+function EDITCORE.41(args 0 words) : <1 word result>;  { locals 0 words, lex 3 }
+  if (G11 > 0) then begin
+    if (G10 = 62) then begin
+      L1 := ((((8*(G11-1))+8)-I1,3)+(I1,3 and 248));
+    end else begin
+      if (I1,3 = 0) then begin
+        L1 := (G11*8);
+      end else begin
+        L1 := (((8*(G11-1))+I1,3)-((I1,3-1) and 248));
+      end;
+    end;
+  end else begin
+    L1 := 0;
+  end;
+
+procedure EDITCORE.42(args 0 words);  { locals 1 words, lex 3 }
+  I1,10 := 0;
+  I1,11 := 0;
+  I1,5 := 0;
+  if G589 then begin
+    case G15 of   { table 18..26 }
+      18, 20: begin
+        EDITCORE.37();
+      end;
+      19, 21: begin
+        EDITCORE.38();
+      end;
+      22, 25, 26: begin
+        if (G10 = 60) then begin
+          EDITCORE.37();
+        end else begin
+          EDITCORE.38();
+        end;
+      end;
+    end;
+    G282 := 1;
+    EDITCORE.2();
+    EXIT(12, 28);
+  end;
+  EDITOR.23(@I1,3, @I1,2);
+  repeat
+    I1,6 := I1,3;
+    I1,7 := I1,2;
+    case G15 of   { table 9..26 }
+      20: begin
+        EDITCORE.34();
+      end;
+      21: begin
+        EDITCORE.35();
+      end;
+      26: begin
+        if (G10 = 60) then begin
+          EDITCORE.34();
+        end else begin
+          EDITCORE.35();
+        end;
+      end;
+      18: begin
+        EDITCORE.32();
+      end;
+      19: begin
+        EDITCORE.33();
+      end;
+      25: begin
+        EDITCORE.36(G11);
+      end;
+      9: begin
+        if (G11 > 1000) then begin
+          EDITOR.2('Too many', 1);
+        end else begin
+          EDITCORE.36((G14*G11));
+        end;
+      end;
+      22: begin
+        if (G11 >= 4096) then begin
+          EDITOR.2('Integer Overflow', 1);
+        end else begin
+          G11 := EDITCORE.41();
+          if (G10 = 60) then begin
+            EDITCORE.34();
+          end else begin
+            EDITCORE.35();
+          end;
+          L1 := (I1,3+1);
+          while ((I1,3 <> L1) and ((I1,3 mod 8) <> 0)) do begin
+            L1 := I1,3;
+            G11 := 1;
+            if (G10 = 62) then begin
+              EDITCORE.35();
+            end else begin
+              EDITCORE.34();
+            end;
+          end;
+        end;
+      end;
+    end;
+    if (I1,5 or (G15 = 9)) then begin
+      FGOTOXY(I1,3, I1,2);
+    end else begin
+      if (I1,2 = I1,7) then begin
+        if (I1,3 = (I1,6+1)) then begin
+          FGOTOXY(I1,3, I1,2);
+        end else begin
+          if (I1,3 = (I1,6-1)) then begin
+            FWRITECHAR(I4,3, G286, 0);
+          end else begin
+            FGOTOXY(I1,3, I1,2);
+          end;
+        end;
+      end else begin
+        if (I1,3 = I1,6) then begin
+          if (I1,2 = (I1,7+1)) then begin
+            FWRITECHAR(I4,3, 10, 0);
+          end else begin
+            if (I1,2 = (I1,7-1)) then begin
+              EDITOR.16(5);
+            end else begin
+              FGOTOXY(I1,3, I1,2);
+            end;
+          end;
+        end else begin
+          FGOTOXY(I1,3, I1,2);
+        end;
+      end;
+    end;
+    G11 := 1;
+    EDITCORE.2();
+  until not ((G15 in {18,19,20,21,22,25,26}));
+  if I1,5 then begin
+    EDITOR.10();
+  end;
+  EDITOR.24();
+
+procedure EDITCORE.43(args 2 words);  { locals 3 words, lex 3 }
+  L3 := L2;
+  while (L3 <= L1) do begin
+    if (G17^[L3] = 13) then begin
+      L3 := (L3+1);
+      FWRITELN(I4,3);
+      L5 := EDITOR.21(L3, @L4);
+      if ((L3 < L1) and (L5 > 0)) then begin
+        FWRITECHAR(I4,3, 32, L5);
+      end;
+      L3 := (L3+L4);
+    end else begin
+      FWRITECHAR(I4,3, G17^[L3], 0);
+      L3 := (L3+1);
+    end;
+  end;
+
+procedure EDITCORE.44(args 0 words);  { locals 7 words, lex 3 }
+  L5 := I1,3;
+  L3 := I1,2;
+  L4 := I1,6;
+  L2 := I1,7;
+  if (I1,9 > I1,8) then begin
+    L7 := (G3-1);
+    L6 := I1,14;
+    L5 := (L5-1);
+  end else begin
+    if (I1,9 < I1,8) then begin
+      L6 := (I1,14-1);
+      L7 := G3;
+      L4 := (L4-1);
+    end else begin
+      EXIT(12, 44);
+    end;
+  end;
+  if ((L3 > L2) or ((L3 = L2) and (L5 > L4))) then begin
+    L1 := L7;
+    L7 := L6;
+    L6 := L1;
+    L1 := L3;
+    L3 := L2;
+    L2 := L1;
+    L1 := L5;
+    L5 := L4;
+    L4 := L1;
+  end;
+  if (abs(I1,9) > abs(I1,8)) then begin
+    EDITCORE.30(L5, L3, L4, L2);
+  end else begin
+    FGOTOXY(L5, L3);
+    EDITCORE.43(L7, L6);
+  end;
+  FGOTOXY(I1,3, I1,2);
+
+procedure EDITCORE.45(args 0 words);  { locals 7 words, lex 3 }
+  I1,13 := 0;
+  I1,10 := 1;
+  I1,11 := 0;
+  I1,5 := 0;
+  L2 := G3;
+  I1,9 := 0;
+  EDITOR.26();
+  L3 := G6;
+  L5 := (G3 = G5);
+  @G1440^ := @G329  {string};
+  EDITOR.10();
+  G282 := 1;
+  EDITOR.24();
+  EDITOR.23(@I1,3, @I1,2);
+  L7 := I1,2;
+  repeat
+    I1,14 := G3;
+    I1,8 := I1,9;
+    I1,6 := I1,3;
+    I1,7 := I1,2;
+    G9 := EDITOR.4();
+    G15 := @G631[G9]^;
+    if (G15 = 23) then begin
+      G11 := EDITOR.25();
+    end else begin
+      G11 := 1;
+    end;
+    if (G15 in {16,17,18,19,20,21,22,23,25,26}) then begin
+      case G15 of   { table 16..26 }
+        20: begin
+          EDITCORE.34();
+        end;
+        21: begin
+          EDITCORE.35();
+        end;
+        26: begin
+          if (G10 = 60) then begin
+            EDITCORE.34();
+          end else begin
+            EDITCORE.35();
+          end;
+        end;
+        18: begin
+          EDITCORE.32();
+        end;
+        19: begin
+          EDITCORE.33();
+        end;
+        25: begin
+          EDITCORE.36(G11);
+        end;
+        16, 17: begin
+          if (G15 = 16) then begin
+            G10 := 60;
+          end else begin
+            G10 := 62;
+          end;
+          FGOTOXY(0, 0);
+          FWRITECHAR(I4,3, G10, 0);
+          FGOTOXY(I1,3, I1,2);
+        end;
+        22: begin
+          if (G11 >= 4096) then begin
+            EDITOR.2('Integer Ovflw', 1);
+          end else begin
+            G11 := EDITCORE.41();
+            if (G10 = 60) then begin
+              EDITCORE.34();
+            end else begin
+              EDITCORE.35();
+            end;
+          end;
+        end;
+      end;
+      I1,9 := (G3-L2);
+      EDITCORE.44();
+    end else begin
+      if ((G9 <> G284) and (G9 <> G287)) then begin
+        EDITOR.19();
+        FGOTOXY(I1,3, I1,2);
+      end;
+    end;
+  until (G9 in ([G287] + [G284]));
+  if (G9 = G287) then begin
+    EDITOR.26();
+    if (L5 and (G3 = G5)) then begin
+      G3 := G6;
+      L1 := L2;
+      L2 := L3;
+    end;
+    if EDITOR.27(G3, L2) then begin
+      EDITOR.30(EDITOR.12(G3, L2), -(abs((G3-L2))));
+      G588 := ((G3 = G6) and L5);
+      if (L2 < G3) then begin
+        MOVELEFT(G17, G3, G17, L2, (G4-G3));
+      end else begin
+        MOVELEFT(G17, L2, G17, G3, (G4-L2));
+      end;
+      G4 := (G4-abs((G3-L2)));
+      G3 := EDITOR.12(G3, L2);
+      EDITOR.26();
+      G3 := EDITOR.13(G5, G3);
+    end else begin
+      G3 := L1;
+    end;
+  end else begin
+    G588 := 0;
+    G587 := 1;
+    EDITOR.33(@G3);
+    G585 := EDITOR.12(G3, L2);
+    G586 := abs((G3-L2));
+    G3 := L2;
+  end;
+  I1,10 := 0;
+  L6 := ((I1,2 = L7) and not (I1,13));
+  EDITOR.29(L6, not (L6), I1,2);
+  EDITCORE.2();
+
+procedure EDITCORE.46(args 0 words);  { locals 0 words, lex 3 }
+  G9 := EDITOR.4();
+  if (G9 = G284) then begin
+    if not (I1,15) then begin
+      EDITOR.11();
+    end;
+    EDITOR.24();
+    EDITCORE.2();
+    EXIT(12, 6);
+  end;
+  if ((G9 = 13) and I1,15) then begin
+    I1,15 := 0;
+    EDITOR.20(1);
+  end else begin
+    FWRITECHAR(I4,3, G9, 0);
+  end;
+
+procedure EDITCORE.47(args 0 words);  { locals 0 words, lex 3 }
+  while (G9 in (([32] + [9]) + [13])) do begin
+    EDITCORE.46();
+  end;
+
+procedure EDITCORE.48(args 0 words);  { locals 0 words, lex 3 }
+  repeat
+    G9 := EDITOR.9(G9);
+    if (G9 = 76) then begin
+      I1,12 := 0;
+      EDITCORE.46();
+    end else begin
+      if (G9 = 86) then begin
+        I1,144 := 1;
+        EDITCORE.46();
+      end else begin
+        if (G9 = 84) then begin
+          I1,12 := 1;
+          EDITCORE.46();
+        end else begin
+          if (G9 = 85) then begin
+            I1,146 := 1;
+            EDITCORE.46();
+          end;
+        end;
+      end;
+    end;
+    G9 := EDITOR.9(G9);
+  until not ((G9 in {76,84,85,86}));
+  EDITCORE.47();
+  if ((G9 = 83) or (G9 = 115)) then begin
+    I1,145 := 1;
+  end;
+
+procedure EDITCORE.49(args 2 words);  { locals 2 words, lex 3 }
+  EDITCORE.47();
+  if (G9 in ([G286] + {48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122})) then begin
+    EDITOR.2('Invalid delimiter.', 1);
+    if not (I1,15) then begin
+      EDITOR.11();
+    end;
+    EDITCORE.2();
+    EXIT(12, 6);
+  end;
+  I1,14 := G9;
+  L4 := 0;
+  repeat
+    EDITCORE.46();
+    if (G9 = G286) then begin
+      if ((L2^[L4] <> 13) and (L4 > 0)) then begin
+        FWRITECHAR(I4,3, 32, 0);
+        FWRITECHAR(I4,3, G286, 0);
+        L4 := (L4-1);
+      end else begin
+        EDITOR.16(8);
+      end;
+    end else begin
+      L2^[L4] := G9;
+      L4 := (L4+1);
+    end;
+  until ((G9 = I1,14) or (L4 >= 127));
+  if (L4 >= 1023) then begin
+    EDITOR.2('Your pattern is too long', 1);
+    if not (I1,15) then begin
+      EDITOR.11();
+    end;
+    EDITCORE.2();
+    EXIT(12, 6);
+  end;
+  L1^ := (L4-1);
+
+function EDITCORE.50(args 1 words) : <1 word result>;  { locals 1 words, lex 3 }
+  L4 := 0;
+  if I1,146 then begin
+    while ((L4 < I1,7) and (EDITOR.9(G17^[(L3+L4)]) = @I1,16^[L4])) do begin
+      L4 := (L4+1);
+    end;
+  end else begin
+    while ((L4 < I1,7) and (G17^[(L3+L4)] = @I1,16^[L4])) do begin
+      L4 := (L4+1);
+    end;
+  end;
+  L1 := (L4 = I1,7);
+
+procedure EDITCORE.51(args 1 words);  { locals 0 words, lex 3 }
+  while (G17^[L1^] in ((([32] + [9]) + [16]) + [13])) do begin
+    if (G17^[L1^] = 16) then begin
+      L1^ := (L1^+2);
+    end else begin
+      L1^ := (L1^+1);
+    end;
+  end;
+
+procedure EDITCORE.52(args 0 words);  { locals 2 words, lex 3 }
+  I1,3 := 0;
+  FILLCHAR(@I1,16, 0, 128, 32);
+  MOVELEFT(@G453, I1,6, @I1,16, 0, I1,7);
+  if I1,146 then begin
+    L1 := 0;
+    L2 := (I1,7-1);
+    while (L1 <= L2) do begin
+      @I1,16^[L1] := EDITOR.9(@I1,16^[L1]);
+      L1 := (L1+1);
+    end;
+  end;
+  I1,147 := (@I1,16^[0] in {65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90});
+
+procedure EDITCORE.53(args 0 words);  { locals 2 words, lex 3 }
+  L2 := 1;
+  EDITCORE.52();
+  while (L2 and not (I1,3)) do begin
+L1F45:
+    if (I1,10 >= I1,7) then begin
+      L1 := SCAN(-(I1,10), 0, @I1,16^[0], G17, I1,10, 0);
+      if (I1,146 and I1,147) then begin
+        L1 := EDITOR.13(L1, SCAN(-(I1,10), 0, (@I1,16^[0]+32), G17, I1,10, 0));
+      end;
+    end else begin
+      L1 := -(I1,10);
+    end;
+    if not ((L1 = -(I1,10))) then goto L1FA2;
+    L2 := 0;
+    I1,3 := 0;
+    goto L1FDB;
+L1FA2:
+    I1,10 := (I1,10+L1);
+    I1,11 := (I1,10-1);
+    if not ((G17^[(I1,10-1)] = 16)) then goto L1FC6;
+    I1,10 := I1,11;
+    goto L1F45;
+L1FC6:
+    if EDITCORE.50(I1,10) then begin
+      I1,3 := 1;
+    end else begin
+      I1,10 := I1,11;
+    end;
+L1FDB:
+  end;
+
+procedure EDITCORE.54(args 0 words);  { locals 3 words, lex 3 }
+  L3 := 1;
+  EDITCORE.52();
+  while (L3 and not (I1,3)) do begin
+L1FFD:
+    L2 := (((G4-I1,7)-I1,10)+1);
+    if (L2 > 0) then begin
+      L1 := SCAN(L2, 0, @I1,16^[0], G17, I1,10, 0);
+      if (I1,146 and I1,147) then begin
+        L1 := EDITOR.12(L1, SCAN(L2, 0, (@I1,16^[0]+32), G17, I1,10, 0));
+      end;
+    end else begin
+      L1 := L2;
+    end;
+    if not ((L1 = L2)) then goto L2057;
+    L3 := 0;
+    I1,3 := 0;
+    goto L2090;
+L2057:
+    I1,10 := (L1+I1,10);
+    I1,11 := (I1,10+1);
+    if not ((G17^[(I1,10-1)] = 16)) then goto L207B;
+    I1,10 := I1,11;
+    goto L1FFD;
+L207B:
+    if EDITCORE.50(I1,10) then begin
+      I1,3 := 1;
+    end else begin
+      I1,10 := I1,11;
+    end;
+L2090:
+  end;
+
+procedure EDITCORE.55(args 0 words);  { locals 0 words, lex 3 }
+  I1,2 := 0;
+  I1,11 := I1,10;
+  repeat
+    I1,10 := I1,11;
+    I1,4 := 0;
+    if (I1,12 = 0) then begin
+      EDITCORE.56();
+    end else begin
+      EDITCORE.57();
+    end;
+    I1,7 := ((I1,5-I1,6)+1);
+    if (G10 = 62) then begin
+      EDITCORE.54();
+    end else begin
+      EDITCORE.53();
+    end;
+    if I1,3 then begin
+      I1,8 := I1,10;
+      I1,2 := 1;
+      while (not (I1,1) and I1,2) do begin
+        if (I1,12 = 0) then begin
+          EDITCORE.56();
+        end else begin
+          EDITCORE.57();
+        end;
+        I1,10 := (I1,10+I1,7);
+        EDITCORE.51(@I1,10);
+        I1,7 := ((I1,5-I1,6)+1);
+        FILLCHAR(@I1,16, 0, 128, 32);
+        MOVELEFT(@G453, I1,6, @I1,16, 0, I1,7);
+        if ((I1,10+I1,7) > G4) then begin
+          I1,2 := 0;
+        end else begin
+          if not (EDITCORE.50(I1,10)) then begin
+            I1,2 := 0;
+          end;
+        end;
+      end;
+    end;
+    if (I1,12 = 1) then begin
+      if (@G24[@I1,16^[0]]^ = 65) then begin
+        if I1,2 then begin
+          if (((I1,8 > 2) and (G17^[(I1,8-2)] <> 16)) or (I1,8 <= 2)) then begin
+            if (@G24[G17^[I1,8]]^ = @G24[G17^[(I1,8-1)]]^) then begin
+              I1,2 := 0;
+            end;
+          end;
+          if (((I1,10+I1,7) <= (G4-1)) and (@G24[G17^[((I1,10+I1,7)-1)]]^ = @G24[G17^[(I1,10+I1,7)]]^)) then begin
+            I1,2 := 0;
+          end;
+        end;
+      end;
+    end;
+  until (I1,2 or not (I1,3));
+
+procedure EDITCORE.56(args 0 words);  { locals 0 words, lex 4 }
+  I2,1 := 0;
+  I2,6 := I2,4;
+  I2,5 := EDITOR.12((G581-1), (I2,6+SCAN((G581-I2,6), 0, 13, @G453, I2,6, 0)));
+  if (I2,5 = (G581-1)) then begin
+    I2,5 := EDITOR.13(I2,5, 0);
+    I2,1 := 1;
+  end;
+  I2,4 := (I2,5+1);
+
+procedure EDITCORE.57(args 0 words);  { locals 0 words, lex 4 }
+  I2,1 := 0;
+  I2,6 := I2,4;
+  while ((@G453^[I2,6] in (([32] + [13]) + [9])) and (I2,6 < (G581-1))) do begin
+    I2,6 := (I2,6+1);
+  end;
+  I2,5 := I2,6;
+  while ((@G24[@G453^[I2,6]]^ = @G24[@G453^[(I2,5+1)]]^) and (I2,5 < (G581-1))) do begin
+    I2,5 := (I2,5+1);
+  end;
+  I2,5 := EDITOR.12(I2,5, (G581-1));
+  I2,4 := (I2,5+1);
+  while ((@G453^[I2,4] in (([13] + [32]) + [9])) and (I2,4 < G581)) do begin
+    I2,4 := (I2,4+1);
+  end;
+  if (I2,4 = G581) then begin
+    I2,5 := EDITOR.13(I2,5, 0);
+    I2,1 := 1;
+  end;
+
+procedure EDITCORE.58(args 4 words);  { locals 82 words, lex 3 }
+  @L46^ := L4  {string};
+  @L5^ := L3  {string};
+  @G1440^ := @L46  {string};
+  EDITOR.10();
+  FWRITECHAR(I4,3, 91, 0);
+  if G589 then begin
+    FWRITECHAR(I4,3, 47, 0);
+  end else begin
+    FWRITEINT(I4,3, L2, 0);
+  end;
+  FWRITESTRING(I4,3, ']: ', 0);
+  if L1 then begin
+    if (I1,12 = 1) then begin
+      FWRITESTRING(I4,3, 'L(it', 0);
+    end else begin
+      FWRITESTRING(I4,3, 'T(ok', 0);
+    end;
+  end;
+  FWRITESTRING(I4,3, @L5, 0);
+
+procedure EDITCORE.59(args 0 words);  { locals 0 words, lex 3 }
+  if I1,144 then begin
+    EDITOR.22(@I1,9, G281, not (I1,15));
+    EDITCORE.58(' Replace', "<esc> aborts, 'R' replaces, ' ' doesn't", ((G11-I1,13)+2), 0);
+    EDITOR.24();
+    G9 := EDITOR.4();
+    if (G9 = G284) then begin
+      EDITOR.26();
+      G3 := EDITOR.13(G3, G5);
+      EDITCORE.2();
+      EXIT(12, 6);
+    end;
+    if not (((G9 <> 82) and (G9 <> 114))) then goto L241E;
+  end else begin
+L241E:
+    if (G582 > (G3-G16)) then begin
+      if (((G582-(G3-G16))+G4) > (G12-200)) then begin
+        EDITOR.2('Buffer full.  Aborting Replace', 1);
+        EDITOR.26();
+        G3 := EDITOR.13(G3, G5);
+        EDITCORE.2();
+        EXIT(12, 6);
+      end else begin
+        MOVERIGHT(G17, G3, G17, (G16+G582), (G4-G3));
+      end;
+    end else begin
+      if (G582 < (G3-G16)) then begin
+        MOVELEFT(G17, G3, G17, (G16+G582), (G4-G3));
+      end;
+    end;
+    MOVELEFT(@G517, 0, G17, G16, G582);
+    if (G582 <> (G3-G16)) then begin
+      EDITOR.30(G16, (G582-(G3-G16)));
+    end;
+    G4 := ((G4+G582)-(G3-G16));
+    G3 := ((G3+G582)-(G3-G16));
+    I1,15 := 0;
+  end;
+
+procedure EDITCORE.60(args 0 words);  { locals 0 words, lex 2 }
+  G589 := 0;
+  if (G15 = 28) then begin
+    G11 := 1;
+    G589 := 1;
+    EDITCORE.2();
+  end else begin
+    if (G15 = 23) then begin
+      G11 := EDITOR.25();
+    end else begin
+      G11 := 1;
+    end;
+  end;
+  if (-(9938) in 1) then begin
+    G590 := 1;
+  end;
+  case G15 of   { table 0..27 }
+    0: begin
+      EDITOR.19();
+      EDITOR.24();
+      EDITCORE.2();
+    end;
+    16, 17: begin
+      EDITCORE.3();
+    end;
+    2: begin
+      EDITCORE.4();
+    end;
+    24: begin
+      EDITCORE.5();
+    end;
+    4: begin
+      EDITCORE.6();
+    end;
+    5: begin
+      EDITCORE.7();
+    end;
+    6: begin
+      EDITCORE.8();
+    end;
+    7: begin
+      EDITCORE.2();
+    end;
+    8: begin
+      EDITCORE.10();
+    end;
+    10: begin
+    end;
+    11: begin
+      EDITCORE.6();
+    end;
+    12: begin
+      EDITCORE.12();
+    end;
+    13: begin
+      EDITCORE.13();
+    end;
+    14: begin
+      EDITCORE.14();
+    end;
+    15: begin
+      EDITCORE.15();
+    end;
+    27: begin
+      G3 := G16;
+      EDITOR.26();
+      G3 := EDITOR.13(G3, G5);
+      EDITOR.22(@G452, G281, 0);
+      EDITOR.24();
+      EDITCORE.2();
+    end;
+    1, 3, 9, 18, 19, 20, 21, 22, 25, 26: begin
+      EDITCORE.28();
+    end;
+  end;
+  { left on stack: G15 }

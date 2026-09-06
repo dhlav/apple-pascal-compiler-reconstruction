@@ -55,16 +55,39 @@ def targets() -> set[str]:
     return out
 
 
+def stems(names) -> dict:
+    """{filename: the part of it that names the output file}.
+
+    The extension comes off -- `FORMATTER.CODE` reads better as
+    `FORMATTER` -- but only where that leaves the file distinguishable.
+    Six of the files on these disks are `SYSTEM.something`, and stripping
+    blindly gave all of them the same name: on 1.3's APPLE1 the listings
+    for `SYSTEM.PASCAL` and `SYSTEM.EDITOR` were written and then
+    overwritten by `SYSTEM.FILER`'s, and on APPLE2 `SYSTEM.ASSMBLER`'s was
+    overwritten by `SYSTEM.LINKER`'s. No error, no gap in the count -- the
+    files were simply not there, and the assembler had no listing at all
+    for the length of the project. Collisions keep their full names.
+    """
+    out, seen = {}, {}
+    for name in names:
+        seen.setdefault(name.rsplit(".", 1)[0], []).append(name)
+    for stem, group in seen.items():
+        for name in group:
+            out[name] = stem if len(group) == 1 else name
+    return out
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     n = 0
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
-        for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP:
-                continue
+        wanted = [e for e in disk.directory()
+                  if e.kind == "codefile" and e.name not in SKIP]
+        stem_of = stems(e.name for e in wanted)
+        for e in wanted:
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
-            stem = e.name.rsplit(".", 1)[0]
+            stem = stem_of[e.name]
             path = OUT / f"{stem}-{tag}.pcode.txt"
             path.write_text(
                 listing_for(cf, f"Apple Pascal {tag} {e.name}"),

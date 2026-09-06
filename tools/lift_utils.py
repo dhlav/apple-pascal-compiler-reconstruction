@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from liftall import lift_codefile
-from disasm_utils import DISKS, SKIP, OUT, targets
+from disasm_utils import DISKS, SKIP, OUT, targets, stems
 
 # The boot disk of each release, for the Intrinsic Units a program calls but
 # does not contain.
@@ -43,9 +43,12 @@ def main() -> int:
     want = targets()
     for tag, fname in DISKS.items():
         disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
-        for e in disk.directory():
-            if e.kind != "codefile" or e.name in SKIP:
-                continue
+        wanted = [e for e in disk.directory()
+                  if e.kind == "codefile" and e.name not in SKIP]
+        # Same naming as the p-code listings, collisions and all -- see
+        # `stems` in disasm_utils.
+        stem_of = stems(e.name for e in wanted)
+        for e in wanted:
             cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
             ver = tag.split("-")[0]
             # "" and not `ver`: the name tables in names.py are
@@ -56,7 +59,7 @@ def main() -> int:
             text, clean, total, structured, gotos, _ = lift_codefile(
                 cf, "", f"Apple Pascal {tag} {e.name}", libs.setdefault(
                     ver, library(ver)))
-            stem = e.name.rsplit(".", 1)[0]
+            stem = stem_of[e.name]
             (OUT / f"{stem}-{tag}.pas.txt").write_text(
                 text, encoding="ascii", errors="replace")
             row = tot[e.name in want]

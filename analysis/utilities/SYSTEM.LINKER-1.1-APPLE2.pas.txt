@@ -1,0 +1,1841 @@
+Apple Pascal 1.1-APPLE2 SYSTEM.LINKER -- lifted to pseudo-Pascal
+
+Storage is named as it is addressed, not invented: G<n> is global
+word n, L<n> local word n, I<lex>,<n> intermediate. See
+docs/FINDINGS.md for what the numbered storage actually is.
+A '{ stack tracking stopped }' marker means an instruction of
+unknown stack effect was reached; the rest of that block is
+listed verbatim.
+
+======================================================================
+SEGMENT 1 LINKER
+======================================================================
+
+procedure LINKER.1(args 2 words);  { locals 89 words, lex 0 }
+  FINIT(@G50, @G350, -(1));
+  LINKER.16();
+  LINKER.21();
+  LINKER.27();
+  UNITCLEAR(3);
+  FCLOSE(@G50, 0);
+
+procedure LINKER.2(args 0 words);  { locals 0 words, lex 1 }
+  UNITCLEAR(3);
+  EXIT(1, 1);
+
+procedure LINKER.3(args 1 words);  { locals 42 words, lex 1 }
+  @L2^ := L1  {string};
+  FWRITESTRING(I2,3, @L2, 0);
+  FWRITELN(I2,3);
+  repeat
+    FWRITESTRING(I2,3, 'Type <sp>(continue), <esc>(terminate)', 0);
+    FWRITELN(I2,3);
+    FREADCHAR(I2,4, @L43);
+    if (L43 = I2,15) then begin
+      LINKER.2();
+    end;
+  until (L43 = 32);
+  G9 := (G9+1);
+
+procedure LINKER.4(args 1 words);  { locals 2 words, lex 1 }
+  L3 := L1^;
+  { unmodelled packed store of chk(8,0..255) }
+  { unmodelled packed store of chk(0,0..255) }
+  L1^ := L2;
+  { left on stack: @L2 }
+  { left on stack: 8 }
+  { left on stack: 0 }
+  { left on stack: @L3 }
+  { left on stack: @L2 }
+  { left on stack: 8 }
+  { left on stack: 8 }
+  { left on stack: @L3 }
+
+function LINKER.5(args 2 words) : <1 word result>;  { locals 0 words, lex 1 }
+  L1 := L4^[L3];
+
+function LINKER.6(args 2 words) : <1 word result>;  { locals 1 words, lex 1 }
+  MOVELEFT(L4, L3, @L5, 0, 2);
+  if G90 then begin
+    LINKER.4(@L5);
+  end;
+  L1 := L5;
+
+procedure LINKER.7(args 3 words);  { locals 0 words, lex 1 }
+  L2^[L1] := L3;
+
+procedure LINKER.8(args 3 words);  { locals 0 words, lex 1 }
+  if G90 then begin
+    LINKER.4(@L3);
+  end;
+  MOVELEFT(@L3, 0, L2, L1, 2);
+
+procedure LINKER.9(args 3 words);  { locals 1 words, lex 1 }
+  L4 := L3;
+  @L4^[8] := (8+128);
+  @L4^[8] := 0;
+  { left on stack: L2 }
+  { left on stack: L1 }
+  { left on stack: L2 }
+  { left on stack: (L1+1) }
+
+procedure LINKER.10(args 1 words);  { locals 5 words, lex 1 }
+  L2 := chk(0,0..15);
+  L4 := chk(15,0..15);
+  while (L2 <= L4) do begin
+    L5 := L1;
+    L6 := L5[chk(L2,0..15)*2w];
+    LINKER.4(L6);
+    LINKER.4((L6+1));
+    L3 := (L5+96)[chk(L2,0..15)]^;
+    LINKER.4(@L3);
+    (L5+96)[chk(L2,0..15)]^ := L3;
+    LINKER.4((L5+112)[chk(L2,0..15)]);
+    move(@L3, (L5+128)[chk(L2,0..15)], 1 words);
+    LINKER.4(@L3);
+    move((L5+128)[chk(L2,0..15)], @L3, 1 words);
+    L2 := (L2+1);
+  end;
+
+procedure LINKER.11(args 2 words);  { locals 3 words, lex 1 }
+  (L2+2)^ := nil;
+  (L2+1)^ := nil;
+  L2^ := nil;
+  if (L1^ = nil) then begin
+    L1^ := L2;
+  end else begin
+    L4 := L1^;
+    repeat
+      L3 := L4;
+      if ((L4+3) > (L2+3)) then begin
+        L4 := L4^.f2;
+        L5 := 1;
+      end else begin
+        if ((L4+3) < (L2+3)) then begin
+          L4 := L4^.f1;
+          L5 := 0;
+        end else begin
+          L2^ := L4^;
+          L4^ := L2;
+          L3 := nil;
+          L4 := nil;
+        end;
+      end;
+    until (L4 = nil);
+    if (L3 <> nil) then begin
+      if L5 then begin
+        (L3+2)^ := L2;
+      end else begin
+        (L3+1)^ := L2;
+      end;
+    end;
+  end;
+
+function LINKER.12(args 3 words) : <1 word result>;  { locals 1 words, lex 1 }
+  L1 := nil;
+  L6 := L3;
+  while (L6 <> nil) do begin
+    if ((L6+3) > L5) then begin
+      L6 := L6^.f2;
+    end else begin
+      if ((L6+3) < L5) then begin
+        L6 := L6^.f1;
+      end else begin
+        if (L6^.f7 <> L4) then begin
+          L6 := L6^;
+        end else begin
+          L1 := L6;
+          L6 := nil;
+        end;
+      end;
+    end;
+  end;
+
+function LINKER.13(args 3 words) : <1 word result>;  { locals 3 words, lex 1 }
+  L3^ := chk(0,0..15);
+L028C:
+  if not ((L5 <> nil)) then goto L02D3;
+  L7 := (L5+3);
+  L6 := chk(0,0..16);
+  L8 := chk(15,0..16);
+L02A2:
+  if not ((L6 <= L8)) then goto L02CD;
+  if not (((L7+32)[chk(L6,0..15)*4w] = L4)) then goto L02C6;
+  if not (((L7+96)[chk(L6,0..15)]^ = 3)) then goto L02C6;
+  goto L0300;
+L02C6:
+  L6 := (L6+1);
+  goto L02A2;
+L02CD:
+  L5 := L5^;
+  goto L028C;
+L02D3:
+  FWRITESTRING(I2,3, 'Unit ', 0);
+  FWRITEBYTES(I2,3, L4, 8, 8);
+  LINKER.3(' not found');
+  L6 := chk(0,0..16);
+L0300:
+  L3^ := chk(L6,0..15);
+  L1 := L5;
+
+function LINKER.14(args 1 words) : <1 word result>;  { locals 2 words, lex 1 }
+  L1 := 0;
+  L4 := 0;
+  L5 := 7;
+L0323:
+  if not ((L4 <= L5)) then goto L034A;
+  if not (not ((L3^[chk(L4,0..7)] in {32,48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95}))) then goto L0343;
+  goto L034D;
+L0343:
+  L4 := (L4+1);
+  goto L0323;
+L034A:
+  L1 := 1;
+L034D:
+
+function LINKER.15(args 2 words) : <1 word result>;  { locals 1 words, lex 1 }
+  if G91 then begin
+    L5 := (L4+(L3 div 2));
+  end else begin
+    L5 := (L4+L3);
+  end;
+  L1 := L5;
+
+procedure LINKER.16(args 0 words);  { locals 3 words, lex 1 }
+  G4 := nil;
+  G3 := nil;
+  G11 := nil;
+  G5 := nil;
+  G6 := adjust(1,1);
+  G9 := 0;
+  G12 := chk(3,1..32767);
+  @G30^ := ''  {string};
+  G8 := not (I2,14);
+  MARK(@G10);
+  UNITWRITE(3, G10, 0, 35, 0, 0);
+  G90 := 0;
+  L3 := 1;
+  L2 := chk((@L3^[chk(0,0..1)] = 1),0..1);
+  NEW(@L1, 1);
+  NEW(@L1, 1);
+  G91 := ((L1-G10) = 1);
+  RELEASE(@G10);
+  LINKER.17();
+  if (G9 > 0) then begin
+    LINKER.2();
+  end;
+  LINKER.19();
+  if (G9 > 0) then begin
+    LINKER.2();
+  end;
+  LINKER.20();
+  if (G9 > 0) then begin
+    LINKER.2();
+  end;
+  { left on stack: 24638 }
+
+procedure LINKER.17(args 0 words);  { locals 35 words, lex 2 }
+  if G8 then begin
+    L1 := 1;
+    L24 := 7;
+    while (L1 <= L24) do begin
+      FWRITELN(I3,3);
+      L1 := (L1+1);
+    end;
+    FWRITESTRING(I3,3, 'Apple Pascal Linker [1.1]', 0);
+    FWRITELN(I3,3);
+  end;
+  G7 := (I3,69 <> 4);
+  if G7 then begin
+    if I3,16 then begin
+      L24 := 0;
+      SCONCAT(@L24, @I3,18, 7);
+      SCONCAT(@L24, ':', 8);
+      SCONCAT(@L24, @I3,30, 23);
+      @L4^ := @L24  {string};
+    end else begin
+      @L4^ := 'in workspace'  {string};
+    end;
+    LINKER.18(0, @L4);
+    LINKER.18(2, '*SYSTEM.LIBRARY');
+  end else begin
+    FWRITESTRING(I3,3, 'Host file? ', 0);
+    FREADSTRING(I3,2, @L4, 39);
+    FREADLN(I3,2);
+    if (@L4 = '') then begin
+      if I3,16 then begin
+        L24 := 0;
+        SCONCAT(@L24, @I3,18, 7);
+        SCONCAT(@L24, ':', 8);
+        SCONCAT(@L24, @I3,30, 23);
+        @L4^ := @L24  {string};
+      end else begin
+        @L4^ := 'in workspace'  {string};
+      end;
+    end;
+    LINKER.18(0, @L4);
+    if (G9 > 0) then begin
+      LINKER.2();
+    end;
+    repeat
+      FWRITESTRING(I3,3, 'Lib file? ', 0);
+      FREADSTRING(I3,2, @L4, 39);
+      FREADLN(I3,2);
+      if (@L4 <> '') then begin
+        if (@L4 = 42) then begin
+          LINKER.18(2, '*SYSTEM.LIBRARY');
+        end else begin
+          LINKER.18(1, @L4);
+        end;
+      end;
+    until (@L4 = '');
+    FWRITESTRING(I3,3, 'Map file? ', 0);
+    FREADSTRING(I3,2, @G30, 39);
+    FREADLN(I3,2);
+    if (@G30 <> '') then begin
+      OS.43(@G30, 1, 39);
+    end;
+  end;
+  L3 := G4;
+  G4 := nil;
+L086F:
+  L2 := L3^;
+  L3^ := G4;
+  G4 := L3;
+  L3 := L2;
+  if not ((L3 = nil)) then goto L086F;
+  G3 := G4^;
+
+procedure LINKER.18(args 2 words);  { locals 50 words, lex 3 }
+  @L3^ := L1  {string};
+  NEW(@L47, 40);
+  MOVELEFT(@G50, 0, L47, 0, 80);
+  FOPEN(L47, @L3, 1, 0);
+  if (IORESULT() <> 0) then begin
+    if (@L3 <> 'in workspace') then begin
+      L45 := SPOS('.LIBRARY', @L3);
+      if not (((L45 <> 0) and (L45 = (@L3^[0]-7)))) then begin
+        OS.43(@L3, 0, 39);
+      end;
+      FOPEN(L47, @L3, 1, 0);
+    end;
+  end;
+  if (IORESULT() <> 0) then begin
+    RELEASE(@L47);
+    SINSERT('No file ', @L3, 80, 1);
+    LINKER.3(@L3);
+    if (L2 <> 0) then begin
+      G9 := (G9-1);
+    end;
+  end else begin
+    if G8 then begin
+      FWRITESTRING(I4,3, 'Opening ', 0);
+      FWRITESTRING(I4,3, @L3, 0);
+      FWRITELN(I4,3);
+    end;
+    NEW(@L48, 259);
+    L48^ := G4;
+    (L48+1)^ := L47;
+    (L48+2)^ := L2;
+    if (FBLOCKIO(L47, (L48+3), 0, 1, 0, 1) <> 1) then begin
+      LINKER.3('segtbl read err');
+    end else begin
+      if (L2 = 0) then begin
+        L46 := chk(0,0..16);
+        L51 := chk(15,0..16);
+        while (L46 <= L51) do begin
+          I2,3 := (L48+99)[chk(L46,0..15)]^;
+          G90 := (@I2,3^[chk(I2,2,0..1)] <> 0);
+          if not (G90) then goto L04B6;
+          goto L04BE;
+L04B6:
+          L46 := (L46+1);
+        end;
+      end;
+L04BE:
+      if G90 then begin
+        LINKER.10((L48+3));
+      end;
+      L46 := chk(0,0..16);
+      L49 := 1;
+      L44 := G9;
+      if (L2 = 0) then begin
+        L50 := adjust(1,1);
+      end else begin
+        L50 := adjust(1,1);
+      end;
+      L51 := (L48+3);
+      repeat
+        { paths disagree on stack depth here }
+        I2,3 := (L51+96)[chk(L46,0..15)]^;
+        if (@I2,3^[chk(I2,2,0..1)] <> 0) then begin
+          LINKER.3('bad byte sex');
+          LINKER.2();
+        end;
+        L49 := ((L51+96)[chk(L46,0..15)]^ and (193 in 1));
+        if ((L51+96)[chk(L46,0..15)]^ and not ((129 in 1))) then begin
+          if ((L2 <> 0) or ((L51+96)[chk(L46,0..15)]^ <> 3)) then begin
+            LINKER.3('funny code seg');
+          end;
+        end;
+        if (((L51[chk(L46,0..15)*2w]^.f1 < 0) or (L51[chk(L46,0..15)*2w]^ < 0)) or (L51[chk(L46,0..15)*2w]^ > 300)) then begin
+          LINKER.3('bad diskinfo');
+        end;
+        if not ((L50 in 1)) then begin
+          LINKER.3('bad seg kind');
+        end;
+        if not (LINKER.14((L51+32)[chk(L46,0..15)*4w])) then begin
+          LINKER.3('bad seg name');
+        end;
+        if (G9 > L44) then begin
+          L46 := chk(15,0..16);
+        end;
+        L46 := chk((L46+1),0..16);
+      until (L46 > 15);
+      if (L49 and (L2 = 0)) then begin
+        FWRITESTRING(I4,3, 'All segs linked', 0);
+        LINKER.2();
+      end;
+      if (G9 = L44) then begin
+        G4 := L48;
+        if (L2 = 0) then begin
+          L51 := (L48+3);
+          L46 := chk(0,0..16);
+          L52 := chk(15,0..16);
+L0660:
+          { paths disagree on stack depth here }
+          if not ((L46 <= L52)) then goto L06A5;
+          if (3 and (13 = 0)) then begin
+            { unmodelled packed store of chk(L46,0..255) }
+          end;
+          { paths disagree on stack depth here }
+          L46 := (L46+1);
+          goto L0660;
+        end;
+      end;
+    end;
+  end;
+L06A5:
+  { paths disagree on stack depth here }
+
+procedure LINKER.19(args 0 words);  { locals 7 words, lex 2 }
+  L5 := 0;
+  L4 := 0;
+  G29 := chk(16,0..16);
+  L6 := (G4+3);
+  L1 := chk(0,0..16);
+  L7 := chk(15,0..16);
+  while (L1 <= L7) do begin
+    if (((L6+96)[chk(L1,0..15)]^ = 0) and (L6[chk(L1,0..15)*2w]^.f1 = 0)) then begin
+      @G13[chk(L1,0..15)]^ := nil;
+    end else begin
+      L2 := G9;
+      NEW(@L3, 6);
+      L3^ := G4;
+      (L3+1)^ := chk(L1,0..15);
+      (L3+2)^ := nil;
+      (L3+3)^ := (L6+96)[chk(L1,0..15)]^;
+      case L3^.f3 of   { table 0..7 }
+        0, 2, 6: begin
+        end;
+        1: begin
+          if (0 <> 1) then begin
+            LINKER.3('bad host seg');
+          end else begin
+            if (G11 <> nil) then begin
+              LINKER.3('dup host seg');
+            end else begin
+              G11 := L3;
+              G29 := chk(L1,0..16);
+              L5 := 1;
+            end;
+          end;
+        end;
+        4: begin
+          if (0 = 1) then begin
+            (L3+4)^ := nil;
+            G29 := chk(L1,0..16);
+            L5 := 1;
+          end else begin
+            (L3+4)^ := G5;
+            G5 := L3;
+            L3 := nil;
+          end;
+        end;
+        3: begin
+          if (L6[chk(L1,0..15)*2w]^.f1 = 0) then begin
+            L3^ := LINKER.13(G3, (L6+32)[chk(L1,0..15)*4w], (L3+1));
+          end;
+        end;
+        5: begin
+          L4 := 1;
+        end;
+        7: begin
+          (L3+4)^ := chk(((L6[chk(L1,0..15)*2w]^.f1 div 2)+1),1..32767);
+        end;
+      end;
+      { paths disagree on stack depth here }
+      if (L2 = G9) then begin
+        @G13[chk(L1,0..15)]^ := L3;
+      end else begin
+        @G13[chk(L1,0..15)]^ := nil;
+      end;
+    end;
+    L1 := (L1+1);
+  end;
+  if (not (L5) and not (L4)) then begin
+    LINKER.3('illegal hostfile');
+  end;
+
+procedure LINKER.20(args 0 words);  { locals 6 words, lex 2 }
+  L4 := G3;
+  while (L4 <> nil) do begin
+    L5 := chk(0,0..16);
+    L6 := chk(15,0..16);
+    while (L5 <= L6) do begin
+      if ((L4+99)[chk(L5,0..15)]^ = 4) then begin
+        NEW(@L3, 6);
+        (L3+4)^ := G5;
+        L3^ := L4;
+        (L3+1)^ := chk(L5,0..15);
+        (L3+2)^ := nil;
+        (L3+3)^ := 4;
+        (L3+4)^ := G5;
+        G5 := L3;
+      end;
+      L5 := (L5+1);
+    end;
+    L4 := L4^;
+  end;
+  L2 := G5;
+  G5 := nil;
+  while (L2 <> nil) do begin
+    L1 := L2^.f4;
+    (L2+4)^ := G5;
+    G5 := L2;
+    L2 := L1;
+  end;
+
+procedure LINKER.21(args 0 words);  { locals 4 words, lex 1 }
+  MARK(@G10);
+  L3 := 1;
+  L1 := chk(0,0..16);
+  L4 := chk(15,0..16);
+  while (L1 <= L4) do begin
+    if (@G13[chk(L1,0..15)]^ <> nil) then begin
+      case @G13[chk(L1,0..15)]^^.f3 of   { table 0..7 }
+        0, 6, 7: begin
+        end;
+        3: begin
+          LINKER.22(1818, adjust(1,1));
+        end;
+        4: begin
+          LINKER.22(6468, adjust(1,1));
+        end;
+        1, 5: begin
+          LINKER.22(1920, adjust(1,1));
+        end;
+        2: begin
+          LINKER.22(1536, adjust(1,1));
+        end;
+      end;
+    end;
+    { paths disagree on stack depth here }
+    L1 := (L1+1);
+  end;
+  if L3 then begin
+    G5 := nil;
+  end;
+  L2 := G5;
+L1198:
+  { paths disagree on stack depth here }
+  if not ((L2 <> nil)) then goto L11AF;
+  LINKER.22(1, adjust((6464 + 1),1));
+  L2 := L2^.f4;
+  goto L1198;
+L11AF:
+  if (G29 <> 16) then begin
+    if (@G13[chk(G29,0..15)]^^.f3 = 4) then begin
+      LINKER.25(@G13[chk(G29,0..15)]^);
+    end;
+  end;
+  L2 := G5;
+  while (L2 <> nil) do begin
+    LINKER.25(L2);
+    L2 := L2^.f4;
+  end;
+  if (G9 > 0) then begin
+    LINKER.2();
+  end;
+
+procedure LINKER.22(args 2 words);  { locals 293 words, lex 2 }
+  L6 := 0;
+  L294 := (L2^+3);
+  L295 := L294[chk(L2^.f1,0..15)*2w];
+  L7 := (L295^+((L295^.f1+511) div 512));
+  if G8 then begin
+    FWRITESTRING(I3,3, 'Reading ', 0);
+    FWRITEBYTES(I3,3, (L294+32)[chk(L2^.f1,0..15)*4w], 8, 8);
+    FWRITELN(I3,3);
+  end;
+  repeat
+    L293 := 1;
+    LINKER.23(@L20);
+    if G90 then begin
+      MOVELEFT(@L20, 0, @L285, 0, 16);
+      L10 := 4;
+      L294 := 7;
+      while (L10 <= L294) do begin
+        LINKER.4(@L285[chk(L10,0..7)]);
+        L10 := (L10+1);
+      end;
+      MOVELEFT(@L285, 0, @L20, 0, 16);
+    end;
+    L9 := G9;
+    if (L24 <> 0) then begin
+      if (L1 in 1) then begin
+        LINKER.24(@L20);
+      end else begin
+        LINKER.3('bad litype');
+        L24 := 0;
+      end;
+    end;
+    { paths disagree on stack depth here }
+    if I1,3 then begin
+      if (26116 in 1) then begin
+        I1,3 := 0;
+      end;
+    end;
+    { paths disagree on stack depth here }
+    if (G6 in 1) then begin
+      if (L26 = 0) then begin
+        L293 := 0;
+      end else begin
+        L8 := ((L26+7) div 8);
+        while (L8 > 0) do begin
+          LINKER.23(@L11);
+          NEW(@L4, 9);
+          MOVELEFT(@L11, 0, (L4+1), 0, 16);
+          if G90 then begin
+            L10 := 0;
+            L294 := 7;
+            while (L10 <= L294) do begin
+              LINKER.4((L4+1)[chk(L10,0..7)]);
+              L10 := (L10+1);
+            end;
+          end;
+          L4^ := L28;
+          L28 := L4;
+          L8 := (L8-1);
+        end;
+        L4 := L28;
+        L28 := nil;
+        while (L4 <> nil) do begin
+          L3 := L4^;
+          L4^ := L28;
+          L28 := L4;
+          L4 := L3;
+        end;
+      end;
+    end;
+    if (L24 = 0) then begin
+      if (34 in 1) then begin
+        if ((L25 <= 0) or (L25 > 32767)) then begin
+          LINKER.3('bad host LC');
+        end else begin
+          if (L2^.f3 = 1) then begin
+            G12 := chk(L25,1..32767);
+          end else begin
+            if ((L26 < 0) or (L26 > 31)) then begin
+              LINKER.3('bad data seg #');
+            end else begin
+              if (L26 <> 0) then begin
+                L294 := (G4+3);
+                L10 := 0;
+                L295 := 15;
+L0EBC:
+                { paths disagree on stack depth here }
+                if not ((L10 <= L295)) then goto L0EF5;
+                if (0 = L26) then begin
+                  (L2+4)^ := chk(((L294[chk(L10,0..15)*2w]^.f1 div 2)+1),1..32767);
+                end;
+                L10 := (L10+1);
+                goto L0EBC;
+              end;
+L0EF5:
+              { paths disagree on stack depth here }
+              (L2+5)^ := chk(L26,0..255);
+            end;
+          end;
+        end;
+        { paths disagree on stack depth here }
+        goto L0F02;
+      end;
+L0F02:
+      { paths disagree on stack depth here }
+    end else begin
+      if ((L9 = G9) and L293) then begin
+        NEW(@L5, 12);
+        move((L5+3), @L20, 9 words);
+        LINKER.11(L5, (L2+2));
+      end;
+    end;
+    { paths disagree on stack depth here }
+  until (L24 = 0);
+
+procedure LINKER.23(args 1 words);  { locals 1 words, lex 3 }
+  L2 := 0;
+  if (I1,6 = 0) then begin
+    I1,6 := 32;
+    L2 := (FBLOCKIO(I1,2^^.f1, @I1,29, 0, 1, I1,7, 1) <> 1);
+    if L2 then begin
+      LINKER.3('li read err');
+    end else begin
+      I1,7 := (I1,7+1);
+    end;
+  end;
+  MOVELEFT(@I1,29[chk((32-I1,6),0..31)*8w], 0, L1, 0, 16);
+  if L2 then begin
+    (L1+4)^ := 0;
+  end;
+  I1,6 := (I1,6-1);
+
+procedure LINKER.24(args 1 words);  { locals 1 words, lex 3 }
+  L2 := L1;
+  if not (LINKER.14(L2)) then begin
+    LINKER.3('non-alpha name');
+  end else begin
+    case L2^.f4 of   { table 1..14 }
+      1, 2, 3, 4, 5, 13, 14: begin
+        (L2+8)^ := nil;
+        if ((L2^.f6 < 0) or (L2^.f6 > 500)) then begin
+          LINKER.3('too many refs');
+        end;
+        if not ((7 in 1)) then begin
+          LINKER.3('bad format');
+        end;
+        if (L2^.f4 = 4) then begin
+          if ((L2^.f7 <= 0) or (L2^.f7 > 32767)) then begin
+            LINKER.3('bad private');
+          end;
+        end;
+      end;
+      6: begin
+        if ((((L2^.f5 <= 0) or (L2^.f5 > 160)) or (L2^.f6 < 0)) or (L2^.f6 > 20000)) then begin
+          LINKER.3('bad globdef');
+        end;
+      end;
+      7: begin
+        if ((L2^.f5 <= 0) or (L2^.f5 > 32767)) then begin
+          LINKER.3('bad publicdef');
+        end;
+      end;
+      9, 10, 11, 12: begin
+        if (6144 in 1) then begin
+          NEW((L2+7), 3);
+        end else begin
+          (L2+7)^ := nil;
+        end;
+        if ((((L2^.f5 <= 0) or (L2^.f5 > 160)) or (L2^.f6 < 0)) or (L2^.f6 > 100)) then begin
+          LINKER.3('bad proc/func');
+        end;
+      end;
+    end;
+  end;
+  { paths disagree on stack depth here }
+
+procedure LINKER.25(args 1 words);  { locals 6 words, lex 2 }
+  L7 := (L1^+3)[chk(L1^.f1,0..15)*2w]^.f1;
+  L6 := ((L7+511) div 512);
+  if ((MEMAVAIL()-400) < (L6*256)) then begin
+    LINKER.3('sep seg 2 big');
+  end else begin
+    MARK(@L3);
+    L4 := L6;
+L1064:
+    NEW(@L2, 256);
+    L4 := (L4-1);
+    if not ((L4 <= 0)) then goto L1064;
+    if (FBLOCKIO(L1^^.f1, L3, 0, L6, (L1^+3)[chk(L1^.f1,0..15)*2w]^, 1) <> L6) then begin
+      LINKER.3('sep seg read err');
+    end else begin
+      L2 := LINKER.15(L3, 0);
+      L5 := LINKER.5(L2, (L7-1));
+      if ((L5 < 0) or (L5 > 160)) then begin
+        LINKER.3('bad proc dict');
+      end else begin
+        LINKER.26(L1^.f2);
+      end;
+    end;
+    RELEASE(@L3);
+  end;
+
+procedure LINKER.26(args 1 words);  { locals 3 words, lex 3 }
+  if (L1 <> nil) then begin
+    LINKER.26(L1^.f2);
+    LINKER.26(L1^.f1);
+    LINKER.26(L1^);
+    L4 := (L1+3);
+    if (6144 in 1) then begin
+      if ((L4^.f5 <= 0) or (L4^.f5 > I1,5)) then begin
+        LINKER.3('bad proc #');
+      end else begin
+        L3 := ((I1,7-2)-(2*L4^.f5));
+        L3 := (L3-LINKER.6(I1,2, L3));
+        if ((LINKER.5(I1,2, L3) <> L4^.f5) and (LINKER.5(I1,2, L3) <> 0)) then begin
+          LINKER.3('disagreeing p #');
+        end else begin
+          L2 := (LINKER.6(I1,2, (L3-2))+4);
+          (L4^.f7+1)^ := ((L3+2)-L2);
+          if (((L4^.f7^.f1 < 0) or (L2 <= 0)) or (L2 > 20000)) then begin
+            LINKER.3('proc place err');
+          end else begin
+            (L4^.f7+2)^ := chk(L2,0..20000);
+          end;
+        end;
+      end;
+    end;
+  end;
+  { paths disagree on stack depth here }
+
+procedure LINKER.27(args 0 words);  { locals 702 words, lex 1 }
+  FINIT(@L401, @L701, -(2));
+  if not (G7) then begin
+    FWRITESTRING(I2,3, 'Output file? ', 0);
+    FREADSTRING(I2,2, @L13, 39);
+    FREADLN(I2,2);
+    G7 := (@L13 = '');
+  end;
+  if G7 then begin
+    FOPEN(@G50, '*SYSTEM.WRK.CODE[*]', 0, 0);
+  end else begin
+    OS.43(@L13, 0, 39);
+    FOPEN(@G50, @L13, 0, 0);
+  end;
+  if (IORESULT() <> 0) then begin
+    LINKER.3('Code open err');
+    LINKER.2();
+  end;
+  L3 := 1;
+  FILLCHAR(@L33, 0, 512, 0);
+  FILLCHAR(@L289, 0, 224, 0);
+  L1 := chk(0,0..16);
+  L702 := chk(15,0..16);
+  while (L1 <= L702) do begin
+    move(@L65[chk(L1,0..15)*4w], @'        ', 4 words);
+    @L129[chk(L1,0..15)]^ := 0;
+    L1 := (L1+1);
+  end;
+  if (@G30 <> '') then begin
+    FOPEN(@L401, @G30, 0, 0);
+    if (IORESULT() <> 0) then begin
+      FWRITESTRING(I2,3, "Can't open ", 0);
+      FWRITESTRING(I2,3, @G30, 0);
+      FWRITELN(I2,3);
+      @G30^ := ''  {string};
+    end else begin
+      FWRITESTRING(@L401, 'Link map for ', 0);
+      if (G11 <> nil) then begin
+        FWRITEBYTES(@L401, (G11^+35)[chk(G11^.f1,0..15)*4w], 8, 8);
+        FWRITELN(@L401);
+      end else begin
+        if (G29 = 16) then begin
+          FWRITESTRING(@L401, 'intrinsic codefile', 0);
+          FWRITELN(@L401);
+        end else begin
+          FWRITESTRING(@L401, 'assem host', 0);
+          FWRITELN(@L401);
+        end;
+      end;
+      FWRITELN(@L401);
+    end;
+  end;
+  MARK(@G10);
+  L1 := chk(0,0..16);
+  L702 := chk(15,0..16);
+  while (L1 <= L702) do begin
+    if (((@G13[chk(L1,0..15)]^ <> nil) and (@G13[chk(L1,0..15)]^ <> G11)) and ((G4+99)[chk(L1,0..15)]^ <> 7)) then begin
+      LINKER.47();
+    end;
+    L1 := (L1+1);
+  end;
+  L1 := chk(0,0..16);
+  L702 := chk(15,0..16);
+  while (L1 <= L702) do begin
+    if ((@G13[chk(L1,0..15)]^ <> nil) and ((G4+99)[chk(L1,0..15)]^ = 7)) then begin
+      LINKER.47();
+    end;
+    L1 := (L1+1);
+  end;
+  if (G11 <> nil) then begin
+    L1 := chk(G29,0..16);
+    LINKER.47();
+  end;
+  if G90 then begin
+    LINKER.10(@L33);
+  end;
+  @L177^ := adjust((G4+147)^<2w>,2)  {2 words};
+  if (FBLOCKIO(@G50, @L33, 0, 1, 0, 0) <> 1) then begin
+    LINKER.3('Code write err');
+  end;
+  if (G9 = 0) then begin
+    FCLOSE(@G50, 1);
+    if G7 then begin
+      I2,16 := 1;
+      @I2,18^ := @I2,63  {string};
+      @I2,30^ := 'SYSTEM.WRK.CODE'  {string};
+    end;
+    if (@G30 <> '') then begin
+      if (G11 <> nil) then begin
+        FWRITESTRING(@L401, 'next base LC = ', 0);
+        FWRITEINT(@L401, G12, 0);
+        FWRITELN(@L401);
+      end;
+      FCLOSE(@L401, 1);
+    end;
+  end;
+  FCLOSE(@L401, 0);
+
+procedure LINKER.28(args 0 words);  { locals 3 words, lex 2 }
+  I1,9 := nil;
+  I1,7 := nil;
+  I1,5 := nil;
+  I1,10 := nil;
+  I1,8 := nil;
+  I1,6 := nil;
+  L3 := @G13[chk(I1,1,0..15)]^;
+  if not ((193 in 1)) then begin
+    I1,11 := (L3^.f3 = 4);
+    if I1,11 then begin
+      (L3+4)^ := G5;
+      G5 := @G13[chk(I1,1,0..15)]^;
+      I1,10 := LINKER.29(adjust(1,1), L3^.f2);
+    end else begin
+      I1,10 := LINKER.29(adjust(1,1), L3^.f2);
+    end;
+L1991:
+    { paths disagree on stack depth here }
+    if not ((I1,10 <> nil)) then goto L19C3;
+    LINKER.34(@I1,10, @I1,9);
+    L1 := G5;
+L19A3:
+    { paths disagree on stack depth here }
+    if not ((L1 <> nil)) then goto L19B7;
+    LINKER.37(adjust(1,1), L1);
+    L1 := L1^.f4;
+    goto L19A3;
+L19B7:
+    LINKER.34(@I1,6, @I1,5);
+    LINKER.31();
+    goto L1991;
+L19C3:
+    if not (I1,11) then begin
+      LINKER.39(L3^.f2);
+      LINKER.34(@I1,8, @I1,7);
+    end;
+    L2 := I1,9;
+    while (L2 <> nil) do begin
+      (L2+5)^ := 1;
+      L2 := L2^;
+    end;
+    L1 := G5;
+L19ED:
+    { paths disagree on stack depth here }
+    if not ((L1 <> nil)) then goto L19FF;
+    LINKER.37(adjust(1,1), L1);
+    L1 := L1^.f4;
+    goto L19ED;
+L19FF:
+    LINKER.34(@I1,6, @I1,5);
+  end;
+  { paths disagree on stack depth here }
+
+function LINKER.29(args 2 words) : <1 word result>;  { locals 1 words, lex 3 }
+  L5 := nil;
+  LINKER.30(L3);
+  L1 := L5;
+
+procedure LINKER.30(args 1 words);  { locals 1 words, lex 4 }
+  if (L1 <> nil) then begin
+    LINKER.30(L1^.f2);
+    LINKER.30(L1^.f1);
+    LINKER.30(L1^);
+    if (I1,4 in 1) then begin
+      NEW(@L2, 7);
+      (L2+2)^ := L1;
+      (L2+4)^ := nil;
+      (L2+1)^ := nil;
+      (L2+3)^ := nil;
+      (L2+5)^ := 1;
+      if I3,11 then begin
+        (L2+6)^ := chk(0,0..160);
+      end else begin
+        (L2+6)^ := chk(L1^.f8,0..160);
+      end;
+      L2^ := I1,5;
+      I1,5 := L2;
+    end;
+  end;
+  { paths disagree on stack depth here }
+
+procedure LINKER.31(args 0 words);  { locals 3 words, lex 3 }
+  L2 := I2,5;
+  while (L2 <> nil) do begin
+    if (L2^.f5 = nil) then begin
+      if (L2^.f2^.f7 = 2) then begin
+        L3 := L2^.f1^.f8;
+      end else begin
+        L3 := L2^.f1^.f8;
+      end;
+      L1 := I2,9;
+      while (L1 <> nil) do begin
+        if (L2^.f3 = L1^.f3) then begin
+          if (L1^.f1^.f8 = L3) then begin
+            (L2+5)^ := L1;
+            L1 := nil;
+          end else begin
+            L1 := L1^;
+          end;
+        end else begin
+          L1 := L1^;
+        end;
+      end;
+      if (L2^.f5 = nil) then begin
+        (L2+5)^ := LINKER.32(L2^.f3^.f2);
+      end;
+    end;
+    L2 := L2^;
+  end;
+
+function LINKER.32(args 1 words) : <1 word result>;  { locals 0 words, lex 4 }
+  L1 := nil;
+  LINKER.33(L3);
+  LINKER.3('missing proc');
+
+procedure LINKER.33(args 1 words);  { locals 1 words, lex 5 }
+  if (L1 <> nil) then begin
+    LINKER.33(L1^.f2);
+    LINKER.33(L1^.f1);
+    LINKER.33(L1^);
+    if (6144 in 1) then begin
+      if (L1^.f8 = I2,3) then begin
+        L2 := I4,10;
+        while (L2 <> nil) do begin
+          if (L2^.f2 = L1) then begin
+            I1,1 := L2;
+            EXIT(1, 32);
+          end;
+          L2 := L2^;
+        end;
+        NEW(@L2, 7);
+        (L2+2)^ := L1;
+        (L2+4)^ := nil;
+        (L2+1)^ := nil;
+        (L2+3)^ := nil;
+        (L2+5)^ := 1;
+        (L2+6)^ := chk(0,0..160);
+        L2^ := I4,10;
+        I4,10 := L2;
+        I1,1 := L2;
+        EXIT(1, 32);
+      end;
+    end;
+  end;
+  { paths disagree on stack depth here }
+
+procedure LINKER.34(args 2 words);  { locals 5 words, lex 3 }
+  while (L2^ <> nil) do begin
+    L6 := L2^;
+    L7 := (L6^.f2+3);
+    case L7^.f4 of   { table 1..14 }
+      2: begin
+        LINKER.35(6);
+        (L6+5)^ := nil;
+      end;
+      5: begin
+        if I2,12 then begin
+          (L6+1)^ := LINKER.12(L7, 8, @G13[chk(I2,1,0..15)]^^.f2);
+          (L6+3)^ := @G13[chk(I2,1,0..15)]^;
+        end else begin
+          if (G11 <> nil) then begin
+            (L6+1)^ := LINKER.12(L7, 8, G11^.f2);
+            (L6+3)^ := G11;
+          end;
+        end;
+      end;
+      3: begin
+        if I2,12 then begin
+          (L6+1)^ := LINKER.12(L7, 7, @G13[chk(I2,1,0..15)]^^.f2);
+          (L6+3)^ := @G13[chk(I2,1,0..15)]^;
+        end else begin
+          if (G11 <> nil) then begin
+            (L6+1)^ := LINKER.12(L7, 7, G11^.f2);
+            (L6+3)^ := G11;
+          end;
+        end;
+      end;
+      4: begin
+        if I2,12 then begin
+          (L6+5)^ := chk(@G13[chk(I2,1,0..15)]^^.f4,1..32767);
+          (@G13[chk(I2,1,0..15)]^+4)^ := chk((@G13[chk(I2,1,0..15)]^^.f4+L7^.f7),1..32767);
+          (L6+1)^ := L6^.f2;
+          (L6+3)^ := @G13[chk(I2,1,0..15)]^;
+        end else begin
+          (L6+5)^ := chk(G12,1..32767);
+          G12 := chk((G12+L7^.f7),1..32767);
+          if (G11 <> nil) then begin
+            (L6+1)^ := L6^.f2;
+          end;
+          (L6+3)^ := G11;
+        end;
+      end;
+      9, 11, 13: begin
+        LINKER.35(11);
+        if (L7^.f4 = 13) then begin
+          (L6+5)^ := nil;
+        end;
+        L4 := 0;
+        if (L6^.f1 <> nil) then begin
+          if (L7^.f4 = 13) then begin
+            L4 := (L6^.f1^.f9 <> L7^.f7);
+          end else begin
+            L4 := (L6^.f1^.f9 <> L7^.f6);
+          end;
+        end;
+        if L4 then begin
+          FWRITESTRING(I4,3, 'Proc ', 0);
+          FWRITEBYTES(I4,3, L7, 8, 8);
+          LINKER.3(' param mismatch');
+        end;
+      end;
+      10, 12, 14: begin
+        LINKER.35(12);
+        if (L7^.f4 = 14) then begin
+          (L6+5)^ := nil;
+        end;
+        L4 := 0;
+        if (L6^.f1 <> nil) then begin
+          if (L7^.f4 = 14) then begin
+            L4 := (L6^.f1^.f9 <> L7^.f7);
+          end else begin
+            L4 := (L6^.f1^.f9 <> L7^.f6);
+          end;
+        end;
+        if L4 then begin
+          FWRITESTRING(I4,3, 'Func ', 0);
+          FWRITEBYTES(I4,3, L7, 8, 8);
+          LINKER.3(' param mismatch');
+        end;
+      end;
+      1: begin
+        if (LINKER.13(G4, L7, @L3) = G4) then begin
+          (L6+1)^ := L6^.f2;
+          8^ := chk(0,0..15);
+        end else begin
+          LINKER.3('unit err');
+        end;
+        { paths disagree on stack depth here }
+      end;
+    end;
+    L5 := L2^;
+    L2^ := L5^;
+    if (L5^.f1 = nil) then begin
+      L6 := (L5^.f2+3);
+      case L6^.f4 of   { table 2..14 }
+        2: begin
+          FWRITESTRING(I4,3, 'Global ', 0);
+        end;
+        3: begin
+          FWRITESTRING(I4,3, 'Public ', 0);
+        end;
+        5: begin
+          FWRITESTRING(I4,3, 'Const ', 0);
+        end;
+        9, 13: begin
+          FWRITESTRING(I4,3, 'Proc ', 0);
+        end;
+        10, 14: begin
+          FWRITESTRING(I4,3, 'Func ', 0);
+        end;
+      end;
+      FWRITEBYTES(I4,3, L6, 8, 8);
+      LINKER.3(' undefined');
+    end else begin
+      if ((6144 in 1) and (L1^ <> nil)) then begin
+        LINKER.36(L5);
+      end else begin
+        L5^ := L1^;
+        L1^ := L5;
+      end;
+    end;
+    { paths disagree on stack depth here }
+  end;
+
+procedure LINKER.35(args 1 words);  { locals 2 words, lex 4 }
+  L3 := G5;
+  while (L3 <> nil) do begin
+    L2 := LINKER.12((I1,2^^.f2+3), L1, L3^.f2);
+    if (L2 <> nil) then begin
+      (I1,2^+1)^ := L2;
+      (I1,2^+3)^ := L3;
+      L3 := nil;
+    end else begin
+      L3 := L3^.f4;
+    end;
+  end;
+
+procedure LINKER.36(args 1 words);  { locals 3 words, lex 4 }
+  L2 := nil;
+  L4 := G5;
+L13F0:
+  if not ((L4 <> I1,1^^.f3)) then goto L1409;
+  if not ((L4 = L1^.f3)) then goto L1403;
+  goto L1463;
+  goto L1407;
+L1403:
+  L4 := L4^.f4;
+L1407:
+  goto L13F0;
+L1409:
+  L3 := I1,1^;
+  repeat
+    if not ((L3^.f3 = L1^.f3)) then goto L143C;
+L1416:
+    if not ((L1^.f1^.f10^.f1 < L3^.f1^.f10^.f1)) then goto L1425;
+    goto L1463;
+L1425:
+    L2 := L3;
+    L3 := L3^;
+    if not ((L3 = nil)) then goto L1433;
+    goto L1463;
+L1433:
+    if not ((L3^.f3 <> L1^.f3)) then goto L1416;
+    goto L145E;
+L143C:
+    L2 := L3;
+    L3 := L3^;
+    if not ((L3 <> nil)) then goto L145E;
+L1448:
+    if not ((L4 <> L3^.f3)) then goto L145E;
+    if not ((L4 = L1^.f3)) then goto L1458;
+    goto L1463;
+    goto L145C;
+L1458:
+    L4 := L4^.f4;
+L145C:
+    goto L1448;
+L145E:
+  until (L3 = nil);
+L1463:
+  if (L2 = nil) then begin
+    L1^ := I1,1^;
+    I1,1^ := L1;
+  end else begin
+    L1^ := L2^;
+    L2^ := L1;
+  end;
+
+procedure LINKER.37(args 2 words);  { locals 3 words, lex 3 }
+  L3 := nil;
+  L4 := I2,9;
+  while (L4 <> nil) do begin
+    if ((L4^.f3 = L1) and L4^.f5) then begin
+      L3 := L4;
+      L4 := nil;
+    end else begin
+      L4 := L4^;
+    end;
+  end;
+  if (L3 <> nil) then begin
+    L4 := L3;
+    repeat
+      L5 := (L4^.f3 <> L3^.f3);
+      if not (L5) then begin
+        L4 := L4^;
+      end;
+    until (L5 or (L4 = nil));
+    LINKER.38(L1^.f2);
+L18BE:
+    (L3+5)^ := 0;
+    L3 := L3^;
+    if not ((L3 = L4)) then goto L18BE;
+  end;
+
+procedure LINKER.38(args 1 words);  { locals 8 words, lex 4 }
+  if (L1 <> nil) then begin
+    LINKER.38(L1^.f2);
+    LINKER.38(L1^.f1);
+    LINKER.38(L1^);
+    L8 := (L1+3);
+    if (I1,2 in 1) then begin
+      L5 := L8^.f6;
+      L7 := L8^.f8;
+L17D8:
+      { paths disagree on stack depth here }
+      if not ((L7 <> nil)) then goto L1860;
+      if (L5 > 8) then begin
+        L6 := 7;
+        L5 := (L5-8);
+      end else begin
+        L6 := (L5-1);
+      end;
+L17F1:
+      L4 := (L7+1)[chk(L6,0..7)]^;
+      L3 := I1,3;
+L1802:
+      if not (L3^.f5) then goto L1845;
+      L9 := L3^.f1^.f10;
+      if not ((L4 < L9^.f1)) then goto L1816;
+      goto L1850;
+      goto L1845;
+L1816:
+      if not ((L4 < (L9^.f1+L9^.f2))) then goto L1845;
+      NEW(@L2, 7);
+      (L2+2)^ := L1;
+      (L2+4)^ := I1,1;
+      (L2+1)^ := nil;
+      (L2+3)^ := nil;
+      L2^ := I3,6;
+      I3,6 := L2;
+      goto L1860;
+L1845:
+      L3 := L3^;
+      if not ((L3 = I1,4)) then goto L1802;
+L1850:
+      L6 := (L6-1);
+      if not ((L6 < 0)) then goto L17F1;
+      L7 := L7^;
+      goto L17D8;
+    end;
+  end;
+L1860:
+  { paths disagree on stack depth here }
+
+procedure LINKER.39(args 1 words);  { locals 1 words, lex 3 }
+  if (L1 <> nil) then begin
+    LINKER.39(L1^.f2);
+    LINKER.39(L1^.f1);
+    LINKER.39(L1^);
+    if (26 in 1) then begin
+      NEW(@L2, 7);
+      (L2+2)^ := L1;
+      (L2+4)^ := nil;
+      (L2+1)^ := nil;
+      (L2+3)^ := nil;
+      L2^ := I2,8;
+      I2,8 := L2;
+    end;
+  end;
+  { paths disagree on stack depth here }
+
+procedure LINKER.40(args 0 words);  { locals 10 words, lex 2 }
+  if I1,11 then begin
+    L5 := 2;
+  end else begin
+    L9 := @G13[chk(I1,1,0..15)]^;
+    L10 := (L9^+3)[chk(L9^.f1,0..15)*2w];
+    L5 := L10^.f1;
+    L4 := L10^;
+  end;
+  L3 := 0;
+  L2 := 0;
+  L7 := I1,9;
+  while (L7 <> nil) do begin
+    L3 := (L3+L7^.f1^.f10^.f2);
+    if (L7^.f6 = 0) then begin
+      L2 := (L2+1);
+    end;
+    L7 := L7^;
+  end;
+  MARK(@L8);
+  I1,2 := LINKER.15(L8, 0);
+  I1,4 := ((L5+L3)+(2*L2));
+  if (I1,4 <= 0) then begin
+    LINKER.3('size oflow');
+    LINKER.2();
+  end;
+  LINKER.41();
+  L6 := chk(LINKER.5(I1,2, (I1,4-1)),0..160);
+  L7 := I1,9;
+  while (L7 <> nil) do begin
+    L9 := L7^.f1^.f10;
+    L9^ := L1;
+    L1 := (L1+L9^.f2);
+    if (L7^.f6 = 0) then begin
+      L6 := chk((L6+1),0..160);
+      if (L6 > 160) then begin
+        LINKER.3('proc num oflow');
+        L6 := chk(1,0..160);
+      end;
+      (L7+6)^ := chk(L6,0..160);
+    end;
+    L7 := L7^;
+  end;
+  LINKER.7(L6, I1,2, (I1,4-1));
+  LINKER.7(0, I1,2, (I1,4-2));
+  { left on stack: (G4+131)[chk(I1,1,0..15)] }
+  { left on stack: 8 }
+
+procedure LINKER.41(args 0 words);  { locals 7 words, lex 3 }
+  L5 := ((I2,4+511) div 512);
+  if ((MEMAVAIL()-300) < (L5*256)) then begin
+    LINKER.3('no mem room');
+    LINKER.2();
+  end;
+  L4 := L5;
+L1A4E:
+  NEW(@L6, 256);
+  L4 := (L4-1);
+  if not ((L4 <= 0)) then goto L1A4E;
+  if I2,11 then begin
+    LINKER.8(0, I2,2, (I2,4-2));
+    I1,1 := 0;
+  end else begin
+    L5 := ((I1,5+511) div 512);
+    if (FBLOCKIO(@G13[chk(I2,1,0..15)]^^^.f1, I2,2, 0, L5, I1,4, 1) <> L5) then begin
+      LINKER.3('seg read err');
+      LINKER.2();
+    end;
+    L2 := (I2,4-I1,5);
+    L1 := LINKER.5(I2,2, (I1,5-1));
+    L3 := ((L1*2)+2);
+    I1,1 := (I1,5-L3);
+    L7 := LINKER.15(I2,2, (I1,5-L3));
+    L6 := LINKER.15(I2,2, (I2,4-L3));
+    if (L7 <> L6) then begin
+      L4 := L3;
+      while (L4 > 2) do begin
+        LINKER.8((L2+LINKER.6(I2,2, (I1,5-L4))), I2,2, (I1,5-L4));
+        L4 := (L4-2);
+      end;
+      MOVERIGHT(L7, 0, L6, 0, L3);
+      FILLCHAR(L7, 0, L2, 0);
+    end;
+  end;
+
+procedure LINKER.42(args 0 words);  { locals 11 words, lex 2 }
+  L1 := nil;
+  L7 := nil;
+  MARK(@L8);
+  L6 := I1,9;
+  while (L6 <> nil) do begin
+    L10 := L6;
+    L11 := (L10^.f1+3);
+    if (L7 <> L10^.f3) then begin
+      LINKER.43(L10^.f3);
+    end;
+    if G8 then begin
+      FWRITESTRING(I3,3, '   Copying ', 0);
+      if (L11^.f4 = 11) then begin
+        FWRITESTRING(I3,3, 'proc ', 0);
+      end else begin
+        FWRITESTRING(I3,3, 'func ', 0);
+      end;
+      FWRITEBYTES(I3,3, L11, 8, 8);
+      FWRITELN(I3,3);
+    end;
+    L4 := LINKER.15(I1,2, L11^.f7^);
+    if L9 then begin
+      LINKER.44(L10^.f3, L11^.f7^.f1, L4, chk(L11^.f7^.f2,0..20000));
+    end else begin
+      L5 := LINKER.15(L1, L11^.f7^.f1);
+      MOVELEFT(L5, 0, L4, 0, L11^.f7^.f2);
+    end;
+    L2 := LINKER.15(I1,2, ((L11^.f7^+L11^.f7^.f2)-2));
+    if (LINKER.5(L2, 0) <> 0) then begin
+      LINKER.7(L10^.f6, L2, 0);
+    end else begin
+      { unmodelled packed store of 8 }
+      if I1,12 then begin
+        LINKER.7(@G13[chk(I1,1,0..15)]^^.f5, L2, 1);
+      end;
+    end;
+    { paths disagree on stack depth here }
+    L3 := LINKER.15(I1,2, ((I1,4-(2*L10^.f6))-2));
+    LINKER.8((L3-L2), L3, 0);
+    L6 := L10^;
+  end;
+  RELEASE(@L8);
+
+procedure LINKER.43(args 1 words);  { locals 2 words, lex 3 }
+  RELEASE(@I1,8);
+  I1,9 := 0;
+  L3 := (L1^+3)[chk(L1^.f1,0..15)*2w]^.f1;
+  L2 := ((L3+511) div 512);
+  if ((MEMAVAIL()-100) < (L2*256)) then begin
+    if ((MEMAVAIL()-100) < 256) then begin
+      LINKER.3('out of mem');
+      LINKER.2();
+    end else begin
+      I1,9 := 1;
+    end;
+  end;
+  if not (I1,9) then begin
+    L3 := L2;
+L1CC4:
+    NEW(@I1,1, 256);
+    L3 := (L3-1);
+    if not ((L3 <= 0)) then goto L1CC4;
+    I1,1 := LINKER.15(I1,8, 0);
+    if (FBLOCKIO(L1^^.f1, I1,1, 0, L2, (L1^+3)[chk(L1^.f1,0..15)*2w]^, 1) <> L2) then begin
+      LINKER.3('sep seg read err');
+      LINKER.2();
+    end;
+  end;
+  I1,7 := L1;
+
+procedure LINKER.44(args 4 words);  { locals 8 words, lex 3 }
+  RELEASE(@I1,8);
+  L9 := (L3 div 512);
+  L7 := (((L1+(L3 mod 512))+511) div 512);
+  if ((MEMAVAIL()-100) >= (L7*256)) then begin
+    L8 := L9;
+    L5 := L1;
+  end else begin
+    L8 := ((L9+L7)-1);
+    L5 := (512-(L3 mod 512));
+    L7 := 1;
+  end;
+  NEW(@I1,1, 256);
+  L10 := L4;
+  L11 := L10^;
+  L6 := L9;
+  L12 := L8;
+  while (L6 <= L12) do begin
+    if (FBLOCKIO(L11^.f1, I1,1, 0, L7, ((L11+3)[chk(L10^.f1,0..15)*2w]^+L6), 1) <> L7) then begin
+      LINKER.3('proc read err');
+      LINKER.2();
+    end else begin
+      if (L6 = L9) then begin
+        MOVELEFT(I1,1, chk((L3 mod 512),0..511), L2, 0, L5);
+        L2 := LINKER.15(L2, L5);
+      end else begin
+        if (L6 = L8) then begin
+          MOVELEFT(I1,1, 0, L2, 0, ((L3+L1) mod 512));
+        end else begin
+          MOVELEFT(I1,1, 0, L2, 0, 512);
+          L2 := LINKER.15(L2, 512);
+        end;
+      end;
+    end;
+    L6 := (L6+1);
+  end;
+
+procedure LINKER.45(args 2 words);  { locals 11 words, lex 2 }
+  while (L2 <> nil) do begin
+    L11 := L2;
+    L12 := (L11^.f2+3);
+    case L12^.f4 of   { table 1..14 }
+      13, 14: begin
+        L3 := L11^.f5^.f6;
+      end;
+      1: begin
+        L3 := L11^.f5;
+      end;
+      5: begin
+        L3 := L11^.f1^.f8;
+      end;
+      2: begin
+        L3 := (L11^.f1^.f9+L11^.f5^.f1^.f10^);
+      end;
+      3, 4: begin
+        if (L12^.f4 = 4) then begin
+          L3 := L11^.f5;
+        end else begin
+          L3 := L11^.f1^.f8;
+        end;
+        if (L12^.f5 = 0) then begin
+          if I1,12 then begin
+            L3 := ((L3-1)*2);
+          end else begin
+            L3 := (((L3-1)*2)+12);
+          end;
+          if G91 then begin
+            L3 := (L3 div 2);
+          end;
+        end else begin
+          if (L3 < 0) then begin
+            LINKER.3('addr oflow');
+          end;
+        end;
+      end;
+    end;
+    L6 := L12^.f6;
+    L9 := L12^.f8;
+    while (L9 <> nil) do begin
+      if (L6 > 8) then begin
+        L5 := 7;
+        L6 := (L6-8);
+      end else begin
+        L5 := (L6-1);
+      end;
+      repeat
+        L4 := (L9+1)[chk(L5,0..7)]^;
+        L10 := not (L1);
+        if L10 then begin
+          L8 := nil;
+          L7 := I1,9;
+          while (L7 <> nil) do begin
+            if (L7^.f3 = L11^.f4) then begin
+              L8 := L7;
+              L7 := nil;
+            end else begin
+              L7 := L7^;
+            end;
+          end;
+          while ((L8 <> nil) and L10) do begin
+            if (L8^.f3 = L11^.f4) then begin
+              L13 := L8^.f1^.f10;
+              if (L4 >= L13^.f1) then begin
+                if (L4 < (L13^.f1+L13^.f2)) then begin
+                  L4 := ((L4-L13^.f1)+L13^);
+                  L10 := 0;
+                end else begin
+                  L8 := L8^;
+                end;
+              end else begin
+                L8 := nil;
+              end;
+            end else begin
+              L8 := nil;
+            end;
+          end;
+        end;
+        if not (L10) then begin
+          case L12^.f5 of   { table 0..2 }
+            0: begin
+              LINKER.8((L3+LINKER.6(I1,2, L4)), I1,2, L4);
+            end;
+            1: begin
+              LINKER.7(L3, I1,2, L4);
+            end;
+            2: begin
+              LINKER.9(L3, I1,2, L4);
+            end;
+          end;
+        end;
+        L5 := (L5-1);
+      until (L5 < 0);
+      L9 := L9^;
+    end;
+    L2 := L11^;
+  end;
+
+procedure LINKER.46(args 0 words);  { locals 5 words, lex 2 }
+  if ((G11 = @G13[chk(I1,1,0..15)]^) or I1,12) then begin
+    L3 := LINKER.15(I1,2, (I1,4-4));
+    L3 := LINKER.15(L3, (-(LINKER.6(L3, 0))-8));
+    if I1,12 then begin
+      if not ((@G13[chk(I1,1,0..15)]^^.f5 <> 0)) then goto L21A2;
+      L4 := (G4+3);
+      L1 := chk(0,0..16);
+      L5 := chk(15,0..16);
+L215B:
+      { paths disagree on stack depth here }
+      if not ((L1 <= L5)) then goto L21A2;
+      if not ((0 = @G13[chk(I1,1,0..15)]^^.f5)) then goto L219B;
+      (@G13[chk(L1,0..15)]^+4)^ := chk(@G13[chk(I1,1,0..15)]^^.f4,1..32767);
+      goto L21AD;
+L219B:
+      L1 := (L1+1);
+      goto L215B;
+L21A2:
+    end else begin
+      LINKER.8(((G12*2)-6), L3, 0);
+    end;
+  end;
+L21AD:
+  { paths disagree on stack depth here }
+  L4 := @G13[chk(I1,1,0..15)]^;
+  L2 := ((I1,4+511) div 512);
+  if (FBLOCKIO(@G50, I1,2, 0, L2, I1,3, 0) <> L2) then begin
+    LINKER.3('code write err');
+    LINKER.2();
+  end;
+  @I1,33[chk(I1,1,0..15)*2w]^ := I1,3;
+  (@I1,33[chk(I1,1,0..15)*2w]+1)^ := I1,4;
+  move(@I1,65[chk(I1,1,0..15)*4w], (L4^+35)[chk(L4^.f1,0..15)*4w], 4 words);
+  if I1,12 then begin
+    @I1,129[chk(I1,1,0..15)]^ := 6;
+  end else begin
+    @I1,129[chk(I1,1,0..15)]^ := 0;
+  end;
+  { unmodelled packed store of chk(0,0..255) }
+  I1,3 := (I1,3+L2);
+  { left on stack: @I1,161[chk(I1,1,0..15)] }
+  { left on stack: 8 }
+  { left on stack: 0 }
+  { left on stack: (G4+131)[chk(I1,1,0..15)] }
+
+procedure LINKER.47(args 0 words);  { locals 5 words, lex 2 }
+  I1,11 := 0;
+  I1,2 := nil;
+  I1,4 := 0;
+  move(@I1,161[chk(I1,1,0..15)], (@G13[chk(I1,1,0..15)]^^+131)[chk(@G13[chk(I1,1,0..15)]^^.f1,0..15)], 1 words);
+  if ((@G13[chk(I1,1,0..15)]^^+3)[chk(@G13[chk(I1,1,0..15)]^^.f1,0..15)*2w]^ < (@G13[chk(I1,1,0..15)]^^+115)[chk(@G13[chk(I1,1,0..15)]^^.f1,0..15)]^) then begin
+    { unmodelled packed store of 2 }
+    { unmodelled packed store of chk(2,0..7) }
+  end;
+  { paths disagree on stack depth here }
+  I1,12 := (96 in 1);
+  if G8 then begin
+    L5 := @G13[chk(I1,1,0..15)]^;
+    FWRITESTRING(I3,3, 'Linking ', 0);
+    FWRITEBYTES(I3,3, (L5^+35)[chk(L5^.f1,0..15)*4w], 8, 8);
+    FWRITESTRING(I3,3, ' # ', 0);
+    FWRITEINT(8, 0, 0);
+    FWRITELN(I3,3);
+  end;
+  { paths disagree on stack depth here }
+  LINKER.28();
+  if (G9 = 0) then begin
+    if (@G30 <> '') then begin
+      LINKER.48();
+    end;
+    if ((G4+99)[chk(I1,1,0..15)]^ <> 7) then begin
+      if I1,12 then begin
+        MARK(@L4);
+        L1 := ((G4+3)[chk(I1,1,0..15)*2w]^-(G4+115)[chk(I1,1,0..15)]^);
+        if (L1 < 0) then begin
+          LINKER.3('interface error');
+          LINKER.2();
+        end;
+        if ((MEMAVAIL()-100) < (L1*256)) then begin
+          LINKER.3('interface too big');
+          LINKER.2();
+        end;
+        L2 := L1;
+L2712:
+        NEW(@L3, 256);
+        L2 := (L2-1);
+        if not ((L2 <= 0)) then goto L2712;
+        if (FBLOCKIO(G4^.f1, L4, 0, L1, (G4+115)[chk(I1,1,0..15)]^, 1) <> L1) then begin
+          LINKER.3('interface read err');
+          LINKER.2();
+        end else begin
+          if (FBLOCKIO(@G50, L4, 0, L1, I1,3, 0) <> L1) then begin
+            LINKER.3('interface write err');
+            LINKER.2();
+          end;
+        end;
+        @I1,145[chk(I1,1,0..15)]^ := I1,3;
+        I1,3 := (I1,3+L1);
+        RELEASE(@L4);
+      end;
+      LINKER.40();
+      LINKER.42();
+      LINKER.45(I1,7, 1);
+      LINKER.45(I1,5, 0);
+      LINKER.46();
+    end else begin
+      (@I1,33[chk(I1,1,0..15)*2w]+1)^ := ((@G13[chk(I1,1,0..15)]^^.f4-1)*2);
+      L1 := ((@I1,33[chk(I1,1,0..15)*2w]^.f1+511) div 512);
+      if ((G4+3)[chk(I1,1,0..15)*2w]^ <> 0) then begin
+        MARK(@L4);
+        if (FBLOCKIO(G4^.f1, L4, 0, L1, (G4+3)[chk(I1,1,0..15)*2w]^, 1) <> L1) then begin
+          LINKER.3('data read err');
+          LINKER.2();
+        end else begin
+          if (FBLOCKIO(@G50, L4, 0, L1, I1,3, 0) <> L1) then begin
+            LINKER.3('data write err');
+            LINKER.2();
+          end;
+        end;
+        @I1,33[chk(I1,1,0..15)*2w]^ := I1,3;
+        I1,3 := (I1,3+L1);
+        RELEASE(@L4);
+      end;
+      move(@I1,65[chk(I1,1,0..15)*4w], (G4+35)[chk(I1,1,0..15)*4w], 4 words);
+      @I1,129[chk(I1,1,0..15)]^ := 7;
+    end;
+  end;
+  if I1,11 then begin
+    G5 := @G13[chk(I1,1,0..15)]^^.f4;
+  end;
+  RELEASE(@G10);
+
+procedure LINKER.48(args 0 words);  { locals 4 words, lex 3 }
+  L3 := @G13[chk(I2,1,0..15)]^;
+  FWRITESTRING(@I2,401, 'Seg # ', 0);
+  FWRITEINT(8, 0, 0);
+  FWRITESTRING(@I2,401, ', ', 0);
+  FWRITEBYTES(@I2,401, (L3^+35)[chk(L3^.f1,0..15)*4w], 8, 8);
+  FWRITELN(@I2,401);
+  L1 := I2,9;
+  if (L1 <> nil) then begin
+    FWRITESTRING(@I2,401, '   Sep procs', 0);
+    FWRITELN(@I2,401);
+  end;
+  while (L1 <> nil) do begin
+    L3 := (L1^.f1+3);
+    FWRITESTRING(@I2,401, '      ', 0);
+    FWRITEBYTES(@I2,401, L3, 8, 8);
+    if (L3^.f4 = 11) then begin
+      FWRITESTRING(@I2,401, ' proc', 0);
+    end else begin
+      FWRITESTRING(@I2,401, ' func', 0);
+    end;
+    FWRITESTRING(@I2,401, ' # ', 0);
+    FWRITEINT(@I2,401, L1^.f6, 3);
+    FWRITESTRING(@I2,401, '    base =', 0);
+    FWRITEINT(@I2,401, L3^.f7^, 6);
+    FWRITESTRING(@I2,401, '    leng =', 0);
+    FWRITEINT(@I2,401, L3^.f7^.f2, 5);
+    FWRITELN(@I2,401);
+    L1 := L1^;
+  end;
+  L2 := (0 and 1);
+  L3 := (1 and 1);
+L23C8:
+  { paths disagree on stack depth here }
+  if not ((L2 <= L3)) then goto L2556;
+  if L2 then begin
+    L1 := I2,5;
+    if (L1 <> nil) then begin
+      FWRITESTRING(@I2,401, '   Sep proc refs', 0);
+      FWRITELN(@I2,401);
+    end;
+  end else begin
+    L1 := I2,7;
+    if (L1 <> nil) then begin
+      FWRITESTRING(@I2,401, '   Local seg refs', 0);
+      FWRITELN(@I2,401);
+    end;
+  end;
+  while (L1 <> nil) do begin
+    L4 := (L1^.f1+3);
+    FWRITESTRING(@I2,401, '      ', 0);
+    FWRITEBYTES(@I2,401, L4, 8, 8);
+    case L4^.f4 of   { table 1..12 }
+      11, 12: begin
+      end;
+      7: begin
+        FWRITESTRING(@I2,401, ' public LC =', 0);
+        FWRITEINT(@I2,401, L4^.f5, 5);
+      end;
+      8: begin
+        FWRITESTRING(@I2,401, ' const val =', 0);
+        FWRITEINT(@I2,401, L4^.f5, 6);
+      end;
+      4: begin
+        FWRITESTRING(@I2,401, ' privat LC =', 0);
+        FWRITEINT(@I2,401, L1^.f5, 5);
+      end;
+      1: begin
+        FWRITESTRING(@I2,401, ' unit seg# =', 0);
+        FWRITEINT(@I2,401, L1^.f5, 3);
+      end;
+      6: begin
+        FWRITESTRING(@I2,401, ' glob def in ', 0);
+        FWRITEBYTES(@I2,401, (L1^.f5^.f1+3), 8, 8);
+        FWRITESTRING(@I2,401, ' @', 0);
+        FWRITEINT(@I2,401, L4^.f6, 5);
+      end;
+    end;
+    FWRITELN(@I2,401);
+    L1 := L1^;
+  end;
+  L2 := (L2+1);
+  goto L23C8;
+L2556:
+  FWRITELN(@I2,401);
