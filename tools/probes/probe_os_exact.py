@@ -113,11 +113,13 @@ STILL_DIFFERS = [
     "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
     "PASCALSY.8",    # FPUT: 1 against Apple's 46, blocked not unknown
     # Frame-identical, and every instruction matches but the two the
-    # finding-218b stand-in costs. These THREE are the control for that
-    # gap: if any of them ever reports exact, an integer expression has
-    # started reaching a Boolean operator and 218b is answered. They
-    # are worth three procedures between them, which is as much as the
-    # entire rest of this file still owes.
+    # finding-218b stand-in costs. Finding 230 closed that question by
+    # reading this project's own byte-verified SYSTEM.COMPILER: GENFJP
+    # and both of ANDOP/OROP demand BOOLPTR unconditionally, so these
+    # three bytes-for-bytes cannot be produced by the shipped 1.3
+    # compiler from any source that compiles. They are a permanent
+    # discrimination control, not a temporary one -- and the count they
+    # hold back, 107, is the real ceiling for the shipped tools.
     "FIOPRIMS.4",    # FPPEEK: 45 instructions against Apple's 43
     "FILEPROC.2",    # FPNEWBLK: 163 against Apple's 161
     "FILEPROC.4",    # FPOPEN: 475 against Apple's 473 (finding 229b)

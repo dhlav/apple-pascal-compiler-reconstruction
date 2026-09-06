@@ -19719,3 +19719,59 @@ procedures -- `FIOPRIMS.4`, `FILEPROC.2` and `FILEPROC.4`, each of them
 frame-identical and each of them exactly two instructions away. Those
 three plus `FIOPRIMS`'s four are the whole of what this file still
 owes.
+
+## 230. Finding 218b is closed: the shipped 1.3 compiler cannot emit those bytes from any source
+
+**VERIFIED SOURCE FACT**, and it is this project's own reconstructed
+`SYSTEM.COMPILER` that supplies it -- the one whose 147 procedures and
+15 segments are byte-identical to Apple's shipped file, so reading it is
+reading Apple's source.
+
+218b had two candidates for how Apple produced an integer expression
+feeding a Boolean operator: an unrecovered variant in the `FIB`
+declaration, or a different compiler. Finding 229c ruled out the first.
+This rules *in* the second, by exhausting the alternative rather than
+preferring it.
+
+`BODYPART.text` gates all three operators involved, unconditionally --
+no compiler option reaches any of them, and `(*$U-*)`, which this file
+already compiles under, does not either:
+
+```
+PROCEDURE GENFJP(*FLBP: LBP*);
+BEGIN LOAD;
+  IF (GATTR.TYPTR <> BOOLPTR) AND (GATTR.TYPTR <> NIL) THEN ERROR(135);
+  GENJMP(33(*FJP*),FLBP)
+END;
+
+(*AND*) ANDOP: IF (LATTR.TYPTR = BOOLPTR) AND (GATTR.TYPTR = BOOLPTR)
+                 THEN GEN0(4(*AND*))
+               ELSE BEGIN ERROR(134); GATTR.TYPTR := NIL END;
+
+(*OR*)  OROP:  IF (LATTR.TYPTR = BOOLPTR) AND (GATTR.TYPTR = BOOLPTR)
+                 THEN GEN0(13(*IOR*))
+               ELSE BEGIN ERROR(134); GATTR.TYPTR := NIL END
+```
+
+`$V` is varstring checking only (manual, Table 14-1) and `$U-` turns
+that same check off and nothing else, so there is no option to reach for.
+
+The one hole is `GENFJP`'s `GATTR.TYPTR <> NIL` escape. `NIL` is what
+the compiler sets a type to *after* it has already reported an error --
+`ANDOP`'s own `ELSE` above sets it -- so the only source that reaches
+`FJP` with no type complaint is source that failed to compile. Apple
+shipped a working OS, so that is not what happened.
+
+### 230a. What this means for the file
+
+The three procedures riding on 218b -- `FIOPRIMS.4`, `FILEPROC.2`,
+`FILEPROC.4`, each frame-identical and each exactly two instructions
+away -- are **not reachable** with the shipped 1.3 tools, and no further
+reading of them will change that. They stay in `STILL_DIFFERS` as the
+comparison's discrimination control, which is now their permanent job
+rather than a temporary one.
+
+That leaves `FIOPRIMS`'s intrinsic-unit build wiring as the only open
+work in the whole file that can still move the count: `PASCALSY.7`
+(`FGET`), `PASCALSY.8` (`FPUT`), `FIOPRIMS.5` and `FIOPRIMS.1`. 104 of
+111 exact, 107 reachable, and the last four are one job.
