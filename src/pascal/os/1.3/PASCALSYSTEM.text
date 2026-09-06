@@ -690,12 +690,16 @@ PROGRAM PASCALSYSTEM;
     SYSSEGS.A.TEXT (calling FWRITELN/FWRITESTRING directly, not through
     WRITE/WRITELN's own sugar -- see the header comment). Apple's real
     `args 2 words` matches its 2-parameter declaration exactly. }
-  SEGMENT PROCEDURE USERPROGRAM(INPUT, OUTPUT: FIBP);
-  BEGIN
-    FWRITELN(SYSTERM^);
-    PL := 'No user program';
-    FWRITESTRING(SYSTERM^, PL, 0)
-  END;
+  { Forward-declared, body below the unit. A `SEGMENT PROCEDURE`
+    claims its segment number where it is *declared* (`PROCDECLARATION`
+    does `SEG := NEXTSEG` and then `NEWSEG(TRUE)` before it ever looks
+    at `FORWARD`), and the completion below picks the same number back
+    up out of `LCP^.PFSEG`. That is what puts `FIOPRIMS` on segment 2:
+    a `UNIT` may only follow a run of *declarations*, never a finished
+    body -- `BLOCK` reaches `IF LEVEL = 0 THEN IF SY = UNITSY` solely
+    on an iteration that began with `NEWBLOCK` true -- so the unit has
+    to sit between this heading and its body. }
+  SEGMENT PROCEDURE USERPROGRAM(INPUT, OUTPUT: FIBP); FORWARD;
 
   { Apple-specific (128K only, no UCSD precedent): file I/O primitives
     the 64K system keeps inline in segment 0. Real `args 0 words`
@@ -706,31 +710,41 @@ PROGRAM PASCALSYSTEM;
     isn't tied to a known caller yet (plausibly `FPUT`'s own
     counterpart, still unwritten).
 
-    **This `SEGMENT PROCEDURE` heading is known to be the wrong shape**
-    (finding 200). `FIOPRIMS`'s own `SEGKIND` in both 1.3 binaries is
-    `LINKED_INTRINS`, not `LINKED`: it is an **intrinsic unit**, and
-    the only one in the operating system. That is what explains the
-    three things this heading cannot -- why the four helpers share one
-    segment (they are one unit's `IMPLEMENTATION`), why `FIOPRIMS.1`
-    holds zero instructions (an empty unit initialization part), and
-    why `FGET` may call `FPWINADV`/`FPDLE`/`FPPEEK` by name at all
-    (they are in the unit's `INTERFACE`, visible to the host "just as
-    if they had been declared in the host program"). Findings 190 and
-    194 spent five real-hardware experiments on `SEGMENT PROCEDURE`
-    variations because of this heading; none of them could have
+    It is a **`UNIT`**, not a `SEGMENT PROCEDURE` (finding 200 read
+    the `SEGKIND`, finding 232 built it). That is what explains the
+    three things a `SEGMENT PROCEDURE` heading cannot: why the four
+    helpers share one segment (they are one unit's `IMPLEMENTATION`),
+    why `FIOPRIMS.1` holds zero instructions and ends `RNP 0` rather
+    than `RBP 0` (`UNITPART`'s own `UNITBODY` builds the anonymous
+    initialisation body at `PFLEV := 1`, and `BODY3` picks `RBP` only
+    for `PFLEV = 0`), and why `FPUT` may call `FPWINOUT` by name at
+    all. No library round trip is needed and there never was one:
+    `GETTEXT` searches `MODPTR` -- the units declared in *this same*
+    compilation -- before it opens any library, and reads their
+    interface text back out of the work codefile (`USEFILE :=
+    WORKCODE`). Findings 190 and 194 spent five real-hardware
+    experiments on `SEGMENT PROCEDURE` variations; none could have
     worked.
 
-    Left standing for now only because switching to the real shape --
-    `(*$U-*)`, `UNIT FIOPRIMS; INTRINSIC CODE 2;`, `INTERFACE`,
-    `IMPLEMENTATION`, terminated `BEGIN END;` -- also requires the
-    host to `USES` it, and `USES` requires a real library round trip
-    (compile the unit to a library of its own, then compile this file
-    against it, then link). `src/pascal/units/1.3/PASCALIO.text` is
-    already exactly that shape and already verified, so the template
-    is in hand; the build wiring is not. Until then these four bodies
-    stay here, compiling but structurally misfiled, and `FGET`/`FPUT`
-    stay stubs. }
-  SEGMENT PROCEDURE FIOPRIMS;
+    **Non-intrinsic on purpose**, though Apple's shipped `SEGKIND` is
+    6. `INTRINSIC CODE 2` names the segment number explicitly and
+    `NEWSEG(FALSE)` then leaves `NEXTSEG` alone, so the next
+    `SEGMENT PROCEDURE` -- `PRINTERROR` -- would claim 2 as well and
+    every segment after it would shift down one. A plain `UNIT` does
+    `SEG := NEXTSEG; NEWSEG(TRUE)`, which takes 2 and advances to 3,
+    and the whole dictionary comes out in Apple's own order. The cost
+    is `SEGKIND` 3 where Apple has 6, and the linker info that
+    `IF NOT INTRINSIC THEN LINKINFO := TRUE` turns on: dictionary
+    differences, not procedure differences, and the shipped file's own
+    `TEXTADDR` of 0 for this segment says it was not written by a
+    plain compile either. }
+  UNIT FIOPRIMS;
+  INTERFACE
+    FUNCTION FPWINADV(VAR F: FIB): BOOLEAN;
+    FUNCTION FPDLE(VAR F: FIB): BOOLEAN;
+    PROCEDURE FPPEEK(VAR F: FIB);
+    FUNCTION FPWINOUT(VAR F: FIB): BOOLEAN;
+  IMPLEMENTATION
 
     { `FIOPRIMS.2` -- soft-buffer window advance (finding 174, closing
       finding 170's own standing gap). Copies up to `FRECSIZE` bytes
@@ -782,7 +796,7 @@ PROGRAM PASCALSYSTEM;
       same thing; only the `ELSE` emits the second `UJP` Apple has.
       Two consecutive `UJP`s are the signature -- look for a missing
       `ELSE`, not for a missing statement. }
-    FUNCTION FPWINADV(VAR F: FIB): BOOLEAN;
+    FUNCTION FPWINADV;
       LABEL 1;
       VAR
         RECSIZE, WINOFS, ROOM, NEED: INTEGER;
@@ -848,7 +862,7 @@ PROGRAM PASCALSYSTEM;
       consumes this: each of the next `FREPTCNT` `GET`s just replays
       the cached space with no further I/O. `params=6` bytes exact;
       the one `data` word is the `WITH F DO` (finding 217). }
-    FUNCTION FPDLE(VAR F: FIB): BOOLEAN;
+    FUNCTION FPDLE;
     BEGIN
       FGET(F);
       WITH F DO
@@ -881,7 +895,7 @@ PROGRAM PASCALSYSTEM;
       word that closed the last gap -- `582/582`, frame exact.
       **Exact** since finding 231, once `ODD` was recognised as a free
       cast rather than a call. }
-    PROCEDURE FPPEEK(VAR F: FIB);
+    PROCEDURE FPPEEK;
       VAR
         SAVE: FIB;
     BEGIN
@@ -954,7 +968,7 @@ PROGRAM PASCALSYSTEM;
       cast to `BOOLEAN` and `IND 13 | LNOT` is exactly what it emits.
       See finding 231 -- that one line reopened all four procedures
       finding 230 had written off as unreachable. }
-    FUNCTION FPWINOUT(VAR F: FIB): BOOLEAN;
+    FUNCTION FPWINOUT;
       LABEL 1;
       VAR
         RECSIZE, WINOFS, ROOM, NEED: INTEGER;
@@ -1035,7 +1049,21 @@ PROGRAM PASCALSYSTEM;
       1: ;
     END;
 
-  BEGIN END;
+  BEGIN
+  END;
+
+  { The user-program stub's body: what runs when no real user program
+    has been loaded on top of this segment's slot yet. Straight from
+    UCSD's own SYSSEGS.A.TEXT (calling FWRITELN/FWRITESTRING directly,
+    not through WRITE/WRITELN's own sugar -- see the header comment).
+    Apple's real `args 2 words` matches its 2-parameter declaration
+    exactly. }
+  SEGMENT PROCEDURE USERPROGRAM;
+  BEGIN
+    FWRITELN(SYSTERM^);
+    PL := 'No user program';
+    FWRITESTRING(SYSTERM^, PL, 0)
+  END;
 
   { Prints the message for a run-time error code. Apple's real body
     (`analysis/lifted/128K.PASCAL-1.3-128K.pas.txt`, segment 3) is not
@@ -4076,6 +4104,69 @@ PROGRAM PASCALSYSTEM;
     USERPROGRAM above; bodies below are a plausible first pass, not yet
     verified against Apple's binary). }
 
+  { `FPUT` = `PASCALSY.8` (finding 224, written for real at finding
+    232). UCSD's own `FPUT` with its whole soft-buffer arm lifted out
+    into `FIOPRIMS.5` -- `CXP 2,5`, one `VAR F` argument, a `BOOLEAN`
+    result standing for UCSD's own `GOTO 1` out of that arm. UCSD
+    declares `LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER; DONE:
+    BOOLEAN` for work that no longer happens here, and Apple's `data`
+    is **6** words against a body that touches exactly one of them
+    (the `WITH F` pointer). Five declared words that emit no code is
+    not a coincidence to be padded around: it is UCSD's own `VAR`
+    line, carried into 1.3 unchanged after the statements under it
+    moved away. Kept in UCSD's order, though only the total is
+    observable.
+
+    The `LABEL 1` target sits *inside* the `ELSE` arm, after
+    `IORSLT := INOTOPEN` -- UCSD writes it that way and the binary
+    agrees: index 33's `UJP` clears the whole `INOTOPEN`-plus-tail
+    block, so the success paths skip a tail the failure paths reach by
+    falling into it.
+
+    **This completion is deliberately first**, ahead of `EXECERROR`'s,
+    and the `USES` is why. `GETTEXT` sets `NEXTPROC := 2` before it
+    re-parses a unit's interface text, and every procedure heading it
+    reads there runs `PROCTABLE[NEXTPROC] := 0` -- so a `USES` of a
+    four-procedure unit **zeroes `PROCTABLE[2..5]` of whatever segment
+    is current**. In segment 0 those four entries are `EXECERROR`,
+    `FINIT`, `FRESET` and `FOPEN`, and `FINISHSEG` reads `PROCTABLE`
+    at the very end of the compilation, so a `USES` placed after their
+    bodies loses their jump-table entries outright (all four came back
+    as empty procedures the first time this was tried). Placed here,
+    before any of them, the zeroing hits entries that are still zero
+    from their own `FORWARD`s and the four bodies fill them in
+    afterwards. `FPUT` claims no nested procedures, so moving it costs
+    nothing (finding 202f); `FGET` cannot follow it, which is finding
+    232b. }
+  PROCEDURE FPUT;
+  USES FIOPRIMS;
+    LABEL 1;
+    VAR
+      LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER;
+      DONE: BOOLEAN;
+  BEGIN
+    SYSCOM^.IORSLT := INOERROR;
+    WITH F DO
+      IF FISOPEN THEN
+        IF FSOFTBUF THEN
+        BEGIN
+          IF FPWINOUT(F) THEN
+            GOTO 1
+        END
+        ELSE
+        BEGIN
+          UNITWRITE(FUNIT, FWINDOW^, FRECSIZE);
+          IF IORESULT <> 0 THEN
+            GOTO 1
+        END
+      ELSE
+      BEGIN
+        SYSCOM^.IORSLT := INOTOPEN;
+    1:  FEOF := TRUE;
+        FEOLN := TRUE
+      END
+  END;
+
   PROCEDURE EXECERROR;
     VAR
       G1: INTEGER;
@@ -4355,69 +4446,22 @@ PROGRAM PASCALSYSTEM;
     argument, but reads as `F^.FISBLKD` under this file's own probed
     `FIB` layout, findings 150/151) is also still unconfirmed.
 
-    The other half of why this is still a stub -- `FGET` calling into
-    `FIOPRIMS` -- is no longer an open question about `FORWARD`s and
-    scope (findings 190/194). `FIOPRIMS` is an intrinsic unit (finding
-    200, `SEGKIND` = `LINKED_INTRINS`), so `FPWINADV`/`FPDLE`/`FPPEEK`
-    reach this body through the unit's own `INTERFACE`, not through
-    any cross-`SEGMENT` declaration trick. `FGET`'s decode itself
-    (finding 190, 233 instructions, read end to end) is ready to write
-    the moment the unit is built and `USES`d rather than nested here
-    as a `SEGMENT PROCEDURE`. }
-  { `FPUT` = `PASCALSY.8` (finding 224). UCSD's own `FPUT` with its
-    whole soft-buffer arm lifted out into `FIOPRIMS.5` -- `CXP 2,5`,
-    one `VAR F` argument, a `BOOLEAN` result standing for UCSD's own
-    `GOTO 1` out of that arm. What is left is the frame: UCSD declares
-    `LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER; DONE: BOOLEAN` for
-    work that no longer happens here, and Apple's `data` is **6** words
-    against a body that touches exactly one of them (the `WITH F`
-    pointer). Five declared words that emit no code is not a
-    coincidence to be padded around: it is UCSD's own `VAR` line,
-    carried into 1.3 unchanged after the statements under it moved
-    away. Kept in UCSD's order, though only the total is observable.
-
-    The `LABEL 1` target sits *inside* the `ELSE` arm, after
-    `IORSLT := INOTOPEN` -- UCSD writes it that way and the binary
-    agrees: index 33's `UJP` clears the whole `INOTOPEN`-plus-tail
-    block, so the success paths skip a tail the failure paths reach by
-    falling into it. }
-  PROCEDURE FPUT; BEGIN END;
-  { Still a stub only because of that `CXP 2,5`: `FPSTUB5` lives
-    inside `SEGMENT PROCEDURE FIOPRIMS` and nothing outside that
-    segment can name it. This is the same wall `FGET` is behind
-    (findings 190/194/200), and it is now the single largest blocked
-    item in the file -- `FGET` (234), `FIOPRIMS.5` (275), `FPUT` (46)
-    and `FIOPRIMS.1`'s `RNP`/`RBP` all come free the moment `FIOPRIMS`
-    is built as the intrinsic unit it really is. The decoded body is
-    written out in full below so that switching costs one paste:
-
-      PROCEDURE FPUT;
-        LABEL 1;
-        VAR
-          LEFTOPUT, WININX, LEFTINBUF, AMOUNT: INTEGER;
-          DONE: BOOLEAN;
-      BEGIN
-        SYSCOM^.IORSLT := INOERROR;
-        WITH F DO
-          IF FISOPEN THEN
-            IF FSOFTBUF THEN
-            BEGIN
-              IF FPSTUB5(F) THEN
-                GOTO 1
-            END
-            ELSE
-            BEGIN
-              UNITWRITE(FUNIT, FWINDOW^, FRECSIZE);
-              IF IORESULT <> 0 THEN
-                GOTO 1
-            END
-          ELSE
-          BEGIN
-            SYSCOM^.IORSLT := INOTOPEN;
-        1:  FEOF := TRUE;
-            FEOLN := TRUE
-          END
-      END; }
+    The other half is now settled and it is a *tool* limit, not a
+    reconstruction gap (finding 232b). `FGET` needs
+    `USES FIOPRIMS;` to name `FPWINADV`/`FPDLE`/`FPPEEK` for its
+    `CXP 2,2`/`2,3`/`2,4`, and a `USES` costs `PROCTABLE[2..5]` of
+    whatever segment is current: `GETTEXT` sets `NEXTPROC := 2` before
+    re-parsing the interface text and each heading it reads runs
+    `PROCTABLE[NEXTPROC] := 0`. In segment 0 that is `EXECERROR`,
+    `FINIT`, `FRESET` and `FOPEN`, so the `USES` must come before all
+    four bodies -- which is exactly why `FPUT`'s completion is first
+    among the 41. `FGET`'s cannot join it: its nested `EXECGETCH` has
+    to claim procedure **56**, which pins this completion after
+    `FBLOCKIO`'s, and `EXECERROR` would then have to be both before
+    `FGET` (for its own nested 51/52) and after it (to survive the
+    zeroing). One compilation of one file cannot have both. The decode
+    itself (finding 190, 234 instructions, read end to end) is ready;
+    what it wants is a second compilation unit. }
   { `XSEEK`/`XREADREAL`/`XWRITEREAL` (`PASCALSY.9`/`.14`/`.15`, finding
     193) -- UCSD's own `SEEK`/`READ(REAL)`/`WRITE(REAL)` support, never
     implemented for the Apple II's own software floating point (no
@@ -6305,7 +6349,7 @@ PROGRAM PASCALSYSTEM;
       and those two produce the same shape against Apple's own bytes
       (finding 203). }
     PROCEDURE CMDDISPATCH;
-    BEGIN (*$R FIOPRIMS*)
+    BEGIN (*$R 2*)
       REPEAT
         WAITSYSVOL;
         GETNEXTCMD;

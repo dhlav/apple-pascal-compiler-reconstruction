@@ -19869,3 +19869,97 @@ calls `FGET` and `FPUT` make.
 `FILEPROC` is complete, all 8. `GETCMD` is complete, all 27.
 `INITIALI` complete, all 11. `PASCALSY` is 56 of 58 and `FIOPRIMS` 4
 of 5.
+
+## 232. `FIOPRIMS` is a `UNIT`, declared inline, `USES`d without a library
+
+**VERIFIED BINARY FACT.** 110 of 111. `FIOPRIMS` is 5 of 5 and
+`PASCALSY` is 57 of 58; only `FGET` is left, and 232b says why it has
+to be.
+
+Findings 190, 194 and 200 left this as "an intrinsic unit, and the
+build wiring for that is not written". The wiring turned out not to
+exist: **a unit declared inline in the same compilation is `USES`-able
+directly.** `GETTEXT` (`DECLARAT.text`) searches `MODPTR` -- the list
+`UNITDECLARATION` appends to -- *before* it opens any library, and on a
+hit sets `USEFILE := WORKCODE` and reads the interface text back out of
+the codefile currently being written. The `MODULE` record survives
+`UNITPART`'s own `RELEASE(UMARKP)` because it is allocated before the
+`MARK`; everything else the unit declared does not, which is why the
+`USES` is needed at all.
+
+Three things had to be right at once.
+
+**Where the unit sits.** `BLOCK` reaches `IF LEVEL = 0 THEN IF
+SY = UNITSY THEN UNITPART(...)` only on an iteration that began with
+`NEWBLOCK` true, and `NEWBLOCK` is set from `SY IN [PROCSY,FUNCSY,
+PROGSY]` at the end of the previous body. So a `UNIT` may follow a run
+of *declarations* and never a finished body. `USERPROGRAM` is therefore
+forward-declared, the unit follows, and `USERPROGRAM`'s body follows
+the unit.
+
+**Which flavour.** Not `INTRINSIC`, despite the shipped `SEGKIND` of 6.
+`INTRINSIC CODE 2` names the number explicitly and `NEWSEG(FALSE)`
+leaves `NEXTSEG` alone, so `PRINTERROR` would claim 2 as well and every
+segment after it would shift down one. A plain `UNIT` does `SEG :=
+NEXTSEG; NEWSEG(TRUE)` -- takes 2, advances to 3 -- and the dictionary
+comes out in Apple's own order. What that costs is `SEGKIND` 3 instead
+of 6 and the linker info `IF NOT INTRINSIC THEN LINKINFO := TRUE` turns
+on. Both are dictionary facts, not procedure facts.
+
+**`RNP` versus `RBP`.** `UNITBODY` builds the anonymous initialisation
+body's own `CTP` by hand with `PFLEV := 1`, and `BODY3` picks
+`RBP` only for `PFLEV = 0`. That single opcode was all `FIOPRIMS.1`
+ever differed by, and it comes free with the shape.
+
+`FPUT` (`PASCALSY.8`) went in at the same time -- UCSD's own body with
+the soft-buffer arm lifted out into `CXP 2,5`, exact.
+
+### 232a. A `USES` zeroes `PROCTABLE[2..5]` of the current segment
+
+This is the trap, and it is worth stating plainly because the first
+compile hid it as four *unrelated* regressions. `GETTEXT` sets
+`NEXTPROC := 2` before re-parsing the interface text, and every
+procedure heading `PROCDECLARATION` reads runs `PROCTABLE[NEXTPROC] :=
+0`. `PROCTABLE` is one global array; `FINISHSEG` reads it at the very
+end of the compilation to emit the segment's jump table. So a `USES` of
+a four-procedure unit, placed anywhere after segment 0's procedures 2-5
+have been compiled, silently empties their jump-table entries.
+
+The first attempt put the `USES` in `FGET`, near the end of the file,
+and `EXECERROR`, `FINIT`, `FRESET` and `FOPEN` all came back as empty
+procedures -- four losses that look like a scope bug and are one
+line of `PROCDECLARATION`. Putting `FPUT`'s completion first among the
+41, ahead of `EXECERROR`'s, fixes it: the zeroing then hits entries
+still zero from their own `FORWARD`s, and the four bodies fill them in
+afterwards. `FPUT` claims no nested procedures, so moving it is free
+(finding 202f).
+
+### 232b. `FGET` cannot be reached in one compilation
+
+Not "not written yet" -- **cannot**, with one source file and one run
+of the shipped compiler, and the two constraints that collide are both
+already verified:
+
+* `FGET` needs a `USES`, and by 232a that `USES` must precede segment
+  0's procedures 2-5, the first of which is `EXECERROR`.
+* `FGET`'s completion cannot move there. Its nested `EXECGETCH` must
+  claim procedure **56**, and a body's nested procedures claim their
+  numbers where the body is written (finding 199), which pins this
+  completion after `FBLOCKIO`'s -- fourteen nested claims later.
+
+So `EXECERROR` would have to be both *before* `FGET`, to keep its own
+nested 51 and 52, and *after* it, to survive the zeroing. No ordering
+satisfies both, and no other procedure can hold the `USES` on `FGET`'s
+behalf: the imported names land in the scope of the procedure whose
+declaration part the `USES` appears in.
+
+What that says about Apple's own build is the interesting part. The
+shipped dictionary already refuses a single plain compile in two other
+ways -- `SEGKIND` 6 on segment 2 with `TEXTADDR` 0 (an intrinsic unit's
+kind with no interface text, which `UNITPART` never writes), and a
+slot 15 holding 5080 bytes of segment 0's code with `TEXTADDR[0]` = 4,
+which nothing in the compiler produces. `SEGSUSED` bit 2 is set, and
+`USEUNIT`'s `IF LSEPPROC THEN SEGSUSED := SEGSUSED + [SEG]` is the only
+line that sets it, so a `USES` did run. **128K.PASCAL was not written
+by one compile**, and `FGET` is where that stops being a curiosity
+about the dictionary and starts costing a procedure.

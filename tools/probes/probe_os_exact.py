@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-odd" / \
+RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-unit" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -107,6 +107,12 @@ EXACT = [
     # compile; FILEPROC is now complete, all 8.
     "FIOPRIMS.4", "FIOPRIMS.5",
     "FILEPROC.2", "FILEPROC.4",
+    # Finding 232. FIOPRIMS is now the UNIT its SEGKIND says it is,
+    # declared inline between USERPROGRAM's forward heading and its
+    # body -- which is what puts it on segment 2 -- and FPUT USES it.
+    # FIOPRIMS.1 is the unit's initialisation part, so it ends RNP 0
+    # where a SEGMENT PROCEDURE ends RBP 0.
+    "FIOPRIMS.1", "PASCALSY.8",
     "PRINTERR.1",
     "USERPROG.1",
 ]
@@ -115,17 +121,17 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    # The three procedures FIOPRIMS's *shape* blocks, and nothing else
-    # is left. FIOPRIMS is an intrinsic unit (SEGKIND 6 in the shipped
-    # dictionary, finding 200), so its body is a UNIT initialisation
-    # part at PFLEV 1 and ends RNP 0 where a SEGMENT PROCEDURE ends
-    # RBP 0; and FGET/FPUT reach FPWINADV/FPDLE/FPPEEK/FPWINOUT by
-    # CXP 2,n, which needs those four names visible outside the
-    # segment. FPUT's body is decoded in full and kept in the source
-    # as a comment (finding 224).
-    "FIOPRIMS.1",    # 1 instruction, RBP 0 where Apple has RNP 0
+    # One left, and finding 232b says it cannot be reached in a single
+    # compilation of a single file. FGET needs USES FIOPRIMS to name
+    # the four helpers it calls with CXP 2,n; GETTEXT re-parses the
+    # interface with NEXTPROC := 2, zeroing PROCTABLE[2..5] of the
+    # current segment, so the USES has to precede segment 0's
+    # procedures 2-5 -- and FGET's own completion cannot move there,
+    # because its nested EXECGETCH must claim procedure 56 and that
+    # fixes its position after FBLOCKIO's. EXECERROR (procedure 2)
+    # would have to be both before FGET, for its own nested 51/52,
+    # and after it, to survive the zeroing.
     "PASCALSY.7",    # FGET: 1 against Apple's 234, still a stub
-    "PASCALSY.8",    # FPUT: 1 against Apple's 46, blocked not unknown
 ]
 
 fail = []
