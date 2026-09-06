@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-05-pascalsystem-getcmd-libs" / \
+RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-getcmd-complete" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -58,6 +58,12 @@ EXACT = [
     # children could not be written before .11.
     "GETCMD.13", "GETCMD.14", "GETCMD.15", "GETCMD.16", "GETCMD.17",
     "GETCMD.18", "GETCMD.11",
+    # Finding 228: GETCMD is complete, all 27 of its procedures. The
+    # segment body (.1) went last on purpose -- every CLP in it is a
+    # procedure number, and a wrong one would have compiled as quietly
+    # as a right one until all 26 callees were real.
+    "GETCMD.25", "GETCMD.27", "GETCMD.1",
+    "GETCMD.20", "GETCMD.21",
     # INITIALIZE is complete: all 11 of its procedures.
     "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",
@@ -95,7 +101,6 @@ EXACT = [
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
 STILL_DIFFERS = [
-    "GETCMD.20",     # STARTCOMPILE: still a stub, 342 instructions
     "FIOPRIMS.5",    # 3 instructions against Apple's 275, still a stub
     "FILEPROC.4",    # FPOPEN: 563 against Apple's 473; see finding 220
     # The two procedures FIOPRIMS's shape blocks. FPUT's body is decoded

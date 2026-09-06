@@ -1491,20 +1491,20 @@ a route end to end; everything else is a straight read-and-rebuild.
     Finding 205c gives the wiring an acceptance test of its own, since
     our codefile's `0x120` must come out `0004` too.
     `GETCMD` had that structural pass (finding 225) and went 6 of 27
-    to **22 of 27** (finding 226 added `SYSASSOC`, `.9` and `.22`;
-    finding 227 added `.11` and the whole of `.13`-`.18` in one
-    compile): seven of its procedures are two or three levels
+    to **27 of 27 -- complete** (finding 226 added `SYSASSOC`, `.9`
+    and `.22`; finding 227 `.11` and the whole of `.13`-`.18` in one
+    compile; finding 228 the EXEC pair `.25`/`.27`, the command loop
+    `.1`, and `STARTCOMPILE` `.20`/`.21`): seven of its procedures
+    are two or three levels
     inside the segment rather than one, which `RBP`/`RNP`, the `lex`
     of a global reference, and the call opcode all agree on. `.8`,
     `.17` and `.21` have no frame of their own and read only their
     parent's locals, so nesting them is what makes their operands mean
     anything -- `.17` and `.21` are now waiting on `.16`'s and `.20`'s
     `VAR` blocks specifically, not on decoding.
-    `GETCMD.20` (`STARTCOMPILE`, 342 instructions) is the largest
-    single body left anywhere in the file, and with `.11` closed the
-    five that remain are `.1` (the menu loop, 321), `.20`, `.21`
-    (nested inside `.20`, so waiting on its `VAR` block), `.25` (160)
-    and `.27` (141).
+    Nothing is left in `GETCMD`. Everything still open in the whole
+    file is `FIOPRIMS`'s shape (`PASCALSY.7`/`.8`, `FIOPRIMS.5`,
+    `FIOPRIMS.1`) plus finding 218b's pair and `FILEPROC`'s three.
     `FILEPROC.4` (`FPOPEN`) at 563/473 and `FILEPROC.8` (`FPTITLE`)
     at 168/203 -- real bodies, close, diffs to read rather than
     routines to decode; `.8` also carries finding 220's error-154
@@ -1654,7 +1654,7 @@ a route end to end; everything else is a straight read-and-rebuild.
   the line and error number extracted. Two builds from identical source,
   one each way, differ in 555 bytes and **none of them is inside a
   segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (98 as of finding 227).
+  (103 as of finding 228).
   The slack differs because the SendKeys path leaves its own exec-file text
   in the compiler's memory, which is a good illustration of why a
   whole-file `cmp` is the wrong acceptance test for a codefile.

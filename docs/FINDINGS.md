@@ -19552,3 +19552,81 @@ formal. `.18` calls it with `FTID` and a length of `15`, and Apple's
 own compiler took it without complaint -- the explicit length
 parameter finding 219 read off the call sites is there precisely
 because the formal cannot know the actual's size.
+
+## 228. `GETCMD` is complete -- all 27 procedures
+
+101 -> **103 of 111**, and the segment that had 6 of 27 two sessions ago
+is now 27 of 27. What was left after finding 227 was `.25`/`.27` (the
+EXEC-file pair), `.1` (the command loop) and `.20`/`.21`
+(`STARTCOMPILE`). Everything still open anywhere in the file is now the
+`FIOPRIMS` set and finding 218b's two, and nothing else.
+
+### 228a. Within-clause reversal applies to record fields and to the bits of a packed record
+
+Two one-instruction misses said so, and both were the same mistake.
+
+`GETCMD.25` came out 160/160 on an identical frame with one operand
+wrong: `SLDC 1 | SLDC 4 | LDP` off `SYSCOM^+29` against our `SLDC 2`.
+`MISCINFO` declares seven `BOOLEAN`s in one clause, so they reverse --
+`HASCLOCK` is bit 0 and `NOBREAK` bit 6 -- which puts `SLOWTERM` on bit
+4 and `USERKIND` on bits 7-8. `GETCMD.1` then confirms the second half
+independently: it reads `USERKIND` as `SLDC 2 | SLDC 7 | LDP`, and bit
+7 is only where `USERKIND` lands if the seven ahead of it are reversed.
+
+The reading is better than the guess as well as more correct: the test
+suppresses a long prompt, and it makes sense of `SLOWTERM` in a way it
+never did of `HASLCCRT`.
+
+`GETCMD.1` had the same shape: `INC 2` off a `FIBP` where we wrote
+`INC 1`. `FEOF, FEOLN: BOOLEAN` is one clause, so `FEOLN` is word 1 and
+`FEOF` is word 2 -- and clearing `FEOF` on the three console files at
+the top of the command loop is what the procedure should be doing.
+
+`SEGINFO` is not a counterexample. Its four fields have four different
+types, so they are four clauses, and clauses ascend: `SEGNUM` at bit 0
+through `VERSION` at 13 (finding 205) stands unchanged.
+
+### 228b. The console `FIBP`s, from five statements
+
+`INPUTFIB, OUTPUTFIB, SYSTERM, SWAPFIB: FIBP` is one clause too, so
+`SWAPFIB` is word 55 and `INPUTFIB` word 58. `GETCMD.1` opens by
+clearing `FEOF` on 58, 57 and 56 and then assigning 58 to `GFILES[0]`
+and 57 to `GFILES[1]` -- input-then-output is the only naming of those
+two words that reads as anything, and it agrees with the reversal
+exactly. `GETCMD.22`'s already-exact `LOD 2,55` is `SWAPFIB`, which is
+the other end of the same clause.
+
+### 228c. `STARTCOMPILE`'s parameter carries a marker, not a state
+
+`NEXTST` has to be a `CMDSTATE`: the last thing the body does is
+`SLDL 1 | SRO 1`, assigning the parameter straight into `GETCMD`'s
+result. But `'A'` calls it with `LINKANDGO` and `'C'` with `COMPONLY`,
+and `LINKANDGO` here means only "assemble" -- it picks `ASSMBLER` over
+`COMPILER` and the word `Assembling` over `Compiling`, and three
+instructions before the result is stored it is normalised back to
+`COMPONLY`. No caller ever sees `LINKANDGO` come back out. That is why
+`GETCMD.1`'s own `LASTST IN [LINKANDGO, LINKDEBUG]` test is not
+contradicted by it.
+
+### 228d. `IF cond THEN GOTO 1 ELSE ...` has a signature
+
+`STARTCOMPILE` has one `LABEL 1` and six paths into it. Where the
+`GOTO` is a whole then-part, the binary shows a `UJP` to the label
+immediately followed by a second `UJP` that nothing can reach: the
+compiler emits its skip-the-else jump whether or not the then-part can
+fall out of. Two adjacent `UJP`s with different targets are that shape,
+and are worth recognising before reading them as control flow that
+exists.
+
+### 228e. One number reproduced but not explained
+
+`STARTCOMPILE`'s `data=396` comes out exact. 198 words: declarations
+fill `2`-`59`, and the `CONCAT` temporary starts at `60` as allocation
+order predicts. But the `COPY` temporary nested inside that same
+statement is at `188`, not `80`, so
+`CONCAT(COPY(FILENAME[WHICH], 1, POS(':', FILENAME[WHICH])),
+'SYSTEM.SWAPDISK')` claims 128 words -- half a `STRING[255]` -- where
+finding 227d's rule predicts twenty. Apple's compiler produces it from
+this source and the bytes match, so it is not a reconstruction error;
+it is a gap in the temporary-sizing rule, recorded rather than papered
+over.
