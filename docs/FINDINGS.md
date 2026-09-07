@@ -20348,3 +20348,57 @@ The lesson is CLAUDE.md's rule 5 in a place it is easy not to look for: a
 check that cannot distinguish "the guest never spoke" from "the host could
 not listen" is worth nothing, and every check run here until `netstat` was
 of the first kind.
+
+## 237. The assembler skeleton on Apple's own compiler: the shape is right
+
+**VERIFIED BINARY FACT**, Apple's real 1.3 `SYSTEM.COMPILER` under the
+emulator, `acceptance/2026-09-07-assembler-skeleton/` -- 672 lines, **zero
+errors**, first run. This is finding 235's reading of the file put to the
+only test that counts.
+
+Almost every body in it is a stub, so a count of exact procedures is not
+what the run is evidence for. It is evidence for the **shape**, which is the
+part that cannot be repaired later one procedure at a time: get the segment
+numbering, the nesting or the declaration order wrong and every `CGP`,
+`CLP` and `CXP` written afterwards is wrong with it, however well each body
+reads.
+
+| claim | result |
+|---|---|
+| six segments, Apple's names, numbers and `SEGKIND` | `TLA` 1, `INITIALI` 7, `SYMTBLDU` 8, `PROCEND` 9, `ASSEMBLE` 10, `PRINTERR` 11, all `LINKED` |
+| Apple's procedure counts | 38, 6, 3, 9, 33, 1 |
+| lex level and `PARAM SIZE`, all 90 shared procedures | not one disagreement |
+| `TLA.1` | **instruction- and frame-identical**, 37 instructions, `params`/`data` 4/4430 |
+
+`TLA.1` landing exact on the first compile is the load-bearing one. Three
+separate things have to be right for it and each fails visibly:
+
+* **The 2215-word `VAR` block.** `data 4430` only comes out if all 112
+  declarations allocate at Apple's offsets -- one wrong width and every
+  later `LDO`, `SRO` and `LAO` in the file moves. Finding 235d's balanced
+  sum is confirmed by the compiler that has to allocate it.
+* **The file variables' order.** `BODY2` and `BODY3` walk the `FFILE`
+  chain, which `DECLARATIONPART` builds head-first, so Apple's `FINIT`
+  order 1135, 1095, 73 and the matching `FCLOSE` sweep only come out if the
+  three files are *declared* 73, 1095, 1135. They are, and it does.
+* **`(*$U-*)` with `(*$NS 7*)`.** An ordinary program would have put the
+  segment procedures somewhere else entirely and given `TLA.1` a `NOP`
+  pair and an `XIT`. It ends `RBP 0` with no `NOP`s, as finding 235a said.
+
+### 237a. The two differences, named and exhaustive
+
+Apple's `PASCALIO` is absent -- it cannot be rebuilt from anything on the
+disk set (finding 235b) -- and ours carries a `PASCALSY` host segment of 43
+procedures that Apple's shipped file does not, which is **finding 105a's
+open item appearing in a second file**. It is the same shape there as here:
+a `(*$U-*)` compilation emits a segment for its own outer block, and
+Apple's shipped `SYSTEM.COMPILER` and `SYSTEM.ASSMBLER` both have zero
+addr/length for it. Two files now show it, which makes it a property of how
+Apple built these rather than anything about either program.
+
+`probe_asm_exact.py` checks all of the above on every build, and the
+exhaustive lists are what keep the rest honest -- a comparison that
+tolerated a missing segment could not fail on one. Perturbing it confirms
+each check discriminates: a wrong segment number, a wrong procedure count,
+an unexpected missing segment and `TLA.1` claimed as a stub are all
+refused.

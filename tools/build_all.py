@@ -60,6 +60,11 @@ STEPS = [
     # compiler already reproduces exactly are named, and a named one going
     # missing is a regression however the total moves (finding 201).
     ("OS procedures already exact", "probes/probe_os_exact.py"),
+    # Same for SYSTEM.ASSMBLER, where the claim is the SHAPE rather than a
+    # count of bodies: six segments with Apple's numbers, 90 signatures, and
+    # TLA.1 exact. Get the numbering wrong and every call site written later
+    # is wrong with it (finding 235g).
+    ("the assembler's shape vs the binary", "probes/probe_asm_exact.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     # SYSTEM.ASSMBLER's outer block carries 2215 words of globals and there
