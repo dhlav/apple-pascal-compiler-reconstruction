@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-blockio"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend3"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -102,6 +102,9 @@ EXACT = [
     "PROCEND.2", "PROCEND.9",
     # Finding 247. PROCEND is 7 of 9; only .1 and .3 are left.
     "PROCEND.4",
+    # Finding 248. PROCEND is 8 of 9 -- only its own 520-instruction
+    # body is left.
+    "PROCEND.3",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -116,7 +119,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
 STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "PROCEND.1",
-                 "PROCEND.3", "INITIALI.1", "SYMTBLDU.1", "TLA.14"]
+                 "INITIALI.1", "SYMTBLDU.1", "TLA.14"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.

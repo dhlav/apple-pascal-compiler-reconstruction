@@ -20912,3 +20912,51 @@ it -- the `FJP` targets the instruction that follows it. UCSD has no way
 to call a function as a statement, so an empty `THEN` is how the code
 throws the result away, and the whole procedure runs under `(*$I-*)` with
 `IORESULT` tested by hand instead.
+
+## 248. A placeholder type that worked, until it did not
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-procend3/` -- 1452 lines, zero errors,
+**31 of 95 instruction- and frame-identical, up from 30, none lost**.
+`PROCEND` is **8 of its 9**; only its own 520-instruction body is left.
+
+`PROCEND.3` is the segment's epilogue: clamp the low-water mark to
+`MEMAVAIL`, report it to the listing and the console, close the codefile
+`LOCK`ed, flush the last block, copy one six-word record over another,
+write the segment's length into a table, add it to a running total,
+restore the symbol table and `RELEASE`.
+
+Writing it needed four globals typed, and one of them broke something
+already exact -- which is the finding.
+
+**Global 64 is a `BOOLEAN`.** `PROCEND.3` tests it with a bare
+`LDO 64 | FJP`, which settles it. But `TLA.1`, written in the very first
+session when 64 was still an `INTEGER` placeholder, says
+`IF (G36 > 0) AND ODD(G64)` -- the free cast of finding 231, added
+*because* the placeholder was an `INTEGER` and `AND` demands a `BOOLEAN`.
+With the real type in place that cast is **error 142**, and `TLA.1` no
+longer compiles.
+
+Both spellings emit `LDO 64` and nothing else, so the byte compare could
+never have told them apart, and `TLA.1` was exact either way. **A
+placeholder type can force a workaround that is invisible in the output
+and wrong in the source**, and the only thing that surfaces it is a
+later procedure pinning the real type. Finding 231's cast is still right
+where the operand really is an integer -- `PROCEND.3`'s own
+`IF ODD(G53) THEN` is one, on a byte offset -- but it should be read as
+a signal to check, not a licence.
+
+### 248a. Two globals that are two shapes at once, and one that is one
+
+* **598 and 622 are the same type**: `LAO 622 | LAO 598 | MOV 6` copies
+  one into the other, and `MOV` is assignment, so they cannot differ.
+  `ASSEMBLE.22` reads and writes word 3 of 622 on its own, which is what
+  makes them a record rather than an array -- a constant index off a
+  global record folds into the address, an array subscript does not.
+* **2167 is word-indexed and byte-filled.** `PROCEND.3` stores through
+  `LAO 2167 | LDO 36 | IXA 1`, which is one-word elements, while
+  `PROCEND.9` clears it with `FILLCHAR(..., 102, ...)`. Both come out of
+  `ARRAY [0..50] OF INTEGER`, because `BYTEADDRESS` takes any variable --
+  the same reason `BLOCKIO`'s buffer argument is untyped (finding 247).
+  The `PACKED ARRAY OF CHAR` it had been given fitted one use and was
+  never checked against the other.
