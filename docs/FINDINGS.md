@@ -20621,3 +20621,59 @@ Both compile to real instructions because the compiler folds constant
 *expressions* but not constant *conditions*. What Apple called them is
 **SPECULATION**; that they are declared constants, and which branch each
 selects, is not.
+
+## 242. `SEEK` is a standard procedure, and `PRINTERR` is complete
+
+**VERIFIED SOURCE FACT** and **VERIFIED BINARY FACT**,
+`acceptance/2026-09-07-assembler-printerror/` -- 1073 lines, zero errors,
+**23 of 95 instruction- and frame-identical, up from 22, none lost**, and
+`PRINTERR` is done: its one procedure, the whole segment.
+
+### 242a. The `USES PASCALIO` question, closed
+
+Findings 235b and 240 both left this open: `PROCEND` and `PRINTERR` call
+`CXP 31,2` five times, and a `USES` is legal only at `LEVEL` 0 or 1 and
+only as the first thing in a declaration part, so a segment procedure
+nested in `TLA` cannot have one of its own. **The question does not
+arise.** `SEEK` is a *standard procedure*: `COMPINIT`'s `ENTSTDNAMES`
+registers it in the same list as `RESET`, `GET` and `PUT`, and `ROUTINE`'s
+`GETPUTETC` emits `GENNR(31, 2(*SEEK*))` for it -- a `CXP` with the
+segment number hard-coded. So `SEEK(F, N)` is sugar exactly like `WRITE`,
+and no unit is named anywhere.
+
+Trying the `USES` anyway is what makes this a check rather than a
+reading, and it fails twice over. Apple's compiler does read the unit --
+`PASCALIO [16472 words]` appears in the listing -- and then stops with
+**error 104** on the interface's own first line, `PROCEDURE FSEEK(VAR F:
+FIB`, because re-parsing an interface needs every type it names in scope
+and this program has no reason to declare `FIB`.
+
+One consequence to note rather than fix: `GENNR` does
+`SEGSUSED := SEGSUSED + [FSEG]`, so a file that uses `SEEK` is stamped
+with segment 31 in its dictionary at `$120`. Apple's shipped
+`SYSTEM.ASSMBLER` has `SEGSUSED` **zero** -- consistent with the linker
+having cleared it when it copied `PASCALIO` in, which is the same event
+that turned that segment's `SEGKIND` into `LINKED` (finding 235b).
+
+### 242b. `PRINTERROR`, and a `CLOSE` that is not in the source
+
+364 local words, and the file accounts for 321 of them: `FILESIZE` 300
+plus the 21-word window `FINIT`'s third argument names, and 21 words is a
+`STRING[40]`. `MARK`'s pointer is the next (`LLA 323 | CSP 32`). The
+remaining 42 are declared and never touched by the only procedure in the
+segment, so nothing says what they are and they are written as a filler
+that says so.
+
+Two constructs settle the body:
+
+* **`RESET` and `MARK` are inside `(*$I-*)`**, because neither carries the
+  `CSP 0` that the rest of the file's I/O does -- and immediately after
+  them the procedure tests `IORESULT <> 0` itself, which is exactly the
+  reason to turn the check off (finding 238b's fourth site, found by the
+  same method).
+* **The trailing `CLOSE` is `BODY3`'s, not Apple's.** Apple ends with one
+  `LLA 2 | SLDC 0 | CXP 0,6` and **no** `CSP 0`. Writing `CLOSE(ERRFILE)`
+  in the source produced that call *checked*, followed by the generated
+  one as well -- two closes where Apple has one. The generated sweep
+  closes every `FILE` declared in a block, so an explicit `CLOSE` at the
+  end of a block is always visible as a duplicate.
