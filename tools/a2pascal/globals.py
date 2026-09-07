@@ -171,6 +171,39 @@ def collect(cf, version: str) -> tuple[dict[int, GlobalVar], list[Access], int |
     return table, accesses, outer_words
 
 
+def find_files(cf) -> list[tuple[int, int, int, str]]:
+    """(fib, window, recwords, site) for every FINIT call in a codefile.
+
+    `BODY2` emits `LDA 0,VADDR; LDA 0,VADDR+FILESIZE; <recwords>; CXP 0,3`
+    for each file variable in scope, with an `NGI` after the push when
+    recwords is negative (BODYPART.text, VERIFIED SOURCE FACT). Matching
+    only the negated form finds untyped `FILE`s and silently misses every
+    `INTERACTIVE` (recwords 0) and every `FILE OF T` (recwords > 0).
+
+    recwords is BODY2's own tag: -1 untyped `FILE`, -2 `TEXT`,
+    0 `INTERACTIVE`, otherwise `FILTYPE^.SIZE` in words. It is the only
+    thing in the binary that says how many words a file variable occupies,
+    because only a typed one gets a real window.
+    """
+    out = []
+    for seg in cf.segments:
+        for p in seg.pcode_procedures:
+            st, _ = disassemble(seg.data, p.enter_ic, p.exit_ic, p.jtab)
+            for k in range(len(st) - 3):
+                a, b, c = st[k:k + 3]
+                if not (a.mnemonic == "LAO" and b.mnemonic == "LAO"
+                        and c.mnemonic in ("LDCI", "SLDC")):
+                    continue
+                neg = st[k + 3].mnemonic == "NGI"
+                call = st[k + 4] if neg else st[k + 3]
+                if call.mnemonic != "CXP" or call.operands != [0, 3]:
+                    continue
+                n = c.operands[0]
+                out.append((a.operands[0], b.operands[0], -n if neg else n,
+                            f"{seg.name}.{p.number}"))
+    return out
+
+
 def infer_objects(table: dict[int, GlobalVar], area_words: int | None) -> list[dict]:
     """Group offsets into candidate objects.
 

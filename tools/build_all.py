@@ -68,6 +68,12 @@ STEPS = [
     ("global data map, the assembler", "globalmap.py",
      ["--target", "SYSTEM.ASSMBLER",
       "--disk", "1.1=Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"]),
+    # Half artifact, half probe: it writes the assembler's VAR block out as
+    # Pascal, and refuses to write anything unless every declaration lands
+    # on the offset the binary uses and the last one ends exactly on the
+    # frame. With no source anywhere to name these globals from, that sum is
+    # the only check the block has (finding 235d).
+    ("the assembler's VAR block", "asmvars.py"),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),

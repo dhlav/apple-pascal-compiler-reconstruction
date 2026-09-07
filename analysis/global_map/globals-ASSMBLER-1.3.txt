@@ -148,12 +148,18 @@ File variables, from FINIT(f, window, recwords) call sites:
   The window is always +300: BODY emits `LDA 0,VADDR` then
   `LDA 0,VADDR+FILESIZE`, and compglbls.text has FILESIZE = 300
   (NILFILESIZE = 40). It emits that for every file variable,
-  typed or not -- so only a TEXT or FILE OF T is really 300+
-  words and actually has a window there. The other three
-  addresses below are not objects at all; they land inside LP.
-  Finding 43.
+  typed or not -- so only a TEXT, INTERACTIVE or FILE OF T is
+  really 300+ words and actually has a window there. An
+  untyped FILE is NILFILESIZE words and its window address
+  lands inside whatever follows. Finding 43.
 
-  FIB at word 1095, window buffer at word 1395 (+300), recwords=-1  [text file]   (TLA.1)
+  recwords is BODY2's own tag (VERIFIED SOURCE FACT,
+  BODYPART.text): -1 = untyped FILE, -2 = TEXT,
+  0 = INTERACTIVE, otherwise FILTYPE^.SIZE in words.
+
+  FIB at word 1135, window buffer at word 1435 (+300), recwords=  8  [FILE OF a 8-word type]   (TLA.1)
+  FIB at word 1095, window buffer at word 1395 (+300), recwords= -1  [untyped FILE]   (TLA.1)
+  FIB at word   73, window buffer at word  373 (+300), recwords=  0  [INTERACTIVE]   (TLA.1)
 
 Busiest globals (by total accesses):
 

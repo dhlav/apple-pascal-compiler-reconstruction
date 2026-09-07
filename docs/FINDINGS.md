@@ -20200,6 +20200,26 @@ anywhere to port this `VAR` block from, so the map
 `build_all.py`) is where it has to come from, and a total that balances on
 the first attempt is the reason to trust it (rule 4).
 
+`tools/asmvars.py` writes that block out as Pascal
+(`analysis/reconstruction/asm-globals-1.3.text`, 112 declarations, 2215
+words), and the sum is the only check it has -- so it had to be made one
+that can actually fail. The first version could not: it sized every object
+by the distance to the next touched offset and then "verified" the layout
+by re-adding the same distances, which is arithmetic that cannot come out
+wrong. Rule 5, exactly.
+
+What makes it real is that the three file variables are sized from
+somewhere else. `FILESIZE`, `NILFILESIZE` and `BODY2`'s recwords tag know
+nothing about where the next variable is, and between them the files
+account for 649 of the 2215 words. So the tool now refuses if a
+declaration covers a word the binary addresses in its own right, if a file
+is followed by a gap (a gap is evidence about a *measured* object, never
+about a modelled one), if the outer block's parameter words are not the
+`PARAM SIZE` the codefile records, or if a touched offset falls in no
+declaration. Perturbing `FILESIZE` by one either way, `NILFILESIZE` by one
+either way, or ignoring recwords entirely is refused in every case; before
+those four checks, three of the six perturbations sailed through.
+
 Three file variables, from the three compiler-generated `FINIT` calls at
 the head of `TLA.1`:
 

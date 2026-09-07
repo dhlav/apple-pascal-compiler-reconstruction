@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
-from a2pascal.globals import collect, infer_objects
+from a2pascal.globals import collect, find_files, infer_objects
 from a2pascal.syscall import segment0_procedures, csp_name
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,27 +44,6 @@ def load(fname, target):
     disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
     e = disk.find(target)
     return CodeFile(disk.read_blocks(e.first_block, e.blocks))
-
-
-def find_files(cf):
-    """Locate FINIT(f, window, recwords) sites: they name the compiler's files.
-
-    The generated shape is  LAO <fib>; LAO <window>; LDCI n; NGI; CXP 0,3
-    where a negative recwords marks a text file.
-    """
-    from a2pascal.pcode import disassemble
-    out = []
-    for seg in cf.segments:
-        for p in seg.pcode_procedures:
-            st, _ = disassemble(seg.data, p.enter_ic, p.exit_ic, p.jtab)
-            for k in range(len(st) - 4):
-                a, b, c, d, e = st[k:k + 5]
-                if (a.mnemonic == "LAO" and b.mnemonic == "LAO"
-                        and c.mnemonic in ("LDCI", "SLDC") and d.mnemonic == "NGI"
-                        and e.mnemonic == "CXP" and e.operands == [0, 3]):
-                    out.append((a.operands[0], b.operands[0], -c.operands[0],
-                                f"{seg.name}.{p.number}"))
-    return out
 
 
 ap = argparse.ArgumentParser(description=__doc__)
@@ -132,14 +111,20 @@ for ver, fname in list(DISKS.items()):
               "  The window is always +300: BODY emits `LDA 0,VADDR` then",
               "  `LDA 0,VADDR+FILESIZE`, and compglbls.text has FILESIZE = 300",
               "  (NILFILESIZE = 40). It emits that for every file variable,",
-              "  typed or not -- so only a TEXT or FILE OF T is really 300+",
-              "  words and actually has a window there. The other three",
-              "  addresses below are not objects at all; they land inside LP.",
-              "  Finding 43.", ""]
+              "  typed or not -- so only a TEXT, INTERACTIVE or FILE OF T is",
+              "  really 300+ words and actually has a window there. An",
+              "  untyped FILE is NILFILESIZE words and its window address",
+              "  lands inside whatever follows. Finding 43.",
+              "",
+              "  recwords is BODY2's own tag (VERIFIED SOURCE FACT,",
+              "  BODYPART.text): -1 = untyped FILE, -2 = TEXT,",
+              "  0 = INTERACTIVE, otherwise FILTYPE^.SIZE in words.", ""]
+        kind = {-1: "untyped FILE", -2: "TEXT", 0: "INTERACTIVE"}
         for fib, win, rec, site in files:
+            what = kind.get(rec, f"FILE OF a {rec}-word type")
             L.append(f"  FIB at word {fib:>4}, window buffer at word {win:>4} "
-                     f"(+{win - fib}), recwords={rec}"
-                     + ("  [text file]" if rec < 0 else "") + f"   ({site})")
+                     f"(+{win - fib}), recwords={rec:>3}"
+                     f"  [{what}]   ({site})")
 
     # The hottest globals are the compiler's core state; call them out.
     L += ["", "Busiest globals (by total accesses):", ""]
