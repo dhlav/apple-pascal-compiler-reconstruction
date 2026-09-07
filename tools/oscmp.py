@@ -51,8 +51,11 @@ from a2pascal.pcode import disassemble, sweep_exit
 
 from procbuild import listing, strip_targets
 
-APPLE3 = ROOT / "evidence" / "disks" / \
-    "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"
+DISKS_13 = [
+    "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
+    "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
+    "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk",
+]
 SHIPPED = "128K.PASCAL"
 # The default "ours" is whatever compile probe_os_exact currently pins,
 # read out of the probe rather than repeated here: the two used to be
@@ -71,11 +74,22 @@ def _pinned_run() -> Path:
 OURS = _pinned_run()
 
 
-def shipped_codefile() -> CodeFile:
-    """Apple's own 128K OS, read straight off the evidence disk."""
-    d = PascalDisk.from_file(APPLE3)
-    e = d.find(SHIPPED)
-    return CodeFile(d.read_blocks(e.first_block, e.blocks))
+def shipped_codefile(name: str = SHIPPED) -> CodeFile:
+    """Apple's own shipped codefile, read straight off an evidence disk.
+
+    Defaults to the 128K OS. Nothing else in this file is specific to it --
+    the comparison is by (segment name, procedure number) either way -- so
+    `--target SYSTEM.ASSMBLER` scores the assembler with the same code and
+    the same rules rather than a second, subtly different scoreboard.
+    """
+    for fname in DISKS_13:
+        d = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
+        try:
+            e = d.find(name)
+        except Exception:                               # noqa: BLE001
+            continue
+        return CodeFile(d.read_blocks(e.first_block, e.blocks))
+    raise SystemExit(f"{name} is not on any 1.3 evidence disk")
 
 
 def procedures(cf: CodeFile) -> dict[str, tuple]:
@@ -166,10 +180,11 @@ def render(rows: dict[str, dict], verbose: bool) -> None:
         print(f"  {seg}: {len(nums)} -- {nums}")
 
 
-def diff_one(key: str, ours_cf: CodeFile, apple_cf: CodeFile) -> int:
+def diff_one(key: str, ours_cf: CodeFile, apple_cf: CodeFile,
+             target: str = SHIPPED) -> int:
     ours, apple = procedures(ours_cf), procedures(apple_cf)
     if key not in apple:
-        print(f"{key} is not in Apple's {SHIPPED}")
+        print(f"{key} is not in Apple's {target}")
         return 1
     if key not in ours:
         print(f"{key} is not in our build")
@@ -191,8 +206,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("procedure", nargs="?",
                     help="one 'SEGMENT.number' to diff in full")
-    ap.add_argument("--ours", type=Path, default=OURS,
-                    help="the compiled codefile to score (default %(default)s)")
+    ap.add_argument("--ours", type=Path, default=None,
+                    help="the compiled codefile to score (default: the run "
+                         "probe_os_exact.py pins)")
+    ap.add_argument("--target", default=SHIPPED,
+                    help="the shipped codefile to score against "
+                         "(default %(default)s)")
     ap.add_argument("--verbose", action="store_true",
                     help="list the exact procedures too, not just the rest")
     ap.add_argument("--save", type=Path,
@@ -202,16 +221,18 @@ def main() -> int:
                          "was gained and, more importantly, lost")
     args = ap.parse_args()
 
+    if args.ours is None:
+        args.ours = OURS
     if not args.ours.exists():
         raise SystemExit(
             f"{args.ours} does not exist -- compile it in the emulator first "
             "(powershell -File tools/emucompile.ps1 -Name PASCALSY) and "
             "extract it with cp2 from build/disks/HD1.hdv")
     ours_cf = CodeFile(args.ours.read_bytes())
-    apple_cf = shipped_codefile()
+    apple_cf = shipped_codefile(args.target)
 
     if args.procedure:
-        return diff_one(args.procedure, ours_cf, apple_cf)
+        return diff_one(args.procedure, ours_cf, apple_cf, args.target)
 
     rows = compare(ours_cf, apple_cf)
     render(rows, args.verbose)

@@ -20054,3 +20054,187 @@ and check it can fail for the property you care about.** The coverage
 figure could fail on a procedure the lifter could not follow. It could
 not fail on a file the writer had silently thrown away, because it was
 counted before it was written.
+
+## 235. `SYSTEM.ASSMBLER`: its shape, and the unrebuildable segment
+
+**VERIFIED BINARY FACT** except where marked. The survey that has to exist
+before a line of `TLA.text` is written: what the file is made of, how its
+procedures nest, where its 2215 words of globals go, and which part of it
+Apple's own tools cannot be made to reproduce.
+
+### a. Seven segments, 95 procedures
+
+| slot | name | seg | blk | bytes | procs | SEGINFO |
+|---|---|---|---|---|---|---|
+| 0 | `PASCALIO` | 31 | 48 | 572 | 5 | **2** |
+| 1 | `TLA` | 1 | 1 | 10176 | 38 | 6 |
+| 2 | `INITIALI` | 7 | 21 | 2568 | 6 | 6 |
+| 3 | `SYMTBLDU` | 8 | 27 | 1088 | 3 | 6 |
+| 4 | `PROCEND` | 9 | 30 | 3224 | 9 | 6 |
+| 5 | `ASSEMBLE` | 10 | 37 | 4554 | 33 | 6 |
+| 6 | `PRINTERR` | 11 | 46 | 192 | 1 | 6 |
+
+`SEGKIND` is 0 (`LINKED`) for all seven, and `SEGSUSED` at `$120` is zero.
+The program is `PROGRAM TLA` -- the name in the segment dictionary is the
+program identifier, not a file name -- and it is **not** a `(*$U-*)`
+compilation: `INITSCALARS` sets `SEG := 1; NEXTSEG := 7` for an ordinary
+program, so the outer block is segment 1 and the five `SEGMENT PROCEDURE`s
+take 7, 8, 9, 10, 11 **in declaration order**. `TLA.1` calls them
+`CXP 7,1`, `CXP 10,1`, `CXP 8,1`, `CXP 9,1`, which fixes the declaration
+order as `INITIALIZE`, `SYMTBLDUMP`, `PROCEND`, `ASSEMBLE`, `PRINTERROR`
+regardless of the order the bodies are used in.
+
+### b. `PASCALIO` is not the shipped library's `PASCALIO`
+
+This is the finding that costs something, so it is worth stating exactly.
+Only one library routine is called at all -- `CXP 31,2`, five times, from
+`PROCEND.1`, `PROCEND.6`, `PROCEND.7`, `PROCEND.8` and `PRINTERR.1` --
+but the whole segment is copied in, and the copy does not match what
+1.3 ships:
+
+| copy | bytes | procs | signatures | SEGINFO |
+|---|---|---|---|---|
+| `SYSTEM.LIBRARY` 1.1 | 1238 | 4 | (0,0) (4,10) (4,10) (10,44) | 1 |
+| `SYSTEM.ASSMBLER` 1.1 | 1238 | 4 | *identical bytes to the above* | 1 |
+| `SYSTEM.LIBRARY` 1.3 | 2070 | 9 | 1.1's 4, +(6,14) (24,42) (8,6) (8,12) (10,0) | 6 |
+| `SYSTEM.ASSMBLER` 1.3 | **572** | **5** | (0,0) (4,10) (8,6) (8,12) (10,0) | **2** |
+
+1.1 is the easy case and it establishes the mechanism: the assembler's
+`PASCALIO` is **byte-identical** to the library's, so `SYSTEM.LINKER`
+copies the segment in verbatim, SEGINFO version and all.
+
+1.3 is not. The assembler's five procedures are LIB 1.3's 1, 2, 7, 8, 9 by
+signature -- renumbered 1..5, which a linker does not do -- and comparing
+the instruction text says why:
+
+* `ASM.1` = `LIB.1`, `ASM.3` = `LIB.7`, `ASM.5` = `LIB.9`, identical.
+* `ASM.4` differs from `LIB.8` in **one operand**: `CGP 5` where the
+  library has `CGP 9`. Same source, compiled where its sibling was
+  numbered 5 instead of 9.
+* `ASM.2` differs from `LIB.2` in the **body**: 215 instructions against
+  209, with a `CXP 0,49` guard and a `LOD 2,1 | SLDC 8 | STO` error
+  return that the assembler's copy does not have, replaced by a
+  different tail. Two versions of the same routine, not two compiles.
+
+**STRONG INFERENCE**: 1.3's `SYSTEM.ASSMBLER` was recompiled by 1.3's
+compiler (its own six segments are SEGINFO 6) but linked against a
+five-procedure `PASCALIO` left over from the 1.1 era (SEGINFO 2 -- written
+by 1.1's compiler), not against the nine-procedure `PASCALIO` that 1.3
+actually ships. The build environment still had the old library on it.
+
+The consequence is concrete and is not a matter of trying harder: **the
+`PASCALIO` segment of `SYSTEM.ASSMBLER` cannot be produced by linking
+against any binary on the 1.3 disk set.** It would need a source that no
+longer exists, compiled by 1.1's compiler. The other six segments -- 90 of
+the 95 procedures -- are unaffected, and the file's own `TLA` segment is
+still reachable in full. Say so rather than let a whole-file `cmp` failure
+look like a reconstruction error later. Compare against
+`SYSTEM.LIBRARY`'s own `PASCALIO` and the three differences above are
+what a link would introduce.
+
+Two further facts pin it down. The five procedures are exactly the
+**transitive closure of `FSEEK`**: `FSEEK` calls `SUPER_MOD` and
+`SUPER_DIV` (`CGP 4`, `CGP 3` in the assembler's numbering, `CGP 8`,
+`CGP 7` in the library's), `SUPER_DIV` calls the unexported helper that
+is the library's procedure 9, and nothing else is reachable. The
+interface names procedures 2-8 -- `FSEEK`, `FREADREAL`, `FWRITEREAL`,
+`FREADDEC`, `FWRITEDEC`, `SUPER_MOD`, `SUPER_DIV` -- and the four the
+assembler does not have are precisely the four `FSEEK` does not need.
+A linker does not do that; it copies whole segments, which is what the
+1.1 pair shows it doing. So this is a `PASCALIO` **source** cut down to
+`FSEEK` alone, compiled separately.
+
+And a scan of every codefile on all six evidence disks finds a
+`PASCALIO` segment in exactly four places -- 1.1's `SYSTEM.LIBRARY` and
+1.1's `SYSTEM.ASSMBLER` (the same 1238 bytes), 1.3's `SYSTEM.LIBRARY`
+(2070), and 1.3's `SYSTEM.ASSMBLER` (572). The 572-byte one exists
+nowhere else. `SEGKIND` is the last piece: both libraries hold
+`PASCALIO` as `LINKED_INTRINS` (6) while both assemblers hold it as
+`LINKED` (0), so Apple linked the unit in rather than leaving it
+intrinsic in both releases -- and in 1.3 linked in a library that is
+not on the disk.
+
+What this costs in practice is smaller than it sounds. `FSEEK` is
+procedure 2 of `PASCALIO` in the shipped 1.3 library as well, so a
+reconstruction that says `USES PASCALIO` and links against the shipped
+`SYSTEM.LIBRARY` emits the same five `CXP 31,2` instructions. Only the
+copied segment differs -- 2070 bytes where Apple has 572, and SEGINFO 6
+where Apple has 2.
+
+### c. Nesting, and why most of `TLA` must be `FORWARD`
+
+Nesting is read off lex level, `enter_ic` order (a parent's body is
+emitted *after* its children's) and the call opcodes -- `CLP` reaches a
+child, `CIP` a sibling, `CGP` a lex-1 procedure from below (finding
+"nesting from lex operands"):
+
+* `TLA`: 23 in 4; 24, 25 in 15; 26, 27, 28 in 14; 30 in 16; 31, 32, 33
+  in 18; 34-38 in 17. 2-22 and 29 are lex 1.
+* `ASSEMBLE`: 3 in 2; 18-31 in 17; 24 in 23. 2-17, 32, 33 are lex 1.
+* `PROCEND`: 4, 5, 7, 8 in 3; 6 in 5. 2, 3, 9 are lex 1.
+* `INITIALI`: 2-6 in 1. `SYMTBLDU`: 2, 3 in 1.
+
+A procedure number is claimed at its **heading**, immediately (finding
+199). `TLA`'s procedure 4 has a nested child numbered **23**, so every
+heading from 2 to 22 was already seen when 4's body was compiled. Since
+4's own body comes before 5..22 in any plain source order, headings 5..22
+must be `FORWARD` declarations placed ahead of procedure 4's completion.
+Procedure 29 is the mirror image: it is lex 1 but numbered after the
+nested children 23-28, so it is declared *plainly*, after the completions
+of 14 and 15 -- one `FORWARD` too many and it would land on 23.
+
+The order the completions have to run in falls straight out of the nested
+numbers: 4 (claims 23), 15 (24, 25), 14 (26, 27, 28), then 29's plain
+declaration, then 16 (30), 18 (31, 32, 33), 17 (34-38).
+
+### d. The global area balances exactly: 2217 words
+
+`TLA.1` has `params 4, data 4430`, so the global activation record is
+(4 + 4430) / 2 = **2217** words (finding 46), of which words 1-2 are the
+two `COMPINIT` reserves before any declaration. 122 distinct offsets are
+touched. Laying the inferred objects out end to end from word 3 accounts
+for **2217 of 2217** with three gaps -- one word at 30, eighteen at
+604-621, eight at 2128-2135 -- and no overlaps. There is no source
+anywhere to port this `VAR` block from, so the map
+(`analysis/global_map/globals-ASSMBLER-1.3.txt`, now built by
+`build_all.py`) is where it has to come from, and a total that balances on
+the first attempt is the reason to trust it (rule 4).
+
+Three file variables, from the three compiler-generated `FINIT` calls at
+the head of `TLA.1`:
+
+| FIB | window | recwords | size | what it is used with |
+|---|---|---|---|---|
+| 73 | 373 | 0 (`INTERACTIVE`) | 300 | `FWRITELN` x33, `FWRITESTRING` x33 |
+| 1095 | (1395) | -1 (untyped `FILE`) | 40 | `FBLOCKIO`, `FCLOSE` |
+| 1135 | 1435 | 8 | 300 | `FOPEN`, `FPUT`, `FCLOSE`, and all five `CXP 31,2` |
+
+The untyped file's "window" at 1395 is the fiction finding 43 already
+describes -- `BODY` emits `VADDR+FILESIZE` for every file variable, but a
+`FILE` with no component type is only `NILFILESIZE` = 40 words, so 1395
+lands *inside* the typed file at 1135. That is what keeps the sum exact:
+1095..1134 is 40 words, 1135..1434 is 300, and the real 8-word window
+follows at 1435..1442.
+
+### e. `TLA.1` decodes completely
+
+37 instructions, three `FINIT`s in and three `FCLOSE`s out, `RBP 0` last:
+
+```pascal
+BEGIN
+  INITIALIZE;
+  REPEAT
+    ASSEMBLE;
+    IF (<g36> > 0) AND <g64> THEN SYMTBLDUMP;
+    PROCEND
+  UNTIL <g4> = 61
+END.
+```
+
+`FJP $2739` targets the `CXP 10,1` at the top of the loop, which is the
+`REPEAT` (a backward branch is a loop condition first). `LDO 36 | SLDC 0 |
+GRTI | LDO 64 | LAND` is `AND` on values, not a short-circuit chain, so
+the guard is one `IF` with two operands rather than nested ones. `<g4>` is
+the busiest scalar in the file after `<g3>` -- 70 reads, 42 writes, 30
+procedures -- and 61 is almost certainly an end-of-input token
+(**SPECULATION** until the scanner is read).

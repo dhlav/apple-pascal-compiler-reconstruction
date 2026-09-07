@@ -1,4 +1,13 @@
-"""Emit the compiler's global data map for both Apple Pascal versions."""
+"""Emit a codefile's global data map for both Apple Pascal versions.
+
+Written for `SYSTEM.COMPILER`, which is still the default, but nothing in
+it is compiler-specific: the offsets come out of the binary and the only
+names it knows are the OS entry points every program calls. Pass
+`--target` for another file. `SYSTEM.ASSMBLER` needs exactly this -- its
+outer block carries 2215 words of globals and there is no source anywhere
+to port them from, so the map is where the VAR block has to come from.
+"""
+import argparse
 import sys
 from collections import Counter
 from pathlib import Path
@@ -31,9 +40,9 @@ def pretty(detail: str) -> str:
     return detail
 
 
-def load(fname):
+def load(fname, target):
     disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / fname)
-    e = disk.find("SYSTEM.COMPILER")
+    e = disk.find(target)
     return CodeFile(disk.read_blocks(e.first_block, e.blocks))
 
 
@@ -58,18 +67,37 @@ def find_files(cf):
     return out
 
 
-for ver, fname in DISKS.items():
-    cf = load(fname)
+ap = argparse.ArgumentParser(description=__doc__)
+ap.add_argument("--target", default="SYSTEM.COMPILER",
+                help="codefile to map (default %(default)s)")
+ap.add_argument("--disk", action="append", metavar="VER=FILE",
+                help="override the disk holding it, e.g. "
+                     "1.3='Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk'")
+args = ap.parse_args()
+TARGET = args.target
+for spec in args.disk or []:
+    ver, _, fname = spec.partition("=")
+    DISKS[ver] = fname
+# One output name per file: the compiler keeps the bare name it has always
+# had, so every finding that cites globals-1.3.txt still resolves.
+SUFFIX = "" if TARGET == "SYSTEM.COMPILER" else f"-{TARGET.rsplit('.', 1)[-1]}"
+
+for ver, fname in list(DISKS.items()):
+    try:
+        cf = load(fname, TARGET)
+    except Exception:                                   # noqa: BLE001
+        print(f"[{ver}] {TARGET} is not on {fname} -- skipped")
+        continue
     table, accesses, area = collect(cf, ver)
     objects = infer_objects(table, area)
     files = find_files(cf)
 
     touched = len(table)
     covered = sum(o["words"] for o in objects if o["words"])
-    L = [f"Apple Pascal {ver} SYSTEM.COMPILER -- global data map",
+    L = [f"Apple Pascal {ver} {TARGET} -- global data map",
          "",
          f"Global area: offsets 1..{area} ({area * 2} bytes), from PARAM SIZE",
-         f"plus DATA SIZE of the outermost block (PASCALCO, lex level 0).",
+         f"plus DATA SIZE of the outermost block (lex level 0).",
          f"Both words count: a UCSD activation record holds the block's",
          f"parameters and its locals in one offset space starting at 1, and",
          f"DATA SIZE alone is short by the two parameter words (finding 46).",
@@ -139,7 +167,7 @@ for ver, fname in DISKS.items():
                 L.append(f"  word {o['offset']:>4} -> OS.{n} {SEG0.get(n, '?')}"
                          f"   ({e.site})")
 
-    path = OUT / f"globals-{ver}.txt"
+    path = OUT / f"globals{SUFFIX}-{ver}.txt"
     path.write_text("\n".join(L), encoding="ascii")
     print(f"[{ver}] area={area} words, {touched} offsets touched, "
           f"{covered} words covered -> {path.name}")

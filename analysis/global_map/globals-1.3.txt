@@ -1,7 +1,7 @@
 Apple Pascal 1.3 SYSTEM.COMPILER -- global data map
 
 Global area: offsets 1..1357 (2714 bytes), from PARAM SIZE
-plus DATA SIZE of the outermost block (PASCALCO, lex level 0).
+plus DATA SIZE of the outermost block (lex level 0).
 Both words count: a UCSD activation record holds the block's
 parameters and its locals in one offset space starting at 1, and
 DATA SIZE alone is short by the two parameter words (finding 46).

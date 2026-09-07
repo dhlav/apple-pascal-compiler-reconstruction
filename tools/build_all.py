@@ -62,6 +62,12 @@ STEPS = [
     ("OS procedures already exact", "probes/probe_os_exact.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
+    # SYSTEM.ASSMBLER's outer block carries 2215 words of globals and there
+    # is no source anywhere to port them from, so this map is where its VAR
+    # block has to come from (finding 235).
+    ("global data map, the assembler", "globalmap.py",
+     ["--target", "SYSTEM.ASSMBLER",
+      "--disk", "1.1=Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"]),
     ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),
@@ -105,9 +111,13 @@ STEPS = [
     ("OSPROC43 vs the binaries", "probes/probe_osproc43.py"),
 ]
 
-for label, script in STEPS:
+for step in STEPS:
+    # A step is (label, script) or (label, script, [args...]). The third
+    # element exists because globalmap.py maps whichever codefile it is
+    # pointed at, and the assembler needs a run of its own.
+    label, script, extra = (*step, [])[:3]
     print(f"\n=== {label} ({script})")
-    r = subprocess.run([sys.executable, "-u", str(HERE / script)],
+    r = subprocess.run([sys.executable, "-u", str(HERE / script), *extra],
                        capture_output=True, text=True)
     sys.stdout.write(r.stdout[-2000:])
     if r.returncode:
