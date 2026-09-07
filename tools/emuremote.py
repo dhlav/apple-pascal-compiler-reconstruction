@@ -44,6 +44,26 @@ volume rebuild:
 A transcript is always written, including when a run fails or times out --
 that is what makes `observe` rarely necessary, since a missed prompt leaves
 the real text on disk to read.
+
+**When the transcript comes back EMPTY, check the port reservation first.**
+An empty transcript with `never saw 'Command:'` is not a Pascal problem and
+not a REDIRIO problem: screenshot the emulator and REDIRIO will be sitting
+there having printed `console -> REMIN:/REMOUT: now`, exactly as it should.
+What has happened is that AppleWin could not bind 1977 and did not say so,
+so no listener ever appears and this client polls `SYN_SENT` until the
+deadline. Port 1977 is inside Windows' TCP dynamic range, which WinNAT and
+Hyper-V allocate blocks out of, and a machine that has been rebooted or has
+had a container feature enabled can lose the port at any time:
+
+    netsh int ipv4 show excludedportrange protocol=tcp   # 1977 must be here
+    netsh int ipv4 show dynamicport tcp                  # starts at 1025
+
+The fix is an administered reservation for 1977 (finding 236). Two things
+that will mislead while diagnosing this: a **closed** loopback port on
+Windows times out rather than refusing, so a connect timeout says nothing
+either way; and stray background runs of this script pile up, each racing
+the others over `HD1.hdv` and `SYSTEM.STARTUP` in its own `finally`, so kill
+them before drawing any conclusion.
 """
 import argparse
 import codecs

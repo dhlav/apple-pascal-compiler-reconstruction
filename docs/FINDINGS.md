@@ -20294,3 +20294,57 @@ the guard is one `IF` with two operands rather than nested ones. `<g4>` is
 the busiest scalar in the file after `<g3>` -- 70 reads, 42 writes, 30
 procedures -- and 61 is almost certainly an end-of-input token
 (**SPECULATION** until the scanner is read).
+
+## 236. The remote console's silent failure: Windows had taken port 1977
+
+**VERIFIED, host side, and not a fact about Apple** -- but findings 210-213
+rest the whole acceptance tier on one TCP port, and this is how that port
+goes away without anything reporting it.
+
+The symptom is a completely empty transcript and
+`never saw 'Command:'`. Everything that could be checked looked right:
+`SYSTEM.ASSMBLER`'s source was on the volume, `REDIRIO.CODE` parsed as
+three procedures (its program body and `PEEKW`/`POKEW`, which is exactly
+what the source has), `SYSTEM.STARTUP` was installed, AppleWin was running
+and responding with `-s2 ssc` on its command line, and the registry had
+`Slot 2\Card type` = 2 with `Serial Port Name` = `TCP`. A screenshot of the
+emulator settled that the guest was fine too: REDIRIO had printed its unit
+table -- unit 6 read 0 and unit 7 write 0, its own "untouched" markers --
+and then `console -> REMIN:/REMOUT: now`. The redirect had happened.
+
+What `netstat` showed was the answer: repeated `SYN_SENT` from the client
+and **nothing in `LISTENING` on 1977, ever**, through a whole 300-second
+run. AppleWin binds the port lazily on the first SSC register access
+(finding 210) and reports nothing at all when the bind fails, so a failed
+bind is indistinguishable from a guest that never touched the card.
+
+The cause is Windows, not AppleWin. 1977 sits inside the TCP dynamic port
+range -- `netsh int ipv4 show dynamicport tcp` gives a start of 1025 and
+64510 ports -- and WinNAT and Hyper-V reserve blocks out of that range for
+themselves. Once a block covering 1977 is held, `bind()` fails for
+everybody else. The fix is an administered exclusion, and
+`netsh int ipv4 show excludedportrange protocol=tcp` is where to see it:
+
+    Start Port    End Port
+    ----------    --------
+          1977        1977     *
+    * - Administered port exclusions.
+
+**Two things that actively mislead while diagnosing this**, both wasted
+time here:
+
+* A **closed** loopback port on this machine *times out* rather than
+  refusing. A connect timeout to 127.0.0.1:1977 therefore proves nothing;
+  probing a port known to be listening is what tells you the network path
+  is fine.
+* Stray background runs of `emuremote.py` accumulate. Each one polls the
+  same port, and each one's `finally` calls `shutdown()` and `disarm()` --
+  killing AppleWin and stripping `SYSTEM.STARTUP` off the volume out from
+  under whatever else is running. `netstat` showing *two* `SYN_SENT`
+  sockets from different local ports is the tell. Kill them before drawing
+  any conclusion from a run.
+
+The lesson is CLAUDE.md's rule 5 in a place it is easy not to look for: a
+check that cannot distinguish "the guest never spoke" from "the host could
+not listen" is worth nothing, and every check run here until `netstat` was
+of the first kind.

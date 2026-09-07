@@ -143,6 +143,17 @@ a2pascal can't) and diff.
 
 ### Emulator pitfalls (all hit for real)
 
+- **Windows reserves port 1977 out from under AppleWin.** The
+  remote console dies silently: REDIRIO boots and prints
+  `console -> REMIN:/REMOUT: now`, then nothing, and the client
+  only ever reaches `SYN_SENT` because AppleWin's bind failed and
+  it does not say so. 1977 is inside the TCP dynamic range
+  (`netsh int ipv4 show dynamicport tcp` -- 1025 up), so WinNAT and
+  Hyper-V take blocks out of it. Check with `netsh int ipv4 show
+  excludedportrange protocol=tcp`: an administered reservation for
+  1977 must be there (finding 236). Note also that a **closed**
+  loopback port on this machine times out rather than refusing, so
+  a connect timeout is not evidence of anything.
 - **AppleWin does not flush a written image until eject or exit.** The
   scripts close it before you read the disk. Do not read `WORK2.dsk` while
   it is running.
