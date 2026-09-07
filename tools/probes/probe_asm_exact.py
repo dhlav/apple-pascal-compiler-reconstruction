@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-07-assembler-record" / "ASSMBLER.CODE"
+RUN = ROOT / "acceptance" / "2026-09-07-assembler-dispatch" / "ASSMBLER.CODE"
 TARGET = "SYSTEM.ASSMBLER"
 
 # (name, segment number, SEGKIND, p-code procedures) -- Apple's, and ours
@@ -72,6 +72,12 @@ EXACT = [
     # `TLA.31` writes its enclosing FUNCTION's result from inside a nested
     # procedure and then EXITs it.
     "ASSEMBLE.17", "ASSEMBLE.21", "ASSEMBLE.29", "ASSEMBLE.32", "TLA.31",
+    # Finding 240: ASSEMBLE.17's whole nested family, all fourteen of
+    # 18..31, so the segment's dispatcher and every arm under it are
+    # Apple's bytes. .23 is the largest at 165 instructions.
+    "ASSEMBLE.22", "ASSEMBLE.23", "ASSEMBLE.24", "ASSEMBLE.25",
+    "ASSEMBLE.26", "ASSEMBLE.27", "ASSEMBLE.28", "ASSEMBLE.30",
+    "ASSEMBLE.31",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -85,7 +91,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.22", "PROCEND.1",
+STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "PROCEND.1",
                  "INITIALI.1", "SYMTBLDU.1", "PRINTERR.1"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple

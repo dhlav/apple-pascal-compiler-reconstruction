@@ -20516,3 +20516,55 @@ LAST name takes the LOWEST offset.**
   (segment, procedure) pair. So `T18` is a `FUNCTION` returning `BOOLEAN`,
   written from a nested procedure as `T18 := FALSE; EXIT(T18)`. Its
   `FJP`-tested call sites agree.
+
+## 240. `ASSEMBLE`'s dispatcher and every arm under it
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-dispatch/` -- 967 lines, zero errors,
+**20 of 95 instruction- and frame-identical, up from 11, none lost**.
+`ASSEMBLE.17` and the whole of its nested family, all fourteen of 18..31,
+are now Apple's bytes, plus `.16` and `.32`: **17 of `ASSEMBLE`'s 33**.
+The largest is `.23` at 165 instructions.
+
+These fourteen are the 6502 opcode dispatcher -- one arm per addressing
+form -- and writing them as a group is what made them cheap. Six share the
+same four-instruction prologue (`G10.OPBYTE := G3^.A6; IF T18(1) THEN`),
+five share a tail that tests `A18` and calls `A19(1)` or `A20(3)`, and the
+operand check `IF (G3^.ANAME = 'X       ') OR (G3^.ANAME = 'Y       ')`
+appears five times over. Once the first was right the rest were
+transcription.
+
+### 240a. What made the difference in each case
+
+* **A record field passed whole needs a whole-word variant.** `TLA.14`'s
+  only call site is `SLDO 10 | SLDC 1 | SLDC 0 | CXP 1,14`, and passing
+  the record by value emitted `LAO 10` instead. A third variant --
+  `2: (OPWORD: INTEGER)` -- and `T14(G10.OPWORD, 1, 0)` gives `SLDO`,
+  because a full-word field at offset 0 of a global record loads
+  directly. One instruction, and the only one `ASSEMBLE.22` was wrong by.
+* **`G3^.ANAME = 'X       '` is a comparison against the pointer
+  itself.** `SLDO 3 | LPA 'X       ' | EQU BYTE,8` pushes the pointer
+  value as the address of the eight bytes at word 0 -- the ALPHA is the
+  record's first field, so its address *is* the record's. The literal
+  must be padded to eight characters or the types do not match.
+* **Global 622 is a record, not an array.** `MOV 6` copies it whole while
+  `LDO 625 | SLDC 2 | SBI | SRO 625` reads and writes its fourth word on
+  its own, and a constant field offset off a global record folds into the
+  absolute address exactly like that. An `ARRAY` indexed by a constant
+  would not.
+* **Global 685 is `ARRAY [0..5] OF INTEGER`.** `LAO 685 | SLDO 6 |
+  IXA 1 | SIND 0` with no adjustment before `IXA` puts the lower bound at
+  0; a bound of 1 would have cost a subtraction.
+* **`T19` takes five arguments and returns `BOOLEAN`.** `SLDC 0 | SLDC 1 |
+  SLDC 1 | SLDC 0 | LDCI 255 | SLDC 0 | SLDC 0 | CXP 1,19` is five
+  arguments followed by the result's two words, which settles the push
+  order: **arguments first, reservation second**.
+
+### 240b. `CASE` arm numbers are not the arm order
+
+`ASSEMBLE.17`'s ten arms are 2..11 mapping to `A21`, `A22`, `A23`, `A25`,
+`A26`, `A27`, `A28`, `A29`, `A30`, `A31` -- `A24` is missing from the list
+because it is nested *inside* `A23` and called from it twice with
+`CLP 24`, not an arm at all. Reading the jump table as "arms in procedure
+order" would have put every arm after the fourth one procedure too far
+along.
