@@ -20862,3 +20862,53 @@ One ordering detail worth keeping: the guard here is
 takes its operands in source order, so the two really are written
 differently, and copying one to the other would have cost an
 instruction.
+
+## 247. `BLOCKIO`: the mode word, and a `-1` the compiler wrote itself
+
+**VERIFIED SOURCE FACT** (`ROUTINE.text`'s `BLOCKIO`, byte-verified) with
+**VERIFIED BINARY FACT** to match: Apple's own compiler,
+`acceptance/2026-09-07-assembler-blockio/` -- 1418 lines, zero errors,
+**30 of 95 instruction- and frame-identical, up from 29, none lost**, and
+`PROCEND.4` exact on the first compile at 180 instructions. `PROCEND` is
+7 of its 9; only `.1` and `.3` are left.
+
+`BLOCKIO` generates eight words for what the source writes as three or
+four arguments, and reading it settles two things a `CXP 0,28` site cannot
+say on its own:
+
+```pascal
+VARIABLE; LOADADDRESS;              { the file          }
+VARIABLE; BYTEADDRESS;              { the buffer: TWO words, addr + offset }
+EXPRESSION;                         { number of blocks  }
+IF SY = COMMA THEN ... ELSE GENLDC(-1);        { block number }
+IF LKEY = 37 THEN GENLDC(1) ELSE GENLDC(0);    { the mode     }
+GENLDC(0); GENLDC(0);               { the result's two words }
+```
+
+* **Mode 1 is a READ and mode 0 a WRITE**, which is the opposite way round
+  from the obvious guess. `ENTSPCPROCS`'s name list numbers the standard
+  procedures in order, and counting to `BLOCKREA.BLOCKWRI.` gives 37 and
+  38 -- so `LKEY = 37` is `BLOCKREAD`. The same count fixes `SEEK` at 32,
+  `GET` at 34 and `PUT` at 35, which is what `GETPUTETC`'s own `CASE`
+  keys on (finding 242a).
+* **An omitted block number compiles to `LDCI 1 | NGI`.** `GENLDC(-1)`
+  takes the long form because -1 is outside 0..127 (finding 241a), so the
+  encoding that identified a declared `CONST` in `TLA.27` means something
+  else entirely at a `BLOCKIO` site: the *fourth argument is absent*.
+  `PROCEND.9` was written with a `MINUS1` constant that produced the right
+  bytes for the wrong reason and is now written the way Apple wrote it,
+  with three arguments.
+
+That second point is the one worth carrying. **`LDCI 1 | NGI` says a -1
+reached `GENLDC` whole; it does not say where from.** A declared constant
+is one source and a compiler default is another, and the difference is
+only visible from the surrounding call. Getting the right bytes is not
+the same as getting the right reading, and here the two came apart.
+
+### 247a. `IF ... THEN ;` is how a result is discarded
+
+`PROCEND.4` twice does `IF BLOCKREAD(...) = 0 THEN` with **nothing** after
+it -- the `FJP` targets the instruction that follows it. UCSD has no way
+to call a function as a statement, so an empty `THEN` is how the code
+throws the result away, and the whole procedure runs under `(*$I-*)` with
+`IORESULT` tested by hand instead.
