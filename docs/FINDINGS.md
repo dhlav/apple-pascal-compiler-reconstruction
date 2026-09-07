@@ -20815,3 +20815,50 @@ level down: the binary records declaration order, so declaration order is
 recoverable, and it is not free to choose. Both of the other two `CASE`s
 in this procedure were already in Apple's order by luck; this one was
 not, and a run of arms all shifted by one is the signature.
+
+## 246. Three one-instruction differences, three different causes
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-procend2/` -- 1366 lines, zero errors,
+**29 of 95 instruction- and frame-identical, up from 27, none lost**.
+`PROCEND` is 6 of its 9; only `.1`, `.3` and `.4` are left.
+
+`PROCEND.2` was exact first time, 36 instructions. `PROCEND.9` was not,
+and it is worth recording because its three differences were each one
+instruction and each had a different cause -- a reminder that a body can
+be right and its *declarations* still wrong in three unrelated ways at
+once.
+
+| Apple | ours | cause |
+|---|---|---|
+| `LOD 3,8` | `LOD 3,9` | field reversal in the host record |
+| `LDCI 1 \| NGI` | `SLDC 1 \| NGI` | a declared CONST, not a written `-1` |
+| no `CSP 0` | `CSP 0` | the call is inside `(*$I-*)` |
+
+* **`WORKCODE`, not `WORKSYM`.** The host block declares
+  `WORKSYM, WORKCODE: ^ PHYLE` as one clause, so the last name takes the
+  lower offset and word 8 is `WORKCODE` -- which is also the file an
+  assembler would be writing. Finding 239a reaching into a record this
+  reconstruction inherited from the compiler's own skeleton rather than
+  one it derived.
+* **`MINUS1` again**, the constant of finding 241a, in a `BLOCKWRITE`
+  block number.
+* **`(*$I-*)` around the `BLOCKWRITE`**, because the result is tested --
+  finding 238b's rule, and the fifth site found by it.
+
+### 246a. `PROCEND.9` is the pass's own initialisation
+
+Read whole it says what the segment does: `NEW` a 256-word buffer (the
+size is in the `NEW` call, `LDCI 256`, which is what fixes `CODEBUF` at
+one disk block), point global 72 at it, copy the 128-bucket symbol table
+aside, clear the buffer, report `<n> blocks for procedure code` and
+`MEMAVAIL words left` to the listing and to the console, reset seven
+globals to 512 or 1 or 0, clear a 102-byte area, and write block -1 of
+the work codefile. `MEMAVAIL` is `CSP 40`, with no arguments, dropped
+straight into a `WRITELN` list.
+
+One ordering detail worth keeping: the guard here is
+`NOT (G12 AND G68)` where `PRINTERR.1`'s is `NOT (G68 AND G12)`. `LAND`
+takes its operands in source order, so the two really are written
+differently, and copying one to the other would have cost an
+instruction.

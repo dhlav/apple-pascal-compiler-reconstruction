@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-liwriter"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend2"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -98,6 +98,8 @@ EXACT = [
     # body in the file so far. Three nested CASEs on one selector, and
     # the arms are emitted in SOURCE order, not label order.
     "PROCEND.7",
+    # Finding 246. PROCEND is 6 of 9 now; only .1, .3 and .4 are left.
+    "PROCEND.2", "PROCEND.9",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -112,7 +114,8 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
 STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "PROCEND.1",
-                 "INITIALI.1", "SYMTBLDU.1", "TLA.14"]
+                 "PROCEND.3", "PROCEND.4", "INITIALI.1",
+                 "SYMTBLDU.1", "TLA.14"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
