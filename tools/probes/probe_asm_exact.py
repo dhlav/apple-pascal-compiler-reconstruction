@@ -42,7 +42,8 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-07-assembler-printerror" / "ASSMBLER.CODE"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend"
+       / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
 # (name, segment number, SEGKIND, p-code procedures) -- Apple's, and ours
@@ -86,6 +87,10 @@ EXACT = [
     # out to be a standard procedure, so the segment needed no USES at
     # all -- which was the last open structural question about the file.
     "PRINTERR.1",
+    # Finding 243: the first two of PROCEND, and they place its own
+    # frame -- 652 words with a FILE at 343, read off `LDA 3,343` and
+    # `LDA 2,343` in three of its children.
+    "PROCEND.5", "PROCEND.6",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are

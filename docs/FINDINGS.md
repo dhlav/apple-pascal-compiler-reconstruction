@@ -20677,3 +20677,48 @@ Two constructs settle the body:
   one as well -- two closes where Apple has one. The generated sweep
   closes every `FILE` declared in a block, so an explicit `CLOSE` at the
   end of a block is always visible as a duplicate.
+
+## 243. `PROCEND`'s file, placed by its children
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-procend/` -- 1132 lines, zero errors,
+**25 of 95 instruction- and frame-identical, up from 23, none lost**, and
+`PROCEND.1`'s own `data` reaches Apple's 1304 with its body still a stub.
+
+`PROCEND.1` has 652 local words and nothing in `PROCEND.1` itself is
+written yet, but three of its children place the one that matters.
+`LDA 3,343` from `PROCEND.6` and `LDA 2,343` from `.7` and `.8` all count
+up to lex 1, so **local 343 is a `FILE`** -- and the record it holds is
+eight words, read off `SIND 0` for the first and `INC 1` then `IXA 1` for
+the seven after it. `FILESIZE` 300 plus that window puts the file at
+343..650, which leaves 342 words before it and two after that nothing has
+named yet. Both are written as fillers that say so.
+
+`PROCEND.6` is 102 instructions and came out exact on the first compile.
+Three things in it are worth keeping:
+
+* **Three FOR loops, two limit temps.** Its five local words are three
+  declared variables and two hidden `FOR` limits (finding 216), and the
+  third loop reuses the first loop's temp because that `FOR` has gone out
+  of scope by then. Getting the declared three in the right order needed
+  one name per clause again (finding 239a).
+* **The record is `KEY` then seven.** `PROCFILE^.KEY` compiles to
+  `SIND 0` and `PROCFILE^.REFS[J]` to `INC 1 | IXA 1 | SIND 0`, so the
+  field boundary is read rather than guessed -- and the same seven words
+  are the type of the four globals at 629, 636, 643 and 650, which
+  `PROCEND.5` passes to it by `VAR` one after another.
+* **`SEEK` and `GET` are sugar**, as finding 242a established, so nothing
+  here names `PASCALIO`.
+
+### 243a. What `PROCEND.8` will need, recorded rather than guessed
+
+`PROCEND.8` copies **five** words out of the same record with `MOV 5`
+from offset 1, where `PROCEND.6` reads **seven** one-word elements from
+that offset. Both cannot be one field, so the eight-word record is a
+**variant**, and the second variant is a five-word sub-record whose word 0
+carries a one-bit flag (`LLA 3 | SLDC 1 | SLDC 0 | LDP`). `PROCEND.8`
+also reaches a byte array through a pointer global (`LDO 72` as an `STB`
+base) and carries a third constant condition -- `SLDC 0 | FJP`, a literal
+`FALSE` this time, where `TLA.27` had `SLDC 1` (finding 241b). None of
+that is modelled yet; writing it down is what stops the next session
+deriving the record's layout and its field names from each other.
