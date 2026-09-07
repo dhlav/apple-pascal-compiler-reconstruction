@@ -39,9 +39,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
+from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-07-assembler-skeleton" / "ASSMBLER.CODE"
+RUN = ROOT / "acceptance" / "2026-09-07-assembler-bodies" / "ASSMBLER.CODE"
 TARGET = "SYSTEM.ASSMBLER"
 
 # (name, segment number, SEGKIND, p-code procedures) -- Apple's, and ours
@@ -59,7 +60,22 @@ EXACT = [
     # The segment body, written for real: 37 instructions, three FINITs in
     # and three FCLOSEs out, `params`/`data` 4/4430 (finding 235e).
     "TLA.1",
+    # Finding 238's first five bodies, all exact on the first compile.
+    # Each one pins a declaration as much as a statement: `TLA.21` that
+    # IOCHECK is on (its two `CSP 0`s), `ASSEMBLE.16` that globals 406 and
+    # 447 are `STRING[80]`, and `.19`/`.20` that global 10 is a one-word
+    # variant with a byte at bits 0..7 and a three-bit field at 2..4.
+    "TLA.21", "ASSEMBLE.16", "ASSEMBLE.18", "ASSEMBLE.19", "ASSEMBLE.20",
 ]
+
+# The six procedures that end `RNP 1` rather than `RNP 0`: they are
+# FUNCTIONs, and nothing else in the file is. PARAM SIZE alone cannot see
+# this -- a function's result costs two words, so `FUNCTION F: BOOLEAN` and
+# `PROCEDURE P(X, Y: INTEGER)` both come to 4 and the skeleton had four of
+# these declared the wrong way while matching Apple's number exactly. The
+# return width is what tells them apart, so it is checked on its own.
+FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
+             "ASSEMBLE.3": 1, "ASSEMBLE.18": 1}
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
@@ -83,6 +99,27 @@ def check(ok: bool, label: str) -> None:
 def shape(cf) -> dict:
     return {s.name.strip(): (s.number, s.segkind, len(s.pcode_procedures))
             for s in cf.segments if s.length}
+
+
+def returns(cf) -> dict:
+    """{procedure: words returned} for every one that returns anything.
+
+    `BODY3` emits `RNP`/`RBP` with the result size, so a non-zero operand
+    on the last instruction is what makes a procedure a FUNCTION.
+    """
+    # Only the six real segments: our own build also carries the $U- host
+    # segment, whose 42 procedures are unresolved FORWARDs with no bodies
+    # to decode at all (finding 105a).
+    names = {n for n, _num, _k, _c in SEGMENTS}
+    out = {}
+    for s in cf.segments:
+        if not s.length or s.name.strip() not in names:
+            continue
+        for p in s.pcode_procedures:
+            last = listing(s, p)[-1].strip()
+            if last.startswith(("RNP", "RBP")) and int(last.split()[1]):
+                out[f"{s.name.strip()}.{p.number}"] = int(last.split()[1])
+    return out
 
 
 def signatures(cf) -> dict:
@@ -121,6 +158,12 @@ def main() -> int:
     check(not wrong, "every one agrees on lex level and PARAM SIZE"
                      + (f" -- {[(k, o[k], a[k]) for k in wrong[:4]]}"
                         if wrong else ""))
+
+    print("=== six FUNCTIONs, and only those six ===")
+    ow, aw = returns(ours_cf), returns(apple_cf)
+    check(aw == FUNCTIONS, f"Apple's shipped file returns a value from "
+                           f"exactly {sorted(FUNCTIONS)}")
+    check(ow == aw, f"and so does ours -- {sorted(ow)}")
 
     print("=== bodies Apple's compiler reproduces exactly ===")
     rows = compare(ours_cf, apple_cf)

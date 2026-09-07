@@ -20402,3 +20402,66 @@ tolerated a missing segment could not fail on one. Perturbing it confirms
 each check discriminates: a wrong segment number, a wrong procedure count,
 an unexpected missing segment and `TLA.1` claimed as a stub are all
 refused.
+
+## 238. The assembler's first five bodies, and what each one settles
+
+**VERIFIED BINARY FACT**, Apple's own 1.3 compiler,
+`acceptance/2026-09-07-assembler-bodies/` -- 701 lines, zero errors, **six
+of 95 procedures instruction- and frame-identical, up from one, none
+lost**. All five landed on the first compile, and each is worth more than
+its own body because each pins a *declaration* the skeleton had guessed.
+
+### 238a. `RNP 1` is what makes a FUNCTION, and PARAM SIZE cannot see it
+
+A function's result costs **two words**, measured on the host compiler
+against three declarations at once: `FUNCTION F: BOOLEAN` comes to PARAM
+SIZE 4, `FUNCTION F(X: INTEGER): BOOLEAN` to 6, `PROCEDURE P(X, Y:
+INTEGER)` to 4. So a no-argument function and a two-argument procedure are
+**indistinguishable by PARAM SIZE**, and finding 237's skeleton had four of
+them declared the wrong way while matching Apple's number exactly.
+
+What tells them apart is the last instruction: `BODY3` emits `RNP`/`RBP`
+with the result size, so a non-zero operand is a function. Six of the 90
+procedures have one, all returning a single word -- `TLA.3`, `.18`, `.19`,
+`.20`, `ASSEMBLE.3` and `ASSEMBLE.18` -- and their argument counts follow
+by subtracting the result's two words: 1, 1, 5, 2, 0, 0.
+
+**Apple's compiler rejects a `FUNCTION` completed as a `PROCEDURE`** --
+`error 160` on the completion line -- and `ucsdpsys_compile` accepts it
+silently, which is one more entry for the fast-tier list of finding 195.
+
+### 238b. `(*$U-*)` turns I/O checking off, and Apple turned it back on
+
+`COMPOPTIONS` sets `IOCHECK := RANGECHECK := NOT SYSCOMP` for `$U`, so a
+`$U-` file has no `CSP 0` after its I/O unless the source says otherwise.
+Apple's assembler has **184** of them against 248 OS I/O calls, so the file
+carries a `(*$I+*)`. The exceptions are informative rather than awkward:
+`TLA.29` and `INITIALI.4`, `.5`, `.6` do I/O with no check at all, so they
+sit in an `(*$I-*)` region and test `IORESULT` themselves -- which is what
+`INITIALIZE` opening files would do. `TLA.1`'s six bare calls are not
+evidence either way, because `BODY2` and `BODY3` generate the
+`FINIT`/`FCLOSE` sweeps and never put a check on them.
+
+`TLA.21` is the proof and the whole of it is
+`WRITELN('Fatal error.  Cannot continue.')` -- two spaces after the period,
+`LOD 2,3` for the default output file, and a `CSP 0` after each of the two
+calls.
+
+### 238c. Two globals typed by the instructions that touch them
+
+* **`LDP`/`STP` take (width, right-bit)**, in that push order, checked
+  against a packed record whose three fields the host compiler laid out at
+  bits 0..1, 2..4 and 5..15: `G.B := I` on the middle one compiles to
+  `SLDC 3 | SLDC 2 | ... | STP`. That is a check that could have come out
+  the other way and did not.
+* **Global 10 is a one-word variant.** Eight sites read it as `(8, 0)` --
+  a whole byte -- and five write `(3, 2)`, a three-bit field *inside* that
+  byte. Overlap is only expressible as a variant record, and the shape is
+  the 6502's own: an opcode byte whose middle three bits are the addressing
+  mode. `ASSEMBLE.19` and `.20` coming out exact is the bit positions
+  confirmed; the field names remain SPECULATION.
+* **Globals 406 and 447 are `STRING[80]`.** 41 words each, and
+  `ASSEMBLE.16`'s `LAO 447 | LAO 406 | SAS 80` is one assigned to the
+  other -- `SAS`'s operand is the destination's declared maximum, so the
+  80 is read straight off the instruction rather than guessed from the
+  size.
