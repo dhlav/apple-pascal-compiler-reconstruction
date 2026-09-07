@@ -139,6 +139,11 @@ FILES = [
     # against is 128K.PASCAL on APPLE3, not the 64K SYSTEM.PASCAL.
     ("PASCALSY.TEXT", ROOT / "src" / "pascal" / "os" / "1.3" /
      "PASCALSYSTEM.text"),
+    # ASSMBLER.TEXT compiles to ASSMBLER.CODE, which does not collide with
+    # the shipped SYSTEM.ASSMBLER beside it -- a volume filename is 15
+    # characters, and only Pascal IDENTIFIERS stop at 8.
+    ("ASSMBLER.TEXT", ROOT / "src" / "pascal" / "programs" / "1.3" /
+     "ASSMBLER.text"),
     # Not part of the disk set -- the two halves of the remote console
     # (findings 210/211). They live here so the bootstrap survives a
     # rebuild: `emuremote.py` needs REDIRIO.CODE on the volume before it

@@ -33,7 +33,7 @@ is what says which files Apple actually rebuilt (finding 99c).
 | SYSTEM.FILER | The file manager used to copy, list, and delete files. | not started; 56 procedures, one segment |
 | SYSTEM.COMPILER | Translates your Pascal code into machine-readable code. | 147 of 147 procedures verified (finding 90); linked, all 15 real segments byte-identical including `PASCALCO` (finding 107); short only an extra, empty host segment Apple's shipped file does not have (finding 105a) |
 | SYSTEM.LINKER | Combines different compiled code pieces into one program. | not started; 51 procedures |
-| SYSTEM.ASSMBLER | Low-level assembly language translator. | surveyed, not yet written (finding 235): 7 segments, 95 procedures, `PROGRAM TLA` on segment 1 with segment procedures 7-11; the global area balances at 2217 words and `TLA.1` decodes whole. 90 of the 95 are reachable -- the `PASCALIO` segment cannot be rebuilt from anything on the 1.3 disks (finding 235b). Also the acceptance tier for `src/native/` (finding 44e) |
+| SYSTEM.ASSMBLER | Low-level assembly language translator. | surveyed, not yet written (finding 235): 7 segments, 95 procedures, `TLA` is a SEGMENT PROCEDURE under `(*$U-*)`, segment 1, with five nested segment procedures at 7-11; the global area balances at 2217 words and `TLA.1` decodes whole. 90 of the 95 are reachable -- the `PASCALIO` segment cannot be rebuilt from anything on the 1.3 disks (finding 235b). Also the acceptance tier for `src/native/` (finding 44e) |
 
 ## Libraries and Code Tools
 

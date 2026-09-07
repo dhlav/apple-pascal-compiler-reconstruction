@@ -93,13 +93,14 @@ def build(ver: str, fname: str) -> list[str]:
     e = disk.find(TARGET)
     cf = CodeFile(disk.read_blocks(e.first_block, e.blocks))
     table, _acc, frame = collect(cf, ver)
-    # The words COMPINIT reserves before any declaration, read off the outer
-    # block rather than assumed: a UCSD program main is given a parameter
-    # area whatever its header says (COMPINIT's LC := LC+2, and the header's
-    # identifier list is skipped without allocating anything), and PARAM SIZE
-    # is where the codefile records it. Declared variables start past it.
-    # Hard-coding 2 here would make the one thing that distinguishes a
-    # parameter word from a declared word unfalsifiable (finding 55c).
+    # The words before the first declaration, read off the block rather than
+    # assumed. TLA is a SEGMENT PROCEDURE under (*$U-*) (finding 235a), so
+    # these two are its own parameters -- the pair SYSTEM.PASCAL enters
+    # segment 1 with, and which the assembler never reads -- not the
+    # LC := LC+2 an ordinary program main gets. Either way PARAM SIZE is
+    # where the codefile records the count, and hard-coding 2 would make the
+    # one thing separating a parameter word from a declared word
+    # unfalsifiable (findings 55c, 59).
     outer = next(p for s_ in cf.segments if s_.length
                  for p in s_.pcode_procedures if p.number == 1
                  and s_.number == 1)
@@ -200,9 +201,10 @@ def build(ver: str, fname: str) -> list[str]:
          "write out unless every declaration lands on the offset the binary",
          "uses and the last one ends exactly on the frame.",
          "",
-         f"{{ Offsets 1..{param_words} are the outer block's parameter words",
-         "  (COMPINIT's LC := LC+2), not declarations. Writing them below",
-         "  would make the compiled frame two words too wide. }",
+         f"{{ Offsets 1..{param_words} are TLA's own parameter words, the pair",
+         "  SYSTEM.PASCAL enters segment 1 with and the assembler never",
+         "  reads (findings 59, 235a). They are not declarations: writing",
+         "  them below would make the compiled frame two words too wide. }",
          "",
          "VAR",
          ]

@@ -13,9 +13,10 @@ What IS verified is the arithmetic, which the tool refuses to
 write out unless every declaration lands on the offset the binary
 uses and the last one ends exactly on the frame.
 
-{ Offsets 1..2 are the outer block's parameter words
-  (COMPINIT's LC := LC+2), not declarations. Writing them below
-  would make the compiled frame two words too wide. }
+{ Offsets 1..2 are TLA's own parameter words, the pair
+  SYSTEM.PASCAL enters segment 1 with and the assembler never
+  reads (findings 59, 235a). They are not declarations: writing
+  them below would make the compiled frame two words too wide. }
 
 VAR
   G3       : INTEGER;                                   {    3    1w touched }

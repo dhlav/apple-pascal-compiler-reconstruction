@@ -20075,14 +20075,50 @@ Apple's own tools cannot be made to reproduce.
 | 6 | `PRINTERR` | 11 | 46 | 192 | 1 | 6 |
 
 `SEGKIND` is 0 (`LINKED`) for all seven, and `SEGSUSED` at `$120` is zero.
-The program is `PROGRAM TLA` -- the name in the segment dictionary is the
-program identifier, not a file name -- and it is **not** a `(*$U-*)`
-compilation: `INITSCALARS` sets `SEG := 1; NEXTSEG := 7` for an ordinary
-program, so the outer block is segment 1 and the five `SEGMENT PROCEDURE`s
-take 7, 8, 9, 10, 11 **in declaration order**. `TLA.1` calls them
-`CXP 7,1`, `CXP 10,1`, `CXP 8,1`, `CXP 9,1`, which fixes the declaration
-order as `INITIALIZE`, `SYMTBLDUMP`, `PROCEND`, `ASSEMBLE`, `PRINTERROR`
-regardless of the order the bodies are used in.
+`TLA` is not the program: it is a `SEGMENT PROCEDURE` inside a `(*$U-*)`
+compilation, laid out exactly like `SYSTEM.COMPILER`'s `PASCALCOMPILER`.
+Two instructions say so and neither is ambiguous.
+
+* **`TLA.1` ends `RBP 0`.** `BODY3` emits `XIT` when `FPROCP = NIL` -- the
+  program's own outer block -- and `RBP` only for a procedure with
+  `PFLEV = 0`, which is a segment procedure declared at lex 0. A program
+  main cannot end `RBP`.
+* **`TLA.1` begins with its first `FINIT`, with no `NOP` pair in front of
+  it.** `BODY1` emits `GENBYTE(NOP); GENBYTE(NOP)` at the head of any body
+  where `(LRES <> NIL) OR LMAIN`, and `LMAIN` is set for `LEVEL = 1 AND NOT
+  SYSCOMP AND NOT INMODULE` -- so an ordinary program's own body always has
+  them. Scanning every codefile on the six disks separates the two kinds
+  cleanly: `LIBMAP`, `FORMATTER`, `BINDER`, `LINEFEED`, `SET40COLS` and
+  `CROSSREF` all start `NOP | NOP`; `SPIRODEMO`, `HILBERT`, `TREE`,
+  `BALANCED`, `GRAFDEMO` and `DISKIO` start `UJP`, which is `BODY3`
+  overwriting the same two bytes with the jump into its segment-loading
+  code; and `SYSTEM.COMPILER`, `SYSTEM.ASSMBLER`, `SYSTEM.LINKER`,
+  `SYSTEM.EDITOR`, `SYSTEM.FILER`, `LIBRARY.CODE` and `SETUP.CODE` have
+  neither, in both releases.
+
+So `SYSCOMP` is true, and `COMPINIT`'s `IF SYSCOMP THEN ... SEG := 0;
+NEXTSEG := 1` gives the first `SEGMENT PROCEDURE` segment 1 -- `TLA` -- with
+`(*$NS 7*)` then moving the counter so the five nested ones take 7, 8, 9,
+10, 11 **in declaration order**. `TLA.1` calls them `CXP 7,1`, `CXP 10,1`,
+`CXP 8,1`, `CXP 9,1`, which fixes that order as `INITIALIZE`,
+`SYMTBLDUMP`, `PROCEND`, `ASSEMBLE`, `PRINTERROR` regardless of the order
+the bodies are used in. Lex levels agree throughout: `TLA.1` is lex 0, each
+nested segment's procedure 1 is lex 1, and their own children are lex 2.
+
+`TLA` takes two words of parameters (`PARAM SIZE` 4) and never reads
+either: the operating system enters segment 1 as `USERPROGRAM(NIL,NIL)`,
+which is where the compiler puts `CODEP` and `SYMBUFP` (finding 59). The
+assembler's globals start at word 3 for the same reason, and this is why
+-- there is no `LC := LC+2` under `$U-`; words 1 and 2 are the two
+parameters.
+
+It also reaches the host frame, so the `$U-` host block is not optional
+here either: nine offsets, `LOD 2,1`, `2,2`, `2,3`, `2,4`, `2,8`, `2,9` and
+`STR 2,10`, `2,11`, `2,12` from lex 1, with `LOD 3,3`/`3,8` and
+`LOD 4,3`/`4,8` from deeper. `SYSCOM` at 1, `GFILES` at 2..7 and
+`USERINFO` at 8.. cover every one -- the same II.0 `GLOBALS.TEXT` prefix
+finding 63 established for the compiler, which reaches ten offsets in the
+same range.
 
 ### b. `PASCALIO` is not the shipped library's `PASCALIO`
 
@@ -20190,8 +20226,8 @@ declaration, then 16 (30), 18 (31, 32, 33), 17 (34-38).
 ### d. The global area balances exactly: 2217 words
 
 `TLA.1` has `params 4, data 4430`, so the global activation record is
-(4 + 4430) / 2 = **2217** words (finding 46), of which words 1-2 are the
-two `COMPINIT` reserves before any declaration. 122 distinct offsets are
+(4 + 4430) / 2 = **2217** words (finding 46), of which words 1-2 are
+`TLA`'s two unread parameters -- there is no `LC := LC+2` under `$U-`. 122 distinct offsets are
 touched. Laying the inferred objects out end to end from word 3 accounts
 for **2217 of 2217** with three gaps -- one word at 30, eighteen at
 604-621, eight at 2128-2135 -- and no overlaps. There is no source
