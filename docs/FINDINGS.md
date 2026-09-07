@@ -20568,3 +20568,56 @@ because it is nested *inside* `A23` and called from it twice with
 `CLP 24`, not an arm at all. Reading the jump table as "arms in procedure
 order" would have put every arm after the fourth one procedure too far
 along.
+
+## 241. `GENLDC` tells a declared CONST from a written constant
+
+**VERIFIED BINARY FACT** and **VERIFIED SOURCE FACT** together, Apple's own
+compiler, `acceptance/2026-09-07-assembler-const/` -- 1020 lines, zero
+errors, **22 of 95 instruction- and frame-identical, up from 20, none
+lost**.
+
+`TLA.27` and `TLA.28` are nested in `TLA.14`, and neither could be written
+before `TLA.14`'s frame was mapped -- from their own operands and nothing
+else. `LOD 1,2` and `LOD 1,1` are `FJP`-tested, so two of `TLA.14`'s three
+parameters are `BOOLEAN`, and its only call site passes `SLDC 1` and
+`SLDC 0` for them, which agrees. `LOD 1,4`, `STR 1,4` and `STR 1,6` use two
+of its five local words whole, while `LDA 1,4 | SLDC 8 | SLDC 0 | LDP` and
+`LDA 1,6 | SLDC 8 | SLDC 8 | STP` take a low byte from one and put it in
+the other's high byte -- so both are a word with two byte views, and the
+byte order is chosen by a condition (below). Declaring the frame that way
+brought `TLA.14`'s own `params`/`data` to Apple's 6/10 with its body still
+a stub, and both children out exact.
+
+### 241a. The rule
+
+**`GENLDC` emits one byte for 0..127 and the two-byte `LDCI` for anything
+else**, negating afterwards when the value is negative (`BODYPART.text`,
+byte-verified source). So the same value -1 has two encodings depending on
+where it came from:
+
+| source | code |
+|---|---|
+| `-1` written in an expression | `SLDC 1` then `NGI` |
+| a declared `CONST` of -1 | `LDCI 1` then `NGI` |
+
+Both reach `NGI`, and the only difference is one byte. `ASSEMBLE.26`'s
+`G6 <> -1` has the first form and is exact with `-1` written literally;
+`TLA.27` has the second, and was exact only once a `CONST` was declared
+and used. **That one byte is the whole evidence that Apple declared a
+named constant there**, and it is the kind of difference a reader would
+otherwise write off as noise.
+
+### 241b. Two constant conditions Apple's compiler did not fold
+
+`TLA.27` carries two conditions with no variable in them at all:
+
+* `LDCI 1 | NGI | LOD 1,1 | LAND` -- the `CONST` above, handed to `LAND`,
+  which only `ODD`'s free cast can do (finding 231);
+* `SLDC 1 | FJP` around the choice of whether `V4`'s low byte goes into
+  `V6`'s **high** byte or its **low** byte -- a literal `TRUE` guarding a
+  byte-order switch.
+
+Both compile to real instructions because the compiler folds constant
+*expressions* but not constant *conditions*. What Apple called them is
+**SPECULATION**; that they are declared constants, and which branch each
+selects, is not.

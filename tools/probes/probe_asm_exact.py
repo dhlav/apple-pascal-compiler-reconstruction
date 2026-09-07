@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-07-assembler-dispatch" / "ASSMBLER.CODE"
+RUN = ROOT / "acceptance" / "2026-09-07-assembler-const" / "ASSMBLER.CODE"
 TARGET = "SYSTEM.ASSMBLER"
 
 # (name, segment number, SEGKIND, p-code procedures) -- Apple's, and ours
@@ -78,6 +78,10 @@ EXACT = [
     "ASSEMBLE.22", "ASSEMBLE.23", "ASSEMBLE.24", "ASSEMBLE.25",
     "ASSEMBLE.26", "ASSEMBLE.27", "ASSEMBLE.28", "ASSEMBLE.30",
     "ASSEMBLE.31",
+    # Finding 241: the pair nested in TLA.14, which could not be written
+    # before its frame was mapped from their own LOD/STR operands -- and
+    # TLA.14's own frame comes out 6/10 as a result, with a stub body.
+    "TLA.27", "TLA.28",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
