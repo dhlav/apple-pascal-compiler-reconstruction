@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-lientry"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-liwriter"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -94,6 +94,10 @@ EXACT = [
     # Finding 244: the eight-word linker-information record modelled as
     # the variant it is, and the packing rule that came out of it.
     "PROCEND.8",
+    # Finding 245: the LIENTRY writer, 267 instructions and the largest
+    # body in the file so far. Three nested CASEs on one selector, and
+    # the arms are emitted in SOURCE order, not label order.
+    "PROCEND.7",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are

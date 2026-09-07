@@ -20769,3 +20769,49 @@ The rule generalises and is worth having: **a packed field's encoding
 depends on its neighbours, so a field cannot be declared from its own
 accesses alone.** Finding 239a said the same about ordering; this says it
 about width.
+
+## 245. The linker-record writer, and `CASE` arms come out in source order
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-liwriter/` -- 1320 lines, zero errors,
+**27 of 95 instruction- and frame-identical, up from 26, none lost**.
+`PROCEND.7` is 267 instructions, the largest body in the file so far, and
+it is the routine that writes the linker-information records finding 244
+modelled -- so it exercises every variant at once and is what confirms
+that model.
+
+Its shape is two loops and three `CASE`s on the same selector:
+
+```pascal
+FOR I := 0 TO 127 DO
+  BEGIN
+    G3 := G966[I];
+    WHILE G3 <> NIL DO
+      BEGIN CASE G3^.A5 OF ... END; G3 := G3^.A4 END
+  END
+```
+
+Global 966 is a **128-bucket hash table of symbol pointers** and `A4` is
+the chain link -- which is what turns three of `ASMREC`'s words from the
+`INTEGER` placeholders of finding 239 into what they are: `A4` an
+`ASMRECP`, `A8` a pointer to a two-word reference cell (`SIND 0` for the
+value, `SIND 1` for the link that replaces it). The record gained two more
+variants besides, both eight words at offset 0: the reference block
+`E2` is handed, and a `PACKED ARRAY [0..15] OF CHAR` for `FILLCHAR` to
+clear.
+
+### 245a. Arm order is source order
+
+The inner `CASE` came out right in every instruction and wrong in its
+*layout*: Apple emits the arms setting 3, 4, 5, 2, 6, 11, 12, and writing
+them in ascending label order emitted 11, 3, 5, 4, 2, 6, 12. **A `CASE`'s
+jump table indexes by value, but its arms are emitted where they are
+written**, so the physical order of the arms in the binary *is* the
+source order -- here 28, 30, 29, 31, 32, 1, 33. Reordering the seven
+lines was the whole of the fix.
+
+This is the same lesson as finding 61's about procedure numbering, one
+level down: the binary records declaration order, so declaration order is
+recoverable, and it is not free to choose. Both of the other two `CASE`s
+in this procedure were already in Apple's order by luck; this one was
+not, and a run of arms all shifted by one is the signature.
