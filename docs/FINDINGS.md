@@ -20722,3 +20722,50 @@ base) and carries a third constant condition -- `SLDC 0 | FJP`, a literal
 `FALSE` this time, where `TLA.27` had `SLDC 1` (finding 241b). None of
 that is modelled yet; writing it down is what stops the next session
 deriving the record's layout and its field names from each other.
+
+## 244. The linker-information record, and what forces a field to pack
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-lientry/` -- 1207 lines, zero errors,
+**26 of 95 instruction- and frame-identical, up from 25, none lost**.
+
+Finding 243a left the eight-word record contradicting itself: `PROCEND.6`
+reads seven one-word elements from offset 1 and `PROCEND.8` does `MOV 5`
+at the same offset. Both are right, and two more readings join them, so
+the record is a variant used four ways:
+
+| site | what it does |
+|---|---|
+| `PROCEND.7` | `MOV 4` from `G3^` into offset 0 -- the symbol's eight-character name -- then writes word 4 with 2, 3, 4, 5, 6, 11 and 12 |
+| `PROCEND.6` | word 0 as a key, offsets 1..7 as seven one-word references |
+| `PROCEND.8`, `ASSEMBLE.5` | word 0 as a key, `MOV 5` at offset 1 |
+| `TLA.25` | word 0 assigned, `MOV 7` at offset 1 |
+
+Those seven constants in word 4 name it. They are exactly the ordinals of
+`LITYPES` in the compiler's own byte-verified `WRITELIN.text` --
+`GLOBREF`, `PUBBLIC`, `PRIVVATE`, `CONNSTANT`, `GLOBDEF`, `SSEPPROC`,
+`SSEPFUNC` -- so this is UCSD's `LIENTRY`, the linker-information record,
+and both of the assembler's typed files hold it. `WRITELIN`'s own comment
+says the size out loud: *"NOW FILL REST OF 8-WORD RECORD"*. Only the
+SHAPE is recovered here; every field name written is ours.
+
+### 244a. A lone `BOOLEAN` in a `PACKED RECORD` is not packed
+
+The five-word variant's word 0 carries a one-bit flag, and writing it as
+the only field in that word does **not** produce a packed access:
+`PROCEND.8`'s test came out `SLDL 3`, a whole-word load, where Apple has
+`LLA 3 | SLDC 1 | SLDC 0 | LDP`. A `BOOLEAN` followed by an `INTEGER`
+gets a word of its own, because the `INTEGER` cannot fit in the fifteen
+bits left and so starts the next word anyway -- there is nothing to pack
+*with*.
+
+What forces the packing is a neighbour, and the binary names one:
+`ASSEMBLE.5` reads bits 8..15 of the same word (`SLDL 2 | SLDC 8 |
+SLDC 8 | LDP`). Declaring the flag, seven bits nothing touches, and that
+byte makes word 0 full, and the flag is then packed -- one instruction
+becoming four, and `PROCEND.8` exact.
+
+The rule generalises and is worth having: **a packed field's encoding
+depends on its neighbours, so a field cannot be declared from its own
+accesses alone.** Finding 239a said the same about ordering; this says it
+about width.

@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-lientry"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -91,6 +91,9 @@ EXACT = [
     # frame -- 652 words with a FILE at 343, read off `LDA 3,343` and
     # `LDA 2,343` in three of its children.
     "PROCEND.5", "PROCEND.6",
+    # Finding 244: the eight-word linker-information record modelled as
+    # the variant it is, and the packing rule that came out of it.
+    "PROCEND.8",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
