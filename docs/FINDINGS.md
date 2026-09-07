@@ -20465,3 +20465,54 @@ calls.
   other -- `SAS`'s operand is the destination's declared maximum, so the
   80 is read straight off the instruction rather than guessed from the
   size.
+
+## 239. The assembler's central record, and a field list that reversed
+
+**VERIFIED BINARY FACT**, Apple's own compiler,
+`acceptance/2026-09-07-assembler-record/` -- 746 lines, zero errors, **11
+of 95 instruction- and frame-identical, up from six, none lost**.
+
+Global 3 is the assembler's busiest -- 117 reads, 9 writes, 24 procedures --
+and it is a **pointer**, `NEW`'d eleven times. What it points at is read off
+the instructions and nothing else:
+
+* word offsets **0, 4, 5, 6, 7, 8** appear as `SLDO 3 | SIND n`;
+* a `MOV 4` and four eight-character `LPA` literals -- `'X       '`,
+  `'Y       '`, `'A       '` and blank -- put a **four-word ALPHA at words
+  0..3**, which is the symbol's name;
+* `NEW` is called at **three sizes, 7, 8 and 9 words**, so the real record
+  is a **variant**. The flat nine-word form written here has the offsets
+  right and the allocation wrong, and is labelled as such: nothing in the
+  reconstruction allocates one yet, so the difference cannot bite until
+  something does.
+
+### 239a. A RECORD's field list reverses within a clause, like everything else
+
+`A4, A5, A6, A7, A8: INTEGER` after the ALPHA put **A5 on word 7**. The
+whole of `ASSEMBLE.17` -- the ten-arm `CASE` that dispatches on it -- was
+otherwise identical, 25 instructions against 25, and the single difference
+was `SIND 7` where Apple has `SIND 5`. Reversed, the clause reads A8, A7,
+A6, A5, A4 from word 4 up, which lands A5 exactly two words late and A6 on
+word 6 by coincidence -- which is why `ASSEMBLE.21` and `.29`, both of
+which use A6, came out exact in the same run while `.17` did not. **A
+coincidence that hides an error in two of three sites is the argument for
+one name per clause**, and that is how it is written now.
+
+This is finding 33's rule, and finding 202's, arriving in a third place. It
+is worth stating once as a rule with no exceptions: **within one
+declaration clause -- `VAR`, formal parameters, or `RECORD` fields -- the
+LAST name takes the LOWEST offset.**
+
+### 239b. Two constructs the bodies settle
+
+* **`ASSEMBLE.17` is a `CASE` with no `OTHERWISE`.** `XJP 2..11` with the
+  else-target being the `RNP` itself, and the ten arms `A21`, `A22`,
+  `A23`, `A25`, `A26`, `A27`, `A28`, `A29`, `A30`, `A31` -- note the gap,
+  `A24` is nested inside `A23` and is not an arm. The jump table follows
+  the arms, as UCSD always puts it.
+* **`TLA.31` assigns its enclosing function's result and then leaves.**
+  `SLDC 0 | STR 1,1` writes lex-1 offset 1, which is `TLA.18`'s result
+  slot, and `SLDC 1 | SLDC 18 | CSP 4` is `EXIT(T18)` -- the callee's own
+  (segment, procedure) pair. So `T18` is a `FUNCTION` returning `BOOLEAN`,
+  written from a nested procedure as `T18 := FALSE; EXIT(T18)`. Its
+  `FJP`-tested call sites agree.

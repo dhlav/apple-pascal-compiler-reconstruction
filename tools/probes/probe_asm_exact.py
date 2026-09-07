@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-07-assembler-bodies" / "ASSMBLER.CODE"
+RUN = ROOT / "acceptance" / "2026-09-07-assembler-record" / "ASSMBLER.CODE"
 TARGET = "SYSTEM.ASSMBLER"
 
 # (name, segment number, SEGKIND, p-code procedures) -- Apple's, and ours
@@ -66,6 +66,12 @@ EXACT = [
     # 447 are `STRING[80]`, and `.19`/`.20` that global 10 is a one-word
     # variant with a byte at bits 0..7 and a three-bit field at 2..4.
     "TLA.21", "ASSEMBLE.16", "ASSEMBLE.18", "ASSEMBLE.19", "ASSEMBLE.20",
+    # Finding 239: global 3's record. `ASSEMBLE.17` is the CASE that
+    # dispatches on its word 5, and it is what caught the field list
+    # reversing within a clause -- one instruction, `SIND 7` for `SIND 5`.
+    # `TLA.31` writes its enclosing FUNCTION's result from inside a nested
+    # procedure and then EXITs it.
+    "ASSEMBLE.17", "ASSEMBLE.21", "ASSEMBLE.29", "ASSEMBLE.32", "TLA.31",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -79,8 +85,8 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "PROCEND.1", "INITIALI.1",
-                 "SYMTBLDU.1", "PRINTERR.1"]
+STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.22", "PROCEND.1",
+                 "INITIALI.1", "SYMTBLDU.1", "PRINTERR.1"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
