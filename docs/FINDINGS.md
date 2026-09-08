@@ -20960,3 +20960,68 @@ a signal to check, not a licence.
   the same reason `BLOCKIO`'s buffer argument is untyped (finding 247).
   The `PACKED ARRAY OF CHAR` it had been given fitted one use and was
   never checked against the other.
+
+## 249. `PROCEND` closes: the two ways an assembly ends
+
+`PROCEND.1` is the segment's own body, 520 instructions and the
+second-largest procedure in the file. It landed instruction- and
+frame-identical on the first compile, which takes the assembler to **32
+of 95** and makes `PROCEND` **the first whole segment of `SYSTEM.ASSMBLER`
+to come out Apple's bytes -- all nine**.
+
+The body is one `IF` on global 4, the token the source ran out on. `61`
+is `.END`: the arm under it writes the last code block, closes the
+codefile, reads it back once, stamps the segment dictionary and reports
+the line and error counts to the listing and the console. The `ELSE` arm
+starts the next procedure instead -- `MARK`, bump the procedure number,
+clear four seven-word tables, reopen the work file, `SEEK` to the current
+record, and scan the `.PROC`/`.FUNC` header.
+
+**The frame is 651 declared words and one the compiler adds.** The
+skeleton had 652 declared, which matched `data` 1304 exactly while the
+body was empty and would have been one word too wide the moment a `FOR`
+loop appeared. The two loops in the body are sequential rather than
+nested, so they share the one limit temp at 652 (finding 216's allocation
+order: declared vars, then loop and `WITH` temps).
+
+### 249a. `FILESIZE` is not the width of a file variable
+
+`BODY2` emits `LDA lev,VADDR` then `LDA lev,VADDR+FILESIZE` for every
+file in scope (`BODYPART.text`, VERIFIED SOURCE FACT), and `FILESIZE` is
+300 words whatever the file is. The *variable* is not 300 words unless it
+is typed: `DECLARAT.text` gives an untyped `FILE` `NILFILESIZE` instead.
+
+This frame has both and measures the difference. `LLA 343 | LLA 643 |
+SLDC 8` is a `FILE OF` an eight-word record: 300 words of FIB plus an
+eight-word window, 343..650. `LLA 303 | LLA 603 | LDCI 1 | NGI` is an
+untyped `FILE`, and its second address, 603, lands *inside the next
+variable* -- the typed file's own FIB. So **the second `LDA` is not a
+measurement**; only the tag is. Untyped comes to 40 words, 303..342,
+which is what closes the frame at 651.
+
+### 249b. Two more constant switches, and they disagree
+
+`SLDC 0 | FJP` twice, around a byte-order choice each time: whether the
+code length is byte-swapped before it goes in the dictionary, and which
+of two adjacent dictionary bytes takes the low half. Apple's compiler
+does not fold a constant condition away, so these are `IF FALSE` in the
+source -- the same construct as `TLA.27`'s `IF TRUE` (finding 241), and
+of the opposite sense, which rules out one shared named constant read two
+ways. `NOT` of a constant is not folded either: it would leave an `LNOT`
+behind, and there is none. The BYTES are Apple's; how Apple spelled the
+constants is SPECULATION.
+
+### 249c. What the body typed
+
+* **Global 13 points at a five-word record with a pointer at word 4** --
+  `NEW` emits `SLDC 5`, and `LDCN | STO` after an `INC 4` puts NIL there.
+  Global 657 takes NIL as well and is typed the same for that reason
+  alone.
+* **Globals 2159 and 2163 are `PACKED ARRAY [0..7] OF CHAR`**, not word
+  arrays: `MOV 4` copies global 3's `ANAME` into each, and `LDB` reads
+  2163 a byte at a time into the dictionary block.
+* **Globals 488 and 539 are one type.** `LAO 539 | LAO 488 | MOV 51` is
+  an assignment, and the two had been declared `ARRAY [0..50] OF INTEGER`
+  and `PACKED ARRAY [0..101] OF CHAR` -- error 129 waiting to happen, a
+  contradiction the byte compare could not see because neither had a
+  reader yet. `PROCEND.1` gave 488 its first one.

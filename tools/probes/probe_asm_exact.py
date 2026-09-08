@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend3"
+RUN = (ROOT / "acceptance" / "2026-09-07-assembler-procend4"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -105,6 +105,11 @@ EXACT = [
     # Finding 248. PROCEND is 8 of 9 -- only its own 520-instruction
     # body is left.
     "PROCEND.3",
+    # Finding 249. PROCEND is complete: its own body, the second-largest
+    # in the file, and the first whole segment of the assembler to come
+    # out Apple's bytes. It is also what measured the frame -- 651
+    # declared words and one FOR limit temp, not 652 declared.
+    "PROCEND.1",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -118,7 +123,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "PROCEND.1",
+STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "ASSEMBLE.2",
                  "INITIALI.1", "SYMTBLDU.1", "TLA.14"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
