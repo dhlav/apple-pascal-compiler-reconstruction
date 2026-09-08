@@ -21025,3 +21025,68 @@ constants is SPECULATION.
   and `PACKED ARRAY [0..101] OF CHAR` -- error 129 waiting to happen, a
   contradiction the byte compare could not see because neither had a
   reader yet. `PROCEND.1` gave 488 its first one.
+
+## 250. Seven pseudo-op handlers, and a record that was already declared
+
+`ASSEMBLE.5`, `.7`, `.8`, `.11`, `.12`, `.13` and `.14` in one compile --
+**39 of 95**, and `ASSEMBLE` is 24 of 33. Six were exact on the first
+try; `.8` took one fix.
+
+These are the data-generating pseudo-ops: `.BYTE`, `.WORD`, `.BLOCK`,
+`.ASCII` and the origin/offset directives. They share a shape --
+`IF T18(...) THEN IF T19(...) THEN`, then a `G660 = 0` test that
+separates counting the location counter from actually emitting -- and
+five of the seven end in a `FOR` loop over `T12` (emit a byte) or `T15`
+(emit a word), guarded by another unfolded constant.
+
+### 250a. `ODD` is how this program spells "test the low bit"
+
+`ASSEMBLE.8` has `SLDL 2 | FJP` on a local that is `LENGTH(G406)` two
+statements earlier and `(V2 + 1) DIV 2` one statement later. An
+`INTEGER` cannot reach `FJP`, and `<> 0` would leave `SLDC 0 | NEQI`
+behind. It is `ODD(V2)`, finding 231's free cast, and Apple wrote it
+deliberately: the `.ASCII` handler pads to a word boundary only when the
+string length is odd.
+
+The same cast appears in `ASSEMBLE.5` twice over -- `ODD(MINUS1)` for the
+configuration constant, exactly as `TLA.27` has it, and `ODD(X1^.HIB)`
+for a packed byte read with `LDP 8,8`.
+
+### 250b. `FIVEREC` was the five-word record all along
+
+Finding 249c gave global 13 an invented `LISTREC`: five words with a
+pointer at word 4, which was all `PROCEND.1` could see. `ASSEMBLE.5`
+names it. It walks a chain of the same records -- `SIND 4` for the link,
+`SIND 1` and `SIND 3` for two integers, `LDP 8,8` for the packed byte at
+word 0 -- and then does `MOV 5` of one straight into the file window's
+`INFO` field, which is a `FIVEREC` and has been since finding 244. So
+the type was already in the file; what it lacked was a pointer to itself,
+and `F4: INTEGER` should have been `F4: FIVEP`. Globals 13 and 657 are
+both `FIVEP`, and the invented record is gone.
+
+The lesson is the one finding 248 records from the other side: **a
+placeholder that fits every constraint you can see is still a
+placeholder**, and the way it gets settled is a *later* procedure that
+uses the same words differently. Inventing a type is the last resort, not
+the first -- check whether one already declared has the shape.
+
+### 250c. Apple's operand order, again
+
+`.8`'s one difference was `G22 := G22 + (V2 + 1) DIV 2` where Apple wrote
+`G22 := (V2 + 1) DIV 2 + G22`. Addition commutes; the code generator does
+not. Eight instructions, all the same, in a different order.
+
+### 250d. Two questions this batch opened and did not close
+
+* **`ASMREC` is a variant record, and word 6 is in the variant part.**
+  `TLA.36` does `G661[G27] := G3^.A6` and `G71 := G3^.A6`, and `TLA.35`
+  then uses `G71` as an `LDB` base -- so word 6 is a pointer to packed
+  characters there. `PROCEND.1`, which is exact, does `G3^.A6 := 0` with
+  `SLDC 0`, so word 6 is an ordinal there. Both cannot be one field. The
+  fixed part is words 0..5 (the name, the hash link and the class), and
+  the variants are 1, 2 and 3 words long -- which is exactly the 7, 8 and
+  9 word `NEW` sizes finding 239 recorded and could not explain.
+* **`ASSEMBLE.33` and `ASSEMBLE.9` both need that variant**, so both are
+  left as stubs rather than forced. `.33` reads
+  `G661[L2]^[0]` as a `BOOLEAN`, and `.9` compares word 7 of another such
+  record with `NIL` while `PROCEND.1` assigns `G36` to it.
