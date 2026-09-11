@@ -65,6 +65,8 @@ STEPS = [
     # TLA.1 exact. Get the numbering wrong and every call site written later
     # is wrong with it (finding 235g).
     ("the assembler's shape vs the binary", "probes/probe_asm_exact.py"),
+    ("a jump that goes to the wrong place is visible",
+     "probes/probe_jump_targets.py"),
     ("call graph", "callgraph.py"),
     ("global data map", "globalmap.py"),
     # SYSTEM.ASSMBLER's outer block carries 2215 words of globals and there

@@ -68,8 +68,7 @@ EXACT = [
     "INITIALI.1", "INITIALI.2", "INITIALI.3", "INITIALI.4", "INITIALI.5",
     "INITIALI.6", "INITIALI.7", "INITIALI.8",
     "INITIALI.9", "INITIALI.10", "INITIALI.11",
-    "PASCALSY.1",
-    "PASCALSY.2", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
+    "PASCALSY.1", "PASCALSY.9", "PASCALSY.10", "PASCALSY.11",
     "PASCALSY.14", "PASCALSY.15",
     "PASCALSY.16", "PASCALSY.17", "PASCALSY.19", "PASCALSY.20",
     "PASCALSY.21", "PASCALSY.22",
@@ -77,11 +76,10 @@ EXACT = [
     "PASCALSY.29", "PASCALSY.30", "PASCALSY.31", "PASCALSY.32",
     "PASCALSY.42",
     "PASCALSY.34", "PASCALSY.35", "PASCALSY.39",
-    "PASCALSY.33",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
     "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
     "PASCALSY.48", "PASCALSY.49", "PASCALSY.50", "PASCALSY.53",
-    "PASCALSY.54", "PASCALSY.55", "PASCALSY.56",
+    "PASCALSY.54", "PASCALSY.56",
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
     "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
     "PASCALSY.43",
@@ -120,6 +118,18 @@ EXACT = [
 # Procedures still known to differ, kept here as the discrimination control
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
+# Finding 252. These three were on EXACT until jump destinations became
+# part of the comparison; each emits Apple's instructions in Apple's order
+# and sends one jump somewhere else, which the old blanking comparison
+# could not see. They are open work, not regressions in the source -- the
+# source never changed. `probe_jump_targets.py` is what stops the hole
+# from reopening.
+#
+#   PASCALSY.2  (EXECERROR)  two jumps: >+42 vs >+52, >+35 vs >+36
+#   PASCALSY.33 (SCANTITLE)  one:       >+81 vs >+156
+#   PASCALSY.55 (BLKXFER)    one:       >+7  vs >+3
+TARGETS_WRONG = ["PASCALSY.2", "PASCALSY.33", "PASCALSY.55"]
+
 STILL_DIFFERS = [
     # One left in RUN, and finding 232b says no single compilation of
     # a single file can hold it alongside the rest. FGET needs
@@ -194,9 +204,16 @@ def main() -> int:
         ours = {k for k, r in rows.items() if r["exact"]}
         theirs = {k for k, r in frows.items() if r["exact"]}
         both = ours | theirs
-        check(len(both) == len(rows),
+        # Was len(rows) -- 111 of 111 -- until finding 252. The three in
+        # TARGETS_WRONG are the difference and they are named, so this
+        # cannot quietly drift further.
+        check(len(both) == len(rows) - len(TARGETS_WRONG),
               f"{len(both)} of {len(rows)} procedures exact across the two "
-              f"runs together")
+              f"runs together, the {len(TARGETS_WRONG)} short being "
+              f"{', '.join(TARGETS_WRONG)} (finding 252)")
+        for key in TARGETS_WRONG:
+            check(key not in both,
+                  f"{key} is still open -- a jump goes to the wrong place")
 
     print()
     if fail:

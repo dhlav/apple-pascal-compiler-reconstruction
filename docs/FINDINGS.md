@@ -21090,3 +21090,150 @@ not. Eight instructions, all the same, in a different order.
   left as stubs rather than forced. `.33` reads
   `G661[L2]^[0]` as a `BOOLEAN`, and `.9` compares word 7 of another such
   record with `NIL` while `PROCEND.1` assigns `G36` to it.
+
+## 251. ASMREC's variant, an endian detector, and four more bodies
+
+Four bodies came from an outside review of this tree (Grok, 2026-09-08),
+re-derived and re-verified here against Apple's own compiler:
+`INITIALI.3`, `TLA.24`, `ASSEMBLE.9` and `ASSEMBLE.33`. **43 of 95**, and
+`ASSEMBLE` is 26 of 33. Three were exact as handed over; the fourth was
+not, and finding 252 is what that cost.
+
+### 251a. `INITIALI.3` is a runtime endian test
+
+```pascal
+N.WHOLE := 1;
+G57 := N.BYTES[1] = CHR(1)
+```
+
+Global 57 is the flag `PROCEND.2` reads before byte-swapping a reference
+(`IF G57 <> FALSE THEN ... T3(...)`), and this is where it is set: store 1
+in a word, read the high-addressed byte, and see whether the 1 landed
+there. On the 6502 it does not.
+
+The overlay must be a `PACKED ARRAY [0..1] OF CHAR`, not the `BYTEPAIR`
+this file already has. Apple's bytes are `LLA | SLDC 1 | LDB` -- a packed
+*array index*. `BYTEPAIR.HI` is a packed *field* and compiles to
+`LDP 8,8`. Same word, same byte, two different opcodes.
+
+This sits beside the compile-time constants of findings 249b and 250: the
+assembler decides byte order twice, once at compile time with an `IF
+FALSE` the compiler does not fold, and once at run time with this.
+
+### 251b. `ASMREC` is a variant, and word 7 is the split
+
+Finding 250d left this open and `ASSEMBLE.9` closes half of it:
+
+```pascal
+ASMREC = RECORD
+           ANAME: PACKED ARRAY [0..7] OF CHAR;   { 0..3 }
+           A4: ASMRECP;  A5: INTEGER;  A6: INTEGER;
+           CASE INTEGER OF
+             0: ();                       { NEW size 7 }
+             1: (A7P: FIVEP);             { NEW size 8 }
+             2: (A7: INTEGER; A8: REFP)   { NEW size 9 }
+         END;
+```
+
+`PROCEND.1` and `.7` -- both exact -- put integers in word 7 and walk word
+8 as a `REFP` chain; `ASSEMBLE.9` compares word 7 with `NIL` and hands it
+to `A5` as a `FIVEP`. One field cannot be both, and the three arms are
+exactly the 7/8/9-word `NEW` sizes finding 239 recorded and could not
+explain.
+
+Apple's compiler accepts the empty variant `0: ()`. **The host compiler
+does not** -- `ucsdpsys_compile` reports a syntax error on it, so the fast
+tier can no longer pre-check this file at all. That is the *opposite*
+direction from the four constructs in finding 195, where the host was the
+permissive one.
+
+### 251c. `SLDO` for globals 1..16 has nothing to do with `$U-`
+
+The review recorded this as a consequence of `(*$U-*)`. It is not, and
+`BODYPART.text` says so (VERIFIED SOURCE FACT):
+
+```pascal
+IF INMODULE AND (FOP IN [LAO,LDO,SRO]) THEN
+  BEGIN LINKERREF(...); GENBYTE(128); GENBYTE(0) END
+ELSE IF ((FOP = LDL) OR (FOP = LDO)) AND (FP2 <= 16) THEN
+  BEGIN IC := IC-1; ... END
+```
+
+The short form is unconditional in `GEN2` for `LDO`/`LDL` at offset ≤ 16.
+The real condition is the other arm: **inside a `MODULE` it is
+suppressed**, because `LAO`/`LDO`/`SRO` there emit a linker reference and
+a two-byte placeholder instead. The fact is right and worth keeping -- do
+not read `SLDO 14` as a parent-frame local -- but the cause was wrong, and
+a wrong cause predicts wrongly somewhere else.
+
+### 251d. `ASSEMBLE.33`: `ODD(ORD(p^[0]))`
+
+`V1 := ODD(ORD(G661[V2]^[0]))` is a bare `LDB` into an `FJP`. Written
+`<> CHR(0)` it is one `NEQI` too many. Both `ORD` and `ODD` are free
+(finding 231), so this is a two-cast route from a packed character to a
+`BOOLEAN` that costs nothing -- and global 661 is an array of `CODEP`,
+pointers to the per-macro text buffers, not the integers it held.
+
+### 251e. What is still open, stated as a prediction
+
+Word 6 has the same collision as word 7, one word earlier. `TLA.36` does
+`G661[G27] := G3^.A6` and `G71 := G3^.A6`, and `TLA.35` then uses global
+71 as an `LDB` base -- so word 6 is a pointer there and an ordinal in
+`PROCEND.1`. **The variant most likely starts at word 6, not word 7.**
+
+It is left at 7 deliberately: no written body forces it yet, and the file
+now carries a real contradiction on purpose -- global 661 is a `CODEP`
+array while global 71 is still an `INTEGER`. Apple's compiler will reject
+that the first time `TLA.36` is written. Recording it now makes the next
+session's error a confirmation instead of a surprise.
+
+## 252. The scorer could not see a jump go to the wrong place
+
+`oscmp` calls two procedures identical when their instruction listings
+match, and `procbuild.strip_targets` blanked every address out of those
+listings first. The reasoning was written down in the docstring and it was
+wrong:
+
+> a jump to the wrong place lands the following instructions in the wrong
+> order and the listings diverge there instead
+
+`ASSEMBLE.33` is the counterexample. With `G12 := TRUE` and `T17` one
+nesting level too deep it emits **the same 38 instructions in the same
+order**; only the `FJP` at instruction 1 moves, from the 35th instruction
+to the 36th. It was scored exact. So had three procedures of
+`128K.PASCAL`, for nine days:
+
+| | Apple | ours |
+|---|---|---|
+| `PASCALSY.2` (`EXECERROR`) | `FJP >+42`, `FJP >+35` | `>+52`, `>+36` |
+| `PASCALSY.33` (`SCANTITLE`) | `UJP >+81` | `>+156` |
+| `PASCALSY.55` (`BLKXFER`) | `FJP >+7` | `>+3` |
+
+**`128K.PASCAL` is 108 of 111, not 111 of 111** (findings 232, 233), and
+`SYSTEM.ASSMBLER` is 43 of 95 rather than the 44 the old comparison would
+have allowed. No source changed; the measurement did.
+
+### 252a. The fix, and why it is not "blank less"
+
+`procbuild.relative_targets` rewrites a jump's destination as an *offset
+in instructions* -- `FJP >+35` -- which is the same number wherever the
+procedure is placed. Placement still does not matter; control flow now
+does. Set constants are left alone too: `LDC 3w [$0001 $03C0 $000C]`
+prints addresses that are not addresses, and blanking those meant two
+different sets also compared equal.
+
+### 252b. The check that can fail
+
+`probes/probe_jump_targets.py` takes four real procedures of Apple's,
+moves one forward jump on by exactly one instruction, and requires that
+the *old* comparison still calls the mutant identical while the new one
+rejects it. Both halves matter: the first proves the mutation is
+target-only, so the second is testing the property claimed and not some
+side effect.
+
+This is CLAUDE.md's fifth rule failing in the place hardest to notice --
+not a check that never fired, but a check that fired constantly, on 150
+procedures, while blind to one kind of error. **A passing check earns
+trust it has not necessarily been tested for.** The question to ask of
+one is not "does it pass" but "what would have to be wrong for it to
+fail, and has that ever been demonstrated".

@@ -11,10 +11,17 @@ difference.
 
 What is compared is the disassembled instruction text of each procedure,
 `enter_ic` through the return and including the exit sweep, with absolute
-jump targets blanked exactly as `procbuild.strip_targets` blanks them: an
-`FJP $092A` and an `FJP $0417` are the same instruction placed differently,
-and a jump to the genuinely wrong place still shows, because the
-instructions after it land in the wrong order.
+jump targets rewritten as instruction offsets by
+`procbuild.relative_targets`: an `FJP $092A` and an `FJP $0417` are the same
+instruction placed differently, but `FJP >+35` and `FJP >+36` are not the
+same instruction at all.
+
+This used to blank the target instead, on the reasoning that a jump to the
+wrong place would show up anyway because the instructions after it land in
+the wrong order. That reasoning is false and `ASSEMBLE.33` falsified it
+(finding 252): a statement one nesting level too deep emits the same
+instructions in the same order and moves only the destination. Everything
+scored before that fix was rescored against it.
 
 `params` and `data` (both byte counts, from the procedure's attribute table)
 are reported alongside, because they fail *independently* of the
@@ -49,7 +56,7 @@ from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.pcode import disassemble, sweep_exit
 
-from procbuild import listing, strip_targets
+from procbuild import relative_targets
 
 DISKS_13 = [
     "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
@@ -110,7 +117,7 @@ def procedures(cf: CodeFile) -> dict[str, tuple]:
 
 def body(seg, p) -> list[str]:
     """The comparable instruction text of one procedure."""
-    return [strip_targets(t) for t in listing(seg, p)]
+    return relative_targets(seg, p)
 
 
 def compare(ours_cf: CodeFile, apple_cf: CodeFile) -> dict[str, dict]:

@@ -89,12 +89,54 @@ def strip_targets(text: str) -> str:
     """Drop absolute jump addresses, which are placement, not content.
 
     `FJP $092A` and `FJP $0417` are the same instruction in two different
-    codefiles. What has to match is the *structure*, and the structure is
-    already pinned by the instruction sequence around it -- a jump to the
-    wrong place lands the following instructions in the wrong order and the
-    listings diverge there instead.
+    codefiles, so the address cannot be compared as it stands.
+
+    The claim that used to stand here -- that a jump to the wrong place
+    shows up anyway, because the instructions after it land in the wrong
+    order -- is FALSE, and `ASSEMBLE.33` falsified it (finding 252). A
+    body whose `T17` sits one nesting level too deep emits exactly the
+    same instructions in exactly the same order; only the `FJP`'s
+    destination moves, from the 36th instruction to the 35th. Every
+    comparison that goes through this function is blind to that.
+
+    Prefer `relative_targets`, which keeps the destination and makes it
+    comparable instead of discarding it. This is kept for the callers
+    that want a listing with no addresses in it at all.
     """
     return re.sub(r"\$[0-9A-F]{4}( \(jtab-\d+\))?", "$----", text)
+
+
+JUMPS = ("UJP", "FJP", "EFJ", "NFJ", "XJP")
+
+
+def relative_targets(seg, p) -> list[str]:
+    """A procedure's listing with jump targets as instruction offsets.
+
+    `FJP $092A` becomes `FJP >+35`: the destination counted in
+    instructions from the jump itself, which is the same number in any
+    codefile that placed the procedure anywhere else. Control flow is
+    then part of the comparison instead of being thrown away.
+
+    Only the jump opcodes are rewritten. A `LDC` set constant prints its
+    words as `$hhhh` too, and `strip_targets` was blanking those as well
+    -- so two *different* set constants also compared equal. They are
+    content; they are left alone.
+    """
+    ins = (disassemble(seg.data, p.enter_ic, p.exit_ic, p.jtab)[0]
+           + sweep_exit(seg.data, p.exit_ic, p.jtab - 8, p.jtab)[0])
+    at = {i.addr: n for n, i in enumerate(ins)}
+    out = []
+    for n, i in enumerate(ins):
+        text = i.text
+        if i.mnemonic in JUMPS:
+            def rel(m, n=n):
+                a = int(m.group(1), 16)
+                return f">{at[a] - n:+d}" if a in at else "$----"
+            text = re.sub(r"\$([0-9A-F]{4})( \(jtab-\d+\))?", rel, text)
+        out.append(text)
+        if i.mnemonic in END:
+            break
+    return out
 
 
 CXP_RE = re.compile(r"^CXP (\d+),(\d+)$")

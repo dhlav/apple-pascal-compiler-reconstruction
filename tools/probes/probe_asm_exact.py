@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-07-assembler-pseudoops"
+RUN = (ROOT / "acceptance" / "2026-09-11-assembler-asmrec"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -115,6 +115,12 @@ EXACT = [
     # five-word record into the FIVEREC that was already declared.
     "ASSEMBLE.5", "ASSEMBLE.7", "ASSEMBLE.8", "ASSEMBLE.11",
     "ASSEMBLE.12", "ASSEMBLE.13", "ASSEMBLE.14",
+    # Finding 251: ASMREC's variant, which findings 239 and 250d left
+    # open. `INITIALI.3` is the runtime endian test behind global 57;
+    # `TLA.24` seeds the FIVEREC at global 13; `ASSEMBLE.9` is the
+    # .DEF/.REF helper that needed word 7 to be a FIVEP; `ASSEMBLE.33`
+    # scans the macro buffers.
+    "INITIALI.3", "TLA.24", "ASSEMBLE.9", "ASSEMBLE.33",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -129,7 +135,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
 STILL_DIFFERS = ["TLA.17", "ASSEMBLE.1", "ASSEMBLE.15", "ASSEMBLE.2",
-                 "INITIALI.1", "SYMTBLDU.1", "TLA.14", "ASSEMBLE.33"]
+                 "INITIALI.1", "SYMTBLDU.1", "TLA.14", "ASSEMBLE.6"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
