@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-06-pascalsystem-unit" / \
+RUN = ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps" / \
     "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
@@ -75,13 +75,13 @@ EXACT = [
     "PASCALSY.23", "PASCALSY.24", "PASCALSY.25", "PASCALSY.26",
     "PASCALSY.29", "PASCALSY.30", "PASCALSY.31", "PASCALSY.32",
     "PASCALSY.42",
-    "PASCALSY.34", "PASCALSY.35", "PASCALSY.39",
+    "PASCALSY.33", "PASCALSY.34", "PASCALSY.35", "PASCALSY.39",
     "PASCALSY.36", "PASCALSY.37", "PASCALSY.38",
     "PASCALSY.44", "PASCALSY.45", "PASCALSY.46", "PASCALSY.47",
     "PASCALSY.48", "PASCALSY.49", "PASCALSY.50", "PASCALSY.53",
-    "PASCALSY.54", "PASCALSY.56",
+    "PASCALSY.54", "PASCALSY.55", "PASCALSY.56",
     "PASCALSY.51", "PASCALSY.52", "PASCALSY.57", "PASCALSY.58",
-    "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
+    "PASCALSY.2", "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
     "PASCALSY.43",
     "PASCALSY.27",
     # PASCALSY is 56 of 58 now: only FGET and FPUT are left, and both are
@@ -118,17 +118,12 @@ EXACT = [
 # Procedures still known to differ, kept here as the discrimination control
 # (check 3 above). These are not failures -- they are the open work, and
 # what matters is that the comparison still reports them as different.
-# Finding 252. These three were on EXACT until jump destinations became
-# part of the comparison; each emits Apple's instructions in Apple's order
-# and sends one jump somewhere else, which the old blanking comparison
-# could not see. They are open work, not regressions in the source -- the
-# source never changed. `probe_jump_targets.py` is what stops the hole
-# from reopening.
-#
-#   PASCALSY.2  (EXECERROR)  two jumps: >+42 vs >+52, >+35 vs >+36
-#   PASCALSY.33 (SCANTITLE)  one:       >+81 vs >+156
-#   PASCALSY.55 (BLKXFER)    one:       >+7  vs >+3
-TARGETS_WRONG = ["PASCALSY.2", "PASCALSY.33", "PASCALSY.55"]
+# Finding 252 demoted three procedures from EXACT when jump destinations
+# became part of the comparison, and finding 253 put them back: EXECERROR
+# had the CONTROL-RESET hang as the inner IF's ELSE instead of the outer
+# one's, SCANTITLE assigned its result inside an ELSE instead of after it,
+# and BLKXFER left one statement outside a THEN. All three are back on
+# EXACT below. `probe_jump_targets.py` is what stops the hole reopening.
 
 STILL_DIFFERS = [
     # One left in RUN, and finding 232b says no single compilation of
@@ -152,7 +147,7 @@ STILL_DIFFERS = [
 # this source", and the cost is exactly the four the finding names and
 # no others. The directory keeps the source that produced it, so the
 # run is reproducible rather than merely archived.
-FGET_RUN = (ROOT / "acceptance" / "2026-09-06-pascalsystem-fget"
+FGET_RUN = (ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps-fget"
             / "PASCALSY.CODE")
 FGET_EXACT = ["PASCALSY.7"]
 FGET_LOST = ["PASCALSY.2", "PASCALSY.3", "PASCALSY.4", "PASCALSY.5"]
@@ -204,16 +199,11 @@ def main() -> int:
         ours = {k for k, r in rows.items() if r["exact"]}
         theirs = {k for k, r in frows.items() if r["exact"]}
         both = ours | theirs
-        # Was len(rows) -- 111 of 111 -- until finding 252. The three in
-        # TARGETS_WRONG are the difference and they are named, so this
-        # cannot quietly drift further.
-        check(len(both) == len(rows) - len(TARGETS_WRONG),
+        # 111 of 111 again, and this time under a comparison that can see
+        # a jump go to the wrong place (findings 252, 253).
+        check(len(both) == len(rows),
               f"{len(both)} of {len(rows)} procedures exact across the two "
-              f"runs together, the {len(TARGETS_WRONG)} short being "
-              f"{', '.join(TARGETS_WRONG)} (finding 252)")
-        for key in TARGETS_WRONG:
-            check(key not in both,
-                  f"{key} is still open -- a jump goes to the wrong place")
+              f"runs together")
 
     print()
     if fail:

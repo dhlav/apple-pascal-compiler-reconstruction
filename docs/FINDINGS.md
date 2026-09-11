@@ -21237,3 +21237,76 @@ procedures, while blind to one kind of error. **A passing check earns
 trust it has not necessarily been tested for.** The question to ask of
 one is not "does it pass" but "what would have to be wrong for it to
 fail, and has that ever been demonstrated".
+
+## 253. The three jumps, fixed, and the second run made reproducible
+
+Finding 252 demoted three procedures of `128K.PASCAL`. All three are back,
+first attempt, and **the OS is 111 of 111 again -- this time under a
+comparison that can see a jump go to the wrong place.**
+
+None of the three needed new evidence. The jump targets said where each
+statement belonged; nothing else had to be read.
+
+### 253a. `PASCALSY.2` (`EXECERROR`): whose `ELSE` the hang is
+
+```pascal
+IF (G2^.XEQERR IN [1,5,6,8,11,13,14]) OR (...) THEN
+BEGIN
+  IF NOT SPACEWAIT(TRUE) THEN
+  BEGIN ...clear units, WAITSYSVOL, EXIT(STUB48)... END
+END
+ELSE
+BEGIN WRITE('Press CONTROL-RESET'); WRITELN; WHILE TRUE DO BEGIN END END
+```
+
+The `'Press CONTROL-RESET'` hang had been written as the **inner** `IF`'s
+`ELSE`. Apple's `FJP >+42` off the set test lands on it directly, so it
+belongs to the outer one -- and that is the reading that makes sense of
+the routine: an error *in* the recoverable set gets the `SPACEWAIT` prompt
+and a warm reboot, and an error outside it cannot be recovered from, so
+the system says so and stops. As written, it hung on exactly the errors
+Apple offers to continue from and rebooted on the ones Apple treats as
+fatal. **The reconstruction had the two arms swapped and ran for weeks.**
+
+### 253b. `PASCALSY.33` (`SCANTITLE`): a result never assigned
+
+`SCANTITLE := OK` and the suffix-recognition block sat inside the
+`LENGTH(FTITLE) = 0` `ELSE`. Apple's `UJP >+81` out of the `THEN` arm
+lands on that assignment, so both arms rejoin there. Nested as it was, a
+title with nothing after the file name -- the common case -- never
+assigned the result at all and `SCANTITLE` returned the `FALSE` it was
+initialised with.
+
+### 253c. `PASCALSY.55` (`BLKXFER`): one statement outside a `THEN`
+
+`IF NBLOCKS < NB THEN NB := NBLOCKS; LEN := NB * 512` against Apple's
+`IF NBLOCKS < NB THEN BEGIN NB := NBLOCKS; LEN := NB * 512 END`. This one
+is semantically harmless -- when `NB` is unchanged `LEN` is already
+`NB * 512` -- which is the point: it is a difference nothing but the jump
+target could have found.
+
+### 253d. The second run is now derived, not archived
+
+`probe_os_exact.py` pins two runs, and the `FGET` one had been kept only
+as a source snapshot. That snapshot was **13,369 diff lines** behind the
+live file, and two of the three procedures fixed here live in both runs --
+so editing the snapshot to match would have been a second, hand-maintained
+copy of the same fix.
+
+`tools/fgetvariant.py` derives it instead. The transformation is exactly
+what the parked comment in the source says: give `FGET` the heading
+`PROCEDURE FGET; USES FIOPRIMS; LABEL 1, 2, 3;` and swap its `BEGIN END`
+stub for the body above it. Every anchor is asserted, so a source edit
+that moves one fails the tool rather than quietly producing a different
+file. Both runs now come from one source.
+
+### 253e. `cp2 extract` does not overwrite either
+
+The `FGET` run first scored identical to the unit run, procedure for
+procedure, which is impossible if the `USES` did anything. The extract had
+silently done nothing: the destination file already existed from the
+previous extract. This is [[cp2-add-does-not-overwrite]] in a second verb,
+and the tell was that the two runs agreed *too well* -- `PASCALSY.2`-`.5`
+exact in a run whose whole purpose is to empty them. **Delete the
+destination before every `cp2 extract`, and check the result says what it
+cannot say by accident.**
