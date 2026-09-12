@@ -21967,3 +21967,123 @@ after finding 258a's `SLDC 0 | FJP` and finding 259a's `WORDBITS = 8`.
 The reconstruction writes the comparison literally, for the same reason:
 the bytes fix the two values and say nothing about the names they were
 written with.
+
+## 263. UCSD's own I.5 Adaptable Assembler, and what `TLA` stands for
+
+`evidence/reference/ucsd-15-sources.zip` is UC San Diego's release of the
+I.5 sources (non-commercial use; the copy here is byte-identical to the
+github.com/glgorman/UCSD-Pascal-p-system download, sha256
+41896812f4e1...). `tools/extract_ucsd15src.py` writes the listings to
+`reference_source/ucsd_15`. The one that matters here is
+`UCSD_I.5_Assembler.txt`, 3704 lines, and its tenth line answers a
+question this file has carried since the first session:
+
+```
+ {       Patterned after The Waterloo Last Assembler (TLA)       }
+ {       Core Authors:  William P. Franks and Dennis Volper      }
+ {               Version :       pdp 11 & LSI 11                 }
+ {               Release :       I.5.b.1                         }
+```
+
+**`TLA` is The Waterloo Last Assembler.** Apple's segment 1 is named
+after the assembler UCSD's was patterned on.
+
+This is a REFERENCE, and CLAUDE.md's rule 4 is the right frame for it:
+legitimate for **names**, never for bytes. It is I.5.b.1 for the
+PDP-11/LSI-11, three years and a different processor from Apple's 1.3 for
+the 6502, and the divergence is real -- its `ASSEMBLE` has `ZOP1..ZOP20`
+where Apple's whole segment holds 33 procedures, its `INITIALIZE` has two
+nested procedures where Apple's has five, and `WORDSWAP` is one word
+there and two here. Every byte in this reconstruction still comes from
+Apple's binary and is still verified by a compile.
+
+### 263a. The structure is Apple's, exactly
+
+```
+SEGMENT PROCEDURE TLA(III,JJJ:INTEGER);
+  SEGMENT PROCEDURE INITIALIZE;  SEGMENT PROCEDURE SYMTBLDUMP;
+  SEGMENT PROCEDURE PROCEND;     SEGMENT PROCEDURE ASSEMBLE;
+  SEGMENT PROCEDURE PRINTERROR(ERRORNUM:INTEGER);
+```
+
+Six segments, Apple's names, Apple's order -- and `TLA`'s two unread
+`INTEGER` parameters, which finding 235e had derived from `params 4`
+alone.
+
+### 263b. The eight bodies still open are all named, and the nesting agrees
+
+| this file | I.5 | what confirms it from the binary |
+|---|---|---|
+| `TLA.18` | `FUNCTION EXPRESS(OPERANDREQUIRED:BOOLEAN):BOOLEAN` | three children, same count |
+| `TLA.31` | `EXPREXIT` | **already exact, and the same body** |
+| `TLA.32` | `EXPREND` | **now exact, same error number 27** |
+| `TLA.33` | `OPERFOLD` | |
+| `TLA.34` | `PCONST` | `TLA.17` sends digits here |
+| `TLA.35` | `PKWORD` | `.` -- keywords are `.PROC`, `.BYTE` |
+| `TLA.36` | `PIDENT` | letters |
+| `TLA.37` | `PLLABEL` | `$` and then a digit test |
+| `TLA.38` | `PSTRING` | `"` |
+
+`LEX`'s five children are declared in the order `PCONST, PKWORD, PIDENT,
+PLLABEL, PSTRING`, which is our `.34, .35, .36, .37, .38`, and the
+already-exact `TLA.17` independently says which character reaches which.
+`EXPREXIT` was written from the binary in a previous session and is I.5's
+procedure line for line, error number included.
+
+**`TLA.17`'s `CASE` is I.5's arm for arm, in the same order**: digits,
+letters, `.`, `#`, `(`, `[`, `{`, `,`, `~`, `?`, `]`, `)`, `}`, `;`, `@`,
+`$`, `"`, `/`, `!`, `+`, `-`, `:`, `|`, `^`, `&`, `*`, `%`, `<`. That
+order was derived here from physical addresses in the jump table
+(finding 245a) with no knowledge of I.5 at all, so the two are
+independent -- and it is the strongest confirmation the source-order rule
+has had.
+
+### 263c. Names taken, and names left alone
+
+Taken, because the binary already confirmed the role:
+
+- **`G4` is `LEXTOKEN`** (90 sites).
+- The nine procedures of 263b.
+- **`NUMREC` is `WORDSWAP`** -- `HWORD`, `HIBYTE`/`LOWBYTE`,
+  `HEX1..HEX4`, `OCT0..OCT6`. I.5's octal arm is *six* three-bit digits
+  and a one-bit seventh, and that is exactly why finding 259a's type is
+  two words: six three-bit fields do not fit in one word, so `OCT1`
+  starts the second. The arm I had derived as `O0..O4` plus `HIOCT` and
+  `HIBIT` is that arm, read from the other end.
+- **Constants that name numbers measured here first**: `CODESIZE = 20`
+  (finding 261b measured the column twice), `PAGESIZE = 55`,
+  `BUFLIMIT = 1023`, `BUFBLKS = 2`, `HASHTOP = 127` (finding 256b's
+  `ODD(127)` mask), `LCCHAR = '*'` (finding 262a's `'*' = '$'`).
+- **`HIBYTEFIRST` and `LISTHIFIRST`** close finding 258a, which said the
+  bytes could not name its two dead guards. I.5 names both, and its
+  senses are the ones reading gave: `HIBYTEFIRST` asks whether a word is
+  STORED high byte first, so a true value swaps before emitting;
+  `LISTHIFIRST` asks whether it is LISTED that way, so a true value
+  suppresses the swap. Both false on a 6502. The comment in `TLA.4` that
+  said the two guards "read as opposites" was right, and that is why they
+  are two constants rather than one.
+- **`EXPRESS`'s parameter is a `BOOLEAN`** -- `OPERANDREQUIRED`. The
+  skeleton had `INTEGER`, which `EXPREND`'s `IF X1 THEN` made **error
+  135**; `PARAM SIZE` is 6 either way, so only a body could say.
+
+Left alone, though I.5 names them, because the role match is not the
+binary's doing: `G11` is I.5's `CH`, `G62` its `ADVANCE`, `G6`/`G685` its
+`SPCIALSTKINDEX`/`SPECIALSTK`, `G622` its `RELOCATE`, `G72` its `BUFFER`,
+`BYTEPAIR` its `BYTESWAP` (whose variant arms are PDP-11 register fields
+and do not match). Those are recorded here and in comments, not adopted.
+
+### 263d. `EXPRESS`'s frame, which the reference unblocked
+
+`TLA.18` is 502 instructions with 46 local words and two children that
+reach into it, and it was the last structural unknown in the file. I.5
+declares `STKINDEX, COUNT: INTEGER; STK: ARRAY[0..10] OF STACKTYPE`,
+which is the shape, and Apple's operands give the sizes: `LDA 1,6 |
+IXA 2` says two-word elements at local 6, and 44 declared words means
+**21** of them, not 11. The last two words are temps, not declarations --
+local 48 takes `... IXA 2 | STL 48` and is read back as a record, so it
+is a `WITH` slot, and local 49 takes `LAO 406 | SLDC 0 | LDB`, a `FOR`
+limit holding the length of a string.
+
+`STACKTYPE`'s one-bit filler is forced: `TIPE` is seven bits at 0 and
+`ATRIB` eight bits at **8**, and with nothing declared between them the
+compiler would have packed `ATRIB` at bit 7.

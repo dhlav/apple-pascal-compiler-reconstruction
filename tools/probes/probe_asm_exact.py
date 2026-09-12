@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-12-assembler-tla-scanner"
+RUN = (ROOT / "acceptance" / "2026-09-12-assembler-i5-names"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -174,6 +174,12 @@ EXACT = [
     # token codes; 407 and 160 instructions, both exact on the first
     # compile, and between them they pin five more BOOLEAN globals.
     "TLA.16", "TLA.17",
+    # Finding 263: EXPREND, written from UCSD's own I.5 listing --
+    # the same procedure, the same error number 27, the same three
+    # cases. The run that carries it also carries the whole naming
+    # pass, and every name in it is byte-neutral: these 82 were
+    # exact before it and are exact after.
+    "TLA.32",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -187,7 +193,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.32", "TLA.34", "TLA.35", "TLA.33",
+STILL_DIFFERS = ["TLA.34", "TLA.35", "TLA.33",
                  "TLA.18", "TLA.36", "TLA.37", "TLA.38"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple

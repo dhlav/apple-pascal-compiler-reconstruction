@@ -1,0 +1,3704 @@
+ {$U-}
+ {$R-}
+ {===============================================================}
+ {                                                               }
+ {               UCSD   ADAPTABLE   ASSEMBLER                    }
+ {               ----   ---------   ---------                    }
+ {       Patterned after The Waterloo Last Assembler (TLA)       }
+ {       Core Authors:  William P. Franks and Dennis Volper      }
+ {                                                               }
+ {                                                               }
+ {               Version :       pdp 11 & LSI 11                 }
+ {               Date    :       Sept.  27, 1978                 }
+ {               Author  :       Dennis Volper                   }
+ {               Release :       I.5.b.1                         }
+ {                                                               }
+ {                                                               }
+ {              Institute for Information Systems                }
+ {                UC  San Diego, La Jolla,  CA                   }
+ {                                                               }
+ {                 Kenneth L. Bowles, Director                   }
+ {                                                               }
+ {                     Copyright (C) 1978,                       }
+ {       Regents of the University of California, San Diego      }
+ {                                                               }
+ {===============================================================}
+ PROGRAM SYSTEMLEVEL;
+ TYPE    PHYLE=FILE;
+ VAR     FILLER:ARRAY[0..6] OF INTEGER;
+         USERINFO:RECORD
+                 WORKSRC,WORKCODE:^PHYLE;
+                 ERRSYM,ERRBLK,ERRNUM:INTEGER;
+                 SLOWTERM,STUPID:BOOLEAN;
+                 ALTMODE:CHAR;
+                 FILLER2:ARRAY[0..21] OF INTEGER; {change with care...allows}
+                 WORKTITLE,SYMTITLE:STRING[15]     {more compile time space}
+             END;
+
+ SEGMENT PROCEDURE TLA(III,JJJ:INTEGER);
+ CONST  RELEASEVERSION =TRUE;  {Is this for the outside world?}
+        NUMKWORDS      =27;    {The number of key words in this assembler}
+        HASHRANGE      =128;   {The hash table size}
+        HASHTOP        =127;   {One less than HASHRANGE}
+        MACROSIZE      =19;    {The buffer size for a MACRO stored on heap}
+        BUFBLKS        =2;     {# of blocks for output buffer}
+        BUFLIMIT       =1023;  {(BUFBLKS*512) - 1}
+        MAXPROC        =10;    {Maximum number of Procedures per Assembly}
+        PAGESIZE       =55;    {Lines printed per page}
+        VIEWSTACK      =TRUE;  {Display stack & heap while Assembling}
+        DEBUG          =FALSE; {for debugging Assembler}
+        CODESIZE       =20;    {Testing values}
+        RELEASENAME    ='I.5 [b.1]';
+
+ {Below constants are Assembler dependent}
+
+        NOP            =160;   {A one byte NOP}
+        ASMNAME        ='11';
+        BYTEFIT        =5;     {maximum bytes per output line}
+        WORDFIT        =3;     {maximum words per output line}
+        HIBYTEFIRST    =FALSE; {First byte is the high-order byte?}
+        LISTHIFIRST    =TRUE;
+        LCCHAR         ='*';   {Location counter character}
+        WORDADDRESSED  =FALSE; {Word as opposed to byte addressed}
+        AFTERPLUS      =0;     {An impossible character}
+        AFTERMINUS     ='(';   { "-(" is always auto decrement}
+        DEFRADIX       =8;     {Default radix}
+        LISTRADIX      =8;     {Printed listing radix}
+        HEXSWITCH      ='H';   {Char following number which resets radix}
+        DECSWITCH      ='.';
+        OCTSWITCH      =0;
+        BINSWITCH      ='B';
+        RELHI          =FALSE; {Relative byte most significant passed PUTWORD}
+
+ TYPE BITE=0..255;
+      PACKNAME=PACKED ARRAY[0..7] OF CHAR;
+      WORDSWAP=PACKED RECORD CASE INTEGER OF
+               0:(HWORD:INTEGER);
+               1:(HIBYTE,LOWBYTE:BITE);
+               2:(HEX1,HEX2,HEX3,HEX4:0..15);
+               3:(OCT2,OCT3,OCT4,OCT5,OCT6:0..7;
+                                      OCT1:0..1);
+               4:(BIN:PACKED ARRAY[0..15] OF 0..1);
+           END;
+      HASHTYPE=RECORD CASE BOOLEAN OF
+               TRUE:(INT:INTEGER);
+              FALSE:(BOL:BOOLEAN)
+           END;
+      BYTESWAP=PACKED RECORD CASE INTEGER OF
+               0:(BWORD:INTEGER);
+               1:(BADBYTE,GOODBYTE:BITE);
+               2:(REGLOW:0..7;
+                  MODELOW:0..7;
+                  REGHI:0..7;
+                  MODEHI:0..7;
+                  DUM2:0..15);
+               3:(XOFFSET:0..255;
+                  DUM3:0..255);
+               4:(SOBSET:0..63;
+                  DUM4:0..1023)
+           END;
+
+ (*$I ASM1.TEXT*)
+                          {start of ASM1}
+      {Copyright (c) 1978 Regents of the University of California}
+
+ TOKENS=(EQUAL,NOTEQUAL,BITWISEOR,EXCLUSIVEOR,DIVIDE,MODULO,ONESCOMPLEMENT,TNOT,
+        OPENPAREN,CLOSEPAREN,OPENBRACKET,CLOSEBRACKET,OPNBRACE,CLSBRACE,
+        COMMA,OPNBROKEN,CLSBROKEN,QUERY,PLUS,MINUS,
+        ASTERISK,AMPERSAND,ATSIGN,COLON,NUMBERSIGN,AUTOINCR,AUTODECR,LOCCTR,
+        FIRSTOPCODE,
+        REF,DEF,OP1,OP2,OP3,OP4,OP5,OP6,OP7,OP8,OP9,OP10,OP11,OP12,OP13,
+        OP14,OP15,OP16,OP17,OP18,OP19,OP20,ALIGN,
+        TEOF,BLOCK,WORD,BIGHT,ENDLINE,TMOD,PROC,FUNC,CONDEND,TELSE,ORG,
+        ASCII,MACRODEF,CONDITION,EQU,PUBLIC,PRIVATE,TCONST,
+        LIST,NOLIST,ASECT,PSECT,TEND,TPAGE,TITLE,
+        LASTOPCODE,
+        INCLUDE,TLABEL,LOCLABEL,TSTRING,CONSTANT,TIDENTIFIER,STARTFILE,
+        MACROEND,EXPAND,TNULL);
+     CODETYPE=(A,P);
+     SOURCETYPE=(MACROSOURCE,PARMSOURCE,FILESOURCE);
+     ATRIBUTETYPE=(DEFABS,PROCS,
+            OPS1,OPS2,OPS3,OPS4,OPS5,OPS6,OPS7,OPS8,OPS9,OPS10,OPS11,
+            OPS12,OPS13,OPS14,OPS15,OPS16,OPS17,OPS18,OPS19,OPS20,
+            DEFRP,DEFREG,DEFCC,DEFIR,
+            PUBLICS,CONSTS,PRIVATES,REFS,DEFS,FUNCS,ABS,LABELS,UNKNOWN,MACROS);
+     MACROPTR=^MACROTYPE;
+     MACROTYPE=PACKED ARRAY[0..MACROSIZE] OF CHAR;
+     JTABPTR=^JTAB;
+     JTAB=RECORD               {Used for linkinfo references}
+        PCOFFSET:INTEGER;
+        LAST:JTABPTR
+      END;
+     BKLABELPTR=^BACKLABEL;
+     SYMTABLEPTR=^SYMBOLTABLE;
+     SYMBOLTABLE=RECORD        {Symboltable entry}
+        NAME:PACKNAME;
+        LINK:SYMTABLEPTR;
+        CASE ATTRIBUTE:ATRIBUTETYPE OF
+          {OPS1,OPS2,OPS3,OPS4,OPS5,OPS6,OPS7,OPS8,OPS9,OPS10,
+          OPS11,OPS12,OPS13,OPS14,OPS15,OPS16,OPS17,OPS18,OPS19,OPS20,
+          ABS,DEFABS,DEFRP,DEFREG,DEFCC,DEFIR,LABELS,}
+                            UNKNOWN:(OFFSETORVALUE:INTEGER;
+                                     FWDREF:BKLABELPTR);
+                             MACROS:(MACRO:MACROPTR;
+                                    EXPANDMCRO:BOOLEAN);
+                               DEFS:(PROCNUM,CODEOFFSET:INTEGER;
+                                     DEFFWDREF:BKLABELPTR);
+       PUBLICS,PRIVATES,REFS,CONSTS:(NREFS,NWORDS:INTEGER;
+                                     LINKOFFSET:JTABPTR);
+                        PROCS,FUNCS:(FUNCNUM,NPARAMS:INTEGER)
+       END;
+     TEMPTABLE=RECORD            {Temporary table entry}
+          TEMPNAME:PACKNAME;
+          DEFOFFSET:INTEGER;
+          FWDREF:BKLABELPTR;
+          TEMPATRIB:ATRIBUTETYPE
+       END;
+     RELTYPE=(LLREL,LABELREL,LCREL,NOTSET);
+     RESULTREC=RECORD            {expression evaluator result record}
+          ATTRIBUTE:ATRIBUTETYPE;
+          OFFSETORVALUE:INTEGER;
+       END;
+     RELREC=RECORD               {current expression's relocation info}
+          TIPE:RELTYPE;
+          OFFSETORVALUE,TEMPLABEL:INTEGER;
+          ATTRIBUTE:ATRIBUTETYPE;
+          SYM:SYMTABLEPTR
+       END;
+     BACKLABEL=PACKED RECORD     {forward reference record}
+          WORDLC,BYTESIZE:BOOLEAN;
+          OFFSET,LC,VALUE:INTEGER;
+          NEXT:BKLABELPTR
+       END;
+     JTABREC=ARRAY[0..6] OF INTEGER;     {for storage of relocation info}
+     BUFFERTYPE=PACKED ARRAY[0..511] OF BITE;
+     SCRATCHREC=RECORD            {scratch file for temporary storage}
+          CLASS:INTEGER;
+          CASE BOOLEAN OF
+               TRUE:(JUMPS:JTABREC);
+              FALSE:(FWDREF:BACKLABEL)
+     END;
+
+ {----------------------------------------------------------------------}
+
+ VAR SYM:SYMTABLEPTR;      {pointer to current symboltable entry}
+     LEXTOKEN:TOKENS;      {current token returned by LEX}
+     OUTBLKNO,             {next output block #}
+     TEXTINDEX,            {index into TEXTLINE, containing line of source text}
+     MACROINDEX,           {index into macro source sitting on heap}
+     SPCIALSTKINDEX,       {index into stack of outstanding special symbols}
+     CODECOUNT:INTEGER;    {index into array containing current line's code}
+     OPBYTE:BYTESWAP;      {used exclusively by ZOP1 - ZOP20}
+     CH:CHAR;
+     DISPLAY:BOOLEAN;      {currently displaying output?}
+     FULLLABEL:BKLABELPTR; {forward referenced labels still unresolved}
+     RESULT:RESULTREC;     {result of last call to expression evaluator}
+
+     BUFBOTTOM,            {start of BUFFER relative to start of output file}
+     BUFFERPOS,            {next output byte relative to start of BUFFER}
+     BUFFERTOP,            {next output byte relative to start of file}
+     MAXBUFTOP,            {maximum BUFFERTOP}
+     OUTBLKTOP,            {next block after current end of output file}
+     PROCSTART,            {start of procedure relative to start of file}
+     JCOUNT1,JCOUNT2,JCOUNT3, {indexes for relocation records JTABREC's}
+     TEMPTOP,TEMPLABEL,
+     BLOCKPTR,BNUM,BLOCKNO,ALTBLOCNO,ALTBLOCPTR,
+     PROCNUM,SEGSIZE,PAGENO,
+     LINENUM,LISTNUM,
+     NUMERRORS,
+     OPVAL,CONSTVAL,
+     PARMPTR,MCSTKINDEX,LINKEND,SCRATCHEND,CONDINDEX,
+     LC,ALC,LASTLC,LOWLC                                 :INTEGER;
+
+     SYMLAST,FOUND,CONSOLE,STARTLINE,FROMPUTWORD,NOTSTRING,LISTING,JUMPINFO,
+     ADVANCE,EXPANDMACRO,PARMCHECK,ALTINPUT,EXPRSSADVANCE,DEFMCHOOK  :BOOLEAN;
+     MCPTR:MACROPTR;
+     BUFFER:^BUFFERTYPE;   {buffer for output code in core}
+     TAB:CHAR;
+     LISTFILE:INTERACTIVE;
+     TITLELINE,STRVAL,CURFNAME,FIRSTFNAME:STRING;
+     TEXTLINE,BLANKLINE:PACKED ARRAY[0..79] OF CHAR;
+
+     RELOCATE,OPERAND1,OPERAND2,OPERAND3,NULLREL:RELREC;
+     NEXTJP:JTABPTR;
+     JUMP1,JUMP2,JUMP3:JTABREC;
+     FREELABEL:BKLABELPTR;
+
+     CURRENTATRIB:ATRIBUTETYPE;
+     SOURCE:SOURCETYPE;
+     CODESECTION:CODETYPE;
+     MACROSTACK:ARRAY[0..5] OF MACROPTR;
+     PARMSTACK,MCINDEX:ARRAY[0..5] OF INTEGER;
+     SPECIALSTK:ARRAY[0..5] OF TOKENS;
+     TEMP:ARRAY[0..20] OF TEMPTABLE;
+     HASH,HASHRES:ARRAY[0..HASHTOP] OF SYMTABLEPTR;
+     LASTSYM:SYMTABLEPTR;
+
+     ALTFILE:FILE;
+     SCRATCH:FILE OF SCRATCHREC;
+
+     KWORDS:ARRAY[0..NUMKWORDS] OF PACKNAME;
+     KTOKEN:ARRAY [0..NUMKWORDS] OF TOKENS;
+     XBLOCK:PACKED ARRAY[0..1023] OF CHAR;
+     CONSTID,HEXCHAR:PACKED ARRAY[0..15] OF CHAR;
+     CODE,BLANKCODE:PACKED ARRAY[0..CODESIZE] OF CHAR;
+     HEAP:^INTEGER;
+     SEGNAME,PROCNAME:PACKNAME;
+     PROCTABLE:ARRAY[0..MAXPROC] OF INTEGER;
+
+
+ PROCEDURE ERROR(ERRORNUM:INTEGER); FORWARD;
+ PROCEDURE PATCHCODE(FWDREF:BACKLABEL; BUFINDEX:INTEGER); FORWARD;
+ PROCEDURE IOCHECK(QUIT:BOOLEAN); FORWARD;
+ PROCEDURE LLCHECK; FORWARD;
+ PROCEDURE PRINTPAGE; FORWARD;
+ PROCEDURE PRINTLINE; FORWARD;
+ PROCEDURE PRINTNUM(WORD:INTEGER; BYTESIZE:BOOLEAN);  FORWARD;
+ PROCEDURE PUTBYTE(BYTE:BITE); FORWARD;
+ PROCEDURE PUTRELWORD(WORD:INTEGER; BYTESIZE,WORDOFFSET:BOOLEAN); FORWARD;
+ PROCEDURE PUTWORD(WORD:INTEGER);  FORWARD;
+ PROCEDURE GETCHAR; FORWARD;
+ PROCEDURE LEX; FORWARD;
+ FUNCTION  EXPRESS(OPERANDREQUIRED:BOOLEAN):BOOLEAN; FORWARD;
+ FUNCTION  CHECKOPERAND(CKSPCSTK,CKABS,CKRANGE:BOOLEAN;LO,HI:INTEGER):BOOLEAN;
+                                                               FORWARD;
+
+ {dummy segments necessary since compiled U-}
+ SEGMENT PROCEDURE DUMMY2;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY3;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY4;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY5;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY6;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY7;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY8;  BEGIN END;
+ SEGMENT PROCEDURE DUMMY9;  BEGIN END;
+
+
+ SEGMENT PROCEDURE INITIALIZE;
+ TYPE  OPREC=RECORD
+          OPNAME:PACKNAME;
+          OPVALUE:INTEGER;
+          OPATRIB:ATRIBUTETYPE
+       END;
+
+ VAR  OK:BOOLEAN;
+      COUNT:INTEGER;
+      OPFILENAME,LISTNAME:STRING;
+      OPFILE:FILE OF OPREC;
+
+ PROCEDURE KEYTOKENSET;
+ BEGIN
+   KWORDS[0] :='ALIGN   '; KTOKEN[0] :=ALIGN;
+   KWORDS[1] :='ASCII   '; KTOKEN[1] :=ASCII;
+   KWORDS[2] :='BLOCK   '; KTOKEN[2] :=BLOCK;
+   KWORDS[3] :='BYTE    '; KTOKEN[3] :=BIGHT;
+   KWORDS[4] :='CONST   '; KTOKEN[4] :=TCONST;
+   KWORDS[5] :='EQU     '; KTOKEN[5] :=EQU;
+   KWORDS[6] :='FUNC    '; KTOKEN[6] :=FUNC;
+   KWORDS[7] :='PUBLIC  '; KTOKEN[7] :=PUBLIC;
+   KWORDS[8] :='PRIVATE '; KTOKEN[8] :=PRIVATE;
+   KWORDS[9] :='PROC    '; KTOKEN[9] :=PROC;
+   KWORDS[10]:='WORD    '; KTOKEN[10]:=WORD;
+   KWORDS[11]:='EXPAND  '; KTOKEN[11]:=EXPAND;
+   KWORDS[12]:='MACRO   '; KTOKEN[12]:=MACRODEF;
+   KWORDS[13]:='ENDM    '; KTOKEN[13]:=MACROEND;
+   KWORDS[14]:='IF      '; KTOKEN[14]:=CONDITION;
+   KWORDS[15]:='ENDC    '; KTOKEN[15]:=CONDEND;
+   KWORDS[16]:='ELSE    '; KTOKEN[16]:=TELSE;
+   KWORDS[17]:='REF     '; KTOKEN[17]:=REF;
+   KWORDS[18]:='DEF     '; KTOKEN[18]:=DEF;
+   KWORDS[19]:='ORG     '; KTOKEN[19]:=ORG;
+   KWORDS[20]:='INCLUDE '; KTOKEN[20]:=INCLUDE;
+   KWORDS[21]:='LIST    '; KTOKEN[21]:=LIST;
+   KWORDS[22]:='NOLIST  '; KTOKEN[22]:=NOLIST;
+   KWORDS[23]:='ASECT   '; KTOKEN[23]:=ASECT;
+   KWORDS[24]:='PSECT   '; KTOKEN[24]:=PSECT;
+   KWORDS[25]:='TITLE   '; KTOKEN[25]:=TITLE;
+   KWORDS[26]:='END     '; KTOKEN[26]:=TEND;
+   KWORDS[27]:='PAGE    '; KTOKEN[27]:=TPAGE;
+ END;
+
+ PROCEDURE LEXINIT;
+ VAR  HASHA,HASHB:INTEGER;
+      ID:PACKNAME;
+ BEGIN
+   FOR COUNT:=0 TO HASHTOP DO HASH[COUNT]:=NIL;
+   KEYTOKENSET;
+   REPEAT
+     ID:=OPFILE^.OPNAME;
+     HASHA:=0; FOUND:=FALSE;
+     FOR COUNT:=0 TO 7 DO
+       BEGIN
+         HASHA:=HASHA + HASHA; {left shift}
+         HASHB:=ORD(ID[COUNT]);
+         HASHA:=ORD((NOT ODD(HASHA) AND ODD(HASHB)) OR
+                    (ODD(HASHA) AND NOT ODD(HASHB)));
+       END;
+
+     HASHB:=HASHA MOD HASHRANGE; {lo-order part}
+     HASHA:=HASHA DIV HASHRANGE; {hi-order part}
+     HASHA:=ORD((NOT ODD(HASHA) AND ODD(HASHB)) OR
+                (ODD(HASHA) AND NOT ODD(HASHB))); {xor}
+     HASHA:=HASHA MOD HASHRANGE;
+     SYM:=HASH[HASHA];
+     WHILE (NOT FOUND) AND (SYM<>NIL) DO
+       IF SYM^.NAME=ID THEN FOUND:=TRUE
+         ELSE SYM:=SYM^.LINK;
+     IF FOUND THEN WRITELN('Opcode declared twice=',ID)
+       ELSE
+         BEGIN
+           NEW(SYM,UNKNOWN); {using UNKNOWN here is to save compile time space}
+           SYM^.NAME:=ID; SYM^.ATTRIBUTE:=OPFILE^.OPATRIB;
+           SYM^.OFFSETORVALUE:=OPFILE^.OPVALUE;
+           SYM^.LINK:=HASH[HASHA];
+           HASH[HASHA]:=SYM;
+           IF DEBUG THEN WRITELN(ID,HASHA:10);
+         END;
+     GET(OPFILE);
+   UNTIL EOF(OPFILE);
+   EXPANDMACRO:=TRUE;
+   PARMCHECK:=FALSE;
+   CURRENTATRIB:=UNKNOWN;
+   BLOCKNO:=2;
+   ADVANCE:=TRUE;
+   MCSTKINDEX:=0;
+   SOURCE:=FILESOURCE;
+   BLOCKPTR:=1024;
+   LEXTOKEN:=ENDLINE;
+   TEMPTOP:=0;
+ END;
+
+ BEGIN {Segment INITIALIZE}
+   (*$I-*)
+   OPFILENAME:=CONCAT(ASMNAME,'.OPCODES');
+   OPFILENAME:=CONCAT('*',OPFILENAME);
+   RESET(OPFILE,OPFILENAME);
+   IF IORESULT<>0 THEN
+     BEGIN
+       WRITELN(OPFILENAME,' not on vol');
+       UNITCLEAR(3);
+       EXIT(TLA);
+     END;
+   FOR COUNT:=0 TO 79 DO BLANKLINE[COUNT]:=CHR(0);
+   TEXTLINE:=BLANKLINE;
+   WRITELN(ASMNAME,'   Assembler  ',RELEASENAME);
+   FOR COUNT:=0 TO CODESIZE DO BLANKCODE[COUNT]:=' ';
+   CODE:=BLANKCODE; CODECOUNT:=0; HEXCHAR:='0123456789ABCDEF';
+   BUFFERPOS:=0; NUMERRORS:=0;
+   TAB:=CHR(9);
+   LINENUM:=0;  SPCIALSTKINDEX:=-1; PROCNUM:=0; LISTNUM:=0;
+   IF LENGTH(USERINFO.WORKTITLE)=0 THEN
+     FIRSTFNAME:=USERINFO.SYMTITLE
+   ELSE
+     FIRSTFNAME:=USERINFO.WORKTITLE;
+   CURFNAME:=FIRSTFNAME;
+   REPEAT
+     WRITE('Output file for assembled listing: (<CR> for none)');
+     READLN(LISTNAME);
+     DISPLAY:=(LISTNAME<>'');  LISTING:=DISPLAY;
+     CONSOLE:=(LISTNAME='CONSOLE:') OR (LISTNAME='#1:');
+     IF DISPLAY THEN
+       IF CONSOLE THEN
+         OPENNEW(LISTFILE,'CONSOLE:')
+       ELSE
+         OPENNEW(LISTFILE,CONCAT(LISTNAME,'.TEXT[*]'));
+     OK:=(IORESULT=0);
+     IOCHECK(FALSE);
+   UNTIL OK;
+   (*$I+*)
+   IF NOT RELEASEVERSION THEN
+     BEGIN
+       WRITELN('Relocation info at file end?');
+       READ(KEYBOARD,CH);
+       JUMPINFO:=(CH='Y') OR (CH='y');
+     END
+   ELSE JUMPINFO:=TRUE;
+   FOR COUNT:=1 TO 9 DO WRITELN;
+   NULLREL.TIPE:=NOTSET; NULLREL.TEMPLABEL:=0; NULLREL.SYM:=NIL;
+   NULLREL.ATTRIBUTE:=UNKNOWN; NULLREL.OFFSETORVALUE:=0;
+   RELOCATE:=NULLREL;
+   MARK(HEAP); {To initialize MEMAVAIL}
+   EXPRSSADVANCE:=TRUE;  NOTSTRING:=TRUE; DEFMCHOOK:=FALSE;
+   ALTINPUT:=FALSE; SYMLAST:=FALSE; FROMPUTWORD:=FALSE;
+   LC:=0; LASTLC:=0; LOWLC:=0; ALC:=0;
+   CONDINDEX:=-1;
+   PROCNAME:='        ';
+   PAGENO:=0;
+   TITLELINE:=' ';
+   IF DISPLAY THEN
+     BEGIN
+       WRITELN(LISTFILE,'PAGE - ',PAGENO:3);
+       PAGENO:=PAGENO + 1;
+     END;
+   (*$I-*)
+   REWRITE(SCRATCH,'*LINKER.INFO'); LINKEND:=0;
+   IOCHECK(TRUE);
+   (*$I+*)
+   NEW(SYM,UNKNOWN); {extra record on heap to garbage}
+   LEXINIT;
+   IF NOT (CONSOLE AND DISPLAY) THEN
+     BEGIN
+       WRITELN;
+       WRITE('<   0>');
+     END;
+   CODESECTION:=P;
+ END;
+
+ (*$I ASM2.TEXT*)
+                         {start of ASM2}
+         {Copyright (c) 1978 Regents of the University of California}
+
+ SEGMENT PROCEDURE SYMTBLDUMP;
+ TYPE  SYMDUMPPTR=^SYMDUMPTYPE;
+       SYMDUMPTYPE=RECORD
+           SYM:SYMTABLEPTR;
+           LLINK,RLINK:SYMDUMPPTR
+         END;
+
+ VAR  HEAP:^INTEGER;
+      BUCKET,DUMPCOUNT,SCREENWIDTH,PAGEWIDTH:INTEGER;
+      TOPOFDUMP,NEWDUMP:SYMDUMPPTR;
+      SAVETITLE,FILL,MSSG:STRING;
+
+ PROCEDURE ALPHABETIZE(SYMDUMP:SYMDUMPPTR);
+ BEGIN
+   IF SYM^.NAME>SYMDUMP^.SYM^.NAME THEN
+     IF SYMDUMP^.RLINK=NIL THEN
+       BEGIN
+         NEW(NEWDUMP);
+         NEWDUMP^.RLINK:=NIL;
+         NEWDUMP^.LLINK:=NIL;
+         NEWDUMP^.SYM:=SYM;
+         SYMDUMP^.RLINK:=NEWDUMP;
+       END
+     ELSE ALPHABETIZE(SYMDUMP^.RLINK)
+   ELSE
+     IF SYMDUMP^.LLINK=NIL THEN
+       BEGIN
+         NEW(NEWDUMP);
+         NEWDUMP^.RLINK:=NIL;
+         NEWDUMP^.LLINK:=NIL;
+         NEWDUMP^.SYM:=SYM;
+         SYMDUMP^.LLINK:=NEWDUMP;
+       END
+     ELSE ALPHABETIZE(SYMDUMP^.LLINK);
+ END;
+
+ PROCEDURE DUMPTABLE(SYMDUMP:SYMDUMPPTR);
+ BEGIN
+   IF SYMDUMP^.LLINK<>NIL THEN DUMPTABLE(SYMDUMP^.LLINK);
+   SYM:=SYMDUMP^.SYM;
+   WRITE(LISTFILE,SYM^.NAME);
+   CASE SYM^.ATTRIBUTE OF
+          ABS:MSSG:=' AB ';
+       LABELS:MSSG:=' LB ';
+        PROCS:MSSG:=' PR ';
+        FUNCS:MSSG:=' FC ';
+      PUBLICS:MSSG:=' PB ';
+     PRIVATES:MSSG:=' PV ';
+         REFS:MSSG:=' RF ';
+         DEFS:MSSG:=' DF ';
+      UNKNOWN:MSSG:=' UD ';
+       MACROS:MSSG:=' MC '
+     END;
+   WRITE(LISTFILE,MSSG);
+
+   IF (SYM^.ATTRIBUTE=ABS) OR (SYM^.ATTRIBUTE=LABELS) THEN
+     BEGIN
+       PRINTNUM(SYM^.OFFSETORVALUE,FALSE);
+       WRITE(LISTFILE,'|  ');
+     END
+   ELSE
+     WRITE(LISTFILE,FILL);
+   DUMPCOUNT:=DUMPCOUNT + 1;
+   IF ((DUMPCOUNT MOD PAGEWIDTH=0) AND NOT CONSOLE)
+   OR ((DUMPCOUNT MOD SCREENWIDTH=0) AND CONSOLE) THEN
+     BEGIN
+       WRITELN(LISTFILE);
+       LISTNUM:=LISTNUM + 1;
+       IF (LISTNUM MOD PAGESIZE=0) THEN PRINTPAGE;
+     END;
+   IF SYMDUMP^.RLINK<>NIL THEN DUMPTABLE(SYMDUMP^.RLINK);
+ END;
+
+ BEGIN{SYMTBLDUMP}
+   MARK(HEAP);
+   IF LEXTOKEN=TEND THEN
+     BEGIN
+       PRINTLINE;
+       TEXTLINE:=BLANKLINE;
+     END;
+   NEW(SYM);
+   SYM^.NAME:='        ';
+   NEW(TOPOFDUMP);
+   TOPOFDUMP^.SYM:=SYM;
+   TOPOFDUMP^.LLINK:=NIL;
+   TOPOFDUMP^.RLINK:=NIL;
+   FOR BUCKET:=0 TO HASHTOP DO
+     BEGIN
+       SYM:=HASH[BUCKET];
+       WHILE SYM<>NIL DO
+         BEGIN
+           CASE SYM^.ATTRIBUTE OF
+             LABELS,ABS,MACROS,PUBLICS,PRIVATES,CONSTS,REFS,DEFS,
+             PROCS,FUNCS,UNKNOWN:
+               ALPHABETIZE(TOPOFDUMP);
+           END;
+           SYM:=SYM^.LINK;
+         END;
+     END;
+   SAVETITLE:=TITLELINE;
+   TITLELINE:='SYMBOLTABLE DUMP';
+   PRINTPAGE;
+   WRITELN(LISTFILE,
+       'AB - Absolute     LB - Label     UD - Undefined     MC - Macro');
+   WRITELN(LISTFILE,
+       'RF - Ref          DF - Def       PR - Proc          FC - Func');
+   WRITELN(LISTFILE,
+       'PB - Public       PV - Private   CS - Consts');
+   WRITELN(LISTFILE);
+   WRITELN(LISTFILE);
+   LISTNUM:=LISTNUM + 5;
+
+   DUMPCOUNT:=0;
+   IF LISTRADIX=8 THEN
+     BEGIN
+       FILL:='------|  ';
+       SCREENWIDTH:=3;
+       PAGEWIDTH:=6;
+     END;
+   IF LISTRADIX=16 THEN
+     BEGIN
+       FILL:='----|  ';
+       SCREENWIDTH:=4;
+       PAGEWIDTH:=7
+     END;
+   DUMPTABLE(TOPOFDUMP^.RLINK);
+   TITLELINE:=SAVETITLE;
+   WRITELN(LISTFILE);
+   LISTNUM:=LISTNUM + 1;
+   PRINTPAGE;
+   RELEASE(HEAP);
+ END;
+
+
+
+ SEGMENT PROCEDURE PROCEND;
+ TYPE   LITYPES=(INVALID,LMODULE,LGLOBALREF,LPUBLIC,LPRIVATE,LCONSTANT,
+                  LGLOBALDEF,LPUBLICDEF,LCONSTDEF,LEXTPROC,LEXTFUNC,
+                  LSEPPROC,LSEPFUNC);
+        LINKREC=RECORD CASE INTEGER OF
+                0:(REFS:ARRAY[0..7] OF INTEGER);
+                1:(NAME:PACKNAME;
+                   CASE LITYPE:LITYPES OF
+                     LMODULE,LPUBLIC,LPRIVATE,LCONSTANT,LGLOBALREF:
+                                (FORMAT:(LWORD,LBYTE,LBIG);
+                                 NREFS:INTEGER;
+                                 NWORDS:INTEGER);
+                     LGLOBALDEF:(PROCNUM:INTEGER;
+                                 CODEOFFSET:INTEGER);
+              LSEPPROC,LSEPFUNC:(FUNCNUM:INTEGER;
+                                 NPARAMS:INTEGER));
+                2:(CLASS:INTEGER;
+                   CASE BOOLEAN OF
+                        TRUE:(JUMPS:JTABREC);
+                       FALSE:(FWDREF:BACKLABEL))
+           END;
+
+ VAR  COUNT,PROCOFFSET,OUTBLKS:INTEGER;
+      SWAPLC:WORDSWAP;
+      SEGDICT:PACKED ARRAY[0..511] OF CHAR;
+      LINKINFO:FILE;
+      LINK:FILE OF LINKREC;
+      VIEWDUMMY:ARRAY[0..0] OF INTEGER;
+
+ PROCEDURE PROCEDE;
+
+ PROCEDURE BUFRESET(NEWPOS:INTEGER);
+ VAR OUTBLKS:INTEGER;
+
+ BEGIN
+   (*$I-*)
+   IF DEBUG THEN WRITELN('Bufreset');
+   IF NEWPOS<BUFBOTTOM THEN
+     BEGIN
+       OUTBLKS:=(BUFFERTOP DIV 512 - OUTBLKNO) + 1;
+       IF OUTBLKS>BUFBLKS THEN OUTBLKS:=BUFBLKS;
+       IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,OUTBLKS,OUTBLKNO)<OUTBLKS
+         THEN ERROR(54);
+       IF OUTBLKNO + OUTBLKS>OUTBLKTOP THEN
+         OUTBLKTOP:=OUTBLKNO + OUTBLKS;
+       OUTBLKNO:=NEWPOS DIV 512;
+       IF IORESULT=0 THEN
+        IF BLOCKREAD(USERINFO.WORKCODE^,BUFFER^,BUFBLKS,OUTBLKNO)=0 THEN;
+       BUFBOTTOM:=OUTBLKNO*512;
+       BUFFERPOS:=NEWPOS MOD 512;
+     END
+   ELSE IF NEWPOS>BUFBOTTOM + BUFLIMIT THEN
+     BEGIN
+       OUTBLKS:=(BUFFERTOP DIV 512 - OUTBLKNO) + 1;
+       IF OUTBLKS>BUFBLKS THEN OUTBLKS:=BUFBLKS;
+       IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,OUTBLKS,OUTBLKNO)<OUTBLKS
+         THEN ERROR(54);
+       IF OUTBLKNO + OUTBLKS>OUTBLKTOP THEN
+         OUTBLKTOP:=OUTBLKNO + OUTBLKS;
+       OUTBLKNO:=NEWPOS DIV 512;
+       IF OUTBLKNO>=OUTBLKTOP THEN
+         BEGIN
+           IF IORESULT=0 THEN
+             IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,OUTBLKNO-OUTBLKTOP,
+               OUTBLKTOP)<OUTBLKNO-OUTBLKTOP THEN ERROR(54);
+           OUTBLKTOP:=OUTBLKNO;
+         END
+       ELSE
+         IF IORESULT=0 THEN
+           IF BLOCKREAD(USERINFO.WORKCODE^,BUFFER^,BUFBLKS,OUTBLKNO)=0 THEN;
+       BUFBOTTOM:=OUTBLKNO*512;
+       BUFFERPOS:=NEWPOS MOD 512;
+     END
+   ELSE BUFFERPOS:=NEWPOS - BUFBOTTOM;
+   IOCHECK(TRUE);
+   (*$I+*)
+ END;
+
+ PROCEDURE PUTJUMPS;
+
+ PROCEDURE PUTJUMP(CLASS:INTEGER; VAR JUMP:JTABREC);
+ VAR I,COUNT,LINKCOUNT:INTEGER;
+ BEGIN
+   COUNT:=0;
+   IF JUMPINFO THEN
+     BEGIN
+       IF LINKEND<>SCRATCHEND THEN
+         BEGIN
+           SEEK(LINK,LINKEND);
+           FOR LINKCOUNT:=LINKEND+1 TO SCRATCHEND DO
+             BEGIN
+               GET(LINK);
+               IF LINK^.CLASS=CLASS THEN
+                 FOR I:=0 TO 6 DO
+                   IF LINK^.JUMPS[I]<>0  THEN
+                     BEGIN
+                       PUTWORD(BUFFERTOP - LINK^.JUMPS[I]);
+                       COUNT:=COUNT + 1;
+                     END;
+             END;
+         END;
+       FOR I:=0 TO 6 DO
+         IF JUMP[I]<>0  THEN
+           BEGIN
+             PUTWORD(BUFFERTOP - JUMP[I]);
+             COUNT:=COUNT + 1;
+           END;
+     END;
+   PUTWORD(COUNT);
+ END;
+
+ BEGIN {Putjumps}
+   PUTJUMP(1,JUMP1);   {Jumptable entries}
+   PUTJUMP(2,JUMP2);
+   PUTJUMP(3,JUMP3);
+ END;
+
+ PROCEDURE LINKSET;
+ VAR BUCKET:INTEGER;
+ BEGIN
+   IF DEBUG THEN WRITELN('Linkset');
+   IF SCRATCHEND<>0 THEN SEEK(LINK,LINKEND); {ie. file not of length 0}
+   FOR BUCKET:=0 TO HASHTOP DO
+     BEGIN
+       SYM:=HASH[BUCKET];
+       WHILE SYM<>NIL DO
+         BEGIN
+           CASE SYM^.ATTRIBUTE OF
+         UNKNOWN:
+             BEGIN
+               IF DISPLAY THEN
+                 BEGIN
+                   WRITELN(LISTFILE);
+                   WRITE(LISTFILE,'>>>>>',SYM^.NAME);
+                   LISTNUM:=LISTNUM + 1;
+                 END;
+               IF NOT (CONSOLE AND DISPLAY) THEN
+                 BEGIN
+                   WRITELN;
+                   WRITE('>>>>>',SYM^.NAME);
+                 END;
+               ERROR(1{Undefined label});
+             END;
+         PUBLICS,PRIVATES,CONSTS,REFS,DEFS,PROCS,FUNCS: {Linkfile info}
+             BEGIN
+               FILLCHAR(LINK^,SIZEOF(LINKREC),0);
+
+               CASE SYM^.ATTRIBUTE OF
+                 PUBLICS:LINK^.LITYPE:=LPUBLIC;
+                 PRIVATES:LINK^.LITYPE:=LPRIVATE;
+                 CONSTS:LINK^.LITYPE:=LCONSTANT;
+                 REFS:LINK^.LITYPE:=LGLOBALREF;
+                 DEFS:LINK^.LITYPE:=LGLOBALDEF;
+                 PROCS:LINK^.LITYPE:=LSEPPROC;
+                 FUNCS:LINK^.LITYPE:=LSEPFUNC
+               END;
+               LINK^.NAME:=SYM^.NAME;
+               CASE SYM^.ATTRIBUTE OF
+                 PUBLICS,PRIVATES,CONSTS,REFS:
+                   BEGIN
+                     LINK^.FORMAT:=LWORD;
+                     LINK^.NREFS:=SYM^.NREFS;
+                     LINK^.NWORDS:=SYM^.NWORDS;
+                     LINKEND:=LINKEND + 1;
+                     PUT(LINK); COUNT:=0;
+                     WHILE SYM^.LINKOFFSET<>NIL DO
+                       BEGIN
+                         LINK^.REFS[COUNT]:=SYM^.LINKOFFSET^.PCOFFSET;
+                         COUNT:=COUNT + 1;
+                         IF COUNT=8 THEN
+                           BEGIN
+                             PUT(LINK);
+                             FILLCHAR(LINK^,SIZEOF(LINKREC),0);
+                             LINKEND:=LINKEND + 1;
+                             COUNT:=0;
+                           END;
+                         SYM^.LINKOFFSET:=SYM^.LINKOFFSET^.LAST;
+                       END;
+                     IF COUNT<>0 THEN
+                       BEGIN
+                         PUT(LINK);
+                         LINKEND:=LINKEND + 1;
+                       END;
+                   END;
+                 DEFS:
+                   IF SYM^.CODEOFFSET=-1 THEN
+                     BEGIN
+                       WRITELN(LISTFILE);
+                       IF DISPLAY THEN WRITE(LISTFILE,SYM^.NAME);
+                       IF NOT (CONSOLE AND DISPLAY) THEN
+                         BEGIN
+                           WRITELN;
+                           WRITE(SYM^.NAME);
+                         END;
+                       ERROR(1{Undefined label});
+                     END
+                   ELSE
+                     BEGIN
+                       LINK^.LITYPE:=LGLOBALDEF;
+                       LINK^.PROCNUM:=SYM^.PROCNUM;
+                       LINK^.CODEOFFSET:=SYM^.CODEOFFSET;
+                       LINKEND:=LINKEND + 1; PUT(LINK);
+                     END;
+
+                 PROCS,FUNCS:
+                   BEGIN
+                     IF SYM^.ATTRIBUTE=PROCS THEN LINK^.LITYPE:=LSEPPROC
+                       ELSE LINK^.LITYPE:=LSEPFUNC;
+                     LINK^.FUNCNUM:=SYM^.FUNCNUM;
+                     LINK^.NPARAMS:=SYM^.NPARAMS;
+                     PUT(LINK);
+                     LINK^.LITYPE:=LGLOBALDEF;
+                     LINK^.PROCNUM:=SYM^.FUNCNUM;
+                     LINK^.CODEOFFSET:=0; {proc's start at LC=0}
+                     PUT(LINK);
+                     LINKEND:=LINKEND + 2;
+                   END
+               END;
+               IF DEBUG THEN WRITELN('link entry:',SYM^.NAME);
+             END;
+           END;
+           SYM:=SYM^.LINK;
+         END;
+     END;
+ END;
+
+ PROCEDURE LABELFIX; {fix label forward references}
+ VAR   SWAP:WORDSWAP;
+       FWDREF:BACKLABEL;
+       LINKCOUNT:INTEGER;
+       KLUDGEPTR:^INTEGER;
+ BEGIN
+   RESET(LINK,'*LINKER.INFO');
+   MARK(KLUDGEPTR);
+   IF SCRATCHEND<>LINKEND THEN SEEK(LINK,LINKEND);
+   FOR LINKCOUNT:=LINKEND+1 TO SCRATCHEND DO
+     BEGIN
+       GET(LINK);
+       IF LINK^.CLASS=0 THEN
+         BEGIN
+           FWDREF:=LINK^.FWDREF;
+           BUFRESET(FWDREF.OFFSET);
+           PATCHCODE(FWDREF,FWDREF.OFFSET-BUFBOTTOM);
+         END;
+     END;
+ END;
+
+ BEGIN {Procede}
+   IF DEBUG THEN WRITELN('Procede');
+   IF DISPLAY THEN
+     WRITELN(LISTFILE,'Current available space is ',MEMAVAIL,' words');
+   IF NOT (DISPLAY AND CONSOLE) THEN
+     BEGIN
+       WRITELN;
+       WRITELN('Current available space is ',MEMAVAIL,' words');
+       WRITE('<',LINENUM:4,'>');
+     END;
+   LLCHECK;
+   CLOSE(SCRATCH,LOCK);
+   LABELFIX;
+
+   BUFRESET(MAXBUFTOP);
+   BUFFERTOP:=BUFBOTTOM + BUFFERPOS; {BUFRESET doesn't affect BUFFERTOP}
+   IF ODD(BUFFERPOS) THEN PUTBYTE(0);
+   RELOCATE:=NULLREL;
+   PUTJUMPS;                          {Jumptable entries}
+   PUTWORD(BUFFERTOP - PROCSTART);    {Enter IC}
+   PUTWORD(0);                        {Proc #, Lex level}
+   LINKSET;
+   PROCTABLE[PROCNUM]:=BUFFERTOP - PROCSTART;
+   SEGSIZE:=SEGSIZE + BUFFERTOP - PROCSTART;
+   HASH:=HASHRES;
+   RELEASE(HEAP);
+ END;
+
+ PROCEDURE FIRSTPROC; {Set up the buffer for output assembled code}
+ VAR   BUFSETUP:^BUFFERTYPE;
+ BEGIN
+   IF DEBUG THEN WRITELN('Procstart');
+   NEW(BUFSETUP); BUFFER:=BUFSETUP;
+   HASHRES:=HASH; {For symboltable cutback}
+   FOR COUNT:=2 TO BUFBLKS DO
+     NEW(BUFSETUP);
+   FILLCHAR(BUFFER^,BUFLIMIT,0);{Clear buffer to aid DEBUGGING}
+   IF DISPLAY THEN WRITELN(LISTFILE,
+             BUFBLKS,' blocks for procedure code  ',MEMAVAIL,' words left');
+   IF NOT (DISPLAY AND CONSOLE) THEN
+     BEGIN
+       WRITELN;
+       WRITELN(BUFBLKS,' blocks for procedure code  ',MEMAVAIL,' words left');
+       WRITE('<',LINENUM:4,'>');
+     END;
+   BUFBOTTOM:=512; BUFFERTOP:=512; MAXBUFTOP:=512;
+   OUTBLKNO:=1; OUTBLKTOP:=1;
+   BUFFERPOS:=0; SEGSIZE:=0;
+   FILLCHAR(PROCTABLE,SIZEOF(PROCTABLE),0);
+   (*$I-*)
+   IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,1)=0 THEN ERROR(54);
+   IOCHECK(TRUE);           {Segment dictionary}
+   (*$I+*)
+ END;
+
+ BEGIN {Segment Procend}
+   IF VIEWSTACK THEN UNITWRITE(3,VIEWDUMMY[-1600],35); {reset display of heap}
+   IF DEBUG THEN WRITELN('Procend');
+   IF PROCNUM>0 THEN PROCEDE
+     ELSE FIRSTPROC;
+   IF LEXTOKEN=TEND THEN
+     BEGIN
+       PROCOFFSET:=2;     {Procedure table}
+       FOR COUNT:=PROCNUM DOWNTO 1 DO
+         BEGIN
+           PUTWORD(PROCOFFSET);
+           PROCOFFSET:=PROCOFFSET + PROCTABLE[COUNT] + 2;
+         END;
+       PUTBYTE(1);               {Segment #}
+       PUTBYTE(PROCNUM);         {# of Procedures}
+
+       SEGSIZE:=PROCOFFSET;
+       COUNT:=(BUFFERPOS + 511) DIV 512;
+       (*$I-*)
+       IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,COUNT,OUTBLKNO)<COUNT
+         THEN ERROR(54);
+       OUTBLKNO:=OUTBLKNO + COUNT;
+       LINK^.LITYPE:=INVALID;  LINKEND:=LINKEND + 1;
+       PUT(LINK);  CLOSE(LINK,LOCK);
+       RESET(LINKINFO,'*LINKER.INFO');
+       COUNT:=((LINKEND*16) + 511) DIV 512;
+       IF IORESULT=0 THEN
+         IF BLOCKREAD(LINKINFO,BUFFER^,COUNT)=0 THEN;
+       FILLCHAR(BUFFER^[LINKEND*16],512,0); {for easier linkinfo debugging}
+       IF IORESULT=0 THEN
+         IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,COUNT,OUTBLKNO)<COUNT
+           THEN ERROR(54);
+       FILLCHAR(SEGDICT,SIZEOF(SEGDICT),0);
+       SEGDICT[4]:=CHR(1);       {Pointer to starting block}
+       SWAPLC.HWORD:=SEGSIZE;    {Segsize}
+       IF HIBYTEFIRST THEN
+         BEGIN
+           SEGDICT[6]:=CHR(SWAPLC.HIBYTE);
+           SEGDICT[7]:=CHR(SWAPLC.LOWBYTE);
+         END
+       ELSE
+         BEGIN
+           SEGDICT[6]:=CHR(SWAPLC.LOWBYTE);
+           SEGDICT[7]:=CHR(SWAPLC.HIBYTE);
+         END;
+       FILLCHAR(SEGDICT[64],128,' ');
+       FOR COUNT:=72 TO 79 DO
+         SEGDICT[COUNT]:=SEGNAME[COUNT-72];
+       SEGDICT[194]:=CHR(4);   {Segment type SEPRTSEG}
+       IF IORESULT=0 THEN IF BLOCKWRITE(USERINFO.WORKCODE^,SEGDICT,1,0)=0
+         THEN ERROR(54);
+       IF LISTING AND NOT CONSOLE THEN PAGE(LISTFILE);
+       IF LISTING THEN CLOSE(LISTFILE,LOCK);
+       CLOSE(LINKINFO,PURGE);
+       IOCHECK(TRUE);
+       UNITCLEAR(3);
+       (*$I+*)
+       WRITELN;
+       WRITELN('Assembly complete:',LINENUM:10,' lines');
+       WRITELN(NUMERRORS:6,'   Errors flagged on this Assembly');
+     END
+   ELSE
+     BEGIN
+       MARK(HEAP);
+       PROCNUM:=PROCNUM + 1;
+       LC:=0; LASTLC:=0; LOWLC:=0;
+       FILLCHAR(JUMP1,SIZEOF(JUMP1),0);  JCOUNT1:=0;
+       FILLCHAR(JUMP2,SIZEOF(JUMP2),0);  JCOUNT2:=0;
+       FILLCHAR(JUMP3,SIZEOF(JUMP3),0);  JCOUNT3:=0;
+       SCRATCHEND:=LINKEND;
+       IF PROCNUM>1 THEN
+         BEGIN
+           CLOSE(LINK,LOCK);
+           RESET(SCRATCH,'*LINKER.INFO');
+           SEEK(SCRATCH,LINKEND);
+         END;
+       NEW(FULLLABEL); FULLLABEL^.NEXT:=NIL;
+       FREELABEL:=NIL;
+       PROCSTART:=BUFFERTOP;
+       IF LEXTOKEN=PROC THEN CURRENTATRIB:=PROCS
+         ELSE CURRENTATRIB:=FUNCS;
+       LEX;
+       IF LEXTOKEN<>TIDENTIFIER THEN ERROR(3{Must have procedure name})
+         ELSE
+           BEGIN
+             IF PROCNUM=1 THEN SEGNAME:=SYM^.NAME;
+             PROCNAME:=SYM^.NAME;
+             SYM^.FUNCNUM:=PROCNUM;
+             LEX;
+             IF LEXTOKEN=COMMA THEN
+               BEGIN
+                 LEX;
+                 IF LEXTOKEN<>CONSTANT THEN
+                    ERROR(4{Number of parameters expected})
+                 ELSE SYM^.NPARAMS:=CONSTVAL;
+                 LEX;
+               END ELSE SYM^.NPARAMS:=0;
+           END;
+       CODE:=BLANKCODE; CODECOUNT:=0;
+       IF DISPLAY THEN PRINTPAGE;
+       IF LEXTOKEN<>ENDLINE THEN
+         BEGIN
+           ERROR(5{extra garbage on line});
+           WHILE LEXTOKEN<>ENDLINE DO LEX;
+         END;
+       PRINTLINE;
+       TEXTLINE:=BLANKLINE;
+       TEXTINDEX:=-1;
+       CURRENTATRIB:=UNKNOWN;
+     END;
+ END;
+
+
+ (*$I ASM3.TEXT*)
+                         {start of ASM3}
+         {Copyright (c) 1978 Regents of University of California}
+
+ SEGMENT PROCEDURE ASSEMBLE;
+ VAR   VIEWDUMMY:ARRAY[0..0] OF INTEGER;
+
+ PROCEDURE ZCOND;
+ VAR  I,CURRENT:INTEGER;
+      ID:PACKNAME;
+
+ FUNCTION CONDTRUE:BOOLEAN;
+ VAR  ISEQUAL,CHECKEQUAL:BOOLEAN;
+      INTSAVE:INTEGER;
+      STRSAVE:STRING;
+
+ BEGIN
+   LEX;
+   IF LEXTOKEN=TSTRING THEN
+     BEGIN
+       STRSAVE:=STRVAL;
+       LEX;
+       CHECKEQUAL:=(LEXTOKEN=EQUAL);
+       IF NOT CHECKEQUAL THEN
+         IF LEXTOKEN<>NOTEQUAL THEN ERROR(62{'=' or '<>' expected});
+       LEX;
+       IF LEXTOKEN=TSTRING THEN
+         BEGIN
+           ISEQUAL:=(STRVAL=STRSAVE);
+           CONDTRUE:=(CHECKEQUAL=ISEQUAL);
+         END
+       ELSE
+         BEGIN
+           ERROR(46{string expected});
+           CONDTRUE:=TRUE;
+         END;
+       LEX;
+     END
+   ELSE
+     BEGIN
+       EXPRSSADVANCE:=FALSE;
+       IF EXPRESS(TRUE) THEN
+         IF SPCIALSTKINDEX=-1 THEN
+           CONDTRUE:=(RESULT.OFFSETORVALUE<>0)
+         ELSE
+           BEGIN
+             INTSAVE:=RESULT.OFFSETORVALUE;
+             CHECKEQUAL:=(SPECIALSTK[SPCIALSTKINDEX]=EQUAL);
+             SPCIALSTKINDEX:=SPCIALSTKINDEX-1;
+             IF EXPRESS(TRUE) THEN
+               BEGIN
+                 ISEQUAL:=(RESULT.OFFSETORVALUE=INTSAVE);
+                 CONDTRUE:=(CHECKEQUAL=ISEQUAL);
+               END
+             ELSE CONDTRUE:=TRUE;
+           END
+       ELSE CONDTRUE:=TRUE;
+     END;
+ END;
+
+ BEGIN
+   CONDINDEX:=CONDINDEX + 1;
+   CURRENT:=CONDINDEX;
+   IF NOT CONDTRUE THEN
+     BEGIN
+       IF LEXTOKEN<>ENDLINE THEN
+         BEGIN
+           ERROR(5{Extra garbage on line});
+           WHILE LEXTOKEN<>ENDLINE DO LEX;
+         END;
+       PRINTLINE;  ID:='        ';  I:=0;
+       TEXTLINE:=BLANKLINE; TEXTINDEX:=-1;
+
+       REPEAT
+         GETCHAR;
+         IF TEXTINDEX>79 THEN ERROR(6{input line over 80 chars});
+         IF CH=CHR(13) THEN
+           BEGIN
+             TEXTLINE:=BLANKLINE; TEXTINDEX:=-1;
+           END
+         ELSE IF CH='.' THEN
+           BEGIN
+             I:=0;
+             ID:='        ';
+           END
+         ELSE IF I<5 THEN
+           BEGIN
+             ID[I]:=CH;
+             I:=I + 1;
+           END;
+         IF ID='IF      ' THEN
+           CONDINDEX:=CONDINDEX + 1
+         ELSE IF ID='ENDC    ' THEN
+           IF CONDINDEX<0 THEN
+             BEGIN
+               ERROR(7{Not enough ifs});
+               EXIT(ZCOND);
+             END
+           ELSE CONDINDEX:=CONDINDEX - 1;
+       UNTIL ((CURRENT=CONDINDEX) AND (ID='ELSE    ')) OR
+             ((CURRENT=CONDINDEX + 1) AND (ID='ENDC    '));
+       LEXTOKEN:=TNULL; {Different from ENDLINE}
+       LEX;
+     END;
+ END;
+
+ PROCEDURE ZELSE;
+ VAR  I,CURRENT:INTEGER;
+      ID:PACKNAME;
+ BEGIN
+   CURRENT:=CONDINDEX;  ID:='        ';  I:=0;
+   PRINTLINE;
+   REPEAT
+     GETCHAR;
+     IF TEXTINDEX>79 THEN ERROR(6{input line over 80 chars});
+     IF CH=CHR(13) THEN
+       BEGIN
+         TEXTLINE:=BLANKLINE; TEXTINDEX:=-1;
+       END
+     ELSE IF CH='.' THEN
+       BEGIN
+         I:=0;
+         ID:='        ';
+       END
+     ELSE IF I<5 THEN
+       BEGIN
+         ID[I]:=CH;
+         I:=I + 1;
+       END;
+
+     IF ID='IF      ' THEN
+       CONDINDEX:=CONDINDEX + 1
+     ELSE IF ID='ENDC    ' THEN
+       IF CONDINDEX<0 THEN
+         BEGIN
+           ERROR(7{Not enough ifs});
+           EXIT(ZCOND);
+         END
+       ELSE CONDINDEX:=CONDINDEX - 1;
+   UNTIL (CURRENT=CONDINDEX + 1) AND (ID='ENDC    ');
+   LEX;
+ END;
+
+ PROCEDURE COREFIX(ENTRY:BKLABELPTR; ADDVALUE:INTEGER);
+ VAR   BUFINDEX:INTEGER;
+       NEXTENTRY:BKLABELPTR;
+       PRINTLC:WORDSWAP;
+ BEGIN
+   WHILE ENTRY<>NIL DO
+     BEGIN
+       NEXTENTRY:=ENTRY^.NEXT;
+       BUFINDEX:=ENTRY^.OFFSET-BUFBOTTOM;
+       ENTRY^.VALUE:=ENTRY^.VALUE + ADDVALUE;
+       IF (NOT WORDADDRESSED) AND (ENTRY^.WORDLC) THEN
+         ENTRY^.VALUE:=ENTRY^.VALUE DIV 2;
+       IF (BUFINDEX>=0) AND (BUFINDEX<BUFLIMIT) THEN
+         PATCHCODE(ENTRY^,BUFINDEX)
+       ELSE
+         BEGIN
+           SCRATCH^.CLASS:=0;  {store it away for PROCEND}
+           SCRATCH^.FWDREF:=ENTRY^;
+           PUT(SCRATCH);
+           SCRATCHEND:=SCRATCHEND + 1;
+         END;
+       ENTRY^.NEXT:=FREELABEL;
+       FREELABEL:=ENTRY;
+       ENTRY:=NEXTENTRY;
+     END;
+ END;
+
+ PROCEDURE ZLABEL;
+ VAR   SWAP:INTEGER;
+       NEXTENTRY,ENTRY:BKLABELPTR;
+ BEGIN
+   ENTRY:=NIL; {Set up nil pointer for error exit}
+   IF LEXTOKEN=TLABEL THEN
+     BEGIN
+       IF SYM^.ATTRIBUTE<>UNKNOWN THEN
+         BEGIN
+           IF SYM^.ATTRIBUTE=DEFS THEN
+             BEGIN
+               SYMLAST:=TRUE;
+               SYM^.CODEOFFSET:=LC;
+               ENTRY:=SYM^.DEFFWDREF;
+             END
+           ELSE
+             BEGIN
+               ERROR(9{identifier previously declared});
+               SYMLAST:=FALSE;
+             END;
+         END
+       ELSE
+         BEGIN
+           IF CODESECTION=A THEN
+             BEGIN
+               SYM^.ATTRIBUTE:=ABS;
+               SYM^.OFFSETORVALUE:=ALC;
+             END
+           ELSE
+             BEGIN
+               SYM^.ATTRIBUTE:=LABELS;
+               SYM^.OFFSETORVALUE:=LC;
+             END;
+           SYMLAST:=TRUE;
+           LASTSYM:=SYM;
+           IF (CODESECTION=A) AND (ENTRY<>NIL) THEN
+             ERROR(8{must be declared in ASECT before used})
+            ELSE ENTRY:=SYM^.FWDREF;
+         END;
+     END
+   ELSE
+     BEGIN  {Processing a local label}
+       SYMLAST:=FALSE;
+       IF CODESECTION=A THEN
+         ERROR(44{no local labels in ASECT})
+       ELSE IF TEMP[TEMPLABEL].TEMPATRIB<>UNKNOWN THEN
+         ERROR(9{identifier previously declared})
+       ELSE
+         BEGIN
+           TEMP[TEMPLABEL].TEMPATRIB:=LABELS;
+           TEMP[TEMPLABEL].DEFOFFSET:=LC;
+           ENTRY:=TEMP[TEMPLABEL].FWDREF;
+           TEMP[TEMPLABEL].FWDREF:=NIL;
+         END;
+     END;
+   IF LEXTOKEN=TLABEL THEN LLCHECK;
+   LEX;
+   IF LEXTOKEN<>EQU THEN COREFIX(ENTRY,LC);
+ END;
+
+ PROCEDURE ZALIGN;
+ {Align handles the .Align psuedo-op. The operand represents the
+  boundary multiple on which the next desired code is to start.}
+ VAR OFFSET,I:INTEGER;
+ BEGIN
+   IF EXPRESS(TRUE) THEN
+     BEGIN
+       OFFSET:=LC MOD RESULT.OFFSETORVALUE;
+       IF OFFSET>0 THEN
+         BEGIN
+           OFFSET:=RESULT.OFFSETORVALUE - OFFSET;
+           IF WORDADDRESSED THEN
+             FOR I:=1 TO OFFSET DO PUTWORD(0)
+           ELSE
+             FOR I:=1 TO OFFSET DO PUTBYTE(0);
+         END;
+     END;
+ END;
+
+ PROCEDURE ZASCII;
+ VAR STRINGSIZE,COUNT:INTEGER;
+ BEGIN
+   LEX;
+   IF LEXTOKEN=TSTRING THEN
+     BEGIN
+       STRINGSIZE:=LENGTH(STRVAL);
+       FOR COUNT:=1 TO STRINGSIZE DO
+         BEGIN
+           IF DISPLAY THEN
+             IF (COUNT MOD BYTEFIT=1) AND (COUNT<>1) THEN
+               BEGIN
+                 PRINTLINE;
+                 TEXTLINE:=BLANKLINE;
+               END;
+           PUTBYTE(ORD(STRVAL[COUNT]));
+         END;
+     END
+   ELSE
+     ERROR(10{improper format});
+   LEX;
+ END;
+
+ PROCEDURE ZEQU;
+ BEGIN
+   IF NOT SYMLAST THEN
+     ERROR(9{identifier previously declared})
+   ELSE
+     IF EXPRESS(TRUE) THEN
+       BEGIN
+         IF CODESECTION=A THEN
+           BEGIN
+             IF LASTSYM^.ATTRIBUTE<>DEFS THEN LASTSYM^.ATTRIBUTE:=ABS;
+           END
+         ELSE IF RELOCATE<>NULLREL THEN
+           IF RELOCATE.TIPE=LLREL THEN
+             IF TEMP[RELOCATE.TEMPLABEL].TEMPATRIB=UNKNOWN THEN
+               ERROR(63)
+             ELSE
+               BEGIN
+                 IF LASTSYM^.ATTRIBUTE<>DEFS THEN LASTSYM^.ATTRIBUTE:=LABELS;
+               END
+           ELSE IF RELOCATE.TIPE=LABELREL THEN
+             IF (RELOCATE.SYM^.ATTRIBUTE=LABELS) OR
+               ((RELOCATE.SYM^.ATTRIBUTE=DEFS) AND
+                (RELOCATE.SYM^.CODEOFFSET<>-1)) THEN
+               BEGIN
+                 IF LASTSYM^.ATTRIBUTE<>DEFS THEN LASTSYM^.ATTRIBUTE:=LABELS;
+               END
+             ELSE ERROR(63{may not EQU to undefined labels})
+           ELSE
+               BEGIN
+                 IF LASTSYM^.ATTRIBUTE<>DEFS THEN
+                   LASTSYM^.ATTRIBUTE:=RESULT.ATTRIBUTE;
+               END
+         ELSE
+           BEGIN
+             IF LASTSYM^.ATTRIBUTE<>DEFS THEN
+               LASTSYM^.ATTRIBUTE:=RESULT.ATTRIBUTE;
+           END;
+         LASTSYM^.OFFSETORVALUE:=RESULT.OFFSETORVALUE;
+         IF LASTSYM^.FWDREF<>NIL THEN
+           IF LASTSYM^.ATTRIBUTE=LABELS THEN
+             COREFIX(LASTSYM^.FWDREF,LASTSYM^.OFFSETORVALUE)
+           ELSE
+             ERROR(12{must EQU before use if not a label});
+       END;
+   SYMLAST:=FALSE;
+ END;
+
+ PROCEDURE ZDEFMACRO;
+ VAR  I:INTEGER;
+      ID:PACKNAME;
+ BEGIN
+   CURRENTATRIB:=MACROS;
+   IF SOURCE<>FILESOURCE THEN
+     ERROR(61{nested Macro definitions are senseless})
+   ELSE
+     BEGIN
+       LEX;
+       IF NOT (LEXTOKEN IN [OP1,OP2,OP3,OP4,OP5,OP6,OP7,OP8,OP9,OP10,
+       OP11,OP12,OP13,OP14,OP15,OP16,OP17,OP18,OP19,OP20,TIDENTIFIER]) THEN
+          ERROR(13{macro identifier expected});
+       SYM^.EXPANDMCRO:=EXPANDMACRO;
+       SYM^.ATTRIBUTE:=MACROS;
+       NEW(MCPTR); SYM^.MACRO:=MCPTR;       {puts macro on heap}
+       REPEAT GETCHAR; UNTIL CH=CHR(13);
+       ADVANCE:=FALSE;
+       MACROINDEX:=0;  I:=0;  ID:='        ';
+       DEFMCHOOK:=TRUE;
+       REPEAT
+         IF MACROINDEX>MACROSIZE THEN
+           BEGIN
+             NEW(MCPTR);
+             MACROINDEX:=0;
+           END;
+         GETCHAR;
+         IF TEXTINDEX>79 THEN ERROR(6{input line over 80 chars});
+         MCPTR^[MACROINDEX]:=CH;
+         IF CH=CHR(13) THEN
+           BEGIN
+             PRINTLINE;
+             TEXTLINE:=BLANKLINE; TEXTINDEX:=-1;
+           END
+         ELSE IF CH='.' THEN
+           BEGIN
+             I:=0;
+             ID:='        ';
+           END
+         ELSE IF I<5 THEN
+           BEGIN
+             ID[I]:=CH;
+             I:=I + 1;
+           END;
+         MACROINDEX:=MACROINDEX + 1;
+       UNTIL ID='ENDM    ';
+       IF MACROINDEX<=MACROSIZE THEN MCPTR^[MACROINDEX]:=CHR(13)
+         ELSE
+           BEGIN
+             NEW(MCPTR);
+             MCPTR^[0]:=CHR(13);
+           END;
+       CURRENTATRIB:=UNKNOWN;
+       DEFMCHOOK:=FALSE;
+     END;
+   LEX;
+ END;
+
+ PROCEDURE ZBLOCK;
+ VAR  COUNT,SIZE:INTEGER;
+      INITVALUE:WORDSWAP;
+ {handles the .BLOCK psuedo-op, the operand is the number
+  of bytes/words of storage requested.}
+ BEGIN
+   IF EXPRESS(TRUE) THEN
+     IF CHECKOPERAND(TRUE,TRUE,TRUE,0,BUFLIMIT) THEN
+       IF CODESECTION=A THEN
+         BEGIN
+           ALC:=ALC + RESULT.OFFSETORVALUE;
+           LEX;
+         END
+       ELSE
+         BEGIN
+           SIZE:=RESULT.OFFSETORVALUE;
+           INITVALUE.HWORD:=0;
+           IF LEXTOKEN=COMMA THEN
+             IF EXPRESS(FALSE) THEN
+               IF CHECKOPERAND(TRUE,TRUE,TRUE,-128,255) THEN
+                 INITVALUE.HWORD:=RESULT.OFFSETORVALUE;
+           IF WORDADDRESSED THEN
+             FOR COUNT:=1 TO SIZE DO PUTWORD(INITVALUE.LOWBYTE)
+           ELSE
+             FOR COUNT:=1 TO SIZE DO PUTBYTE(INITVALUE.LOWBYTE);
+         END;
+ END;
+
+ PROCEDURE ZWORD;
+ VAR  COUNT,INITVALUE:INTEGER;
+ BEGIN
+   INITVALUE:=0;
+   COUNT:=0;
+
+   IF CODESECTION=A THEN
+     BEGIN
+       IF WORDADDRESSED THEN ALC:=ALC+1 ELSE ALC:=ALC+2;
+       LEX;
+     END
+   ELSE
+     REPEAT
+       IF EXPRESS(FALSE) THEN
+         IF CHECKOPERAND(TRUE,FALSE,FALSE,0,0) THEN
+           INITVALUE:=RESULT.OFFSETORVALUE;
+       PUTWORD(INITVALUE);
+       IF DISPLAY THEN
+         BEGIN
+           COUNT:=COUNT + 1;
+           IF (COUNT MOD WORDFIT=0) AND (LEXTOKEN=COMMA) THEN
+             BEGIN
+               PRINTLINE;
+               FILLCHAR(TEXTLINE[2],70,' ');
+             END;
+         END;
+     UNTIL LEXTOKEN<>COMMA;
+ END;
+
+ PROCEDURE ZBYTE;
+ VAR  INITVALUE:WORDSWAP;
+      COUNT:INTEGER;
+ BEGIN
+   IF WORDADDRESSED THEN
+     ERROR(14{word addressed only})
+   ELSE IF CODESECTION=A THEN
+     BEGIN
+       ALC:=ALC+1;
+       LEX;
+     END
+   ELSE
+     BEGIN
+       COUNT:=0;
+       REPEAT
+         INITVALUE.HWORD:=0;
+         IF EXPRESS(FALSE) THEN
+           IF CHECKOPERAND(TRUE,TRUE,TRUE,-128,255) THEN
+             INITVALUE.HWORD:=RESULT.OFFSETORVALUE;
+         PUTBYTE(INITVALUE.LOWBYTE);
+         IF DISPLAY THEN
+           BEGIN
+             COUNT:=COUNT + 1;
+             IF (COUNT MOD BYTEFIT=0) AND (LEXTOKEN=COMMA) THEN
+               BEGIN
+                 PRINTLINE;
+                 FILLCHAR(TEXTLINE[2],70,' ');
+               END;
+           END;
+       UNTIL LEXTOKEN<>COMMA;
+     END;
+ END;
+
+ PROCEDURE ZORG;
+ VAR  I,DIFFERENCE:INTEGER;
+ BEGIN
+   IF EXPRESS(TRUE) THEN
+     IF CHECKOPERAND(TRUE,TRUE,FALSE,0,32767) THEN
+       IF CODESECTION=A THEN
+         ALC:=RESULT.OFFSETORVALUE
+       ELSE
+         BEGIN
+           IF LC=0 THEN
+             BEGIN
+               LC:=RESULT.OFFSETORVALUE;
+               LOWLC:=LC;
+             END
+           ELSE IF RESULT.OFFSETORVALUE<LC THEN
+             ERROR(15{backward ORG not allowed})
+           ELSE
+             BEGIN
+               DIFFERENCE:=RESULT.OFFSETORVALUE - LC;
+               IF WORDADDRESSED THEN DIFFERENCE:=DIFFERENCE + DIFFERENCE;
+               FOR I:=1 TO DIFFERENCE DO PUTBYTE(0);
+             END;
+         END;
+ END;
+
+ PROCEDURE ZGLOBAL;
+ {Privates are not put into the linker information.}
+ VAR SAVESYM:SYMTABLEPTR;
+ BEGIN
+   CASE LEXTOKEN OF
+     TCONST:CURRENTATRIB:=CONSTS;
+     PUBLIC:CURRENTATRIB:=PUBLICS;
+     PRIVATE:CURRENTATRIB:=PRIVATES;
+     REF:CURRENTATRIB:=REFS;
+     DEF:CURRENTATRIB:=DEFS
+   END;
+   REPEAT
+     LEX;
+     IF LEXTOKEN<>TIDENTIFIER THEN
+       ERROR(16{Expected identifier})
+     ELSE
+       BEGIN
+         IF SYM^.ATTRIBUTE<>CURRENTATRIB THEN
+           ERROR(9{Identifier previously declared})
+         ELSE IF CURRENTATRIB=PRIVATES THEN
+           BEGIN
+             SAVESYM:=SYM;
+             LEX;
+             IF LEXTOKEN=COLON THEN
+               BEGIN
+                 LEX;
+                 IF LEXTOKEN=CONSTANT THEN
+                   SAVESYM^.NWORDS:=CONSTVAL
+                 ELSE ERROR(17{Constant expected});
+                 LEX;
+               END
+             ELSE SAVESYM^.NWORDS:=1;
+           END
+         ELSE LEX;
+       END;
+   UNTIL LEXTOKEN<>COMMA;
+   CURRENTATRIB:=UNKNOWN;
+ END;
+
+ PROCEDURE ZTITLE;
+ BEGIN
+   LEX;
+   IF LEXTOKEN=TSTRING THEN TITLELINE:=STRVAL
+     ELSE ERROR(46{string expected});
+   LEX;
+ END;
+
+
+
+ PROCEDURE GETOPER(VAR XMODE,XREG,INDEX:INTEGER;
+                   VAR ISINDEXED,RELATIVE:BOOLEAN);
+   VAR MODEADJUST:INTEGER;
+   {1: evaluate any exterior address
+    2: evaluate register number and set register number
+    3: check special stack and set mode
+    XMODE,XREG,INDEX and ISINDEXED are variables returned by this routine,
+    the routine input is the assembly file.
+    XMODE is the address mode of the operand.
+    XREG  is the register specified (or implied) by the operand.
+    INDEX is the value of the index which is specified by the operand, except
+          that where the PC register is implied it is the value of the operand.
+    ISINDEXED is true if there is an index specified or if the register is the
+          PC. It is true in exactly those cases requiring a second word be
+          emitted following the emission of the opcode.}
+  BEGIN
+   MODEADJUST:=0;
+   RELATIVE:=FALSE;
+   ISINDEXED:=FALSE;
+   XMODE:=0;
+   XREG:=0;
+   IF EXPRESS(FALSE) THEN
+    BEGIN
+     ISINDEXED:=TRUE;
+     INDEX:=RESULT.OFFSETORVALUE;
+     IF RESULT.ATTRIBUTE=DEFABS THEN
+      BEGIN{A register stands alone. Check special stack, if it is empty the
+            mode is 0 otherwise the mode is 1 and we check for an "@". Then
+            load the value of the register}
+       IF SPCIALSTKINDEX=-1 THEN XMODE:=0 ELSE
+        BEGIN
+         XMODE:=1;
+         IF (SPECIALSTK[0]<>ATSIGN) OR (SPCIALSTKINDEX<>0) THEN
+           ERROR(25{illegal use of special symbols});
+         SPCIALSTKINDEX:=-1;
+        END;
+       XREG:=SYM^.OFFSETORVALUE;
+       ISINDEXED:=FALSE;
+      END ELSE{Indexed addressing. Operand followed by register enclosed
+               in parentheses. If no register is explicit then the PC
+               register is implied}
+       IF LEXTOKEN=OPENPAREN THEN
+        BEGIN{check special stack and determine mode then get the register}
+         SPCIALSTKINDEX:=SPCIALSTKINDEX-1;{Peel "(" off stack}
+         IF (SPCIALSTKINDEX=0) AND (SPECIALSTK[0]=ATSIGN) THEN
+          BEGIN
+           MODEADJUST:=1;
+           SPCIALSTKINDEX:=-1;
+          END;
+         XMODE:=6+MODEADJUST;
+         LEX;
+         IF (LEXTOKEN=TIDENTIFIER) AND (SYM^.ATTRIBUTE=DEFABS) THEN
+          BEGIN
+           XREG:=SYM^.OFFSETORVALUE;
+           LEX;
+           IF LEXTOKEN<>CLOSEPAREN THEN ERROR(76{")" expected}) ELSE LEX;
+          END ELSE ERROR(77{Register expected});
+        END ELSE
+        BEGIN{The PC is the implied register, check special stack}
+         XREG:=7;
+         IF SPCIALSTKINDEX=-1 THEN
+          BEGIN{Mode=Relative}
+           RELATIVE:=TRUE;
+           INDEX:=RESULT.OFFSETORVALUE-4;
+           XMODE:=6;
+          END ELSE
+          BEGIN
+           IF SPCIALSTKINDEX=0 THEN
+             IF SPECIALSTK[0]=ATSIGN THEN
+              BEGIN{Mode=Relative defered}
+               RELATIVE:=TRUE;
+               INDEX:=RESULT.OFFSETORVALUE-4;
+               XMODE:=7;
+              END ELSE
+               IF SPECIALSTK[0]=NUMBERSIGN THEN XMODE:=2 ELSE{=Immediate}
+                 ERROR(25{Special symbol misused})
+             ELSE
+             IF SPCIALSTKINDEX=1 THEN
+               IF (SPECIALSTK[0]=ATSIGN) AND
+                  (SPECIALSTK[1]=NUMBERSIGN) THEN XMODE:=3 ELSE{=Absolute}
+                 ERROR(25{Special symbol misused})
+               ELSE ERROR(78{Too many special symbols});
+           SPCIALSTKINDEX:=-1;
+          END;
+        END
+    END ELSE
+      IF LEXTOKEN=OPENPAREN THEN{Unindexed use of register. Modes 1..5}
+       BEGIN
+        SPCIALSTKINDEX:=SPCIALSTKINDEX-1;{Peel off the "("}
+        IF (SPCIALSTKINDEX<>-1) AND
+           (SPECIALSTK[0]=ATSIGN) THEN MODEADJUST:=1;{Auto Inc/Dec Defered}
+        LEX;{get register number}
+        IF (LEXTOKEN=TIDENTIFIER) AND (SYM^.ATTRIBUTE=DEFABS) THEN
+         BEGIN
+          XREG:=SYM^.OFFSETORVALUE;
+          LEX;
+          IF LEXTOKEN=CLOSEPAREN THEN
+           BEGIN
+            LEX;
+            IF LEXTOKEN=PLUS THEN{Check for auto-increment}
+             BEGIN
+              LEX;
+              XMODE:=2+MODEADJUST
+             END ELSE
+              IF SPCIALSTKINDEX<>-1 THEN{Check for Auto decrement}
+               BEGIN
+                IF SPECIALSTK[SPCIALSTKINDEX]=AUTODECR THEN
+                 BEGIN
+                  XMODE:=4+MODEADJUST;
+                  SPCIALSTKINDEX:=SPCIALSTKINDEX-1;
+                 END ELSE ERROR(79{Unrecognizable operand});
+               END ELSE XMODE:=1;
+           END ELSE ERROR(76{")" expected});
+         END ELSE ERROR(77{Register expected});
+        IF MODEADJUST=1 THEN SPCIALSTKINDEX:=SPCIALSTKINDEX-1;
+                         {Peel off the "@"}
+       END ELSE ERROR(79{Unrecognizable operand});
+  END;
+
+ PROCEDURE ZOP1;
+ {instructions with no operands}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op1');
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   PUTWORD(OPBYTE.BWORD);
+   LEX;
+ END;
+
+ PROCEDURE ZOP2;
+ {branch - short: opcode..offset in words.}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op2');
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   IF EXPRESS(TRUE) THEN
+    BEGIN
+     RELOCATE.OFFSETORVALUE:=RELOCATE.OFFSETORVALUE-2;{for putrelword's sake}
+     PUTRELWORD(OPBYTE.BWORD,TRUE,TRUE);
+    END;
+ END;
+
+ PROCEDURE ZOP3;
+   VAR MODE1,REG1,OPINDX1:INTEGER;
+       HASINDX1,REL1:BOOLEAN;
+ {one operand: opcode..mode..register. CLR,COM,INC,DEC,NEG, Shift & rotates,
+  and Multiple precision}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op3');
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   GETOPER(MODE1,REG1,OPINDX1,HASINDX1,REL1);
+   OPERAND1:=RELOCATE;
+   RELOCATE:=NULLREL;
+   OPBYTE.MODELOW:=MODE1;
+   OPBYTE.REGLOW:=REG1;
+   PUTWORD(OPBYTE.BWORD);
+   IF HASINDX1 THEN
+    BEGIN
+     RELOCATE:=OPERAND1;
+     IF REL1 THEN PUTRELWORD(OPINDX1,FALSE,FALSE) ELSE PUTWORD(OPINDX1);
+    END;
+ END;
+
+ PROCEDURE ZOP4;
+ {one operand: opcode..register. RTS, and Floating-point}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op4');
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   LEX;
+   IF SYM^.ATTRIBUTE=DEFABS THEN
+    BEGIN
+     OPBYTE.REGLOW:=SYM^.OFFSETORVALUE;
+     PUTWORD(OPBYTE.BWORD);
+     LEX;
+    END ELSE ERROR(80{Register reference only});
+ END;
+
+ PROCEDURE ZOP5;
+   VAR MODE1,REG1,OPINDX1:INTEGER;
+       HASINDX1,REL1:BOOLEAN;
+ {opcode..register..mode..register. Used by XOR,JSR}
+ BEGIN
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   IF DEBUG THEN WRITELN('Op5');
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   LEX;
+   IF SYM^.ATTRIBUTE=DEFABS THEN OPBYTE.REGHI:=SYM^.OFFSETORVALUE
+      ELSE ERROR(81{First operand must be register});
+   LEX;
+   IF LEXTOKEN<>COMMA THEN ERROR(82{Comma expected});
+   GETOPER(MODE1,REG1,OPINDX1,HASINDX1,REL1);
+   OPERAND1:=RELOCATE;
+   RELOCATE:=NULLREL;
+   OPBYTE.MODELOW:=MODE1;
+   OPBYTE.REGLOW:=REG1;
+   PUTWORD(OPBYTE.BWORD);
+   IF HASINDX1 THEN
+    BEGIN
+     RELOCATE:=OPERAND1;
+     IF REL1 THEN PUTRELWORD(OPINDX1,FALSE,FALSE) ELSE PUTWORD(OPINDX1);
+    END;
+ END;
+
+ PROCEDURE ZOP6;
+
+ {handles MARK}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op6');
+   ERROR(83{Unimplemented instruction});
+ END;
+
+ PROCEDURE ZOP7;
+ {handles SOB}
+ BEGIN
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   IF DEBUG THEN WRITELN('Op7');
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   LEX;
+   IF SYM^.ATTRIBUTE=DEFABS THEN
+    BEGIN
+     OPBYTE.REGHI:=SYM^.OFFSETORVALUE;
+     LEX;
+     IF LEXTOKEN=COMMA THEN
+      BEGIN
+       IF EXPRESS(TRUE) THEN
+        BEGIN
+         IF RESULT.ATTRIBUTE=LABELS THEN
+          BEGIN
+           RESULT.OFFSETORVALUE:=(LC+2-RESULT.OFFSETORVALUE) DIV 2;
+           IF CHECKOPERAND(TRUE,FALSE,TRUE,0,64) THEN
+            BEGIN
+             RELOCATE:=NULLREL;
+             OPBYTE.SOBSET:=RESULT.OFFSETORVALUE;
+             PUTWORD(OPBYTE.BWORD);
+            END;
+          END ELSE ERROR(84{Must branch backwards to label});
+        END;
+      END ELSE ERROR(82{Comma expected});
+    END ELSE ERROR(81{First operand must be register});
+ END;
+
+ PROCEDURE ZOP8;
+ {The double operand instructions. MOV,CMP,ADD,SUB and logicals}
+   VAR MODE1,REG1,OPINDX1,MODE2,REG2,OPINDX2:INTEGER;
+       HASINDX1,REL1,HASINDX2,REL2:BOOLEAN;
+  BEGIN
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   IF DEBUG THEN WRITELN('Op8');
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   GETOPER(MODE1,REG1,OPINDX1,HASINDX1,REL1);
+   OPBYTE.MODEHI:=MODE1;
+   OPBYTE.REGHI:=REG1;
+   OPERAND1:=RELOCATE;
+   RELOCATE:=NULLREL;
+   IF LEXTOKEN<>COMMA THEN ERROR(82{Comma expected});
+   GETOPER(MODE2,REG2,OPINDX2,HASINDX2,REL2);
+   OPBYTE.MODELOW:=MODE2;
+   OPBYTE.REGLOW:=REG2;
+   OPERAND2:=RELOCATE;
+   RELOCATE:=NULLREL;
+   PUTWORD(OPBYTE.BWORD);
+   IF HASINDX1 THEN
+    BEGIN
+     RELOCATE:=OPERAND1;
+     IF REL1 THEN PUTRELWORD(OPINDX1,FALSE,FALSE) ELSE PUTWORD(OPINDX1);
+    END;
+   IF HASINDX2 THEN
+    BEGIN
+     RELOCATE:=OPERAND2;
+     IF REL2 THEN
+      BEGIN
+       IF HASINDX1 THEN OPINDX2:=OPINDX2-2;
+       PUTRELWORD(OPINDX2,FALSE,FALSE)
+      END ELSE PUTWORD(OPINDX2);
+    END;
+  END;
+
+ PROCEDURE ZOP9;
+   VAR MODE1,REG1,OPINDX1:INTEGER;
+       HASINDX1,REL1:BOOLEAN;
+ {opcode..register..mode..register. Used by MUL,DIV,ASH,ASHC}
+ BEGIN
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   IF DEBUG THEN WRITELN('Op5');
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   GETOPER(MODE1,REG1,OPINDX1,HASINDX1,REL1);
+   IF LEXTOKEN<>COMMA THEN ERROR(82{Comma expected});
+   LEX;
+   IF SYM^.ATTRIBUTE=DEFABS THEN OPBYTE.REGHI:=SYM^.OFFSETORVALUE
+      ELSE ERROR(81{First operand must be register});
+   LEX;
+   OPERAND1:=RELOCATE;
+   RELOCATE:=NULLREL;
+   OPBYTE.MODELOW:=MODE1;
+   OPBYTE.REGLOW:=REG1;
+   PUTWORD(OPBYTE.BWORD);
+   IF HASINDX1 THEN
+    BEGIN
+     RELOCATE:=OPERAND1;
+     IF REL1 THEN PUTRELWORD(OPINDX1,FALSE,FALSE) ELSE PUTWORD(OPINDX1);
+    END;
+ END;
+
+ PROCEDURE ZOP10;
+ {TRAP and EMT}
+ BEGIN
+   IF DEBUG THEN WRITELN('Op2');
+   IF ODD(LC) THEN PUTBYTE(NOP);
+   OPBYTE.BWORD:=SYM^.OFFSETORVALUE;
+   IF EXPRESS(TRUE) THEN
+     IF CHECKOPERAND(TRUE,TRUE,TRUE,-128,255) THEN
+       OPBYTE.GOODBYTE:=RESULT.OFFSETORVALUE;
+   PUTWORD(OPBYTE.BWORD);
+ END;
+
+ PROCEDURE ZOP11;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP12;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP13;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP14;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP15;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP16;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP17;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP18;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP19;
+ BEGIN
+ END;
+
+ PROCEDURE ZOP20;
+ BEGIN
+ END;
+
+ (*$I ASM4.TEXT*)
+                         {start of ASM4}
+         {Copyright (c) 1978 Regents of University of California}
+
+ PROCEDURE ZNOLIST;
+ BEGIN
+   IF DISPLAY THEN
+     BEGIN
+       PRINTLINE;
+       IF CONSOLE THEN
+         BEGIN
+           WRITELN;
+           WRITE('<',LINENUM:4,'>');
+         END;
+       DISPLAY:=FALSE;
+     END;
+   LEX;
+ END;
+
+ PROCEDURE ZLIST;
+ BEGIN
+   IF LISTING THEN
+     BEGIN
+       IF NOT DISPLAY THEN PRINTPAGE;
+       DISPLAY:=TRUE;
+     END;
+   LEX;
+ END;
+
+ BEGIN {Segment Assemble}
+   IF VIEWSTACK THEN
+     UNITWRITE(3,VIEWDUMMY[-1600],35); {turn on display of stack & heap}
+   IF DISPLAY THEN
+     WRITELN(LISTFILE,'Memory after initialization:',MEMAVAIL:8);
+   REPEAT
+     LEX;
+     IF (LEXTOKEN=TLABEL) OR (LEXTOKEN=LOCLABEL) THEN ZLABEL;
+     IF ((CODESECTION=A) AND
+         NOT (LEXTOKEN IN [WORD,BIGHT,BLOCK,EQU,ORG,LIST,NOLIST,PSECT]))
+         OR (LEXTOKEN<=FIRSTOPCODE) OR (LEXTOKEN>=LASTOPCODE)
+         OR ((PROCNUM=0) AND (LEXTOKEN<=OP20)) THEN
+       BEGIN
+         ERROR(18{Invalid structure});
+         WHILE LEXTOKEN<>ENDLINE DO LEX;
+         PRINTLINE;
+       END
+     ELSE
+       BEGIN
+         CASE LEXTOKEN OF
+           NOLIST:ZNOLIST;
+           LIST:ZLIST;
+           ASECT:  BEGIN  CODESECTION:=A;  LEX;  END;
+           PSECT:  BEGIN  CODESECTION:=P;  LEX;  END;
+           ALIGN:ZALIGN;
+           ASCII:ZASCII;
+           EQU:ZEQU;
+           MACRODEF:ZDEFMACRO;
+           BLOCK:ZBLOCK;
+           WORD:ZWORD;
+           BIGHT:ZBYTE;
+           ORG:ZORG;
+           TPAGE:BEGIN
+                   IF DISPLAY THEN PRINTPAGE;
+                   LEX;
+                 END;
+           TITLE:ZTITLE;
+           PROC,FUNC,TEND:EXIT(ASSEMBLE);
+           TCONST,PUBLIC,PRIVATE,DEF,REF:ZGLOBAL;
+           CONDITION:ZCOND;
+           TELSE:ZELSE;
+           CONDEND:BEGIN
+                     IF CONDINDEX<0 THEN ERROR(7{Not enough ifs})
+                       ELSE CONDINDEX:=CONDINDEX - 1;
+                     LEX;
+                   END;
+           OP1:ZOP1;
+           OP2:ZOP2;
+           OP3:ZOP3;
+           OP4:ZOP4;
+           OP5:ZOP5;
+           OP6:ZOP6;
+           OP7:ZOP7;
+           OP8:ZOP8;
+           OP9:ZOP9;
+           OP10:ZOP10;
+           OP11:ZOP11;
+           OP12:ZOP12;
+           OP13:ZOP13;
+           OP14:ZOP14;
+           OP15:ZOP15;
+           OP16:ZOP16;
+           OP17:ZOP17;
+           OP18:ZOP18;
+           OP19:ZOP19;
+           OP20:ZOP20
+           {ENDLINE is legal yet ignored!}
+         END;
+        IF SPCIALSTKINDEX<>-1 THEN
+          BEGIN
+            SPCIALSTKINDEX:=-1;
+            ERROR(19{Extra special symbol});
+          END;
+        IF LEXTOKEN<>ENDLINE THEN
+          BEGIN
+            ERROR(5{extra garbage on line});
+            WHILE LEXTOKEN<>ENDLINE DO LEX;
+          END;
+        PRINTLINE; SYMLAST:=FALSE;
+       END;
+   UNTIL FALSE;
+ END;
+
+ PROCEDURE PRERRNUM(ERRORNUM:INTEGER; EXTRA:BOOLEAN); FORWARD;
+
+ SEGMENT PROCEDURE PRINTERROR(ERRORNUM:INTEGER);
+ TYPE  ERRORSTRING=STRING[40];
+ VAR  ERRORFILE:FILE OF ERRORSTRING;
+      KLUDGEPTR:^INTEGER;
+      NAME:STRING;
+
+ BEGIN
+   (*$I-*)
+   NAME:=CONCAT('*',ASMNAME);
+   RESET(ERRORFILE,CONCAT(NAME,'.ERRORS'));
+   MARK(KLUDGEPTR); {dumps disk directory so next proc call won't STK-OFLW}
+   (*$I+*)
+   IF IORESULT<>0 THEN
+     PRERRNUM(ERRORNUM,TRUE)
+   ELSE
+     BEGIN
+       SEEK(ERRORFILE,ERRORNUM);
+       GET(ERRORFILE);
+       IF DISPLAY THEN
+         BEGIN
+           WRITELN(LISTFILE);
+           WRITELN(LISTFILE,TEXTLINE);
+           WRITELN(LISTFILE,ERRORFILE^);
+           LISTNUM:=LISTNUM + 3;
+         END;
+       IF NOT (CONSOLE AND DISPLAY) THEN
+         BEGIN
+           WRITELN;
+           WRITELN(TEXTLINE);
+           WRITELN(ERRORFILE^);
+         END;
+     END;
+ END;
+
+ PROCEDURE PRERRNUM;  {ERRORNUM:INTEGER; EXTRA:BOOLEAN}
+ VAR   LINES:INTEGER;
+ BEGIN
+   IF DISPLAY THEN
+     BEGIN
+       WRITELN(LISTFILE);
+       WRITELN(LISTFILE,TEXTLINE);
+       WRITELN(LISTFILE,'ERROR #',ERRORNUM:4);
+       IF EXTRA THEN
+         BEGIN
+           WRITELN(LISTFILE,'"*',ASMNAME,'.ERRORS" file not around');
+           LINES:=4;
+         END
+       ELSE LINES:=3;
+       LISTNUM:=LISTNUM + LINES;
+     END;
+   IF NOT (CONSOLE AND DISPLAY) THEN
+     BEGIN
+       WRITELN;
+       WRITELN(TEXTLINE);
+       WRITELN('ERROR #',ERRORNUM:4);
+       IF EXTRA THEN WRITELN('"*',ASMNAME,'.ERRORS" file not around');
+     END;
+ END;
+
+ PROCEDURE ERROR; {ERRORNUM:INTEGER}
+ VAR  CH:CHAR;
+ BEGIN
+   NUMERRORS:=NUMERRORS + 1;
+   IF MEMAVAIL>1800 THEN
+     PRINTERROR(ERRORNUM)
+   ELSE
+     PRERRNUM(ERRORNUM,FALSE);
+   WITH USERINFO DO
+     REPEAT
+       WRITELN('E(dit,<space>,<esc>');
+       READ(KEYBOARD,CH);
+       IF (CH=ALTMODE) OR ((ERRORNUM>=47) AND (ERRORNUM<=60)) THEN EXIT(TLA);
+       IF (CH='E') OR (CH='e') THEN
+         BEGIN
+           IF ALTINPUT THEN
+             BEGIN
+               ERRSYM:=ALTBLOCPTR;
+               ERRBLK:=ALTBLOCNO-2;
+             END
+           ELSE
+             BEGIN
+               ERRSYM:=BLOCKPTR;
+               ERRBLK:=BLOCKNO-2;
+             END;
+           ERRNUM:=ERRORNUM;
+           EXIT(TLA);
+         END;
+     UNTIL CH=' ';
+   IF NOT (DISPLAY AND CONSOLE) THEN
+     BEGIN
+       WRITELN;
+       WRITE('<',LINENUM:4,'>');
+     END;
+   IF DISPLAY AND (LISTNUM MOD PAGESIZE<4) THEN PRINTPAGE;
+ END;
+
+ PROCEDURE PATCHCODE; {FWDREF:BACKLABEL; BUFINDEX:INTEGER}
+ VAR   PRINTLC:WORDSWAP;
+       SWAP:INTEGER;
+
+ PROCEDURE PATCHPRINT(BYTESIZE:BOOLEAN);
+ BEGIN
+   PRINTNUM(FWDREF.LC,FALSE);
+   WRITE(LISTFILE,'* ');
+   PRINTNUM(PRINTLC.HWORD,BYTESIZE);
+   WRITELN(LISTFILE);
+ END;
+
+ BEGIN {PATCHCODE}
+   PRINTLC.HWORD:=FWDREF.VALUE;
+   IF FWDREF.BYTESIZE THEN
+     IF (PRINTLC.HWORD>127) OR (PRINTLC.HWORD<-128) THEN
+       BEGIN
+         PRINTLC.HWORD:=FWDREF.LC;
+         WRITELN('Location ',HEXCHAR[PRINTLC.HEX1],
+           HEXCHAR[PRINTLC.HEX2],HEXCHAR[PRINTLC.HEX3],
+           HEXCHAR[PRINTLC.HEX4]);
+         ERROR(2{operand out of range});
+       END
+     ELSE
+       BEGIN
+         BUFFER^[BUFINDEX]:=PRINTLC.LOWBYTE;
+         IF DISPLAY THEN PATCHPRINT(TRUE);
+       END
+   ELSE
+     BEGIN
+       IF HIBYTEFIRST THEN
+         BEGIN
+           BUFFER^[BUFINDEX]:=PRINTLC.HIBYTE;
+           BUFFER^[BUFINDEX + 1]:=PRINTLC.LOWBYTE;
+         END
+       ELSE
+         BEGIN
+           BUFFER^[BUFINDEX]:=PRINTLC.LOWBYTE;
+           BUFFER^[BUFINDEX + 1]:=PRINTLC.HIBYTE;
+         END;
+       IF NOT LISTHIFIRST THEN
+         BEGIN
+           SWAP:=PRINTLC.HIBYTE;
+           PRINTLC.HIBYTE:=PRINTLC.LOWBYTE;
+           PRINTLC.LOWBYTE:=SWAP;
+         END;
+       IF DISPLAY THEN PATCHPRINT(FALSE);
+     END;
+   IF DISPLAY THEN
+     BEGIN
+       LISTNUM:=LISTNUM + 1;
+       IF (LISTNUM MOD PAGESIZE=0) THEN PRINTPAGE;
+     END;
+ END;
+
+ PROCEDURE IOCHECK; {QUIT:BOOLEAN}
+ BEGIN
+   IF IORESULT<>0 THEN
+     BEGIN
+       ERROR(46 + IORESULT);
+       IF QUIT THEN
+         BEGIN
+           UNITCLEAR(3); {remove pretty display of stack & heap on screen}
+           EXIT(TLA);
+         END;
+     END;
+ END;
+
+ PROCEDURE LLCHECK;
+ VAR  I:INTEGER;
+ BEGIN
+   FOR I:=0 TO TEMPTOP-1 DO
+     IF TEMP[I].FWDREF<>NIL THEN
+       BEGIN
+         IF DISPLAY THEN
+           BEGIN
+             WRITELN(LISTFILE);
+             WRITE(LISTFILE,'>>>>>',TEMP[I].TEMPNAME);
+           END;
+         IF NOT (CONSOLE AND DISPLAY) THEN
+           BEGIN
+             WRITELN;
+             WRITE('>>>>>',TEMP[I].TEMPNAME);
+           END;
+         ERROR(1{undefined label});
+         TEMP[I].FWDREF:=NIL;
+       END;
+   TEMPTOP:=0;
+ END;
+
+ PROCEDURE PRINTPAGE;
+ BEGIN
+   IF CONSOLE THEN
+     BEGIN
+       WRITELN(LISTFILE);
+       WRITELN(LISTFILE);
+     END
+   ELSE PAGE(LISTFILE);
+   WRITE(LISTFILE,'PAGE - ',PAGENO:3,'  ',PROCNAME,'  FILE:',CURFNAME);
+   IF DISPLAY AND CONSOLE THEN WRITELN(LISTFILE);
+   WRITELN(LISTFILE,'  ',TITLELINE);
+   WRITELN(LISTFILE);
+   WRITELN(LISTFILE);
+   LISTNUM:=0;
+   PAGENO:=PAGENO + 1;
+ END;
+
+ PROCEDURE PRINTLINE;
+ VAR  COUNT:INTEGER;
+      LISTLINE:STRING;
+ BEGIN
+   LINENUM:=LINENUM + 1;
+   IF NOT (DISPLAY AND CONSOLE) THEN
+     BEGIN
+       WRITE('.');
+       IF (LINENUM MOD 50=0) THEN
+         BEGIN
+           WRITELN;
+           WRITE('<',LINENUM:4,'>');
+         END;
+     END;
+   IF DISPLAY THEN
+     BEGIN
+       LISTNUM:=LISTNUM + 1;
+       IF (LISTNUM MOD PAGESIZE=0) THEN PRINTPAGE;
+       PRINTNUM(LASTLC,FALSE);
+       IF CODECOUNT<CODESIZE-2 THEN    {use blank impression code}
+         BEGIN
+           COUNT:=CODESIZE - CODECOUNT + 1;
+           CODE[CODECOUNT]:=CHR(16);
+           CODE[CODECOUNT + 1]:=CHR(COUNT + 32);
+           MOVELEFT(CODE,LISTLINE[1],CODECOUNT+2);
+           LISTLINE[0]:=CHR(CODECOUNT+2);
+           WRITE(LISTFILE,'| ',LISTLINE);
+         END
+       ELSE
+         WRITE(LISTFILE,'| ',CODE);
+       IF TEXTINDEX>79 THEN TEXTINDEX:=79;  {caution abounds in unsure minds}
+       MOVELEFT(TEXTLINE,LISTLINE[1],TEXTINDEX+1);
+       LISTLINE[0]:=CHR(TEXTINDEX+1);
+       IF SOURCE=MACROSOURCE THEN
+         WRITELN(LISTFILE,'#',LISTLINE)
+       ELSE
+         WRITELN(LISTFILE,' ',LISTLINE);
+     END;
+   IF (CODESECTION=A) THEN  LASTLC:=ALC  ELSE  LASTLC:=LC;
+   CODE:=BLANKCODE;
+   CODECOUNT:=0;
+ END;
+
+ PROCEDURE PRINTNUM; {WORD:INTEGER; BYTESIZE:BOOLEAN}
+ VAR NUM:WORDSWAP;
+ BEGIN
+   NUM.HWORD:=WORD;
+   IF BYTESIZE THEN
+     BEGIN
+       IF LISTRADIX=16 THEN
+         WRITE(LISTFILE,HEXCHAR[NUM.HEX3],HEXCHAR[NUM.HEX4]);
+       IF LISTRADIX=8 THEN
+         WRITE(LISTFILE,NUM.OCT4:1,NUM.OCT5:1,NUM.OCT6:1)
+     END
+   ELSE
+     BEGIN
+       IF LISTRADIX=16 THEN WRITE(LISTFILE,HEXCHAR[NUM.HEX1],HEXCHAR[NUM.HEX2],
+                                           HEXCHAR[NUM.HEX3],HEXCHAR[NUM.HEX4]);
+       IF LISTRADIX=8 THEN WRITE(LISTFILE,NUM.OCT1:1,NUM.OCT2:1,NUM.OCT3:1,
+                                          NUM.OCT4:1,NUM.OCT5:1,NUM.OCT6:1)
+     END
+ END;
+
+ PROCEDURE PUTBYTE;  {BYTE:BITE}
+ VAR  HEX:WORDSWAP;
+ BEGIN
+   IF BUFFERPOS>BUFLIMIT THEN
+     BEGIN
+       (*$I-*)
+       IF BLOCKWRITE(USERINFO.WORKCODE^,BUFFER^,1,OUTBLKNO)=0 THEN ERROR(54);
+       IOCHECK(TRUE);
+       (*$I+*)
+       OUTBLKNO:=OUTBLKNO + 1;
+       IF OUTBLKNO>OUTBLKTOP THEN OUTBLKTOP:=OUTBLKNO;
+       MOVELEFT(BUFFER^[512],BUFFER^[0],(BUFBLKS -1)*512);
+       BUFFERPOS:=BUFFERPOS - 512;
+       BUFBOTTOM:=BUFBOTTOM + 512;
+     END;
+   BUFFER^[BUFFERPOS]:=BYTE;
+   BUFFERPOS:=BUFFERPOS + 1;
+   BUFFERTOP:=BUFBOTTOM + BUFFERPOS;
+   IF BUFFERTOP>MAXBUFTOP THEN MAXBUFTOP:=BUFFERTOP;
+   IF NOT WORDADDRESSED THEN LC:=LC + 1;
+   IF DISPLAY AND NOT FROMPUTWORD THEN
+     BEGIN
+       HEX.HWORD:=BYTE;
+       IF LISTRADIX=16 THEN
+         IF CODECOUNT + 2<=CODESIZE THEN
+           BEGIN
+             CODE[CODECOUNT]:=HEXCHAR[HEX.HEX3];
+             CODE[CODECOUNT + 1]:=HEXCHAR[HEX.HEX4];
+             CODE[CODECOUNT + 2]:=' ';
+             CODECOUNT:=CODECOUNT + 3;
+           END;
+       IF LISTRADIX=8 THEN
+         IF CODECOUNT + 3<=CODESIZE THEN
+           BEGIN
+             CODE[CODECOUNT]:=CHR(HEX.OCT4 + ORD('0'));
+             CODE[CODECOUNT + 1]:=CHR(HEX.OCT5 + ORD('0'));
+             CODE[CODECOUNT + 2]:=CHR(HEX.OCT6 + ORD('0'));
+             CODE[CODECOUNT + 3]:=' ';
+             CODECOUNT:=CODECOUNT + 4;
+           END;
+     END;
+ END;
+
+ PROCEDURE SENDWORD(NUM:WORDSWAP; ASTRKCODE:INTEGER);
+ VAR  SWAP,LISTNUM:WORDSWAP;
+ BEGIN
+   SWAP:=NUM;
+   IF NOT HIBYTEFIRST THEN
+     BEGIN
+       NUM.HIBYTE:=SWAP.LOWBYTE;
+       NUM.LOWBYTE:=SWAP.HIBYTE;
+     END;
+   IF DISPLAY THEN
+     BEGIN
+       IF LISTHIFIRST THEN
+         LISTNUM:=SWAP
+       ELSE
+         BEGIN
+           LISTNUM:=NUM;
+           ASTRKCODE:=ASTRKCODE DIV 2 + (ASTRKCODE MOD 2)*2;
+         END;
+       IF LISTRADIX=16 THEN
+         IF CODECOUNT + 4<=CODESIZE THEN
+           BEGIN
+             FILLCHAR(CODE[CODECOUNT],4,'*');
+             IF ASTRKCODE<2 THEN
+               BEGIN
+                 CODE[CODECOUNT]:=HEXCHAR[LISTNUM.HEX1];
+                 CODE[CODECOUNT + 1]:=HEXCHAR[LISTNUM.HEX2];
+               END;
+             IF (ASTRKCODE MOD 2<>1) THEN
+               BEGIN
+                 CODE[CODECOUNT + 2]:=HEXCHAR[LISTNUM.HEX3];
+                 CODE[CODECOUNT + 3]:=HEXCHAR[LISTNUM.HEX4];
+               END;
+             CODE[CODECOUNT + 4]:=' ';
+             CODECOUNT:=CODECOUNT + 5;
+           END;
+       IF LISTRADIX=8 THEN
+         IF CODECOUNT + 6<=CODESIZE THEN
+           BEGIN
+             FILLCHAR(CODE[CODECOUNT],6,'*');
+             IF ASTRKCODE<2 THEN
+               BEGIN
+                 CODE[CODECOUNT]:=CHR(LISTNUM.OCT1 + ORD('0'));
+                 CODE[CODECOUNT + 1]:=CHR(LISTNUM.OCT2 + ORD('0'));
+                 CODE[CODECOUNT + 2]:=CHR(LISTNUM.OCT3 + ORD('0'));
+               END;
+             IF (ASTRKCODE MOD 2<>1) THEN
+               BEGIN
+                 CODE[CODECOUNT + 3]:=CHR(LISTNUM.OCT4 + ORD('0'));
+                 CODE[CODECOUNT + 4]:=CHR(LISTNUM.OCT5 + ORD('0'));
+                 CODE[CODECOUNT + 5]:=CHR(LISTNUM.OCT6 + ORD('0'));
+               END;
+             CODE[CODECOUNT + 6]:=' ';
+             CODECOUNT:=CODECOUNT + 7;
+           END;
+     END;
+   IF WORDADDRESSED THEN LC:=LC + 1;
+   FROMPUTWORD:=TRUE;
+   PUTBYTE(NUM.HIBYTE);
+   PUTBYTE(NUM.LOWBYTE);
+   FROMPUTWORD:=FALSE;
+ END;
+
+ PROCEDURE PUTWORD;  {WORD:INTEGER}
+ VAR  NUM,SWAP:WORDSWAP;
+      ASTRKCODE:INTEGER;
+
+ PROCEDURE FULLSET;
+ BEGIN
+   FULLLABEL^.OFFSET:=BUFFERTOP;
+   FULLLABEL^.LC:=LC;
+   FULLLABEL^.BYTESIZE:=FALSE;
+   FULLLABEL^.WORDLC:=FALSE;
+   FULLLABEL^.VALUE:=WORD;
+   ASTRKCODE:=3;
+ END;
+
+ PROCEDURE JUMPSET(VAR JCOUNT:INTEGER; VAR JUMP:JTABREC; CLASS:INTEGER);
+ BEGIN
+   IF JUMPINFO THEN
+     BEGIN
+       IF JCOUNT=7 THEN
+         BEGIN
+           SCRATCH^.CLASS:=CLASS;
+           SCRATCH^.JUMPS:=JUMP;
+           PUT(SCRATCH); SCRATCHEND:=SCRATCHEND + 1;
+           FILLCHAR(JUMP,SIZEOF(JUMP),0);
+           JCOUNT:=0;
+         END;
+       JUMP[JCOUNT]:=BUFFERTOP;
+       JCOUNT:=JCOUNT + 1;
+     END;
+ END;
+
+ BEGIN {PUTWORD}
+   ASTRKCODE:=0;
+   NUM.HWORD:=WORD;
+   CASE RELOCATE.TIPE OF
+     NOTSET:;
+      LCREL:BEGIN
+              RELOCATE:=NULLREL;
+              JUMPSET(JCOUNT1,JUMP1,1);
+            END;
+      LLREL:BEGIN
+              IF TEMP[RELOCATE.TEMPLABEL].TEMPATRIB=UNKNOWN THEN
+                BEGIN
+                  FULLSET;
+                  FULLLABEL^.NEXT:=TEMP[RELOCATE.TEMPLABEL].FWDREF;
+                  TEMP[RELOCATE.TEMPLABEL].FWDREF:=FULLLABEL;
+                  IF FREELABEL<>NIL THEN
+                    BEGIN
+                      FULLLABEL:=FREELABEL;
+                      FREELABEL:=FREELABEL^.NEXT;
+                    END
+                  ELSE NEW(FULLLABEL);
+                END;
+              JUMPSET(JCOUNT1,JUMP1,1);
+              RELOCATE:=NULLREL;
+            END;
+   LABELREL:BEGIN
+              CASE RELOCATE.SYM^.ATTRIBUTE OF
+                LABELS,UNKNOWN,DEFS:
+                    BEGIN
+                      IF (RELOCATE.SYM^.ATTRIBUTE=LABELS) OR
+                          ((RELOCATE.SYM^.ATTRIBUTE=DEFS) AND
+                          (RELOCATE.SYM^.CODEOFFSET<>-1)) THEN
+                      ELSE
+                        BEGIN
+                          FULLSET;
+                          IF RELOCATE.SYM^.ATTRIBUTE=DEFS THEN
+                           BEGIN
+                            FULLLABEL^.NEXT:=RELOCATE.SYM^.DEFFWDREF;
+                            RELOCATE.SYM^.DEFFWDREF:=FULLLABEL
+                           END
+                          ELSE
+                           BEGIN
+                            FULLLABEL^.NEXT:=RELOCATE.SYM^.FWDREF;
+                            RELOCATE.SYM^.FWDREF:=FULLLABEL;
+                           END;
+                          IF FREELABEL<>NIL THEN
+                            BEGIN
+                              FULLLABEL:=FREELABEL;
+                              FREELABEL:=FREELABEL^.NEXT;
+                            END
+                          ELSE NEW(FULLLABEL);
+                        END;
+                      JUMPSET(JCOUNT1,JUMP1,1);
+                    END;
+                PRIVATES,PUBLICS,CONSTS,REFS:
+                    BEGIN
+                      RELOCATE.SYM^.NREFS:=RELOCATE.SYM^.NREFS + 1;
+                      NEW(NEXTJP); NEXTJP^.PCOFFSET:=BUFFERTOP-512;
+                      NEXTJP^.LAST:=RELOCATE.SYM^.LINKOFFSET;
+                      RELOCATE.SYM^.LINKOFFSET:=NEXTJP;
+                      CASE RELOCATE.SYM^.ATTRIBUTE OF
+                        PUBLICS,PRIVATES:  JUMPSET(JCOUNT3,JUMP3,3);
+                        REFS:   JUMPSET(JCOUNT2,JUMP2,2)
+                      END;
+                    END;
+              END;
+              RELOCATE:=NULLREL;
+            END
+     END;{Main Case}
+   SENDWORD(NUM,ASTRKCODE);
+ END;
+
+ PROCEDURE PUTRELWORD; {WORD:INTEGER; BYTESIZE,WORDOFFSET:BOOLEAN}
+ VAR NUM,SWAP:WORDSWAP;
+     ASTRKCODE:INTEGER;
+
+ PROCEDURE FULLRELSET;
+ BEGIN
+   FULLLABEL^.OFFSET:=BUFFERTOP;
+   FULLLABEL^.LC:=LC;
+   FULLLABEL^.WORDLC:=WORDOFFSET;
+ END;
+
+ PROCEDURE SHORTSPACE;
+ BEGIN
+   IF TEMP[RELOCATE.TEMPLABEL].TEMPATRIB=UNKNOWN THEN
+     BEGIN
+       FULLRELSET;
+       IF BYTESIZE THEN
+         BEGIN
+           IF RELHI THEN ASTRKCODE:=2 ELSE ASTRKCODE:=1;
+           IF (RELHI AND NOT HIBYTEFIRST) OR
+             (NOT RELHI AND HIBYTEFIRST) THEN
+                FULLLABEL^.OFFSET:=BUFFERTOP + 1;
+           FULLLABEL^.BYTESIZE:=TRUE;
+           IF RELOCATE.ATTRIBUTE=LABELS THEN
+             FULLLABEL^.VALUE:=RELOCATE.OFFSETORVALUE - LASTLC;
+         END
+       ELSE
+         BEGIN
+           ASTRKCODE:=3;
+           FULLLABEL^.BYTESIZE:=FALSE;
+           IF RELOCATE.ATTRIBUTE=LABELS THEN
+             FULLLABEL^.VALUE:=WORD - LASTLC;
+         END;
+       FULLLABEL^.NEXT:=TEMP[RELOCATE.TEMPLABEL].FWDREF;
+       TEMP[RELOCATE.TEMPLABEL].FWDREF:=FULLLABEL;
+       IF FREELABEL<>NIL THEN
+         BEGIN
+           FULLLABEL:=FREELABEL;
+           FREELABEL:=FREELABEL^.NEXT;
+         END
+       ELSE NEW(FULLLABEL);
+     END
+   ELSE
+     IF BYTESIZE THEN
+       BEGIN
+         IF RELOCATE.ATTRIBUTE=LABELS THEN
+           SWAP.HWORD:=RELOCATE.OFFSETORVALUE-LASTLC
+         ELSE
+           SWAP.HWORD:=RELOCATE.OFFSETORVALUE;
+         IF NOT WORDADDRESSED AND WORDOFFSET THEN
+           SWAP.HWORD:=SWAP.HWORD DIV 2;
+         IF (SWAP.HWORD>=-128) AND (SWAP.HWORD<=127) THEN
+           IF RELHI THEN
+             NUM.HIBYTE:=SWAP.LOWBYTE
+           ELSE
+             NUM.LOWBYTE:=SWAP.LOWBYTE
+         ELSE ERROR(20{branch too far});
+       END
+     ELSE
+       IF RELOCATE.ATTRIBUTE=LABELS THEN
+         NUM.HWORD:=WORD - LASTLC;
+   RELOCATE:=NULLREL;
+ END;
+
+ BEGIN {PUTRELWORD}
+   ASTRKCODE:=0;
+   NUM.HWORD:=WORD;
+   CASE RELOCATE.TIPE OF
+     NOTSET:IF BYTESIZE THEN
+              BEGIN
+                SWAP.HWORD:=RELOCATE.OFFSETORVALUE;
+                IF NOT WORDADDRESSED AND WORDOFFSET THEN
+                  SWAP.HWORD:=SWAP.HWORD DIV 2;
+                IF (SWAP.HWORD>=-128) AND (SWAP.HWORD<=127) THEN
+                  IF RELHI THEN
+                    NUM.HIBYTE:=SWAP.LOWBYTE
+                  ELSE
+                    NUM.LOWBYTE:=SWAP.LOWBYTE
+                ELSE ERROR(20{branch too far});
+              END;
+      LCREL:BEGIN
+              IF BYTESIZE THEN
+                BEGIN
+                  IF RELOCATE.ATTRIBUTE=LABELS THEN {not ABS}
+                    SWAP.HWORD:=RELOCATE.OFFSETORVALUE-LASTLC
+                  ELSE
+                    SWAP.HWORD:=RELOCATE.OFFSETORVALUE;
+                  IF NOT WORDADDRESSED AND WORDOFFSET THEN
+                    SWAP.HWORD:=SWAP.HWORD DIV 2;
+                  IF (SWAP.HWORD>=-128) AND (SWAP.HWORD<=127) THEN
+                    IF RELHI THEN
+                      NUM.HIBYTE:=SWAP.LOWBYTE
+                    ELSE
+                      NUM.LOWBYTE:=SWAP.LOWBYTE
+                  ELSE ERROR(20{branch too far});
+                END
+              ELSE
+                IF RELOCATE.ATTRIBUTE=LABELS THEN
+                  NUM.HWORD:=WORD - LASTLC;
+              RELOCATE:=NULLREL;
+            END;
+      LLREL:SHORTSPACE;
+   LABELREL:BEGIN
+              CASE RELOCATE.SYM^.ATTRIBUTE OF
+                LABELS,UNKNOWN,DEFS:
+                  BEGIN
+                    IF (RELOCATE.SYM^.ATTRIBUTE=LABELS) OR
+                        ((RELOCATE.SYM^.ATTRIBUTE=DEFS) AND
+                        (RELOCATE.SYM^.CODEOFFSET<>-1)) THEN
+                      BEGIN
+                        IF BYTESIZE THEN
+                          BEGIN
+                            IF RELOCATE.ATTRIBUTE=LABELS THEN
+                              SWAP.HWORD:=RELOCATE.OFFSETORVALUE-LASTLC
+                            ELSE
+                              SWAP.HWORD:=RELOCATE.OFFSETORVALUE;
+                            IF NOT WORDADDRESSED AND WORDOFFSET THEN
+                              SWAP.HWORD:=SWAP.HWORD DIV 2;
+                            IF (SWAP.HWORD>=-128) AND (SWAP.HWORD<=127) THEN
+                              IF RELHI THEN
+                                NUM.HIBYTE:=SWAP.LOWBYTE
+                              ELSE
+                                NUM.LOWBYTE:=SWAP.LOWBYTE
+                            ELSE ERROR(20{branch too far});
+                          END
+                        ELSE
+                          IF RELOCATE.ATTRIBUTE=LABELS THEN
+                            NUM.HWORD:=WORD - LASTLC;
+                      END
+                    ELSE
+                      BEGIN
+                        FULLRELSET;
+                        IF BYTESIZE THEN
+                          BEGIN
+                            IF RELHI THEN ASTRKCODE:=2 ELSE ASTRKCODE:=1;
+                            IF (RELHI AND NOT HIBYTEFIRST) OR
+                              (NOT RELHI AND HIBYTEFIRST) THEN
+                                FULLLABEL^.OFFSET:=BUFFERTOP + 1;
+                            FULLLABEL^.BYTESIZE:=TRUE;
+                            IF RELOCATE.ATTRIBUTE=LABELS THEN
+                              FULLLABEL^.VALUE:=RELOCATE.OFFSETORVALUE-LASTLC;
+                          END
+                        ELSE
+                          BEGIN
+                            ASTRKCODE:=3;
+                            FULLLABEL^.BYTESIZE:=FALSE;
+                            FULLLABEL^.VALUE:=WORD-LASTLC;
+                          END;
+                        IF RELOCATE.SYM^.ATTRIBUTE=DEFS THEN
+                         BEGIN
+                          FULLLABEL^.NEXT:=RELOCATE.SYM^.DEFFWDREF;
+                          RELOCATE.SYM^.DEFFWDREF:=FULLLABEL;
+                         END
+                        ELSE
+                         BEGIN
+                          FULLLABEL^.NEXT:=RELOCATE.SYM^.FWDREF;
+                          RELOCATE.SYM^.FWDREF:=FULLLABEL;
+                         END;
+                        IF FREELABEL<>NIL THEN
+                          BEGIN
+                            FULLLABEL:=FREELABEL;
+                            FREELABEL:=FREELABEL^.NEXT;
+                          END
+                        ELSE NEW(FULLLABEL);
+                      END;
+                  END;
+                PRIVATES,PUBLICS,CONSTS,REFS:
+                    BEGIN
+                      IF DISPLAY THEN
+                        BEGIN
+                          WRITELN(LISTFILE);
+                          WRITE(LISTFILE,RELOCATE.SYM^.NAME);
+                        END;
+                      IF NOT (CONSOLE AND DISPLAY) THEN
+                        BEGIN
+                          WRITELN;
+                          WRITE(RELOCATE.SYM^.NAME);
+                        END;
+                      ERROR(21{Variable not PC relative});
+                    END
+              END;
+              RELOCATE:=NULLREL;
+            END
+     END;{Main Case}
+   SENDWORD(NUM,ASTRKCODE);
+ END;
+
+
+ (*$I ASM5.TEXT*)
+                         {starting ASM5}
+         {Copyright (c) 1978 Regents of University of California}
+
+ PROCEDURE NEWFILE;
+ BEGIN
+   (*$I-*)
+   TEXTLINE:=BLANKLINE; TEXTINDEX:=0;
+   IF ALTINPUT THEN
+     BNUM:=BLOCKREAD(ALTFILE,XBLOCK,2,BLOCKNO)
+   ELSE
+     BNUM:=BLOCKREAD(USERINFO.WORKSRC^,XBLOCK,2,BLOCKNO);
+   BLOCKPTR:=0;
+   BLOCKNO:=BLOCKNO+BNUM;
+   IF DEBUG THEN
+      WRITELN('BLOCKREAD=',BLOCKNO);
+   IF BNUM=0 THEN
+     IF ALTINPUT THEN
+       BEGIN
+         BLOCKNO:=ALTBLOCNO;
+         BLOCKPTR:=ALTBLOCPTR;
+         BNUM:=BLOCKREAD(USERINFO.WORKSRC^,XBLOCK,2,BLOCKNO - 2);
+         ALTINPUT:=FALSE;
+         CLOSE(ALTFILE);
+         CURFNAME:=FIRSTFNAME;
+       END
+     ELSE
+       BEGIN
+         ERROR(36);
+         UNITCLEAR(3);
+         EXIT(LEX);
+       END;
+   IOCHECK(TRUE);
+   (*$I+*)
+ END;
+
+ PROCEDURE GETCHAR;
+ VAR I:INTEGER;
+ BEGIN
+   IF DEBUG THEN WRITE(LISTFILE,'Getchar ');
+   CASE SOURCE OF
+     MACROSOURCE:BEGIN
+                   IF ADVANCE THEN
+                     BEGIN
+                       MACROINDEX:=MACROINDEX + 1;
+                       TEXTINDEX:=TEXTINDEX + 1;
+                     END
+                   ELSE ADVANCE:=TRUE;
+                   IF MCPTR^[MACROINDEX]=CHR(16) THEN
+                     BEGIN
+                       CH:=MCPTR^[MACROINDEX + 1];
+                       STARTLINE:=(ORD(CH) - 32=0);
+                       IF TEXTINDEX<79 THEN
+                         BEGIN
+                           TEXTLINE[TEXTINDEX]:=CHR(16);
+                           TEXTLINE[TEXTINDEX + 1]:=CH;
+                           TEXTINDEX:=TEXTINDEX+2;
+                         END;
+                       MACROINDEX:=MACROINDEX + 2;
+                     END;
+                   CH:=MCPTR^[MACROINDEX];
+                   IF CH='%' THEN
+                     BEGIN
+                       CH:=MCPTR^[MACROINDEX + 1];
+                       MACROINDEX:=MACROINDEX + 2;
+                       IF (CH<'1') OR (CH>'9') THEN
+                         ERROR(22{illegal macro parameter index})
+                       ELSE
+                         BEGIN
+                           I:=ORD(CH)-ORD('1');
+                           PARMPTR:=MCINDEX[MCSTKINDEX-1];
+                           IF MCSTKINDEX>1 THEN
+                             BEGIN
+                               MCPTR:=MACROSTACK[MCSTKINDEX - 1];
+                               WHILE (I<>0) AND (MCPTR^[PARMPTR]<>CHR(13)) DO
+                                 BEGIN
+                                   IF MCPTR^[PARMPTR]=',' THEN I:=I-1;
+                                   PARMPTR:=PARMPTR + 1;
+                                 END;
+                               I:=SCAN(80,<>' ',MCPTR^[PARMPTR]);
+                               PARMPTR:=PARMPTR + I;
+                               CH:=MCPTR^[PARMPTR];
+                               IF (CH=CHR(13)) OR (CH=';') THEN
+                                 MCPTR:=MACROSTACK[MCSTKINDEX];
+                             END
+                           ELSE
+                             BEGIN
+                               WHILE (I<>0) AND (XBLOCK[PARMPTR]<>CHR(13)) DO
+                                 BEGIN
+                                   IF XBLOCK[PARMPTR]=',' THEN I:=I-1;
+                                   PARMPTR:=PARMPTR + 1;
+                                 END;
+                               I:=SCAN(80,<>' ',XBLOCK[PARMPTR]);
+                               PARMPTR:=PARMPTR + I;
+                               CH:=XBLOCK[PARMPTR];
+                             END;
+                          IF (CH<>CHR(13)) AND (CH<>';') THEN SOURCE:=PARMSOURCE;
+                           ADVANCE:=FALSE;
+                           GETCHAR;
+                         END;
+                     END
+                   ELSE IF (CH=' ') AND NOTSTRING THEN
+                     BEGIN
+                       I:=SCAN(80,<>' ',MCPTR^[MACROINDEX]);
+                       IF TEXTINDEX + I<80 THEN
+                         BEGIN
+                           FILLCHAR(TEXTLINE[TEXTINDEX],I,' ');
+                           TEXTINDEX:=TEXTINDEX + I - 1;
+                         END;
+                       MACROINDEX:=MACROINDEX + I - 1;
+                     END
+                   ELSE IF (EXPANDMACRO) AND (CH<>CHR(13)) THEN
+                     BEGIN
+                       IF TEXTINDEX<80 THEN TEXTLINE[TEXTINDEX]:=CH;
+                       IF CH=TAB THEN CH:=' ';
+                     END;
+                 END;
+      PARMSOURCE:BEGIN
+                   IF ADVANCE THEN
+                     BEGIN
+                       PARMPTR:=PARMPTR + 1;
+                       TEXTINDEX:=TEXTINDEX + 1;
+                     END
+                   ELSE ADVANCE:=TRUE;
+                   IF MCSTKINDEX>1 THEN CH:=MCPTR^[PARMPTR]
+                     ELSE CH:=XBLOCK[PARMPTR];
+                   IF (CH=',') OR (CH=CHR(13)) OR (CH=';') THEN
+                     BEGIN
+                       IF MCSTKINDEX>1 THEN
+                         I:=SCAN(-70,<>' ',MCPTR^[PARMPTR - 1])
+                       ELSE
+                         I:=SCAN(-70,<>' ',XBLOCK[PARMPTR - 1]);
+                       TEXTINDEX:=TEXTINDEX + I;
+                       SOURCE:=MACROSOURCE;
+                       MCPTR:=MACROSTACK[MCSTKINDEX];
+                       ADVANCE:=FALSE;
+                       GETCHAR;
+                     END
+                   ELSE IF (CH=' ') AND NOTSTRING THEN
+                     BEGIN
+                       REPEAT
+                         IF TEXTINDEX<80 THEN TEXTLINE[TEXTINDEX]:=' ';
+                         TEXTINDEX:=TEXTINDEX + 1;
+                         PARMPTR:=PARMPTR + 1;
+                         IF MCSTKINDEX>1 THEN CH:=MCPTR^[PARMPTR]
+                           ELSE CH:=XBLOCK[PARMPTR];
+                       UNTIL CH<>' ';
+                       CH:=' ';
+                       PARMPTR:=PARMPTR - 1;
+                       TEXTINDEX:=TEXTINDEX - 1;
+                     END
+                   ELSE
+                     BEGIN
+                       IF TEXTINDEX<80 THEN TEXTLINE[TEXTINDEX]:=CH;
+                       IF CH=TAB THEN CH:=' ';
+                     END;
+                 END;
+      FILESOURCE:BEGIN
+                   IF ADVANCE THEN
+                     BEGIN
+                       BLOCKPTR:=BLOCKPTR + 1;
+                       TEXTINDEX:=TEXTINDEX + 1;
+                     END
+                   ELSE ADVANCE:=TRUE;
+                   IF BLOCKPTR>1023 THEN NEWFILE
+                     ELSE IF (XBLOCK[BLOCKPTR]=CHR(0)) THEN NEWFILE;
+                   IF (XBLOCK[BLOCKPTR]=CHR(16)) AND NOT DEFMCHOOK THEN
+                     BEGIN
+                       CH:=XBLOCK[BLOCKPTR+1];
+                       STARTLINE:=(ORD(CH) - 32=0);
+                       IF TEXTINDEX<79 THEN
+                         BEGIN
+                           TEXTLINE[TEXTINDEX]:=CHR(16);
+                           TEXTLINE[TEXTINDEX + 1]:=CH;
+                           TEXTINDEX:=TEXTINDEX + 2;
+                         END;
+                       BLOCKPTR:=BLOCKPTR+2;
+                     END;
+                   CH:=XBLOCK[BLOCKPTR];
+                   IF CH=';' THEN
+                     BEGIN
+                       I:=SCAN(80,=CHR(13),XBLOCK[BLOCKPTR]);
+                       IF TEXTINDEX+I<80 THEN
+                         BEGIN
+                           MOVELEFT(XBLOCK[BLOCKPTR],TEXTLINE[TEXTINDEX],I);
+                           TEXTINDEX:=TEXTINDEX + I - 1;
+                         END;
+                       BLOCKPTR:=BLOCKPTR + I;
+                       CH:=CHR(13);
+                     END
+                   ELSE IF (CH=' ') AND NOTSTRING AND NOT DEFMCHOOK THEN
+                     BEGIN
+                       I:=SCAN(80,<>' ',XBLOCK[BLOCKPTR]);
+                       IF TEXTINDEX+I<80 THEN
+                         BEGIN
+                           FILLCHAR(TEXTLINE[TEXTINDEX],I,' ');
+                           TEXTINDEX:=TEXTINDEX + I - 1;
+                         END;
+                       BLOCKPTR:=BLOCKPTR + I - 1;
+                     END
+                   ELSE IF CH<>CHR(13) THEN
+                     BEGIN
+                       IF TEXTINDEX<80 THEN TEXTLINE[TEXTINDEX]:=CH;
+                       IF CH=TAB THEN CH:=' ';
+                     END;
+                 END
+      END;{CASE}
+   IF DEBUG THEN WRITELN(LISTFILE,'CH=',CH,'|ORD:',ORD(CH),
+        ' FROM:',ORD(SOURCE));
+ END;
+
+ FUNCTION CHECKOPERAND; {CKSPSTK,CKABS,CKRANGE:BOOLEAN; LO,HI:INTEGER}
+ {Tests the result of an operand for correctness}
+ BEGIN
+   IF CKABS AND NOT (RESULT.ATTRIBUTE IN [ABS,DEFABS,DEFREG,DEFRP,DEFCC,DEFIR])
+    THEN
+     BEGIN
+       ERROR(24{operand not absolute});
+       CHECKOPERAND:=FALSE;
+     END
+   ELSE IF CKRANGE AND
+         ((RESULT.OFFSETORVALUE<LO) OR (RESULT.OFFSETORVALUE>HI)) THEN
+     BEGIN
+       ERROR(2{operand out of range});
+       CHECKOPERAND:=FALSE;
+     END
+   ELSE IF CKSPCSTK AND (SPCIALSTKINDEX<>-1) THEN
+     BEGIN
+       ERROR(25{illegal use of special symbols});
+       SPCIALSTKINDEX:=-1;
+       CHECKOPERAND:=TRUE {operand maybe ok - just warning}
+     END
+   ELSE CHECKOPERAND:=TRUE;
+ END;
+
+ FUNCTION EXPRESS; {OPERANDREQUIRED:BOOLEAN}
+ TYPE  STACKTYPE=PACKED RECORD     {expression evaluator stack}
+          TIPE:TOKENS;
+          ATRIB:ATRIBUTETYPE;
+          VALUE:INTEGER
+       END;
+ VAR  STKINDEX,COUNT:INTEGER;
+      STK:ARRAY[0..10] OF STACKTYPE;
+      UNDEFINED:BOOLEAN;
+ {The value and type of the calculation should be returned in the
+  variable record RESULT}
+
+ PROCEDURE EXPREXIT;
+ BEGIN
+   ERROR(26{ill formed expression});
+   WHILE (LEXTOKEN<>TEOF) AND (LEXTOKEN<>ENDLINE) DO LEX;
+   EXPRESS:=FALSE;
+   EXIT(EXPRESS);
+ END;
+
+ PROCEDURE EXPREND;
+ BEGIN
+   IF (LEXTOKEN IN [OPENPAREN,EQUAL,NOTEQUAL]) THEN
+     BEGIN
+       SPCIALSTKINDEX:=SPCIALSTKINDEX + 1;
+       SPECIALSTK[SPCIALSTKINDEX]:=LEXTOKEN;
+     END;
+   IF STKINDEX=-1 THEN
+     IF LEXTOKEN=OPENPAREN THEN
+       BEGIN
+         EXPRESS:=FALSE;
+         EXIT(EXPRESS);
+       END
+     ELSE IF OPERANDREQUIRED THEN
+       BEGIN
+         ERROR(27{not enough operands});
+         EXPRESS:=FALSE;
+       END
+     ELSE EXPRESS:=FALSE
+   ELSE IF (STKINDEX=0) AND (STK[STKINDEX].TIPE=TNULL) THEN
+     BEGIN
+       RESULT.OFFSETORVALUE:=STK[STKINDEX].VALUE;
+       RESULT.ATTRIBUTE:=STK[STKINDEX].ATRIB;
+       RELOCATE.ATTRIBUTE:=RESULT.ATTRIBUTE;
+       RELOCATE.OFFSETORVALUE:=RESULT.OFFSETORVALUE;
+       EXPRESS:=TRUE
+     END
+   ELSE IF (STKINDEX=1) AND (STK[0].TIPE=TNULL) AND
+    (STK[STKINDEX].TIPE IN [PLUS,MINUS,ASTERISK]) THEN
+     BEGIN
+       SPCIALSTKINDEX:=SPCIALSTKINDEX + 1;
+       CASE STK[STKINDEX].TIPE OF
+         PLUS:SPECIALSTK[SPCIALSTKINDEX]:=AUTOINCR;
+         MINUS:SPECIALSTK[SPCIALSTKINDEX]:=AUTODECR;
+         ASTERISK:SPECIALSTK[SPCIALSTKINDEX]:=LEXTOKEN
+       END;
+       RESULT.OFFSETORVALUE:=STK[0].VALUE;
+       RESULT.ATTRIBUTE:=STK[0].ATRIB;
+       RELOCATE.ATTRIBUTE:=RESULT.ATTRIBUTE;
+       RELOCATE.OFFSETORVALUE:=RESULT.OFFSETORVALUE;
+       EXPRESS:=TRUE;
+     END
+   ELSE EXPRESS:=FALSE;
+   EXIT(EXPRESS);
+ END;
+
+ PROCEDURE OPERFOLD;
+ VAR  LATTRIBUTE,RATTRIBUTE:ATRIBUTETYPE;
+      KLUDGETYPE:TOKENS;
+      RVALUE:INTEGER;
+      BOTHABSOLUTE:BOOLEAN;
+
+ BEGIN
+   IF (STKINDEX=0) THEN
+     EXIT(OPERFOLD)
+   ELSE IF (STK[STKINDEX-1].TIPE=OPNBROKEN) THEN
+     EXIT(OPERFOLD)
+   ELSE IF STKINDEX>=2 THEN
+     BEGIN
+       IF STK[STKINDEX-2].TIPE=TNULL THEN
+       BEGIN
+         LATTRIBUTE:=STK[STKINDEX-2].ATRIB;
+         RATTRIBUTE:=STK[STKINDEX].ATRIB;
+         IF (LATTRIBUTE IN [DEFABS,DEFRP,DEFREG,DEFCC]) THEN LATTRIBUTE:=ABS;
+         IF (RATTRIBUTE IN [DEFABS,DEFRP,DEFREG,DEFCC]) THEN RATTRIBUTE:=ABS;
+         BOTHABSOLUTE:=((LATTRIBUTE=ABS) AND (RATTRIBUTE=ABS));
+         RVALUE:=STK[STKINDEX].VALUE;
+         KLUDGETYPE:=STK[STKINDEX-1].TIPE;
+         WITH STK[STKINDEX-2] DO
+         BEGIN
+           IF NOT (KLUDGETYPE IN [PLUS,MINUS,BITWISEOR,AMPERSAND,
+             EXCLUSIVEOR,ASTERISK,DIVIDE,MODULO]) THEN
+               EXPREXIT
+           ELSE CASE KLUDGETYPE OF
+             PLUS:IF (LATTRIBUTE=ABS) OR (RATTRIBUTE=ABS) THEN
+                    BEGIN
+                      VALUE:=VALUE + RVALUE;
+                      IF RATTRIBUTE<>ABS THEN ATRIB:=RATTRIBUTE;
+                    END
+                  ELSE EXPREXIT;
+            MINUS:IF (RATTRIBUTE=ABS) OR
+                    ((RATTRIBUTE<>ABS) AND (LATTRIBUTE=RATTRIBUTE)) THEN
+                    BEGIN
+                      VALUE:=VALUE - RVALUE;
+                      IF RATTRIBUTE<>ABS THEN ATRIB:=ABS;
+                    END
+                  ELSE EXPREXIT;
+        BITWISEOR:IF BOTHABSOLUTE THEN
+                    VALUE:=ORD(ODD(VALUE) OR ODD(RVALUE))
+                  ELSE EXPREXIT;
+        AMPERSAND:IF BOTHABSOLUTE THEN
+                    VALUE:=ORD(ODD(VALUE) AND ODD(RVALUE))
+                  ELSE EXPREXIT;
+      EXCLUSIVEOR:IF BOTHABSOLUTE THEN
+                    VALUE:=ORD((ODD(VALUE) AND NOT ODD(RVALUE)) OR
+                        (NOT ODD(VALUE) AND ODD(RVALUE)))
+                  ELSE EXPREXIT;
+         ASTERISK:IF BOTHABSOLUTE THEN
+                    VALUE:=VALUE*RVALUE
+                  ELSE EXPREXIT;
+           DIVIDE:IF BOTHABSOLUTE THEN
+                    VALUE:=VALUE DIV RVALUE
+                  ELSE EXPREXIT;
+           MODULO:IF BOTHABSOLUTE THEN
+                    VALUE:=VALUE MOD RVALUE
+                  ELSE EXPREXIT
+           END;{CASE}
+         END;{WITH}
+         STKINDEX:=STKINDEX-2;
+       END ELSE EXPREXIT;
+     END
+   ELSE IF STK[STKINDEX].ATRIB=ABS THEN {check for unary operator}
+     BEGIN
+       CASE STK[STKINDEX-1].TIPE OF
+         MINUS:STK[STKINDEX-1].VALUE:=-STK[STKINDEX].VALUE;
+         PLUS:STK[STKINDEX-1].VALUE:=STK[STKINDEX].VALUE;
+         ONESCOMPLEMENT:STK[STKINDEX-1].VALUE:=-STK[STKINDEX].VALUE - 1
+       END;
+       STKINDEX:=STKINDEX - 1;
+       STK[STKINDEX].TIPE:=TNULL;
+       STK[STKINDEX].ATRIB:=ABS;
+     END
+   ELSE EXPREXIT; {whatever he wanted i couldn't do}
+ END;
+
+ BEGIN  {EXPRESS}
+   RELOCATE:=NULLREL;
+   STKINDEX:=-1;
+   REPEAT
+     IF EXPRSSADVANCE THEN LEX
+       ELSE EXPRSSADVANCE:=TRUE;
+     IF NOT (LEXTOKEN IN [PLUS,MINUS,BITWISEOR,AMPERSAND,EXCLUSIVEOR,
+       ASTERISK,DIVIDE,MODULO,AUTOINCR,AUTODECR,EQUAL,NOTEQUAL,
+       ENDLINE,COMMA,OPNBROKEN,OPENPAREN,NUMBERSIGN,ATSIGN,LOCCTR,
+       TNOT,CLOSEPAREN,CLSBROKEN,ONESCOMPLEMENT,
+       CONSTANT,TSTRING,LOCLABEL,TIDENTIFIER]) THEN EXPREXIT
+     ELSE
+     CASE LEXTOKEN OF
+       PLUS,MINUS,BITWISEOR,AMPERSAND,EXCLUSIVEOR,
+       DIVIDE,MODULO,OPNBROKEN,ONESCOMPLEMENT:
+                  BEGIN
+                    STKINDEX:=STKINDEX + 1;
+                    STK[STKINDEX].TIPE:=LEXTOKEN;
+                  END;
+         ASTERISK:IF STKINDEX=-1 THEN
+                    IF LCCHAR='*' THEN
+                      BEGIN
+                        STKINDEX:=STKINDEX + 1;
+                        IF CODESECTION=A THEN
+                          STK[STKINDEX].VALUE:=ALC
+                        ELSE STK[STKINDEX].VALUE:=LASTLC;
+                        RELOCATE.TIPE:=LCREL;
+                        STK[STKINDEX].ATRIB:=LABELS;
+                        STK[STKINDEX].TIPE:=TNULL;
+                        OPERFOLD;
+                      END
+                    ELSE
+                      BEGIN
+                        SPCIALSTKINDEX:=SPCIALSTKINDEX + 1;
+                        SPECIALSTK[SPCIALSTKINDEX]:=LEXTOKEN;
+                      END
+                  ELSE
+                    BEGIN
+                      STKINDEX:=STKINDEX + 1;
+                      STK[STKINDEX].TIPE:=LEXTOKEN;
+                    END;
+           LOCCTR:BEGIN
+                    STKINDEX:=STKINDEX + 1;
+                    IF CODESECTION=A THEN
+                      STK[STKINDEX].VALUE:=ALC
+                    ELSE STK[STKINDEX].VALUE:=LASTLC;
+                    IF RELOCATE=NULLREL THEN
+                      RELOCATE.TIPE:=LCREL
+                    ELSE IF RELOCATE.TIPE=LCREL THEN
+                      RELOCATE:=NULLREL;
+                    STK[STKINDEX].ATRIB:=LABELS;
+                    STK[STKINDEX].TIPE:=TNULL;
+                    OPERFOLD;
+                  END;
+ CONSTANT,TSTRING:BEGIN
+                    STKINDEX:=STKINDEX + 1;
+                    STK[STKINDEX].VALUE:=0;
+                    IF LEXTOKEN=CONSTANT THEN
+                      STK[STKINDEX].VALUE:=CONSTVAL
+                    ELSE IF LENGTH(STRVAL)<=2 THEN
+                      FOR COUNT:=1 TO LENGTH(STRVAL) DO
+                        STK[STKINDEX].VALUE:=
+                          STK[STKINDEX].VALUE*256 + ORD(STRVAL[COUNT])
+                    ELSE EXPREXIT;
+                    STK[STKINDEX].ATRIB:=ABS; {Constants are absolute}
+                    STK[STKINDEX].TIPE:=TNULL;
+                    OPERFOLD;
+                  END;
+        LOCLABEL: BEGIN
+                    IF (RELOCATE<>NULLREL) AND (RELOCATE.TIPE<>LCREL) THEN
+                      BEGIN
+                        IF TEMP[TEMPLABEL].TEMPATRIB=UNKNOWN THEN
+                          ERROR(28{cannot handle this relative});
+                      END
+                    ELSE
+                      BEGIN
+                        RELOCATE.TIPE:=LLREL;
+                        RELOCATE.TEMPLABEL:=TEMPLABEL;
+                      END;
+                    STKINDEX:=STKINDEX + 1;
+                    STK[STKINDEX].VALUE:=TEMP[TEMPLABEL].DEFOFFSET;
+                    STK[STKINDEX].ATRIB:=LABELS;
+                    STK[STKINDEX].TIPE:=TNULL;
+                    OPERFOLD;
+                  END;
+     TIDENTIFIER: BEGIN
+                    UNDEFINED:=FALSE;
+                    STKINDEX:=STKINDEX + 1;
+                    IF SYM^.ATTRIBUTE IN
+                      [ABS,DEFABS,DEFRP,DEFREG,DEFCC,DEFIR,LABELS] THEN
+                        STK[STKINDEX].VALUE:=SYM^.OFFSETORVALUE
+                    ELSE IF (SYM^.ATTRIBUTE=DEFS) AND (SYM^.CODEOFFSET<>-1) THEN
+                      STK[STKINDEX].VALUE:=SYM^.CODEOFFSET
+                    ELSE
+                      BEGIN
+                        STK[STKINDEX].VALUE:=0;
+                        UNDEFINED:=TRUE;
+                      END;
+                    IF (SYM^.ATTRIBUTE<>UNKNOWN) AND (SYM^.ATTRIBUTE<>DEFS) THEN
+                      STK[STKINDEX].ATRIB:=SYM^.ATTRIBUTE
+                    ELSE
+                      STK[STKINDEX].ATRIB:=LABELS;
+                    IF NOT (SYM^.ATTRIBUTE IN
+                                  [ABS,DEFABS,DEFRP,DEFREG,DEFCC,DEFIR])
+                     THEN
+                      BEGIN
+                        IF (RELOCATE<>NULLREL) AND (RELOCATE.TIPE<>LCREL) THEN
+                          BEGIN
+                            IF UNDEFINED THEN
+                              ERROR(28{cannot handle this relative});
+                          END
+                        ELSE
+                          BEGIN
+                            RELOCATE.TIPE:=LABELREL;
+                            RELOCATE.SYM:=SYM;
+                          END;
+                      END;
+                    STK[STKINDEX].TIPE:=TNULL;
+                    OPERFOLD;
+                  END;
+       ENDLINE,COMMA,OPENPAREN,EQUAL,NOTEQUAL:
+                  EXPREND;
+       NUMBERSIGN,ATSIGN,TNOT,AUTOINCR,AUTODECR,CLOSEPAREN:
+                  BEGIN
+                    SPCIALSTKINDEX:=SPCIALSTKINDEX + 1;
+                    SPECIALSTK[SPCIALSTKINDEX]:=LEXTOKEN;
+                  END;
+        CLSBROKEN:BEGIN
+                    IF STKINDEX=0 THEN EXPREXIT;
+                    IF (STK[STKINDEX-1].TIPE<>OPNBROKEN) THEN EXPREXIT;
+                    STK[STKINDEX-1].VALUE:=STK[STKINDEX].VALUE;
+                    STK[STKINDEX-1].ATRIB:=STK[STKINDEX].ATRIB;
+                    STK[STKINDEX-1].TIPE:=STK[STKINDEX].TIPE;
+                    STKINDEX:=STKINDEX - 1;
+                    IF (STK[STKINDEX].TIPE<>TNULL) THEN EXPREXIT;
+                    OPERFOLD;
+                  END
+     END; {CASE STATEMENT}
+   UNTIL FALSE;
+ END;
+
+
+ (*$I ASM6.TEXT*)
+                         {start of ASM6}
+         {Copyright (c) 1978 Regents of University of California}
+
+ PROCEDURE LEX;
+
+ PROCEDURE PCONST;
+ VAR RADIX,I,NUM:INTEGER;
+     TEMP,ID:STRING;
+     VAL:WORDSWAP;
+ BEGIN
+   IF DEBUG THEN WRITELN('Pcon');
+   TEMP:=' '; ID:=' ';
+   WHILE (((CH>='A') AND (CH<='F')) OR ((CH>='0') AND (CH<='9'))) DO
+     BEGIN
+       IF CH>='A' THEN TEMP[1]:=CHR(ORD(CH)-55)
+         ELSE TEMP[1]:=CHR(ORD(CH)-ORD('0'));
+       ID:=CONCAT(ID,TEMP);
+       GETCHAR;
+     END;
+   REPEAT
+     DELETE(ID,1,1);
+   UNTIL (ORD(ID[1])<>0) OR (LENGTH(ID)=1);
+   IF ORD(CH)=ORD(HEXSWITCH) THEN
+     RADIX:=16
+   ELSE IF ORD(CH)=ORD(DECSWITCH) THEN
+     RADIX:=10
+   ELSE IF ORD(CH)=ORD(OCTSWITCH) THEN
+     RADIX:=8
+   ELSE IF ORD(CH)=ORD(BINSWITCH) THEN
+     RADIX:=2
+   ELSE
+     BEGIN
+       RADIX:=DEFRADIX;
+       ADVANCE:=FALSE;
+     END;
+   LEXTOKEN:=CONSTANT;
+   TEMP[1]:=CHR(0);
+   CONSTVAL:=0;
+   CASE RADIX OF
+     16:IF LENGTH(ID)>4 THEN
+          ERROR(29{constant overflow})
+        ELSE
+          BEGIN
+            WHILE LENGTH(ID)<4 DO ID:=CONCAT(TEMP,ID);
+            VAL.HEX1:=ORD(ID[1]);
+            VAL.HEX2:=ORD(ID[2]);
+            VAL.HEX3:=ORD(ID[3]);
+            VAL.HEX4:=ORD(ID[4]);
+            CONSTVAL:=VAL.HWORD;
+          END;
+     10:IF LENGTH(ID)>5 THEN
+          ERROR(29{constant overflow})
+        ELSE
+          BEGIN
+            WHILE LENGTH(ID)<5 DO ID:=CONCAT(TEMP,ID);
+            NUM:=0;
+            FOR I:=1 TO 4 DO
+              IF ORD(ID[I])>9 THEN
+                BEGIN
+                  ERROR(30{illegal decimal constant});
+                  EXIT(PCONST);
+                END
+              ELSE NUM:=NUM*10 + ORD(ID[I]);
+            IF (NUM>3276) OR ((NUM=3276) AND (ORD(ID[5])>7)) THEN
+              ERROR(29{constant overflow})
+            ELSE CONSTVAL:=NUM*10 + ORD(ID[5]);
+          END;
+      8:IF (LENGTH(ID)>6) OR ((ORD(ID[1])>1) AND (LENGTH(ID)=6)) THEN
+          ERROR(29{constant overflow})
+        ELSE
+          BEGIN
+            WHILE LENGTH(ID)<6 DO ID:=CONCAT(TEMP,ID);
+            FOR I:=2 TO 6 DO
+              IF ORD(ID[I])>7 THEN
+                BEGIN
+                  ERROR(31{illegal octal constant});
+                  EXIT(PCONST);
+                END;
+            VAL.OCT1:=ORD(ID[1]);
+            VAL.OCT2:=ORD(ID[2]);
+            VAL.OCT3:=ORD(ID[3]);
+            VAL.OCT4:=ORD(ID[4]);
+            VAL.OCT5:=ORD(ID[5]);
+            VAL.OCT6:=ORD(ID[6]);
+            CONSTVAL:=VAL.HWORD;
+          END;
+      2:IF (LENGTH(ID)>16) THEN
+          ERROR(29{constant overflow})
+        ELSE
+          BEGIN
+            WHILE LENGTH(ID)<16 DO ID:=CONCAT(TEMP,ID);
+            FOR I:=1 TO 16 DO
+              IF ORD(ID[I])>1 THEN
+                BEGIN
+                  ERROR(32{illegal binary constant});
+                  EXIT(PCONST);
+                END
+              ELSE VAL.BIN[16 - I]:=ORD(ID[I]);
+            CONSTVAL:=VAL.HWORD;
+          END
+   END; {Case}
+ END;
+
+         {Looks up the reserved word in the KWORD array and returns the correct
+          token for that key word. Only the LEXTOKEN is returned}
+
+ PROCEDURE PKWORD;
+ VAR I:INTEGER; KLUDGEPTR:^INTEGER;
+     ID:PACKNAME;
+     TEMP,ALTNAME:STRING;
+ BEGIN
+   IF DEBUG THEN WRITELN('PKW');
+   GETCHAR;{Skip over the period}
+   ID:='        ';
+   I:=0;
+   WHILE (((CH>='A') AND (CH<='Z')) OR ((CH>='0') AND (CH<='9'))) DO
+     BEGIN
+       IF I<8 THEN ID[I]:=CH;
+       I:=I+1;
+       GETCHAR;
+     END;
+   IF I=0 THEN ERROR(45{Keyword expected});
+   I:=-1;
+   FOUND:=FALSE;
+   WHILE NOT FOUND AND (I<NUMKWORDS) DO
+     BEGIN
+       I:=I+1;
+       FOUND:=(KWORDS[I]=ID);
+     END;
+   IF NOT FOUND THEN
+    BEGIN
+     WRITELN('>',ID,'<');
+     ERROR(33{invalid key word})
+    END ELSE
+     LEXTOKEN:=KTOKEN[I];
+   ADVANCE:=FALSE;
+   IF ID='ENDM    ' THEN {macro end}
+     BEGIN
+       MCSTKINDEX:=MCSTKINDEX - 1;
+       IF MCSTKINDEX>0 THEN
+         BEGIN
+           MCPTR:=MACROSTACK[MCSTKINDEX];
+           MACROINDEX:=MCINDEX[MCSTKINDEX];
+           WHILE MCPTR^[MACROINDEX]<>CHR(13) DO MACROINDEX:=MACROINDEX + 1;
+         END
+       ELSE
+         BEGIN
+           SOURCE:=FILESOURCE;
+           WHILE XBLOCK[BLOCKPTR]<>CHR(13) DO BLOCKPTR:=BLOCKPTR + 1;
+         END;
+       REPEAT
+         LEX;
+       UNTIL (LEXTOKEN=ENDLINE) OR (LEXTOKEN=TEOF);
+       IF LEXTOKEN=TEOF THEN
+         ERROR(34{Unexpected end of input - after macro})
+       ELSE LEX;
+     END
+   ELSE IF LEXTOKEN=INCLUDE THEN
+     IF ALTINPUT THEN
+       ERROR(35{Include files may not be nested})
+     ELSE IF SOURCE<>FILESOURCE THEN
+       ERROR(37{This is a bad place for an include file})
+     ELSE
+       BEGIN
+         ALTINPUT:=TRUE;
+         TEMP:=' '; ALTNAME:=' ';
+         REPEAT
+           GETCHAR;
+           IF (CH<>' ') AND (CH<>CHR(13)) THEN
+             BEGIN
+               TEMP[1]:=CH;
+               ALTNAME:=CONCAT(ALTNAME,TEMP);
+             END;
+         UNTIL CH=CHR(13);
+         ALTBLOCNO:=BLOCKNO;
+         ALTBLOCPTR:=BLOCKPTR;
+         (*$I-*)
+         RESET(ALTFILE,ALTNAME);
+         IOCHECK(TRUE);
+         (*$I+*)
+         MARK(KLUDGEPTR);{dumps disk direc so next proc call won't STK-OFLW}
+         CURFNAME:=ALTNAME;
+         BLOCKNO:=2; BLOCKPTR:=1024;
+         LEXTOKEN:=ENDLINE;
+         IF NOT (CONSOLE AND DISPLAY) THEN
+           BEGIN
+             WRITELN;
+             WRITELN(TEXTLINE);
+             WRITE('<',LINENUM:4,'>');
+           END;
+       END;
+ END;
+
+       {Search the symbol tree to locate the identifier and determine
+        what it is. The types returned can be: OPCODE1..10,TIDENTIFIER,
+        if start-line is true then we return the token type of TLABEL}
+
+ PROCEDURE PIDENT;
+ VAR HASHA,HASHB,I:INTEGER;
+     ID:PACKNAME;
+
+ BEGIN
+   IF DEBUG THEN WRITELN('PID');
+   ID:='        ';
+   I:=0;
+   WHILE ((CH>='A') AND (CH<='Z')) OR ((CH>='0') AND (CH<='9')) OR (CH='_') DO
+     BEGIN
+       IF I<8 THEN ID[I]:=CH;
+       I:=I+1;
+       GETCHAR;
+     END;
+   HASHA:=0; FOUND:=FALSE;
+   FOR I:=0 TO 7 DO
+     BEGIN
+       HASHA:=HASHA + HASHA; {left shift}
+       HASHB:=ORD(ID[I]);
+       HASHA:=ORD((NOT ODD(HASHA) AND ODD(HASHB)) OR
+                      (ODD(HASHA) AND NOT ODD(HASHB))); {xor}
+     END;
+   HASHB:=HASHA MOD HASHRANGE; {lo-order part}
+   HASHA:=HASHA DIV HASHRANGE; {hi-order part}
+   HASHA:=ORD((NOT ODD(HASHA) AND ODD(HASHB)) OR
+              (ODD(HASHA) AND NOT ODD(HASHB)));
+   HASHA:=HASHA MOD HASHRANGE;
+   SYM:=HASH[HASHA];
+   WHILE (NOT FOUND) AND (SYM<>NIL) DO
+     IF SYM^.NAME=ID THEN FOUND:=TRUE ELSE SYM:=SYM^.LINK;
+   IF NOT FOUND THEN
+     BEGIN
+       IF DEBUG THEN WRITELN('not found',ORD(CURRENTATRIB):3);
+              {insert at the top of the list}
+       CASE CURRENTATRIB OF
+         MACROS:
+           BEGIN
+             NEW(SYM,MACROS);
+             SYM^.EXPANDMCRO:=EXPANDMACRO;
+           END;
+         DEFS:
+           BEGIN
+             NEW(SYM,DEFS);
+             SYM^.PROCNUM:=PROCNUM;
+             SYM^.CODEOFFSET:=-1;
+             SYM^.DEFFWDREF:=NIL;
+           END;
+         PUBLICS,PRIVATES,REFS,CONSTS:
+           BEGIN
+             CASE CURRENTATRIB OF
+               PUBLICS:NEW(SYM,PUBLICS);
+               PRIVATES:NEW(SYM,PRIVATES);
+               REFS:NEW(SYM,REFS);
+               CONSTS:NEW(SYM,CONSTS)
+             END;
+             SYM^.NREFS:=0;
+             SYM^.NWORDS:=1;
+             SYM^.LINKOFFSET:=NIL;
+           END;
+         PROCS:NEW(SYM,PROCS);
+         FUNCS:NEW(SYM,FUNCS);
+         UNKNOWN:
+           BEGIN
+             NEW(SYM,UNKNOWN);
+             SYM^.OFFSETORVALUE:=0;
+             SYM^.FWDREF:=NIL;
+           END
+         END;
+       SYM^.NAME:=ID; SYM^.ATTRIBUTE:=CURRENTATRIB;
+       SYM^.LINK:=HASH[HASHA];
+       HASH[HASHA]:=SYM;
+     END
+   ELSE IF SYM^.ATTRIBUTE=MACROS THEN
+     BEGIN
+       IF MCSTKINDEX>0 THEN
+         MCINDEX[MCSTKINDEX]:=MACROINDEX
+       ELSE
+         BEGIN
+           MCINDEX[MCSTKINDEX]:=BLOCKPTR;
+           EXPANDMACRO:=SYM^.EXPANDMCRO;
+         END;
+       WHILE CH<>CHR(13) DO GETCHAR;
+       PRINTLINE;
+       SOURCE:=MACROSOURCE;
+       MCSTKINDEX:=MCSTKINDEX + 1;
+       MACROSTACK[MCSTKINDEX]:=SYM^.MACRO;
+       MCPTR:=SYM^.MACRO;
+       MACROINDEX:=0;
+       LEXTOKEN:=ENDLINE;
+       LEX; {re-initiate LEX with appropriate SOURCE then exit to return called}
+       EXIT(LEX); {LEX's LEXTOKEN.  style - 0, effeciency - 1}
+     END;
+   IF STARTLINE THEN
+    BEGIN
+     IF DEBUG THEN WRITELN('STARTLINE true');
+     IF CH=':' THEN GETCHAR;
+     IF NOT FOUND THEN LEXTOKEN:=TLABEL
+       ELSE IF (SYM^.ATTRIBUTE=UNKNOWN) OR (SYM^.ATTRIBUTE=DEFS) THEN
+              LEXTOKEN:=TLABEL
+               ELSE ERROR(38{only labels & comments may occupy column one});
+    END
+     ELSE
+       IF (SYM^.ATTRIBUTE>=OPS1) AND (SYM^.ATTRIBUTE<=OPS20) THEN
+         CASE SYM^.ATTRIBUTE OF
+            OPS1: LEXTOKEN:=OP1;
+            OPS2: LEXTOKEN:=OP2;
+            OPS3: LEXTOKEN:=OP3;
+            OPS4: LEXTOKEN:=OP4;
+            OPS5: LEXTOKEN:=OP5;
+            OPS6: LEXTOKEN:=OP6;
+            OPS7: LEXTOKEN:=OP7;
+            OPS8: LEXTOKEN:=OP8;
+            OPS9: LEXTOKEN:=OP9;
+           OPS10: LEXTOKEN:=OP10;
+           OPS11: LEXTOKEN:=OP11;
+           OPS12: LEXTOKEN:=OP12;
+           OPS13: LEXTOKEN:=OP13;
+           OPS14: LEXTOKEN:=OP14;
+           OPS15: LEXTOKEN:=OP15;
+           OPS16: LEXTOKEN:=OP16;
+           OPS17: LEXTOKEN:=OP17;
+           OPS18: LEXTOKEN:=OP18;
+           OPS19: LEXTOKEN:=OP19;
+           OPS20: LEXTOKEN:=OP20
+         END
+           ELSE LEXTOKEN:=TIDENTIFIER;
+   IF DEBUG THEN WRITELN('PASSED=',SYM^.NAME,' VALUE=',
+                                  ORD(SYM^.ATTRIBUTE):5,HASHA:10);
+   ADVANCE:=FALSE;
+ END;
+
+       {A $ has been encountered and we are now processing a local label}
+
+ PROCEDURE PLLABEL;
+ VAR I:INTEGER;
+     ID:PACKNAME;
+ BEGIN
+   IF DEBUG THEN WRITELN('PLLAB');
+   ID:='        ';
+   I:=0;
+   WHILE (CH>='0') AND (CH<='9') DO
+     BEGIN
+       IF I<8 THEN ID[I]:=CH;
+       I:=I+1;
+       GETCHAR;
+     END;
+   IF I=0 THEN ERROR(39{expected local label});
+   FOUND:=FALSE;
+   TEMPLABEL:=0;
+   WHILE NOT FOUND AND (TEMPLABEL<TEMPTOP) DO
+     IF TEMP[TEMPLABEL].TEMPNAME=ID THEN
+       FOUND:=TRUE
+     ELSE
+       TEMPLABEL:=TEMPLABEL+1;
+   IF NOT FOUND THEN
+     IF TEMPTOP=21 THEN
+       BEGIN
+         ERROR(40{Local label stack overflow});
+         EXIT(TLA);
+       END
+     ELSE
+        BEGIN
+          TEMP[TEMPTOP].TEMPNAME:=ID;
+          TEMP[TEMPTOP].TEMPATRIB:=UNKNOWN;
+          TEMP[TEMPTOP].DEFOFFSET:=0;
+          TEMP[TEMPTOP].FWDREF:=NIL;
+          TEMPTOP:=TEMPTOP+1;
+        END;
+   LEXTOKEN:=LOCLABEL;
+   IF STARTLINE AND (CH=':') THEN GETCHAR;
+   ADVANCE:=FALSE;
+ END;
+
+       {Returns the value of a string constant in STRVAL and sets
+        LEXTOKEN to TSTRING. Checks for the closing double quote}
+
+ PROCEDURE PSTRING;
+ VAR I:INTEGER;
+     BACKSCAN:BOOLEAN;
+     SCH:STRING;
+ BEGIN
+   IF DEBUG THEN WRITELN('PSTR');
+   LEXTOKEN:=TSTRING;
+   NOTSTRING:=FALSE;
+   BACKSCAN:=FALSE;
+   SCH:=' ';
+   STRVAL:='';
+   GETCHAR;
+   I:=0;
+   WHILE (CH<>'"') AND (I<80) AND (CH<>CHR(13)) DO
+   BEGIN
+     SCH[1]:=CH;
+     STRVAL:=CONCAT(STRVAL,SCH);
+     IF SOURCE=PARMSOURCE THEN BACKSCAN:=TRUE; {always true if ever!}
+     GETCHAR;
+     I:=I+1;
+   END;
+   NOTSTRING:=TRUE;
+   IF BACKSCAN THEN
+     BEGIN
+       I:=SCAN(-I,<>' ',STRVAL[I]);
+       STRVAL[0]:=CHR(LENGTH(STRVAL) + I);
+     END;
+   IF CH=CHR(13) THEN
+   BEGIN
+     LEXTOKEN:=ENDLINE;
+     ERROR(41{string constant must be on one line});
+   END;
+   IF I>80 THEN
+     ERROR(42{string constant exceeds 80 chars});
+ END;
+
+ BEGIN {Lex}
+   IF DEBUG THEN WRITELN('Lex');
+   STARTLINE:=(LEXTOKEN=ENDLINE);
+   IF STARTLINE THEN
+     BEGIN
+       TEXTLINE:=BLANKLINE;
+       TEXTINDEX:=-1;
+     END;
+   GETCHAR;
+   WHILE CH=' ' DO
+     BEGIN
+       GETCHAR;
+       STARTLINE:=FALSE;
+     END;
+   IF CH=CHR(13) THEN LEXTOKEN:=ENDLINE ELSE
+   BEGIN
+     CASE CH OF
+       '0','1','2','3','4','5','6','7','8','9':PCONST;
+       'A','B','C','D','E','F','G','H','I','J','K','L','M',
+       'N','O','P','Q','R','S','T','U','V','W','X','Y','Z':PIDENT;
+       '.':PKWORD;
+       '#':LEXTOKEN:=NUMBERSIGN;
+       '(':LEXTOKEN:=OPENPAREN;
+       '[':LEXTOKEN:=OPENBRACKET;
+       '{':LEXTOKEN:=OPENBRACE;     (* This is 7 on the numeric pad *)
+       ',':LEXTOKEN:=COMMA;
+       '~':LEXTOKEN:=ONESCOMPLEMENT;  (* This is 4 on the numeric pad *)
+       '?':LEXTOKEN:=QUERY;
+       ']':LEXTOKEN:=CLOSEBRACKET;
+       ')':LEXTOKEN:=CLOSEPAREN;
+       '}':LEXTOKEN:=CLSBRACE;
+       ';':LEXTOKEN:=ENDLINE;
+       '@':LEXTOKEN:=ATSIGN;
+       '$':IF LCCHAR='$' THEN
+             BEGIN
+               GETCHAR;
+               IF (CH<'0') OR (CH>'9') THEN
+                 BEGIN
+                   LEXTOKEN:=LOCCTR;
+                   ADVANCE:=FALSE;
+                 END
+               ELSE PLLABEL;
+             END
+           ELSE
+             BEGIN
+               GETCHAR;
+               PLLABEL;
+             END;
+       '"':PSTRING;         {Process a string}
+       '/':LEXTOKEN:=DIVIDE;
+       '!':LEXTOKEN:=TNOT;
+       '+':BEGIN
+             GETCHAR;
+             IF CH=CHR(ORD(AFTERPLUS)) THEN LEXTOKEN:=AUTOINCR
+               ELSE LEXTOKEN:=PLUS; {Char after plus isn't eaten}
+             ADVANCE:=FALSE;
+           END;
+       '-':BEGIN
+             GETCHAR;
+             IF CH=CHR(ORD(AFTERMINUS)) THEN LEXTOKEN:=AUTODECR
+               ELSE LEXTOKEN:=MINUS; {Char after minus isn't eaten}
+             ADVANCE:=FALSE;
+           END;
+       ':':LEXTOKEN:=COLON;
+       '|':LEXTOKEN:=BITWISEOR;
+       '^':LEXTOKEN:=EXCLUSIVEOR;
+       '&':LEXTOKEN:=AMPERSAND;
+       '*':LEXTOKEN:=ASTERISK;
+       '%':LEXTOKEN:=MODULO;
+       '<':BEGIN
+             GETCHAR;
+             IF CH='>' THEN
+               LEXTOKEN:=NOTEQUAL
+             ELSE
+               BEGIN
+                 LEXTOKEN:=OPNBROKEN;
+                 ADVANCE:=FALSE;
+               END;
+           END;
+       '>':LEXTOKEN:=CLSBROKEN;
+       '=':LEXTOKEN:=EQUAL;
+     END;(*OF CASE STATMENT*)
+   END;
+   IF DEBUG THEN WRITELN('LEXTOKEN IS:',ORD(LEXTOKEN));
+ END;   (*of procedure LEX*)
+
+ BEGIN {Main Assembler}
+   INITIALIZE;
+   REPEAT
+     ASSEMBLE;
+     IF (PROCNUM>0) AND LISTING THEN SYMTBLDUMP;
+     PROCEND;
+   UNTIL LEXTOKEN=TEND;
+ END;
+
+
+ BEGIN  {dummy outer block}  END.
+
