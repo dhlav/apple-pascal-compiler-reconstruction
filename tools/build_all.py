@@ -113,6 +113,7 @@ STEPS = [
     ("OSPROC43 vs the binaries", "probes/probe_osproc43.py"),
     ("SYSTEM.COMPILER whole file, via the Librarian", "probes/probe_compiler_whole.py"),
     ("SYSTEM.ASSMBLER whole file, via the Librarian", "probes/probe_assembler_whole.py"),
+    ("SYSTEM.LINKER whole file, via the Librarian", "probes/probe_linker_whole.py"),
 ]
 
 for step in STEPS:

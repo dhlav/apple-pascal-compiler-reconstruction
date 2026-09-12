@@ -1,0 +1,2266 @@
+{ LINKER -- Apple Pascal 1.3 SYSTEM.LINKER, reconstructed.
+
+  One segment, LINKER, and 51 procedures. The shape is the
+  assembler's and the compiler's: a (*$U-*) compilation whose
+  first SEGMENT PROCEDURE is segment 1, finished by the
+  Librarian, which is what leaves slot 0 of the shipped file
+  blank (finding 267).
+
+  The ancestor is Roger Sumner's I.5 linker (summer '78),
+  reference_source/ucsd_15. Its three phases, its record
+  layouts and most of its bodies survive into Apple's 1.3
+  binary unchanged, and its names are used wherever the binary
+  confirms the role. What Apple added has no name to borrow
+  and carries a placeholder instead: LK<n> for procedure n,
+  G<n> for global word n, L<n> or M<n> for local word n.
+
+  Range checking is on and I/O checking is off: the binary has
+  CHK everywhere but in procedures 6 to 10, and not one CSP 0.
+  (*$U-*) turns both off, so R+ is Apple's own. }
+
+(*$U-*)
+(*$R+*)
+(*$G+*)
+PROGRAM PASCALSYSTEM;
+
+{ The operating system's globals, UCSD II.0's GLOBALS.TEXT laid
+  out from offset 1: the linker reads SLOWTERM at 14, GOTCODE at
+  16, CODEVID at 18, CODETID at 30, SYVID at 63 and STATE at 69. }
+
+TYPE PHYLE = FILE;
+     FIBP = ^ PHYLE;
+     VID = STRING[7];
+     TID = STRING[15];
+     INFOREC = RECORD
+                 WORKSYM,WORKCODE: FIBP;
+                 ERRSYM,ERRBLK,ERRNUM: INTEGER;
+                 SLOWTERM,STUPID: BOOLEAN;
+                 ALTMODE: CHAR;
+                 GOTSYM,GOTCODE: BOOLEAN;
+                 WORKVID,SYMVID,CODEVID: VID;
+                 WORKTID,SYMTID,CODETID: TID
+               END;
+
+VAR SYSCOM: ^ INTEGER;
+    GFILES: ARRAY [0..5] OF FIBP;
+    USERINFO: INFOREC;
+    EMPTYHEAP: ^ INTEGER;
+    INPUTFIB,OUTPUTFIB,SYSTERM,SWAPFIB: FIBP;
+    SYVID,DKVID: VID;
+    THEDATE: INTEGER;
+    DEBUGINFO: ^ INTEGER;
+    STATE: INTEGER;
+
+PROCEDURE EXECERRO; FORWARD;   { CXP 0,2 }
+PROCEDURE FINIT; FORWARD;   { CXP 0,3 }
+PROCEDURE FRESET; FORWARD;   { CXP 0,4 }
+PROCEDURE FOPEN; FORWARD;   { CXP 0,5 }
+PROCEDURE FCLOSE; FORWARD;   { CXP 0,6 }
+PROCEDURE FGET; FORWARD;   { CXP 0,7 }
+PROCEDURE FPUT; FORWARD;   { CXP 0,8 }
+PROCEDURE XSEEK; FORWARD;   { CXP 0,9 }
+FUNCTION FEOF: INTEGER; FORWARD;   { CXP 0,10 }
+FUNCTION FEOLN: INTEGER; FORWARD;   { CXP 0,11 }
+PROCEDURE FREADINT; FORWARD;   { CXP 0,12 }
+PROCEDURE FWRITEIN; FORWARD;   { CXP 0,13 }
+PROCEDURE XREADREA; FORWARD;   { CXP 0,14 }
+PROCEDURE XWRITERE; FORWARD;   { CXP 0,15 }
+PROCEDURE FREADCHA; FORWARD;   { CXP 0,16 }
+PROCEDURE FWRITECH; FORWARD;   { CXP 0,17 }
+PROCEDURE FREADSTR; FORWARD;   { CXP 0,18 }
+PROCEDURE FWRITEST; FORWARD;   { CXP 0,19 }
+PROCEDURE FWRITEBY; FORWARD;   { CXP 0,20 }
+PROCEDURE FREADLN; FORWARD;   { CXP 0,21 }
+PROCEDURE FWRITELN; FORWARD;   { CXP 0,22 }
+PROCEDURE SCONCAT; FORWARD;   { CXP 0,23 }
+PROCEDURE SINSERT; FORWARD;   { CXP 0,24 }
+PROCEDURE SCOPY; FORWARD;   { CXP 0,25 }
+PROCEDURE SDELETE; FORWARD;   { CXP 0,26 }
+FUNCTION SPOS: INTEGER; FORWARD;   { CXP 0,27 }
+FUNCTION FBLOCKIO: INTEGER; FORWARD;   { CXP 0,28 }
+PROCEDURE FGOTOXY; FORWARD;   { CXP 0,29 }
+FUNCTION VOLSEARC: INTEGER; FORWARD;   { CXP 0,30 }
+PROCEDURE WRITEDIR; FORWARD;   { CXP 0,31 }
+FUNCTION DIRSEARC: INTEGER; FORWARD;   { CXP 0,32 }
+FUNCTION SCANTITL: INTEGER; FORWARD;   { CXP 0,33 }
+PROCEDURE DELENTRY; FORWARD;   { CXP 0,34 }
+PROCEDURE INSENTRY; FORWARD;   { CXP 0,35 }
+PROCEDURE HOMECURS; FORWARD;   { CXP 0,36 }
+PROCEDURE CLEARSCR; FORWARD;   { CXP 0,37 }
+PROCEDURE CLEARLIN; FORWARD;   { CXP 0,38 }
+PROCEDURE PROMPT; FORWARD;   { CXP 0,39 }
+FUNCTION SPACEWAI: INTEGER; FORWARD;   { CXP 0,40 }
+FUNCTION GETCHAR: INTEGER; FORWARD;   { CXP 0,41 }
+FUNCTION FETCHDIR: INTEGER; FORWARD;   { CXP 0,42 }
+PROCEDURE OSPROC43(VAR S: STRING; I,N: INTEGER); FORWARD;   { CXP 0,43 }
+
+SEGMENT PROCEDURE LINKER(III, JJJ: INTEGER);
+
+CONST
+  MAXSEG = 15;          { max code seg # in code files }
+  MAXSEG1 = 16;         { MAXSEG+1, useful for loop vars }
+  MASTERSEG = 1;        { USERHOST segment number # }
+  MAXLC = MAXINT;       { max compiler assigned address }
+  MAXIC = 20000;        { max number bytes of code per proc }
+  MAXPROC = 254;        { max legal procedure number }
+  MSDELTA = 12;         { mark stack size for pub/priv fixup }
+  SYSPROG = 4;          { STATE when run from the command line }
+
+TYPE
+  SEGRANGE = 0..MAXSEG;
+  SEGINDEX = 0..MAXSEG1;
+  LCRANGE = 1..MAXLC;
+  ICRANGE = 0..MAXIC;
+  PROCRANGE = 1..MAXPROC;
+
+  ALPHA = PACKED ARRAY [0..7] OF CHAR;
+  DISKBLOCK = PACKED ARRAY [0..511] OF 0..255;
+  CODEFILE = FILE;
+  FILEP = ^CODEFILE;
+  CODEP = ^DISKBLOCK;
+
+  PLACEP = ^PLACEREC;
+  PLACEREC = RECORD
+               SRCBASE, DESTBASE: INTEGER;
+               LENGTH: ICRANGE
+             END;
+
+  REFP = ^REFNODE;
+  REFNODE = RECORD
+              NEXT: REFP;
+              REFS: ARRAY [0..7] OF INTEGER
+            END;
+
+  LITYPES = (EOFMARK, UNITREF, GLOBREF, PUBLREF, PRIVREF, CONSTREF,
+             GLOBDEF, PUBLDEF, CONSTDEF, EXTPROC, EXTFUNC,
+             SEPPROC, SEPFUNC, SEPPREF, SEPFREF);
+  LISET = SET OF LITYPES;
+  OPFORMAT = (WORD, BYTE, BIG);
+
+  { EOFMARK's second word is Apple's: the data segment number of
+    an intrinsic unit, checked against 0..63 in READLINKINFO. }
+  LIENTRY = RECORD
+              NAME: ALPHA;
+              CASE LITYPE: LITYPES OF
+                SEPPREF, SEPFREF, UNITREF, GLOBREF, PUBLREF,
+                PRIVREF, CONSTREF:
+                  (FORMAT: OPFORMAT;
+                   NREFS: INTEGER;
+                   NWORDS: LCRANGE;
+                   REFLIST: REFP);
+                EXTPROC, EXTFUNC, SEPPROC, SEPFUNC:
+                  (SRCPROC: PROCRANGE;
+                   NPARAMS: INTEGER;
+                   PLACE: PLACEP);
+                GLOBDEF:
+                  (HOMEPROC: PROCRANGE;
+                   ICOFFSET: ICRANGE);
+                PUBLDEF:
+                  (BASEOFFSET: LCRANGE);
+                CONSTDEF:
+                  (CONSTVAL: INTEGER);
+                EOFMARK:
+                  (NEXTLC: LCRANGE;
+                   DATANUM: INTEGER)
+            END;
+
+  SYMP = ^SYMBOL;
+  SYMBOL = RECORD
+             LLINK, RLINK, SLINK: SYMP;
+             ENTRY: LIENTRY
+           END;
+
+  SEGKINDS = (LINKED, HOSTSEG, SEGPROC, UNITSEG, SEPRTSEG,
+              UNLINKED_INTRINS, LINKED_INTRINS, DATASEG);
+
+  FINFOP = ^FILEINFOREC;
+
+  { The second variant is Apple's: the next private offset and
+    the data segment number of a unit, or a data segment's size. }
+  SEGP = ^SEGREC;
+  SEGREC = RECORD
+             SRCFILE: FINFOP;
+             SRCSEG: SEGRANGE;
+             SYMTAB: SYMP;
+             CASE SEGKIND: SEGKINDS OF
+               SEPRTSEG:
+                 (NEXT: SEGP);
+               UNITSEG, UNLINKED_INTRINS, DATASEG:
+                 (PRIVLC: LCRANGE;
+                  DSEGNUM: 0..255)
+           END;
+
+  { MTYPE takes the value 2 with no range check, so it is an
+    enumeration; UCSD's names for it. }
+  MTYPES = (UNDEFINED, PCODEMOST, PCODELEAST, PDP11, M8080, Z80,
+            GA440, M6502, M6800, TI9900);
+  SIREC = PACKED RECORD
+            SEGNUM: 0..255;
+            MTYPE: MTYPES;
+            SIFILLER: 0..1;
+            VERSION: 0..7
+          END;
+
+  { Block 0 of a 1.3 codefile. SEGMISC is the field the compiler
+    and the OS call SEGINFO: the linker reads its global SEGINFO
+    array inside WITH on one of these, so the two names differ. }
+  SEGDICT = RECORD
+              DISKINFO: ARRAY [SEGRANGE] OF
+                          RECORD
+                            CODELENG, CODEADDR: INTEGER
+                          END;
+              SEGNAME: ARRAY [SEGRANGE] OF ALPHA;
+              SEGKIND: ARRAY [SEGRANGE] OF SEGKINDS;
+              SEGDATA: ARRAY [SEGRANGE] OF INTEGER;
+              SEGMISC: ARRAY [SEGRANGE] OF SIREC;
+              INTRINSSEGS: SET OF 0..63;
+              DICTFILL: ARRAY [0..107] OF INTEGER
+            END;
+
+  FILEKIND = (USERHOST, USERLIB, SYSTEMLIB);
+
+  FILEINFOREC = RECORD
+                  NEXT: FINFOP;
+                  CODE: FILEP;
+                  FKIND: FILEKIND;
+                  SEGTBL: SEGDICT
+                END;
+
+  SWAPREC = PACKED RECORD
+              CASE BOOLEAN OF
+                TRUE: (INTEG: INTEGER);
+                FALSE: (LOWBYTE: 0..255;
+                        HIGHBYTE: 0..255)
+            END;
+
+  WORDREC = RECORD
+              CASE INTEGER OF
+                0: (INTEG: INTEGER);
+                1: (KIND: SEGKINDS);
+                2: (MISC: SIREC);
+                3: (BYTES: PACKED ARRAY [0..1] OF 0..255)
+            END;
+
+VAR
+  HOSTFILE, LIBFILES: FINFOP;
+  SEPLIST: SEGP;
+  REFLITYPES: LISET;
+  TALKATIVE, USEWORKFILE: BOOLEAN;
+  ERRCOUNT: INTEGER;
+  HEAPBASE: ^INTEGER;
+  HOSTSP: SEGP;
+  NEXTBASELC: LCRANGE;
+  SEGINFO: ARRAY [SEGRANGE] OF SEGP;
+  G29: SEGINDEX;        { host segment's slot, MAXSEG1 if none }
+  MAPNAME: STRING[39];
+  CODE: CODEFILE;
+  G90: BOOLEAN;         { segment tables are byte-flipped }
+  G91: BOOLEAN;         { heap pointers count words }
+
+{ Close every input file. }
+
+PROCEDURE LK2;
+BEGIN
+  WHILE HOSTFILE <> NIL DO
+    BEGIN
+      CLOSE(HOSTFILE^.CODE^);
+      HOSTFILE := HOSTFILE^.NEXT
+    END
+END;
+
+{ Close everything and leave. }
+
+PROCEDURE LK3;
+BEGIN
+  LK2;
+  CLOSE(CODE);
+  EXIT(LINKER)
+END;
+
+PROCEDURE ERROR(MSG: STRING);
+  VAR CH: CHAR;
+BEGIN
+  WRITELN(MSG);
+  WRITE('<sp>(continue), <esc>(terminate)');
+  REPEAT
+    READ(KEYBOARD, CH)
+  UNTIL (CH = ' ') OR (CH = CHR(27));
+  IF CH = CHR(27) THEN
+    LK3;
+  ERRCOUNT := ERRCOUNT+1;
+  WRITELN
+END { ERROR } ;
+
+{ Swap the two bytes of a word. }
+
+PROCEDURE LK5(VAR X: INTEGER);
+  VAR B, A: SWAPREC;
+BEGIN
+  B.INTEG := X;
+  A.LOWBYTE := B.HIGHBYTE;
+  A.HIGHBYTE := B.LOWBYTE;
+  X := A.INTEG
+END;
+
+(*$R-*)
+
+FUNCTION FETCHBYTE(CP: CODEP; OFFSET: INTEGER): INTEGER;
+BEGIN
+  FETCHBYTE := CP^[OFFSET]
+END { FETCHBYTE } ;
+
+FUNCTION FETCHWORD(CP: CODEP; OFFSET: INTEGER): INTEGER;
+  VAR I: INTEGER;
+BEGIN
+  MOVELEFT(CP^[OFFSET], I, 2);
+  IF G90 THEN
+    LK5(I);
+  FETCHWORD := I
+END { FETCHWORD } ;
+
+PROCEDURE STOREBYTE(VAL: INTEGER; CP: CODEP; OFFSET: INTEGER);
+BEGIN
+  CP^[OFFSET] := VAL
+END { STOREBYTE } ;
+
+PROCEDURE STOREWORD(VAL: INTEGER; CP: CODEP; OFFSET: INTEGER);
+BEGIN
+  IF G90 THEN
+    LK5(VAL);
+  MOVELEFT(VAL, CP^[OFFSET], 2)
+END { STOREWORD } ;
+
+{ A BIG-format reference: high byte first, with the top bit set. }
+
+PROCEDURE LK10(VAL: INTEGER; CP: CODEP; OFFSET: INTEGER);
+  VAR R: SWAPREC;
+BEGIN
+  R.INTEG := VAL;
+  CP^[OFFSET] := R.HIGHBYTE+128;
+  CP^[OFFSET+1] := R.LOWBYTE
+END;
+
+(*$R+*)
+
+{ Byte-swap a whole segment dictionary. }
+
+PROCEDURE LK11(VAR SEGTBL: SEGDICT);
+  VAR S: SEGRANGE;
+      X: WORDREC;
+BEGIN
+  FOR S := 0 TO MAXSEG DO
+    WITH SEGTBL DO
+      BEGIN
+        WITH DISKINFO[S] DO
+          BEGIN
+            LK5(CODEADDR);
+            LK5(CODELENG)
+          END;
+        X.KIND := SEGKIND[S];
+        LK5(X.INTEG);
+        SEGKIND[S] := X.KIND;
+        LK5(SEGDATA[S]);
+        X.MISC := SEGMISC[S];
+        LK5(X.INTEG);
+        SEGMISC[S] := X.MISC
+      END
+END;
+
+PROCEDURE ENTERSYM(NEWSYM: SYMP; VAR SYMTAB: SYMP);
+  VAR SYP, LASTSYP: SYMP;
+      USELEFT: BOOLEAN;
+BEGIN
+  NEWSYM^.LLINK := NIL;
+  NEWSYM^.RLINK := NIL;
+  NEWSYM^.SLINK := NIL;
+  IF SYMTAB = NIL THEN
+    SYMTAB := NEWSYM
+  ELSE
+    BEGIN
+      SYP := SYMTAB;
+      REPEAT
+        LASTSYP := SYP;
+        IF SYP^.ENTRY.NAME > NEWSYM^.ENTRY.NAME THEN
+          BEGIN SYP := SYP^.LLINK; USELEFT := TRUE END
+        ELSE
+          IF SYP^.ENTRY.NAME < NEWSYM^.ENTRY.NAME THEN
+            BEGIN SYP := SYP^.RLINK; USELEFT := FALSE END
+          ELSE
+            BEGIN
+              NEWSYM^.SLINK := SYP^.SLINK;
+              SYP^.SLINK := NEWSYM;
+              LASTSYP := NIL;
+              SYP := NIL
+            END
+      UNTIL SYP = NIL;
+      IF LASTSYP <> NIL THEN
+        BEGIN
+          IF USELEFT THEN
+            LASTSYP^.LLINK := NEWSYM
+          ELSE
+            LASTSYP^.RLINK := NEWSYM
+        END
+    END
+END { ENTERSYM } ;
+
+FUNCTION SYMSRCH(VAR NAME: ALPHA; OKTYPE: LITYPES; SYMTAB: SYMP): SYMP;
+  VAR SYP: SYMP;
+BEGIN
+  SYMSRCH := NIL;
+  SYP := SYMTAB;
+  WHILE SYP <> NIL DO
+    IF SYP^.ENTRY.NAME > NAME THEN
+      SYP := SYP^.LLINK
+    ELSE
+      IF SYP^.ENTRY.NAME < NAME THEN
+        SYP := SYP^.RLINK
+      ELSE
+        IF SYP^.ENTRY.LITYPE <> OKTYPE THEN
+          SYP := SYP^.SLINK
+        ELSE
+          BEGIN SYMSRCH := SYP; SYP := NIL END
+END { SYMSRCH } ;
+
+FUNCTION UNITSRCH(FP: FINFOP; VAR NAME: ALPHA;
+                  VAR SEG: SEGRANGE): FINFOP;
+  LABEL 1;
+  VAR S: SEGINDEX;
+BEGIN
+  SEG := 0;
+  WHILE FP <> NIL DO
+    BEGIN
+      WITH FP^.SEGTBL DO
+        FOR S := 0 TO MAXSEG DO
+          IF SEGNAME[S] = NAME THEN
+            IF SEGKIND[S] = UNITSEG THEN
+              GOTO 1;
+      FP := FP^.NEXT
+    END;
+  WRITE('Unit ', NAME);
+  ERROR(' not found');
+  S := 0;
+1:
+  SEG := S;
+  UNITSRCH := FP
+END { UNITSRCH } ;
+
+FUNCTION ALPHABETIC(VAR NAME: ALPHA): BOOLEAN;
+  LABEL 1;
+  VAR I: INTEGER;
+BEGIN
+  ALPHABETIC := FALSE;
+  FOR I := 0 TO 7 DO
+    IF NOT (NAME[I] IN ['A'..'Z', '0'..'9', ' ', '_']) THEN
+      GOTO 1;
+  ALPHABETIC := TRUE;
+1:
+END { ALPHABETIC } ;
+
+FUNCTION GETCODEP(MEMADDR, OFFSET: INTEGER): CODEP;
+  VAR R: RECORD
+           CASE BOOLEAN OF
+             TRUE: (I: INTEGER);
+             FALSE: (P: CODEP)
+         END;
+BEGIN
+  IF G91 THEN
+    R.I := MEMADDR+OFFSET DIV 2
+  ELSE
+    R.I := MEMADDR+OFFSET;
+  GETCODEP := R.P
+END { GETCODEP } ;
+
+{ Drop a leading blank-compression code from a typed name. }
+
+PROCEDURE LK17(VAR FNAME: STRING);
+BEGIN
+  IF FNAME <> '' THEN
+    IF FNAME[1] = CHR(16) THEN
+      DELETE(FNAME, 1, 2)
+END;
+
+PROCEDURE PHASE1;
+  VAR L1: ^INTEGER;
+      L2: 0..1;          { index of a word's high byte }
+      L3: WORDREC;
+
+  PROCEDURE BUILDFILELIST;
+    VAR I: INTEGER;
+        P, Q: FINFOP;
+        FNAME: STRING[39];
+
+    PROCEDURE SETUPFILE(KIND: FILEKIND; TITLE: STRING);
+      LABEL 1;
+      VAR ERRS: INTEGER;
+          L45: INTEGER;
+          S: SEGINDEX;
+          CP: FILEP;
+          FP: FINFOP;
+          ALLLINKED: BOOLEAN;
+          GOODKINDS: SET OF SEGKINDS;
+    BEGIN
+      IF SCAN(LENGTH(TITLE)+1, = CHR(27), TITLE[1])
+         < LENGTH(TITLE)+1 THEN
+        LK3;
+      NEW(CP);
+      MOVELEFT(CODE, CP^, 80);
+      RESET(CP^, TITLE);
+      IF IORESULT <> 0 THEN
+        IF TITLE <> 'in workspace' THEN
+          BEGIN
+            L45 := POS('.LIBRARY', TITLE);
+            IF NOT ((L45 <> 0) AND (L45 = LENGTH(TITLE)-7)) THEN
+              OSPROC43(TITLE, 0, 39);
+            RESET(CP^, TITLE)
+          END;
+      IF IORESULT <> 0 THEN
+        BEGIN
+          RELEASE(CP);
+          INSERT('No file ', TITLE, 1);
+          ERROR(TITLE);
+          IF KIND <> USERHOST THEN
+            ERRCOUNT := ERRCOUNT-1
+        END
+      ELSE
+        BEGIN
+          IF TALKATIVE THEN
+            WRITELN('Opening ', TITLE);
+          NEW(FP);
+          FP^.NEXT := HOSTFILE;
+          FP^.CODE := CP;
+          FP^.FKIND := KIND;
+          IF BLOCKREAD(CP^, FP^.SEGTBL, 1, 0) <> 1 THEN
+            ERROR('segtbl read error')
+          ELSE
+            BEGIN
+              IF KIND = USERHOST THEN
+                FOR S := 0 TO MAXSEG DO
+                  BEGIN
+                    L3.KIND := FP^.SEGTBL.SEGKIND[S];
+                    G90 := L3.BYTES[L2] <> 0;
+                    IF G90 THEN
+                      GOTO 1
+                  END;
+            1:
+              IF G90 THEN
+                LK11(FP^.SEGTBL);
+              S := 0;
+              ALLLINKED := TRUE;
+              ERRS := ERRCOUNT;
+              IF KIND = USERHOST THEN
+                GOODKINDS := [LINKED, HOSTSEG, SEGPROC, UNITSEG,
+                              SEPRTSEG, UNLINKED_INTRINS,
+                              LINKED_INTRINS, DATASEG]
+              ELSE
+                GOODKINDS := [LINKED, UNITSEG, SEPRTSEG,
+                              LINKED_INTRINS, DATASEG];
+              WITH FP^.SEGTBL DO
+                REPEAT
+                  L3.KIND := SEGKIND[S];
+                  IF L3.BYTES[L2] <> 0 THEN
+                    BEGIN
+                      ERROR('bad byte sex');
+                      LK3
+                    END;
+                  ALLLINKED := ALLLINKED AND
+                    (SEGKIND[S] IN [LINKED, LINKED_INTRINS, DATASEG]);
+                  IF (DISKINFO[S].CODELENG = 0)
+                  AND NOT (SEGKIND[S] IN [LINKED, DATASEG]) THEN
+                    IF (KIND <> USERHOST)
+                    OR (SEGKIND[S] <> UNITSEG) THEN
+                      ERROR('funny code seg');
+                  IF (DISKINFO[S].CODELENG < 0)
+                  OR (DISKINFO[S].CODEADDR < 0)
+                  OR (DISKINFO[S].CODEADDR > 300) THEN
+                    ERROR('bad diskinfo');
+                  IF NOT (SEGKIND[S] IN GOODKINDS) THEN
+                    ERROR('bad seg kind');
+                  IF NOT ALPHABETIC(SEGNAME[S]) THEN
+                    ERROR('bad seg name');
+                  IF ERRCOUNT > ERRS THEN
+                    S := MAXSEG;
+                  S := S+1
+                UNTIL S > MAXSEG;
+              IF ALLLINKED AND (KIND = USERHOST) THEN
+                BEGIN
+                  WRITE('All segments linked');
+                  LK3
+                END;
+              IF ERRCOUNT = ERRS THEN
+                BEGIN
+                  HOSTFILE := FP;
+                  IF KIND = USERHOST THEN
+                    WITH FP^.SEGTBL DO
+                      FOR S := 0 TO MAXSEG DO
+                        IF (DISKINFO[S].CODEADDR <> 0)
+                        AND (SEGMISC[S].VERSION = 0) THEN
+                          SEGMISC[S].SEGNUM := S
+                END
+            END
+        END
+    END { SETUPFILE } ;
+
+  BEGIN { BUILDFILELIST }
+    IF TALKATIVE THEN
+      BEGIN
+        FOR I := 1 TO 7 DO
+          WRITELN;
+        WRITELN('Apple Pascal Linker [1.3]')
+      END;
+    USEWORKFILE := STATE <> SYSPROG;
+    IF USEWORKFILE THEN
+      BEGIN
+        IF USERINFO.GOTCODE THEN
+          FNAME := CONCAT(USERINFO.CODEVID, ':', USERINFO.CODETID)
+        ELSE
+          FNAME := 'in workspace';
+        SETUPFILE(USERHOST, FNAME);
+        SETUPFILE(SYSTEMLIB, '*SYSTEM.LIBRARY')
+      END
+    ELSE
+      BEGIN
+        WRITELN;
+        WRITE('Link what host codefile? ');
+        READLN(FNAME);
+        IF FNAME = '' THEN
+          IF USERINFO.GOTCODE THEN
+            FNAME := CONCAT(USERINFO.CODEVID, ':', USERINFO.CODETID)
+          ELSE
+            FNAME := 'in workspace';
+        SETUPFILE(USERHOST, FNAME);
+        IF ERRCOUNT > 0 THEN
+          LK3;
+        WRITE('Using what library file? ');
+        REPEAT
+          READLN(FNAME);
+          LK17(FNAME);
+          IF FNAME <> '' THEN
+            IF FNAME = '*' THEN
+              SETUPFILE(SYSTEMLIB, '*SYSTEM.LIBRARY')
+            ELSE
+              SETUPFILE(USERLIB, FNAME);
+          IF FNAME <> '' THEN
+            WRITE('Another library file (<ret> for none) ? ')
+        UNTIL FNAME = '';
+        WRITE('Map file (<ret> for none) ? ');
+        READLN(MAPNAME);
+        LK17(MAPNAME);
+        IF MAPNAME <> '' THEN
+          OSPROC43(MAPNAME, 1, 39)
+      END;
+    P := HOSTFILE;
+    HOSTFILE := NIL;
+    REPEAT
+      Q := P^.NEXT;
+      P^.NEXT := HOSTFILE;
+      HOSTFILE := P;
+      P := Q
+    UNTIL P = NIL;
+    LIBFILES := HOSTFILE^.NEXT
+  END { BUILDFILELIST } ;
+
+  PROCEDURE BUILDSEGINFO;
+    VAR S: SEGINDEX;
+        ERRS: INTEGER;
+        SP: SEGP;
+        L5, L4: BOOLEAN;
+  BEGIN
+    L5 := FALSE;
+    L4 := FALSE;
+    G29 := MAXSEG1;
+    WITH HOSTFILE^.SEGTBL DO
+      FOR S := 0 TO MAXSEG DO
+        IF (SEGKIND[S] = LINKED)
+        AND (DISKINFO[S].CODELENG = 0) THEN
+          SEGINFO[S] := NIL
+        ELSE
+          BEGIN
+            ERRS := ERRCOUNT;
+            NEW(SP);
+            SP^.SRCFILE := HOSTFILE;
+            SP^.SRCSEG := S;
+            SP^.SYMTAB := NIL;
+            SP^.SEGKIND := SEGKIND[S];
+            CASE SP^.SEGKIND OF
+              LINKED, SEGPROC, LINKED_INTRINS: ;
+
+              HOSTSEG:   IF SEGMISC[S].SEGNUM <> MASTERSEG THEN
+                           ERROR('bad host seg')
+                         ELSE
+                           IF HOSTSP <> NIL THEN
+                             ERROR('dup host seg')
+                           ELSE
+                             BEGIN
+                               HOSTSP := SP;
+                               G29 := S;
+                               L5 := TRUE
+                             END;
+
+              SEPRTSEG:  IF SEGMISC[S].SEGNUM = MASTERSEG THEN
+                           BEGIN
+                             SP^.NEXT := NIL;
+                             G29 := S;
+                             L5 := TRUE
+                           END
+                         ELSE
+                           BEGIN
+                             SP^.NEXT := SEPLIST;
+                             SEPLIST := SP;
+                             SP := NIL
+                           END;
+
+              UNITSEG:   IF DISKINFO[S].CODELENG = 0 THEN
+                           SP^.SRCFILE := UNITSRCH(LIBFILES,
+                                                   SEGNAME[S],
+                                                   SP^.SRCSEG);
+
+              UNLINKED_INTRINS:
+                         L4 := TRUE;
+
+              DATASEG:   SP^.PRIVLC := DISKINFO[S].CODELENG DIV 2 + 1
+            END { CASES } ;
+            IF ERRS = ERRCOUNT THEN
+              SEGINFO[S] := SP
+            ELSE
+              SEGINFO[S] := NIL
+          END;
+    IF NOT L5 AND NOT L4 THEN
+      ERROR('illegal hostfile')
+  END { BUILDSEGINFO } ;
+
+  PROCEDURE BUILDSEPLIST;
+    VAR SP, P, Q: SEGP;
+        FP: FINFOP;
+        S: SEGINDEX;
+  BEGIN
+    FP := LIBFILES;
+    WHILE FP <> NIL DO
+      BEGIN
+        FOR S := 0 TO MAXSEG DO
+          IF FP^.SEGTBL.SEGKIND[S] = SEPRTSEG THEN
+            BEGIN
+              NEW(SP);
+              SP^.NEXT := SEPLIST;
+              SP^.SRCFILE := FP;
+              SP^.SRCSEG := S;
+              SP^.SYMTAB := NIL;
+              SP^.SEGKIND := SEPRTSEG;
+              SP^.NEXT := SEPLIST;
+              SEPLIST := SP
+            END;
+        FP := FP^.NEXT
+      END;
+    P := SEPLIST;
+    SEPLIST := NIL;
+    WHILE P <> NIL DO
+      BEGIN
+        Q := P^.NEXT;
+        P^.NEXT := SEPLIST;
+        SEPLIST := P;
+        P := Q
+      END
+  END { BUILDSEPLIST } ;
+
+BEGIN { PHASE1 }
+  HOSTFILE := NIL;
+  LIBFILES := NIL;
+  HOSTSP := NIL;
+  SEPLIST := NIL;
+  REFLITYPES := [UNITREF, GLOBREF, PUBLREF,
+                 PRIVREF, CONSTREF,
+                 SEPPREF, SEPFREF];
+  ERRCOUNT := 0;
+  NEXTBASELC := 3;
+  MAPNAME := '';
+  TALKATIVE := NOT USERINFO.SLOWTERM;
+  MARK(HEAPBASE);
+  UNITWRITE(3, HEAPBASE^, 35);
+  G90 := FALSE;
+  L3.INTEG := 1;
+  L2 := ORD(L3.BYTES[0] = 1);
+  NEW(L1);
+  NEW(L1);
+  G91 := ORD(L1)-ORD(HEAPBASE) = 1;
+  RELEASE(HEAPBASE);
+  BUILDFILELIST;
+  IF ERRCOUNT > 0 THEN
+    LK3;
+  BUILDSEGINFO;
+  IF ERRCOUNT > 0 THEN
+    LK3;
+  BUILDSEPLIST;
+  IF ERRCOUNT > 0 THEN
+    LK3
+END { PHASE1 } ;
+
+PROCEDURE PHASE2;
+  VAR S: SEGINDEX;
+      SP: SEGP;
+      DUMPSEPS: BOOLEAN;
+
+  PROCEDURE READLINKINFO(SP: SEGP; OKTYPES: LISET);
+    VAR RP, RQ: REFP;
+        SYP: SYMP;
+        ERRS, NRECS, NEXTBLK, RECSLEFT: INTEGER;
+        L10: INTEGER;
+        ENTRY, TEMP: LIENTRY;
+        BUF: ARRAY [0..31] OF
+               ARRAY [0..7] OF INTEGER;
+        L285: ARRAY [0..7] OF INTEGER;
+        L293: BOOLEAN;
+
+    PROCEDURE GETENTRY(VAR ENTRY: LIENTRY);
+      VAR ERR: BOOLEAN;
+    BEGIN
+      ERR := FALSE;
+      IF RECSLEFT = 0 THEN
+        BEGIN
+          RECSLEFT := 32;
+          ERR := BLOCKREAD(SP^.SRCFILE^.CODE^, BUF, 1, NEXTBLK) <> 1;
+          IF ERR THEN
+            ERROR('li read err')
+          ELSE
+            NEXTBLK := NEXTBLK+1
+        END;
+      MOVELEFT(BUF[32-RECSLEFT], ENTRY, 16);
+      IF ERR THEN
+        ENTRY.LITYPE := EOFMARK;
+      RECSLEFT := RECSLEFT-1
+    END { GETENTRY } ;
+
+    PROCEDURE VALIDATE(VAR ENTRY: LIENTRY);
+    BEGIN
+      WITH ENTRY DO
+        IF NOT ALPHABETIC(NAME) THEN
+          ERROR('non-alpha name')
+        ELSE
+          CASE LITYPE OF
+            SEPPREF,
+            SEPFREF,
+            UNITREF,
+            GLOBREF,
+            PUBLREF,
+            PRIVREF,
+            CONSTREF:  BEGIN
+                         REFLIST := NIL;
+                         IF NREFS < 0 THEN
+                           ERROR('bad number of refs');
+                         IF NOT (FORMAT IN [WORD, BYTE, BIG]) THEN
+                           ERROR('bad format');
+                         IF LITYPE = PRIVREF THEN
+                           IF (NWORDS <= 0)
+                           OR (NWORDS > MAXLC) THEN
+                             ERROR('bad private')
+                       END;
+            GLOBDEF:   IF (HOMEPROC <= 0)
+                       OR (HOMEPROC > MAXPROC)
+                       OR (ICOFFSET < 0)
+                       OR (ICOFFSET > MAXIC) THEN
+                         ERROR('bad globdef');
+            PUBLDEF:   IF (BASEOFFSET <= 0)
+                       OR (BASEOFFSET > MAXLC) THEN
+                         ERROR('bad publicdef');
+            EXTPROC,
+            EXTFUNC,
+            SEPPROC,
+            SEPFUNC:   BEGIN
+                         IF LITYPE IN [SEPPROC,SEPFUNC] THEN
+                           NEW(PLACE)
+                         ELSE
+                           PLACE := NIL;
+                         IF (SRCPROC <= 0)
+                         OR (SRCPROC > MAXPROC)
+                         OR (NPARAMS < 0)
+                         OR (NPARAMS > 100) THEN
+                           ERROR('bad proc/func')
+                       END
+          END { CASE LITYPE }
+    END { VALIDATE } ;
+
+  BEGIN { READLINKINFO }
+    RECSLEFT := 0;
+    WITH SP^.SRCFILE^.SEGTBL, DISKINFO[SP^.SRCSEG] DO
+      BEGIN
+        NEXTBLK := CODEADDR + (CODELENG+511) DIV 512;
+        IF TALKATIVE THEN
+          WRITELN('Reading ', SEGNAME[SP^.SRCSEG])
+      END;
+    REPEAT
+      L293 := TRUE;
+      GETENTRY(ENTRY);
+      IF G90 THEN
+        BEGIN
+          MOVELEFT(ENTRY, L285, 16);
+          FOR L10 := 4 TO 7 DO
+            LK5(L285[L10]);
+          MOVELEFT(L285, ENTRY, 16)
+        END;
+      ERRS := ERRCOUNT;
+      IF ENTRY.LITYPE <> EOFMARK THEN
+        IF ENTRY.LITYPE IN OKTYPES THEN
+          VALIDATE(ENTRY)
+        ELSE
+          BEGIN
+            ERROR('bad litype');
+            ENTRY.LITYPE := EOFMARK
+          END;
+      IF DUMPSEPS THEN
+        IF ENTRY.LITYPE IN [SEPPREF, SEPFREF,
+                            EXTPROC, EXTFUNC,
+                            GLOBREF] THEN
+          DUMPSEPS := FALSE;
+      IF ENTRY.LITYPE IN REFLITYPES THEN
+        IF ENTRY.NREFS = 0 THEN
+          L293 := FALSE
+        ELSE
+          BEGIN
+            NRECS := (ENTRY.NREFS+7) DIV 8;
+            WHILE NRECS > 0 DO
+              BEGIN
+                GETENTRY(TEMP);
+                NEW(RP);
+                MOVELEFT(TEMP, RP^.REFS, 16);
+                IF G90 THEN
+                  FOR L10 := 0 TO 7 DO
+                    LK5(RP^.REFS[L10]);
+                RP^.NEXT := ENTRY.REFLIST;
+                ENTRY.REFLIST := RP;
+                NRECS := NRECS-1
+              END;
+            RP := ENTRY.REFLIST;
+            ENTRY.REFLIST := NIL;
+            WHILE RP <> NIL DO
+              BEGIN
+                RQ := RP^.NEXT;
+                RP^.NEXT := ENTRY.REFLIST;
+                ENTRY.REFLIST := RP;
+                RP := RQ
+              END
+          END;
+      IF ENTRY.LITYPE = EOFMARK THEN
+        IF SP^.SEGKIND IN [HOSTSEG, UNLINKED_INTRINS] THEN
+          IF (ENTRY.NEXTLC <= 0)
+          OR (ENTRY.NEXTLC > MAXLC) THEN
+            ERROR('bad host LC')
+          ELSE
+            IF SP^.SEGKIND = HOSTSEG THEN
+              NEXTBASELC := ENTRY.NEXTLC
+            ELSE
+              IF (ENTRY.DATANUM < 0) OR (ENTRY.DATANUM > 63) THEN
+                ERROR('bad data seg #')
+              ELSE
+                BEGIN
+                  IF ENTRY.DATANUM <> 0 THEN
+                    WITH HOSTFILE^.SEGTBL DO
+                      FOR L10 := 0 TO MAXSEG DO
+                        IF SEGMISC[L10].SEGNUM = ENTRY.DATANUM THEN
+                          SP^.PRIVLC := DISKINFO[L10].CODELENG DIV 2
+                                        + 1;
+                  SP^.DSEGNUM := ENTRY.DATANUM
+                END
+        ELSE
+      ELSE
+        IF (ERRS = ERRCOUNT) AND L293 THEN
+          BEGIN
+            NEW(SYP);
+            SYP^.ENTRY := ENTRY;
+            ENTERSYM(SYP, SP^.SYMTAB)
+          END
+    UNTIL ENTRY.LITYPE = EOFMARK
+  END { READLINKINFO } ;
+
+  PROCEDURE BUILDPLACES(SP: SEGP);
+    VAR CP: CODEP; HEAP: ^INTEGER;
+        NBYTES, NBLOCKS, NPROCS, N: INTEGER;
+
+    PROCEDURE PROCSRCH(SYMTAB: SYMP);
+      VAR I, J: INTEGER;
+    BEGIN
+      IF SYMTAB <> NIL THEN
+        BEGIN
+          PROCSRCH(SYMTAB^.LLINK);
+          PROCSRCH(SYMTAB^.RLINK);
+          PROCSRCH(SYMTAB^.SLINK);
+          WITH SYMTAB^.ENTRY DO
+            IF LITYPE IN [SEPPROC, SEPFUNC] THEN
+              IF (SRCPROC <= 0) OR (SRCPROC > NPROCS) THEN
+                ERROR('bad proc #')
+              ELSE
+                BEGIN
+                  I := NBYTES-2-2*SRCPROC;
+                  I := I-FETCHWORD(CP, I);
+                  IF (FETCHBYTE(CP, I) <> SRCPROC)
+                  AND (FETCHBYTE(CP, I) <> 0) THEN
+                    ERROR('disagreeing p #')
+                  ELSE
+                    BEGIN
+                      J := FETCHWORD(CP, I-2)+4;
+                      PLACE^.SRCBASE := I+2-J;
+                      IF (PLACE^.SRCBASE < 0)
+                      OR (J <= 0) OR (J > MAXIC) THEN
+                        ERROR('proc place error')
+                      ELSE
+                        PLACE^.LENGTH := J
+                    END
+                END
+        END
+    END { PROCSRCH } ;
+
+  BEGIN { BUILDPLACES }
+    NBYTES := SP^.SRCFILE^.SEGTBL.DISKINFO[SP^.SRCSEG].CODELENG;
+    NBLOCKS := (NBYTES+511) DIV 512;
+    IF MEMAVAIL-400 < NBLOCKS*256 THEN
+      ERROR('sep seg 2 big')
+    ELSE
+      BEGIN
+        MARK(HEAP);
+        N := NBLOCKS;
+        REPEAT
+          NEW(CP);
+          N := N-1
+        UNTIL N <= 0;
+        IF BLOCKREAD(SP^.SRCFILE^.CODE^, HEAP^, NBLOCKS,
+             SP^.SRCFILE^.SEGTBL.DISKINFO[SP^.SRCSEG].CODEADDR)
+           <> NBLOCKS THEN
+          ERROR('sep seg read err')
+        ELSE
+          BEGIN
+            CP := GETCODEP(ORD(HEAP), 0);
+            NPROCS := FETCHBYTE(CP, NBYTES-1);
+            IF (NPROCS < 0) OR (NPROCS > MAXPROC) THEN
+              ERROR('bad proc dict')
+            ELSE
+              PROCSRCH(SP^.SYMTAB)
+          END;
+        RELEASE(HEAP)
+      END
+  END { BUILDPLACES } ;
+
+BEGIN { PHASE2 }
+  MARK(HEAPBASE);
+  DUMPSEPS := TRUE;
+  FOR S := 0 TO MAXSEG DO
+    IF SEGINFO[S] <> NIL THEN
+      CASE SEGINFO[S]^.SEGKIND OF
+        LINKED, LINKED_INTRINS, DATASEG: ;
+        UNITSEG:   READLINKINFO(SEGINFO[S], [PUBLREF, PRIVREF, UNITREF,
+                                             CONSTDEF,EXTPROC, EXTFUNC]);
+        SEPRTSEG:  READLINKINFO(SEGINFO[S], [GLOBREF, GLOBDEF,
+                                             CONSTDEF,SEPPROC, SEPFUNC]);
+        HOSTSEG, UNLINKED_INTRINS:
+                   READLINKINFO(SEGINFO[S], [PUBLDEF, CONSTDEF,
+                                             EXTPROC, EXTFUNC]);
+        SEGPROC:   READLINKINFO(SEGINFO[S], [EXTPROC, EXTFUNC])
+      END { CASES } ;
+  IF DUMPSEPS THEN
+    SEPLIST := NIL;
+  SP := SEPLIST;
+  WHILE SP <> NIL DO
+    BEGIN
+      READLINKINFO(SP, REFLITYPES+[CONSTDEF, GLOBDEF, SEPPROC, SEPFUNC]);
+      SP := SP^.NEXT
+    END;
+  IF G29 <> MAXSEG1 THEN
+    IF SEGINFO[G29]^.SEGKIND = SEPRTSEG THEN
+      BUILDPLACES(SEGINFO[G29]);
+  SP := SEPLIST;
+  WHILE SP <> NIL DO
+    BEGIN
+      BUILDPLACES(SP);
+      SP := SP^.NEXT
+    END;
+  IF ERRCOUNT > 0 THEN
+    LK3
+END { PHASE2 } ;
+
+PROCEDURE PHASE3;
+  TYPE
+    WORKP = ^WORKREC;
+    WORKREC = RECORD
+                NEXT: WORKP;
+                REFSYM, DEFSYM: SYMP;
+                REFSEG, DEFSEG: SEGP;
+                CASE LITYPES OF
+                  SEPPREF,
+                  SEPFREF,
+                  GLOBREF:
+                      (DEFPROC: WORKP);
+                  UNITREF:
+                      (DEFSEGNUM: 0..63);
+                  PRIVREF:
+                      (NEWOFFSET: LCRANGE);
+                  EXTPROC,
+                  EXTFUNC,
+                  SEPPROC,
+                  SEPFUNC:
+                      (NEEDSRCH: BOOLEAN;
+                       NEWPROC: 0..MAXPROC)
+              END { WORKREC } ;
+
+  VAR S: SEGINDEX;
+      SEGBASE: CODEP;
+      SEGLENG, NEXTBLK: INTEGER;
+      UPROCS, PROCS, ULOCAL, LOCAL, UOTHER, OTHER: WORKP;
+      SEPHOST: BOOLEAN;
+      L12: BOOLEAN;         { linking an intrinsic unit }
+      FNAME: STRING[39];
+      SEGTBL: SEGDICT;
+      L289: ARRAY [0..111] OF INTEGER;
+      MAP: TEXT;
+
+  PROCEDURE BUILDWORKLISTS;
+    VAR SP: SEGP;
+        WP: WORKP;
+
+    FUNCTION FINDPROCS(OKSET: LISET; SYMTAB: SYMP): WORKP;
+      VAR WORK: WORKP;
+
+      PROCEDURE PROCSRCH(SYM: SYMP);
+        VAR WP: WORKP;
+      BEGIN
+        IF SYM <> NIL THEN
+          BEGIN
+            PROCSRCH(SYM^.LLINK);
+            PROCSRCH(SYM^.RLINK);
+            PROCSRCH(SYM^.SLINK);
+            IF SYM^.ENTRY.LITYPE IN OKSET THEN
+              BEGIN
+                NEW(WP);
+                WP^.REFSYM := SYM;
+                WP^.REFSEG := NIL;
+                WP^.DEFSYM := NIL;
+                WP^.DEFSEG := NIL;
+                WP^.NEEDSRCH := TRUE;
+                IF SEPHOST THEN
+                  WP^.NEWPROC := 0
+                ELSE
+                  WP^.NEWPROC := SYM^.ENTRY.SRCPROC;
+                WP^.NEXT := WORK;
+                WORK := WP
+              END
+          END
+      END { PROCSRCH } ;
+
+    BEGIN { FINDPROCS }
+      WORK := NIL;
+      PROCSRCH(SYMTAB);
+      FINDPROCS := WORK
+    END { FINDPROCS } ;
+
+    PROCEDURE FINDNEWPROCS;
+      VAR WP, WP1: WORKP;
+          PNUM: INTEGER;
+
+      FUNCTION FINDNADD(SYMTAB: SYMP): WORKP;
+
+        PROCEDURE PROCSRCH(SYM: SYMP);
+          VAR WP: WORKP;
+        BEGIN
+          IF SYM <> NIL THEN
+            BEGIN
+              PROCSRCH(SYM^.LLINK);
+              PROCSRCH(SYM^.RLINK);
+              PROCSRCH(SYM^.SLINK);
+              IF SYM^.ENTRY.LITYPE IN [SEPPROC, SEPFUNC] THEN
+                IF SYM^.ENTRY.SRCPROC = PNUM THEN
+                  BEGIN
+                    WP := UPROCS;
+                    WHILE WP <> NIL DO
+                      BEGIN
+                        IF WP^.REFSYM = SYM THEN
+                          BEGIN
+                            FINDNADD := WP;
+                            EXIT(FINDNADD)
+                          END;
+                        WP := WP^.NEXT
+                      END;
+                    NEW(WP);
+                    WP^.REFSYM := SYM;
+                    WP^.REFSEG := NIL;
+                    WP^.DEFSYM := NIL;
+                    WP^.DEFSEG := NIL;
+                    WP^.NEEDSRCH := TRUE;
+                    WP^.NEWPROC := 0;
+                    WP^.NEXT := UPROCS;
+                    UPROCS := WP;
+                    FINDNADD := WP;
+                    EXIT(FINDNADD)
+                  END
+            END
+        END { PROCSRCH } ;
+
+      BEGIN { FINDNADD }
+        FINDNADD := NIL;
+        PROCSRCH(SYMTAB);
+        ERROR('missing proc')
+      END { FINDNADD } ;
+
+    BEGIN { FINDNEWPROCS }
+      WP := OTHER;
+      WHILE WP <> NIL DO
+        BEGIN
+          IF WP^.DEFPROC = NIL THEN
+            BEGIN
+              IF WP^.REFSYM^.ENTRY.LITYPE = GLOBREF THEN
+                PNUM := WP^.DEFSYM^.ENTRY.HOMEPROC
+              ELSE
+                PNUM := WP^.DEFSYM^.ENTRY.SRCPROC;
+              WP1 := PROCS;
+              WHILE WP1 <> NIL DO
+                IF WP^.DEFSEG = WP1^.DEFSEG THEN
+                  IF WP1^.DEFSYM^.ENTRY.SRCPROC = PNUM THEN
+                    BEGIN
+                      WP^.DEFPROC := WP1;
+                      WP1 := NIL
+                    END
+                  ELSE
+                    WP1 := WP1^.NEXT
+                ELSE
+                  WP1 := WP1^.NEXT;
+              IF WP^.DEFPROC = NIL THEN
+                WP^.DEFPROC := FINDNADD(WP^.DEFSEG^.SYMTAB)
+            END;
+          WP := WP^.NEXT
+        END { WHILE }
+    END { FINDNEWPROCS } ;
+
+    PROCEDURE RESOLVE(VAR INLIST, OUTLIST: WORKP);
+      VAR SEG: SEGRANGE;
+          ERR: BOOLEAN;
+          WP: WORKP;
+
+      PROCEDURE SEPSRCH(OKTYPE: LITYPES);
+        VAR SYP: SYMP;
+            SP: SEGP;
+      BEGIN
+        SP := SEPLIST;
+        WHILE SP <> NIL DO
+          BEGIN
+            SYP := SYMSRCH(INLIST^.REFSYM^.ENTRY.NAME,
+                           OKTYPE, SP^.SYMTAB);
+            IF SYP <> NIL THEN
+              BEGIN
+                INLIST^.DEFSYM := SYP;
+                INLIST^.DEFSEG := SP;
+                SP := NIL
+              END
+            ELSE
+              SP := SP^.NEXT
+          END
+      END { SEPSRCH } ;
+
+      PROCEDURE PROCINSERT(WORK: WORKP);
+        LABEL 1;
+        VAR CRNT, PREV: WORKP;
+            SP: SEGP;
+      BEGIN
+        PREV := NIL;
+        SP := SEPLIST;
+        WHILE SP <> OUTLIST^.DEFSEG DO
+          IF SP = WORK^.DEFSEG THEN
+            GOTO 1
+          ELSE
+            SP := SP^.NEXT;
+        CRNT := OUTLIST;
+        REPEAT
+          IF CRNT^.DEFSEG = WORK^.DEFSEG THEN
+            WHILE CRNT <> NIL DO
+              IF (WORK^.DEFSYM^.ENTRY.PLACE^.SRCBASE >=
+                  CRNT^.DEFSYM^.ENTRY.PLACE^.SRCBASE)
+              AND (CRNT^.DEFSEG = WORK^.DEFSEG) THEN
+                BEGIN
+                  PREV := CRNT;
+                  CRNT := CRNT^.NEXT
+                END
+              ELSE
+                CRNT := NIL
+          ELSE
+            BEGIN
+              PREV := CRNT;
+              CRNT := CRNT^.NEXT;
+              IF CRNT <> NIL THEN
+                WHILE SP <> CRNT^.DEFSEG DO
+                  IF SP = WORK^.DEFSEG THEN
+                    GOTO 1
+                  ELSE
+                    SP := SP^.NEXT
+            END
+        UNTIL CRNT = NIL;
+    1:
+        IF PREV = NIL THEN
+          BEGIN
+            WORK^.NEXT := OUTLIST;
+            OUTLIST := WORK
+          END
+        ELSE
+          BEGIN
+            WORK^.NEXT := PREV^.NEXT;
+            PREV^.NEXT := WORK
+          END
+      END { PROCINSERT } ;
+
+    BEGIN { RESOLVE }
+      WHILE INLIST <> NIL DO
+        BEGIN
+          WITH INLIST^, REFSYM^.ENTRY DO
+            CASE LITYPE OF
+              GLOBREF:    BEGIN
+                            SEPSRCH(GLOBDEF);
+                            DEFPROC := NIL
+                          END;
+
+              CONSTREF:   IF L12 THEN
+                            BEGIN
+                              DEFSYM := SYMSRCH(NAME, CONSTDEF,
+                                                SEGINFO[S]^.SYMTAB);
+                              DEFSEG := SEGINFO[S]
+                            END
+                          ELSE
+                            IF HOSTSP <> NIL THEN
+                              BEGIN
+                                DEFSYM := SYMSRCH(NAME, CONSTDEF,
+                                                  HOSTSP^.SYMTAB);
+                                DEFSEG := HOSTSP
+                              END;
+
+              PUBLREF:    IF L12 THEN
+                            BEGIN
+                              DEFSYM := SYMSRCH(NAME, PUBLDEF,
+                                                SEGINFO[S]^.SYMTAB);
+                              DEFSEG := SEGINFO[S]
+                            END
+                          ELSE
+                            IF HOSTSP <> NIL THEN
+                              BEGIN
+                                DEFSYM := SYMSRCH(NAME, PUBLDEF,
+                                                  HOSTSP^.SYMTAB);
+                                DEFSEG := HOSTSP
+                              END;
+
+              PRIVREF:    IF L12 THEN
+                            BEGIN
+                              NEWOFFSET := SEGINFO[S]^.PRIVLC;
+                              SEGINFO[S]^.PRIVLC :=
+                                SEGINFO[S]^.PRIVLC+NWORDS;
+                              DEFSYM := REFSYM;
+                              DEFSEG := SEGINFO[S]
+                            END
+                          ELSE
+                            BEGIN
+                              NEWOFFSET := NEXTBASELC;
+                              NEXTBASELC := NEXTBASELC+NWORDS;
+                              IF HOSTSP <> NIL THEN
+                                DEFSYM := REFSYM;
+                              DEFSEG := HOSTSP
+                            END;
+              EXTPROC,
+              SEPPROC,
+              SEPPREF:    BEGIN
+                            SEPSRCH(SEPPROC);
+                            IF LITYPE = SEPPREF THEN
+                              DEFPROC := NIL;
+                            ERR := FALSE;
+                            IF DEFSYM <> NIL THEN
+                              IF LITYPE = SEPPREF THEN
+                                ERR := DEFSYM^.ENTRY.NPARAMS <> NWORDS
+                              ELSE
+                                ERR := DEFSYM^.ENTRY.NPARAMS <> NPARAMS;
+                            IF ERR THEN
+                              BEGIN
+                                WRITE('Proc ', NAME);
+                                ERROR(' param mismatch')
+                              END
+                          END;
+              EXTFUNC,
+              SEPFUNC,
+              SEPFREF:    BEGIN
+                            SEPSRCH(SEPFUNC);
+                            IF LITYPE = SEPFREF THEN
+                              DEFPROC := NIL;
+                            ERR := FALSE;
+                            IF DEFSYM <> NIL THEN
+                              IF LITYPE = SEPFREF THEN
+                                ERR := DEFSYM^.ENTRY.NPARAMS <> NWORDS
+                              ELSE
+                                ERR := DEFSYM^.ENTRY.NPARAMS <> NPARAMS;
+                            IF ERR THEN
+                              BEGIN
+                                WRITE('Func ', NAME);
+                                ERROR(' param mismatch')
+                              END
+                          END;
+
+              UNITREF:    IF UNITSRCH(HOSTFILE, NAME, SEG) = HOSTFILE THEN
+                            BEGIN
+                              DEFSYM := REFSYM;
+                              DEFSEGNUM :=
+                                HOSTFILE^.SEGTBL.SEGMISC[SEG].SEGNUM
+                            END
+                          ELSE
+                            ERROR('unit err')
+            END { CASES } ;
+
+          WP := INLIST;
+          INLIST := WP^.NEXT;
+          IF WP^.DEFSYM = NIL THEN
+            WITH WP^.REFSYM^.ENTRY DO
+              BEGIN
+                CASE LITYPE OF
+                  GLOBREF:  WRITE('Global ');
+                  PUBLREF:  WRITE('Public ');
+                  CONSTREF: WRITE('Const ');
+                  SEPPREF,
+                  EXTPROC:  WRITE('Proc ');
+                  SEPFREF,
+                  EXTFUNC:  WRITE('Func ')
+                END { CASES } ;
+                WRITE(NAME);
+                ERROR(' undefined')
+              END
+          ELSE
+            IF  (WP^.DEFSYM^.ENTRY.LITYPE IN [SEPPROC, SEPFUNC])
+            AND (OUTLIST <> NIL) THEN
+              PROCINSERT(WP)
+            ELSE
+              BEGIN
+                WP^.NEXT := OUTLIST;
+                OUTLIST := WP
+              END
+        END { WHILE }
+    END { RESOLVE } ;
+
+    PROCEDURE REFSRCH(OKSET: LISET; SP: SEGP);
+      VAR LPL, IPL: WORKP;
+          DIFFSEG: BOOLEAN;
+
+      PROCEDURE CHECKREFS(SYM: SYMP);
+        LABEL 1, 2;
+        VAR PL, WP: WORKP;
+            I, N, REF: INTEGER;
+            RP: REFP;
+      BEGIN
+        IF SYM <> NIL THEN
+          BEGIN
+            CHECKREFS(SYM^.LLINK);
+            CHECKREFS(SYM^.RLINK);
+            CHECKREFS(SYM^.SLINK);
+            WITH SYM^.ENTRY DO
+              IF LITYPE IN OKSET THEN
+                BEGIN
+                  N := NREFS;
+                  RP := REFLIST;
+                  WHILE RP <> NIL DO
+                    BEGIN
+                      IF N > 8 THEN
+                        BEGIN
+                          I := 7;
+                          N := N-8
+                        END
+                      ELSE
+                        I := N-1;
+                      REPEAT
+                        REF := RP^.REFS[I];
+                        PL := IPL;
+                        REPEAT
+                          IF PL^.NEEDSRCH THEN
+                            WITH PL^.DEFSYM^.ENTRY.PLACE^ DO
+                              IF REF < SRCBASE THEN
+                                GOTO 2
+                              ELSE
+                                IF REF < SRCBASE+LENGTH THEN
+                                  BEGIN
+                                    NEW(WP);
+                                    WP^.REFSYM := SYM;
+                                    WP^.REFSEG := SP;
+                                    WP^.DEFSYM := NIL;
+                                    WP^.DEFSEG := NIL;
+                                    WP^.NEXT := UOTHER;
+                                    UOTHER := WP;
+                                    GOTO 1
+                                  END;
+                          PL := PL^.NEXT
+                        UNTIL PL = LPL;
+                    2:
+                        I := I-1
+                      UNTIL I < 0;
+                      RP := RP^.NEXT
+                    END { WHILE }
+                END
+          END;
+    1:
+      END { CHECKREFS } ;
+
+    BEGIN { REFSRCH }
+      IPL := NIL;
+      LPL := PROCS;
+      WHILE LPL <> NIL DO
+        IF (LPL^.DEFSEG = SP)
+        AND LPL^.NEEDSRCH THEN
+          BEGIN
+            IPL := LPL;
+            LPL := NIL
+          END
+        ELSE
+          LPL := LPL^.NEXT;
+      IF IPL <> NIL THEN
+        BEGIN
+          LPL := IPL;
+          REPEAT
+            DIFFSEG := LPL^.DEFSEG <> IPL^.DEFSEG;
+            IF NOT DIFFSEG THEN
+              LPL := LPL^.NEXT
+          UNTIL DIFFSEG OR (LPL = NIL);
+          CHECKREFS(SP^.SYMTAB);
+          REPEAT
+            IPL^.NEEDSRCH := FALSE;
+            IPL := IPL^.NEXT
+          UNTIL IPL = LPL
+        END
+    END { REFSRCH } ;
+
+    PROCEDURE FINDLOCALS(SYM: SYMP);
+      VAR WP: WORKP;
+    BEGIN
+      IF SYM <> NIL THEN
+        BEGIN
+          FINDLOCALS(SYM^.LLINK);
+          FINDLOCALS(SYM^.RLINK);
+          FINDLOCALS(SYM^.SLINK);
+          IF SYM^.ENTRY.LITYPE IN [UNITREF, PUBLREF, PRIVREF] THEN
+            BEGIN
+              NEW(WP);
+              WP^.REFSYM := SYM;
+              WP^.REFSEG := NIL;
+              WP^.DEFSYM := NIL;
+              WP^.DEFSEG := NIL;
+              WP^.NEXT := ULOCAL;
+              ULOCAL := WP
+            END
+        END
+    END { FINDLOCALS } ;
+
+  BEGIN { BUILDWORKLISTS }
+    PROCS := NIL;
+    LOCAL := NIL;
+    OTHER := NIL;
+    UPROCS := NIL;
+    ULOCAL := NIL;
+    UOTHER := NIL;
+    WITH SEGINFO[S]^ DO
+      IF NOT (SEGKIND IN [LINKED, LINKED_INTRINS, DATASEG]) THEN
+        BEGIN
+          SEPHOST := SEGKIND = SEPRTSEG;
+          IF SEPHOST THEN
+            BEGIN
+              NEXT := SEPLIST;
+              SEPLIST := SEGINFO[S];
+              UPROCS := FINDPROCS([SEPPROC, SEPFUNC], SYMTAB)
+            END
+          ELSE
+            UPROCS := FINDPROCS([EXTPROC, EXTFUNC], SYMTAB);
+          WHILE UPROCS <> NIL DO
+            BEGIN
+              RESOLVE(UPROCS, PROCS);
+              SP := SEPLIST;
+              WHILE SP <> NIL DO
+                BEGIN
+                  REFSRCH([GLOBREF, SEPPREF, SEPFREF], SP);
+                  SP := SP^.NEXT
+                END;
+              RESOLVE(UOTHER, OTHER);
+              FINDNEWPROCS
+            END;
+          IF NOT SEPHOST THEN
+            BEGIN
+              FINDLOCALS(SYMTAB);
+              RESOLVE(ULOCAL, LOCAL)
+            END;
+          WP := PROCS;
+          WHILE WP <> NIL DO
+            BEGIN
+              WP^.NEEDSRCH := TRUE;
+              WP := WP^.NEXT
+            END;
+          SP := SEPLIST;
+          WHILE SP <> NIL DO
+            BEGIN
+              REFSRCH([PUBLREF, PRIVREF, CONSTREF], SP);
+              SP := SP^.NEXT
+            END;
+          RESOLVE(UOTHER, OTHER)
+        END
+  END { BUILDWORKLISTS } ;
+
+  PROCEDURE READSRCSEG;
+    VAR ORGLENG, ADDR,
+        ADDLENG, ADDPROCS,
+        NEXTSPOT: INTEGER;
+        LAST: 0..MAXPROC;
+        WP: WORKP;
+        LHEAP: ^INTEGER;
+
+    PROCEDURE READNSPLIT;
+      VAR NBLOCKS, N, PDLENG,
+          PDDELTA, NPROCS: INTEGER;
+          CP0, CP1: CODEP;
+    BEGIN
+      NBLOCKS := (SEGLENG+511) DIV 512;
+      IF MEMAVAIL-300 < NBLOCKS*256 THEN
+        BEGIN
+          ERROR('no memory room');
+          LK3
+        END;
+      N := NBLOCKS;
+      REPEAT
+        NEW(CP1);
+        N := N-1
+      UNTIL N <= 0;
+      IF SEPHOST THEN
+        BEGIN
+          STOREWORD(0, SEGBASE, SEGLENG-2);
+          NEXTSPOT := 0
+        END
+      ELSE
+        BEGIN
+          NBLOCKS := (ORGLENG+511) DIV 512;
+          IF BLOCKREAD(SEGINFO[S]^.SRCFILE^.CODE^, SEGBASE^,
+                       NBLOCKS, ADDR) <> NBLOCKS THEN
+            BEGIN
+              ERROR('segment read error');
+              LK3
+            END;
+          PDDELTA := SEGLENG-ORGLENG;
+          NPROCS := FETCHBYTE(SEGBASE, ORGLENG-1);
+          PDLENG := NPROCS*2+2;
+          NEXTSPOT := ORGLENG-PDLENG;
+          CP0 := GETCODEP(ORD(SEGBASE), ORGLENG-PDLENG);
+          CP1 := GETCODEP(ORD(SEGBASE), SEGLENG-PDLENG);
+          IF CP0 <> CP1 THEN
+            BEGIN
+              N := PDLENG;
+              WHILE N > 2 DO
+                BEGIN
+                  STOREWORD(PDDELTA+FETCHWORD(SEGBASE, ORGLENG-N),
+                            SEGBASE, ORGLENG-N);
+                  N := N-2
+                END;
+              MOVERIGHT(CP0^, CP1^, PDLENG);
+              FILLCHAR(CP0^, PDDELTA, CHR(0))
+            END
+        END
+    END { READNSPLIT } ;
+
+  BEGIN { READSRCSEG }
+    IF SEPHOST THEN
+      ORGLENG := 2
+    ELSE
+      WITH SEGINFO[S]^, SRCFILE^.SEGTBL.DISKINFO[SRCSEG] DO
+        BEGIN
+          ORGLENG := CODELENG;
+          ADDR := CODEADDR
+        END;
+    ADDLENG := 0;
+    ADDPROCS := 0;
+    WP := PROCS;
+    WHILE WP <> NIL DO
+      BEGIN
+        ADDLENG := ADDLENG+WP^.DEFSYM^.ENTRY.PLACE^.LENGTH;
+        IF WP^.NEWPROC = 0 THEN
+          ADDPROCS := ADDPROCS+1;
+        WP := WP^.NEXT
+      END;
+    MARK(LHEAP);
+    SEGBASE := GETCODEP(ORD(LHEAP), 0);
+    SEGLENG := ORGLENG+ADDLENG+2*ADDPROCS;
+    IF SEGLENG <= 0 THEN
+      BEGIN
+        ERROR('size overflow');
+        LK3
+      END;
+    READNSPLIT;
+    LAST := FETCHBYTE(SEGBASE, SEGLENG-1);
+    WP := PROCS;
+    WHILE WP <> NIL DO
+      BEGIN
+        WITH WP^.DEFSYM^.ENTRY.PLACE^ DO
+          BEGIN
+            DESTBASE := NEXTSPOT;
+            NEXTSPOT := NEXTSPOT+LENGTH
+          END;
+        IF WP^.NEWPROC = 0 THEN
+          BEGIN
+            LAST := LAST+1;
+            IF LAST > MAXPROC THEN
+              BEGIN
+                ERROR('proc # overflow');
+                LAST := 1
+              END;
+            WP^.NEWPROC := LAST
+          END;
+        WP := WP^.NEXT
+      END;
+    STOREBYTE(LAST, SEGBASE, SEGLENG-1);
+    STOREBYTE(HOSTFILE^.SEGTBL.SEGMISC[S].SEGNUM, SEGBASE, SEGLENG-2)
+  END { READSRCSEG } ;
+
+  PROCEDURE COPYINPROCS;
+    VAR CP0, CP1, PDP,
+        JTAB, SEPBASE: CODEP;
+        WP: WORKP;
+        CURSP: SEGP;
+        LHEAP: ^INTEGER;
+        L9: BOOLEAN;        { no room: copy from the disk directly }
+
+    PROCEDURE READSEPSEG(SP: SEGP);
+      VAR N, NBLOCKS: INTEGER;
+    BEGIN
+      RELEASE(LHEAP);
+      L9 := FALSE;
+      N := SP^.SRCFILE^.SEGTBL.DISKINFO[SP^.SRCSEG].CODELENG;
+      NBLOCKS := (N+511) DIV 512;
+      IF MEMAVAIL-100 < NBLOCKS*256 THEN
+        IF MEMAVAIL-100 < 256 THEN
+          BEGIN
+            ERROR('out of memory');
+            LK3
+          END
+        ELSE
+          L9 := TRUE;
+      IF NOT L9 THEN
+        BEGIN
+          N := NBLOCKS;
+          REPEAT
+            NEW(SEPBASE);
+            N := N-1
+          UNTIL N <= 0;
+          SEPBASE := GETCODEP(ORD(LHEAP), 0);
+          IF BLOCKREAD(SP^.SRCFILE^.CODE^, SEPBASE^, NBLOCKS,
+               SP^.SRCFILE^.SEGTBL.DISKINFO[SP^.SRCSEG].CODEADDR)
+             <> NBLOCKS THEN
+            BEGIN
+              ERROR('sep seg read err');
+              LK3
+            END
+        END;
+      CURSP := SP
+    END { READSEPSEG } ;
+
+    { Copy one procedure's code straight off the disk, one block
+      at a time, when the whole segment does not fit. }
+
+    PROCEDURE LK46(SP: SEGP; SRCBASE: INTEGER; DEST: CODEP;
+                   LENG: ICRANGE);
+      VAR M9, M8, M7, M6, M5: INTEGER;
+    BEGIN
+      RELEASE(LHEAP);
+      M9 := SRCBASE DIV 512;
+      M7 := (LENG+SRCBASE MOD 512+511) DIV 512;
+      IF MEMAVAIL-100 >= M7*256 THEN
+        BEGIN
+          M8 := M9;
+          M5 := LENG
+        END
+      ELSE
+        BEGIN
+          M8 := M9+M7-1;
+          M5 := 512-SRCBASE MOD 512;
+          M7 := 1
+        END;
+      NEW(SEPBASE);
+      WITH SP^, SRCFILE^ DO
+        FOR M6 := M9 TO M8 DO
+          IF BLOCKREAD(CODE^, SEPBASE^, M7,
+                       SEGTBL.DISKINFO[SRCSEG].CODEADDR+M6) <> M7 THEN
+            BEGIN
+              ERROR('proc read error');
+              LK3
+            END
+          ELSE
+            IF M6 = M9 THEN
+              BEGIN
+                MOVELEFT(SEPBASE^[SRCBASE MOD 512], DEST^, M5);
+                DEST := GETCODEP(ORD(DEST), M5)
+              END
+            ELSE
+              IF M6 = M8 THEN
+                MOVELEFT(SEPBASE^, DEST^, (SRCBASE+LENG) MOD 512)
+              ELSE
+                BEGIN
+                  MOVELEFT(SEPBASE^, DEST^, 512);
+                  DEST := GETCODEP(ORD(DEST), 512)
+                END
+    END;
+
+  BEGIN { COPYINPROCS }
+    SEPBASE := NIL;
+    CURSP := NIL;
+    MARK(LHEAP);
+    WP := PROCS;
+    WHILE WP <> NIL DO
+      WITH WP^, DEFSYM^.ENTRY DO
+        BEGIN
+          IF CURSP <> DEFSEG THEN
+            READSEPSEG(DEFSEG);
+          IF TALKATIVE THEN
+            BEGIN
+              WRITE('   Copying ');
+              IF LITYPE = SEPPROC THEN
+                WRITE('proc ')
+              ELSE
+                WRITE('func ');
+              WRITELN(NAME)
+            END;
+          CP1 := GETCODEP(ORD(SEGBASE), PLACE^.DESTBASE);
+          IF L9 THEN
+            LK46(DEFSEG, PLACE^.SRCBASE, CP1, PLACE^.LENGTH)
+          ELSE
+            BEGIN
+              CP0 := GETCODEP(ORD(SEPBASE), PLACE^.SRCBASE);
+              MOVELEFT(CP0^, CP1^, PLACE^.LENGTH)
+            END;
+          JTAB := GETCODEP(ORD(SEGBASE),
+                           PLACE^.DESTBASE+PLACE^.LENGTH-2);
+          IF FETCHBYTE(JTAB, 0) <> 0 THEN
+            STOREBYTE(NEWPROC, JTAB, 0)
+          ELSE
+            BEGIN
+              SEGTBL.SEGMISC[S].MTYPE :=
+                DEFSEG^.SRCFILE^.SEGTBL.SEGMISC[DEFSEG^.SRCSEG].MTYPE;
+              IF L12 THEN
+                STOREBYTE(SEGINFO[S]^.DSEGNUM, JTAB, 1)
+            END;
+          PDP := GETCODEP(ORD(SEGBASE), SEGLENG-2*NEWPROC-2);
+          STOREWORD(ORD(PDP)-ORD(JTAB), PDP, 0);
+          WP := NEXT
+        END;
+    RELEASE(LHEAP)
+  END { COPYINPROCS } ;
+
+  PROCEDURE FIXUPREFS(WORK: WORKP; FIXALLREFS: BOOLEAN);
+    VAR N, I, REF, VAL: INTEGER;
+        WP, WP1: WORKP;
+        RP: REFP;
+        SKIPIT: BOOLEAN;
+  BEGIN
+    WHILE WORK <> NIL DO
+      WITH WORK^, REFSYM^.ENTRY DO
+        BEGIN
+          CASE LITYPE OF
+            SEPPREF,
+            SEPFREF:  VAL := DEFPROC^.NEWPROC;
+            UNITREF:  VAL := DEFSEGNUM;
+            CONSTREF: VAL := DEFSYM^.ENTRY.CONSTVAL;
+            GLOBREF:  VAL := DEFSYM^.ENTRY.ICOFFSET+
+                             DEFPROC^.DEFSYM^.ENTRY.PLACE^.DESTBASE;
+            PUBLREF,
+            PRIVREF:  BEGIN
+                        IF LITYPE = PRIVREF THEN
+                          VAL := NEWOFFSET
+                        ELSE
+                          VAL := DEFSYM^.ENTRY.BASEOFFSET;
+                        IF FORMAT = WORD THEN
+                          BEGIN
+                            IF L12 THEN
+                              VAL := (VAL-1)*2
+                            ELSE
+                              VAL := (VAL-1)*2+MSDELTA;
+                            IF G91 THEN
+                              VAL := VAL DIV 2
+                          END
+                        ELSE
+                          IF VAL < 0 THEN
+                            ERROR('address overflow')
+                      END
+          END;
+          N := NREFS;
+          RP := REFLIST;
+          WHILE RP <> NIL DO
+            BEGIN
+              IF N > 8 THEN
+                BEGIN
+                  I := 7;
+                  N := N-8
+                END
+              ELSE
+                I := N-1;
+              REPEAT
+                REF := RP^.REFS[I];
+                SKIPIT := NOT FIXALLREFS;
+                IF SKIPIT THEN
+                  BEGIN
+                    WP := NIL;
+                    WP1 := PROCS;
+                    WHILE WP1 <> NIL DO
+                      IF WP1^.DEFSEG = REFSEG THEN
+                        BEGIN
+                          WP := WP1;
+                          WP1 := NIL
+                        END
+                      ELSE
+                        WP1 := WP1^.NEXT;
+                    WHILE (WP <> NIL) AND SKIPIT DO
+                      IF WP^.DEFSEG = REFSEG THEN
+                        WITH WP^.DEFSYM^.ENTRY.PLACE^ DO
+                          IF REF >= SRCBASE THEN
+                            IF REF < SRCBASE+LENGTH THEN
+                              BEGIN
+                                REF := REF-SRCBASE+DESTBASE;
+                                SKIPIT := FALSE
+                              END
+                            ELSE
+                              WP := WP^.NEXT
+                          ELSE
+                            WP := NIL
+                      ELSE
+                        WP := NIL
+                  END;
+                IF NOT SKIPIT THEN
+                  CASE FORMAT OF
+                    WORD:  STOREWORD(VAL+FETCHWORD(SEGBASE, REF),
+                                     SEGBASE, REF);
+                    BYTE:  STOREBYTE(VAL, SEGBASE, REF);
+                    BIG:   LK10(VAL, SEGBASE, REF)
+                  END;
+                I := I-1
+              UNTIL I < 0;
+              RP := RP^.NEXT
+            END;
+          WORK := NEXT
+        END
+  END { FIXUPREFS } ;
+
+  PROCEDURE WRITETOCODE;
+    LABEL 1;
+    VAR I: SEGINDEX;
+        NBLOCKS: INTEGER;
+        JTAB: CODEP;
+  BEGIN
+    IF (HOSTSP = SEGINFO[S]) OR L12 THEN
+      BEGIN
+        JTAB := GETCODEP(ORD(SEGBASE), SEGLENG-4);
+        JTAB := GETCODEP(ORD(JTAB), -FETCHWORD(JTAB, 0)-8);
+        IF L12 THEN
+          BEGIN
+            IF SEGINFO[S]^.DSEGNUM <> 0 THEN
+              WITH HOSTFILE^.SEGTBL DO
+                FOR I := 0 TO MAXSEG DO
+                  IF SEGMISC[I].SEGNUM = SEGINFO[S]^.DSEGNUM THEN
+                    BEGIN
+                      SEGINFO[I]^.PRIVLC := SEGINFO[S]^.PRIVLC;
+                      GOTO 1
+                    END
+          END
+        ELSE
+          STOREWORD(NEXTBASELC*2-6, JTAB, 0)
+      END;
+  1:
+    WITH SEGINFO[S]^, SEGTBL DO
+      BEGIN
+        NBLOCKS := (SEGLENG+511) DIV 512;
+        IF BLOCKWRITE(CODE, SEGBASE^, NBLOCKS, NEXTBLK) <> NBLOCKS THEN
+          BEGIN
+            ERROR('code write error');
+            LK3
+          END;
+        DISKINFO[S].CODEADDR := NEXTBLK;
+        DISKINFO[S].CODELENG := SEGLENG;
+        SEGNAME[S] := SRCFILE^.SEGTBL.SEGNAME[SRCSEG];
+        IF L12 THEN
+          SEGKIND[S] := LINKED_INTRINS
+        ELSE
+          SEGKIND[S] := LINKED;
+        SEGMISC[S].SEGNUM := HOSTFILE^.SEGTBL.SEGMISC[S].SEGNUM;
+        NEXTBLK := NEXTBLK+NBLOCKS
+      END
+  END { WRITETOCODE } ;
+
+  PROCEDURE LINKSEGMENT;
+    VAR L2, L1: INTEGER;
+        L3: CODEP;
+        L4: ^INTEGER;
+
+    PROCEDURE WRITEMAP;
+      VAR WP: WORKP;
+          B: BOOLEAN;
+    BEGIN
+      WITH SEGINFO[S]^ DO
+        WRITELN(MAP, 'Seg # ', HOSTFILE^.SEGTBL.SEGMISC[S].SEGNUM, ', ',
+                SRCFILE^.SEGTBL.SEGNAME[SRCSEG]);
+      WP := PROCS;
+      IF WP <> NIL THEN
+        WRITELN(MAP, '   Sep procs');
+      WHILE WP <> NIL DO
+        WITH WP^.DEFSYM^.ENTRY DO
+          BEGIN
+            WRITE(MAP, '      ', NAME);
+            IF LITYPE = SEPPROC THEN
+              WRITE(MAP, ' proc')
+            ELSE
+              WRITE(MAP, ' func');
+            WRITE(MAP, ' # ', WP^.NEWPROC: 3);
+            WRITE(MAP, '    base =', PLACE^.DESTBASE: 6);
+            WRITE(MAP, '    leng =', PLACE^.LENGTH: 5);
+            WRITELN(MAP);
+            WP := WP^.NEXT
+          END;
+      FOR B := FALSE TO TRUE DO
+        BEGIN
+          IF B THEN
+            BEGIN
+              WP := OTHER;
+              IF WP <> NIL THEN
+                WRITELN(MAP, '   Sep proc refs')
+            END
+          ELSE
+            BEGIN
+              WP := LOCAL;
+              IF WP <> NIL THEN
+                WRITELN(MAP, '   Local seg refs')
+            END;
+          WHILE WP <> NIL DO
+            WITH WP^.DEFSYM^.ENTRY DO
+              BEGIN
+                WRITE(MAP, '      ', NAME);
+                CASE LITYPE OF
+                  SEPPROC,
+                  SEPFUNC:   ;
+                  PUBLDEF:   WRITE(MAP, ' public LC =', BASEOFFSET: 5);
+                  CONSTDEF:  WRITE(MAP, ' const val =', CONSTVAL: 6);
+                  PRIVREF:   WRITE(MAP, ' privat LC =', WP^.NEWOFFSET: 5);
+                  UNITREF:   WRITE(MAP, ' unit seg# =', WP^.DEFSEGNUM: 3);
+                  GLOBDEF:   WRITE(MAP, ' glob def in ',
+                                   WP^.DEFPROC^.DEFSYM^.ENTRY.NAME,
+                                   ' @', ICOFFSET: 5)
+                END;
+                WRITELN(MAP);
+                WP := WP^.NEXT
+              END
+        END;
+      WRITELN(MAP)
+    END { WRITEMAP } ;
+
+  BEGIN { LINKSEGMENT }
+    SEPHOST := FALSE;
+    SEGBASE := NIL;
+    SEGLENG := 0;
+    SEGTBL.SEGMISC[S] :=
+      SEGINFO[S]^.SRCFILE^.SEGTBL.SEGMISC[SEGINFO[S]^.SRCSEG];
+    IF SEGINFO[S]^.SRCFILE^.SEGTBL.DISKINFO[SEGINFO[S]^.SRCSEG].CODEADDR
+       < SEGINFO[S]^.SRCFILE^.SEGTBL.SEGDATA[SEGINFO[S]^.SRCSEG] THEN
+      BEGIN
+        SEGTBL.SEGMISC[S].MTYPE := PCODELEAST;
+        SEGTBL.SEGMISC[S].VERSION := 6
+      END;
+    L12 := HOSTFILE^.SEGTBL.SEGKIND[S] IN [UNLINKED_INTRINS,
+                                           LINKED_INTRINS];
+    IF TALKATIVE THEN
+      WITH SEGINFO[S]^ DO
+        WRITELN('Linking ', SRCFILE^.SEGTBL.SEGNAME[SRCSEG], ' # ',
+                HOSTFILE^.SEGTBL.SEGMISC[S].SEGNUM);
+    BUILDWORKLISTS;
+    IF ERRCOUNT = 0 THEN
+      BEGIN
+        IF MAPNAME <> '' THEN
+          WRITEMAP;
+        IF HOSTFILE^.SEGTBL.SEGKIND[S] <> DATASEG THEN
+          BEGIN
+            IF L12 THEN
+              BEGIN
+                MARK(L4);
+                L1 := HOSTFILE^.SEGTBL.DISKINFO[S].CODEADDR
+                      - HOSTFILE^.SEGTBL.SEGDATA[S];
+                IF L1 < 0 THEN
+                  BEGIN
+                    ERROR('interface error');
+                    LK3
+                  END;
+                IF MEMAVAIL-100 < L1*256 THEN
+                  BEGIN
+                    ERROR('interface too big');
+                    LK3
+                  END;
+                L2 := L1;
+                REPEAT
+                  NEW(L3);
+                  L2 := L2-1
+                UNTIL L2 <= 0;
+                IF BLOCKREAD(HOSTFILE^.CODE^, L4^, L1,
+                             HOSTFILE^.SEGTBL.SEGDATA[S]) <> L1 THEN
+                  BEGIN
+                    ERROR('interface read error');
+                    LK3
+                  END
+                ELSE
+                  IF BLOCKWRITE(CODE, L4^, L1, NEXTBLK) <> L1 THEN
+                    BEGIN
+                      ERROR('interface write error');
+                      LK3
+                    END;
+                SEGTBL.SEGDATA[S] := NEXTBLK;
+                NEXTBLK := NEXTBLK+L1;
+                RELEASE(L4)
+              END;
+            READSRCSEG;
+            COPYINPROCS;
+            FIXUPREFS(LOCAL, TRUE);
+            FIXUPREFS(OTHER, FALSE);
+            WRITETOCODE
+          END
+        ELSE
+          BEGIN
+            SEGTBL.DISKINFO[S].CODELENG := (SEGINFO[S]^.PRIVLC-1)*2;
+            L1 := (SEGTBL.DISKINFO[S].CODELENG+511) DIV 512;
+            IF HOSTFILE^.SEGTBL.DISKINFO[S].CODEADDR <> 0 THEN
+              BEGIN
+                MARK(L4);
+                IF BLOCKREAD(HOSTFILE^.CODE^, L4^, L1,
+                             HOSTFILE^.SEGTBL.DISKINFO[S].CODEADDR)
+                   <> L1 THEN
+                  BEGIN
+                    ERROR('data read error');
+                    LK3
+                  END
+                ELSE
+                  IF BLOCKWRITE(CODE, L4^, L1, NEXTBLK) <> L1 THEN
+                    BEGIN
+                      ERROR('data write error');
+                      LK3
+                    END;
+                SEGTBL.DISKINFO[S].CODEADDR := NEXTBLK;
+                NEXTBLK := NEXTBLK+L1;
+                RELEASE(L4)
+              END;
+            SEGTBL.SEGNAME[S] := HOSTFILE^.SEGTBL.SEGNAME[S];
+            SEGTBL.SEGKIND[S] := DATASEG
+          END
+      END;
+    IF SEPHOST THEN
+      SEPLIST := SEGINFO[S]^.NEXT;
+    RELEASE(HEAPBASE)
+  END { LINKSEGMENT } ;
+
+BEGIN { PHASE3 }
+  IF NOT USEWORKFILE THEN
+    BEGIN
+      WRITE('Output file (<ret> for workfile) ? ');
+      READLN(FNAME);
+      IF FNAME <> '' THEN
+        IF FNAME[1] = CHR(27) THEN
+          LK3;
+      LK17(FNAME);
+      USEWORKFILE := FNAME = ''
+    END;
+  IF USEWORKFILE THEN
+    REWRITE(CODE, '*SYSTEM.WRK.CODE[*]')
+  ELSE
+    BEGIN
+      OSPROC43(FNAME, 0, 39);
+      REWRITE(CODE, FNAME)
+    END;
+  IF IORESULT <> 0 THEN
+    BEGIN
+      ERROR('Code open error');
+      LK3
+    END;
+  NEXTBLK := 1;
+  FILLCHAR(SEGTBL, SIZEOF(SEGTBL), CHR(0));
+  FILLCHAR(L289, SIZEOF(L289), CHR(0));
+  WITH SEGTBL DO
+    FOR S := 0 TO MAXSEG DO
+      BEGIN
+        SEGNAME[S] := '        ';
+        SEGKIND[S] := LINKED
+      END;
+  IF MAPNAME <> '' THEN
+    BEGIN
+      REWRITE(MAP, MAPNAME);
+      IF IORESULT <> 0 THEN
+        BEGIN
+          WRITELN('Can''t open ', MAPNAME);
+          MAPNAME := ''
+        END
+      ELSE
+        BEGIN
+          WRITE(MAP, 'Link map for ');
+          IF HOSTSP <> NIL THEN
+            WRITELN(MAP, HOSTSP^.SRCFILE^.SEGTBL.SEGNAME[HOSTSP^.SRCSEG])
+          ELSE
+            IF G29 = MAXSEG1 THEN
+              WRITELN(MAP, 'intrinsic codefile')
+            ELSE
+              WRITELN(MAP, 'assembly host');
+          WRITELN(MAP)
+        END
+    END;
+  MARK(HEAPBASE);
+  FOR S := 0 TO MAXSEG DO
+    IF (SEGINFO[S] <> NIL)
+    AND (SEGINFO[S] <> HOSTSP)
+    AND (HOSTFILE^.SEGTBL.SEGKIND[S] <> DATASEG) THEN
+      LINKSEGMENT;
+  FOR S := 0 TO MAXSEG DO
+    IF (SEGINFO[S] <> NIL)
+    AND (HOSTFILE^.SEGTBL.SEGKIND[S] = DATASEG) THEN
+      LINKSEGMENT;
+  IF HOSTSP <> NIL THEN
+    BEGIN
+      S := G29;
+      LINKSEGMENT
+    END;
+  IF G90 THEN
+    LK11(SEGTBL);
+  SEGTBL.INTRINSSEGS := HOSTFILE^.SEGTBL.INTRINSSEGS;
+  IF BLOCKWRITE(CODE, SEGTBL, 1, 0) <> 1 THEN
+    ERROR('Code write error');
+  IF ERRCOUNT = 0 THEN
+    BEGIN
+      LK2;
+      CLOSE(CODE, LOCK);
+      IF USEWORKFILE THEN
+        WITH USERINFO DO
+          BEGIN
+            GOTCODE := TRUE;
+            CODEVID := SYVID;
+            CODETID := 'SYSTEM.WRK.CODE'
+          END;
+      IF MAPNAME <> '' THEN
+        BEGIN
+          IF HOSTSP <> NIL THEN
+            WRITELN(MAP, 'next base LC = ', NEXTBASELC);
+          CLOSE(MAP, LOCK)
+        END
+    END
+END { PHASE3 } ;
+
+{ Refuse to run on anything but a 1.3 SYSTEM.PASCAL: the byte at
+  $BF21 holds the operating system's version. }
+
+PROCEDURE LK51;
+  TYPE BYTE1 = PACKED ARRAY [0..0] OF 0..255;
+  VAR R: RECORD
+           CASE BOOLEAN OF
+             TRUE: (I: INTEGER);
+             FALSE: (P: ^BYTE1)
+         END;
+BEGIN
+  R.I := -16607;
+  IF R.P^[0] <> 4 THEN
+    BEGIN
+      WRITELN;
+      WRITELN;
+      WRITELN('Version 1.3 of SYSTEM.LINKER cannot run');
+      WRITELN('with a non-1.3 version of SYSTEM.PASCAL');
+      EXIT(LINKER)
+    END
+END;
+
+BEGIN { LINKER }
+  LK51;
+  PHASE1;
+  PHASE2;
+  PHASE3;
+  UNITCLEAR(3)
+END { LINKER } ;
+
+BEGIN
+END.

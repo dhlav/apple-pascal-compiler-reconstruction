@@ -22391,3 +22391,89 @@ What that proves and what it does not:
 So the order of Apple's release step for this file is fixed too: the
 assembler's own segments first, `PASCALIO` added last. `SYSTEM.ASSMBLER`
 is as complete as the disk set allows.
+
+## 268. `SYSTEM.LINKER`: all 12,800 bytes, from I.5's linker and the binary
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/LINKER.text`, compiled
+once by Apple's 1.3 compiler, gives a `LINKER` segment identical to the
+shipped one in all 11,804 bytes, and oscmp scores 51 of 51 procedures
+instruction- and frame-identical. Apple's Librarian then copied slot 1 into
+a fresh file with the notice, and the result equals shipped
+`SYSTEM.LINKER` in **all 12,800 bytes**
+(`acceptance/2026-09-12-linker-complete`,
+`acceptance/2026-09-12-linker-librarian`). No native code, so only two of
+Apple's tools were needed. `probe_linker_whole.py` checks the result on
+every build, and also checks that the kept source still equals `src/`.
+
+### 268a. The shape
+
+**VERIFIED BINARY FACT.** One segment, `LINKER`, slot 1, and slot 0 blank
+with finding 267's Librarian fingerprints. `LINKER.1` ends `RBP 0` with no
+`NOP` pair, so it is the assembler's shape: a `(*$U-*)` program whose first
+`SEGMENT PROCEDURE` is segment 1, taking two parameters it never reads.
+Its frame is 91 words: those two, then I.5's globals in I.5's order (the
+eight `f0..f7` input files are gone), one untyped `FILE` at word 50
+(`NILFILESIZE` 40 words), and two new booleans at 90 and 91.
+
+**VERIFIED SOURCE FACT** (COMPOPTI): `(*$U-*)` turns off both range
+checking and I/O checking. The binary has `CHK` in every procedure except 6
+to 10 and no `CSP 0` anywhere, so Apple turned `R+` back on and left `I-`.
+Procedures 6 to 10 are the byte and word accessors, the same
+`{$R-}`...`{$R+}` region I.5 has.
+
+### 268b. What survives from I.5 and what Apple added
+
+**STRONG INFERENCE**, from the procedure tree read off `CLP`/`CGP` and lex
+levels, and from the bodies: the tree is I.5's, one procedure for one
+procedure. Phase 1 has `BUILDFILELIST` (holding `SETUPFILE`),
+`BUILDSEGINFO` and `BUILDSEPLIST`. Phase 2 has `READLINKINFO` (holding
+`GETENTRY` and `VALIDATE`) and `BUILDPLACES` (holding `PROCSRCH`). Phase 3
+has `BUILDWORKLISTS` with its six children, `READSRCSEG`, `COPYINPROCS`,
+`FIXUPREFS`, `WRITETOCODE` and `LINKSEGMENT`. I.5's record layouts land on
+every offset the binary uses, once each field list is read reversed.
+`ENTERSYM`, `SYMSRCH`, `UNITSRCH`, `ALPHABETIC`, `GETENTRY`, `SEPSRCH`,
+`REFSRCH`, `CHECKREFS`, `FINDLOCALS`, `FINDPROCS` and `BUILDSEPLIST` are
+I.5's bodies unchanged.
+
+**VERIFIED BINARY FACT.** Apple removed `GETFILEP` and `ADDUNIT`, and the
+"first assignable segment" loop and `NEXTSEG` with it. Apple added, each
+visible in the bytes:
+
+- **Byte sex.** Word 90 is set when a host's segment kinds have a nonzero
+  high byte. `LK11` then swaps the whole dictionary, `LK5` swaps a word, and
+  `FETCHWORD`, `STOREWORD` and `READLINKINFO` swap what they read. Phase 1
+  learns which byte is high by storing 1 in a variant record and reading
+  byte 0 back. `SETUPFILE` reaches that record and index two levels up:
+  `STR 2,3` / `LOD 2,2`, not its parent's `P` and `Q`.
+- **Word-addressed heaps.** Word 91 is set when two `NEW`s of one word
+  come out 1 apart. `GETCODEP` then halves byte offsets, and `FIXUPREFS`
+  halves `WORD`-format offsets.
+- **Intrinsic units and data segments.** The 1.3 segment kinds 5-7 appear
+  in `SETUPFILE`'s sets, and the `EOFMARK` entry carries a data segment
+  number checked against 0..63. `RESOLVE` allocates private offsets from
+  the unit's data segment. `LINKSEGMENT` copies an interface's text blocks
+  and a data segment's blocks through to the output file.
+- **Copying from the disk.** When memory is short, `COPYINPROCS` calls
+  `LK46`, which reads a procedure block by block rather than the whole
+  segment.
+- **`BIG` format** is `LK10`: high byte first, plus 128.
+- **A version check** (`LK51`): the byte at `$BF21` must be 4, or the
+  Linker refuses a non-1.3 `SYSTEM.PASCAL`. `LK17` strips a leading DLE
+  blank-compression code from typed file names.
+
+### 268c. Two names the binary forced
+
+**VERIFIED BINARY FACT.** The dictionary field the compiler and the OS call
+`SEGINFO` cannot have that name here. `WRITETOCODE` reads the global
+`SEGINFO` array (`LAO 13`) inside a `WITH` on a dictionary (the temp at
+local 4), and a field of that name would shadow the global. The source
+calls the field `SEGMISC`.
+
+**VERIFIED BINARY FACT.** `MTYPE` is an enumeration, not `0..15`.
+`LINKSEGMENT` stores 2 into it with no `CHK`, and the `VERSION` store right
+after it has one. STATEMEN emits `CHK` for every subrange target under
+`R+`, so the field has no subrange type. UCSD's machine-type names are used
+for it; only `PCODELEAST` = 2 is confirmed.
+
+Everything the I.5 source does not name carries a placeholder: `LK<n>`,
+`G<n>`, `L<n>`/`M<n>`. The user's instruction was confirmed roles only.

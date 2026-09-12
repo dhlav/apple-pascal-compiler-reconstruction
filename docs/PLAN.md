@@ -16,9 +16,10 @@ checks.
 `SYSTEM.ASSMBLER` are reproduced as whole files by Apple's own compiler,
 assembler, Linker and Librarian (findings 267e and 267f; `PASCALIO` in the
 assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 across two
-kept compiles (finding 253). Next in scope: `SYSTEM.LINKER` and
-`SYSTEM.FILER`, each one segment, and both with I.5 ancestors under
-`reference_source/ucsd_15`.
+kept compiles (finding 253). `SYSTEM.LINKER` is identical as a whole
+file too (finding 268), from I.5's linker and the binary. Next in scope:
+`SYSTEM.FILER`, one segment, and `LIBRARY.CODE` and `LIBMAP.CODE`, both
+with I.5 ancestors under `reference_source/ucsd_15`.
 
 `docs/DISKSET.md` is the file-by-file scoreboard;
 `analysis/diskset-inventory.txt` is its machine-readable companion,

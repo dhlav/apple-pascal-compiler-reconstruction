@@ -12,7 +12,9 @@ the 1.1-only tools, probes and generated analysis in `archive/`. Nothing in
 so the tools that sweep that disk skip them by name.
 
 Reconstructed so far: `SYSTEM.COMPILER` (the whole file, finding 267e),
-`SYSTEM.LIBRARY`, `LINEFEED.CODE`, `FORMATTER.CODE`. Plan in
+`SYSTEM.LINKER` (the whole file, finding 268), `SYSTEM.ASSMBLER` (whole
+file with `PASCALIO` borrowed, 267f), `SYSTEM.LIBRARY`, `LINEFEED.CODE`,
+`FORMATTER.CODE`. Plan in
 `docs/PLAN.md`, evidence ledger in `docs/FINDINGS.md`, per-file
 scoreboard in `docs/DISKSET.md`.
 
