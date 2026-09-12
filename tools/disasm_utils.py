@@ -23,12 +23,11 @@ DISKS = {
     "1.3-APPLE1": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
     "1.3-APPLE2": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
     "1.3-APPLE3": "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk",
-    "1.1-APPLE1": "UCSD Pascal 1.1_1.dsk",
-    "1.1-APPLE2": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
-    "1.1-APPLE3": "UCSD Pascal 1.1_3.dsk",
 }
-# These have their own listings already.
-SKIP = {"SYSTEM.COMPILER", "SYSTEM.LIBRARY"}
+# These have their own listings already -- and SYSTEM.PASCAL is the 64K
+# operating system, archived: only 128K.PASCAL is a target, and the 64K
+# build stays inside the APPLE1 image only because evidence cannot change.
+SKIP = {"SYSTEM.COMPILER", "SYSTEM.LIBRARY", "SYSTEM.PASCAL"}
 OUT = ROOT / "analysis" / "utilities"
 
 
@@ -38,12 +37,10 @@ def targets() -> set[str]:
     1.3 is what is being reproduced, so this is the set that has to be
     reconstructed, and it is what the coverage figure is counted over.
 
-    It is *not* a filter on what gets disassembled and lifted. Everything on
-    all six disks still does, because the 1.1-only files cost nothing to
-    keep and one group of them is irreplaceable: eleven demo programs ship
-    as .TEXT on the 1.3 APPLE3 disk and as .TEXT *and* .CODE on 1.1's, and
-    that pair is the only corpus anywhere of Apple's source beside Apple's
-    own output. `probe_calibrate.py` is built on two of them.
+    Only the three 1.3 disks are swept. The 1.1 disks, and with them the
+    demo programs that shipped as .TEXT and .CODE together and calibrated
+    the lifter (archive/tools/probes/probe_calibrate.py), are in
+    evidence/archive/1.1. The archived 64K SYSTEM.PASCAL is left out.
     """
     from a2pascal.disk import PascalDisk as _D
     out = set()
@@ -51,7 +48,8 @@ def targets() -> set[str]:
         if not tag.startswith("1.3"):
             continue
         d = _D.from_file(ROOT / "evidence" / "disks" / fname)
-        out |= {e.name for e in d.directory() if e.kind == "codefile"}
+        out |= {e.name for e in d.directory()
+                if e.kind == "codefile" and e.name != "SYSTEM.PASCAL"}
     return out
 
 

@@ -51,7 +51,6 @@ import applesrc
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "reconstruction"
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 # Addresses the binary computes but nothing lives at: `BODY` emits

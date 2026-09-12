@@ -19,7 +19,6 @@ from a2pascal.names import procname
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "lifted"
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 
@@ -62,7 +61,7 @@ def lift_codefile(cf, ver, title, extern=None):
             nm = procname(seg.name, p.number, ver)
             # A function's parameter area includes the two-word result
             # slot the caller reserves, so its real argument count is two
-            # words fewer (tools/probes/probe_funcresult.py).
+            # words fewer (archive/tools/probes/probe_funcresult.py).
             argw = p.param_size // 2 - (2 if fn else 0)
             hdr = (f"\n{'function' if fn else 'procedure'} {seg.name}."
                    f"{p.number}{':' + nm if nm else ''}"

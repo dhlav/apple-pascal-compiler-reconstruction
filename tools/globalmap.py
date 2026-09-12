@@ -24,7 +24,6 @@ OUT.mkdir(parents=True, exist_ok=True)
 SEG0 = segment0_procedures(ROOT / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT")
 
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 

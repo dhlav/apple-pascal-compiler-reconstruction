@@ -48,13 +48,13 @@ except OSError:
 #
 # VERIFIED SOURCE FACT for everything below, counted off the pops and pushes
 # in each handler of John Brooks' Apple Pascal 1.4 interpreter (Interp.s),
-# then confirmed against the binary by tools/probes/probe_csp_check.py --
+# then confirmed against the binary by archive/tools/probes/probe_csp_check.py --
 # adopting these arities raises the number of cleanly balancing procedures,
 # which is a result a wrong table could not produce.
 #
 # This replaces four values that the earlier hand-built table got wrong by
 # counting Pascal arguments instead of stack words (CSP 2, 3, 10, 11), and
-# supplies the ten that tools/probes/probe_csp_arity.py could not reach. The
+# supplies the ten that archive/tools/probes/probe_csp_arity.py could not reach. The
 # two that probe did solve, 34 and 40, are confirmed exactly: they are
 # IORESULT and MEMAVAIL, both zero-argument word-returning functions.
 # (segment, procedure number) -> (param words, is function, name).
@@ -67,7 +67,7 @@ except OSError:
 # Native procedures carry no p-code to read a signature out of, so it has
 # to be supplied. The word count is the total the call pops, which for a
 # function includes the two-word result area the caller reserves
-# (tools/probes/probe_funcresult.py): TREESEARCH takes three arguments --
+# (archive/tools/probes/probe_funcresult.py): TREESEARCH takes three arguments --
 # the same three 1.1 passes to CSP 8 -- plus that area, so five.
 # A native procedure's parameter count is not in the codefile at all. The
 # attribute word says `procnum = 0` and nothing else (finding 44), and the
@@ -259,7 +259,7 @@ def _real(words: list[int]) -> str:
 
 
 class _Lifter:
-    def __init__(self, param_words: int, callee_words, release: str = "1.1",
+    def __init__(self, param_words: int, callee_words, release: str = "1.3",
                  sets_only: bool = False):
         self.param_words = param_words
         self.callee_words = callee_words       # (kind, a, b) -> words popped
@@ -498,7 +498,7 @@ class _Lifter:
                         # caller pushes them as two literal zeros -- 154 of
                         # 154 function call sites across both releases, and
                         # 0 of 2961 procedure call sites
-                        # (tools/probes/probe_funcresult.py). They are not
+                        # (archive/tools/probes/probe_funcresult.py). They are not
                         # arguments, so they do not belong in the argument
                         # list.
                         args = args[:-2]
@@ -520,7 +520,7 @@ class _Lifter:
         return st
 
 
-def lift(seg, proc, cf, release: str = "1.1",
+def lift(seg, proc, cf, release: str = "1.3",
          extern=None) -> list[Block]:
     """Lift one procedure to blocks of pseudo-Pascal.
 

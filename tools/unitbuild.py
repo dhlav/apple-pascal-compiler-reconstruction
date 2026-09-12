@@ -34,7 +34,6 @@ EMUNAME = {"TRANSCEND": "TRANSCND", "CHAINSTUFF": "CHAINSTF",
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "pascal" / "units"
 LIB = {
-    "1.1": "UCSD Pascal 1.1_1.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
 }
 # The unit's own name against the eight characters the dictionary holds.

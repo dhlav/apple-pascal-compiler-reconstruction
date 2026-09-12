@@ -28,9 +28,6 @@ STEPS = [
     # rather than the SEGMENT PROCEDURE findings 190/194 kept failing to
     # compile (finding 200).
     ("SEGKIND: FIOPRIMS is a unit", "probes/probe_segkind.py"),
-    # Not an artifact: the three APPLE3 utilities 1.3 shipped without
-    # rebuilding differ from their 1.1 copies only inside SEGINFO.
-    ("utilities 1.3 did not rebuild", "probes/probe_stale_utils.py"),
     ("segment/procedure maps", "map_compiler.py"),
     ("SYSTEM.LIBRARY unit map and interfaces", "libmap.py"),
     ("p-code decoder self-check", "validate_pcode.py"),
@@ -74,15 +71,13 @@ STEPS = [
     # is no source anywhere to port them from, so this map is where its VAR
     # block has to come from (finding 235).
     ("global data map, the assembler", "globalmap.py",
-     ["--target", "SYSTEM.ASSMBLER",
-      "--disk", "1.1=Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"]),
+     ["--target", "SYSTEM.ASSMBLER"]),
     # Half artifact, half probe: it writes the assembler's VAR block out as
     # Pascal, and refuses to write anything unless every declaration lands
     # on the offset the binary uses and the last one ends exactly on the
     # frame. With no source anywhere to name these globals from, that sum is
     # the only check the block has (finding 235d).
     ("the assembler's VAR block", "asmvars.py"),
-    ("1.1 -> 1.3 correspondence", "globaldiff.py"),
     ("procedure profiles", "procprofile.py"),
     ("II.0 VAR block alignment", "vardecl.py"),
     # Not an artifact: lays out UCSD's compiler records and requires them to
@@ -106,13 +101,6 @@ STEPS = [
     ("lift to pseudo-Pascal", "liftall.py"),
     ("lift the operating system", "liftos.py"),
     ("lift SYSTEM.LIBRARY", "liblift.py"),
-    # Not an artifact: lifts the two GOTOXY programs whose Pascal source is
-    # on the same disk and diffs the result against it (finding 49).
-    ("lifter calibration", "probes/probe_calibrate.py"),
-    # Not an artifact: compiles the two GOTOXY programs on the host and
-    # diffs the result against Apple's own compiled output (finding 55).
-    # Skips, loudly, if the toolchain is not built.
-    ("host compile vs Apple's output", "probes/probe_xcompile.py"),
     # Not an artifact: the same idea at scale -- 41 operating system
     # procedures against the UCSD II.0 source, checking loops and calls
     # rather than exact text, because Apple's is a fork (finding 52).

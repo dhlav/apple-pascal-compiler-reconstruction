@@ -11,13 +11,12 @@ from a2pascal.names import procname
 
 ROOT = Path(__file__).resolve().parent.parent
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 
 args = sys.argv[1:]
-ver = "1.1"
-if args and re.fullmatch(r"1\.[13]", args[0]):
+ver = "1.3"
+if args and re.fullmatch(r"1\.3", args[0]):
     ver, args = args[0], args[1:]
 
 disk = PascalDisk.from_file(ROOT / "evidence" / "disks" / DISKS[ver])

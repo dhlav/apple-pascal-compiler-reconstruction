@@ -11,7 +11,7 @@ Self-relative pointers (used by jump tables and XJP) are stored as the
 amount to SUBTRACT from the address of the pointer word itself.
 
 One-byte short forms. These boundaries were verified against the binaries
-with tools/probes/probe_short_form_base.py, which checks that the increment
+with archive/tools/probes/probe_short_form_base.py, which checks that the increment
 idiom `<short load X>; SLDC 1; ADI; <long store X>` names the same variable
 on both sides -- the long store's operand is unambiguous, so it pins the
 short load's base:

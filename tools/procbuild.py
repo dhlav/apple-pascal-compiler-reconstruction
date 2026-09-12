@@ -61,8 +61,7 @@ import xcompile
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "pascal"
 SKEL = ROOT / "analysis" / "reconstruction"
-DISKS = {"1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
-         "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"}
+DISKS = {"1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"}
 END = ("RNP", "RBP", "XIT")
 HOSTSEG = "PASCALSY"      # the skeleton's host program, finding 63
 
@@ -1073,8 +1072,8 @@ def main() -> int:
     check = "--emu-check" in sys.argv
     only = next((a.split("=", 1)[1] for a in sys.argv
                  if a.startswith("--ver=")), None)
-    if only not in (None, "1.1", "1.3"):
-        raise SystemExit(f"--ver={only}: expected 1.1 or 1.3")
+    if only not in (None, "1.3"):
+        raise SystemExit(f"--ver={only}: only 1.3 is built; 1.1 is archived")
     want = {a.upper() for a in args}
     if not emu and not check and not xcompile.available():
         print("SKIPPED: ucsdpsys_compile is not built "
@@ -1082,7 +1081,7 @@ def main() -> int:
         return 0
 
     done = stubs = bad = bytebad = 0
-    for ver in ("1.3", "1.1"):
+    for ver in ("1.3",):
         if only and ver != only:
             continue
         segs = sources(ver)

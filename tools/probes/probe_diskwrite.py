@@ -372,8 +372,7 @@ else:
     # And the contents have to come back out. Its `-g` decodes `.TEXT` and
     # renders DLE indentation as tabs, so compare with tabs expanded.
     src = {"SEARCH.TEXT": ROOT / "src/native/SEARCH.TEXT",
-           "SKEL13.TEXT": ROOT / "analysis/reconstruction/skeleton-1.3.text",
-           "SKEL11.TEXT": ROOT / "analysis/reconstruction/skeleton-1.1.text"}
+           "SKEL13.TEXT": ROOT / "analysis/reconstruction/skeleton-1.3.text"}
     got = xcompile.fs(
         f'd=$(mktemp -d) && cd "$d" && ucsdpsys_disk -f "{wp}" '
         + " ".join(f"-g {n}" for n in src)

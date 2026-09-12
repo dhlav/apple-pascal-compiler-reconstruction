@@ -29,7 +29,6 @@ ROOT = Path(__file__).resolve().parent.parent
 LIFTED = ROOT / "analysis" / "lifted"
 PCODE = ROOT / "analysis" / "pcode_disassembly"
 DISKS = {
-    "1.1": "UCSD Pascal 1.1_1.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
 }
 

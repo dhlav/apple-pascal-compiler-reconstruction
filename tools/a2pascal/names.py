@@ -70,7 +70,7 @@ PASCALCO_11: dict[int, str] = {
     23: "FINISHSEG",    # close the current segment: emit the procedure
                          # dictionary from PROCDICT, then the segment number
                          # and procedure count, record the segment's length
-                         # and reset LCBASE. See tools/probes/probe_segtail.py
+                         # and reset LCBASE. See archive/tools/probes/probe_segtail.py
     25: "COMPILE",       # stamp the start time, call BLOCK with the outermost
                          # fsys, then FINISHUP.1 -- the whole compilation
     28: "HOLDMOST",      # hold DECLARAT, BODYPART, NUMSTRIN, STATEMEN,
@@ -680,7 +680,7 @@ SYMBOL_SET_NAMES = {
 # descriptors and the standard identifiers come straight out of COMPINIT's
 # two initialisation procedures, which name each descriptor by storing
 # `LPA 'INTEGER '` next to the pointer that refers to it -- see
-# `tools/probes/probe_stdtypes.py` and finding 22.
+# `archive/tools/probes/probe_stdtypes.py` and finding 22.
 GLOBALS_11: dict[int, str] = {
     12: "INTPTR",       # INTEGER   size 1 word, form scalar, standard
     15: "SY",           # current symbol; written 20x in INSYMBOL, read 256x
@@ -1231,9 +1231,9 @@ IDCLASS = {                    # `klass`, with the record size it implies
 }
 
 
-def procname(segname: str, number: int, release: str = "1.1"):
+def procname(segname: str, number: int, release: str = "1.3"):
     return PROC_NAMES.get(release, {}).get((segname, number))
 
 
-def globalname(number: int, release: str = "1.1"):
+def globalname(number: int, release: str = "1.3"):
     return GLOBAL_NAMES.get(release, {}).get(number)

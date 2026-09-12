@@ -18,7 +18,6 @@ from a2pascal.syscall import segment0_procedures
 ROOT = Path(__file__).resolve().parent.parent
 SEG0 = segment0_procedures(ROOT / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT")
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 CONTEXT = 6      # instructions of argument setup to show before each call

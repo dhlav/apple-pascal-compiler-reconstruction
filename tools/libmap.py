@@ -29,7 +29,6 @@ from a2pascal.codefile import CodeFile
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "analysis" / "library"
 DISKS = {
-    "1.1": ("UCSD Pascal 1.1_1.dsk", "SYSTEM.LIBRARY"),
     "1.3": ("Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.LIBRARY"),
 }
 # The segment dictionary, 512 bytes at the head of every codefile. Offsets

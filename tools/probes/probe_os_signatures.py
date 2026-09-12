@@ -29,8 +29,6 @@ from a2pascal import syscall as sc
 
 ROOT = Path(__file__).resolve().parents[2]
 BUILDS = [
-    ("1.1", "UCSD Pascal 1.1_1.dsk", "SYSTEM.PASCAL"),
-    ("1.3", "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.PASCAL"),
     ("1.3-128K", "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "128K.PASCAL"),
 ]
 AGREE_THROUGH = 42          # and 43 must differ

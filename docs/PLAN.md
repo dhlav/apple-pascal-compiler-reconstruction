@@ -5,12 +5,20 @@ shipped, a source that Apple's own tools turn back into the shipped bytes.
 Readable pseudocode is not the target and never was; byte-identical output
 from `SYSTEM.COMPILER`, `SYSTEM.ASSMBLER` and `SYSTEM.LINKER` is.
 
-**The target is 1.3 and the 128K system** (`128K.APPLE` + `128K.PASCAL`).
-1.1 is not a goal and is not discarded: it ships *source* for utilities 1.3
-ships only as codefiles, its binaries are simpler (no native code at all),
-and comparing the two releases is what says which files Apple actually
-rebuilt. Every 1.1 fact should be pushed through the correspondence table
-of finding 11 and checked against 1.3 rather than left version-specific.
+**The target is 1.3 and the 128K system only** (`128K.APPLE` +
+`128K.PASCAL`). As of 2026-09-12 the 64K `SYSTEM.APPLE`/`SYSTEM.PASCAL` and
+all of 1.1 are archived and out of the build (`archive/README.md`). The
+history below still cites 1.1 where 1.1 is how a fact was first found;
+treat those as leads to confirm against the 1.3 binaries, not as live
+checks.
+
+**Current state** (the sections below are older): `SYSTEM.COMPILER` and
+`SYSTEM.ASSMBLER` are reproduced as whole files by Apple's own compiler,
+assembler, Linker and Librarian (findings 267e and 267f; `PASCALIO` in the
+assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 across two
+kept compiles (finding 253). Next in scope: `SYSTEM.LINKER` and
+`SYSTEM.FILER`, each one segment, and both with I.5 ancestors under
+`reference_source/ucsd_15`.
 
 `docs/DISKSET.md` is the file-by-file scoreboard;
 `analysis/diskset-inventory.txt` is its machine-readable companion,

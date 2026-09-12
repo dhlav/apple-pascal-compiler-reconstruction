@@ -17,7 +17,7 @@ declarations are complete and whose body is empty, which is exactly the thing
 `ucsdpsys_compile` can be pointed at to find out whether the declarations are
 well formed at all.
 
-Writes analysis/reconstruction/skeleton-{1.1,1.3}.text.
+Writes analysis/reconstruction/skeleton-1.3.text.
 """
 import re
 import sys
@@ -70,7 +70,7 @@ OUT = ROOT / "analysis" / "reconstruction"
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    for ver in ("1.1", "1.3"):
+    for ver in ("1.3",):
         consts, types, notes = applesrc.blocks(ver)
         # The VAR block is generated separately and offset-checked; take the
         # declarations out of it and leave its commentary behind.

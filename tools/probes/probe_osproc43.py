@@ -1,10 +1,12 @@
-"""OSPROC43 against both operating systems and both compilers (finding 89).
+"""OSPROC43 against the 128K operating system and the compiler (finding 89).
 
 Finding 79b established that the compiler names the operating system by
 declaring 42 unresolved FORWARDs and calling the 43rd, and left what the
 43rd *does* open. It is `FILEPROC.8`, the file-title normaliser, and this
-re-derives the whole chain from the four binaries rather than trusting the
-write-up:
+re-derives the whole chain from the binaries rather than trusting the
+write-up. It once read 1.1's OS and compiler as well; those disks are in
+evidence/archive/1.1 now, and the 1.1-only halves of checks 3 and 4 no
+longer run:
 
   1. `SYSTEM.PASCAL`'s procedure 43 is a seven-instruction forwarder into
      `FILEPROC`'s four-arm dispatcher, arm 4;
@@ -29,10 +31,9 @@ from a2pascal.codefile import CodeFile
 from a2pascal.pcode import disassemble
 
 ROOT = Path(__file__).resolve().parents[2]
-OS_DISKS = (("1.1", "UCSD Pascal 1.1_1.dsk"),
-            ("1.3", "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk"))
-CO_DISKS = (("1.1", "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk"),
-            ("1.3", "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"))
+OS_DISKS = (("1.3", "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk",
+             "128K.PASCAL"),)
+CO_DISKS = (("1.3", "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk"),)
 
 # The forwarder, in full. `4` selects FILEPROC.1's fourth arm; @G4 and G294
 # are procedure 43's own local buffer, which that arm never reads -- they
@@ -81,9 +82,9 @@ def literals(ins):
     return {i.operands[0] for i in ins if i.mnemonic == "LSA"}
 
 
-for rel, fname in OS_DISKS:
-    print(f"=== SYSTEM.PASCAL {rel} ===")
-    cf = load(fname, "SYSTEM.PASCAL")
+for rel, fname, member in OS_DISKS:
+    print(f"=== {member} {rel} ===")
+    cf = load(fname, member)
     sys0 = segment(cf, "PASCALSY")
     p43 = procedure(sys0, 43)
     check(p43.param_size == 6, f"{rel}: procedure 43 takes three words")

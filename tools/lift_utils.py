@@ -20,8 +20,7 @@ from disasm_utils import DISKS, SKIP, OUT, targets, stems
 
 # The boot disk of each release, for the Intrinsic Units a program calls but
 # does not contain.
-LIBDISK = {"1.3": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
-           "1.1": "UCSD Pascal 1.1_1.dsk"}
+LIBDISK = {"1.3": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk"}
 
 
 def library(ver):

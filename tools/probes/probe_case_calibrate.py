@@ -38,8 +38,7 @@ from a2pascal.structure import structure
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "reference_source" / "ucsd_ii0" / "SYSSEGS.A.TEXT"
 BUILDS = [
-    ("1.1", "UCSD Pascal 1.1_1.dsk", "SYSTEM.PASCAL"),
-    ("1.3", "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.PASCAL"),
+    ("1.3", "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "128K.PASCAL"),
 ]
 # Apple's departures from II.0, per release. Each must STILL be a departure.
 DROPPED = {"1.1": {15, 19}, "1.3": {15}}          # inner labels II.0 has, Apple lacks

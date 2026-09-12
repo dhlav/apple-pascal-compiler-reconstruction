@@ -4,10 +4,12 @@ Reconstruct source for every file on the **Apple Pascal 1.3 disk set**, such
 that Apple's own tools turn that source back into the shipped bytes.
 Readable pseudocode is not the target — byte-identical output is.
 
-Target is **1.3 on the 128K system** (`128K.APPLE` + `128K.PASCAL`), not the
-64K `SYSTEM.PASCAL`. 1.1 stays in use: it ships *source* for utilities 1.3
-ships only as codefiles, and comparing releases says which files Apple
-actually rebuilt.
+Target is **1.3 on the 128K system only** (`128K.APPLE` + `128K.PASCAL`).
+The 64K `SYSTEM.APPLE`/`SYSTEM.PASCAL` and everything 1.1 are **archived**:
+the 1.1 disk images in `evidence/archive/1.1/`, the 1.1 compiler source and
+the 1.1-only tools, probes and generated analysis in `archive/`. Nothing in
+`build_all.py` reads them. The 64K pair cannot leave the 1.3 `APPLE1` image,
+so the tools that sweep that disk skip them by name.
 
 Reconstructed so far: `SYSTEM.COMPILER` (the whole file, finding 267e),
 `SYSTEM.LIBRARY`, `LINEFEED.CODE`, `FORMATTER.CODE`. Plan in
@@ -24,6 +26,8 @@ notes about what you found and where.
 ## Hard rules
 
 1. **Nothing in `evidence/` is ever modified.** It is Apple's shipped media.
+   Archived images moved to `evidence/archive/` keep their bytes exactly and
+   stay read-only; a move is not a modification, an edit is.
 2. **`build/`, `analysis/`, `reference_source/` are generated.** Never
    hand-edit them — change the tool and rerun `python tools/build_all.py`.
    That script is the single entry point and must exit 0 before any commit.
@@ -38,15 +42,18 @@ notes about what you found and where.
 ## Layout
 
 ```
-evidence/disks/      six .dsk images, read-only
+evidence/disks/      the three 1.3 .dsk images + ii0src.sdk, read-only
+evidence/archive/    archived media (1.1), bytes unchanged, read-only
+evidence/reference/  manuals, and UCSD's I.5 sources (names only)
 src/native/          6502 assembly (Apple Assembler syntax)
-src/pascal/1.1|1.3/  the compiler, PASCALCO.text + phases/
+src/pascal/1.3/      the compiler, PASCALCO.text + phases/
 src/pascal/units/    SYSTEM.LIBRARY units
 src/pascal/programs/ standalone utilities
 tools/               generators; a2pascal/ is the library
 tools/probes/        checks, not artifacts — wired into build_all.py
 acceptance/          what Apple's own tools produced, kept verbatim
 docs/                PLAN, FINDINGS, DISKSET
+archive/             1.1 source, tools, probes, analysis -- not run
 ```
 
 `tools/a2pascal/`: `disk.py` `diskwrite.py` (Pascal volumes), `codefile.py`
@@ -170,9 +177,9 @@ a2pascal can't) and diff.
   disk — and `BOOT128` does not carry it.
 - **Run on 128K.** The 64K system cannot compile Apple's own `HILBERT.TEXT`
   (runtime stack overflow). `mkbootdisk.py` builds `BOOT128.dsk`.
-- **Check the version banner** if a compile behaves oddly: mounting 1.1's
-  APPLE2 gives `SYSTEM.COMPILER is not version 1.3` and drops you in the
-  Editor.
+- **Check the version banner** if a compile behaves oddly: a compiler from
+  another release gives `SYSTEM.COMPILER is not version 1.3` and drops you
+  in the Editor.
 - AppleWin registry settings are **version-specific in value and type**
   (`Emulation Speed` is REG_SZ). See finding 57d.
 - **AppleWin opens `-d1`/`-d2` read-write and will write to evidence.** A
@@ -297,8 +304,9 @@ behaving more like the name than the one holding it. Write the evidence down
 and leave the name alone until the answer is known — renaming twice is worse
 than renaming late.
 
-When a 1.1 fact is established, push it through the correspondence table
-(finding 11) and confirm it in 1.3. Divergences are findings, not noise.
+The 1.1 -> 1.3 correspondence table (finding 11) and its tools are archived
+with 1.1. Findings that cite 1.1 are history; confirm anything they claim
+against the 1.3 binaries before relying on it.
 
 ## Git
 

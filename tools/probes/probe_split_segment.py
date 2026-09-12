@@ -33,16 +33,20 @@ from a2pascal.codefile import CodeFile
 ROOT = Path(__file__).resolve().parent.parent.parent
 DISKS = ROOT / "evidence" / "disks"
 
-# The three operating system builds. Apple ships two memory maps of the same
-# system, and they split it at different points, which is the best evidence
-# that the split is a property of the build and not of the source.
+# The operating system build this project targets. Apple ships two memory
+# maps of the same system and they split it at different points -- which is
+# the best evidence the split is a property of the build, not the source --
+# but only 128K.PASCAL is a target now; the 64K SYSTEM.PASCAL and 1.1's OS
+# are archived.
 SPLIT = [
-    ("1.1 SYSTEM.PASCAL", "UCSD Pascal 1.1_1.dsk", "SYSTEM.PASCAL", 57, 28, 29),
-    ("1.3 SYSTEM.PASCAL",
-     "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.PASCAL", 58, 32, 26),
     ("1.3 128K.PASCAL",
      "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "128K.PASCAL", 58, 16, 42),
 ]
+
+# Still inside the APPLE1 image, which cannot change, and still split -- but
+# archived rather than a target, so the sweep neither expects nor objects to
+# its join.
+ARCHIVED = {("Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.PASCAL")}
 
 fails = []
 checks = 0
@@ -115,7 +119,9 @@ for dsk in sorted(DISKS.glob("*.dsk")):
         if not cf.segments or not any(s.procedures for s in cf.segments):
             continue
         seen += 1
-        expect = any(fn == e.name and dk == dsk.name for _, dk, fn, *_ in SPLIT)
+        expect = (any(fn == e.name and dk == dsk.name
+                      for _, dk, fn, *_ in SPLIT)
+                  or (dsk.name, e.name) in ARCHIVED)
         for s in cf.segments:
             if s.is_split and not expect:
                 split_elsewhere += 1

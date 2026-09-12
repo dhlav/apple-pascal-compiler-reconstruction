@@ -20,7 +20,6 @@ from a2pascal.pcode import disassemble, sweep_exit
 
 ROOT = Path(__file__).resolve().parent.parent
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 

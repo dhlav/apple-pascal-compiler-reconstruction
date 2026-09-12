@@ -36,12 +36,11 @@ VOLUME = "WORK"
 VOLUME2 = "WORK2"
 
 # (name on the volume, source file). Names are upper case and at most 15
-# characters, and `SKEL13`/`SKEL11` are inside Apple Pascal's eight
-# significant characters as well, so the two cannot collide.
+# characters, and inside Apple Pascal's eight significant characters as well.
+# The 1.1 skeleton (`SKEL11`) went to archive/ with the rest of 1.1.
 FILES = [
     ("SEARCH.TEXT", ROOT / "src" / "native" / "SEARCH.TEXT"),
     ("SKEL13.TEXT", ROOT / "analysis" / "reconstruction" / "skeleton-1.3.text"),
-    ("SKEL11.TEXT", ROOT / "analysis" / "reconstruction" / "skeleton-1.1.text"),
     # The APPLE3 utilities, smallest first. LINEFEED is Apple's own source,
     # off the 1.1 APPLE3 disk, carried over unaltered as the hypothesis for
     # 1.3 -- the two releases ship byte-identical codefiles for it.

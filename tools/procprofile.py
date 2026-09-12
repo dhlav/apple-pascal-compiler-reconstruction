@@ -7,7 +7,7 @@ literal strings it contains.
 
 Function detection uses the db operand of the terminating RNP/RBP, which is
 the function result size in words -- 0 for a procedure. See
-tools/probes/probe_rnp_operand.py for the evidence.
+archive/tools/probes/probe_rnp_operand.py for the evidence.
 """
 import sys
 from collections import Counter, defaultdict
@@ -25,7 +25,6 @@ OUT.mkdir(parents=True, exist_ok=True)
 SEG0 = segment0_procedures(ROOT / "reference_source" / "ucsd_ii0" / "GLOBALS.TEXT")
 
 DISKS = {
-    "1.1": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
     "1.3": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
 }
 GLOBAL_OPS = {"LDO": "r", "SLDO": "r", "SRO": "w", "LAO": "&"}

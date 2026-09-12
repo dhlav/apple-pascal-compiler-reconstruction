@@ -50,8 +50,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "reference_source" / "ucsd_ii0"
 SOURCES = ("SYSTEM.A.TEXT", "SYSTEM.B.TEXT", "SYSTEM.C.TEXT")
 BUILDS = [
-    ("1.1", "UCSD Pascal 1.1_1.dsk", "SYSTEM.PASCAL"),
-    ("1.3", "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk", "SYSTEM.PASCAL"),
+    ("1.3", "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk", "128K.PASCAL"),
 ]
 ALIGNED = range(2, 43)          # finding 51: II.0's numbering holds to 42
 MAX_WRONG_PAIRING = 0.15        # measured 0.073 / 0.075

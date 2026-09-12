@@ -119,11 +119,6 @@ RELEASES = {
     "1.3": {"d1": "Apple II Pascal 1.3 APPLE1_ 680-0283-A.dsk",
             "d2": "Apple II Pascal 1.3 APPLE2_ 680-0284-A.dsk",
             "s5d2": "Apple II Pascal 1.3 APPLE3_ 680-0290-A.dsk"},
-    # 1.1's APPLE1 is not in evidence/; only its APPLE2 is, so 1.1 boots off
-    # the UCSD disk that carries the GOTOXY pair.
-    "1.1": {"d1": "UCSD Pascal 1.1_1.dsk",
-            "d2": "Apple II Pascal 1.1 APPLE2_ 680-0005-01.dsk",
-            "s5d2": "UCSD Pascal 1.1_3.dsk"},
 }
 
 
