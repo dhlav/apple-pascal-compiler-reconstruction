@@ -22338,3 +22338,32 @@ The test that turns this from inference into fact is to run Apple's own
 `LIBRARY.CODE` on `COMPLINK.CODE` -- whose fifteen real segments are
 already byte-identical -- and compare the result with shipped
 `SYSTEM.COMPILER` up to the end of each segment.
+
+### 267e. Tested: Apple's Librarian turns the linked reconstruction into shipped `SYSTEM.COMPILER`, every byte
+
+**VERIFIED BINARY FACT.** `emuremote.py` now drives `LIBRARY.CODE` (a new
+`librarian` action, answering each `Copy slot N?` from the slot number it
+actually reads). Run on `COMPLINK.CODE` -- the reconstruction compiled by
+Apple's compiler, `SEARCH` assembled by Apple's assembler, the two linked
+by Apple's Linker -- copying slots 1 to 15 and answering `Notice?` with
+`COPYRIGHT 1979,1980,1983-1985 APPLE COMPUTER, INC. ALL RIGHTS RESERVED`:
+
+```
+sizes: shipped 39936  ours 39936
+whole file identical: True
+```
+
+**All 39,936 bytes of `SYSTEM.COMPILER`**, block 0, all fifteen segments,
+and the slack after each segment's end, which CLAUDE.md warns is normally
+uninitialised leftovers and not comparable. It is identical here because
+the Librarian copies whole blocks, and the blocks it copied were produced
+by the same tools, in the same order, as Apple's
+(`acceptance/2026-09-12-compiler-librarian`).
+
+So finding 105a is closed, and was never a gap in the source: the release
+step was the Librarian, and segment 0 is simply the slot it was never asked
+to copy. `SYSTEM.COMPILER` is the first **system program** on the disk set
+reproduced whole by Apple's own tools from this repository's source, and
+the first to need all four of them. `probe_compiler_whole.py` checks the
+kept file every build, and checks the Librarian's input is *not* already
+Apple's file, so the comparison cannot pass by being blind.

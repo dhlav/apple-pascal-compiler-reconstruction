@@ -4,6 +4,8 @@
     python tools/emuremote.py assemble SEARCH
     python tools/emuremote.py link --host FORMATTR --lib FMTNATIV --out FORMATTR
     python tools/emuremote.py observe A --seconds 40      # what does it prompt?
+    python tools/emuremote.py librarian --input COMPLINK --out LIBTEST \
+        --slots 1-15 --notice "COPYRIGHT ..."            # finding 267
 
 The `emu*.ps1` scripts type into AppleWin's window with SendKeys and capture
 a screenshot. They still work and are still the fallback, but they carry
@@ -465,8 +467,87 @@ def do_observe(con: Console, args) -> int:
     return 0
 
 
+LIB_COPY = re.compile(rb"Copy slot\D{0,12}?(\d+)\s*\?")
+
+
+def slots_in(spec: str) -> set[int]:
+    """`1-15` or `0,3-5` -> the slot numbers it names."""
+    out: set[int] = set()
+    for part in spec.split(","):
+        lo, _, hi = part.partition("-")
+        out.update(range(int(lo), int(hi or lo) + 1))
+    return out
+
+
+def nonzero_slots(name: str) -> list[int]:
+    """The slots LIBRARY.CODE's `?` mode will ask about, read off SYSHD.
+
+    It asks once for every slot whose length is non-zero, in slot order,
+    and prints nothing after the last question. Knowing the list up front
+    is what tells the driver when the questions are over, and lets it check
+    that each question it sees is the one it expected.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        cp2("extract", "--raw", "--strip-paths", str(HD1), f"{name}.CODE",
+            cwd=Path(tmp))
+        b = (Path(tmp) / f"{name}.CODE").read_bytes()
+    return [s for s in range(16) if b[2 + 4 * s] | b[3 + 4 * s] << 8]
+
+
+def do_librarian(con: Console, args) -> int:
+    """Copy chosen slots of a codefile into a new one with Apple's Librarian.
+
+    Finding 267: block 0 of every shipped system program was written by
+    LIBRARY.CODE, not the compiler -- slot 0 left blank, segments in the
+    order they were copied, and the copyright notice as a Pascal string.
+    This reproduces that release step with Apple's own tool.
+    """
+    wanted = slots_in(args.slots)
+    asked = nonzero_slots(args.input)
+    con.expect(PROMPT)
+    con.send("X")
+    con.expect(b"Execute what file")
+    con.send(f"{VOL}LIBRARY\r")
+    con.expect(b"Output file ->")
+    con.send(f"{VOL}{args.out}.CODE{SIZED}\r")
+    con.expect(b"Input File ->")
+    con.send(f"{VOL}{args.input}.CODE\r")
+    con.expect(b"N(ew file")
+    con.send("?")
+    for expected in asked:
+        con.expect(b"Copy slot")
+        # `mark` is the end of everything received at the match, not the
+        # end of the match, so the number may already be behind it.
+        start = con.rx.rfind(b"Copy slot")
+        while True:
+            m = LIB_COPY.search(bytes(con.rx[start:]))
+            if m:
+                break
+            if time.monotonic() > con.deadline:
+                raise Fault("never saw the slot number after 'Copy slot'")
+            con._pump()
+        if int(m.group(1)) != expected:
+            raise Fault(f"Librarian asked about slot {m.group(1).decode()}, "
+                        f"expected {expected}")
+        con.send("Y" if expected in wanted else "N")
+    # Type-ahead: the Q waits in the keyboard buffer until the last copy
+    # finishes and GETCOMMAND reads it.
+    con.send("Q")
+    if con.expect(b"Notice?", b"Type <space> to continue") != b"Notice?":
+        print(f"\nLIBRARIAN FAILED: {message_before(con.text(), 'Type')}")
+        return 1
+    con.send(f"{args.notice}\r")
+    if con.expect(PROMPT, b"Code write error") != PROMPT:
+        print("\nLIBRARIAN FAILED: Code write error")
+        return 1
+    copied = sorted(set(asked) & wanted)
+    print(f"\nlibrarian: copied slots {copied} of {asked} into {args.out}")
+    return 0
+
+
 ACTIONS = {"compile": do_compile, "assemble": do_assemble,
-           "link": do_link, "observe": do_observe}
+           "link": do_link, "observe": do_observe,
+           "librarian": do_librarian}
 
 
 def main() -> int:
@@ -487,12 +568,20 @@ def main() -> int:
                    help="repeatable; may be omitted entirely")
     p.add_argument("--out", required=True)
 
+    p = sub.add_parser("librarian")
+    p.add_argument("--input", required=True, help="codefile on SYSHD")
+    p.add_argument("--out", required=True)
+    p.add_argument("--slots", required=True, help="e.g. 1-15")
+    p.add_argument("--notice", default="",
+                   help="the answer to Notice? -- the codefile comment")
+
     p = sub.add_parser("observe")
     p.add_argument("keys", help="sent verbatim once the Command prompt shows")
     p.add_argument("--seconds", type=float, default=30.0)
 
     args = ap.parse_args()
     label = {"link": lambda: f"{args.out}-link",
+             "librarian": lambda: f"{args.out}-librarian",
              "observe": lambda: "observe"}.get(
                  args.action, lambda: f"{args.name}-{args.action}")()
 

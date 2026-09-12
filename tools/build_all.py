@@ -123,6 +123,7 @@ STEPS = [
     # Not an artifact: the operating system routine the compiler calls by
     # number, re-derived from all four binaries (finding 89).
     ("OSPROC43 vs the binaries", "probes/probe_osproc43.py"),
+    ("SYSTEM.COMPILER whole file, via the Librarian", "probes/probe_compiler_whole.py"),
 ]
 
 for step in STEPS:

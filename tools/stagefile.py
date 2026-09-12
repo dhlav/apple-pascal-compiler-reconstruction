@@ -1,6 +1,12 @@
-"""Put one text file on SYSHD without rebuilding the volume.
+"""Put one text file, or one codefile, on SYSHD without rebuilding the volume.
 
     python tools/stagefile.py <source.text> <NAME.TEXT>
+    python tools/stagefile.py <file.CODE>   <NAME.CODE>
+
+A name ending in .CODE is staged byte for byte with the `PCD` attribute:
+a codefile an earlier emulator step produced, going back on the volume for
+the next tool -- the Librarian, finding 267. Anything else is text, encoded
+and width-checked exactly as before.
 
 `mkharddisks.py` is the entry point for the volume's contents and stays
 that way for anything the reconstruction depends on. This is for the case
@@ -33,7 +39,8 @@ CP2 = Path(r'C:\CiderPress2\cp2.exe')
 HD1 = ROOT / 'build' / 'disks' / 'HD1.hdv'
 
 if len(sys.argv) != 3:
-    raise SystemExit('usage: python tools/stagefile.py <source.text> <NAME.TEXT>')
+    raise SystemExit('usage: python tools/stagefile.py '
+                     '<source> <NAME.TEXT | NAME.CODE>')
 if not HD1.exists():
     raise SystemExit(f'{HD1.relative_to(ROOT)} has not been built '
                      '(python tools/mkharddisks.py)')
@@ -49,11 +56,17 @@ def cp2(*args: str, allow_fail: bool = False) -> str:
     return r.stdout
 
 
-text = expand_tabs(src.read_text(encoding='ascii', errors='replace'))
-text = text[:-1] if text.endswith('\n') else text
-long = over_width(text.split('\n'))
-if long:
-    raise SystemExit(f'{name}: {len(long)} lines exceed {WIDTH} columns {long[:5]}')
+CODE = name.upper().endswith('.CODE')
+if CODE:
+    payload = src.read_bytes()
+else:
+    text = expand_tabs(src.read_text(encoding='ascii', errors='replace'))
+    text = text[:-1] if text.endswith('\n') else text
+    long = over_width(text.split('\n'))
+    if long:
+        raise SystemExit(f'{name}: {len(long)} lines exceed {WIDTH} columns '
+                         f'{long[:5]}')
+    payload = encode_text(text)
 
 cp2("delete", str(HD1), name, allow_fail=True)
 
@@ -65,9 +78,9 @@ cp2("delete", str(HD1), name, allow_fail=True)
 # repository.
 staging = Path(tempfile.mkdtemp(prefix='stagefile-'))
 tmp = staging / name
-tmp.write_bytes(encode_text(text))
+tmp.write_bytes(payload)
 cp2("add", "--raw", "--no-strip-ext", "--strip-paths", str(HD1), str(tmp))
-cp2("set-attr", str(HD1), "type=PTX", name)
+cp2("set-attr", str(HD1), f"type={'PCD' if CODE else 'PTX'}", name)
 
 cat = cp2("catalog", str(HD1))
 if name not in cat:

@@ -85,7 +85,12 @@ The order below is by what the evidence supports, not by size. A file whose
 1.1 release ships source is nearly free; a file with a native half now has
 a route end to end; everything else is a straight read-and-rebuild.
 
-1. **One gap left in `SYSTEM.COMPILER`: the empty `PASCALSY` host segment
+1. **CLOSED (finding 267e): `SYSTEM.COMPILER` is identical as a whole
+   file.** The `PASCALSY` host segment was never a source gap: Apple's
+   release step copied segments 1-15 into a fresh file with `LIBRARY.CODE`.
+   What follows is the history of the gap.
+
+   *Was:* **One gap left in `SYSTEM.COMPILER`: the empty `PASCALSY` host segment
    (finding 105a), 512 bytes.** The three steps -- compile the fifteen
    segments, assemble `src/native/SEARCH.TEXT`, `L(ink` the two -- now
    produce all 15 real segments byte-identical to Apple's, `PASCALCO`

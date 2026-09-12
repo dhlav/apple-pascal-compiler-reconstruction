@@ -9,9 +9,10 @@ Target is **1.3 on the 128K system** (`128K.APPLE` + `128K.PASCAL`), not the
 ships only as codefiles, and comparing releases says which files Apple
 actually rebuilt.
 
-Reconstructed so far: `SYSTEM.COMPILER`, `SYSTEM.LIBRARY`, `LINEFEED.CODE`,
-`FORMATTER.CODE`. Plan in `docs/PLAN.md`, evidence ledger in
-`docs/FINDINGS.md`, per-file scoreboard in `docs/DISKSET.md`.
+Reconstructed so far: `SYSTEM.COMPILER` (the whole file, finding 267e),
+`SYSTEM.LIBRARY`, `LINEFEED.CODE`, `FORMATTER.CODE`. Plan in
+`docs/PLAN.md`, evidence ledger in `docs/FINDINGS.md`, per-file
+scoreboard in `docs/DISKSET.md`.
 
 ## Memory
 
@@ -75,6 +76,7 @@ python tools/emuremote.py compile  X
 python tools/emuremote.py assemble X
 python tools/emuremote.py link --host X --lib Y --out Z
 python tools/emuremote.py observe "L" --seconds 40    # capture a tool's prompts
+python tools/emuremote.py librarian --input X --out Y --slots 1-15 --notice "..."
 ```
 
 **`emuremote.py` is the path to prefer for all three tools** (findings
