@@ -22087,3 +22087,39 @@ limit holding the length of a string.
 `STACKTYPE`'s one-bit filler is forced: `TIPE` is seven bits at 0 and
 `ATRIB` eight bits at **8**, and with nothing declared between them the
 compiler would have packed `ATRIB` at bit 7.
+
+## 264. Three of `LEX`'s children, written against I.5
+
+`PIDENT` (`TLA.36`), `PLLABEL` (`.37`) and `PSTRING` (`.38`) are
+**instruction- and frame-identical**, all three exact on the first
+compile (`acceptance/2026-09-12-assembler-lex-children`, 4197 lines, 0
+errors). **86 of 95, up from 83, none lost.** Four bodies are left:
+`EXPRESS`, `OPERFOLD`, `PCONST`, `PKWORD`.
+
+Each was decoded from Apple's binary and then checked against the I.5
+procedure of the same name (finding 263), and the reference's value
+showed up as frames that balanced on the first try rather than as copied
+statements:
+
+- **`PSTRING`**: I.5's `I: INTEGER; BACKSCAN: BOOLEAN; SCH: STRING` is 43
+  words, and `CONCAT` adds a `STRING[160]` temp -- the running maximum
+  in `SCONCAT`'s third argument (`LDCI 160`) -- for 124 in all, which is
+  `data 248` exactly. Token 66 is `TSTRING`, errors 41 and 42 are I.5's.
+  `G406[0] := CHR(LENGTH(G406) + I)` confirms `LENGTH` of a string is
+  `LAO | SLDC 0 | LDB`, which finding 263d had assumed for `EXPRESS`'s
+  `FOR` limit.
+- **`PIDENT`**: I.5 declares `HASHA, HASHB, I: INTEGER` in one clause,
+  and reversing it puts `I` at 1, `HASHB` at 2 and `HASHA` at 3 -- the
+  offsets the body uses. The hash is I.5's shift-and-XOR through `ODD`
+  and `ORD`, the bucket mask is `ODD(HASHTOP)` (so `LAND 127`, not
+  `MOD 128`) and the high half is `DIV HASHRANGE`. Apple's changes: an
+  underscore is accepted and skipped rather than stored, and a macro call
+  saves and restores the local-label slice.
+- **`PLLABEL`**: I.5's errors 39 and 40 and its `TEMPTOP = 21` limit,
+  plus an extension I.5 does not have -- a local label read out of a
+  macro parameter belongs to that level's slice of the table, so a new
+  entry shifts the levels above it up one place (`MOVERIGHT` of
+  `14 * (G44 - G43)` bytes, and a `FOR` over `G673`). Local 9 is a temp
+  twice: the `FOR` limit, then the `WITH` slot.
+
+`HASHRANGE = 128` joins the constant block beside `HASHTOP`.

@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-12-assembler-i5-names"
+RUN = (ROOT / "acceptance" / "2026-09-12-assembler-lex-children"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -180,6 +180,11 @@ EXACT = [
     # pass, and every name in it is byte-neutral: these 82 were
     # exact before it and are exact after.
     "TLA.32",
+    # Finding 264: three of LEX's five children -- PIDENT, PLLABEL,
+    # PSTRING -- each written against I.5's own procedure and each
+    # exact on the first compile. Apple's changes to them are
+    # visible and small.
+    "TLA.36", "TLA.37", "TLA.38",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -193,8 +198,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.34", "TLA.35", "TLA.33",
-                 "TLA.18", "TLA.36", "TLA.37", "TLA.38"]
+STILL_DIFFERS = ["TLA.34", "TLA.35", "TLA.33", "TLA.18"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
