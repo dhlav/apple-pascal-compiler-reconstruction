@@ -21696,3 +21696,86 @@ than inventing a name and a sense that the binary cannot confirm. The
 live half needs no flag at all: a word prints high nibble first, so
 listing two bytes in memory order means swapping the word and listing
 one byte means not swapping, and `X1` alone decides that.
+
+## 259. The listing writers, and a number that is two words wide
+
+`TLA.9`, `.11`, `.12`, `.22`, `.26` and `.29` are **instruction- and
+frame-identical** (`acceptance/2026-09-11-assembler-tla-numbers`, 3349
+lines, 0 errors). **74 of 95, up from 68, none lost.** `TLA` is 22 of 38;
+sixteen bodies are left, all of them in `TLA`.
+
+- `.9` breaks the page: a form feed to a file, two blank lines to a
+  console, then the heading and the page number.
+- `.11` writes a number -- two hex digits for a byte, four for a word.
+- `.12` emits one byte of object code, flushing a block to the work file
+  when the buffer fills, and puts the byte in the listing's hex column.
+- `.22` reports an error that has no source line to point at.
+- `.26` fills in the relocation record for the operand just assembled.
+- `.29` reads the next two blocks of source into the 1024-byte window.
+
+### 259a. `NUMREC` is two words, and that is what the pads were
+
+Finding 257b recorded that `TLA.3` declares two words its own code never
+touches, and 257's commit said Apple declared something there that is not
+known. It is the second word of the number itself.
+
+`TLA.11` prints a word in octal as well as hex, and the octal arm reads
+**six** fields: a 1-bit and a 3-bit field out of local 4, then four 3-bit
+fields out of local 3 at right-bits 12, 9, 6 and 3. One word cannot hold
+them, and local 3 is also read as four nibbles and written as a whole
+word. So the type is:
+
+```pascal
+  NUMREC = PACKED RECORD
+             CASE INTEGER OF
+               0: (LO: 0..255; HI: 0..255; HIOCT: 0..7; HIBIT: 0..1);
+               1: (WHOLE: INTEGER);
+               2: (N0: 0..15; N1: 0..15; N2: 0..15; N3: 0..15);
+               3: (O0: 0..7; O1: 0..7; O2: 0..7; O3: 0..7; O4: 0..7)
+           END;
+```
+
+two words wide, with `HIOCT` and `HIBIT` pushed into word 1 because `LO`
+and `HI` have already filled word 0.
+
+Three frames then come out at Apple's offsets with no placeholders at
+all: `TLA.3`'s `V4` and `V6` at 4 and 6 (`data` 8), `TLA.14`'s at 4 and 6
+with `V8` at 8 (`data` 10), and `TLA.4`'s `V8` at 8 leaving one word
+rather than two unexplained (`data` 16). **All three were already exact
+and stayed exact**, which is the check: a one-word type with a pad gives
+the same offsets only by coincidence at each site, and a three-word type
+gives none of them.
+
+What the bytes cannot show is the second word being *used*. Every
+`WORDBITS = 8` arm in the file is dead -- `SLDC 16 | SLDC 8 | EQUI` is a
+constant comparison the compiler does not fold (finding 251's
+`WORDBITS`), and a word is sixteen bits -- so word 1 exists for the
+eight-bit-word build of an assembler Apple compiled for more than one
+machine. Which is also why `TLA.11` has two spellings of every number:
+four hex digits or six octal ones.
+
+### 259b. `WORKSYM` and `WORKCODE`, and why the clause order matters
+
+`TLA.29` reads its source blocks from `LOD 2,9` and `TLA.12` writes its
+code blocks to `LOD 2,8`. `INFOREC`'s first clause is
+`WORKSYM, WORKCODE: ^ PHYLE`, and a clause's names descend (finding 93a),
+so `WORKCODE` is at 8 and `WORKSYM` at 9.
+
+This is the first time within-clause reversal has distinguished two
+fields that *mean* different things rather than just sitting at different
+offsets: the assembler reads text out of `SYSTEM.WRK.TEXT` and writes
+code into `SYSTEM.WRK.CODE`, and a reconstruction that had the clause
+order backwards would compile, run, and read the wrong file. The first
+attempt wrote `WORKCODE` in `TLA.29` and the two `LOD 2,8`s against
+Apple's `LOD 2,9` were the only difference in the body.
+
+### 259c. A fifth `(*$I-*)` site
+
+`TLA.12`'s `BLOCKWRITE` carries no `CSP 0`, so the program checks that
+one itself -- and it does, on the next line, by calling `TLA.5`, which is
+the `IORESULT` reporter. That makes five regions in the file with IOCHECK
+off: `TLA.29`, `INITIALI.4`, `.5` and `.6` whole, and one statement each
+in `TLA.12` and `PROCEND.9`. Every one of them has a reason visible in
+the source, which is the rule in CLAUDE.md working in the reverse
+direction: the missing `CSP 0` predicts an `IORESULT` test nearby, and
+there was one.

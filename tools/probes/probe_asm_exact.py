@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-11-assembler-tla-bytes"
+RUN = (ROOT / "acceptance" / "2026-09-11-assembler-tla-numbers"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -152,6 +152,12 @@ EXACT = [
     # close together -- `.23` reads `.4`'s locals 4 and 5 with
     # `LOD 1,n` and has no frame of its own at all.
     "TLA.4", "TLA.6", "TLA.7", "TLA.23",
+    # Finding 259: the listing writers and the two files. A number is
+    # TWO words wide, which is what the declared-and-never-touched
+    # words in TLA.3 and TLA.14 were -- those two frames and TLA.4's
+    # stay exact with the placeholders gone, and would not if the
+    # type were one word and a pad.
+    "TLA.9", "TLA.11", "TLA.12", "TLA.22", "TLA.26", "TLA.29",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
