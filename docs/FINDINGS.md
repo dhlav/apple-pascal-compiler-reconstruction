@@ -21779,3 +21779,84 @@ in `TLA.12` and `PROCEND.9`. Every one of them has a reason visible in
 the source, which is the rule in CLAUDE.md working in the reverse
 direction: the missing `CSP 0` predicts an `IORESULT` test nearby, and
 there was one.
+
+## 260. The error reporter, and two dispatchers that are the same CASE
+
+`TLA.2`, `.14`, `.15` and `.30` are **instruction- and frame-identical**,
+all four exact on the first compile
+(`acceptance/2026-09-12-assembler-tla-dispatch`, 3561 lines, 0 errors).
+**78 of 95, up from 74, none lost.** `TLA` is 26 of 38; twelve bodies are
+left.
+
+### 260a. `KEYBOARD` is predeclared, at `VADDR` 4
+
+`TLA.2` reads the operator's answer with `LOD 2,4 | LLA 2 | CXP 0,16`, and
+offset 4 in the host program's frame is not declared anywhere in this
+reconstruction. It does not have to be: `COMPINIT.text` enters `INPUT` at
+`VADDR` 2, `OUTPUT` at 3 and **`KEYBOARD` at 4**, all three `VLEV` 0,
+`FORMALVARS`, before a line of source is read (VERIFIED SOURCE FACT). So
+`READ(KEYBOARD, CH)` is the whole of it, exactly as finding 201's
+`WRITE`/`WRITELN` sugar reaches `LOD 2,3` with nothing declared either.
+
+### 260b. `SYMFIBP` and `CODEFIBP`, and the field order cross-checks
+
+Finding 259b read `LOD 2,9` as `WORKSYM` from the reversal rule. The
+verified OS source settles the names and confirms the order: the OS's own
+`INFOREC` (`src/pascal/os/1.3/PASCALSYSTEM.text`, in a file whose every
+procedure is Apple's bytes) declares
+
+```pascal
+  SYMFIBP, CODEFIBP: FIBP;         { workfiles for scratch }
+  ERRSYM, ERRBLK, ERRNUM: INTEGER; { error stuff in edit }
+```
+
+so `CODEFIBP` is at 8 and `SYMFIBP` at 9, and this reconstruction now
+uses the OS's names for them -- the assembler is reading the operating
+system's own globals, so it should.
+
+The second clause then puts `ERRNUM` at 10, `ERRBLK` at 11 and `ERRSYM`
+at 12, and `TLA.2` is where that gets checked against meaning rather than
+against an offset. It writes offset 12 from `G37`, offset 11 from
+`G38 - 2` and offset 10 with 500. `TLA.29` -- already exact -- restores
+`G39 := G38` and `G41 := G37`, and `G39` is the block counter `BLOCKREAD`
+is called with while `G41` is the byte offset `SCAN` starts from. So
+offset 12 takes an offset and offset 11 a block number: **`ERRSYM` is the
+position within the block and `ERRBLK` the block**, which is what the
+reversed clause says they are, derived twice from different evidence.
+
+### 260c. `TLA.14` and `TLA.15` are one `CASE`, twice
+
+Both dispatch on `G622.W0` with arms 0 to 4, both emit them in the source
+order 4, 3, 0, 1, 2 (finding 245a), both have the same inner `CASE` on
+`G622.W5^.A5` with labels {1, 32, 33, 35} and {26, 36}, both allocate a
+`FIVEREC` off the same free list at `G657`, and both end
+
+```pascal
+  G622 := G598;
+  T13(V<n>.WHOLE, V<m>, 0)
+```
+
+`.14` records the operand for the code generator (its children fill in
+relocation records) and `.15` records it for the cross-reference
+(its children file references through `TLA.25`). Two empty arms in `.15`
+are written `4: ;` and `27: ;` -- a label with an empty statement, which
+Apple's compiler accepts and which still gets its own jump-table entry
+distinct from the `else`, so the labels are in the source even though the
+arms do nothing.
+
+The pair is also the third and fourth frame to need finding 259a's
+two-word `NUMREC`: `.15`'s `V2` at 2..3 with `V4` at 4 (`data` 6) and
+`.14`'s at 4..5 and 6..7 with `V8` at 8 (`data` 10). `TLA.24`, exact
+since finding 251, already pinned `.15`'s `V4` at 4 by writing it from
+inside the nested procedure, so the only way to reach it with two
+declarations is a two-word first one.
+
+### 260d. `G661` holds macro buffers, not code buffers
+
+`TLA.30` assigns `G661[G27 - 1]` into `G71`, and `G71` is a `MACP` --
+`^ PACKED ARRAY [0..9] OF CHAR` -- so the array is `ARRAY [0..5] OF
+MACP`, not of `CODEP` as the placeholder had it. Nothing in the output
+moved: the already-exact `ASSEMBLE.33` indexes `G661[V2]^[0]` and a
+packed array of `CHAR` is addressed the same way whatever its bound, so
+this is a correction the bytes cannot see -- which is exactly why it was
+worth making from the one body that can see it.
