@@ -21860,3 +21860,61 @@ moved: the already-exact `ASSEMBLE.33` indexes `G661[V2]^[0]` and a
 packed array of `CHAR` is addressed the same way whatever its bound, so
 this is a correction the bytes cannot see -- which is exactly why it was
 worth making from the one body that can see it.
+
+## 261. The line writer, and the number passed by VAR
+
+`TLA.10` and `TLA.13` are **instruction- and frame-identical**
+(`acceptance/2026-09-12-assembler-tla-listing`, 3689 lines, 0 errors).
+**80 of 95, up from 78, none lost.** `TLA` is 28 of 38, and the ten left
+are three families: `TLA.16`, `TLA.17` with `.34`-`.38`, and `TLA.18`
+with `.32` and `.33`.
+
+`TLA.10` ends a source line -- the progress dot, the location counter,
+the object column, the source text -- and `TLA.13` puts one word into
+that column and emits its two bytes.
+
+### 261a. `TLA.13` takes the number by VAR, and that retyped a sixth frame
+
+`TLA.13` begins `LLA 4 | SLDL 3 | MOV 2`: it copies **two words** out of
+the address in its first parameter. Nothing else can produce that, so the
+formal is `VAR X1: NUMREC` (finding 259a), not the `VAR X1: INTEGER` the
+skeleton had -- and the body goes on to read `LLA 7`, the second word of
+a `NUMREC` at local 6, for the `WORDBITS = 8` octal digits.
+
+Changing the formal broke the third call site with **error 142**, in
+`ASSEMBLE.9`, whose own frame was `V1: INTEGER; PAD2: INTEGER` -- one
+more invented placeholder, and one more second word. With `V1: NUMREC`
+the call compiles and `ASSEMBLE` stays 33 of 33. That is six frames now
+whose `data` only comes out right if a number is two words:
+`TLA.3`, `.4`, `.13`, `.14`, `.15` and `ASSEMBLE.9`.
+
+The type also fixes what the second parameter counts. `X2` is *half*
+words: `X2 < 2` prints the high pair of nibbles, `X2 MOD 2 <> 1` prints
+the low pair, and in the listing-order branch `X2 := X2 DIV 2 + X2 MOD 2
+* 2`. An odd count prints only the half that was generated.
+
+### 261b. The object column is 21 bytes, and a `WRITE` says so
+
+`TLA.10` writes the column with `LAO 2147 | SLDC 21 | SLDC 21 |
+CXP 0,20`, and finding 255a fixed those two operands as the operand's
+size twice. So `G2147` is `PACKED ARRAY [0..20] OF CHAR`, 21 bytes, and
+not the 22 the placeholder had -- and `G2136`, which it is assigned from
+whole (`MOV 11`), has to match it exactly or the assignment will not
+compile. `INITIALI.1`, exact since finding 256, already fills `G2136`
+with `FOR I := 0 TO 20`, which is the same bound read off a loop instead
+of a `WRITE`: two independent measurements agreeing, where 11 words of
+storage could not distinguish 21 bytes from 22.
+
+### 261c. A STRING's length byte, written directly
+
+`TLA.10` builds its output line by hand:
+
+```pascal
+  MOVELEFT(G2147[0], V2[1], G5 + 2);
+  V2[0] := CHR(G5 + 2);
+```
+
+`V2[0]` is the length byte of a `STRING[102]`, assigned as an ordinary
+packed component -- `LLA 2 | SLDC 0 | <len> | STB` -- and that is how a
+string gets a length the compiler did not compute. It is also what makes
+the local 52 words rather than 51: `STRING[102]` is 103 bytes.
