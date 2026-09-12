@@ -22243,3 +22243,98 @@ two earlier kept runs whose differences are known:
 
 It also now asserts all 90 directly, rather than only the ones `EXACT`
 lists, and that `EXACT` lists every one of them.
+
+## 267. Finding 105a's missing segment 0 is the Librarian's doing, not the compiler's
+
+*Confidence: VERIFIED BINARY FACT for every fingerprint below; VERIFIED
+SOURCE FACT for what the compiler and the Librarian each write; STRONG
+INFERENCE that Apple's release step was `LIBRARY.CODE`, until Apple's own
+Librarian is run on a reconstruction and reproduces a shipped file.*
+
+Finding 105a left one question open in `SYSTEM.COMPILER`, and it now stands
+in `SYSTEM.ASSMBLER` too: why Apple's shipped file has no segment 0, when
+Apple's own compiler writes one for this exact source shape every time
+(105a-i, tested on hardware) and Apple's own Linker carries it through
+(`2026-08-25-compiler-linked-v2`). 105a concluded the removal "happens in
+the compile". It does not. It happens after the Linker, in a tool neither
+finding looked at.
+
+### 267a. Block 0 of Apple's shipped system programs was not written by the compiler
+
+Four things in block 0 of shipped `SYSTEM.ASSMBLER` and `SYSTEM.COMPILER`
+differ from what the 1.3 compiler writes:
+
+1. **The codefile comment carries a length byte.** Offset 432 holds `F`
+   (70), then `COPYRIGHT 1979,1980,1983-1985 APPLE COMPUTER, INC. ALL
+   RIGHTS RESERVED` -- exactly 70 characters. The compiler cannot write
+   that: `FINISHUP.text` copies `MOVELEFT(COMMENT^[1], CODEP^[IC],
+   LENGTH(COMMENT^))`, starting *after* the length byte. Ours, with no
+   `(*$C*)`, has zeros there.
+2. **Segments are on disk in slot order.** Shipped `SYSTEM.ASSMBLER` has
+   `TLA` at block 1, `INITIALI` at 21, ..., `PASCALIO` last at 48. The
+   compiler writes segments as they are finished -- innermost first -- so
+   ours has `INITIALI` at block 1, `TLA` at 27 and `PASCALSY` at 47.
+3. **The four words at 288 are zero.** The compiler writes `SEGSUSED`
+   there for a program (`IF ISPROG`); ours marks segment 31 used (0x8000).
+4. **Slot 0 is blank or holds a unit.** `SYSTEM.COMPILER`'s slot 0 is
+   eight spaces and a zero address and length; `SYSTEM.ASSMBLER`'s holds
+   `PASCALIO`, segment 31, placed at the END of the file.
+
+### 267b. The Librarian writes all four
+
+`src/pascal/programs/1.3/LIBRARY.text` -- the reconstructed `LIBRARY.CODE`,
+which compiles clean under Apple's own compiler -- builds its output
+dictionary as `SEGDICTREC`:
+
+- `FILLCHAR(OUTDICT, 512, 0)` and every name set to eight spaces, so any
+  slot nobody copies into stays **blank and codeless** (4);
+- `SPARE: ARRAY [1..72] OF INTEGER` at word 144, never written, so the
+  `SEGSUSED` words are **zero** (3);
+- segments copied one at a time into `NEXTBLK`, so they land **in the order
+  a person copies them** (2), and a unit added last lands last;
+- `COMMENT: STRING[79]` at word 216 -- byte 432 -- filled from a
+  `Notice?` prompt, **a Pascal string with its length byte** (1).
+
+Apple's Linker, for comparison, wrote `PASCALSY` into slot 0 at block 1,
+no comment, and zero `SEGSUSED` (`COMPLINK.CODE` in
+`2026-08-25-compiler-linked-v2`): it accounts for (3) and nothing else.
+
+### 267c. The fingerprint across both releases
+
+Every codefile on the six disks, block 0 only:
+
+| file | slot 0 | layout | notice |
+|---|---|---|---|
+| 1.3 `SYSTEM.COMPILER`, `SYSTEM.LINKER`, `SYSTEM.EDITOR`, `SYSTEM.FILER`, `LIBRARY.CODE` | **empty** | slot order | 70-byte string |
+| 1.3 `SYSTEM.ASSMBLER` | `PASCALIO`, copied last | slot order, then 0 | 70-byte string |
+| 1.3 `SYSTEM.LIBRARY` | `LONGINTI` | not | 70-byte string |
+| 1.3 `SYSTEM.PASCAL`, `128K.PASCAL` | `PASCALSY` (the OS is real code) | not | 70-byte string |
+| 1.1 `SYSTEM.COMPILER`, `SYSTEM.LINKER`, `SYSTEM.EDITOR`, `SYSTEM.FILER`, `LIBRARY.CODE` | **empty** | slot order | Apple or Regents notice |
+| every utility: `LIBMAP`, `FORMATTER`, `BINDER`, `LINEFEED`, `SET40COLS`, `SETUP`, the 1.1 demos | the program itself | slot order | **none** |
+
+**Every file with a length-prefixed notice is a system file, and no
+utility has one.** Every file with an empty slot 0 has a notice, with one
+exception, 1.1's `CALC.CODE`. And the utilities are exactly the files this
+project has already rebuilt whole with the compiler and Linker alone
+(`FORMATTER`, `LINEFEED`) -- the files that never went through the extra
+step are the ones that never needed it.
+
+That is also why 105a found 1.1's `SYSTEM.COMPILER` has the same empty
+slot 0 "though it never goes near `SYSTEM.LINKER`": it went near the
+Librarian instead.
+
+### 267d. What it predicts, and the test
+
+Apple's release step for a system program was: compile (and link, where
+there is native code), then `LIBRARY.CODE` -- copy segments 1 to n, in
+slot order, into a fresh codefile; for `SYSTEM.ASSMBLER` also copy a
+`PASCALIO` unit into free slot 0; answer `Notice?` with the copyright
+line. Segment 0, the `(*$U-*)` program's empty outer block, is simply never
+copied.
+
+So **finding 105a is not a gap in the reconstructed source at all**, and
+nothing in `PASCALCO.text` or `ASSMBLER.text` should change to chase it.
+The test that turns this from inference into fact is to run Apple's own
+`LIBRARY.CODE` on `COMPLINK.CODE` -- whose fifteen real segments are
+already byte-identical -- and compare the result with shipped
+`SYSTEM.COMPILER` up to the end of each segment.
