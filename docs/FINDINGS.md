@@ -21389,3 +21389,66 @@ the source refusing to compile rather than by the score.
   `EQU BYTE,8`, so they are an eight-character name; `TLA.14` and `.15`
   push global 13 onto word 5, so it is a `FIVEP`; word 6 carries the same
   class ordinals `ASMREC`'s `A5` does; word 4 takes the location counter.
+
+## 255. `SYMTBLDUMP` is complete, all three, first compile
+
+**53 of 95**, and a fourth whole segment. `SYMTBLDUMP` is the `.SYMBOLS`
+listing: it copies the 128-bucket hash chain into a binary sort tree,
+walks the tree in order, and prints each symbol with a two-letter class
+tag.
+
+### 255a. `WRITE` of a structured operand takes `LOADADDRESS`
+
+`WRITE(G73, G3^.ANAME)` compiles to four pushes, not five:
+
+```
+LAO 73 | SLDO 3 | SLDC 8 | SLDC 8 | CXP 0,20
+```
+
+One word of address where a byte address would be two. `BODYPART.text`
+says why (VERIFIED SOURCE FACT): `WRITE`'s argument loop does
+`IF FORM > LONGINT THEN LOADADDRESS`, so a structured operand never
+reaches `BYTEADDRESS` and never gets the `GENLDC(0)` that would follow.
+The two `SLDC 8`s are then `GENLDC(LMAX)` twice -- the default field
+width and the length, both the array's own element count.
+
+This was worth an hour of staring at `SLDC 8` where `SLDC 0` was
+expected. **When a call's argument count is one short, check which
+address-emitting routine the construct actually goes through** --
+`LOADADDRESS`, `BYTEADDRESS` and `LOADIDADDR` are three different
+widths, and the `BYTESTREAM` rule of finding 214 is about the third.
+
+### 255b. The tree, read off the traversal
+
+Three words and `NEW` says so with `SLDC 3`. Which child is which comes
+from the walk, not from the insert: `SYMTBLDU.3` recurses on word 2
+*before* printing and on word 1 *after*, so word 2 is the left child and
+word 1 the right. The insert in `.2` then confirms it -- `GRT BYTE,8` on
+the two eight-character names, right child when greater.
+
+`NEW(G3)` with no tag list allocates `ASMREC`'s largest arm, which is the
+nine-word one, and nine is what Apple's own `SLDC 9` allocates here
+(finding 254a).
+
+### 255c. A second unfolded constant, compared two ways
+
+```
+SLDC 16 | SLDC 8  | EQUI   { IF WORDBITS = 8  THEN ... }
+SLDC 16 | SLDC 16 | EQUI   { IF WORDBITS = 16 THEN ... }
+```
+
+Two constants and a compare, folded by nothing. The first picks a
+six-column layout with a `'------'` rule, the second a seven-column one
+with `'----'`. A word is sixteen bits, so only the second ever fires --
+this is the same portability scaffolding as findings 249b and 250, left
+in the shipped binary because Apple's compiler does not evaluate a
+constant comparison at compile time. The NAME is SPECULATION; the pair of
+comparisons is not.
+
+### 255d. A `TYPE` that points at a later `TYPE` is fine; a field is not
+
+`NODEREC`'s `SYM: ASMRECP` put the record ahead of `ASMRECP` in the
+`TYPE` block and got **error 104**. `NODEP = ^ NODEREC` ahead of
+`NODEREC` is legal -- a pointer's target may be declared later -- but a
+*field's* type must already exist. The two look alike and only one is a
+forward reference.

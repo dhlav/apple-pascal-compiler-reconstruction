@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-11-assembler-complete-segment"
+RUN = (ROOT / "acceptance" / "2026-09-11-assembler-symtbldump"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -128,6 +128,10 @@ EXACT = [
     # finding 251e had predicted.
     "ASSEMBLE.1", "ASSEMBLE.2", "ASSEMBLE.3", "ASSEMBLE.4",
     "ASSEMBLE.6", "ASSEMBLE.10", "ASSEMBLE.15",
+    # Finding 255: SYMTBLDUMP is complete, all three, first compile. The
+    # sort tree, the in-order walk, and WRITE of a PACKED ARRAY OF CHAR
+    # taking a one-word LOADADDRESS rather than a two-word BYTEADDRESS.
+    "SYMTBLDU.1", "SYMTBLDU.2", "SYMTBLDU.3",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -142,7 +146,7 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
 STILL_DIFFERS = ["TLA.17", "TLA.2", "TLA.10", "TLA.34",
-                 "INITIALI.1", "SYMTBLDU.1", "TLA.14"]
+                 "INITIALI.1", "INITIALI.2", "TLA.14"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
