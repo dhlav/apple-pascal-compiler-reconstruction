@@ -2699,11 +2699,8 @@ VAR
       PAD9: INTEGER;
       PAD10: INTEGER;
 
-    { One listing line: the location, then the bytes. A word is
-      printed high nibble first, so listing two bytes in the order they
-      sit in memory means swapping the word; a single byte is printed as
-      it is. X1 says which, and is all the `IF X1` arm needs -- the
-      `IF FALSE` above it is dead, like T4's own (finding 258a). }
+    { One cross-reference line: the location, then the bytes. The
+      `IF FALSE` is Apple's -- see T4's own, below. }
     PROCEDURE T23(X1: BOOLEAN);               { .23  2/0 }
     BEGIN
       T11(V3.F2, FALSE);
@@ -2740,12 +2737,12 @@ VAR
       END
     ELSE
       BEGIN
-        { `SLDC 0 | FJP`: a constant-false guard over a statement
-          that can therefore never run. The compiler DOES fold `NOT` of
-          a boolean constant (`BODYPART`'s NOTSY arm), so this could
-          equally be a named flag, or `NOT` a named flag, and the bytes
-          cannot tell which -- nor which sense, since the two dead
-          guards here and in T23 read as opposites (finding 258a). }
+        { `SLDC 0 | FJP` -- a guard the compiler could not have
+          generated and did not fold away. The same shape is in T23
+          above, and there it means the opposite: here a true condition
+          swaps the bytes before emitting them, there it suppresses the
+          swap. So the two cannot be one named constant, and the
+          compiler does not fold `NOT` of one (finding 258a). }
         IF FALSE THEN V8.WHOLE := T3(V8.WHOLE);
         G72^[X2] := CHR(V8.LO);
         G72^[X2 + 1] := CHR(V8.HI);

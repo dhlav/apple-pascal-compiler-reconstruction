@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-11-assembler-tla-six"
+RUN = (ROOT / "acceptance" / "2026-09-11-assembler-tla-bytes"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -147,6 +147,11 @@ EXACT = [
     # negative dividend needs; `.25` accumulates cross-reference words
     # seven to a record and PUTs when the seventh lands.
     "TLA.3", "TLA.5", "TLA.8", "TLA.19", "TLA.20", "TLA.25",
+    # Finding 258: the byte emitter and its listing line, the
+    # undefined-local sweep, and the line copier. `.4` and `.23`
+    # close together -- `.23` reads `.4`'s locals 4 and 5 with
+    # `LOD 1,n` and has no frame of its own at all.
+    "TLA.4", "TLA.6", "TLA.7", "TLA.23",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are

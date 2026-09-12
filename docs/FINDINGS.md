@@ -21622,3 +21622,77 @@ the cleanest test of that rule in the file -- there is no local for a
 mis-ordered parameter to hide behind, so all five offsets are pinned by
 one body, and `params` 14 is five words plus the two a `FUNCTION` result
 costs.
+
+## 258. The byte emitter, and a guard that can never run
+
+`TLA.4`, `.6`, `.7` and `.23` are **instruction- and frame-identical**,
+all four exact on the first compile
+(`acceptance/2026-09-11-assembler-tla-bytes`, 3099 lines, 0 errors).
+**68 of 95, up from 64, none lost.** `TLA` is 16 of 38.
+
+`.4` and `.23` had to land together: `.23` is nested inside `.4`, has
+`data` 0 -- no frame of its own at all -- and reads its parent's locals 4
+and 5 with `LOD 1,4` and `LOD 1,5`, which is what places `.4`'s
+five-word `FIVEREC` copy at local 3 (finding: a nested procedure measures
+the parent frame).
+
+What the four do, in order of what they settle:
+
+- `.4` emits the one or two bytes an operand assembled to, into the code
+  buffer at `X2`, and reports an out-of-range single byte by printing the
+  location as four hex digits. `VAR X1: FIVEREC` is copied whole with
+  `MOV 5`, so the parameter is a `VAR` of the record the operand parser
+  fills in, not a pointer to it.
+- `.23` writes one listing line for those bytes.
+- `.6` sweeps the local-label block at the end of a procedure: anything
+  in `G42..G44-1` still carrying a reference chain was never defined.
+- `.7` copies the current source line out of the input window into
+  `G539`, stopping at `CHR(13)` or 102 characters.
+
+Three types came out of them, each with at least one already-exact body
+to confirm the change was byte-neutral: **`G56` and `G62` are `BOOLEAN`**
+(`LDO 56 | LAND` and `LDO 62 | FJP`, with no comparison), and their four
+`:= 1`/`:= 0` sites in `ASSEMBLE` and `INITIALI` compile to the same
+`SLDC` as `TRUE`/`FALSE`. **`G1608` is a `PACKED ARRAY [0..1023] OF
+CHAR`**, not 512 `INTEGER`s: `.7` reaches it through `SCAN` and
+`MOVELEFT`, both of which take a byte address. And **`T11`'s second
+parameter is a `BOOLEAN`** -- `PARAM SIZE` is 4 either way, so only
+`.23`'s `SLDL 1 | CGP 11` says so.
+
+### 258a. A constant-false guard, twice, and the bytes cannot name it
+
+VERIFIED BINARY FACT: `TLA.4` and `TLA.23` each contain `SLDC 0 | FJP`
+over a statement that therefore can never run, and in both cases the
+statement guarded is a call to `TLA.3`, the byte swap:
+
+```
+  87 SLDC 0          |   9 SLDC 0
+  88 FJP  $038C      |  10 FJP  $02AE
+  89 SLDL 8          |  11 LOD  1,4
+  90 SLDC 0          |  12 SLDL 1
+  91 SLDC 0          |  13 CGP  11      { and the next arm is identical }
+  92 CGP  3          |
+  93 STL  8          |
+```
+
+The obvious reading is a conditional-compilation flag -- Apple's
+assembler family was built from one source across targets -- and that is
+as far as the evidence goes, for two reasons.
+
+First, **the compiler folds `NOT` of a boolean constant** (VERIFIED
+SOURCE FACT, `BODYPART.text`'s `NOTSY` arm: `IF (KIND = CST) AND (TYPTR =
+BOOLPTR) THEN CVAL.IVAL := ORD(NOT ODD(CVAL.IVAL))`), so `FALSE`,
+`SOMEFLAG` and `NOT SOMEFLAG` all reach the codefile as one `SLDC 0`.
+The bytes cannot distinguish them.
+
+Second, the two guards read as *opposites*: in `.4` a true condition
+would swap the bytes before storing them, in `.23` it would suppress the
+swap before listing them. A single named flag cannot satisfy both while
+both are false -- but nothing requires two dead branches to be
+consistent, which is exactly what makes them dead.
+
+So the reconstruction writes the literal `FALSE` and says why, rather
+than inventing a name and a sense that the binary cannot confirm. The
+live half needs no flag at all: a word prints high nibble first, so
+listing two bytes in memory order means swapping the word and listing
+one byte means not swapping, and `X1` alone decides that.
