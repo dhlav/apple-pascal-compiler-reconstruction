@@ -21310,3 +21310,82 @@ and the tell was that the two runs agreed *too well* -- `PASCALSY.2`-`.5`
 exact in a run whose whole purpose is to empty them. **Delete the
 destination before every `cp2 extract`, and check the result says what it
 cannot say by accident.**
+
+## 254. `ASSEMBLE` is complete, and word 6 moved when it said it would
+
+Eight bodies in four compiles: `.6`, `.4`, `.10`, `.2`, `.3`, `.15`, then
+`.1`. **50 of 95, and `ASSEMBLE` is all 33** -- the third whole segment
+of `SYSTEM.ASSMBLER`, after `PROCEND` and `PRINTERR`.
+
+### 254a. The prediction came true one procedure early
+
+Finding 251e recorded, as a prediction rather than a fix, that `ASMREC`'s
+word 6 would have to join the variant part, and that the file carried a
+real contradiction until some body forced it. `ASSEMBLE.10` forced it:
+
+```pascal
+NEW(G71);            { SLDC 5 -- five words of packed characters }
+G3^.A6P := G71;      { the macro text buffer hangs off word 6 }
+```
+
+while `ASSEMBLE.6`, exact in the same session, does `G3^.A6 := G22` with
+the location counter. Both are word 6 and they cannot be one field. The
+`CASE` now starts at word 6:
+
+```pascal
+CASE INTEGER OF
+  0: (A6: INTEGER);                          { NEW size 7 }
+  1: (A6P: MACP; A7P: FIVEP);                { NEW size 8 }
+  2: (A6PAD: INTEGER; A7: INTEGER; A8: REFP) { NEW size 9 }
+```
+
+**A tagless `CASE` makes every name reachable whatever was allocated.**
+That is what lets `PROCEND.1` use `A6` from the first arm and `A7`/`A8`
+from the third in one body; the arms fix the overlay and the three `NEW`
+sizes and nothing else. Writing the prediction down turned what would
+have been a confusing error into a two-line edit.
+
+### 254b. `ASSEMBLE.1`, and two procedures numbered 7
+
+The segment body went last because every `CLP` in it is a procedure
+number (finding 228). It still cost one instruction: `CXP 1,7` where this
+had `CLP 7`. The first call in the main loop is `TLA.7`, and label 34 of
+the same `CASE`, twenty lines below, calls `ASSEMBLE.7`. **Two procedures
+numbered 7, one line apart, doing different things** -- and the only
+thing that separates them in the listing is `CXP 1,n` against `CLP n`.
+
+The `CASE` itself has 41 labels over 29..69 with three gaps, and its arms
+are in Apple's source order, which the jump table gives by physical
+address: 56, 55, 41, 42, 43, 44, 45, 30, 31, 34, 29, 49, 47, 69, 35, 36,
+37, 32, 57, 58, 59-61, 50-54, 48, 40, 39, 33. Label order would have put
+every one of them wrong (finding 245a).
+
+The loop is `UNTIL FALSE` -- `SLDC 0 | FJP` at the bottom -- and the only
+way out is the `EXIT(ASSEMBLE)` on labels 59..61, a segment procedure
+exiting itself.
+
+### 254c. `VAR` after a nested procedure is error 6
+
+`ASSEMBLE.2`'s own `VAR` block, written after its nested `FUNCTION A3`,
+is **error 6** on Apple's compiler; the host tool accepts it (finding
+195). It goes ahead of the nested function, and the offsets do not
+change -- locals are allocated in declaration order whatever procedures
+sit between them.
+
+`A3` is also a `BOOLEAN` function declared `INTEGER`. Both spellings give
+`PARAM SIZE 4` and both end `RNP 1`, so **the probe cannot see the
+difference** -- but every assignment to the result is a comparison, and
+`A3 := V3 = V4` does not typecheck as an integer. This is finding 248's
+shape again: a wrong type that the byte compare is blind to, caught by
+the source refusing to compile rather than by the score.
+
+### 254d. Two more records the binary named
+
+* **`MACBUF`** -- `NEW(G71)` emits `SLDC 5` and `ASSEMBLE.10` fills
+  indices 0..9 a byte at a time, so `PACKED ARRAY [0..9] OF CHAR`. Each
+  block chains through `ASMREC`'s word 6.
+* **`LOCREC`** -- global 691 is 147 words indexed `IXA 7`, so 21 records
+  of seven. `TLA.37` compares words 0..3 against a local with
+  `EQU BYTE,8`, so they are an eight-character name; `TLA.14` and `.15`
+  push global 13 onto word 5, so it is a `FIVEP`; word 6 carries the same
+  class ordinals `ASMREC`'s `A5` does; word 4 takes the location counter.
