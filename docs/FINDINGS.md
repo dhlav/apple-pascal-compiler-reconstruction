@@ -22178,3 +22178,68 @@ piece of evidence arrived, and not before.
 
 `NUMKWORDS = 32`, `DEFRADIX`, and the four `...SWITCH` constants join the
 constant block.
+
+## 266. `OPERFOLD` and `EXPRESS`: every procedure in `SYSTEM.ASSMBLER`'s six segments
+
+`OPERFOLD` (`TLA.33`) and `EXPRESS` (`TLA.18`) are **instruction- and
+frame-identical**, both exact on the first compile
+(`acceptance/2026-09-12-assembler-operfold`, then
+`acceptance/2026-09-12-assembler-complete`, 4674 lines, 0 errors).
+
+**90 of 95. Every procedure in all six segments -- `TLA` 38, `ASSEMBLE`
+33, `PROCEND` 9, `INITIALI` 6, `SYMTBLDU` 3, `PRINTERR` 1 -- is produced
+byte-for-byte by Apple's own 1.3 compiler from this source.** The five
+that are not are `PASCALIO`'s, a cut-down library unit that exists on no
+disk in the set and cannot be rebuilt from anything that does (finding
+235b). The one segment ours has and Apple's does not is the `$U-` host
+segment of finding 105a. Those two are the whole of the difference, and
+`probe_asm_exact.py` asserts both.
+
+### 266a. `OPERFOLD`
+
+I.5's procedure, restructured: its two early `EXIT`s are one guard
+(`IF STK[STKINDEX - 1].TIPE <> 15`), a new `BOOLEAN` local decides
+binary against unary, and an assembly that is not relocatable -- neither
+`G63` nor `G622.W1` -- treats every operand pair as absolute. The eight
+binary arms and three unary arms are in I.5's order, which is physical
+order. The frame is I.5's `LATTRIBUTE, RATTRIBUTE` reversed into 2 and 1,
+then `KLUDGETYPE`, `RVALUE`, `BOTHABSOLUTE`, Apple's local 6, and the
+`WITH` slot at 7 that both of its `WITH`s share.
+
+### 266b. `EXPRESS`
+
+502 instructions, and I.5's loop with four changes visible in the bytes:
+
+- The `CASE` runs inside `WITH STK[STKINDEX + 1]`. That is what local 48
+  was (finding 263d): the address of the entry an arm is about to fill,
+  cached before the arm bumps `STKINDEX`, so `STKINDEX := STKINDEX + 1;
+  TIPE := LEXTOKEN` writes the right slot.
+- A full stack (`STKINDEX >= 20`) is error 26 and out of the assembler,
+  where I.5 would have indexed past the end of an 11-entry array.
+- Every `OPERFOLD` is guarded by `IF STKINDEX > 0`.
+- Token 46, `.INTERP` (finding 256a), gets an arm of its own between
+  `LOCLABEL` and `TIDENTIFIER`; everything else is I.5's arms in I.5's
+  order.
+
+The `NOT (LEXTOKEN IN [...])` set is five words, and decoded it is
+exactly the union of the `CASE` labels -- two derivations of one fact
+agreeing. `G59` is I.5's `EXPRSSADVANCE`, a `BOOLEAN`, so its three
+`:= 0`/`:= 1` sites became `FALSE`/`TRUE` with no change in bytes.
+
+### 266c. The probe's negative control had to be rebuilt
+
+`probe_asm_exact.py` had kept a list of still-stub procedures that had to
+come back "differs", as proof the comparison could still tell a stub from
+a body. With no stubs left that list was empty, and an empty control
+proves nothing (CLAUDE.md rule 5). It now runs the same comparison over
+two earlier kept runs whose differences are known:
+
+- `2026-09-12-assembler-operfold`, whose source differs from the final
+  one **only in `EXPRESS`'s body**, must differ in exactly `{TLA.18}` --
+  not more, not fewer. A comparison that had gone blind would pass the
+  final run and fail this.
+- `2026-09-07-assembler-skeleton`, the file's first compile, must still
+  differ in a named procedure from each of the six segments.
+
+It also now asserts all 90 directly, rather than only the ones `EXACT`
+lists, and that `EXACT` lists every one of them.

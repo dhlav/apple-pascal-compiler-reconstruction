@@ -508,7 +508,7 @@ VAR
   G56      : BOOLEAN;                                   {   56    1w tested }
   G57      : BOOLEAN;                                   {   57    1w touched }
   G58      : BOOLEAN;                                   {   58    1w tested }
-  G59      : BOOLEAN;                                   {   59    1w tested }
+  G59      : INTEGER;                                   {   59    1w touched }
   G60      : BOOLEAN;                                   {   60    1w tested }
   G61      : INTEGER;                                   {   61    1w touched }
   G62      : BOOLEAN;                                   {   62    1w tested }
@@ -957,7 +957,7 @@ VAR
     G622 := G598;
     G598.W1 := FALSE;
     MARK(G2158);
-    G59 := TRUE;
+    G59 := 1;
     G65 := TRUE;
     G58 := FALSE;
     G60 := FALSE;
@@ -1723,7 +1723,7 @@ VAR
           END
         ELSE
           BEGIN
-            G59 := FALSE;
+            G59 := 0;
             IF EXPRESS(TRUE) THEN
               BEGIN
                 IF G622.W1 THEN T2(1)
@@ -2123,7 +2123,7 @@ VAR
                 BEGIN
                   IF LEXTOKEN <> 14 THEN
                     BEGIN
-                      G59 := FALSE;
+                      G59 := 0;
                       T2(5)
                     END;
                   IF EXPRESS(FALSE) THEN
@@ -3941,177 +3941,7 @@ VAR
         END
     END;
 
-  { EXPRESS's own body: a loop that pushes operands and operators and
-    folds as it goes, and never falls out -- its three children set the
-    result and EXIT. I.5's with Apple's changes: the CASE runs inside
-    WITH STK[STKINDEX + 1], so an arm can bump STKINDEX and still write
-    the entry it was about to fill; a full stack is error 26 and out of
-    the assembler; every OPERFOLD waits until there are two entries; and
-    token 46 (.INTERP, finding 256a) gets an arm of its own. The IN set
-    is exactly the union of the CASE labels. }
   BEGIN
-    G622 := G598;
-    STKINDEX := -1;
-    REPEAT
-      IF G59 THEN T17
-      ELSE G59 := TRUE;
-      IF NOT (LEXTOKEN IN [0..9, 14, 15, 16, 18..22, 24..27, 38, 46,
-                           65..68]) THEN EXPREXIT
-      ELSE IF STKINDEX >= 20 THEN
-        BEGIN
-          T2(26);
-          T21;
-          EXIT(TLA)
-        END
-      ELSE
-        WITH STK[STKINDEX + 1] DO
-          CASE LEXTOKEN OF
-            2, 3, 4, 5, 6, 15, 18, 19, 21:
-              BEGIN
-                STKINDEX := STKINDEX + 1;
-                TIPE := LEXTOKEN
-              END;
-            20: IF STKINDEX = -1 THEN
-                  IF LCCHAR = '*' THEN
-                    BEGIN
-                      STKINDEX := STKINDEX + 1;
-                      IF G660 = 0 THEN VALUE := G21
-                      ELSE VALUE := G20;
-                      G622.W0 := 3;
-                      ATRIB := 35;
-                      TIPE := 70;
-                      IF STKINDEX > 0 THEN OPERFOLD
-                    END
-                  ELSE
-                    BEGIN
-                      G6 := G6 + 1;
-                      G685[G6] := LEXTOKEN
-                    END
-                ELSE
-                  BEGIN
-                    STKINDEX := STKINDEX + 1;
-                    TIPE := LEXTOKEN
-                  END;
-            27: BEGIN
-                  STKINDEX := STKINDEX + 1;
-                  IF G660 = 0 THEN VALUE := G21
-                  ELSE VALUE := G20;
-                  IF G622 = G598 THEN G622.W0 := 3
-                  ELSE IF G622.W0 = 3 THEN G622 := G598;
-                  ATRIB := 35;
-                  TIPE := 70;
-                  IF STKINDEX > 0 THEN OPERFOLD
-                END;
-            66, 67:
-              BEGIN
-                STKINDEX := STKINDEX + 1;
-                VALUE := 0;
-                IF LEXTOKEN = 67 THEN VALUE := G29
-                ELSE IF LENGTH(G406) <= 2 THEN
-                  FOR COUNT := 1 TO LENGTH(G406) DO
-                    VALUE := VALUE * 256 + ORD(G406[COUNT])
-                ELSE EXPREXIT;
-                ATRIB := 34;
-                TIPE := 70;
-                IF STKINDEX > 0 THEN OPERFOLD
-              END;
-            65: BEGIN
-                  IF G622.W1 THEN
-                    BEGIN
-                      IF G691[G43].LCLASS = 36 THEN T2(28)
-                    END
-                  ELSE
-                    BEGIN
-                      IF G691[G43].LCLASS = 36 THEN G622.W1 := TRUE;
-                      G622.W0 := 0;
-                      G622.W2 := G43
-                    END;
-                  STKINDEX := STKINDEX + 1;
-                  VALUE := G691[G43].LVAL;
-                  ATRIB := 35;
-                  TIPE := 70;
-                  IF STKINDEX > 0 THEN OPERFOLD
-                END;
-            46: BEGIN
-                  G622.W0 := 2;
-                  STKINDEX := STKINDEX + 1;
-                  VALUE := 0;
-                  ATRIB := 27;
-                  TIPE := 70;
-                  IF STKINDEX > 0 THEN OPERFOLD
-                END;
-            68: BEGIN
-                  STKINDEX := STKINDEX + 1;
-                  CASE G3^.A5 OF
-                    0, 22, 23, 24, 25, 34:
-                      BEGIN
-                        VALUE := G3^.A6;
-                        ATRIB := G3^.A5
-                      END;
-                    26, 36:
-                      BEGIN
-                        VALUE := 0;
-                        ATRIB := 35;
-                        IF G622.W1 THEN T2(28)
-                        ELSE
-                          BEGIN
-                            G622.W1 := TRUE;
-                            G622.W0 := 1;
-                            G622.W5 := G3
-                          END
-                      END;
-                    32, 35:
-                      BEGIN
-                        VALUE := G3^.A6;
-                        ATRIB := 35;
-                        IF NOT G622.W1 THEN
-                          BEGIN
-                            G622.W0 := 1;
-                            G622.W5 := G3
-                          END
-                      END;
-                    1, 33:
-                      BEGIN
-                        VALUE := 0;
-                        ATRIB := 35;
-                        IF NOT G622.W1 THEN
-                          BEGIN
-                            G622.W0 := 1;
-                            G622.W5 := G3
-                          END
-                      END;
-                    27, 28, 29, 30, 31:
-                      BEGIN
-                        VALUE := 0;
-                        ATRIB := G3^.A5;
-                        IF NOT G622.W1 THEN
-                          BEGIN
-                            G622.W0 := 2;
-                            G622.W5 := G3
-                          END
-                      END
-                  END;
-                  TIPE := 70;
-                  IF STKINDEX > 0 THEN OPERFOLD
-                END;
-            0, 1, 8, 14, 38: EXPREND;
-            7, 9, 22, 24, 25, 26:
-              BEGIN
-                G6 := G6 + 1;
-                G685[G6] := LEXTOKEN
-              END;
-            16: BEGIN
-                  IF STKINDEX = 0 THEN EXPREXIT;
-                  IF STK[STKINDEX - 1].TIPE <> 15 THEN EXPREXIT;
-                  STK[STKINDEX - 1].VALUE := STK[STKINDEX].VALUE;
-                  STK[STKINDEX - 1].ATRIB := STK[STKINDEX].ATRIB;
-                  STK[STKINDEX - 1].TIPE := STK[STKINDEX].TIPE;
-                  STKINDEX := STKINDEX - 1;
-                  IF STK[STKINDEX].TIPE <> 70 THEN EXPREXIT;
-                  IF STKINDEX > 0 THEN OPERFOLD
-                END
-          END
-    UNTIL FALSE
   END;
 
   { Classifies one character into a token code in LEXTOKEN, having skipped the

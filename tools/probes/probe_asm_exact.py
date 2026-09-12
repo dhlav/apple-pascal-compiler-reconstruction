@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-12-assembler-lex-complete"
+RUN = (ROOT / "acceptance" / "2026-09-12-assembler-complete"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -188,6 +188,10 @@ EXACT = [
     # Finding 265: PKWORD and PCONST, and LEX is complete -- the scanner
     # and all five children. Only EXPRESS and OPERFOLD remain.
     "TLA.34", "TLA.35",
+    # Finding 266: OPERFOLD, and EXPRESS last. Every procedure in all
+    # six segments is now Apple's bytes; the five that are not are
+    # PASCALIO, which nothing on the 1.3 disks can rebuild.
+    "TLA.33", "TLA.18",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -199,9 +203,21 @@ EXACT = [
 FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
              "ASSEMBLE.3": 1, "ASSEMBLE.18": 1}
 
-# Still stubs, kept as the discrimination control. If these came back
-# "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.33", "TLA.18"]
+# The discrimination control. While bodies were still stubs, a few of them
+# were listed here and had to come back "differs". There are no stubs left
+# (finding 266), so the control runs the SAME comparison over earlier kept
+# runs whose differences are known, and requires it to find exactly those.
+# The -operfold run is the sharp one: its source differs from RUN's only in
+# EXPRESS's body, so TLA.18 and nothing else may differ there. A comparison
+# that had gone blind would pass RUN and fail this.
+CONTROLS = [
+    ("2026-09-12-assembler-operfold", {"TLA.18"}),
+]
+# And the first compile of the file, when only TLA.1 had a body: these must
+# all differ in it, whatever else does.
+SKELETON = "2026-09-07-assembler-skeleton"
+SKELETON_DIFFERS = ["TLA.2", "TLA.18", "TLA.34", "ASSEMBLE.1",
+                    "PROCEND.1", "INITIALI.2", "SYMTBLDU.1", "PRINTERR.1"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
@@ -293,11 +309,32 @@ def main() -> int:
         check(bool(r) and r["exact"],
               f"{key} instruction- and frame-identical")
 
+    print("=== every procedure in the six segments, not just the listed ===")
+    names = {n for n, _num, _k, _c in SEGMENTS}
+    mine = sorted(k for k in rows if k.rsplit(".", 1)[0] in names)
+    inexact = [k for k in mine if not rows[k]["exact"]]
+    check(len(mine) == 90 and not inexact,
+          f"{len(mine)} procedures, all exact" +
+          (f" -- not: {inexact}" if inexact else ""))
+    check(sorted(EXACT) == mine, "and EXACT names every one of them")
+
     print("=== the comparison can still tell a stub from a body ===")
-    for key in STILL_DIFFERS:
-        r = rows.get(key)
+    for run, expected in CONTROLS:
+        cf = CodeFile((ROOT / "acceptance" / run / "ASSMBLER.CODE")
+                      .read_bytes())
+        crow = compare(cf, apple_cf)
+        diff = {k for k in crow if k.rsplit(".", 1)[0] in names
+                and not crow[k]["exact"]}
+        check(diff == expected,
+              f"{run}: differs in exactly {sorted(expected)} (got "
+              f"{sorted(diff)})")
+    cf = CodeFile((ROOT / "acceptance" / SKELETON / "ASSMBLER.CODE")
+                  .read_bytes())
+    crow = compare(cf, apple_cf)
+    for key in SKELETON_DIFFERS:
+        r = crow.get(key)
         check(bool(r) and not r["exact"],
-              f"{key} still differs, as a stub should")
+              f"{SKELETON}: {key} differs, as the stub it was")
 
     print("=== the two known differences, and no others ===")
     only_apple = sorted(set(a) - set(o))
