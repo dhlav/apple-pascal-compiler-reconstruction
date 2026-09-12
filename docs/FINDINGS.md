@@ -21452,3 +21452,94 @@ comparisons is not.
 `NODEREC` is legal -- a pointer's target may be declared later -- but a
 *field's* type must already exist. The two look alike and only one is a
 forward reference.
+
+## 256. `INITIALIZE` is complete, and five of six segments with it
+
+**58 of 95.** `ASSEMBLE` (33), `PROCEND` (9), `INITIALI` (6), `SYMTBLDU`
+(3) and `PRINTERR` (1) are all whole; only `TLA` is left, 6 of 38.
+
+### 256a. `INITIALI.2` is the key to every bare number in the file
+
+It is 66 assignments and nothing else: 33 eight-character directive names
+beside the token code each becomes.
+
+```
+ALIGN 34  ASCII 29  BLOCK 35  BYTE 37  CONST 54  EQU 49  FUNC 60
+PUBLIC 52  PRIVATE 53  PROC 59  WORD 36  INTERP 46  MACRO 47  ENDM 69
+IF 48  ENDC 39  ELSE 40  REF 50  DEF 51  ORG 32  INCLUDE 63  LIST 55
+NOLIST 56  ASECT 30  PSECT 31  TITLE 58  END 61  PAGE 57
+MACROLIS 41  NOMACROL 42  PATCHLIS 43  NOPATCHL 44  ABSOLUTE 45
+```
+
+This is a **whole-file cross-check arriving after the fact**, and it
+passes. `ASSEMBLE.1`'s `CASE` runs 29..69 over exactly these, and every
+arm lands where the table says it should: `.12` on 36 is `.WORD`, `.13`
+on 37 is `.BYTE`, `.11` on 35 is `.BLOCK`, `.8` on 29 is `.ASCII`, `.10`
+on 47 is `.MACRO`, `.9` on 49 is `.EQU`, `.2` on 48 is `.IF`, `.4` on 40
+is `.ELSE`, `.15` on 50..54 is the `REF`/`DEF`/`PUBLIC`/`PRIVATE`/`CONST`
+family, and 59/60/61 -- `PROC`, `FUNC`, `END` -- are the three that
+`EXIT(ASSEMBLE)`. `61` being `.END` is why `PROCEND.1` branches on it
+(finding 249). Nothing had to be revised.
+
+### 256b. Bitwise arithmetic on a `BOOLEAN`, and `ODD(127)` as a mask
+
+`INITIALI.4` hashes an opcode name into 128 buckets, and its hash
+variable is declared **`BOOLEAN` while holding a full sixteen-bit
+value**. That is the only way to write it. `AND`, `OR` and `NOT` are word
+operations in the p-machine (`LAND`, `LOR`, `LNOT`), and `ANDOP` emits
+them for `BOOLPTR` operands *only* -- so a `BOOLEAN`-declared word plus
+finding 231's free `ODD`/`ORD` casts buys bitwise arithmetic at zero
+instruction cost:
+
+```pascal
+V2 := ODD(ORD(V2) + ORD(V2));          { shift left                  }
+V1 := ODD(ORD(BUF[I]));                { a byte into the same word   }
+V2 := (NOT V2 AND V1) OR (V2 AND NOT V1);   { XOR, which Pascal lacks }
+V1 := V2 AND ODD(127);                 { mask to seven bits          }
+V2 := ODD(ORD(V2) DIV 128);            { shift right                 }
+```
+
+**`ODD(127)` is a bit mask.** Every cast there compiles to nothing at
+all, and `SLDC 127 | LAND` is the whole of what reaches the codefile.
+This is finding 231 at a scale it was not expected to reach: not an
+occasional free cast but the mechanism an entire routine is built on.
+
+### 256c. Integer to pointer, through a one-word variant
+
+`INITIALI.6` reads the running system's version byte at an absolute
+address, and UCSD has no cast that can do it (finding: `@` does not
+exist, `ORD(p)` is one-way). A one-word variant record is how:
+
+```pascal
+VAR V1: RECORD CASE INTEGER OF 0: (ADDR: INTEGER); 1: (P: CODEP) END;
+...
+V1.ADDR := -16607;                     { $BF21 }
+IF V1.P^[0] <> CHR(4) THEN ...
+```
+
+### 256d. `NEW(p, n)` needs a named tag field
+
+`ASMREC`'s `CASE` had no tag and `NEW(G3, 0)` would have silently
+allocated the largest arm: `NEWSTMT` guards the whole arm-selection block
+with `IF LSP^.TAGFIELDP <> NIL`, and with no tag field `LSIZE` keeps the
+record's full size (VERIFIED SOURCE FACT, `ROUTINE.text`). Apple's own
+`SLDC 7` in `INITIALI.4` and `SLDC 8` in `INITIALI.1` are proof the arms
+*are* being selected, so `A5` is the tag: `CASE A5: INTEGER OF`. A tag
+field stays an ordinary readable, writable field, so every `G3^.A5 := n`
+in the already-exact bodies is untouched -- and `NEW(G3)` with no tag
+list still takes the largest, which is `SYMTBLDU.1`'s `SLDC 9`.
+
+### 256e. `(*$I-*)` crosses a segment boundary, and cost three procedures
+
+`INITIALIZE` ends with IOCHECK off -- its last statements are unchecked
+-- and the option is lexical and sticky. Leaving it that way stripped the
+`CSP 0` from `PROCEND.2`, `SYMTBLDU.1` and `SYMTBLDU.3`, and **all three
+stopped being exact**, in a compile that had just gained five. A
+`SEGMENT PROCEDURE` boundary is not a scope for compiler options; one
+`(*$I+*)` after `INITIALIZE`'s `END` put them back.
+
+The score is what caught it, and only because it is checked by name:
+going 53 → 55 when five landed reads as a win until you notice the count
+is three short of 58. **A net gain can hide a regression** -- which is
+why `probe_asm_exact.py` lists every exact procedure individually rather
+than asserting a floor.
