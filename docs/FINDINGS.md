@@ -21543,3 +21543,82 @@ going 53 → 55 when five landed reads as a win until you notice the count
 is three short of 58. **A net gain can hide a regression** -- which is
 why `probe_asm_exact.py` lists every exact procedure individually rather
 than asserting a floor.
+
+## 257. The first six of `TLA`, and the unsigned `MOD`
+
+`TLA.3`, `.5`, `.8`, `.19`, `.20` and `.25` are **instruction- and
+frame-identical**, all six exact on the first compile
+(`acceptance/2026-09-11-assembler-tla-six`, 2976 lines, 0 errors). **64 of
+95, up from 58, none lost.** `TLA` is 12 of 38; it is the only segment
+still open.
+
+These six were picked because none of them is reached from another
+unwritten body: each is a leaf that the already-exact five sixths of the
+file calls. That is what makes a first-compile hit meaningful here --
+every `CXP`/`CLP` in them names a procedure whose number is already
+settled, so nothing in the result is being confirmed by a stub.
+
+### 257a. `TLA.20` is `MOD` for an *unsigned* 16-bit dividend
+
+VERIFIED BINARY FACT, and the one body of the six with any arithmetic
+worth reading:
+
+```pascal
+FUNCTION T20(X1, X2: INTEGER): INTEGER;
+  VAR V5: INTEGER;
+BEGIN
+IF X2 >= 0 THEN
+  BEGIN
+  IF X1 >= 0 THEN T20 := X1 MOD X2
+  ELSE
+    BEGIN
+    V5 := 4 * (16384 MOD X2) MOD X2;
+    T20 := X2 - (-X1 - V5) MOD X2
+    END
+  END
+ELSE
+  IF X1 >= X2 THEN T20 := X1 - X2
+  ELSE T20 := X1
+END;
+```
+
+`4 * (16384 MOD X2) MOD X2` is **65536 MOD X2 computed without
+overflowing a signed word** -- `*` and `MOD` share a precedence level and
+associate left, so it reads `((4 * (16384 MOD X2)) MOD X2)`, and 16384 is
+the largest power of two a 1.3 `INTEGER` can hold with room to multiply.
+With `R` = 2^16 mod `X2`, an `X1` the assembler means as unsigned is
+`X1 + 65536`, so `X1 + R` is congruent to it, and negating into a positive
+dividend is how you take `MOD` of it at all: the p-machine's `MOD` is
+`MODI`, and the reconstruction can only see what Apple wrote, not what
+`MODI` does with a negative left operand. Writing `X1 MOD X2` in the
+`X1 < 0` arm would have been two instructions, not eleven.
+
+So this is an address helper: the assembler holds 16-bit addresses in a
+signed word and needs `MOD` over the whole range (STRONG INFERENCE from
+the callers, which pass `G15` and page sizes).
+
+### 257b. `TLA.3`'s frame has two words nothing reads
+
+`TLA.3` swaps the bytes of a word, which needs two `BYTEPAIR`s, and
+Apple's `data` is **8** with the two in use at locals 4 and 6:
+
+```pascal
+VAR V4: BYTEPAIR; PAD5: INTEGER; V6: BYTEPAIR; PAD7: INTEGER;
+```
+
+Two declared words are never loaded or stored. A frame that is two words
+*larger* than the body needs is the opposite of the usual case (finding
+216's "one or two words short" is a `WITH` pointer or a `FOR` limit temp),
+and it cannot be a temp at all -- temps come after declared vars, and
+these are interleaved. Apple declared something there that its own code
+does not touch; the pads are honest about not knowing what, and any future
+reading has to keep both offsets.
+
+### 257c. A five-parameter list with no locals at all
+
+`TLA.19` validates a parsed operand: `params` 14, `data` **0**. Five
+parameters reversing whole (finding 175) with nothing else in the frame is
+the cleanest test of that rule in the file -- there is no local for a
+mis-ordered parameter to hide behind, so all five offsets are pinned by
+one body, and `params` 14 is five words plus the two a `FUNCTION` result
+costs.

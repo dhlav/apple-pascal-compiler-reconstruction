@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-11-assembler-initialize"
+RUN = (ROOT / "acceptance" / "2026-09-11-assembler-tla-six"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -138,6 +138,15 @@ EXACT = [
     # BOOLEAN-declared word; .6 casts an integer to a pointer through a
     # one-word variant record.
     "INITIALI.1", "INITIALI.2", "INITIALI.4", "INITIALI.5", "INITIALI.6",
+    # Finding 257: the first six of TLA's 38, all exact on the first
+    # compile. `.3` swaps the two bytes of a word through BYTEPAIR; `.5`
+    # is the I/O error reporter, and its `X1: BOOLEAN` is visible only in
+    # the body (PARAM SIZE is 2 either way); `.8` writes the
+    # MEMAVAIL/line banner; `.19` validates a parsed operand and has five
+    # parameters and no locals at all; `.20` is MOD with the correction a
+    # negative dividend needs; `.25` accumulates cross-reference words
+    # seven to a record and PUTs when the seventh lands.
+    "TLA.3", "TLA.5", "TLA.8", "TLA.19", "TLA.20", "TLA.25",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
