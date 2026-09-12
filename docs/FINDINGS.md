@@ -21918,3 +21918,52 @@ storage could not distinguish 21 bytes from 22.
 packed component -- `LLA 2 | SLDC 0 | <len> | STB` -- and that is how a
 string gets a length the compiler did not compute. It is also what makes
 the local 52 words rather than 51: `STRING[102]` is 103 bytes.
+
+## 262. The scanner, both halves, first compile
+
+`TLA.16` and `TLA.17` are **instruction- and frame-identical**
+(`acceptance/2026-09-12-assembler-tla-scanner`, 3899 lines, 0 errors).
+**82 of 95, up from 80, none lost.** `TLA` is 30 of 38, and the eight
+left are `.18` with `.32` and `.33`, and `.34`-`.38` under `.17`.
+
+`TLA.16` is 407 instructions, the largest body in the file after
+`PROCEND.1`, and it came out exact on the first compile. It reads the
+next character into `G11` from whichever of three sources `G659` names:
+
+- **0**, a macro body being expanded, indexed by `G7`;
+- **1**, a macro's actual-parameter text, indexed by `G28`, out of the
+  macro buffer when there is a level above and the source window
+  otherwise;
+- **2**, the source window itself, indexed by `G41`.
+
+The three arms are the same shape and that is what makes the body
+readable at all: step the position unless `G62` says the previous call
+left it stepped, take the character, keep the line buffer `G539` in step
+so the listing shows what was read, and collapse a run of blanks with
+`SCAN`. Five globals come out `BOOLEAN` from it -- `G58`, `G65`, `G67`
+(and `G55` stays an `INTEGER` tested with `ODD`, which is this file's own
+idiom, finding 250) -- and each of their `:= 0`/`:= 1` sites in the
+already-exact segments compiles to the same `SLDC`.
+
+`TLA.17` classifies that character into one of thirty token codes. Two
+things in it are worth recording:
+
+- **The token codes are finding 256a's, read from the other end.**
+  `INITIALI.2`'s directive table named the codes the handlers compare
+  against; this is where the scanner produces them, and every one lines
+  up: 38 for end-of-statement, 8 and 9 for the parentheses, 24 for `#`,
+  and so on. Neither table was derived from the other.
+- **`SCAN` with a negative length scans backwards.** `TLA.16`'s arm 1
+  ends a macro parameter with `SCAN(-70, <> ' ', G71^[G28 - 1])`, walking
+  back over the blanks the parameter was padded with. `SLDC 70 | NGI` is
+  a written `-70`, not a declared constant (finding 241).
+
+### 262a. A constant comparison of two characters
+
+`TLA.17`'s `$` arm begins `SLDC 42 | SLDC 36 | EQUI` -- `'*' = '$'`, two
+character constants the compiler does not fold, and the `THEN` side can
+never run. It is the third shape of dead configuration test in this file,
+after finding 258a's `SLDC 0 | FJP` and finding 259a's `WORDBITS = 8`.
+The reconstruction writes the comparison literally, for the same reason:
+the bytes fix the two values and say nothing about the names they were
+written with.

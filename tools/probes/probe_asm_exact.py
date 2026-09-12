@@ -42,7 +42,7 @@ from oscmp import compare, shipped_codefile
 from procbuild import listing
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = (ROOT / "acceptance" / "2026-09-12-assembler-tla-listing"
+RUN = (ROOT / "acceptance" / "2026-09-12-assembler-tla-scanner"
        / "ASSMBLER.CODE")
 TARGET = "SYSTEM.ASSMBLER"
 
@@ -169,6 +169,11 @@ EXACT = [
     # which retyped a sixth frame -- `ASSEMBLE.9`'s, whose own
     # placeholder was the second word -- without moving a byte.
     "TLA.10", "TLA.13",
+    # Finding 262: the scanner. `.16` reads the next character out of
+    # one of three sources and `.17` classifies it into one of 30
+    # token codes; 407 and 160 instructions, both exact on the first
+    # compile, and between them they pin five more BOOLEAN globals.
+    "TLA.16", "TLA.17",
 ]
 
 # The six procedures that end `RNP 1` rather than `RNP 0`: they are
@@ -182,8 +187,8 @@ FUNCTIONS = {"TLA.3": 1, "TLA.18": 1, "TLA.19": 1, "TLA.20": 1,
 
 # Still stubs, kept as the discrimination control. If these came back
 # "identical" the comparison would be broken, not the reconstruction.
-STILL_DIFFERS = ["TLA.17", "TLA.34", "TLA.35", "TLA.33",
-                 "TLA.18", "TLA.36", "TLA.16"]
+STILL_DIFFERS = ["TLA.32", "TLA.34", "TLA.35", "TLA.33",
+                 "TLA.18", "TLA.36", "TLA.37", "TLA.38"]
 
 # Apple has these and we cannot (finding 235b); we have these and Apple
 # does not (finding 105a). Both lists are exhaustive on purpose.
