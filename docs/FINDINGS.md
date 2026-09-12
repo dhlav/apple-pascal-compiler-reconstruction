@@ -22367,3 +22367,27 @@ reproduced whole by Apple's own tools from this repository's source, and
 the first to need all four of them. `probe_compiler_whole.py` checks the
 kept file every build, and checks the Librarian's input is *not* already
 Apple's file, so the comparison cannot pass by being blind.
+
+### 267f. `SYSTEM.ASSMBLER` the same way -- every byte, with `PASCALIO` borrowed
+
+**VERIFIED BINARY FACT.** Apple's Librarian, two inputs: slots 1 to 6 from
+the reconstruction's `ASSMBLER.CODE` (finding 266), then `N(ew file` and
+slot 0 from shipped `SYSTEM.ASSMBLER`, then the notice. The result equals
+shipped `SYSTEM.ASSMBLER` in **all 25,600 bytes**
+(`acceptance/2026-09-12-assembler-librarian`).
+
+What that proves and what it does not:
+
+- **Proves**: the six reconstructed segments, all 22,002 bytes of them,
+  equal Apple's including slack; block 0 is Apple's; and the layout --
+  `PASCALIO`'s interface text at block 47 and code at 48, copied last into
+  free slot 0 -- is exactly what 267d predicted a person adding a unit at
+  the end would produce.
+- **Does not prove anything about `PASCALIO`.** Its 572 code bytes and its
+  text block were copied from the shipped file itself, because nothing on
+  the 1.3 disks rebuilds that cut-down unit (finding 235b). That region
+  matches by construction, and `probe_assembler_whole.py` says so.
+
+So the order of Apple's release step for this file is fixed too: the
+assembler's own segments first, `PASCALIO` added last. `SYSTEM.ASSMBLER`
+is as complete as the disk set allows.

@@ -1,0 +1,92 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]XExecute what file (<ret> to exit) ? SYSHD:LIBRARY
+<1E>  Apple Pascal Librarian [1.3]<00><1E> -Output file -> <00>SYSHD:LIBASM.CODE[*]
+<1E> $Input File -> <00>SYSHD:ASSMBLER.CODE
+<1E> %            0-( 0) PASCALSY   100            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-(10) ASSEMBLE  4554           13-                  0
+            6-(11) PRINTERR   192           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>1<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>?<1E> "Copy slot <00>0? N
+<1E> "Copy slot <00>1? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>21<1E> "Copy slot <00>2? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>27<1E> "Copy slot <00>3? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>30<1E> "Copy slot <00>4? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>37<1E> "Copy slot <00>5? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-(10) ASSEMBLE  4554           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>46<1E> "Copy slot <00>6? Y
+<1E> /            0-                  0            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-(10) ASSEMBLE  4554           13-                  0
+            6-(11) PRINTERR   192           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>47<1E> "<00>N<1E> $Input File -> <00>SYSHD:SYSTEM.ASSMBLER
+<1E> %            0-(31) PASCALIO   572            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-(10) ASSEMBLE  4554           13-                  0
+            6-(11) PRINTERR   192           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>47<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>?<1E> "Copy slot <00>0? Y
+<1E> /            0-(31) PASCALIO   572            8-                  0
+            1-( 1) TLA      10176            9-                  0
+            2-( 7) INITIALI  2568           10-                  0
+            3-( 8) SYMTBLDU  1088           11-                  0
+            4-( 9) PROCEND   3224           12-                  0
+            5-(10) ASSEMBLE  4554           13-                  0
+            6-(11) PRINTERR   192           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>50<1E> "Copy slot <00>1? N
+<1E> "Copy slot <00>2? N
+<1E> "Copy slot <00>3? N
+<1E> "Copy slot <00>4? N
+<1E> "Copy slot <00>5? N
+<1E> "Copy slot <00>6? N
+<1E> "<00>Q<1E> 7Notice? <00>COPYRIGHT 1979,1980,1983-1985 APPLE COMPUTER, INC. ALL RIGHTS RESERVED
+Command:

@@ -488,10 +488,15 @@ def nonzero_slots(name: str) -> list[int]:
     that each question it sees is the one it expected.
     """
     with tempfile.TemporaryDirectory() as tmp:
-        cp2("extract", "--raw", "--strip-paths", str(HD1), f"{name}.CODE",
+        cp2("extract", "--raw", "--strip-paths", str(HD1), codename(name),
             cwd=Path(tmp))
-        b = (Path(tmp) / f"{name}.CODE").read_bytes()
+        b = (Path(tmp) / codename(name)).read_bytes()
     return [s for s in range(16) if b[2 + 4 * s] | b[3 + 4 * s] << 8]
+
+
+def codename(name: str) -> str:
+    """`ASSMBLER` -> `ASSMBLER.CODE`; `SYSTEM.ASSMBLER` is already a name."""
+    return name if "." in name else f"{name}.CODE"
 
 
 def do_librarian(con: Console, args) -> int:
@@ -502,34 +507,42 @@ def do_librarian(con: Console, args) -> int:
     order they were copied, and the copyright notice as a Pascal string.
     This reproduces that release step with Apple's own tool.
     """
-    wanted = slots_in(args.slots)
-    asked = nonzero_slots(args.input)
+    if len(args.input) != len(args.slots):
+        raise SystemExit("give one --slots for every --input, in order")
+    plan = [(name, slots_in(spec), nonzero_slots(name))
+            for name, spec in zip(args.input, args.slots)]
     con.expect(PROMPT)
     con.send("X")
     con.expect(b"Execute what file")
     con.send(f"{VOL}LIBRARY\r")
     con.expect(b"Output file ->")
     con.send(f"{VOL}{args.out}.CODE{SIZED}\r")
-    con.expect(b"Input File ->")
-    con.send(f"{VOL}{args.input}.CODE\r")
-    con.expect(b"N(ew file")
-    con.send("?")
-    for expected in asked:
-        con.expect(b"Copy slot")
-        # `mark` is the end of everything received at the match, not the
-        # end of the match, so the number may already be behind it.
-        start = con.rx.rfind(b"Copy slot")
-        while True:
-            m = LIB_COPY.search(bytes(con.rx[start:]))
-            if m:
-                break
-            if time.monotonic() > con.deadline:
-                raise Fault("never saw the slot number after 'Copy slot'")
-            con._pump()
-        if int(m.group(1)) != expected:
-            raise Fault(f"Librarian asked about slot {m.group(1).decode()}, "
-                        f"expected {expected}")
-        con.send("Y" if expected in wanted else "N")
+    report = []
+    for n, (name, wanted, asked) in enumerate(plan):
+        if n:
+            # N(ew file ends this input's MAINLOOP; GETINPUT asks again.
+            con.send("N")
+        con.expect(b"Input File ->")
+        con.send(f"{VOL}{codename(name)}\r")
+        con.expect(b"N(ew file")
+        con.send("?")
+        for expected in asked:
+            con.expect(b"Copy slot")
+            # `mark` is the end of everything received at the match, not
+            # the end of the match, so the number may already be behind it.
+            start = con.rx.rfind(b"Copy slot")
+            while True:
+                m = LIB_COPY.search(bytes(con.rx[start:]))
+                if m:
+                    break
+                if time.monotonic() > con.deadline:
+                    raise Fault("never saw the slot number after 'Copy slot'")
+                con._pump()
+            if int(m.group(1)) != expected:
+                raise Fault(f"Librarian asked about slot "
+                            f"{m.group(1).decode()}, expected {expected}")
+            con.send("Y" if expected in wanted else "N")
+        report.append(f"{name} {sorted(set(asked) & wanted)}")
     # Type-ahead: the Q waits in the keyboard buffer until the last copy
     # finishes and GETCOMMAND reads it.
     con.send("Q")
@@ -540,8 +553,7 @@ def do_librarian(con: Console, args) -> int:
     if con.expect(PROMPT, b"Code write error") != PROMPT:
         print("\nLIBRARIAN FAILED: Code write error")
         return 1
-    copied = sorted(set(asked) & wanted)
-    print(f"\nlibrarian: copied slots {copied} of {asked} into {args.out}")
+    print(f"\nlibrarian: into {args.out}, copied " + "; ".join(report))
     return 0
 
 
@@ -569,9 +581,11 @@ def main() -> int:
     p.add_argument("--out", required=True)
 
     p = sub.add_parser("librarian")
-    p.add_argument("--input", required=True, help="codefile on SYSHD")
+    p.add_argument("--input", action="append", required=True,
+                   help="codefile on SYSHD; repeat for a second input")
     p.add_argument("--out", required=True)
-    p.add_argument("--slots", required=True, help="e.g. 1-15")
+    p.add_argument("--slots", action="append", required=True,
+                   help="e.g. 1-15; one per --input, in the same order")
     p.add_argument("--notice", default="",
                    help="the answer to Notice? -- the codefile comment")
 
