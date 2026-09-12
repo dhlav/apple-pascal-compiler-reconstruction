@@ -22123,3 +22123,58 @@ statements:
   twice: the `FOR` limit, then the `WITH` slot.
 
 `HASHRANGE = 128` joins the constant block beside `HASHTOP`.
+
+## 265. `PKWORD` and `PCONST`: `LEX` is complete
+
+`PKWORD` (`TLA.35`) and `PCONST` (`TLA.34`) are **instruction- and
+frame-identical**, both exact on the first compile
+(`acceptance/2026-09-12-assembler-lex-complete`, 4420 lines, 0 errors).
+**88 of 95, up from 86, none lost.** `LEX` (`TLA.17`) and all five of its
+children are now Apple's bytes; the only bodies left in the file are
+`EXPRESS` (`TLA.18`) and `OPERFOLD` (`TLA.33`).
+
+Both frames are I.5's declarations, reversed, plus exactly what the
+compiler adds:
+
+- **`PKWORD`**: `I`, `KLUDGEPTR: ^INTEGER`, `ID`, then `TEMP, ALTNAME:
+  STRING` in one clause, so `ALTNAME` at 7 and `TEMP` at 48, and a
+  `STRING[160]` `CONCAT` temp at 89 -- 169 words, `data 338`.
+- **`PCONST`**: `RADIX, I, NUM` reverses to `NUM` 1, `I` 2, `RADIX` 3;
+  `TEMP, ID: STRING` to `ID` 5 and `TEMP` 46; `VAL: WORDSWAP` at 87 --
+  **two words**, the seventh frame to measure finding 259a -- and the
+  `CONCAT` temp at 89, which the `FOR` limits reuse. Apple adds one word,
+  local 4, the last digit character read.
+
+### 265a. `WORDSWAP`'s octal digits were numbered one off
+
+Finding 263c adopted I.5's field names for `WORDSWAP` with the octal arm
+as `OCT0..OCT6`, taking the one-bit field as `OCT0`. `PCONST` is where
+I.5's own code stores into them, and it says otherwise:
+`VAL.OCT1 := ORD(ID[1])` lands in the **one-bit** field at bit 3 of word
+1, and `OCT2`..`OCT6` in the three-bit ones below it. So every octal name
+moved up one (18 references, byte-neutral), the unread low three bits
+became `OCT7`, and the declaration is now
+
+```pascal
+3: (OCT2, OCT3, OCT4, OCT5, OCT6, OCT7: 0..7; OCT1: 0..1);
+4: (BIN: PACKED ARRAY [0..15] OF 0..1)
+```
+
+-- the `BIN` arm being what `PCONST`'s binary branch indexes with
+`IXP 16,1`. A name taken from a reference was wrong in a way no compile
+could catch, and the reference's own code is what caught it. That is
+CLAUDE.md's naming rule doing its job: the name moved once the second
+piece of evidence arrived, and not before.
+
+### 265b. What Apple changed
+
+- `PKWORD` tests `LEXTOKEN = 69` for `.ENDM` where I.5 compares the name
+  with `'ENDM    '`; lets a comma or semicolon end an `.INCLUDE` file
+  name, with error 5 for anything after; and passes the name through the
+  OS's title fixer (`OSPROC43(ALTNAME, 1, 80)`) before the `RESET`.
+- `PCONST`'s default radix is 16 and its suffixes are `H`, `.`, `O` and
+  `T`, in I.5's order; the last-digit test for a binary suffix that is
+  itself a hex digit cannot succeed with `T`, and is dead.
+
+`NUMKWORDS = 32`, `DEFRADIX`, and the four `...SWITCH` constants join the
+constant block.
