@@ -18,10 +18,10 @@ assembler, Linker and Librarian (findings 267e and 267f; `PASCALIO` in the
 assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 across two
 kept compiles (finding 253). `SYSTEM.LINKER` is identical as a whole
 file too (finding 268), from I.5's linker and the binary, and so is
-`LIBRARY.CODE` (finding 269), from I.5's Librarian. Next in scope:
-`LIBMAP.CODE`, whose I.5 ancestor is under `reference_source/ucsd_15`, and
-`SYSTEM.FILER`, one segment with no ancestor in either the I.5 or the II.0
-sources.
+`LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
+through the end of its segment (finding 270), from I.5's LibMap. Next in
+scope: `SYSTEM.FILER`, one segment with no ancestor in either the I.5 or
+the II.0 sources.
 
 `docs/DISKSET.md` is the file-by-file scoreboard;
 `analysis/diskset-inventory.txt` is its machine-readable companion,

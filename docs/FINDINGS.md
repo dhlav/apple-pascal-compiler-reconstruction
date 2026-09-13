@@ -22552,3 +22552,101 @@ This is a second thing oscmp cannot see (after finding 252's jump
 targets). It compares where a jump goes, not which slot carries it. The
 probe keeps a mutant with the two operands exchanged, so the whole-file
 check is shown to catch it.
+
+## 270. `LIBMAP.CODE`: every byte before the slack, and Apple's names for its globals
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/LIBMAP.text` was
+rewritten whole. Apple's compiler scores it 11 of 11 p-code procedures
+instruction- and frame-identical on its first clean compile. Apple's
+assembler built `src/native/SEARCH.TEXT`, and Apple's Linker joined the
+two. The output equals shipped `LIBMAP.CODE` in block 0 and all 4,788
+segment bytes, native `IDSEARCH` included: **5,300 of 5,300 bytes before
+the slack** (`acceptance/2026-09-12-libmap-complete`,
+`acceptance/2026-09-12-libmap-linked`). The other 311 bytes, all in the
+last block's tail, are slack. `probe_libmap_whole.py` checks this on every
+build.
+
+The file this replaces (findings 109, 111, 120, 121) had the right shape
+but only 1 of 12 procedures instruction-identical, with invented names.
+Its map file was a `TEXT`, and `FINIT`'s third argument (0, not -2)
+says `INTERACTIVE` (BODYPART, VERIFIED SOURCE FACT).
+
+### 270a. The shape: an ordinary program, finished by the Linker
+
+**VERIFIED BINARY FACT.** Unlike findings 267-269, this is not a
+`(*$U-*)` system program finished by the Librarian. Shipped slot 0 holds
+the segment itself (segment number 1, `LINKED`, machine type 7, version
+6), and there is no notice. `LIBMAP.1` begins `NOP NOP`, and the binary
+has `CHK` throughout and no `CSP 0`. That is I.5's `program LIBMAP` under
+its own `G+`/`I-` options, with `IDSEARCH` declared `EXTERNAL` first so it
+is procedure 2. A compile alone gives `HOSTSEG` with p-code machine type,
+and the Linker turns that into what Apple shipped.
+
+### 270b. What survives from I.5 and what Apple added
+
+**STRONG INFERENCE**, from lex levels and bodies. The tree is I.5's LibMap
+(Robert Hofkin, September 1978), procedure for procedure: `alphabetic`,
+`phase2` holding `readlinkinfo` (holding `copyinterface`, `getentry` and
+`ref`), and `getfile`. `alphabetic`, `getentry` and the link-info listing
+are I.5's bodies. Globals are I.5's in I.5's order, so `firsttime`,
+`listrefs` and `listmap` land at 600, 601 and 602 once their clause is read
+reversed.
+
+**VERIFIED BINARY FACT.** Apple added:
+
+- **Byte sex.** `LM3` and `LM5` are the Linker's `LK5` and `LK11`
+  instruction for instruction, range checks included. `LM4` is the same
+  high-byte test as the Librarian's `LB3`. When the dictionary was
+  flipped, `readlinkinfo` also swaps words 4-7 of each link-info entry.
+- **Segment information.** `phase2` prints `SEGNUM` when it is nonzero,
+  and prints the version and machine type through two name tables the
+  main program fills in. A segment with no `VERSION` bits is
+  "Pre-II.1".
+- **1.3 segment kinds.** Arms for unlinked and linked intrinsic units
+  and data segments. The `EOFMARK` arm prints the data segment number
+  and can never run, because it sits inside `if litype <> EOFMARK`.
+- **Smaller changes.** `copyinterface` skips DLE blank compression and
+  no longer refuses a start past block 200. `ref` says "(once)" only for
+  exactly one reference. `getfile` answers each Y/N prompt
+  unconditionally, defaults the map file to `CONSOLE:`, upper-cases the
+  name, and appends `.TEXT` unless it already ends in `.TEXT`.
+
+### 270c. The slack holds Apple's compiler symbol table
+
+**VERIFIED BINARY FACT.** The tail of the shipped file's last block, bytes
+5300-5631, is not random leftover code. It holds nodes from Apple's
+compiler's identifier table: an 8-character name, then `LLINK`, `RLINK`,
+`IDTYPE`, `NEXT`, `KLASS`, `VLEV`, `VADDR`. Nine are level-1 variables, and
+every one names a global at exactly the offset this reconstruction gives
+it:
+
+| node | offset |
+|---|---|
+| `SEGTBL` | 3 |
+| `FP` | 259 |
+| `MAPFILE` | 299 |
+| `FIRSTTIM` | 600 |
+| `LISTREFS` | 601 |
+| `LISTMAP` | 602 |
+| `FLIPPED` | 603 |
+| `VERSION` | 604 |
+| `MACHKIND` | 636 |
+
+A tenth name, `I`, is cut off by the end of the file before its offset;
+the only global left for it is word 756, the main program's loop variable
+(STRONG INFERENCE). `SYMBUFAR` heads the tail with a size of 512, which
+matches `copyinterface`'s 1,024-character buffer (SPECULATION).
+
+So the six I.5 names are Apple's names too, and the four globals Apple
+added are named from the binary rather than given placeholders:
+`FLIPPED`, `VERSION`, `MACHKIND` and `I`. The probe reads the nodes out of
+the shipped tail and requires each to match a `PUBLDEF` in our own
+compile's link info, name and offset. It would fail on a wrong name or a
+wrong offset.
+
+**VERIFIED BINARY FACT.** A scan of every segment tail in the in-scope
+1.3 files finds no such nodes in `SYSTEM.FILER`, `SYSTEM.EDITOR`, `SETUP`
+or the other utilities. Of those files, only `SYSTEM.LIBRARY`'s tails
+(already reconstructed) hold a handful of name-like records, plus one
+stray name in `128K.PASCAL`. This is a LIBMAP accident, not a general
+source of names.

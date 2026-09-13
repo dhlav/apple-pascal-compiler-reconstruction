@@ -115,6 +115,9 @@ STEPS = [
     ("SYSTEM.ASSMBLER whole file, via the Librarian", "probes/probe_assembler_whole.py"),
     ("SYSTEM.LINKER whole file, via the Librarian", "probes/probe_linker_whole.py"),
     ("LIBRARY.CODE whole file, via the Librarian", "probes/probe_library_whole.py"),
+    # LIBMAP is the Linker's output, not the Librarian's, and its slack
+    # carries Apple's own names for its globals (finding 270c).
+    ("LIBMAP.CODE whole segment, via the Linker", "probes/probe_libmap_whole.py"),
 ]
 
 for step in STEPS:
