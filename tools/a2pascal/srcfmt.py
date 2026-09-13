@@ -30,6 +30,8 @@ requiring Apple's own frame back.
 
 from __future__ import annotations
 
+import re
+
 WIDTH = 80
 TAB = 8
 
@@ -229,6 +231,19 @@ def format_lines(lines: list[str], width: int = WIDTH) -> list[str]:
     return out
 
 
+_LONE_LITERAL = re.compile(r"'(?:[^']|'')*'[;,)]*")
+
+
 def over_width(lines: list[str], width: int = WIDTH) -> list[tuple[int, int]]:
-    """(line number, length) for every line that is still too long."""
-    return [(i, len(ln)) for i, ln in enumerate(lines, 1) if len(ln) > width]
+    """(line number, length) for every line that is still too long.
+
+    One exception: a line that is nothing but a single Pascal string
+    literal, starting in column 1, with at most closing punctuation after
+    it. Pascal cannot continue a literal onto the next line, so an
+    80-character prompt (SYSTEM.EDITOR's COMPROMPT) is 82 columns however
+    it is written. Apple's compiler reads a line of any length; the limit
+    is the assembler's (error 54), and no assembler source is shaped like
+    this. Indentation disqualifies a line -- that can always be removed.
+    """
+    return [(i, len(ln)) for i, ln in enumerate(lines, 1)
+            if len(ln) > width and not _LONE_LITERAL.fullmatch(ln)]

@@ -479,6 +479,22 @@ def slots_in(spec: str) -> set[int]:
     return out
 
 
+def slot_pairs(spec: str) -> list[tuple[int, int]] | None:
+    """`1:1,7:2` -> [(1, 1), (7, 2)], in the order given; None if no `:`."""
+    if ":" not in spec:
+        return None
+    return [(int(a), int(b)) for a, b in
+            (part.split(":") for part in spec.split(","))]
+
+
+def dictionary(name: str) -> bytes:
+    """Block 0 of a codefile on SYSHD."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cp2("extract", "--raw", "--strip-paths", str(HD1), codename(name),
+            cwd=Path(tmp))
+        return (Path(tmp) / codename(name)).read_bytes()[:512]
+
+
 def nonzero_slots(name: str) -> list[int]:
     """The slots LIBRARY.CODE's `?` mode will ask about, read off SYSHD.
 
@@ -487,10 +503,7 @@ def nonzero_slots(name: str) -> list[int]:
     is what tells the driver when the questions are over, and lets it check
     that each question it sees is the one it expected.
     """
-    with tempfile.TemporaryDirectory() as tmp:
-        cp2("extract", "--raw", "--strip-paths", str(HD1), codename(name),
-            cwd=Path(tmp))
-        b = (Path(tmp) / codename(name)).read_bytes()
+    b = dictionary(name)
     return [s for s in range(16) if b[2 + 4 * s] | b[3 + 4 * s] << 8]
 
 
@@ -509,7 +522,8 @@ def do_librarian(con: Console, args) -> int:
     """
     if len(args.input) != len(args.slots):
         raise SystemExit("give one --slots for every --input, in order")
-    plan = [(name, slots_in(spec), nonzero_slots(name))
+    plan = [(name, slots_in(spec) if slot_pairs(spec) is None
+             else slot_pairs(spec), dictionary(name))
             for name, spec in zip(args.input, args.slots)]
     con.expect(PROMPT)
     con.send("X")
@@ -518,13 +532,29 @@ def do_librarian(con: Console, args) -> int:
     con.expect(b"Output file ->")
     con.send(f"{VOL}{args.out}.CODE{SIZED}\r")
     report = []
-    for n, (name, wanted, asked) in enumerate(plan):
+    for n, (name, wanted, block0) in enumerate(plan):
         if n:
             # N(ew file ends this input's MAINLOOP; GETINPUT asks again.
             con.send("N")
         con.expect(b"Input File ->")
         con.send(f"{VOL}{codename(name)}\r")
         con.expect(b"N(ew file")
+        if isinstance(wanted, list):
+            # `7 ` names a source slot; CONFIRM then asks where it goes
+            # (READ of an integer, and one more READ eats the terminator).
+            # A copy ends by redisplaying the output table, so the source
+            # segment's name arriving is the sign the next pair may go.
+            for src, dst in wanted:
+                segname = block0[0x40 + 8 * src:0x48 + 8 * src].rstrip()
+                con.send(f"{src} ")
+                con.expect(b"Slot to copy into?")
+                con.send(f"{dst} ")
+                con.expect(segname)
+            report.append(f"{name} " + ",".join(f"{s}->{d}"
+                                                for s, d in wanted))
+            continue
+        asked = [s for s in range(16)
+                 if block0[2 + 4 * s] | block0[3 + 4 * s] << 8]
         con.send("?")
         for expected in asked:
             con.expect(b"Copy slot")
@@ -585,7 +615,8 @@ def main() -> int:
                    help="codefile on SYSHD; repeat for a second input")
     p.add_argument("--out", required=True)
     p.add_argument("--slots", action="append", required=True,
-                   help="e.g. 1-15; one per --input, in the same order")
+                   help="e.g. 1-15, answered with ?; or 1:1,7:2 to copy "
+                        "slot 7 into slot 2, in that order; one per --input")
     p.add_argument("--notice", default="",
                    help="the answer to Notice? -- the codefile comment")
 

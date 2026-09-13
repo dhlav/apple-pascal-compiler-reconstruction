@@ -22735,3 +22735,142 @@ for statement, down to `EATSPACES` testing `STRG[1]` where it means
 Names for the three procedure-local additions and the two globals are
 placeholders (`L<n>`, `G361`, `G362`, `FL56`). Apple's own names for them
 are not recoverable from the binary.
+
+## 272. `SYSTEM.EDITOR`: all 25,600 bytes, from UCSD II.0's screen editor and the binary
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/EDITOR.text` compiled
+by Apple's 1.3 compiler. The first compile scored 127 of the 129 real
+procedures instruction- and frame-identical; the second, after one fix
+in two places (272d), scored 129 of 129, and all seven segments were
+then byte-identical to Apple's. The other 48 procedures are the host's
+forward stubs and dummy segments, which the Librarian drops. Apple's
+Librarian then copied segments 1 and 7 to 12 into slots 1 to 7 of a
+fresh file with the notice. The result equals shipped `SYSTEM.EDITOR` in
+**all 25,600 bytes** (`acceptance/2026-09-13-editor-complete`,
+`acceptance/2026-09-13-editor-librarian`). `probe_editor_whole.py`
+checks this on every build.
+
+The ancestor is Richard Kaufmann's UCSD screen editor, version E.6f
+(II.0, December 1978), from the `editor/` directory of
+`github.com/dhlav/ucsd-psystem-os`. It is now in
+`evidence/reference/ucsd-ii0-editor/`, with its provenance and hashes in
+the `PROVENANCE.md` beside it.
+
+### 272a. The shape
+
+**VERIFIED BINARY FACT.** The shipped file has seven slots: `EDITOR` (35
+procedures), `INITIALI` (7), `OUT` (4), `COPYFILE` (11), `ENVIRONM` (5),
+`PUTSYNTA` (2) and `EDITCORE` (65). Slot 0 is blank with finding 267's
+fingerprints. The segment numbers are 1 and 7 to 12, not 1 to 7: II.0
+declares dummy segments `NUM2` to `NUM9` so that its real segments do not
+collide with the operating system's, and Apple kept `NUM2` to `NUM6`.
+So the compile puts `NUM2`..`NUM6` in slots 2 to 6, and the Librarian's
+slot-for-slot `?` mode cannot produce Apple's file. Its other mode can:
+a slot number and a space, then "Slot to copy into?". `emuremote.py
+librarian --slots 1:1,7:2,...` now drives that, waiting after each copy
+for the segment's name in the redisplayed output table.
+
+There is no `CHK` and no `CSP 0`, so `(*$U-*)` is left alone. The host
+is II.0's own `head.text`: its trimmed `SYSCOMREC`, `INFOREC` and I.4
+global list are what `LOADFROMSYSCOM` and `PUTSYNTAX` read, at the
+offsets that list gives. Before `SEGMENT PROCEDURE EDITOR` the host also
+declares the operating system's first 43 procedures `FORWARD`, as the
+Linker's does, so that `INITIALIZE`'s and `OUT`'s `CXP 0,43` is
+`TITLENORM`.
+
+### 272b. What survives from II.0
+
+**STRONG INFERENCE**, from lex levels, frames and bodies. II.0's `VAR`
+list transfers verbatim, each clause read reversed, from `CURSOR` at 3 to
+`KEYBRD` at 1615. Its 31 forward declarations are `EDITOR` procedures 2
+to 32 in order. Its segment order and nesting are Apple's. Most bodies
+are II.0's statement for statement. In `EDITCORE` alone, `FIXDIRECTION`,
+`DUMP`, `VERIFY`, `CHECK`, `SPACEOVER`, `ENDLINE`, `BACKUP`,
+`FIXUP`, `POPDOWN`, `CLEANSCREEN`, `SCROLLUP`, `CLEAR`, `CENTER`,
+`DOWNMOVE`, `RIGHTMOVE`, `JUMPBEGIN`, `JUMPEND`, `TABBY`, `DOIT`,
+`PUTITBACK`, `RESOLVESCREEN`, `SKIP`, `SKIPKIND3`, `NEXTLINE`,
+`NEXTTOKEN`, `PUTPROMPT`, `NEXTCOMMAND` and `COMMANDER` needed no change.
+
+### 272c. What Apple changed
+
+**VERIFIED BINARY FACT**, each visible in the bytes:
+
+- **A changed-text flag.** Global 590, between `INFINITY` and `THEFILE`,
+  is set by every edit that alters the buffer: `COPY`, `INSERTIT`,
+  `DEFMACRO`, `SETMARKER`, `XMACRO`, `ZAPIT`, `ADJUSTING`, `DELETING`,
+  `REPLACEIT`, `COPYFILE` and `ENVIRONMENT`. `OUT` clears it after a
+  write and asks "Are you sure you want to throw away changes since last
+  update?" before E(xit or C(hange.
+- **Four globals after `KEYBRD`.** 1623 is the file's name, a `STRING`;
+  1664 says S(ave may use it; 1665 is set by C(hange and makes `EDITOR`'s
+  main loop run `INITIALIZE` again; 1666 is set by `INITIALIZE` from a
+  hardware check and gates the scroll-down below (**STRONG INFERENCE**
+  for what the check detects).
+- **New procedures in `EDITOR`.** 33 backs a pointer over a
+  blank-compression pair; 34 resets `INPUT` after an end-of-file; 35 is
+  `MAPCRTCOMMAND`, not forward-declared, called by `MAPTOCOMMAND`.
+- **`OUT` is a menu.** S(ave, W(rite, U(pdate, E(xit, R(eturn, C(hange;
+  the workfile is `*SYSTEM.WRK.TEXT`.
+- **Scrolling down.** `MOVEIT` gains a procedure 30 that reverse-scrolls
+  lines on at the top of the screen. `UPMOVE` and `LEFTMOVE` use it when
+  the cursor leaves the top by less than a screen, outside a delete, on
+  hardware with global 1666 set. `TABBY` moves ahead of `ADJUSTING`.
+- **`FIND` and `REPLACE`.** A `U` option makes the search ignore case
+  (locals 146 and 147, a new procedure 55 that folds `PAT`, and a second
+  `SCAN` for the lower-case first letter). `S`ame echoes the old pattern
+  under the prompt, a line at a time (procedures 62 and 63, local 148
+  counting lines). A missing old target is its own error. Echoed control
+  characters print as `?` (procedure 48).
+- **Blank-compression pairs at a join.** `COPY` from the buffer,
+  `COPYFILE`'s `UNSPLITBUF` and its start offset skip a `DLE` pair when it
+  would land mid-line.
+- **Insert.** `<esc>` keeps what was typed as the copy buffer, moved to
+  the top of the buffer, instead of discarding it (local 2 marks its
+  start). Right-arrow inserts a space.
+- **eXchange and Adjust.** In eXchange, right-arrow copies the character
+  under the cursor, and up- and down-arrow copy it in upper or lower case.
+  In Adjust, `<esc>` shifts the current line back by the total so far and
+  restores the cursor; `TAB` and `SPACE` become left or right moves; and
+  `PARAC` adjusts 24 lines per count. Delete now accepts `PARAC` too, and
+  in plain moving a `PARAC` count over 1000 jumps to the beginning or end
+  where II.0 said "Too many".
+- **Markers.** `SETMARKER` and `JUMPMARKER` repeat `GETNAME` until a name
+  is given and treat `<esc>` as a cancel. The overflow prompt rings the
+  bell on a bad answer.
+- **Messages.** Most prompts are reworded to the 1.3 style ("Copy:
+  B(uffer, F(ile portion, <esc> escapes"). `EDITOR`'s loop prompts for
+  the original disk after a file copy.
+
+Names for Apple's additions are placeholders: `G<n>`, `L<n>`, and a
+segment prefix with the procedure number (`ED33`, `OU2`, `IN7`, `FI47`,
+`SCROLLDOWN` excepted, whose role the body settles).
+
+### 272d. The one miss: a backward jump read as an exit
+
+**VERIFIED BINARY FACT.** `JUMPMARKER` and `SETMARKER` came out one
+instruction wrong in the first compile, `FJP >+51` where Apple has
+`FJP >-8`. The dump's target was the procedure's own `enter_ic`, which
+was read as a mis-decoded exit instead of what it said: a loop back to
+before `GETNAME`. II.0 has `IF MNAME<>'        ' THEN`; Apple has
+`REPEAT GETNAME(...) UNTIL MNAME<>'        '`. CLAUDE.md's "a backward
+branch is a loop condition before it is anything else" would have caught
+it before the compile.
+
+### 272e. Two lines over 80 columns
+
+**VERIFIED BINARY FACT.** `COMPROMPT` and `ADJUSTPROMPT` are 79
+characters. The binary has them as `LSA` with length byte 79, and a
+Pascal string literal cannot continue onto a second line, so each is 81
+columns with its quotes alone. **VERIFIED SOURCE FACT:** the 1.3
+compiler reads a line of any length (`PASCALCO`'s `PRINTLINE` truncates
+only the listing, at 100). The 80-column limit is the assembler's (error
+54). `srcfmt.over_width` now exempts exactly this shape: a line that is
+one string literal starting in column 1, with nothing after it but
+closing punctuation. `probe_editor_whole.py` checks that these two are
+the only long lines and that both literals are in Apple's `INITIALI`.
+
+**VERIFIED SOURCE FACT**, a refinement of finding 269's jump-table note:
+an unused label costs nothing. `PUTLABEL` resets `JTABINX` to 0, and
+`GENJMP` allocates a slot only when a jump to the label needs one. II.0's
+`LABEL 1` in `DELETING`, which no statement jumps to, is kept and the
+segment is still byte-identical.

@@ -20,8 +20,9 @@ kept compiles (finding 253). `SYSTEM.LINKER` is identical as a whole
 file too (finding 268), from I.5's linker and the binary, and so is
 `LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
 through the end of its segment (finding 270), from I.5's LibMap, and
-`SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer. Left in scope:
-`SYSTEM.EDITOR`, `SETUP.CODE`, `BINDER.CODE` and `SET40COLS.CODE`.
+`SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer, and `SYSTEM.EDITOR`
+(finding 272), from UCSD's II.0 screen editor. Left in scope:
+`SETUP.CODE`, `BINDER.CODE` and `SET40COLS.CODE`.
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 
@@ -288,8 +289,9 @@ a route end to end; everything else is a straight read-and-rebuild.
    utilities. Note `6502.OPCODES` and `6502.ERRORS` are its data, and
    finding 103e records how it looks for each.
 
-9. **`SYSTEM.EDITOR`** -- 129 procedures in 12 segments, the largest single
-   target on the disk set.
+9. **`SYSTEM.EDITOR`** -- 129 procedures in 7 segments (numbered 1 and
+   7-12), the largest single target on the disk set. **Done**: the whole
+   file, finding 272.
 
 10. **The operating system** -- `128K.PASCAL` specifically, the only build
     this file targets, reads, or cites; the 64K `SYSTEM.PASCAL` build is

@@ -119,6 +119,7 @@ STEPS = [
     # carries Apple's own names for its globals (finding 270c).
     ("LIBMAP.CODE whole segment, via the Linker", "probes/probe_libmap_whole.py"),
     ("SYSTEM.FILER whole file, via the Librarian", "probes/probe_filer_whole.py"),
+    ("SYSTEM.EDITOR whole file, via the Librarian", "probes/probe_editor_whole.py"),
 ]
 
 for step in STEPS:

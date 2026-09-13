@@ -15,7 +15,8 @@ Reconstructed so far: `SYSTEM.COMPILER` (the whole file, finding 267e),
 `SYSTEM.LINKER` (the whole file, finding 268), `SYSTEM.ASSMBLER` (whole
 file with `PASCALIO` borrowed, 267f), `LIBRARY.CODE` (the whole file,
 finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
-(the whole file, 271), `SYSTEM.LIBRARY`,
+(the whole file, 271), `SYSTEM.EDITOR` (the whole file, 272),
+`SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
 `docs/PLAN.md`, evidence ledger in `docs/FINDINGS.md`, per-file
@@ -225,7 +226,9 @@ a2pascal can't) and diff.
 - Global frame bound is `(param_size + data_size) / 2` **words** — parameters
   and locals share one offset space (finding 46).
 - Source files: **LF line endings, ≤80 columns**, plain ASCII.
-  `mkworkdisk.py` enforces the width.
+  `mkworkdisk.py` enforces the width. The one exception is a line that is
+  nothing but a string literal too long to fit (`SYSTEM.EDITOR`'s 79-character
+  prompts, finding 272e); `srcfmt.over_width` allows exactly that shape.
 
 ## Codefile facts
 
