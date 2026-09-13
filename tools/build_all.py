@@ -118,6 +118,7 @@ STEPS = [
     # LIBMAP is the Linker's output, not the Librarian's, and its slack
     # carries Apple's own names for its globals (finding 270c).
     ("LIBMAP.CODE whole segment, via the Linker", "probes/probe_libmap_whole.py"),
+    ("SYSTEM.FILER whole file, via the Librarian", "probes/probe_filer_whole.py"),
 ]
 
 for step in STEPS:

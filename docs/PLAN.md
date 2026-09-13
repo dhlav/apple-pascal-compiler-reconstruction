@@ -19,9 +19,11 @@ assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 across two
 kept compiles (finding 253). `SYSTEM.LINKER` is identical as a whole
 file too (finding 268), from I.5's linker and the binary, and so is
 `LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
-through the end of its segment (finding 270), from I.5's LibMap. Next in
-scope: `SYSTEM.FILER`, one segment with no ancestor in either the I.5 or
-the II.0 sources.
+through the end of its segment (finding 270), from I.5's LibMap, and
+`SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer. Left in scope:
+`SYSTEM.EDITOR`, `SETUP.CODE`, `BINDER.CODE` and `SET40COLS.CODE`.
+Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
+carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 
 `docs/DISKSET.md` is the file-by-file scoreboard;
 `analysis/diskset-inventory.txt` is its machine-readable companion,

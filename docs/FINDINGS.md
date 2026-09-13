@@ -22650,3 +22650,88 @@ or the other utilities. Of those files, only `SYSTEM.LIBRARY`'s tails
 (already reconstructed) hold a handful of name-like records, plus one
 stray name in `128K.PASCAL`. This is a LIBMAP accident, not a general
 source of names.
+
+## 271. `SYSTEM.FILER`: all 15,360 bytes, from UCSD II.0's Filer and the binary
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/FILER.text` compiled
+once by Apple's 1.3 compiler. oscmp scores all 56 `FILEHAND` procedures
+instruction- and frame-identical; the other 42 procedures are our host's
+forward stubs, which the Librarian drops. Apple's Librarian then copied
+slot 1 into a fresh file with the notice. The result equals shipped
+`SYSTEM.FILER` in **all 15,360 bytes**
+(`acceptance/2026-09-12-filer-complete`,
+`acceptance/2026-09-12-filer-librarian`). `probe_filer_whole.py` checks
+this on every build.
+
+Finding 268's notes, and PLAN until now, said the Filer had no ancestor.
+That was wrong. The I.5 zip has no Filer, and neither does `ii0src.sdk`,
+but `github.com/dhlav/ucsd-psystem-os` carries UCSD's II.0 Filer (Roger
+T. Sumner and Steven S. Thomson, 1979). It is now in
+`evidence/reference/ucsd-ii0-filer/`, with its provenance and hashes in
+the `PROVENANCE.md` beside it.
+
+### 271a. The shape
+
+**VERIFIED BINARY FACT.** Slot 1 is `FILEHAND` with 56 procedures, and
+slot 0 is blank with finding 267's fingerprints. There is no `CHK` and no
+`CSP 0`, so `(*$U-*)` is left alone. II.0 wrote the Filer as a segment of
+the operating system, so the host here carries the 1.3 operating system's
+own `CONST`/`TYPE`/`VAR` from `PASCALSYSTEM.text`. The Filer reaches
+`USERINFO` (16-46), `SYVID`/`DKVID`, `THEDATE`, `PL`, `IPOT`, `DIGITS`
+(122), `UNITABLE` (126), `CHAIN_NAME`/`CHAIN_MSG` (328, 340) and `RUN_VOL`
+(444), and every one of those lands where that file puts it. The host
+also declares the OS's first 42 procedures `FORWARD`, which gives the
+`CXP 0,n` numbers.
+
+One type differs from the OS source. `SEARCHDIR` stores and tests a
+one-bit field at bit 15 of a directory entry's word 2, where the OS
+declares a single 12-bit filler. So the file variant is II.0's
+`GLOBALS.TEXT`: `FILLER2: 0..1024; STATUS: BOOLEAN`.
+
+### 271b. What survives from II.0
+
+**STRONG INFERENCE**, from lex levels, frames and bodies. The tree is
+II.0's procedure for procedure, with one removal: `CHECKRSLT` is gone, and
+everything after it is numbered one lower. `MOVEIT` is gone from inside
+`KRUNCHIT`. Procedure 56, a version check, is new after `CALLPROC`. The
+globals are II.0's in II.0's order, each clause read reversed, from
+`GBUFBLKS` at 3 to `INSTRING` at 233. Most bodies are II.0's statement
+for statement, down to `EATSPACES` testing `STRG[1]` where it means
+`STRG[I]`.
+
+### 271c. What Apple changed
+
+**VERIFIED BINARY FACT**, each visible in the bytes:
+
+- **`MESSAGES` absorbed `CHECKRSLT`.** It now takes an I/O result and a
+  Filer error separately, and ignores results 0, 13 and 14 when there is
+  no Filer error. `MAKECALL` passes both.
+- **The Filer's error numbers moved.** 1013-1034 became 1-22, in the order
+  of II.0's `CASE` arms; the arm each number reaches is what names it. The
+  "expected" messages are 16 and up. Under `SLOWTERM` a Filer error prints
+  as a number too.
+- **Block counts.** `CHECKFILE` records the source volume's `DEOVBLK` in a
+  new global (word 362), and `PROCESSDATA` records the destination's (361).
+  `TRANSFER` asks before a volume-to-volume copy between blocked units whose
+  counts differ.
+- **`%` as the run volume.** `PROCESSDATA` maps it to `RUN_VOL`.
+- **Rewritten procedures.**
+  - `LISTVOLS` prints block counts, uses `UNITSTATUS` for blocked units
+    with no directory, and lists installed drivers from a table at `$FE81`.
+  - `BADBLOCKS` reads a buffer's worth at a time into `GBUF`.
+  - `KRUNCH` moves files with one `KRUNCHIT` taking signed counts and a
+    direction word.
+  - `ZEROVOLUME` no longer asks about a duplicate directory, and a bare
+    return keeps the name.
+- **Smaller changes.**
+  - `LISTDIR` keeps a copy of the source directory across the `REWRITE`
+    of its output file, rather than scanning the input twice.
+  - `MOVEFILE` reads and writes sequentially.
+  - `XBLOCKS` stops on a write-protected disk (I/O result 16).
+  - `CALLPROC` warns about duplicate names across 20 units, not 12, and
+    on `Q` it moves a chained command from `CHAIN_MSG` to `CHAIN_NAME`.
+  - Most messages are reworded, and the prompt carries `[1.3]`.
+
+Names for the three procedure-local additions and the two globals are
+placeholders (`L<n>`, `G361`, `G362`, `FL56`). Apple's own names for them
+are not recoverable from the binary.
