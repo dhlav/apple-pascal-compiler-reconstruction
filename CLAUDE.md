@@ -225,10 +225,11 @@ a2pascal can't) and diff.
   out.
 - Global frame bound is `(param_size + data_size) / 2` **words** — parameters
   and locals share one offset space (finding 46).
-- Source files: **LF line endings, ≤80 columns**, plain ASCII.
-  `mkworkdisk.py` enforces the width. The one exception is a line that is
-  nothing but a string literal too long to fit (`SYSTEM.EDITOR`'s 79-character
-  prompts, finding 272e); `srcfmt.over_width` allows exactly that shape.
+- Source files: **LF line endings**, plain ASCII. **Assembler source ≤80
+  columns** (error 54); `srcfmt.over_width` enforces it for any file with
+  a `.PROC`/`.FUNC`. **Pascal source has no width limit here**: Apple's
+  compiler read `SYSTEM.EDITOR`'s 81-column lines (finding 272e). Nothing
+  longer has been tried, so keep Pascal near 80 unless a line cannot be.
 
 ## Codefile facts
 

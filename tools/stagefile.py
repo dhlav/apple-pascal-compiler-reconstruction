@@ -13,8 +13,8 @@ that way for anything the reconstruction depends on. This is for the case
 it cannot serve: a file that has to arrive *between* two emulator steps,
 where a rebuild would wipe the codefile the previous step just produced.
 
-Same encoder, same 80-column check and same `PTX` attribute mkharddisks
-uses, so a file staged here is indistinguishable from one it wrote. Two
+Same encoder, same 80-column check (assembler source only, finding 272e)
+and same `PTX` attribute mkharddisks uses, so a file staged here is indistinguishable from one it wrote. Two
 things it does that a bare `cp2 add` does not:
 
   * deletes any existing copy first -- `cp2 add` silently skips a name

@@ -18,10 +18,11 @@ Claims, each of which the binary can fail:
      compile alone is not Apple's file -- PASCALSY in slot 0, NUM2..NUM6
      in slots 2 to 6, INITIALI in slot 7 -- so copying slot for slot
      would have put a dummy segment where Apple has INITIALI.
-  4. **The two over-width source lines are the ones that must be**: the
-     only lines over 80 columns are lone string literals, each a
-     79-character prompt -- 81 columns with its quotes alone -- that
-     appears with length byte 79 in Apple's INITIALI segment.
+  4. **Apple's compiler read lines over 80 columns**: the compiled source
+     has two, each a 79-character prompt -- 81 columns with its quotes --
+     that appears with length byte 79 in Apple's INITIALI. So the
+     80-column check is the assembler's alone: it passes this source and
+     still refuses an assembler source given one long line.
   5. **The ancestor is the one recorded**: the UCSD II.0 editor source in
      evidence/reference/ucsd-ii0-editor still has the hashes its
      PROVENANCE.md gives, so finding 272's comparisons stay checkable.
@@ -168,17 +169,27 @@ def main() -> int:
           "slots 2 to 6 hold NUM2..NUM6, so a slot-for-slot copy would "
           "not be Apple's slot 2")
 
-    print("=== the only over-width lines are 79-character literals ===")
-    text = SOURCE.read_bytes().replace(b"\r\n", b"\n").decode("ascii")
+    print("=== Apple's compiler read lines over 80 columns ===")
+    text = KEPT_SOURCE.read_bytes().replace(b"\r\n", b"\n").decode("ascii")
     lines = text.split("\n")
     long = [ln for ln in lines if len(ln) > WIDTH]
     init = segment(apple, 2)
     found = [ln for ln in long
              if re.fullmatch(r"'[^']{79}';", ln)
              and bytes([79]) + ln[1:80].encode() in init]
-    check(len(long) == 2 and found == long and not over_width(lines),
-          f"{len(long)} lines over {WIDTH} columns, {len(found)} of them a "
-          "lone literal Apple's INITIALI holds with length byte 79")
+    check(len(long) == 2 and found == long,
+          f"the compiled source has {len(long)} lines over {WIDTH} columns, "
+          f"{len(found)} of them a literal Apple's INITIALI holds with "
+          "length byte 79")
+    check(not over_width(lines),
+          "so the width check passes Pascal source, long lines and all")
+    asm = (ROOT / "src" / "native" / "SEARCH.TEXT").read_bytes()
+    asm_lines = asm.replace(b"\r\n", b"\n").decode("ascii").split("\n")
+    check(not over_width(asm_lines)
+          and over_width(asm_lines + ["; " + "x" * 80]) == [
+              (len(asm_lines) + 1, 82)],
+          "and still refuses an assembler source with one 82-column line, "
+          "at that line")
 
     print("=== the ancestor is the one recorded ===")
     # Hashed with LF line endings: the working copy carries CRLF.

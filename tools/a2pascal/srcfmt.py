@@ -15,11 +15,14 @@ notice:
     the six evidence disks is 77 (`GRAFDEMO.TEXT`), and the longest in the
     UCSD II.0 source is exactly 80.
 
-Whether `SYSTEM.COMPILER` itself enforces 80 is *not* established here -- the
-error list for the compiler has no counterpart to assembler error 54, and no
-line on the disks is long enough to have tested it. What is established is
-that 80 is the width every surviving source was written to, so generated
-source is held to it too.
+`SYSTEM.COMPILER` does not enforce 80. `SYSTEM.EDITOR` holds two 79-character
+prompts, 81 columns with their quotes, which Pascal cannot split; Apple's
+compiler read them and produced Apple's bytes (finding 272e). So the hard
+check, `over_width`, applies to assembler source only. Pascal source has no
+width check in these tools, and nothing here has tested how long a line the
+compiler will take beyond those 81 columns. `format_lines` still wraps
+*generated* Pascal to 80, because 80 is the width Apple's sources were
+written to and the Editor shows.
 
 Wrapping is safe because Pascal is free-form: any run of whitespace outside a
 string literal or a comment can become a newline. This splits there and
@@ -231,19 +234,23 @@ def format_lines(lines: list[str], width: int = WIDTH) -> list[str]:
     return out
 
 
-_LONE_LITERAL = re.compile(r"'(?:[^']|'')*'[;,)]*")
+# Every assembler source has one; no Pascal source does (src/native/, all
+# five). Content, not file name, because stagefile.py takes any path.
+_ASM_DIRECTIVE = re.compile(r"^\s*\.(PROC|FUNC)\b", re.I)
+
+
+def is_assembler(lines: list[str]) -> bool:
+    """True for Apple Assembler source: a `.PROC` or `.FUNC` directive."""
+    return any(_ASM_DIRECTIVE.match(ln) for ln in lines)
 
 
 def over_width(lines: list[str], width: int = WIDTH) -> list[tuple[int, int]]:
-    """(line number, length) for every line that is still too long.
+    """(line number, length) for every line too long for Apple's tools.
 
-    One exception: a line that is nothing but a single Pascal string
-    literal, starting in column 1, with at most closing punctuation after
-    it. Pascal cannot continue a literal onto the next line, so an
-    80-character prompt (SYSTEM.EDITOR's COMPROMPT) is 82 columns however
-    it is written. Apple's compiler reads a line of any length; the limit
-    is the assembler's (error 54), and no assembler source is shaped like
-    this. Indentation disqualifies a line -- that can always be removed.
+    Only the assembler has a line limit (error 54), so Pascal source always
+    returns nothing: the compiler read SYSTEM.EDITOR's 81-column lines
+    (finding 272e).
     """
-    return [(i, len(ln)) for i, ln in enumerate(lines, 1)
-            if len(ln) > width and not _LONE_LITERAL.fullmatch(ln)]
+    if not is_assembler(lines):
+        return []
+    return [(i, len(ln)) for i, ln in enumerate(lines, 1) if len(ln) > width]

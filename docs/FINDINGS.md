@@ -22861,13 +22861,23 @@ it before the compile.
 **VERIFIED BINARY FACT.** `COMPROMPT` and `ADJUSTPROMPT` are 79
 characters. The binary has them as `LSA` with length byte 79, and a
 Pascal string literal cannot continue onto a second line, so each is 81
-columns with its quotes alone. **VERIFIED SOURCE FACT:** the 1.3
-compiler reads a line of any length (`PASCALCO`'s `PRINTLINE` truncates
-only the listing, at 100). The 80-column limit is the assembler's (error
-54). `srcfmt.over_width` now exempts exactly this shape: a line that is
-one string literal starting in column 1, with nothing after it but
-closing punctuation. `probe_editor_whole.py` checks that these two are
-the only long lines and that both literals are in Apple's `INITIALI`.
+columns with its quotes alone. **VERIFIED BINARY FACT:** Apple's 1.3
+compiler read both lines and produced Apple's bytes, so it does not stop
+at 80. **VERIFIED SOURCE FACT:** `PASCALCO`'s `PRINTLINE` cuts only the
+listing, at 100 characters. How long a line the compiler will take is
+not established; 81 columns is the longest it has been given.
+
+The 80-column limit is the assembler's (error 54), so `srcfmt.over_width`
+now applies it to assembler source only -- any file with a `.PROC` or
+`.FUNC` directive, which all five in `src/native/` have and no Pascal
+source does -- and returns nothing for Pascal. (A first version exempted
+only a lone string literal in column 1; the compile had already shown
+the limit was never the compiler's.) `procbuild.py` and `srcskel.py`
+dropped their own Pascal width checks; `srcskel` still wraps generated
+Pascal to 80. `probe_editor_whole.py` checks that the compiled source has
+exactly these two long lines, that both literals are in Apple's
+`INITIALI`, that the check passes this source, and that it still refuses
+`SEARCH.TEXT` with one 82-column line added.
 
 **VERIFIED SOURCE FACT**, a refinement of finding 269's jump-table note:
 an unused label costs nothing. `PUTLABEL` resets `JTABINX` to 0, and

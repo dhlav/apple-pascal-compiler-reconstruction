@@ -75,9 +75,9 @@ def main() -> int:
         # this side's convention and not `encode_text`'s -- Apple's own
         # `.TEXT` files often do end with a blank line.
         text = text[:-1] if text.endswith("\n") else text
-        # 80 columns is a hard limit for the assembler (error 54) and the
-        # width every surviving Apple source was written to. Refuse rather
-        # than ship a disk whose files the machine cannot open properly.
+        # 80 columns is a hard limit for the assembler (error 54), so an
+        # assembler source over it is refused. Pascal source is not checked:
+        # Apple's compiler reads longer lines (finding 272e).
         long = over_width(text.split("\n"))
         if long:
             raise SystemExit(

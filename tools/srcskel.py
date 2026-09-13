@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import applesrc
-from a2pascal.srcfmt import WIDTH, format_lines, over_width
+from a2pascal.srcfmt import WIDTH, format_lines
 from varblock import build as build_vars
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -215,17 +215,12 @@ def main() -> int:
         # the same program -- which probe_xcompile.py then confirms by
         # compiling this and requiring Apple's own frame back.
         L = format_lines(L)
-        long = over_width(L)
-        if long:
-            raise SystemExit(
-                f"[{ver}] {len(long)} lines will not fit in {WIDTH} columns "
-                f"and have no break point: {long[:5]}")
 
         f = OUT / f"skeleton-{ver}.text"
         f.write_text("\n".join(L), encoding="ascii", errors="replace")
         print(f"[{ver}] wrote {f.name}: {len(varlines)} globals, "
               f"{len(notes)} edits to UCSD's declarations, "
-              f"{len(L)} lines, all within {WIDTH} columns")
+              f"{len(L)} lines, wrapped to {WIDTH} columns")
     return 0
 
 

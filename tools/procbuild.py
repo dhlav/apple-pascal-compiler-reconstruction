@@ -55,7 +55,6 @@ from a2pascal.disk import PascalDisk
 from a2pascal.codefile import CodeFile
 from a2pascal.names import PROC_NAMES
 from a2pascal.pcode import disassemble, sweep_exit
-from a2pascal.srcfmt import WIDTH, over_width
 import xcompile
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -1121,11 +1120,6 @@ def main() -> int:
             who = "Apple's compiler"
         else:
             source = spliced(ver, segs, fast=True)
-            long = over_width(source.split("\n"))
-            if long:
-                print(f"[{ver}] {len(long)} lines over {WIDTH} columns: "
-                      f"{long[:3]}")
-                bad += 1
             try:
                 cf = CodeFile(xcompile.compile_text(source))
             except xcompile.CompileError as exc:
