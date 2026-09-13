@@ -22477,3 +22477,78 @@ for it; only `PCODELEAST` = 2 is confirmed.
 
 Everything the I.5 source does not name carries a placeholder: `LK<n>`,
 `G<n>`, `L<n>`/`M<n>`. The user's instruction was confirmed roles only.
+
+## 269. `LIBRARY.CODE`: all 4,096 bytes, from I.5's Librarian and the binary
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/LIBRARY.text` was
+rewritten whole. Compiled by Apple's 1.3 compiler, it gives a `LIBRARIA`
+segment that oscmp scores 16 of 16 procedures instruction- and
+frame-identical. The shipped Librarian copied slot 1 into a fresh file with
+the notice, and the result equals shipped `LIBRARY.CODE` in **all 4,096
+bytes** (`acceptance/2026-09-12-library-complete`,
+`acceptance/2026-09-12-library-librarian`). The Librarian rebuilt its own
+file. `probe_library_whole.py` checks this on every build.
+
+The file this replaces (findings 113-116) was a plain `PROGRAM LIBRARY`
+with invented names. That was the wrong shape: `LIBRARY.1` has
+`params=4`, so it is a `SEGMENT PROCEDURE` taking I.5's `III, JJJ`, and
+its frame holds the globals. That older file's frame gaps (`MAINLOOP`'s
+74 words among them) are history, not open threads.
+
+### 269a. The shape, and what is Apple's
+
+**VERIFIED BINARY FACT.** Slot 1 is `LIBRARIA`, slot 0 is blank with
+finding 267's fingerprints, and there is no `CHK` and no `CSP 0` anywhere,
+so `(*$U-*)` is left alone. The host program is I.5's `PLIBRARIAN`, with
+only `SYSCOM` declared. `PROMPT` reads `SYSCOM^.CRTCTRL` at word 31 (`LOD
+2,1; INC 31`), and I.5's `SYSCOMREC` lands `ESCAPE` on byte 0 and `ERASEEOL`
+on byte 3 once its clause is read reversed. `INPUT`, `OUTPUT` and
+`KEYBOARD` need no declaration: COMPINIT fixes them at words 2, 3 and 4
+(VERIFIED SOURCE FACT).
+
+**STRONG INFERENCE**, from lex levels and bodies. The tree is I.5's
+`NEWLINKER` flattened into `LIBRARIAN`: `PROMPT`, `CHECKIO`, `OPENFILE`,
+`DISPLAY`, then `LINKCODE` holding `LINKIT` (holding `COPYLINKINFO`/`GETREC`
+and `COPYINTERFACE`) and `CONFIRM`. `COPYLINKINFO`, `GETREC` and `CONFIRM`
+are I.5's bodies with Apple's additions. Globals are I.5's in I.5's groups,
+except that `NTITLE` and both dictionaries became globals (the dictionaries
+are records, not heap blocks). The one unused word, 5, is I.5's own unused
+global `NBLOCKS`.
+
+**VERIFIED BINARY FACT.** Apple added:
+
+- **Byte sex.** `LB2` and `LB4` are the Linker's `LK5` and `LK11`
+  instruction for instruction, and `LB3` is `SETUPFILE`'s high-byte test
+  applied to segment addresses. Because `LB4` copies `SEGKIND` through a
+  `WORDREC` before swapping it, the dictionary's `SEGKIND` is the Linker's
+  `SEGKINDS` enumeration, not I.5's `INTEGER`.
+- **A `SEGINFO` word** after `EXTRA`. `DISPLAY` prints its `SEGNUM` when
+  `VERSION` is nonzero, and `NOTICE` moves to word 216.
+- **`=` and `?` modes** in `LINKCODE`, and `LINKIT` takes its two slots as
+  parameters. `COPYINTERFACE` reaches `LINKIT`'s `SSEG`/`DSEG` as `LOD 1,2`
+  and `LOD 1,1`, not globals 6 and 7.
+- **Heap-chained copying.** `LINKIT` and `COPYINTERFACE` `MARK`, `NEW` one
+  256-word block per disk block, transfer the whole run in one
+  `BLOCKREAD`, then `RELEASE`. The first guard is `MEMAVAIL`.
+
+### 269b. Sixteen of sixteen, and still two bytes wrong
+
+**VERIFIED BINARY FACT.** The first compile scored 16 of 16 in oscmp, but
+the whole file differed in two bytes: the operands at `$0A95` and `$0AD2`
+in `LINKCODE`, `$EE`/`$F0` against Apple's `$F0`/`$EE`. Both are jumps to
+the same `UNTIL`: the `IF CONFIRM` `FJP` and the `GOTO 1` out of the
+copy-all loop. They had exchanged jump-table slots.
+
+**VERIFIED SOURCE FACT** (BODYPART `GENJMP`/`PUTLABEL`). A label gets at
+most one slot, taken from `NEXTJTAB` when the label is placed and a
+pending reference turns out to need one. So slot order follows the order
+in which labels are placed, even for two labels at the same address.
+Apple's `GOTO` label has the lower slot, so `1:` is placed before the IF's
+end label: it is the last statement inside `IF CONFIRM THEN BEGIN ...
+END`, not a label on the `UNTIL`. Moving it there gave all 4,096 bytes on
+the next compile.
+
+This is a second thing oscmp cannot see (after finding 252's jump
+targets). It compares where a jump goes, not which slot carries it. The
+probe keeps a mutant with the two operands exchanged, so the whole-file
+check is shown to catch it.
