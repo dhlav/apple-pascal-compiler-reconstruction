@@ -24064,3 +24064,44 @@ tool.
 - after the Librarian it is all 12,800 bytes of `SYSTEM.LINKER`.
 
 `probe_linker_whole.py` now reads this run.
+
+## 292. `LIBRARY.CODE`'s byte-flip placeholders named from UCSD's II.0 librarian
+
+**VERIFIED SOURCE FACT.** UCSD's II.0 Librarian ("Modified March 1979 by
+Gary Dismukes to handle byte-flipped files; also Procedure Copyinterface
+rewritten", `librarian/main.text` in the same mirror as 291) matches five
+of `LIBRARY.text`'s placeholders body for body:
+
+| was | II.0 | where the match is |
+|---|---|---|
+| `G765, G764` | `FIRSTFILE, FLIPPED` | declared together; the offsets 765 and 764 are what `firstfile, flipped` gives |
+| `LB2`, `L3, L2`, `X` | `BYTESWAP`, `TEMP1, TEMP2`, `WORD` | the body |
+| `LB3`, `SEGTBL`, `L4, L5, L6` | `TABLEFLIPPED` (`Table_flipped`), `TABLE`, `S, HIGHBYTE, INT` | the body, and the locals in II.0's order |
+| `LB4`, `SEGTBL`, `L2` | `FLIPTABLE`, `TABLE`, `S` | II.0's body, plus Apple's `SEGINFO` swap |
+| `COPYINTERFACE.L2` | `IFSIZE` | `DISKADDR - START`, II.0's `ifsize`, in Apple's rewrite of the procedure |
+
+II.0 writes `Table_flipped` and calls it as `tableflipped`; the name is
+used without the underscore.
+
+**STRONG INFERENCE:**
+- **`FLIPTABLE`'s record local `WORD`** is Apple's addition. II.0 swaps
+  `SEGKIND` as a plain integer. It takes the name of the Linker's
+  `FLIPTABLE` local that does the same job (291), because Apple's two
+  procedures are the same shape.
+- **`IFSIZE`** also holds the saved start block on Apple's code-first path.
+
+**Not renamed:**
+- `G131` (the typed notice);
+- `LB6` (a `PROMPT` with a number);
+- `LB15` (the interface write error);
+- `PROMPT`'s `L2`;
+- `LINKIT`'s `L3`-`L5` (Apple moved the reconfirm there);
+- `LINKCODE`'s `M2`/`M3` (the `=` and `?` modes);
+- `COPYINTERFACE`'s `L3`.
+
+II.0 has none of them.
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-library-names`, compiled
+and joined on the 1.3 system:
+- the compile is byte-identical to 2026-09-12's, all 4,608 bytes;
+- after the Librarian it is all 4,096 bytes of `LIBRARY.CODE`.
