@@ -48,8 +48,10 @@ EXPECTED = {
     # memory SETUP never writes (277)
     ("APPLE1", "SYSTEM.MISCINFO"): 147, ("APPLE3", "II40.MISCINFO"): 142,
     ("APPLE3", "II80.MISCINFO"): 116, ("APPLE3", "HAZEL.MISCINFO"): 151,
-    # two text blocks fewer than Apple's, so every slot after LONGINTI sits
-    # a block or two early; slot by slot 16417 agree (287, 290)
+    # an accepted exception (docs/PLAN.md): two text blocks fewer than
+    # Apple's, which a compiler other than the shipped one wrote, so every
+    # slot after LONGINTI sits a block or two early; slot by slot 16417
+    # agree (287, 290)
     ("APPLE1", "SYSTEM.LIBRARY"): 16234,
     # the Linker's slack past the last segment (104)
     ("APPLE2", "LIBMAP.CODE"): 311, ("APPLE3", "FORMATTER.CODE"): 394,

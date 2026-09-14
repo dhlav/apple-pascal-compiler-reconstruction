@@ -34,7 +34,23 @@ recipes; their other bytes are memory SETUP never writes (finding 277).
 `SYSTEM.CHARSET` is identical (finding 278), and so is `128K.APPLE`, the
 interpreter, from three traced assemblies (finding 279).
 `SYSTEM.LIBRARY` has every code byte and all interface text by Apple's
-tools (findings 285-287). The ten text files are identical from
+tools (findings 285-287, 290).
+
+**`SYSTEM.LIBRARY` is an accepted exception to the whole-file target.**
+Its text blocks were written by a compiler other than the shipped
+`SYSTEM.COMPILER`. That gives three things no source can reproduce:
+- the block counts: LONGINTI 2 and TURTLEGR 3, where the shipped compiler
+  writes 1 and 2;
+- the `N`/`X` trailer byte;
+- the buffer copies in the extra blocks.
+
+So the rebuilt file is two blocks short, and on the disk every slot after
+LONGINTI sits early. The measure that counts is the slot-aligned one,
+16,417 of 19,456 with every code byte identical. The in-place 16,234 in
+`probe_diskset.py` is expected. Do not reopen it without new evidence
+about that compiler.
+
+The ten text files are identical from
 `src/text/` (finding 288). **The disks are written** (step 12, finding
 289, 290): 359,323 of 430,080 bytes, every difference accounted for by
 `probe_diskset.py`.

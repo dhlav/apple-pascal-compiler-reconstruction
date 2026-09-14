@@ -26,7 +26,10 @@ by Apple's SETUP from recipes; the rest is memory, 277), `SYSTEM.CHARSET`
 (the whole file, 278), `128K.APPLE` (the whole file, three traced
 assemblies, 279), `128K.PASCAL` (all but 571 bytes of another tool's
 slack, finished by `MAKEOS`, 284),
-`SYSTEM.LIBRARY` (all code and interface text by Apple's tools, 287),
+`SYSTEM.LIBRARY` (all code and interface text by Apple's tools, 287;
+**an accepted exception** -- its text block counts, trailer flag and block
+copies came from a compiler other than the shipped one, so it cannot match
+as a whole file, 286c, 290),
 `LINEFEED.CODE` (all but the version field, 288c),
 `FORMATTER.CODE`, and the ten text files (from `src/text/` and their
 `.layout`s, 288). **The disks are written**: `tools/mkdiskset.py`, 359,323
