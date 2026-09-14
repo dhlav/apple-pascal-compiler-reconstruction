@@ -23143,3 +23143,59 @@ Apple's fill (`B9 1E 00 00 00 00 AE 15 93 A1 07 A5 80 D3 ...`) occurs
 nowhere else on the three 1.3 disks. **SPECULATION:** it is memory from
 the session that first wrote the file, possibly on another p-system, and
 no 1.3 session is known to reproduce it. Not closable from source.
+
+## 277. The MISCINFO profiles: every setting by Apple's SETUP, the rest is memory
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-13-miscinfo` holds four runs
+of the shipped `SETUP.CODE` (byte-identical to the evidence copy) under the
+1.3 system. `emuremote.py setup` drove each one from a recipe in
+`src/data/miscinfo/`, setting all 53 fields through C(HANGE S(INGLE and
+then D(isk update. Each NEW.MISCINFO equals its shipped profile
+(`SYSTEM.MISCINFO`, `II40`, `II80`, `HAZEL`) in bytes 58-95 and in the
+zero tail 192-511. `probe_miscinfo.py` checks it on every build.
+
+| profile | bytes matching of 512 | differing, all in 0-57 and 96-191 |
+|---|---|---|
+| SYSTEM.MISCINFO | 365 | 147 |
+| II40.MISCINFO | 370 | 142 |
+| II80.MISCINFO | 396 | 116 |
+| HAZEL.MISCINFO | 361 | 151 |
+
+### 277a. Why only bytes 58-95 are settings
+
+**VERIFIED SOURCE FACT.** SETUP's BUFFER is 96 words (`WRDINDMAX = 95`).
+At start it copies only words `STARTINDEX..ENDINDEX` = 29..47 from SYSCOM,
+and D(isk writes the whole BUFFER as one record. So bytes 0-57 and 96-191
+of every profile are whatever memory BUFFER occupied.
+
+**VERIFIED BINARY FACT.** Every bit of words 29-47 is one of SETUP's 53
+fields except bits 6-15 of word 29, all of word 30, the high byte of
+word 36, bits 5, 14 and 15 of word 47, and all of word 46. In all four profiles those bits are 0, except
+word 46, which is 8. No field names word 46, so a SETUP run passes it
+through from the booted SYSTEM.MISCINFO. All four runs booted with
+SYSTEM.MISCINFO. HAZEL's recipe changes 14 of the 38 bytes and II80's 3,
+and both came out exact, so the recipes set them, not the boot. The probe
+also rebuilds the 38 bytes on the host from each recipe and SETUP's own
+ENTER table.
+
+### 277b. What the memory was
+
+**VERIFIED BINARY FACT.** Our four runs left the same 154 bytes, text from
+the Command level's X(ecute prompt. Apple's four differ from each other:
+
+* **SYSTEM.MISCINFO:** all 154 are SYSTEM.FILER's code, file offsets
+  8206-8397 (segment offset 7694), byte for byte. So BUFFER sat where the
+  Filer's code had been loaded.
+* **II80.MISCINFO:** all zero.
+* **HAZEL.MISCINFO** (19-Mar-79): p-code whose 12-byte pieces recur in
+  1.3's SYSTEM.FILER and SYSTEM.EDITOR, but no single alignment matches
+  more than 27 of its 141 nonzero bytes.
+* **II40.MISCINFO** (1-Jul-85): pointers around `$88xx` and pieces of
+  `.CODE` strings; it matches no codefile.
+
+In our 128K run, SETUP after the Filer left Command-level text in BUFFER,
+not Filer code (tried with the observe action on 2026-09-13). **STRONG
+INFERENCE:** under 128K.PASCAL code segments do not land where a program's
+globals later go, so SYSTEM.MISCINFO was written under a system that
+loads code on the stack, such as the 64K one. **SPECULATION:** HAZEL's is
+an older Filer's. None of the four leftovers is reproducible in scope.

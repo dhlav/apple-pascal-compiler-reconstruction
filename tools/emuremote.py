@@ -7,6 +7,7 @@
     python tools/emuremote.py librarian --input COMPLINK --out LIBTEST \
         --slots 1-15 --notice "COPYRIGHT ..."            # finding 267
     python tools/emuremote.py run MAKEFMT                # X(ecute, finding 275
+    python tools/emuremote.py setup --recipe II80.recipe # NEW.MISCINFO, 277
 
 The `emu*.ps1` scripts type into AppleWin's window with SendKeys and capture
 a screenshot. They still work and are still the fallback, but they carry
@@ -474,6 +475,66 @@ def do_run(con: Console, args) -> int:
     return 0
 
 
+BOOLEANS = {"T", "F", "TRUE", "FALSE"}
+
+
+def read_recipe(path: Path) -> list[tuple[str, str]]:
+    """`FIELD NAME = value` lines; `#` starts a comment."""
+    out = []
+    for line in path.read_text(encoding="ascii").splitlines():
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        name, _, value = line.rpartition("=")
+        out.append((name.strip(), value.strip()))
+    return out
+
+
+def do_setup(con: Console, args) -> int:
+    """X(ecute SETUP, set every field a recipe names, D(isk update, E(xit.
+
+    Each field goes through C(HANGE S(INGLE by name, and every answer
+    waits for the prompt it answers. A boolean is sent as written; any
+    other value is decimal and goes as `D<n>`, which GETORDSTR reads as a
+    number for character fields too. SETUP writes `*NEW.MISCINFO`
+    (finding 277).
+    """
+    recipe = read_recipe(Path(args.recipe))
+    con.expect(PROMPT)
+    con.send("X")
+    con.expect(b"Execute what file")
+    con.send(f"{VOL}{args.name}\r")
+    con.expect(b"SETUP: C(HANGE")
+    con.send("C")
+    for name, value in recipe:
+        con.expect(b"CHANGE: S(INGLE)")
+        con.send("S")
+        con.expect(b"NAME OF FIELD: ")
+        con.send(f"{name}\r")
+        if con.expect(b"WANT TO CHANGE", b"DIDN'T FIND") != b"WANT TO CHANGE":
+            print(f"\nSETUP FAILED: no field {name!r}")
+            return 1
+        con.send("Y")
+        con.expect(b"NEW VALUE: ")
+        con.send((value if value.upper() in BOOLEANS else f"D{value}") + "\r")
+        hit = con.expect(b"WANT TO CHANGE", b"ALLOWED VALUES", b"NEW VALUE: ")
+        if hit != b"WANT TO CHANGE":
+            print(f"\nSETUP FAILED: {name} = {value} refused")
+            return 1
+        con.send("N")
+    con.expect(b"CHANGE: S(INGLE)")
+    con.send("Q")
+    con.expect(b"SETUP: C(HANGE")
+    con.send("Q")
+    con.expect(b"QUIT: D(ISK)")
+    con.send("D")
+    con.expect(b"QUIT: D(ISK)")
+    con.send("E")
+    con.expect(PROMPT)
+    print(f"\nsetup: {len(recipe)} fields set, NEW.MISCINFO written")
+    return 0
+
+
 def do_observe(con: Console, args) -> int:
     """Send a key and log whatever comes back. For converting the next tool."""
     con.expect(PROMPT)
@@ -609,7 +670,7 @@ def do_librarian(con: Console, args) -> int:
 
 ACTIONS = {"compile": do_compile, "assemble": do_assemble,
            "link": do_link, "observe": do_observe,
-           "librarian": do_librarian, "run": do_run}
+           "librarian": do_librarian, "run": do_run, "setup": do_setup}
 
 
 def main() -> int:
@@ -643,6 +704,12 @@ def main() -> int:
     p = sub.add_parser("run")
     p.add_argument("name", help="codefile on SYSHD, without .CODE")
 
+    p = sub.add_parser("setup")
+    p.add_argument("--recipe", required=True,
+                   help="FIELD NAME = value lines, one field to a line")
+    p.add_argument("--name", default="SETUP",
+                   help="the SETUP codefile on SYSHD, without .CODE")
+
     p = sub.add_parser("observe")
     p.add_argument("keys", help="sent verbatim once the Command prompt shows")
     p.add_argument("--seconds", type=float, default=30.0)
@@ -651,7 +718,8 @@ def main() -> int:
     label = {"link": lambda: f"{args.out}-link",
              "librarian": lambda: f"{args.out}-librarian",
              "observe": lambda: "observe",
-             "run": lambda: f"{args.name}-run"}.get(
+             "run": lambda: f"{args.name}-run",
+             "setup": lambda: f"{Path(args.recipe).stem}-setup"}.get(
                  args.action, lambda: f"{args.name}-{args.action}")()
 
     if not HD1.exists():

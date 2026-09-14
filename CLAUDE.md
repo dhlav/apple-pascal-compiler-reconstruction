@@ -21,7 +21,8 @@ finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 274),
 `FORMATTER.DATA` (all but one uncleared assembler byte, 275),
 `6502.OPCODES` (the whole file) and `6502.ERRORS` (all but its record
-window's first fill, 276),
+window's first fill, 276), the four `.MISCINFO` profiles (every setting,
+by Apple's SETUP from recipes; the rest is memory, 277),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
@@ -97,6 +98,7 @@ python tools/emuremote.py link --host X --lib Y --out Z
 python tools/emuremote.py observe "L" --seconds 40    # capture a tool's prompts
 python tools/emuremote.py librarian --input X --out Y --slots 1-15 --notice "..."
 python tools/emuremote.py run X                       # X(ecute a program
+python tools/emuremote.py setup --recipe R            # SETUP -> NEW.MISCINFO
 ```
 
 **`emuremote.py` is the path to prefer for all three tools** (findings

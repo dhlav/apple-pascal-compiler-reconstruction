@@ -126,6 +126,7 @@ STEPS = [
     ("BINDER and SET40COLS, all but the version field", "probes/probe_v2_binaries.py"),
     ("FORMATTER.DATA, assembled and built on the 1.3 system", "probes/probe_formatter_data.py"),
     ("6502.OPCODES and 6502.ERRORS, written on the 1.3 system", "probes/probe_asm_data.py"),
+    ("the MISCINFO profiles, by Apple's SETUP", "probes/probe_miscinfo.py"),
 ]
 
 for step in STEPS:
