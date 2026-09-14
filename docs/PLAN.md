@@ -1571,16 +1571,20 @@ a route end to end; everything else is a straight read-and-rebuild.
 
 ### Carried forward, not scheduled
 
-* **`DECOPS`'s eleven operations are not read out** (findings 98d, 290).
-  The engine in `src/native/LONGINTS.TEXT` reassembles to Apple's bytes and
-  carries Apple's name, but what each operation number does is still
-  unread. It is the one native procedure left out of `NATIVE_SIG`, because
-  its arity is variable.
-* **Placeholder names.** Apple's additions to the Linker, the Librarian
-  and SETUP, the `L<nnnn>` labels in `128K.APPLE`, and unnamed globals in
-  `SYSTEM.ASSMBLER` are byte-exact and unnamed. A name needs evidence, as
-  `DECOPS` (290) and LIBMAP's globals (270c) had. Slack that holds
-  compiler symbol nodes or source text is the best place to look.
+* **`DECOPS`'s operations are named but not read** (findings 98d, 290,
+  294). `DECTBL`'s eleven entries carry UCSD's names, from II.0's own
+  `DECOPS` and the compiler's operation numbers. How each one works inside
+  is still unread, and the rest of the engine's labels are offsets. It is
+  the one native procedure left out of `NATIVE_SIG`, because its arity is
+  variable.
+* **Placeholder names.** UCSD's II.0 revisions named the byte-flipping
+  and small-memory parts of the Linker, Librarian and LibMap (291-293).
+  What is left is Apple's own additions to those tools and SETUP, the
+  `L<nnnn>` labels in `128K.APPLE`, and unnamed globals in
+  `SYSTEM.ASSMBLER`. They are byte-exact and unnamed. A name needs
+  evidence, as `DECOPS` (290) and LIBMAP's globals (270c) had. Slack that
+  holds compiler symbol nodes or source text is the best place to look,
+  then `github.com/dhlav/ucsd-psystem-os`.
 * **89 joins where the two paths disagree on stack depth**, mostly UCSD
   sets. Do not "fix" these by loosening the merge -- the report is what
   makes a wrong callee arity findable.

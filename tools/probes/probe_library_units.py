@@ -45,6 +45,9 @@ RUN = ROOT / "acceptance" / "2026-09-14-library-decops"
 # The run before finding 286: the same code, interfaces staged as plain
 # text. It is the control for the interface-text check.
 PLAIN = ROOT / "acceptance" / "2026-09-14-library-units"
+# LONGINTS.TEXT with DECOPS's UCSD labels (finding 294), reassembled,
+# relinked and rejoined; its three codefiles must be the full run's.
+LABELS = ROOT / "acceptance" / "2026-09-14-decops-labels"
 UNITSRC = ROOT / "src" / "pascal" / "units" / "1.3"
 SOURCES = ["TRANSCEND", "CHAINSTUFF", "PASCALIO", "LONGINTIO",
            "TURTLEGRAPHICS", "APPLESTUFF"]
@@ -153,8 +156,14 @@ def main() -> int:
             crlf, lf = b"\r\n", b"\n"
             check(kept.replace(crlf, lf) == tree.replace(crlf, lf),
                   f"{stem}.{ext}")
+    for stem in ("NLONG", "LLONG", "NEWLIB"):
+        check((LABELS / f"{stem}.CODE").read_bytes()
+              == (RUN / f"{stem}.CODE").read_bytes(),
+              f"{stem}.CODE from the relabelled DECOPS is the run's, byte "
+              f"for byte")
     for name in ("LONGINTS.TEXT", "TURTLEGR.TEXT", "APPLESTF.TEXT"):
-        kept = (RUN / name).read_bytes().replace(crlf, lf)
+        kept = ((LABELS if name == "LONGINTS.TEXT" else RUN) / name
+                ).read_bytes().replace(crlf, lf)
         tree = (ROOT / "src" / "native" / name).read_bytes()
         check(kept == tree.replace(crlf, lf), f"src/native/{name}")
 
@@ -199,6 +208,7 @@ def main() -> int:
           f"Apple's slack declares the engine: {second[432:458]!r}")
     ulong = (RUN / "ULONG.CODE").read_bytes()
     native = (ROOT / "src" / "native" / "LONGINTS.TEXT").read_text()
+    # (the name check reads the tree; LABELS' copy equals it, above)
     check(b"DECOPS  " in ulong and b"LONGOPS" not in ulong
           and ".PROC DECOPS,0" in native,
           "ULONG's link information and src/native/LONGINTS.TEXT name it "

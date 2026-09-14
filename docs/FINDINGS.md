@@ -24132,3 +24132,47 @@ link. The compile, `SEARCH.CODE` and the linked file are byte-identical
 to 2026-09-12's, all 5,632 bytes, slack included. The linked file is
 `LIBMAP.CODE` through the end of its segment, as before. The slack's
 symbol nodes are globals, so local renames do not reach them.
+
+## 294. `DECOPS`'s eleven operations carry UCSD's names
+
+**VERIFIED SOURCE FACT.** UCSD's II.0 long-integer engine is PDP-11
+assembly beginning `.PROC DECOPS` (`long_integer/decop.a.text` in the
+mirror of 291). That corroborates 290's name. It dispatches on the
+operation byte through an eleven-word table:
+
+    DECTBL: .WORD DAJ, DAD, DSB, DNG, DMP, DDV, DSTR, DCV, DECCMP, DCVT, DTNC
+
+Our compiler source pushes those operations as word offsets 0 to 20 under
+the same names: `GENLDC(0(*DAJ*))`, `(2(*DAD*))` and so on to
+`(20(*DTNC*))`, with `DCMP` for `DECCMP`. Apple's 6502 engine indexes its
+own eleven-word table by that number. So `LONGINTS.TEXT`'s `OPS` is
+`DECTBL`, and its entries, by position, are:
+
+| was | name | II.0's comment |
+|---|---|---|
+| `L00ED` | `DAJ` | decimal adjust |
+| `L0298` | `DAD` | decimal add |
+| `L02C5` | `DSB` | decimal subtract |
+| `L011C` | `DNG` | decimal negate |
+| `L02F8` | `DMP` | decimal multiply |
+| `L040E` | `DDV` | |
+| `L064E` | `DSTR` | |
+| `L056A` | `DCV` | |
+| `L012B` | `DECCMP` | |
+| `L054E` | `DCVT` | |
+| `L05C7` | `DTNC` | |
+
+`L0077`, the error exit that loads 5, is II.0's `DOVR: TRAP INTOVR`
+(`INTOVR .EQU 5`). The exits that load 13 and 6 are inline traps in II.0,
+with no label, so they keep their placeholders.
+
+**Not claimed:** how any of the eleven works. The 6502 bodies are Apple's
+own and unread. The names come from the table position and the compiler's
+operation numbers, not from reading the code.
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-decops-labels` is the
+relabelled source assembled by Apple's assembler, linked with the 290
+run's `ULONG` and joined with the other five units. `NLONG.CODE`,
+`LLONG.CODE` and `NEWLIB.CODE` are byte-identical to
+`2026-09-14-library-decops`'s. `probe_lib_native_asm.py` reassembles it
+byte for byte on the fast tier too.
