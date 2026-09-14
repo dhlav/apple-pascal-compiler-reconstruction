@@ -23574,3 +23574,66 @@ so the body is split into four procedures.
 
 **SPECULATION.** `MAKEOS` uses a capacity of 1453, $FDFC − $F84F. Any value
 from 1438 to 1457 writes the same file, so this choice is not evidence.
+
+## 285. `SYSTEM.LIBRARY`: all six units' code by Apple's tools; the interface text is the source file's bytes
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-library-units` holds the
+first acceptance-tier build of the library's units:
+
+* the six sources in `src/pascal/units/1.3/`, compiled by `SYSTEM.COMPILER`;
+* `LONGINTS`, `TURTLEGR` and `APPLESTF` from `src/native/`, assembled by
+  `SYSTEM.ASSMBLER`;
+* the three units with native halves, linked by `SYSTEM.LINKER`.
+
+All six code segments equal `SYSTEM.LIBRARY`'s byte for byte, with Apple's
+`SEGKIND`, segment number, machine type and version:
+
+* `TRANSCEN`, `CHAINSTU` and `PASCALIO` straight from the compile;
+* `LONGINTI`, `TURTLEGR` and `APPLESTU` after the link.
+
+Before the link those three are `UNLINKED_INTRINS` and 694, 2984 and 68
+bytes long. `TURTLEGR`'s `DATA` segment, 386 bytes on no block, matches
+too. `probe_library_units.py` checks all of it. Until now the library's
+claim rested on per-procedure comparisons.
+
+### 285a. `CLIP` is a function to the Linker
+
+**VERIFIED BINARY FACT / VERIFIED SOURCE FACT.** The first link of
+`TURTLEGRAPHICS` stopped with `Proc CLIP undefined`. The assembly
+declares `.FUNC CLIP,4`. The Linker matches a reference against a
+definition by kind (`EXTPROC` against `SEPPROC`, `EXTFUNC` against
+`SEPFUNC`), then by parameter words (`LINKER.text` 1356-1390). The source
+now declares `FUNCTION CLIP(VAR X1, Y1, X2, Y2: INTEGER): BOOLEAN;
+EXTERNAL;`. Nothing in the Pascal calls `CLIP`, and the compiled segment is
+byte-identical either way.
+
+### 285b. Why the interface text does not match yet
+
+**VERIFIED SOURCE FACT.** `UNITPART` copies the interface into the codefile
+straight out of the symbol buffer: `MOVELEFT(SYMBUFP^[TEXTSTRT],
+CODEP^[0], IC)`, from just after `INTERFACE` to just after
+`IMPLEMENTATION`. The symbol buffer holds one 1024-byte page of the
+`.TEXT` file, still encoded. So the text blocks carry the source file's
+own bytes: DLE indentation codes, and whatever follows `IMPLEMENTATION`
+on that page.
+
+**VERIFIED BINARY FACT.** Apple's text blocks show both effects:
+
+* nearly every line starts with a DLE indent code, blank lines included
+  (`DLE ' '`). Three lines do not: the `STUNT` line (seven literal spaces,
+  in `LONGINTI` and `PASCALIO`), `PASCALIO`'s `FREADREAL` (two literal
+  spaces), and `TURTLEGR`'s `SCREENCOLOR` (`DLE 4`, then two literal
+  spaces). That is editing history, and plain text cannot record it;
+* `TURTLEGR`'s interface is over 1014 bytes, so `IC` is capped at 1034.
+  The block then carries the source past `IMPLEMENTATION`, including a
+  `{$endc}` line whose brace the compiler overwrote with 0.
+
+Our staged sources differ in both ways. `encode_text` compresses only
+indents over two spaces. And `TRANSCEND`'s long header comment pushes its
+interface across a page boundary, so the compile copied a truncated text
+(it stops after `LN`). A program that `USES` such a unit would compile
+against incomplete text. This matters beyond the byte count.
+
+The blocks past `IC` hold the compiler's heap. In Apple's file that heap
+holds zeros, then the same `NEWC/C.CODE` memory found in `128K.PASCAL`'s
+slack (282d). That part is memory.

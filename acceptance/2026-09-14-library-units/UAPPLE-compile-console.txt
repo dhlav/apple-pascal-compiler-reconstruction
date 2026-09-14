@@ -1,0 +1,32 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]CCompiling...
+Compile what textfile (<ret> to exit) ? WORKHD:UAPPLE.TEXT
+
+To what codefile (<ret> for workfile) ? WORKHD:UAPPLE.CODE[*]
+
+Listing file (<ret> for none or option in source): 
+
+
+
+
+Apple Pascal Compiler [1.3]
+<   0>...........................................
+KEYPRESS [17196 words]
+<  43>....
+PADDLE   [17222 words]
+<  47>.
+BUTTON   [17222 words]
+<  48>.
+TTLOUT   [17222 words]
+<  49>.
+RANDOM   [17222 words]
+<  50>.
+RANDOMIZ [17222 words]
+<  51>.
+NOTE     [17222 words]
+<  52>...
+APPLESTU [17202 words]
+<  55>...
+PROGRAM  [17724 words]
+<  58>
+58 lines
+Smallest available space = 17196 wordsCommand:

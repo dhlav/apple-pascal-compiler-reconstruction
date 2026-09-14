@@ -491,10 +491,15 @@ INTERFACE
 { The last two privates, 30 and 31: the hi-res primitives and the line
   clipper, both 6502 and both in src/native/TURTLEGR.TEXT. Nothing in this
   file calls them -- the other five native procedures do, through .DEF/.REF
-  -- but they have to be declared here, after 29, to be numbered 30 and 31. }
+  -- but they have to be declared here, after 29, to be numbered 30 and 31.
+
+  CLIP is a FUNCTION of four VAR words because the assembly says .FUNC
+  CLIP,4, and the Linker matches the kind and the parameter words: declared
+  as a bare PROCEDURE it stops with "Proc CLIP undefined" (finding 285).
+  Nothing calls it from Pascal, so the heading changes no byte. }
 
     PROCEDURE HIRES; EXTERNAL;
-    PROCEDURE CLIP; EXTERNAL;
+    FUNCTION CLIP(VAR X1, Y1, X2, Y2: INTEGER): BOOLEAN; EXTERNAL;
 
 { Unit initialisation. SYSTEM.CHARSET is looked for on unit 4 and then on
   unit 5; if it is there it is read into a 512-word buffer. The buffer comes
