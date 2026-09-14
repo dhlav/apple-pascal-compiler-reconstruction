@@ -26,7 +26,7 @@ by Apple's SETUP from recipes; the rest is memory, 277), `SYSTEM.CHARSET`
 (the whole file, 278), `128K.APPLE` (the whole file, three traced
 assemblies, 279), `128K.PASCAL` (all but 571 bytes of another tool's
 slack, finished by `MAKEOS`, 284),
-`SYSTEM.LIBRARY`,
+`SYSTEM.LIBRARY` (all code and interface text by Apple's tools, 287),
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
 `docs/PLAN.md`, evidence ledger in `docs/FINDINGS.md`, per-file

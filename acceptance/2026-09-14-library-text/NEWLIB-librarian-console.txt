@@ -1,0 +1,114 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]XExecute what file (<ret> to exit) ? SYSHD:LIBRARY
+<1E>  Apple Pascal Librarian [1.3]<00><1E> -Output file -> <00>WORKHD:NEWLIB.CODE[*]
+<1E> $Input File -> <00>WORKHD:LLONG.CODE
+<1E> %            0-( 0) PASCALSY   112            8-                  0
+            1-(30) LONGINTI  2546            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>1<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>0 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-                  0            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>7<1E> "<00>N<1E> $Input File -> <00>WORKHD:UPASIO.CODE
+<1E> %            0-( 0) PASCALSY   112            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>7<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>1 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>14<1E> "<00>N<1E> $Input File -> <00>WORKHD:UCHAIN.CODE
+<1E> %            0-( 0) PASCALSY    16            8-                  0
+            1-(28) CHAINSTU   410            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>14<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>2 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-(28) CHAINSTU   410           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>16<1E> "<00>N<1E> $Input File -> <00>WORKHD:UTRANS.CODE
+<1E> %            0-                  0            8-                  0
+            1-(29) TRANSCEN  1268            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>16<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>3 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-(28) CHAINSTU   410           10-                  0
+            3-(29) TRANSCEN  1268           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>20<1E> "<00>N<1E> $Input File -> <00>WORKHD:LTURTLE.CODE
+<1E> %            0-                 18            8-                  0
+            1-(20) TURTLEGR  5230            9-                  0
+            2-(21) TURTLEGR   386           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>20<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>4 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-(28) CHAINSTU   410           10-                  0
+            3-(29) TRANSCEN  1268           11-                  0
+            4-(20) TURTLEGR  5230           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>33<1E> "<00>2 <1E> "Slot to copy into? <00>5 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-(28) CHAINSTU   410           10-                  0
+            3-(29) TRANSCEN  1268           11-                  0
+            4-(20) TURTLEGR  5230           12-                  0
+            5-(21) TURTLEGR   386           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>33<1E> "<00>N<1E> $Input File -> <00>WORKHD:LAPPLE.CODE
+<1E> %            0-                 18            8-                  0
+            1-(22) APPLESTU   652            9-                  0
+            2-                  0           10-                  0
+            3-                  0           11-                  0
+            4-                  0           12-                  0
+            5-                  0           13-                  0
+            6-                  0           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>33<1E>  Slot # to copy and <space>, = for all, ? for select, N(ew file, Q(uit, A(bort<00><1E> "<00>1 <1E> "Slot to copy into? <00>6 <1E> /            0-(30) LONGINTI  2546            8-                  0
+            1-(31) PASCALIO  2070            9-                  0
+            2-(28) CHAINSTU   410           10-                  0
+            3-(29) TRANSCEN  1268           11-                  0
+            4-(20) TURTLEGR  5230           12-                  0
+            5-(21) TURTLEGR   386           13-                  0
+            6-(22) APPLESTU   652           14-                  0
+            7-                  0           15-                  0
+<1E> .File length - <00>36<1E> "<00>Q<1E> 7Notice? <00>COPYRIGHT 1979,1980,1983-1985 APPLE COMPUTER, INC. ALL RIGHTS RESERVED
+Command:

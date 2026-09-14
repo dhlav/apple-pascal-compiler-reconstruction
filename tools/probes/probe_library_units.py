@@ -23,6 +23,10 @@ Claims, each of which the binary can fail:
   6. **Each 10-byte trailer is Apple's but for one byte**: offset 6, where
      Apple's holds N or X and no 1.3 tool writes anything.
   7. **The kept sources and layouts are the tree's.**
+  8. **Apple's Librarian joins them** (finding 287) into NEWLIB.CODE, slots
+     0-6 in Apple's order with the notice: block 0 is Apple's but for the
+     block addresses, every code segment is identical, and a region-by-
+     region account of Apple's 19456 bytes balances.
 
 Not claimed: the rest of each text block, which is compiler memory, and
 the block counts of LONGINTI's and TURTLEGR's text, which the shipped
@@ -148,6 +152,36 @@ def main() -> int:
             crlf, lf = b"\r\n", b"\n"
             check(kept.replace(crlf, lf) == tree.replace(crlf, lf),
                   f"{stem}.{ext}")
+
+    print("=== Apple's Librarian joins them (finding 287) ===")
+    lib = (RUN / "NEWLIB.CODE").read_bytes()
+    word = lambda b, o: int.from_bytes(b[o:o + 2], "little")
+    addr_bytes = {4 * i for i in range(16)} | {0xE0 + 2 * i
+                                               for i in range(16)}
+    off = [i for i in range(512) if lib[i] != araw[i]]
+    check(off and all(i in addr_bytes for i in off),
+          f"block 0 differs only in block addresses: {off}")
+    rows, total = [], 512
+    same = 512 - len(off)
+    for i in (0, 1, 2, 3, 4, 6):
+        ta, ca, la = (word(araw, 0xE0 + 2 * i), word(araw, 4 * i),
+                      word(araw, 4 * i + 2))
+        to, co = word(lib, 0xE0 + 2 * i), word(lib, 4 * i)
+        nb = (la + 511) // 512
+        code_ok = lib[co * 512:co * 512 + la] == araw[ca * 512:ca * 512 + la]
+        check(code_ok and word(lib, 4 * i + 2) == la,
+              f"slot {i}: {la} code bytes identical in the joined file")
+        at, ot = araw[ta * 512:ca * 512], lib[to * 512:co * 512]
+        ac, oc = araw[ca * 512:(ca + nb) * 512], lib[co * 512:(co + nb) * 512]
+        total += len(at) + len(ac)
+        same += sum(1 for k in range(len(at)) if k < len(ot)
+                    and at[k] == ot[k])
+        same += sum(1 for k in range(len(ac)) if ac[k] == oc[k])
+    check(total == len(araw) == 19456,
+          f"text, code and slack of six slots plus block 0 tile Apple's "
+          f"{len(araw)} bytes: {total}")
+    check(same == 16414, f"{same} of {total} bytes identical, aligned "
+          f"by slot")
 
     print()
     if fail:

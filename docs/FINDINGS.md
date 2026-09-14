@@ -23711,3 +23711,36 @@ pre-release 1.3 compiler would fit. What it was is SPECULATION.
 
 The rest of each text block past the trailer is heap memory in both
 files.
+
+## 287. `SYSTEM.LIBRARY` joined by Apple's Librarian: 16414 of 19456 bytes, all code
+
+**VERIFIED BINARY FACT.** Apple's `LIBRARY.CODE` joined the run of
+finding 286 into `acceptance/2026-09-14-library-text/NEWLIB.CODE`:
+
+    LLONG 1->0, UPASIO 1->1, UCHAIN 1->2, UTRANS 1->3,
+    LTURTLE 1->4 and 2->5, LAPPLE 1->6
+
+with Apple's copyright notice. The Librarian copies each unit's interface
+text ahead of its code, as Apple's file has it. Compared with
+`SYSTEM.LIBRARY`:
+
+* every code segment is identical in the joined file, and so are the
+  names, `SEGKIND`, `SEGINFO` and notice in block 0;
+* block 0 differs in 11 bytes, all block addresses. Our file is 36 blocks,
+  not 38, because `LONGINTI`'s text is one block where Apple's is two and
+  `TURTLEGR`'s is two where Apple's is three (286c);
+* aligned slot by slot, block 0 plus each slot's text, code and slack tile
+  Apple's 19456 bytes exactly, and 16414 of them are identical.
+
+The other 3042 bytes are:
+
+* **text-block memory past each trailer**, the six trailer flag bytes, and
+  `TURTLEGR`'s editor leftovers (286c);
+* **slack after the linked units' code**: `LONGINTI` 1 of 14 bytes
+  identical, `TURTLEGR` 14 of 402, `APPLESTU` 48 of 372. That is the
+  Linker's memory, as in `FORMATTER.CODE`'s last block;
+* **`CHAINSTU`'s slack**, 7 of 102, which is compiler memory.
+
+`PASCALIO`'s and `TRANSCEN`'s slack, 490 and 268 bytes, are identical.
+`probe_library_units.py` checks the block 0 difference set, the code, the
+balance and the count.
