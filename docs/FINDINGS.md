@@ -23528,3 +23528,49 @@ byte off, all 42 fail. The shift `CodeFile` fits is 19510 =
 range (1438-1457 bytes) would put the lowest allowed start between $F84B
 and $F85E, just above the boot's own data at $F83F-$F84E. That would
 explain the capacity. It is not checked.
+
+## 284. `128K.PASCAL`: every byte but three slack tails, finished on the 1.3 system
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-128k-pascal` holds
+`MAKEOS`, compiled by Apple's 1.3 compiler and run under the 1.3 system.
+It read the compile kept in `2026-09-14-pascalsystem-intrinsic` and wrote
+the 45-block `128K.PASCAL` kept beside it. That file equals Apple's in
+22469 of 23040 bytes. The other 571 bytes all lie in the three slack
+tails of finding 282d, 594 bytes in all:
+
+* after slot 0's piece, 98 bytes, 94 differing;
+* after slot 15's piece, 40 bytes, 31 differing;
+* after slot 1, 456 bytes, 446 differing.
+
+In Apple's file those tails are memory from another tool (`INITIALI`'s
+bytes; unit names). No source reproduces them.
+
+`src/pascal/programs/1.3/MAKEOS.text` is this reconstruction's finishing
+step. Apple's is not on the disks. It does only what the file and the boot
+show:
+
+* it cuts segment 0 at its procedures' attribute tables;
+* it deals the procedures out in number order, first fit, slot 0 before
+  slot 15 (282b);
+* it rewrites the one dictionary, shifting crossing pointers by the two
+  `CodeP` tops, $FDFC and $C000 (283);
+* it copies segments 1-6 as whole blocks;
+* it writes block 0: the compile's names, `SEGKIND` and `SEGINFO`, no
+  text addresses, `SEGSUSED` set from the intrinsic segments, and the
+  notice as a string (282d).
+
+`probe_128k_pascal.py` checks that:
+
+* nothing differs outside the tails, which it measures from Apple's
+  dictionary, and a flipped byte elsewhere is caught;
+* slots 1-6 are the compile's blocks;
+* a host rendering of `MAKEOS`'s steps turns the kept compile into the
+  kept output byte for byte. With the slot 0 top one byte off, or a
+  capacity outside 1438-1457, it does not;
+* the kept source equals the tree.
+
+The first compile of `MAKEOS` stopped at error 253, procedure too long,
+so the body is split into four procedures.
+
+**SPECULATION.** `MAKEOS` uses a capacity of 1453, $FDFC − $F84F. Any value
+from 1438 to 1457 writes the same file, so this choice is not evidence.

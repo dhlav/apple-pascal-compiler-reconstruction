@@ -24,7 +24,8 @@ finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 window's first fill, 276), the four `.MISCINFO` profiles (every setting,
 by Apple's SETUP from recipes; the rest is memory, 277), `SYSTEM.CHARSET`
 (the whole file, 278), `128K.APPLE` (the whole file, three traced
-assemblies, 279),
+assemblies, 279), `128K.PASCAL` (all but 571 bytes of another tool's
+slack, finished by `MAKEOS`, 284),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in

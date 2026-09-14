@@ -1,0 +1,201 @@
+{ MAKEOS -- finishes 128K.PASCAL from the compile of PASCALSYSTEM.text
+  (finding 284).
+
+  The compiler writes segment 0 as one slot. The 128K boot loads it as two
+  pieces: slot 15 directly below CodeP $C000, then slot 0 directly below
+  CodeP $FDFC (finding 283). Slot 0 carries the one procedure dictionary,
+  so a pointer naming a procedure in slot 15 holds the distance as loaded,
+  not as stored. This program:
+
+    * cuts segment 0 into its procedures and deals them out in number
+      order, first fit: a procedure goes in slot 0 while it still fits
+      there beside the dictionary, otherwise in slot 15 (finding 282b);
+    * rewrites the dictionary, with every crossing pointer shifted by the
+      two load addresses;
+    * copies segments 1-6 whole, block for block, slack included;
+    * writes block 0: the compile's names, kinds and SEGINFO, no text
+      addresses, the SEGSUSED word with each intrinsic segment's bit, and
+      the copyright notice as a string (finding 282d).
+
+  Apple's finishing tool is not on the 1.3 disks; this is this
+  reconstruction's, written to what the file and the boot show. The slack
+  after slot 0, slot 15 and slot 1 was that tool's memory and is not
+  reproduced. Everything lives on WORKHD. }
+
+(*$I-*)
+PROGRAM MAKEOS;
+
+CONST
+  TOP0 = -516;        { $FDFC }
+  TOP15 = -16384;     { $C000 }
+  { Any capacity from 1438 to 1457 bytes gives Apple's split (finding
+    282b). $FDFC - $F84F puts slot 0 just above the boot's data. }
+  CAPACITY = 1453;
+  MAXPROC = 127;
+
+TYPE
+  OCTET = 0..255;
+  SEGBUF = RECORD
+             CASE BOOLEAN OF
+               TRUE: (W: ARRAY [0..3327] OF INTEGER);
+               FALSE: (B: PACKED ARRAY [0..6655] OF OCTET)
+           END;
+  PIECE0 = RECORD
+             CASE BOOLEAN OF
+               TRUE: (W: ARRAY [0..767] OF INTEGER);
+               FALSE: (B: PACKED ARRAY [0..1535] OF OCTET)
+           END;
+  BLOCK0 = RECORD
+             CASE BOOLEAN OF
+               TRUE: (W: ARRAY [0..255] OF INTEGER);
+               FALSE: (B: PACKED ARRAY [0..511] OF OCTET)
+           END;
+
+VAR
+  SRC, DST: FILE;
+  DICT, NEWDICT: BLOCK0;
+  CODE, P15: SEGBUF;
+  P0: PIECE0;
+  JTAB, START, NEWJTAB: ARRAY [1..MAXPROC] OF INTEGER;
+  INSLOT0: PACKED ARRAY [1..MAXPROC] OF BOOLEAN;
+  LEN, NPROC, I, J, S, TOTAL, SIZE, LEN0, LEN15, SHIFT, AT, BLK, NB,
+    USED, BIT: INTEGER;
+  NOTICE: STRING[79];
+
+PROCEDURE FAIL(S: STRING);
+BEGIN
+  WRITELN('MAKEOS: ', S);
+  EXIT(MAKEOS)
+END;
+
+PROCEDURE READSLOT0;
+BEGIN
+  RESET(SRC, 'WORKHD:PASCALSY.CODE');
+  IF IORESULT <> 0 THEN FAIL('no PASCALSY.CODE');
+  IF BLOCKREAD(SRC, DICT, 1, 0) <> 1 THEN FAIL('reading block 0');
+  LEN := DICT.W[1];
+  NB := (LEN + 511) DIV 512;
+  IF BLOCKREAD(SRC, CODE, NB, DICT.W[0]) <> NB THEN FAIL('reading slot 0');
+  NPROC := CODE.B[LEN - 1];
+
+  { Each procedure's attribute table, from its self-relative pointer, and
+    where it starts: just past the table of the procedure below it. }
+  FOR I := 1 TO NPROC DO
+    BEGIN
+      AT := LEN - 2 - 2 * I;
+      JTAB[I] := AT - CODE.W[AT DIV 2]
+    END;
+  FOR I := 1 TO NPROC DO
+    BEGIN
+      START[I] := 0;
+      FOR J := 1 TO NPROC DO
+        IF (JTAB[J] < JTAB[I]) AND (JTAB[J] + 2 > START[I]) THEN
+          START[I] := JTAB[J] + 2
+    END
+END;
+
+PROCEDURE SPLIT;
+BEGIN
+  { Number order, first fit. }
+  FILLCHAR(P0, SIZEOF(P0), CHR(0));
+  FILLCHAR(P15, SIZEOF(P15), CHR(0));
+  TOTAL := 2 + 2 * NPROC;
+  LEN0 := 0;
+  LEN15 := 0;
+  FOR I := 1 TO NPROC DO
+    BEGIN
+      SIZE := JTAB[I] + 2 - START[I];
+      INSLOT0[I] := TOTAL + SIZE <= CAPACITY;
+      IF INSLOT0[I] THEN
+        BEGIN
+          TOTAL := TOTAL + SIZE;
+          MOVELEFT(CODE.B[START[I]], P0.B[LEN0], SIZE);
+          LEN0 := LEN0 + SIZE;
+          NEWJTAB[I] := LEN0 - 2
+        END
+      ELSE
+        BEGIN
+          MOVELEFT(CODE.B[START[I]], P15.B[LEN15], SIZE);
+          LEN15 := LEN15 + SIZE;
+          NEWJTAB[I] := LEN15 - 2
+        END
+    END;
+
+  { The dictionary, at the end of slot 0. A pointer into slot 15 spans
+    the gap between the two pieces as the boot places them. }
+  LEN0 := LEN0 + 2 + 2 * NPROC;
+  SHIFT := (TOP0 - TOP15) - LEN0 + LEN15;
+  FOR I := 1 TO NPROC DO
+    BEGIN
+      AT := LEN0 - 2 - 2 * I;
+      IF INSLOT0[I] THEN
+        P0.W[AT DIV 2] := AT - NEWJTAB[I]
+      ELSE
+        P0.W[AT DIV 2] := AT - NEWJTAB[I] + SHIFT
+    END;
+  P0.W[(LEN0 - 2) DIV 2] := CODE.W[(LEN - 2) DIV 2]
+END;
+
+PROCEDURE WRITEPIECES;
+BEGIN
+  REWRITE(DST, 'WORKHD:128K.PASCAL');
+  IF IORESULT <> 0 THEN FAIL('cannot open 128K.PASCAL');
+  FILLCHAR(NEWDICT, SIZEOF(NEWDICT), CHR(0));
+  MOVELEFT(DICT.B[64], NEWDICT.B[64], 128);
+  BLK := 1;
+  NB := (LEN0 + 511) DIV 512;
+  IF BLOCKWRITE(DST, P0, NB, BLK) <> NB THEN FAIL('writing slot 0');
+  NEWDICT.W[0] := BLK;
+  NEWDICT.W[1] := LEN0;
+  NEWDICT.W[96] := DICT.W[96];
+  NEWDICT.W[128] := DICT.W[128];
+  BLK := BLK + NB;
+  NB := (LEN15 + 511) DIV 512;
+  IF BLOCKWRITE(DST, P15, NB, BLK) <> NB THEN FAIL('writing slot 15');
+  NEWDICT.W[30] := BLK;
+  NEWDICT.W[31] := LEN15;
+  BLK := BLK + NB
+END;
+
+PROCEDURE WRITEREST;
+BEGIN
+  { Segments 1-15 as the compile wrote them, whole blocks. }
+  USED := 0;
+  FOR S := 1 TO 15 DO
+    IF DICT.W[2 * S + 1] > 0 THEN
+      BEGIN
+        NB := (DICT.W[2 * S + 1] + 511) DIV 512;
+        IF BLOCKREAD(SRC, CODE, NB, DICT.W[2 * S]) <> NB THEN
+          FAIL('reading a segment');
+        IF BLOCKWRITE(DST, CODE, NB, BLK) <> NB THEN
+          FAIL('writing a segment');
+        NEWDICT.W[2 * S] := BLK;
+        NEWDICT.W[2 * S + 1] := DICT.W[2 * S + 1];
+        NEWDICT.W[96 + S] := DICT.W[96 + S];
+        NEWDICT.W[128 + S] := DICT.W[128 + S];
+        IF DICT.W[96 + S] = 6 THEN
+          BEGIN
+            BIT := 1;
+            FOR J := 1 TO DICT.B[256 + 2 * S] DO
+              BIT := BIT + BIT;
+            USED := USED + BIT
+          END;
+        BLK := BLK + NB
+      END;
+  NEWDICT.W[144] := USED;
+
+  NOTICE := CONCAT('COPYRIGHT 1979,1980,1983-1985 ',
+                   'APPLE COMPUTER, INC. ALL RIGHTS RESERVED');
+  MOVELEFT(NOTICE, NEWDICT.B[432], LENGTH(NOTICE) + 1);
+  IF BLOCKWRITE(DST, NEWDICT, 1, 0) <> 1 THEN FAIL('writing block 0');
+  CLOSE(DST, LOCK);
+  CLOSE(SRC);
+  WRITELN('MAKEOS: 128K.PASCAL written, ', BLK, ' blocks')
+END;
+
+BEGIN
+  READSLOT0;
+  SPLIT;
+  WRITEPIECES;
+  WRITEREST
+END.

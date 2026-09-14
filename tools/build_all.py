@@ -129,6 +129,7 @@ STEPS = [
     ("the MISCINFO profiles, by Apple's SETUP", "probes/probe_miscinfo.py"),
     ("SYSTEM.CHARSET, written on the 1.3 system", "probes/probe_charset.py"),
     ("128K.APPLE, three assemblies joined on the 1.3 system", "probes/probe_128k_apple.py"),
+    ("128K.PASCAL, the compile finished by MAKEOS on the 1.3 system", "probes/probe_128k_pascal.py"),
 ]
 
 for step in STEPS:
