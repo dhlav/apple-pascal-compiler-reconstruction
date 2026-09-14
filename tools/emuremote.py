@@ -8,6 +8,7 @@
         --slots 1-15 --notice "COPYRIGHT ..."            # finding 267
     python tools/emuremote.py run MAKEFMT                # X(ecute, finding 275
     python tools/emuremote.py setup --recipe II80.recipe # NEW.MISCINFO, 277
+    python tools/emuremote.py --vol WORKHD compile X     # files on drive 2
 
 The `emu*.ps1` scripts type into AppleWin's window with SendKeys and capture
 a screenshot. They still work and are still the fallback, but they carry
@@ -83,9 +84,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CP2 = Path(r"C:\CiderPress2\cp2.exe")
 HD1 = ROOT / "build" / "disks" / "HD1.hdv"
+HD2 = ROOT / "build" / "disks" / "HD2.hdv"
+# Where a run's files live: `--vol`. SYSHD always boots and carries the
+# tools and REDIRIO; WORKHD (mkworkhd.py) is drive 2 for per-run work.
+IMAGES = {"SYSHD:": HD1, "WORKHD:": HD2}
 PORT = 1977
 STARTUP = "SYSTEM.STARTUP"
 VOL = "SYSHD:"
+SYSVOL = "SYSHD:"   # the boot volume: system tools and REDIRIO, always
 
 PROMPT = b"Command:"
 ESC = "\x1b"
@@ -435,7 +441,7 @@ def verify_linked(name: str) -> int:
 
     tmp = Path(tempfile.mkdtemp(prefix="emuremote-"))
     try:
-        out = cp2("extract", "--raw", "--strip-paths", str(HD1),
+        out = cp2("extract", "--raw", "--strip-paths", str(IMAGES[VOL]),
                   f"{name}.CODE", cwd=tmp, allow_fail=True)
         blob = tmp / f"{name}.CODE"
         if not blob.exists():
@@ -503,7 +509,7 @@ def do_setup(con: Console, args) -> int:
     con.expect(PROMPT)
     con.send("X")
     con.expect(b"Execute what file")
-    con.send(f"{VOL}{args.name}\r")
+    con.send(f"{SYSVOL}{args.name}\r")  # Apple's SETUP.CODE, a system tool
     con.expect(b"SETUP: C(HANGE")
     con.send("C")
     for name, value in recipe:
@@ -571,7 +577,7 @@ def slot_pairs(spec: str) -> list[tuple[int, int]] | None:
 def dictionary(name: str) -> bytes:
     """Block 0 of a codefile on SYSHD."""
     with tempfile.TemporaryDirectory() as tmp:
-        cp2("extract", "--raw", "--strip-paths", str(HD1), codename(name),
+        cp2("extract", "--raw", "--strip-paths", str(IMAGES[VOL]), codename(name),
             cwd=Path(tmp))
         return (Path(tmp) / codename(name)).read_bytes()[:512]
 
@@ -609,7 +615,7 @@ def do_librarian(con: Console, args) -> int:
     con.expect(PROMPT)
     con.send("X")
     con.expect(b"Execute what file")
-    con.send(f"{VOL}LIBRARY\r")
+    con.send(f"{SYSVOL}LIBRARY\r")      # Apple's Librarian, a system tool
     con.expect(b"Output file ->")
     con.send(f"{VOL}{args.out}.CODE{SIZED}\r")
     report = []
@@ -679,6 +685,8 @@ def main() -> int:
                     help="seconds for boot plus the run (default 480)")
     ap.add_argument("--quiet", action="store_true",
                     help="do not echo the console while it runs")
+    ap.add_argument("--vol", default="SYSHD",
+                    help="volume holding the run's files: SYSHD or WORKHD")
     sub = ap.add_subparsers(dest="action", required=True)
 
     for verb in ("compile", "assemble"):
@@ -715,6 +723,13 @@ def main() -> int:
     p.add_argument("--seconds", type=float, default=30.0)
 
     args = ap.parse_args()
+    global VOL
+    VOL = args.vol.upper().rstrip(":") + ":"
+    if VOL not in IMAGES:
+        raise SystemExit(f"--vol must be one of {sorted(IMAGES)}")
+    if not IMAGES[VOL].exists():
+        raise SystemExit(f"{IMAGES[VOL].relative_to(ROOT)} has not been built "
+                         "(python tools/mkworkhd.py)")
     label = {"link": lambda: f"{args.out}-link",
              "librarian": lambda: f"{args.out}-librarian",
              "observe": lambda: "observe",
@@ -742,7 +757,7 @@ def main() -> int:
         print(f"transcript: {out.relative_to(ROOT)}")
         shutdown()
         disarm()
-        print("closed; HD1.hdv (SYSHD) flushed, SYSTEM.STARTUP removed")
+        print("closed; SYSHD and WORKHD flushed, SYSTEM.STARTUP removed")
 
     # Only now, with AppleWin gone and HD1.hdv flushed, can the result be
     # read back off the volume.

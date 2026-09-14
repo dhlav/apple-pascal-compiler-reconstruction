@@ -15,7 +15,9 @@ hard-disk volume on a slot-5 HDC**, built by `mkharddisks.py`:
 This was two volumes (SYSHD + WORKHD, h1 and h2) briefly; see
 mkharddisks.py's docstring for why a single volume needs `[*]` on every
 codefile it creates and is not simply "the same thing, one disk instead of
-two." `-s5h2` is unused now.
+two." `-s5h2` now carries WORKHD (`HD2.hdv`, `mkworkhd.py`) when that image
+exists: not for the space, but because a Pascal volume holds 77 files and
+SYSHD ran out of directory slots.
 
 Name the volume by its Pascal volume name (`SYSHD:`), not by which .hdv
 holds it. `cp2 create-disk-image ... pascal` always names a fresh volume
@@ -72,6 +74,7 @@ DISKS = ROOT / "evidence" / "disks"
 WORK = ROOT / "build" / "disks" / "WORK.dsk"
 WORK2 = ROOT / "build" / "disks" / "WORK2.dsk"
 HD1 = ROOT / "build" / "disks" / "HD1.hdv"     # SYSHD: boot, every tool, ours
+HD2 = ROOT / "build" / "disks" / "HD2.hdv"     # WORKHD: per-run work, mkworkhd.py
 
 # Applied before every launch. AppleWin reads these from the registry at
 # startup and there is no command-line switch for any of them.
@@ -211,6 +214,7 @@ def main_hd(dry_run: bool = False, ssc: bool = False) -> int:
            "-model", "apple2ee",
            "-s5", "hdc",
            "-s5h1", str(HD1),
+           *(["-s5h2", str(HD2)] if HD2.exists() else []),
            "-s6", "empty",
            "-s7", "empty"]
     if ssc:
@@ -222,6 +226,8 @@ def main_hd(dry_run: bool = False, ssc: bool = False) -> int:
     print()
 
     print("Slot 5 HDC h1", HD1.name, " <- SYSHD: boot, every system tool, ours")
+    if HD2.exists():
+        print("Slot 5 HDC h2", HD2.name, " <- WORKHD: per-run work (mkworkhd.py)")
     if ssc:
         print(f"Slot 2 SSC (TCP, port {SSC_TCP_PORT}, binds lazily on first UART access)")
     print("Slots 6, 7    empty")

@@ -2,6 +2,7 @@
 
     python tools/stagefile.py <source.text> <NAME.TEXT>
     python tools/stagefile.py <file.CODE>   <NAME.CODE>
+    python tools/stagefile.py --vol WORKHD <source.text> <NAME.TEXT>
 
 A name ending in .CODE is staged byte for byte with the `PCD` attribute:
 a codefile an earlier emulator step produced, going back on the volume for
@@ -38,15 +39,23 @@ from a2pascal.textfile import encode_text
 CP2 = Path(r'C:\CiderPress2\cp2.exe')
 HD1 = ROOT / 'build' / 'disks' / 'HD1.hdv'
 
-if len(sys.argv) != 3:
-    raise SystemExit('usage: python tools/stagefile.py '
+IMAGES = {'SYSHD': (HD1, 'mkharddisks.py'),
+          'WORKHD': (ROOT / 'build' / 'disks' / 'HD2.hdv', 'mkworkhd.py')}
+
+argv = sys.argv[1:]
+vol = 'SYSHD'
+if len(argv) == 4 and argv[0] == '--vol':
+    vol, argv = argv[1].upper().rstrip(':'), argv[2:]
+if len(argv) != 2 or vol not in IMAGES:
+    raise SystemExit('usage: python tools/stagefile.py [--vol SYSHD|WORKHD] '
                      '<source> <NAME.TEXT | NAME.CODE>')
+HD1, builder = IMAGES[vol]
 if not HD1.exists():
     raise SystemExit(f'{HD1.relative_to(ROOT)} has not been built '
-                     '(python tools/mkharddisks.py)')
+                     f'(python tools/{builder})')
 
-src = Path(sys.argv[1])
-name = sys.argv[2]
+src = Path(argv[0])
+name = argv[1]
 
 
 def cp2(*args: str, allow_fail: bool = False) -> str:
@@ -86,7 +95,7 @@ cat = cp2("catalog", str(HD1))
 if name not in cat:
     raise SystemExit(f'{name} is not on the volume after add -- cp2 skipped it')
 shutil.rmtree(staging, ignore_errors=True)
-print(f'{name} staged on SYSHD')
+print(f'{name} staged on {vol}')
 for line in cat.splitlines():
     if name.split('.')[0] in line:
         print('  ' + line.strip())

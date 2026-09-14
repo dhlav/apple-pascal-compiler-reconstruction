@@ -100,6 +100,8 @@ python tools/emuremote.py observe "L" --seconds 40    # capture a tool's prompts
 python tools/emuremote.py librarian --input X --out Y --slots 1-15 --notice "..."
 python tools/emuremote.py run X                       # X(ecute a program
 python tools/emuremote.py setup --recipe R            # SETUP -> NEW.MISCINFO
+python tools/mkworkhd.py                              # WORKHD, drive 2, once
+python tools/emuremote.py --vol WORKHD compile X      # a run's files on WORKHD
 ```
 
 **`emuremote.py` is the path to prefer for all three tools** (findings
@@ -151,6 +153,15 @@ build and fails loudly rather than let it be a surprise; give any new
 volume a distinct name too, in case a second one is ever online at once —
 two disks both named `NEWDISK` (cp2's default) left the Filer unable to
 tell them apart.
+
+**Per-run work goes on `WORKHD`, drive 2 of the same HDC** (`HD2.hdv`,
+`python tools/mkworkhd.py`, `--reset` to empty it). SYSHD hit 77 files
+twice in one session. `runemu.py` mounts HD2 on `-s5h2` whenever it
+exists; `stagefile.py --vol WORKHD` and `emuremote.py --vol WORKHD` put a
+run's sources and outputs there. System tools (the Librarian and SETUP
+included) and REDIRIO stay on SYSHD. A program's `*NAME` still means the
+boot volume, so write `WORKHD:NAME` in a program that should write there.
+Keep new per-run files off SYSHD.
 
 **The old four-floppy layout is still there behind `-Floppy`** (`runemu.py
 --floppy`), unchanged, and does not need `[*]` — system tools and output
