@@ -1,0 +1,7 @@
+# How Apple's editor stored this unit's lines (finding 285). The
+# interface is copied into the codefile still encoded, so this is content.
+dle
+literal 172          # STUNT: seven typed spaces, no DLE
+expect 172        STUNT = RECORD CASE INTEGER OF
+page 169             # INTERFACE starts a page, so the interface is one text window
+expect 169 INTERFACE

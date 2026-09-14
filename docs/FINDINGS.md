@@ -23637,3 +23637,77 @@ against incomplete text. This matters beyond the byte count.
 The blocks past `IC` hold the compiler's heap. In Apple's file that heap
 holds zeros, then the same `NEWC/C.CODE` memory found in `128K.PASCAL`'s
 slack (282d). That part is memory.
+
+## 286. The library's interface text, byte for byte through `IMPLEMENTATION`
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-library-text` rebuilds
+the six units and three links on the 1.3 system. The code is identical
+again, and now so is each unit's interface text, from just after
+`INTERFACE` through `IMPLEMENTATION`:
+
+| unit | bytes |
+|---|---|
+| `TRANSCEN` | 224 |
+| `CHAINSTU` | 189 |
+| `PASCALIO` | 672 |
+| `LONGINTI` | 422 |
+| `TURTLEGR` | 826 |
+| `APPLESTU` | 293 |
+
+The run of finding 285 staged the same sources as plain text and matches
+none of the six. `probe_library_units.py` requires both results.
+
+### 286a. What it took
+
+**VERIFIED SOURCE FACT.** The interface arrives in the codefile still
+encoded (285b). So each unit source now carries a `.layout` beside it,
+which `stagefile.py` applies through `textfile.Layout`:
+
+* `dle`: a DLE indent code on every line, indent 0 and blank lines
+  included, as Apple's editor wrote them;
+* `literal` and `split` for the three lines whose indentation was typed:
+  `STUNT` in `LONGINTIO` and `PASCALIO`, `FREADREAL`, and `SCREENCOLOR`;
+* `page` where a page must begin;
+* `expect` lines, so an edit that moves one of those lines stops the
+  staging instead of misencoding it.
+
+Whitespace in six sources changed to match the decoded text: blank lines
+that carry indentation, and two blank lines that were not Apple's.
+
+### 286b. A correction to 285b
+
+**VERIFIED SOURCE FACT.** 285b said `TRANSCEND`'s first compile copied a
+truncated interface. It did not. `GETNEXTPAGE` writes the current window,
+`SYMBUFP^[TEXTSTRT..]` for 1024 bytes, as a text block whenever a page
+ends inside an interface, and it restarts `TEXTSTRT` at 0. An interface
+that crosses a page takes more blocks; nothing is lost. That run had
+three text blocks where Apple's has one. A `page` directive at
+`INTERFACE` now gives one.
+
+### 286c. What the shipped compiler does not reproduce
+
+**VERIFIED BINARY FACT.** Three things in Apple's text blocks do not come
+out of the shipped `SYSTEM.COMPILER`, however the source is laid out:
+
+* **Offset 6 of each 10-byte trailer holds `N` or `X`**: `X` for
+  `CHAINSTU` and `TURTLEGR`, `N` for the other four. `UNITPART` writes
+  blanks, `E` at offset 8, and `P` and `L` at 1 and 3. No 1.3 tool in
+  this repository writes offset 6, and `USEUNIT` reads only `P` and `L`.
+* **`TURTLEGR`'s trailer starts its third text block**, at 1024. That is
+  where it lands when a page fetch happens between `IMPLEMENTATION` and
+  the copy. Apple's first block then holds the page padding: a 0, then
+  `$endc}` and `SETC SHORT := FALSE}`, the editor's leftovers. With the
+  shipped compiler the carriage return after `IMPLEMENTATION` is not
+  consumed before the copy. That held with the page breaking right after
+  that line and with `{$endc}` lines following it (a trial compile of
+  both); the trailer followed the text directly each time.
+* **`LONGINTI`'s text is two blocks** for 432 bytes of text and trailer.
+  Its second block holds only memory.
+
+**STRONG INFERENCE.** Apple's unit text blocks were written by a compiler
+that differs from the shipped one in how it writes the trailer, though
+not in any byte of code. The units carry version 6 in `SEGINFO`. A late
+pre-release 1.3 compiler would fit. What it was is SPECULATION.
+
+The rest of each text block past the trailer is heap memory in both
+files.

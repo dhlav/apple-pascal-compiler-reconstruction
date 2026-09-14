@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tools'))
 
 from a2pascal.srcfmt import WIDTH, expand_tabs, over_width
-from a2pascal.textfile import encode_text
+from a2pascal.textfile import Layout, encode_text
 
 CP2 = Path(r'C:\CiderPress2\cp2.exe')
 HD1 = ROOT / 'build' / 'disks' / 'HD1.hdv'
@@ -75,7 +75,10 @@ else:
     if long:
         raise SystemExit(f'{name}: {len(long)} lines exceed {WIDTH} columns '
                          f'{long[:5]}')
-    payload = encode_text(text)
+    # A unit's interface lands in its codefile still encoded, so a unit
+    # source carries a .layout beside it saying how Apple's editor stored
+    # its lines (finding 285).
+    payload = encode_text(text, layout=Layout.beside(src))
 
 cp2("delete", str(HD1), name, allow_fail=True)
 

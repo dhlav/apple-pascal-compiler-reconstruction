@@ -1,0 +1,7 @@
+# How Apple's editor stored this unit's lines (finding 285). The
+# interface is copied into the codefile still encoded, so this is content.
+dle
+literal 196          # STUNT: seven typed spaces, no DLE
+expect 196        STUNT = RECORD CASE INTEGER OF
+literal 210          # FREADREAL: two typed spaces, no DLE
+expect 210   PROCEDURE FREADREAL(VAR F: FIB; VAR X: REAL);

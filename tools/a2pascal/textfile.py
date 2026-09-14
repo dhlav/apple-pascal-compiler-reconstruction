@@ -42,7 +42,7 @@ def decode_text(data: bytes, has_header: bool = True) -> str:
 
 
 def encode_text(text: str, header: bytes | None = None,
-                compress: bool = True) -> bytes:
+                compress: bool = True, layout: "Layout | None" = None) -> bytes:
     """Build a .TEXT file: a header page, then packed 1024-byte text pages.
 
     The one rule that is not optional is that **a line may not straddle a
@@ -74,13 +74,17 @@ def encode_text(text: str, header: bytes | None = None,
 
     `header` is the 1024-byte editor environment block. Zeros are fine for a
     file the compiler will read; the editor rewrites it on first save.
+
+    `layout` is for the one case where the bytes do matter: a unit's
+    interface, which the compiler copies into the codefile still encoded
+    (finding 285). See `Layout`.
     """
     if header is None:
         header = bytes(HEADER_BYTES)
     if len(header) != HEADER_BYTES:
         raise ValueError(f"header is {len(header)} bytes, need {HEADER_BYTES}")
 
-    def render(line: str) -> bytes:
+    def render(number: int, line: str) -> bytes:
         body = line.rstrip("\n")
         # TAB is the one control character a source line may carry: it is a
         # legal `.TEXT` byte, `decode_text` passes it through, and INSYMBOL's
@@ -92,6 +96,8 @@ def encode_text(text: str, header: bytes | None = None,
             bad = next(c for c in body if bad_char(c))
             raise ValueError(f"line contains non-printable {ord(bad):#04x}: "
                              f"{body!r}")
+        if layout is not None:
+            return layout.render(number, body)
         if compress:
             ind = len(body) - len(body.lstrip(" "))
             # The indent byte is `ind + 32` and is one byte, so runs past 223
@@ -111,13 +117,19 @@ def encode_text(text: str, header: bytes | None = None,
     # caller knows which convention its input follows; this does not.
     body = text.replace("\r\n", "\n").replace("\r", "\n")
 
+    lines = body.split("\n")
+    if layout is not None:
+        layout.check(lines)
     out = bytearray(header)
     page = bytearray()
-    for line in body.split("\n"):
-        enc = render(line)
+    for number, line in enumerate(lines, 1):
+        enc = render(number, line)
         if len(enc) >= PAGE:
             raise ValueError(f"line of {len(enc)} bytes will not fit in a "
                              f"{PAGE}-byte page: {line[:60]!r}...")
+        if page and layout is not None and number in layout.pages:
+            out += page + bytes(PAGE - len(page))
+            page = bytearray()
         if len(page) + len(enc) >= PAGE:
             out += page + bytes(PAGE - len(page))
             page = bytearray()
@@ -125,3 +137,78 @@ def encode_text(text: str, header: bytes | None = None,
     if page:
         out += page + bytes(PAGE - len(page))
     return bytes(out)
+
+
+class Layout:
+    """How an editor stored a file's lines, where plain text cannot say.
+
+    A unit's interface is copied into its codefile still encoded (finding
+    285), so for a unit the encoding is content. Apple's editor wrote a DLE
+    indent code on nearly every line; a few lines kept typed spaces, which
+    is editing history. A `.layout` file beside the source records it, one
+    directive per line, `#` comments:
+
+        dle              every line gets a DLE indent code, indent 0 and
+                         blank lines included
+        literal N        line N keeps its indentation as typed spaces
+        split N K        line N: a DLE for K spaces, then the rest as typed
+        page N           line N starts a new page
+        expect N TEXT    line N must read TEXT (after one space), so an
+                         edit that moves a line fails instead of misencoding
+
+    Line numbers are 1-based, as an editor shows them.
+    """
+
+    def __init__(self, text: str):
+        self.dle = False
+        self.literal: dict[int, int] = {}      # line -> spaces in its DLE
+        self.pages: set[int] = set()
+        self.expect: dict[int, str] = {}
+        for raw in text.splitlines():
+            if raw.startswith("expect "):
+                n, _, want = raw[len("expect "):].partition(" ")
+                self.expect[int(n)] = want
+                continue
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                continue
+            word, _, rest = line.partition(" ")
+            if word == "dle":
+                self.dle = True
+            elif word == "literal":
+                self.literal[int(rest)] = 0
+            elif word == "split":
+                n, k = rest.split()
+                self.literal[int(n)] = int(k)
+            elif word == "page":
+                self.pages.add(int(rest))
+            else:
+                raise ValueError(f"unknown layout directive: {raw!r}")
+        if not self.dle:
+            raise ValueError("a layout must say `dle`")
+
+    @classmethod
+    def beside(cls, source) -> "Layout | None":
+        """The layout for `source`, if a `.layout` of the same stem exists."""
+        from pathlib import Path
+        path = Path(source).with_suffix(".layout")
+        return cls(path.read_text(encoding="ascii")) if path.exists() else None
+
+    def check(self, lines: list[str]) -> None:
+        for n, want in sorted(self.expect.items()):
+            got = lines[n - 1] if n <= len(lines) else None
+            if got != want:
+                raise ValueError(f"layout expects line {n} to be {want!r}, "
+                                 f"it is {got!r}")
+
+    def render(self, number: int, body: str) -> bytes:
+        ind = len(body) - len(body.lstrip(" "))
+        if number in self.literal:
+            k = self.literal[number]
+            if k > ind:
+                raise ValueError(f"line {number}: a DLE for {k} spaces, but "
+                                 f"it is indented {ind}")
+            head = bytes((DLE, k + 32)) if k else b""
+            return head + body[k:].encode("ascii") + bytes((CR,))
+        return (bytes((DLE, ind + 32)) + body[ind:].encode("ascii")
+                + bytes((CR,)))

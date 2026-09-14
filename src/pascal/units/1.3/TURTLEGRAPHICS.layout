@@ -1,0 +1,9 @@
+# How Apple's editor stored this unit's lines (finding 285). The
+# interface is copied into the codefile still encoded, so this is content.
+dle
+split 46 4           # SCREENCOLOR: a DLE for four, two more typed
+expect 46       SCREENCOLOR=(none,white,black,reverse,radar,
+page 70              # Apple's page ended on the IMPLEMENTATION line
+expect 69   IMPLEMENTATION
+page 44              # INTERFACE starts a page, so the interface is one text window
+expect 44 INTERFACE

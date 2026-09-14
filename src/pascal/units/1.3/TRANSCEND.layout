@@ -1,0 +1,5 @@
+# How Apple's editor stored this unit's lines (finding 285). The
+# interface is copied into the codefile still encoded, so this is content.
+dle
+page 33              # INTERFACE starts a page, so the interface is one text window
+expect 33 INTERFACE
