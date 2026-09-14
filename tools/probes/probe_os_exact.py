@@ -35,7 +35,8 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-14-pascalsystem-getcmd" / "PASCALSY.CODE"
+RUN = (ROOT / "acceptance" / "2026-09-14-pascalsystem-intrinsic"
+       / "PASCALSY.CODE")
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
 # Grows as the reconstruction does; it must never shrink without a finding
@@ -138,7 +139,48 @@ WHOLE_CONTROL = (ROOT / "acceptance" / "2026-09-13-pascalsystem-one"
                  / "PASCALSY.CODE")
 WHOLE_CONTROL_DIFFERS = {"GETCMD": 4438}
 
+# Segment 0 procedure by procedure, byte for byte, wherever Apple's split
+# put each one (finding 282). Instruction identity misses a jump-table
+# slot order; this does not. Its control is the run before 282, whose
+# CANTSTRETCH (.49) had two slots swapped.
+SEG0_CONTROL = (ROOT / "acceptance" / "2026-09-14-pascalsystem-getcmd"
+                / "PASCALSY.CODE")
+SEG0_CONTROL_DIFFERS = [49]
+
+# SEGKIND for the seven real slots, the words the compiler itself writes
+# (finding 282). FIOPRIMS is INTRINSIC, so it is 6 and no USES sets
+# LINKINFO, so no slot is marked HOSTSEG. The same run is the control:
+# before 282 FIOPRIMS was a plain unit, 3, and slot 1 came out 1.
+KINDS_CONTROL = SEG0_CONTROL
+KINDS_CONTROL_DIFFERS = {1: (1, 0), 2: (3, 6)}
+
 fail = []
+
+
+def proc_bytes(seg) -> dict[int, bytes]:
+    """Each procedure's bytes, tiled inside the chunk that holds it.
+
+    A procedure runs from the end of the one below it (or its chunk's
+    start) through its two attribute bytes. A split segment's chunks come
+    from CodeFile's join (finding 50), so Apple's two pieces tile apart.
+    """
+    out = {}
+    for start, length, _ in seg.chunks:
+        inside = sorted((p for p in seg.procedures
+                         if start <= p.jtab < start + length),
+                        key=lambda p: p.jtab)
+        prev = start
+        for p in inside:
+            out[p.number] = seg.data[prev:p.jtab + 2]
+            prev = p.jtab + 2
+    return out
+
+
+def seg0_differs(cf: CodeFile, apple_cf: CodeFile) -> list[int]:
+    ours = proc_bytes(next(s for s in cf.segments if s.name == "PASCALSY"))
+    apple = proc_bytes(next(s for s in apple_cf.segments
+                            if s.name == "PASCALSY"))
+    return sorted(n for n in apple if ours.get(n) != apple[n])
 
 
 def segments(data: bytes) -> dict[str, bytes]:
@@ -210,6 +252,83 @@ def main() -> int:
         check(got == WHOLE_CONTROL_DIFFERS,
               f"the pre-281 run differs in exactly "
               f"{WHOLE_CONTROL_DIFFERS}: {got}")
+
+    print("=== segment 0, every procedure byte for byte (finding 282) ===")
+    shipped = shipped_codefile()
+    apple0 = next(s for s in shipped.segments if s.name == "PASCALSY")
+    check(len(apple0.chunks) == 2, f"Apple's segment 0 joined from two "
+          f"pieces: {[(c[2], c[1]) for c in apple0.chunks]}")
+    check(len(proc_bytes(apple0)) == 58, "all 58 procedures tile a piece")
+    # How the pieces were filled. Both hold their procedures in number
+    # order, whatever order the compile wrote them in, and slot 0's set is
+    # exactly what first-fit in number order gives for some capacity:
+    # every procedure that went in kept the running total under it, every
+    # one that did not would have gone over.
+    pieces = {}
+    for start, length, slot in apple0.chunks:
+        pieces[slot] = [p.number for p in sorted(
+            (p for p in apple0.procedures
+             if start <= p.jtab < start + length), key=lambda p: p.jtab)]
+    check(all(v == sorted(v) for v in pieces.values()),
+          f"each piece in procedure-number order: {pieces}")
+    sizes = {n: len(b) for n, b in proc_bytes(apple0).items()}
+    dict_bytes = 2 + 2 * len(sizes)
+    lo, hi, total = 0, 1 << 16, dict_bytes
+    for n in sorted(sizes):
+        if n in pieces[0]:
+            total += sizes[n]
+            lo = max(lo, total)
+        else:
+            hi = min(hi, total + sizes[n] - 1)
+    slot0_len = next(n for _, n, slot in apple0.chunks if slot == 0)
+    check(lo <= hi and lo == slot0_len,
+          f"slot 0 is first-fit in number order: any capacity {lo}..{hi} "
+          f"bytes gives its set")
+    got = seg0_differs(CodeFile(RUN.read_bytes()), shipped)
+    check(got == [], f"no procedure's bytes differ: {got}")
+    if not SEG0_CONTROL.exists():
+        check(False, f"{SEG0_CONTROL} is missing")
+    else:
+        got = seg0_differs(CodeFile(SEG0_CONTROL.read_bytes()), shipped)
+        check(got == SEG0_CONTROL_DIFFERS,
+              f"the pre-282 run differs in exactly procedures "
+              f"{SEG0_CONTROL_DIFFERS}: {got}")
+
+    print("=== slack after each segment (finding 282) ===")
+    # The tail of a segment's last block. For slots 2-6 Apple's holds the
+    # same bytes as this compile's, so whatever finished the file copied
+    # those blocks whole. Slot 1's does not: its tail holds unit names
+    # and a file title, memory of whatever tool wrote that block.
+    def tails(data: bytes) -> dict[int, bytes]:
+        out = {}
+        for i in range(1, 7):
+            addr = int.from_bytes(data[4 * i:4 * i + 2], "little")
+            length = int.from_bytes(data[4 * i + 2:4 * i + 4], "little")
+            end = addr * 512 + length
+            out[i] = data[end:(addr + (length + 511) // 512) * 512]
+        return out
+    at, ot = tails(shipped.data), tails(RUN.read_bytes())
+    same = [i for i in at if at[i] == ot[i]]
+    check(same == [2, 3, 4, 5, 6],
+          f"slots whose slack is the compiler's own: {same}")
+    check(b"SYSTERM" in at[1] and b"SYSTERM" not in ot[1],
+          "slot 1's slack is another tool's memory (unit names)")
+
+    print("=== SEGKIND, slots 0-6 (finding 282) ===")
+    def kinds(data: bytes) -> list[int]:
+        return [int.from_bytes(data[0xC0 + 2 * i:0xC2 + 2 * i], "little")
+                for i in range(7)]
+    want = kinds(shipped.data)
+    check(kinds(RUN.read_bytes()) == want,
+          f"the compile's SEGKINDs are Apple's: {want}")
+    if not KINDS_CONTROL.exists():
+        check(False, f"{KINDS_CONTROL} is missing")
+    else:
+        ctl = kinds(KINDS_CONTROL.read_bytes())
+        got = {i: (ctl[i], want[i]) for i in range(7) if ctl[i] != want[i]}
+        check(got == KINDS_CONTROL_DIFFERS,
+              f"the pre-282 run differs in exactly {KINDS_CONTROL_DIFFERS} "
+              f"(ours, Apple's): {got}")
 
     print()
     if fail:

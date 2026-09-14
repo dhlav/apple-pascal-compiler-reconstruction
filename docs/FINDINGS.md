@@ -23388,3 +23388,103 @@ together, between the library pass and the compile command, and that
 
 What is left before the whole file is 280c's other two items: segment 0's
 two-slot split and the dictionary.
+
+## 282. Segment 0's procedures, the dictionary kinds, and what no compile writes
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-pascalsystem-intrinsic`
+is one compile by Apple's 1.3 compiler. In it:
+
+* all 111 procedures are exact, as before;
+* six segments are whole, as in 281;
+* all 58 of segment 0's procedures are byte-identical to the procedures in
+  Apple's two pieces (slots 0 and 15);
+* the `SEGKIND` words of slots 0-6 are Apple's: `0 0 6 0 0 0 0`;
+* the slack after slots 2-6 is byte-identical to Apple's.
+
+`probe_os_exact.py` checks each of these. Each new check has a pre-282
+run as its control, and the control must fail it in exactly the known
+way.
+
+### 282a. `CANTSTRETCH` takes `GOTO 1`, not `ELSE`
+
+**VERIFIED BINARY FACT.** Procedure 49 was instruction-identical but two
+bytes off: two jump-table slots, `F2` and `F4`, in swapped order. Both
+slots hold the same target, label `1:`. They are two labels resolving
+at one address: the exit of `IF LENGTH(DVID) > 0` and the jump taken
+after `ILOSTUNIT`.
+
+**VERIFIED SOURCE FACT.** `GENJMP` gives a label its slot when the jump
+is too long for a byte and the label is placed (`BODYPART.text` 321-379).
+An `ELSE` skip is placed when its `IF` ends, which is before the outer
+`IF`'s exit. A `GOTO 1` is placed at `1:`, after it. Apple's slots are
+in the second order.
+
+UCSD II.0's `CANTSTRETCH` (`SYSTEM.C.TEXT` 31-67) writes both failures
+as `BEGIN SYSCOM^.IORSLT := ...; GOTO 1 END`. The source now does too.
+The `ILOSTFILE` jump is short, so its form is not visible in the bytes;
+it follows UCSD.
+
+### 282b. Apple's split is number order, first fit
+
+**VERIFIED BINARY FACT.** Each of Apple's two pieces holds its procedures
+in procedure-number order, although the compile writes them in completion
+order (8, 51, 52, 2, ... 1). Slot 0 holds 1-12, 14-16 and 19. Walking
+procedures 1 to 58 and adding each one to slot 0 while the running total
+plus the 118-byte dictionary fits gives exactly that set, for any capacity
+from 1438 to 1457 bytes. Slot 0 is 1438. The probe computes that interval
+and fails if it is empty. Dropping procedure 14 from the set empties it.
+
+**SPECULATION.** A capacity near 1440 suggests a fixed memory budget in
+the 128K map. This is not measured.
+
+### 282c. `FIOPRIMS` is `INTRINSIC CODE 2`
+
+**VERIFIED BINARY FACT.** Finding 232 wrote `FIOPRIMS` as a plain `UNIT`
+because `INTRINSIC CODE 2` leaves `NEXTSEG` alone and `PRINTERROR` would
+claim 2 too. `(*$NS 3*)` after the unit raises `NEXTSEG` to 3
+(`COMPOPTI.text`: it only ever raises it). With both, the compile gives:
+
+* `SEGKIND` 6 for `FIOPRIMS` (`UNITPART` line 107), where it gave 3;
+* slot 1 unmarked. A `USES` of a non-intrinsic unit sets `LINKINFO`, and
+  `FINISHUP` then marks a segment `HOSTSEG`. For an intrinsic unit,
+  `GETTEXT` sets `LSEPPROC`, and `USEUNIT` never sets `LINKINFO`;
+* no linker info blocks. The file is 46 blocks, not 48.
+
+No procedure changed.
+
+### 282d. What no compile of this source writes
+
+**VERIFIED SOURCE FACT / VERIFIED BINARY FACT.** Four things in Apple's
+file are outside anything the compiler writes:
+
+* **Word 0x120 is 4** (`SEGSUSED`, segment 2). `FINISHUP` writes
+  `SEGSUSED` only `IF ISPROG`. `BLOCK` is entered once for the program
+  and once per unit, and sets `ISPROG := NOT INMODULE` on entry. A unit
+  declared inside the program runs the last `BLOCK` entry with
+  `INMODULE` set, so `ISPROG` is false at `FINISHUP` and the words are 0.
+  That matches both kept compiles. Of the 17 codefiles on the three
+  disks, `128K.PASCAL` is the only one with a nonzero word there.
+* **A notice at 0x1B0 with a length byte.** "COPYRIGHT 1979,1980,
+  1983-1985 APPLE COMPUTER, INC. ALL RIGHTS RESERVED" is 70 characters,
+  and 0x1B0 holds 70. The compiler's `(*$C*)` text goes to the same
+  offset without a length byte (`FINISHUP`: `MOVELEFT(COMMENT^[1], ...)`).
+  The Librarian writes it as `STRING[79]`. The Librarian also zero-fills
+  block 0 (`LIBRARY.text` 633) and never writes 0x120, so it did not
+  write this block 0 either.
+* **`TEXTADDR` 0 for `FIOPRIMS`.** The compiler writes `CURBLK` there.
+* **The split itself**: slot 15, the crossing pointers (finding 50's
+  `S`), and the block order `0, 15, 1, 2, ... 6`.
+
+**VERIFIED BINARY FACT.** Some slack is not the compiler's either:
+
+* slot 0's 98 bytes are exactly `INITIALI`'s segment bytes 2866-2963;
+* slot 1's 456 bytes hold unit names (`SYSTERM`, `GRAPHIC`, `PRINTER`,
+  `REMIN`, `REMOUT`) and the title `NEWC/C.CODE`;
+* slot 15's 40 bytes are neither.
+
+**STRONG INFERENCE.** A tool after the compiler split segment 0, wrote
+slots 0, 15 and 1 from its own memory, and copied slots 2-6 whole. It
+also wrote a block 0 carrying `SEGSUSED` 4 and a Librarian-style notice.
+That tool is not on the disks. Its slack, 98 + 40 + 456 = 594 bytes, is
+memory, and 10 bytes of slot 1's tail happen to agree with the compile's.
+Those bytes are not closable. Neither is the 0x120 word from a compile.
