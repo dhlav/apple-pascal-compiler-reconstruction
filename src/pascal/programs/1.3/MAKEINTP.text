@@ -1,0 +1,48 @@
+{ MAKEINTP -- builds 128K.APPLE, the 128K p-machine interpreter, out of
+  three SYSTEM.ASSMBLER codefiles (finding 279).
+
+  The Disk II boot loads the file's blocks 0-23 into language-card bank 2
+  at D000-FFFF and blocks 24-31 into bank 1 at D000-DFFF. The three
+  pieces are .ABSOLUTE assemblies, and this copies their disk blocks:
+
+    blocks  0-22  INTERP.CODE blocks 1-23, D000-FDFF: the code and its
+                  assembler trailer, which ends exactly on block 23
+    block  23     TOP.CODE block 1, FE00-FFFF: trampolines and vectors;
+                  its trailer is in block 2 and is not copied
+    blocks 24-31  BANK1.CODE blocks 1-8, bank 1 D000-DFFF; its trailer is
+                  in block 9 and is not copied
+
+  Apple's builder is not on the 1.3 disks; this is this reconstruction's,
+  written to the layout the file and the boot show. Everything lives on
+  WORKHD, the second work volume. }
+
+(*$I-*)
+PROGRAM MAKEINTP;
+
+VAR
+  SRC, DST: FILE;
+  BUF: PACKED ARRAY [0..11775] OF 0..255;
+
+PROCEDURE FAIL(S: STRING);
+BEGIN
+  WRITELN('MAKEINTP: ', S);
+  EXIT(MAKEINTP)
+END;
+
+PROCEDURE COPY(NAME: STRING; FIRST, COUNT, AT: INTEGER);
+BEGIN
+  RESET(SRC, NAME);
+  IF IORESULT <> 0 THEN FAIL(CONCAT('no ', NAME));
+  IF BLOCKREAD(SRC, BUF, COUNT, FIRST) <> COUNT THEN FAIL(NAME);
+  CLOSE(SRC);
+  IF BLOCKWRITE(DST, BUF, COUNT, AT) <> COUNT THEN FAIL('writing')
+END;
+
+BEGIN
+  REWRITE(DST, 'WORKHD:INTERP.DATA');
+  COPY('WORKHD:INTERP.CODE', 1, 23, 0);
+  COPY('WORKHD:TOP.CODE', 1, 1, 23);
+  COPY('WORKHD:BANK1.CODE', 1, 8, 24);
+  CLOSE(DST, LOCK);
+  WRITELN('MAKEINTP: INTERP.DATA written')
+END.

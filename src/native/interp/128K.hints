@@ -1,0 +1,31 @@
+; 128K.APPLE, the 128K p-machine interpreter, as three .ABSOLUTE assemblies
+; (finding 279). The Disk II boot loads blocks 0-23 into language-card
+; bank 2 at D000-FFFF and blocks 24-31 into bank 1 at D000-DFFF.
+; E000-FFFF is common to both banks; D000-DFFF is either.
+image   APPLE3 128K.APPLE
+
+piece   INTERP
+region  0000 2DF0 D000        ; blocks 0-22 less the assembler's trailer
+words   BANK1 D000 141 E000 FDFF
+calls   TOP   E000 FDFF
+calls   TOP   D000 DFFF FF40 FFFF  ; the JMP table the trampolines enter, bank 2
+calls   BANK1 E000 FDFF
+foreign E000 FFFF D000 DFFF   ; common code reaching D000-DFFF means bank 1
+out     src/native/interp/INTERP.TEXT
+
+piece   TOP
+region  2E00 0200 FE00        ; block 23: FE00-FFFF, the vectors
+entry   FEEC FEE6 FE02    ; RESET/NMI/IRQ vectors, and the handler FE00 points to
+entry   FE80 FE83 FE86 FE89 FE8C FE8F FE92 FE95 FE98 FE9B FE9E FEA1 FEA4 FEA7 FEAA FEAD   ; 16 JMP slots patched at run time
+entry   FF00 FF03 FF06 FF09 FF0C FF0F FF12 FF15 FF18 FF1B FF1E FF21 FF24 FF27 FF2A FF2D FF30 FF33 FF36 FF39 FF3C   ; 21 JSR FF9B trampolines
+entry   FF59 FF5C FF5F FF62 FF65 FF68 FF6B FF6E FF71 FF74 FF77 FF7A FF7D FF80 FF83 FF86 FF89 FF8C FF8F FF92 FF95 FF98
+calls   INTERP FE00 FFFF
+calls   BANK1  FE00 FFFF
+out     src/native/interp/TOP.TEXT
+
+piece   BANK1
+region  3000 1000 D000        ; blocks 24-31, bank 1
+words   BANK1 D000 141 D000 DFFF   ; the dispatch table
+calls   INTERP D000 DFFF E000 FDFF
+calls   TOP    D000 DFFF FEE0 FEFF  ; LDA C08B, then JMP: bank 1
+out     src/native/interp/BANK1.TEXT

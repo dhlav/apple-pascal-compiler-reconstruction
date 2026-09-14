@@ -1,0 +1,177 @@
+        .ABSOLUTE
+        .PROC   TOP
+        .ORG    0FE00
+LFE00   .BYTE 00,00
+        STA  LFE7A
+        PLA
+        PHA
+        AND  #10
+        BNE  LFE47
+        LDA  LFE7A
+        PHA
+        TXA
+        PHA
+        TYA
+        PHA
+        LDA  0C013
+        PHA
+        STA  0C002
+        LDA  0C014
+        PHA
+        STA  0C004
+        LDA  0C011
+        PHA
+        LDA  0C08B
+        LDA  LFE79
+        PHA
+        LDA  LFE78
+        PHA
+        LDA  0C01C
+        STA  0C054
+        ASL  A
+        LDA  0C015
+        PHP
+        LDA  07F8
+        STA  LFE7B
+        STA  0C006
+        JMP  @LFE00
+LFE47   JMP  @LFFFC
+        .BYTE 90,03,8D,55,0C0,10,03,8D
+        .BYTE 07,0C0,68,10,03,0AD,83,0C0
+        .BYTE 68,10,03,8D,05,0C0,68,10
+        .BYTE 03,8D,03,0C0,0AD,7B,0FE,8D
+        .BYTE 71,0FE,0AD,0FF,0CF,0AD,0FF,0C0
+        .BYTE 68,0A8,68,0AA,68,40
+LFE78   .BYTE 4A
+LFE79   .BYTE 0FE
+LFE7A   .BYTE 00
+LFE7B   .BYTE 00,00,00,00,00
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+        JMP  0000
+LFEAD   JMP  0000
+        .BYTE 0FF,0FF,0FF,0FF,0FF,0FF,00,00
+        .BYTE 01,00,0FF,0FF,0FF,0FF,0FF,0FF
+        .BYTE 04,00,05,00,02,00,03,00
+        .BYTE 0FF,0FF,0FF,0FF,0FF,0FF,0FF,0FF
+        .BYTE 0FF,0FF,0FF,0FF,0FF,0FF,0FF,0FF
+LFED8   STA  0D2
+        ASL  A
+        ASL  A
+        SBC  0D2
+        TAY
+        LDA  #0FE
+        PHA
+        TYA
+        JMP  LFF48
+        LDA  0C08B
+        JMP  @0BF2F
+        LDA  0C08B
+        JMP  0D152
+        LDA  0C08B
+        JMP  @0BF16
+        .BYTE 00,00,00,00,00,00,00,00
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+        JSR  LFF9B
+LFF3F   STA  0D2
+        LDA  LFEAD+2,Y
+        PHA
+        LDA  LFEAD+1,Y
+LFF48   PHA
+        LDA  0D2
+        RTS
+        .BYTE 00,00,00,00,00,00,71,0DE
+        .BYTE 0C8,0DA,4D,0DD
+LFF58   RTS
+        JMP  0D899
+        JMP  0DB3B
+        JMP  0DA9F
+        JMP  0D9F8
+        JMP  0DAD1
+        JMP  0DA27
+        JMP  0D000
+        JMP  0D003
+        JMP  0DA84
+        JMP  0DB8A
+        JMP  0DB01
+        JMP  0DA43
+        JMP  LFF58
+        JMP  0DA3F
+        JMP  LFF58
+        JMP  0DBCA
+        JMP  0DBFB
+        JMP  0DC68
+        JMP  0DC15
+        JMP  0D899
+        JMP  LFED8
+        JMP  LFF3F
+LFF9B   STA  0D2
+        PLA
+        CLC
+        ADC  #5A
+        STA  0D3
+        PLA
+        ADC  #00
+        STA  0D4
+        PLA
+        STA  0BF1A
+        PLA
+        STA  0BF1B
+        LDA  0C083
+        LDA  0D2
+        JSR  LFFC8
+        STA  0D2
+        LDA  0BF1B
+        PHA
+        LDA  0BF1A
+        PHA
+        LDA  0C08B
+        LDA  0D2
+        RTS
+LFFC8   JMP  @00D3
+        LDA  0FB
+        CMP  #14
+        BCS  LFFD5
+        LDA  #28
+        BNE  LFFD7
+LFFD5   LDA  #00
+LFFD7   SEC
+        SBC  0FB
+        JMP  0DF2F
+        .BYTE 00,00,00,00,00,30,0DA,0B
+        .BYTE 0C,0F,5D,5E,40,1D,1E,00
+        .BYTE 5B,0A,0B,4D,4E,50,5D,5E
+        .BYTE 40,04,00,0EC,0FE,0E6,0FE
+LFFFC   .BYTE 0E6,0FE,0E6,0FE
+        .END

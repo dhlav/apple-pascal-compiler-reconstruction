@@ -1,0 +1,2123 @@
+        .ABSOLUTE
+        .PROC   BANK1
+        .ORG    0D000
+LD000   .WORD 0D762
+        .WORD 0F2D3
+        .WORD 0D780
+        .WORD 0F0E3
+        .WORD 0D603
+        .WORD 0DCD8
+        .WORD 0D8E4
+        .WORD 0F17B
+        .WORD 0D929
+        .WORD 0F360
+        .WORD 0F383
+        .WORD 0DDDC
+        .WORD 0DCA1
+        .WORD 0D61C
+        .WORD 0D911
+        .WORD LD7ED
+        .WORD 0F276
+        .WORD 0D79A
+        .WORD 0F2E1
+        .WORD 0D635
+        .WORD 0DE53
+        .WORD 0D7AC
+        .WORD 0F12A
+        .WORD 0DE41
+        .WORD 0D834
+        .WORD 0F29E
+        .WORD 0D4FB
+        .WORD 0DABD
+        .WORD 0DCFA
+        .WORD 0D46F
+        .WORD 0EC92
+        .WORD 0D309
+        .WORD 0DD66
+        .WORD 0D2C7
+        .WORD 0DAFC
+        .WORD 0DAE0
+        .WORD 0DB0F
+        .WORD 0D3AA
+        .WORD 0D9CE
+        .WORD 0D4C5
+        .WORD 0D5EF
+        .WORD 0D38E
+        .WORD 0DA76
+        .WORD 0D3C7
+        .WORD 0D642
+        .WORD 0E554
+        .WORD 0E432
+        .WORD 0DF6F
+        .WORD 0DF67
+        .WORD 0DF5F
+        .WORD 0D40F
+        .WORD 0D515
+        .WORD 0DF6B
+        .WORD 0DF63
+        .WORD 0D3E3
+        .WORD 0DF5B
+        .WORD 0D443
+        .WORD 0D2D1
+        .WORD 0DB9D
+        .WORD 0DBF3
+        .WORD 0D552
+        .WORD 0D587
+        .WORD 0D5BB
+        .WORD 0D5D5
+        .WORD 0DB4E
+        .WORD 0E53F
+        .WORD 0E508
+        .WORD 0E0F2
+        .WORD 0E0C4
+        .WORD 0E0BC
+        .WORD 0D348
+        .WORD 0D310
+        .WORD 0E0C0
+        .WORD 0E0B8
+        .WORD 0D32C
+        .WORD 0E0C8
+        .WORD 0D365
+        .WORD 0E4D1
+        .WORD 0E492
+        .WORD 0E4B4
+        .WORD 0D9A8
+        .WORD 0D49A
+        .WORD LD2AE
+        .WORD 0D225
+        .WORD 0D225
+        .WORD 0EE46
+        .WORD 0D747
+        .WORD LD2AE
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D31F
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D381
+        .WORD 0D4EA
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0D4E7
+        .WORD 0F525
+        .WORD 0D6D6
+        .WORD 0EEBB
+        .WORD 0EEBB
+        .WORD 0ED75
+        .WORD 0F68D
+        .WORD 0F692
+        .WORD 0D225
+        .WORD 0D225
+        .WORD 0EE5C
+        .WORD 0ECA3
+        .WORD 0ECE8
+        .WORD 0F548
+        .BYTE 00,00,00,00,00,00,00,00
+        .BYTE 00,00,00,00,00,00,00,00
+        .BYTE 7E,0EC,88,0EC,0F1,0F3,0DC,0F3
+        .BYTE 25,0D2,25,0D2,25,0D2,25,0D2
+        .BYTE 25,0D2,25,0D2,25,0D2,12,0D7
+        .BYTE 29,0D7,1A,0F5,30,0F5,06,0F4
+        .BYTE 3E,0F5,0C3,0F5,4E,0EE,25,0EF
+        JMP  0F8C8
+LD155   STA  0C003
+        LDA  @58,Y
+        BPL  LD16F
+        STA  69
+        INC  58
+        BNE  LD164
+        INC  59
+LD164   LDA  @58,Y
+        ASL  A
+        STA  68
+        ROL  69
+        STA  0C002
+        RTS
+LD16F   ASL  A
+        STA  68
+        LDA  #00
+        STA  69
+        STA  0C002
+        RTS
+LD17A   STA  0C003
+        LDA  @58,Y
+        BPL  LD193
+        TAX
+        INC  58
+        BNE  LD188
+        INC  59
+LD188   LDA  @58,Y
+        ASL  A
+        TAY
+        TXA
+        ROL  A
+        TAX
+        STA  0C002
+        RTS
+LD193   ASL  A
+        TAY
+        LDX  #00
+        STA  0C002
+        RTS
+LD19B   LDA  52
+        STA  6C
+        LDA  53
+        STA  6D
+        CPX  #00
+        BEQ  LD1B9
+LD1A7   LDY  #00
+        LDA  @6C,Y
+        STA  7E
+        INY
+        LDA  @6C,Y
+        STA  6D
+        LDA  7E
+        STA  6C
+        DEX
+        BNE  LD1A7
+LD1B9   RTS
+LD1BA   LDA  0BD26
+        BNE  LD1C5
+        LDX  0BD27
+        BNE  LD1C5
+        RTS
+LD1C5   STA  5A
+        LDA  0BD27
+        STA  5B
+        LDA  #00
+        STA  0BD26
+        LDA  #00
+        STA  0BD27
+        RTS
+        .BYTE 0D9,0D1,31,0D2,00,0FF,1E,0BD
+        .BYTE 7E,00
+LD1E1   LDA  #01
+        BPL  LD231
+        LDA  #02
+        BPL  LD231
+        LDA  #03
+        BPL  LD231
+LD1ED   LDA  #00
+        STA  0BD26
+        STA  0BD27
+        STA  5A
+        STA  5C
+        LDA  #80
+        STA  5D
+        LDA  #62
+        STA  5B
+        LDA  #04
+        BPL  LD231
+        LDA  #05
+        BPL  LD231
+LD209   LDA  #06
+        BPL  LD231
+        LDA  #08
+        BPL  LD231
+        LDA  #09
+        BPL  LD231
+        LDA  #0A
+        BPL  LD231
+        LDA  #80
+        STA  61
+        LDA  #62
+        STA  63
+        LDA  #10
+        BPL  LD231
+        LDA  #0B
+        BPL  LD231
+        LDA  #0C
+        BPL  LD231
+LD22D   LDA  #0D
+        BPL  LD231
+LD231   STA  0BD20
+        LDA  #00
+        STA  0BD21
+        STA  0C003
+        SEC
+        LDA  54
+        SBC  #02
+        STA  9A
+        LDA  55
+        SBC  #00
+        STA  9B
+        JSR  0E5E8
+        SEC
+        LDA  58
+        SBC  86
+        STA  0BD34
+        LDA  59
+        SBC  87
+        STA  0BD35
+        LDY  #00
+        LDA  @54,Y
+        STA  0BD2E
+        LDA  @56,Y
+        STA  0BD30
+        STY  0BD2F
+        STY  0BD31
+        STA  0C002
+        LDA  #00
+        STA  90
+        LDA  #02
+        STA  82
+        JMP  0E4F4
+LD27B   LDA  58
+        CLC
+        ADC  #03
+        STA  58
+        BCC  LD2B4
+        INC  59
+        BCS  LD2B4
+LD288   LDA  58
+        CLC
+        ADC  #02
+        STA  58
+        BCC  LD2B4
+        INC  59
+        BCS  LD2B4
+LD295   TAX
+        TYA
+        PHA
+        TXA
+        PHA
+        INC  58
+        BNE  LD2A0
+        INC  59
+LD2A0   LDA  @58,Y
+        BPL  LD295
+        ASL  A
+        STA  LD2AB+1
+        STA  0C002
+LD2AB   JMP  @LD000
+LD2AE   INC  58
+        BNE  LD2B4
+        INC  59
+LD2B4   STA  0C003
+        LDY  #00
+        LDA  @58,Y
+        BPL  LD295
+        ASL  A
+        STA  LD2C4+1
+        STA  0C002
+LD2C4   JMP  @LD000
+        PLA
+        AND  #01
+        BEQ  LD2D0
+        PLA
+        JMP  LD288
+LD2D0   PLA
+        CLC
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        BMI  LD2E9
+        ADC  58
+        STA  58
+        BCC  LD288
+        INC  59
+        JMP  LD288
+LD2E9   ADC  54
+        STA  7E
+        LDA  #0FF
+        ADC  55
+        STA  7F
+        LDA  7E
+        SEC
+        LDY  #00
+        STA  0C003
+        SBC  @7E,Y
+        STA  58
+        LDA  7F
+        INY
+        SBC  @7E,Y
+        STA  59
+        JMP  LD2B4
+        LDA  #00
+        PHA
+        PHA
+        JMP  LD2AE
+        LDY  #02
+        STA  0C003
+        LDA  @58,Y
+        PHA
+        DEY
+        LDA  @58,Y
+        PHA
+        JMP  LD27B
+        SBC  #0A3
+        TAY
+        LDA  @52,Y
+        PHA
+        DEY
+        LDA  @52,Y
+        PHA
+        JMP  LD2AE
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  52
+        STA  6E
+        TXA
+        ADC  53
+        STA  6F
+        LDY  #0B
+        LDA  @6E,Y
+        PHA
+        DEY
+        LDA  @6E,Y
+        PHA
+        JMP  LD288
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  52
+        TAY
+        TXA
+        ADC  53
+        TAX
+        CLC
+        TYA
+        ADC  #0A
+        TAY
+        BCC  LD35E
+        INX
+LD35E   TXA
+        PHA
+        TYA
+        PHA
+        JMP  LD288
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  52
+        STA  6E
+        TXA
+        ADC  53
+        STA  6F
+        LDY  #0A
+        PLA
+        STA  @6E,Y
+        INY
+        PLA
+        STA  @6E,Y
+        JMP  LD288
+        SBC  #0C3
+        TAY
+        LDA  @50,Y
+        PHA
+        DEY
+        LDA  @50,Y
+        PHA
+        JMP  LD2AE
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  50
+        STA  6E
+        TXA
+        ADC  51
+        STA  6F
+        LDY  #0B
+        LDA  @6E,Y
+        PHA
+        DEY
+        LDA  @6E,Y
+        PHA
+        JMP  LD288
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  50
+        TAY
+        TXA
+        ADC  51
+        TAX
+        CLC
+        TYA
+        ADC  #0A
+        TAY
+        BCC  LD3C0
+        INX
+LD3C0   TXA
+        PHA
+        TYA
+        PHA
+        JMP  LD288
+        LDY  #01
+        JSR  LD17A
+        CLC
+        TYA
+        ADC  50
+        STA  6E
+        TXA
+        ADC  51
+        STA  6F
+        LDY  #0A
+        PLA
+        STA  @6E,Y
+        INY
+        PLA
+        STA  @6E,Y
+        JMP  LD288
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        TAX
+        JSR  LD19B
+        LDY  #02
+        JSR  LD155
+        LDA  68
+        CLC
+        ADC  6C
+        STA  6E
+        LDA  69
+        ADC  6D
+        STA  6F
+        LDY  #0B
+        LDA  @6E,Y
+        PHA
+        DEY
+        LDA  @6E,Y
+        PHA
+        JMP  LD27B
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        TAX
+        JSR  LD19B
+        LDY  #02
+        JSR  LD155
+        LDA  68
+        CLC
+        ADC  6C
+        STA  6E
+        LDA  69
+        ADC  6D
+        STA  6F
+        LDA  6E
+        CLC
+        ADC  #0A
+        STA  6E
+        BCC  LD43A
+        INC  6F
+LD43A   LDA  6F
+        PHA
+        LDA  6E
+        PHA
+        JMP  LD27B
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        TAX
+        JSR  LD19B
+        LDY  #02
+        JSR  LD155
+        LDA  68
+        CLC
+        ADC  6C
+        STA  6E
+        LDA  69
+        ADC  6D
+        STA  6F
+        LDY  #0A
+        PLA
+        STA  @6E,Y
+        INY
+        PLA
+        STA  @6E,Y
+        JMP  LD27B
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        ASL  A
+        TAX
+        INY
+        JSR  LD155
+        LDA  0BC9E,X
+        CLC
+        ADC  68
+        STA  7E
+        LDA  0BC9F,X
+        ADC  69
+        STA  7F
+        LDY  #01
+        LDA  @7E,Y
+        PHA
+        DEY
+        LDA  @7E,Y
+        PHA
+        JMP  LD27B
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        ASL  A
+        TAX
+        INY
+        JSR  LD155
+        LDA  0BC9E,X
+        CLC
+        ADC  68
+        STA  7E
+        LDA  0BC9F,X
+        ADC  69
+        STA  7F
+        LDY  #00
+        PLA
+        STA  @7E,Y
+        INY
+        PLA
+        STA  @7E,Y
+        JMP  LD27B
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        ASL  A
+        TAX
+        INY
+        JSR  LD155
+        LDA  0BC9E,X
+        CLC
+        ADC  68
+        TAY
+        LDA  0BC9F,X
+        ADC  69
+        PHA
+        TYA
+        PHA
+        JMP  LD27B
+        SBC  #0F0
+        TAY
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        INY
+        LDA  @7E,Y
+        PHA
+        DEY
+        LDA  @7E,Y
+        PHA
+        JMP  LD2AE
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        PLA
+        STA  80
+        PLA
+        STA  81
+        LDY  #00
+        LDA  7E
+        STA  @80,Y
+        INY
+        LDA  7F
+        STA  @80,Y
+        JMP  LD2AE
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        TAX
+        TAY
+        INY
+        TYA
+        ASL  A
+        STA  7E
+        LDA  58
+        AND  #01
+        BEQ  LD532
+        INC  58
+        BNE  LD532
+        INC  59
+LD532   LDY  #03
+        STA  0C003
+LD537   LDA  @58,Y
+        PHA
+        DEY
+        LDA  @58,Y
+        PHA
+        INY
+        INY
+        INY
+        DEX
+        BNE  LD537
+        LDA  58
+        CLC
+        ADC  7E
+        STA  58
+        BCC  LD54F
+        INC  59
+LD54F   JMP  LD2B4
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        STA  7E
+        ASL  A
+        TAY
+        STA  80
+        TSX
+        TXA
+        SEC
+        SBC  80
+        BCC  LD584
+        SBC  #08
+        BCC  LD584
+        LDX  7E
+        DEY
+        PLA
+        STA  72
+        PLA
+        STA  73
+LD576   LDA  @72,Y
+        PHA
+        DEY
+        LDA  @72,Y
+        PHA
+        DEY
+        DEX
+        BNE  LD576
+        JMP  LD288
+LD584   JMP  LD1ED
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        STA  7E
+        TSX
+        TXA
+        CLC
+        ADC  7E
+        ADC  7E
+        TAX
+        LDA  0101,X
+        STA  74
+        LDA  0102,X
+        STA  75
+        DEY
+        LDX  7E
+        JMP  LD5B4
+LD5AB   PLA
+        STA  @74,Y
+        INY
+        PLA
+        STA  @74,Y
+        INY
+        DEX
+LD5B4   BNE  LD5AB
+        PLA
+        PLA
+        JMP  LD288
+        TSX
+        CLC
+        PLA
+        ADC  0103,X
+        STA  7E
+        PLA
+        ADC  0104,X
+        STA  7F
+        TYA
+        STA  0104,X
+        LDA  @7E,Y
+        STA  0103,X
+        JMP  LD2AE
+        PLA
+        TAX
+        PLA
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        CLC
+        PLA
+        ADC  7E
+        STA  7E
+        PLA
+        ADC  7F
+        STA  7F
+        TXA
+        STA  @7E,Y
+        JMP  LD2AE
+        PLA
+        STA  72
+        PLA
+        STA  73
+        PLA
+        STA  74
+        PLA
+        STA  75
+        LDY  #01
+        JSR  LD155
+        JMP  0EEF3
+        TSX
+        LDA  0103,X
+        AND  0101,X
+        STA  0103,X
+        LDA  0104,X
+        AND  0102,X
+        STA  0104,X
+        INX
+        INX
+        TXS
+        JMP  LD2AE
+        TSX
+        LDA  0103,X
+        ORA  0101,X
+        STA  0103,X
+        LDA  0104,X
+        ORA  0102,X
+        STA  0104,X
+        INX
+        INX
+        TXS
+        JMP  LD2AE
+        PLA
+        TAX
+        PLA
+        EOR  #0FF
+        PHA
+        TXA
+        EOR  #0FF
+        PHA
+        JMP  LD2AE
+        STA  0C003
+        LDA  #01
+        ORA  58
+        STA  58
+        PLA
+        STA  96
+        PLA
+        STA  97
+        LDY  #02
+        EOR  @58,Y
+        BMI  LD668
+        LDA  @58,Y
+        CMP  97
+        BCC  LD66C
+        BNE  LD6C8
+        DEY
+        LDA  96
+        CMP  @58,Y
+        BCS  LD66C
+        BCC  LD6C8
+LD668   LDA  97
+        BMI  LD6C8
+LD66C   LDY  #04
+        LDA  @58,Y
+        EOR  97
+        BMI  LD685
+        LDA  97
+        CMP  @58,Y
+        BCC  LD689
+        BNE  LD6C8
+        DEY
+        LDA  @58,Y
+        CMP  96
+        BCS  LD689
+        BCC  LD6C8
+LD685   LDA  97
+        BPL  LD6C8
+LD689   SEC
+        LDY  #01
+        LDA  96
+        SBC  @58,Y
+        STA  96
+        LDA  97
+        INY
+        SBC  @58,Y
+        STA  97
+        ASL  96
+        ROL  97
+        LDA  58
+        CLC
+        ADC  96
+        STA  96
+        LDA  59
+        ADC  97
+        STA  97
+        LDA  96
+        CLC
+        ADC  #07
+        STA  96
+        BCC  LD6B5
+        INC  97
+LD6B5   LDY  #00
+        SEC
+        LDA  96
+        SBC  @96,Y
+        STA  58
+        LDA  97
+        INY
+        SBC  @96,Y
+        STA  59
+        JMP  LD2B4
+LD6C8   LDA  58
+        CLC
+        ADC  #05
+        STA  58
+        BCC  LD6D3
+        INC  59
+LD6D3   JMP  LD2B4
+        JSR  LD1BA
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        PLA
+        STA  80
+        PLA
+        STA  81
+        ASL  7E
+        ROL  7F
+        LDY  #00
+        LDA  5A
+        STA  @80,Y
+        INY
+        LDA  5B
+        STA  @80,Y
+        LDA  5A
+        CLC
+        ADC  7E
+        STA  5A
+        LDA  5B
+        ADC  7F
+        STA  5B
+        SEC
+        LDA  5C
+        SBC  5A
+        LDA  5D
+        SBC  5B
+        BCS  LD70F
+        JMP  LD1ED
+LD70F   JMP  LD288
+        .BYTE 20,0BA,0D1,68,85,7E,68,85
+        .BYTE 7F,0A0,00,0A5,5A,91,7E,0C8
+        .BYTE 0A5,5B,91,7E,4C,88,0D2,68
+        .BYTE 85,7E,68,85,7F,0A0,00,0B1
+        .BYTE 7E,85,5A,0C8,0B1,7E,85,5B
+        .BYTE 0A9,00,8D,26,0BD,0A9,00,8D
+        .BYTE 27,0BD,4C,88,0D2
+        LDA  #0AD
+        STA  00
+        LDA  #8A
+        STA  01
+        LDA  #0C0
+        STA  02
+        LDA  #6C
+        STA  03
+        LDA  #0FC
+        STA  04
+        LDA  #0FF
+        STA  05
+        JMP  0000
+        PLA
+        TAX
+        PLA
+        BMI  LD76D
+        PHA
+        TXA
+        PHA
+        JMP  LD2AE
+LD76D   TAY
+        CLC
+        TXA
+        EOR  #0FF
+        ADC  #01
+        TAX
+        TYA
+        EOR  #0FF
+        ADC  #00
+        PHA
+        TXA
+        PHA
+        JMP  LD2AE
+        TSX
+        CLC
+        LDA  0103,X
+        ADC  0101,X
+        STA  0103,X
+        LDA  0104,X
+        ADC  0102,X
+        STA  0104,X
+        INX
+        INX
+        TXS
+        JMP  LD2AE
+        PLA
+        EOR  #0FF
+        CLC
+        ADC  #01
+        TAX
+        PLA
+        EOR  #0FF
+        ADC  #00
+        PHA
+        TXA
+        PHA
+        JMP  LD2AE
+        TSX
+        SEC
+        LDA  0103,X
+        SBC  0101,X
+        STA  0103,X
+        LDA  0104,X
+        SBC  0102,X
+        STA  0104,X
+        INX
+        INX
+        TXS
+        JMP  LD2AE
+LD7C6   LDA  #00
+        STA  6F
+        STA  6E
+        LDX  #10
+LD7CE   ROR  95
+        ROR  94
+        BCC  LD7E1
+        LDA  6E
+        CLC
+        ADC  92
+        STA  6E
+        LDA  6F
+        ADC  93
+        STA  6F
+LD7E1   ROR  6F
+        ROR  6E
+        ROR  97
+        ROR  96
+        DEX
+        BNE  LD7CE
+        RTS
+LD7ED   PLA
+        STA  94
+        PLA
+        STA  95
+        BMI  LD7FE
+        PLA
+        STA  92
+        PLA
+        STA  93
+        JMP  LD828
+LD7FE   PLA
+        STA  92
+        PLA
+        STA  93
+        BPL  LD828
+        LDA  94
+        EOR  #0FF
+        CLC
+        ADC  #01
+        STA  94
+        LDA  95
+        EOR  #0FF
+        ADC  #00
+        STA  95
+        LDA  92
+        EOR  #0FF
+        CLC
+        ADC  #01
+        STA  92
+        LDA  93
+        EOR  #0FF
+        ADC  #00
+        STA  93
+LD828   JSR  LD7C6
+        LDA  97
+        PHA
+        LDA  96
+        PHA
+        JMP  LD2AE
+        TSX
+        LDA  0102,X
+        PHA
+        LDA  0101,X
+        PHA
+        JMP  LD7ED
+LD840   LDY  #00
+        STY  94
+        STY  6E
+        STY  6F
+        STY  96
+        STY  97
+        LDA  90
+        BNE  LD857
+        LDA  91
+        BNE  LD857
+        JMP  LD209
+LD857   LDA  91
+        BPL  LD86E
+        LDA  90
+        EOR  #0FF
+        CLC
+        ADC  #01
+        STA  90
+        LDA  91
+        EOR  #0FF
+        ADC  #00
+        STA  91
+        INC  94
+LD86E   LDA  93
+        BPL  LD885
+        LDA  92
+        EOR  #0FF
+        CLC
+        ADC  #01
+        STA  92
+        LDA  93
+        EOR  #0FF
+        ADC  #00
+        STA  93
+        DEC  94
+LD885   SEC
+        LDA  92
+        SBC  90
+        LDA  93
+        SBC  91
+        BCS  LD89D
+        STY  96
+        STY  97
+        LDA  92
+        STA  92
+        LDA  93
+        STA  93
+        RTS
+LD89D   CLC
+        LDX  #10
+        LDA  93
+        BNE  LD8AE
+        LDA  90
+        STA  6F
+        LDA  91
+        STA  90
+        LDX  #08
+LD8AE   CLC
+        ROR  91
+        BNE  LD8D5
+        ROR  90
+        BNE  LD8D7
+LD8B7   ROR  6F
+        ROR  6E
+        LDA  92
+        SEC
+        SBC  6E
+        TAY
+        LDA  93
+        SBC  6F
+        BCC  LD8DC
+        STA  93
+        STY  92
+        SEC
+        ROL  96
+        ROL  97
+        DEX
+        CLC
+        BNE  LD8B7
+        RTS
+LD8D5   ROR  90
+LD8D7   ROR  6F
+        ROR  6E
+        CLC
+LD8DC   ROL  96
+        ROL  97
+        DEX
+        BNE  LD8AE
+        RTS
+        PLA
+        STA  90
+        PLA
+        STA  91
+        PLA
+        STA  92
+        PLA
+        STA  93
+        JSR  LD840
+        LDA  94
+        BEQ  LD908
+        LDA  96
+        EOR  #0FF
+        CLC
+        ADC  #01
+        STA  96
+        LDA  97
+        EOR  #0FF
+        ADC  #00
+        STA  97
+LD908   LDA  97
+        PHA
+        LDA  96
+        PHA
+        JMP  LD2AE
+        PLA
+        STA  90
+        PLA
+        STA  91
+        PLA
+        STA  92
+        PLA
+        STA  93
+        JSR  LD840
+        LDA  93
+        PHA
+        LDA  92
+        PHA
+        JMP  LD2AE
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        PLA
+        STA  80
+        PLA
+        STA  81
+        TSX
+        LDA  0101,X
+        STA  82
+        LDA  0102,X
+        STA  83
+        EOR  81
+        BMI  LD954
+        LDA  81
+        CMP  83
+        BCC  LD958
+        BNE  LD975
+        LDA  82
+        CMP  80
+        BCS  LD958
+        BCC  LD975
+LD954   LDA  83
+        BMI  LD975
+LD958   LDA  7F
+        EOR  83
+        BMI  LD96E
+        LDA  83
+        CMP  7F
+        BCC  LD972
+        BNE  LD975
+        LDA  7E
+        CMP  82
+        BCS  LD972
+        BCC  LD975
+LD96E   LDA  83
+        BPL  LD975
+LD972   JMP  LD2AE
+LD975   JMP  LD1E1
+LD978   LDA  5E
+        STA  7E
+        LDA  5F
+        STA  7F
+LD980   LDA  7F
+        BNE  LD989
+        LDA  7E
+        BNE  LD989
+        RTS
+LD989   LDY  #00
+        LDA  @7E,Y
+        CMP  58
+        BNE  LD999
+        INY
+        LDA  @7E,Y
+        CMP  59
+        BNE  LD999
+        RTS
+LD999   LDY  #02
+        LDA  @7E,Y
+        TAX
+        INY
+        LDA  @7E,Y
+        STA  7F
+        STX  7E
+        JMP  LD980
+        JSR  LD978
+        LDA  58
+        STA  80
+        LDA  59
+        STA  81
+        INC  58
+        BNE  LD9B9
+        INC  59
+LD9B9   STA  0C003
+        LDY  #00
+        LDA  @58,Y
+        STA  0C002
+        STA  82
+        INC  58
+        BNE  LD9CB
+        INC  59
+LD9CB   JMP  LD9ED
+        JSR  LD978
+        LDA  58
+        STA  80
+        LDA  59
+        STA  81
+        INC  58
+        BNE  LD9DF
+        INC  59
+LD9DF   STA  0C003
+        LDY  #00
+        LDA  @58,Y
+        STA  0C002
+        STA  82
+        INC  82
+LD9ED   LDA  7F
+        BNE  LDA62
+        LDA  7E
+        BNE  LDA62
+        LDA  5C
+        SEC
+        SBC  82
+        STA  5C
+        BCS  LDA00
+        DEC  5D
+LDA00   LDA  5C
+        AND  #0FE
+        STA  5C
+        LDA  5D
+        PHA
+        LDA  5C
+        PHA
+        LDY  82
+        DEY
+        BMI  LDA1E
+        STA  0C003
+LDA14   LDA  @58,Y
+        STA  @5C,Y
+        DEY
+        BPL  LDA14
+        STA  0C002
+LDA1E   LDA  5C
+        SEC
+        SBC  #04
+        STA  5C
+        BCS  LDA29
+        DEC  5D
+LDA29   LDY  #00
+        LDA  80
+        STA  @5C,Y
+        INY
+        LDA  81
+        STA  @5C,Y
+        INY
+        LDA  5E
+        STA  @5C,Y
+        INY
+        LDA  5F
+        STA  @5C,Y
+        LDA  5C
+        STA  5E
+        LDA  5D
+        STA  5F
+        SEC
+        LDA  5C
+        SBC  5A
+        LDA  5D
+        SBC  5B
+        BCS  LDA54
+        JMP  LD1ED
+LDA54   LDA  58
+        CLC
+        ADC  82
+        STA  58
+        BCC  LDA5F
+        INC  59
+LDA5F   JMP  LD2B4
+LDA62   LDA  7E
+        CLC
+        ADC  #04
+        STA  7E
+        BCC  LDA6D
+        INC  7F
+LDA6D   LDA  7F
+        PHA
+        LDA  7E
+        PHA
+        JMP  LDA54
+        PLA
+        STA  72
+        PLA
+        STA  73
+        PLA
+        STA  74
+        PLA
+        STA  75
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        LDX  73
+        BNE  LDAA2
+        CMP  #01
+        BCC  LDABA
+        LDA  #01
+        LDY  #00
+        STA  @74,Y
+        LDA  72
+        INY
+        STA  @74,Y
+        JMP  LD288
+LDAA2   LDY  #00
+        CMP  @72,Y
+        BCC  LDABA
+        LDA  @72,Y
+        STA  @74,Y
+        TAY
+        JMP  LDAB5
+LDAB0   LDA  @72,Y
+        STA  @74,Y
+        DEY
+LDAB5   BNE  LDAB0
+        JMP  LD288
+LDABA   JMP  LD22D
+        TSX
+        LDA  0102,X
+        BNE  LDADA
+        LDA  0101,X
+        BEQ  LDADA
+        LDY  0103,X
+        STY  7E
+        LDY  0104,X
+        STY  7F
+        LDY  #00
+        CMP  @7E,Y
+        BCC  LDADD
+        BEQ  LDADD
+LDADA   JMP  LD1E1
+LDADD   JMP  LD2AE
+        LDY  #01
+        JSR  LD155
+        CLC
+        PLA
+        ADC  68
+        STA  82
+        PLA
+        ADC  69
+        STA  83
+        LDY  #01
+        LDA  @82,Y
+        PHA
+        DEY
+        LDA  @82,Y
+        PHA
+        JMP  LD288
+        LDY  #01
+        JSR  LD155
+        CLC
+        PLA
+        ADC  68
+        TAX
+        PLA
+        ADC  69
+        PHA
+        TXA
+        PHA
+        JMP  LD288
+        PLA
+        STA  92
+        PLA
+        STA  93
+        LDY  #01
+        JSR  LD155
+        LDA  69
+        BNE  LDB2B
+        LDA  68
+        CMP  #02
+        BNE  LDB2B
+        ASL  92
+        ROL  93
+        JMP  LDB3E
+LDB2B   LDA  68
+        STA  94
+        LDA  69
+        STA  95
+        JSR  LD7C6
+        LDA  96
+        STA  92
+        LDA  97
+        STA  93
+LDB3E   CLC
+        PLA
+        ADC  92
+        STA  82
+        PLA
+        ADC  93
+        PHA
+        LDA  82
+        PHA
+        JMP  LD288
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        STA  90
+        STA  0C003
+        LDY  #02
+        LDA  @58,Y
+        STA  0C002
+        STA  84
+        LDA  #00
+        STA  91
+        STA  85
+        PLA
+        STA  92
+        PLA
+        STA  93
+        JSR  LD840
+        ASL  96
+        ROL  97
+        CLC
+        PLA
+        ADC  96
+        STA  82
+        PLA
+        ADC  97
+        PHA
+        LDA  82
+        PHA
+        LDA  85
+        PHA
+        LDA  84
+        PHA
+        LDA  #00
+        LDX  92
+        BEQ  LDB98
+        CLC
+LDB93   ADC  84
+        DEX
+        BNE  LDB93
+LDB98   PHA
+        PHA
+        JMP  LD27B
+        PLA
+        STA  86
+        PLA
+        STA  87
+        PLA
+        STA  84
+        PLA
+        STA  85
+        PLA
+        STA  82
+        PLA
+        STA  83
+        LDY  #00
+        LDA  @82,Y
+        STA  88
+        INY
+        LDA  @82,Y
+        STA  89
+        LDA  86
+        SEC
+        SBC  #08
+        BMI  LDBD0
+        TAX
+        LDA  88
+        LDY  89
+        STY  88
+        STA  89
+        CPX  #00
+        BNE  LDBD5
+        BEQ  LDBDC
+LDBD0   ADC  #08
+        TAX
+        BEQ  LDBDC
+LDBD5   ROR  89
+        ROR  88
+        DEX
+        BNE  LDBD5
+LDBDC   LDA  84
+        ASL  A
+        TAX
+        LDA  88
+        AND  LDF19,X
+        STA  88
+        LDA  89
+        AND  LDF1A,X
+        PHA
+        LDA  88
+        PHA
+        JMP  LD2AE
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        PLA
+        STA  86
+        PLA
+        STA  87
+        PLA
+        STA  84
+        PLA
+        STA  85
+        LDA  84
+        ASL  A
+        TAX
+        LDA  LDF19,X
+        STA  80
+        AND  7E
+        STA  7E
+        LDA  LDF1A,X
+        STA  81
+        AND  7F
+        STA  7F
+        LDA  86
+        SEC
+        SBC  #08
+        BMI  LDC39
+        TAX
+        LDA  7E
+        LDY  7F
+        STA  7F
+        STY  7E
+        LDA  80
+        LDY  81
+        STA  81
+        STY  80
+        CPX  #00
+        BNE  LDC3E
+        BEQ  LDC49
+LDC39   ADC  #08
+        TAX
+        BEQ  LDC49
+LDC3E   ASL  7E
+        ROL  7F
+        ASL  80
+        ROL  81
+        DEX
+        BNE  LDC3E
+LDC49   PLA
+        STA  82
+        PLA
+        STA  83
+        LDY  #00
+        LDA  @82,Y
+        STA  88
+        INY
+        LDA  @82,Y
+        STA  89
+        LDA  80
+        EOR  #0FF
+        AND  88
+        ORA  7E
+        STA  88
+        LDA  81
+        EOR  #0FF
+        AND  89
+        ORA  7F
+        STA  89
+        LDY  #00
+        LDA  88
+        STA  @82,Y
+        INY
+        LDA  89
+        STA  @82,Y
+        JMP  LD2AE
+LDC7C   PLA
+        STA  96
+        PLA
+        STA  97
+        PLA
+        ASL  A
+        STA  86
+        PLA
+        TSX
+        TXA
+        CLC
+        ADC  86
+        TAY
+        INY
+        STY  88
+        LDA  0100,Y
+        ASL  A
+        INY
+        INY
+        STY  7E
+        INC  96
+        BNE  LDC9E
+        INC  97
+LDC9E   JMP  @0096
+        JSR  LDC7C
+        LDX  86
+        SEC
+        SBC  86
+        BPL  LDCB1
+        CLC
+        ADC  86
+        TAX
+        LDA  #00
+LDCB1   STA  9A
+        CPX  #00
+        BEQ  LDCC2
+LDCB7   PLA
+        AND  0100,Y
+        STA  0100,Y
+        INY
+        DEX
+        BNE  LDCB7
+LDCC2   LDX  9A
+        BEQ  LDCD1
+        BMI  LDCD1
+        LDA  #00
+LDCCA   STA  0100,Y
+        INY
+        DEX
+        BNE  LDCCA
+LDCD1   LDX  88
+        DEX
+        TXS
+        JMP  LD2AE
+        JSR  LDC7C
+        LDX  86
+        CMP  86
+        BPL  LDCE2
+        TAX
+LDCE2   CPX  #00
+        BEQ  LDCF3
+LDCE6   PLA
+        EOR  #0FF
+        AND  0100,Y
+        STA  0100,Y
+        INY
+        DEX
+        BNE  LDCE6
+LDCF3   LDX  88
+        DEX
+        TXS
+        JMP  LD2AE
+        JSR  LDC7C
+        CMP  86
+        BMI  LDD19
+        LDX  86
+        CPX  #00
+        BEQ  LDD12
+LDD07   PLA
+        ORA  0100,Y
+        STA  0100,Y
+        INY
+        DEX
+        BNE  LDD07
+LDD12   LDX  88
+        DEX
+        TXS
+        JMP  LD2AE
+LDD19   STA  84
+        CMP  #00
+        BNE  LDD21
+        BEQ  LDD3C
+LDD21   TSX
+        INX
+        LDY  7E
+        LDA  84
+        STA  82
+        LDA  85
+        STA  83
+LDD2D   LDA  0100,Y
+        ORA  0100,X
+        STA  0100,X
+        INY
+        INX
+        DEC  82
+        BNE  LDD2D
+LDD3C   LDA  7E
+        CLC
+        ADC  84
+        TAX
+        DEX
+        LDA  86
+        STA  82
+        LDA  87
+        STA  83
+        LDY  88
+        DEY
+LDD4E   LDA  0100,Y
+        STA  0100,X
+        DEY
+        DEX
+        DEC  82
+        BNE  LDD4E
+        TXS
+        LSR  86
+        LDA  87
+        PHA
+        LDA  86
+        PHA
+        JMP  LD2AE
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        ASL  A
+        STA  8E
+        PLA
+        STA  8C
+        PLA
+        STA  8D
+        ASL  8C
+        ROL  8D
+        LDA  8C
+        CMP  8E
+        BNE  LDD86
+        JMP  LD288
+LDD86   BMI  LDDA3
+        TSX
+        TXA
+        CLC
+        ADC  8E
+        TAY
+        TXA
+        CLC
+        ADC  8C
+        TAX
+LDD93   LDA  0100,Y
+        STA  0100,X
+        DEY
+        DEX
+        DEC  8E
+        BNE  LDD93
+        TXS
+        JMP  LD288
+LDDA3   LDA  8E
+        SEC
+        SBC  8C
+        STA  90
+        CMP  8E
+        BNE  LDDB8
+        TSX
+        TXA
+        SEC
+        SBC  90
+        TAX
+        TXS
+        INX
+        BNE  LDDCE
+LDDB8   TSX
+        TXA
+        TAY
+        INY
+        SEC
+        SBC  90
+        TAX
+        TXS
+        INX
+LDDC2   LDA  0100,Y
+        STA  0100,X
+        INY
+        INX
+        DEC  8C
+        BNE  LDDC2
+LDDCE   LDY  90
+        LDA  #00
+LDDD2   STA  0100,X
+        INX
+        DEY
+        BNE  LDDD2
+        JMP  LD288
+        PLA
+        STA  8C
+        PLA
+        STA  8D
+        ASL  8C
+        ROL  8D
+        TSX
+        TXA
+        CLC
+        ADC  8C
+        TAY
+        INY
+        LDA  0100,Y
+        STA  86
+        INY
+        LDA  0100,Y
+        STA  87
+        STY  70
+        AND  #0FE
+        BNE  LDE2F
+        LDA  86
+        AND  #07
+        STA  7F
+        ROR  87
+        LDA  86
+        ROR  A
+        ROR  A
+        ROR  A
+        AND  #3F
+        STA  7E
+        CMP  8C
+        BPL  LDE2F
+        TSX
+        INX
+        TXA
+        ADC  7E
+        TAX
+        LDA  0100,X
+        LDY  7F
+        AND  LDE39,Y
+        BEQ  LDE2F
+        LDX  70
+        TXS
+        LDA  #00
+        PHA
+        LDA  #01
+        PHA
+        JMP  LD2AE
+LDE2F   LDX  70
+        TXS
+        LDA  #00
+        PHA
+        PHA
+        JMP  LD2AE
+LDE39   .BYTE 01,02,04,08,10,20,40,80
+        PLA
+        STA  8A
+        PLA
+        STA  8B
+        LDA  8B
+        PHA
+        LDA  8A
+        PHA
+        LDA  8B
+        PHA
+        LDA  8A
+        PHA
+        PLA
+        STA  84
+        PLA
+        STA  85
+        PLA
+        STA  86
+        PLA
+        STA  87
+        LDA  87
+        BPL  LDE66
+        JMP  LDF12
+LDE66   LDA  85
+        AND  #0FE
+        BEQ  LDE6F
+        JMP  LDF12
+LDE6F   SEC
+        LDA  84
+        SBC  86
+        STA  88
+        LDA  85
+        SBC  87
+        STA  89
+        LDA  89
+        BPL  LDE83
+        JMP  LDF0B
+LDE83   LDA  86
+        AND  #0F
+        ASL  A
+        STA  7F
+        LDA  86
+        LDX  #04
+LDE8E   ROR  87
+        ROR  A
+        DEX
+        BNE  LDE8E
+        STA  7E
+        LDA  84
+        AND  #0F
+        ASL  A
+        STA  81
+        LDA  84
+        LDX  #04
+LDEA1   ROR  85
+        ROR  A
+        DEX
+        BNE  LDEA1
+        STA  80
+        SEC
+        LDA  80
+        SBC  7E
+        TAX
+        LDY  81
+        LDA  LDF1B,Y
+        STA  82
+        LDA  LDF1C,Y
+        STA  83
+        CPX  #00
+        BEQ  LDED6
+        LDA  83
+        PHA
+        LDA  82
+        PHA
+        LDA  #0FF
+        STA  82
+        STA  83
+        BNE  LDED3
+LDECD   LDA  83
+        PHA
+        LDA  82
+        PHA
+LDED3   DEX
+        BNE  LDECD
+LDED6   LDA  82
+        LDY  7F
+        AND  LDF3B,Y
+        STA  82
+        LDA  83
+        AND  LDF3C,Y
+        STA  83
+        LDA  83
+        PHA
+        LDA  82
+        PHA
+        LDA  #00
+        STA  82
+        STA  83
+        LDX  7E
+        BEQ  LDEFF
+LDEF6   LDA  83
+        PHA
+        LDA  82
+        PHA
+        DEX
+        BNE  LDEF6
+LDEFF   LDA  #00
+        PHA
+        CLC
+        LDA  80
+        ADC  #01
+        PHA
+        JMP  LD2AE
+LDF0B   LDA  #00
+        PHA
+        PHA
+        JMP  LD2AE
+LDF12   LDA  #00
+        PHA
+        PHA
+        JMP  LD1E1
+LDF19   .BYTE 00
+LDF1A   .BYTE 00
+LDF1B   .BYTE 01
+LDF1C   .BYTE 00,03,00,07,00,0F,00,1F
+        .BYTE 00,3F,00,7F,00,0FF,00,0FF
+        .BYTE 01,0FF,03,0FF,07,0FF,0F,0FF
+        .BYTE 1F,0FF,3F,0FF,7F,0FF,0FF
+LDF3B   .BYTE 0FF
+LDF3C   .BYTE 0FF,0FE,0FF,0FC,0FF,0F8,0FF,0F0
+        .BYTE 0FF,0E0,0FF,0C0,0FF,80,0FF,00
+        .BYTE 0FF,00,0FE,00,0FC,00,0F8,00
+        .BYTE 0F0,00,0E0,00,0C0,00,80
+        LDA  #06
+        BPL  LDF71
+        LDA  #04
+        BPL  LDF71
+        LDA  #02
+        BPL  LDF71
+        LDA  #05
+        BPL  LDF71
+        LDA  #03
+        BPL  LDF71
+        LDA  #01
+LDF71   STA  76
+        STA  0C003
+        LDY  #01
+        LDA  @58,Y
+        STA  0C002
+        CMP  #02
+        BNE  LDF84
+        JMP  0E069
+LDF84   CMP  #04
+        BNE  LDF8B
+        JMP  LDFF1
+LDF8B   CMP  #06
+        BNE  LDF92
+        JMP  0E0A3
+LDF92   CMP  #08
+        BNE  LDF99
+        JMP  0E1CD
+LDF99   CMP  #0A
+        BEQ  LDF9F
+        BNE  LDFAB
+LDF9F   LDY  #02
+        JSR  LD155
+        LSR  69
+        ROR  68
+        JMP  LDFB0
+LDFAB   LDY  #02
+        JSR  LD155
+LDFB0   PLA
+        STA  80
+        PLA
+        STA  81
+        PLA
+        STA  7E
+        PLA
+        STA  7F
+        INC  58
+        BNE  LDFC2
+        INC  59
+LDFC2   LDY  #00
+        LDX  68
+        JMP  LDFDC
+LDFC9   LDA  @7E,Y
+        CMP  @80,Y
+        BNE  LDFE5
+        INC  7E
+        BNE  LDFD5
+        INC  7F
+LDFD5   INC  80
+        BNE  LDFDB
+        INC  81
+LDFDB   DEX
+LDFDC   BNE  LDFC9
+        DEC  69
+        BPL  LDFC9
+        JMP  0E04F
+LDFE5   BCS  LDFEA
+        JMP  0E053
+LDFEA   JMP  0E04B
+        .BYTE 88,00,8A,00
+LDFF1   PLA
+        STA  80
+        PLA
+        STA  81
+        .BYTE 0D0,12              ; BNE 0E00B, out of the piece
+        LDA  80
+        STA  89
+        LDA  #01
+        .BYTE 85
+        .END

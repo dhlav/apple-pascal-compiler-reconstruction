@@ -23,7 +23,8 @@ finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 `6502.OPCODES` (the whole file) and `6502.ERRORS` (all but its record
 window's first fill, 276), the four `.MISCINFO` profiles (every setting,
 by Apple's SETUP from recipes; the rest is memory, 277), `SYSTEM.CHARSET`
-(the whole file, 278),
+(the whole file, 278), `128K.APPLE` (the whole file, three traced
+assemblies, 279),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
