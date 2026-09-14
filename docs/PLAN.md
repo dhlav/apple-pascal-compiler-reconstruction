@@ -21,8 +21,11 @@ file too (finding 268), from I.5's linker and the binary, and so is
 `LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
 through the end of its segment (finding 270), from I.5's LibMap, and
 `SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer, and `SYSTEM.EDITOR`
-(finding 272), from UCSD's II.0 screen editor. Left in scope:
-`SETUP.CODE`, `BINDER.CODE` and `SET40COLS.CODE`.
+(finding 272), from UCSD's II.0 screen editor. `SETUP.CODE` is 54 of 54
+procedures from UCSD's SETUP D1 (finding 273) -- as far as 1.3 tools
+reach, since it predates the version word. `BINDER.CODE` and
+`SET40COLS.CODE` are 1.1 binaries (version 2) and stay where finding 99c
+left them.
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 
@@ -195,7 +198,9 @@ a route end to end; everything else is a straight read-and-rebuild.
    `COPYINTERFACE`) and one cosmetic screen-cursor detail in
    `MSGLINE`/`MSGLINEINT` are still `(*STUB*)`.
 
-5. **`SETUP.CODE`** -- 54 procedures in 12 segments, nine of which are
+5. **`SETUP.CODE`** -- **Superseded by finding 273**: UCSD's own SETUP D1
+   source plus six edits gives all 54 procedures; the history below is the
+   hand reconstruction it replaced. 54 procedures in 12 segments, nine of which are
    16-byte stubs, and **byte-identical between 1.1 and 1.3**. The segment
    structure is the interesting part; the stubs make it cheaper than the
    count suggests. It also writes `SYSTEM.MISCINFO`, so it is the way in to

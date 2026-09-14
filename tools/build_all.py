@@ -120,6 +120,8 @@ STEPS = [
     ("LIBMAP.CODE whole segment, via the Linker", "probes/probe_libmap_whole.py"),
     ("SYSTEM.FILER whole file, via the Librarian", "probes/probe_filer_whole.py"),
     ("SYSTEM.EDITOR whole file, via the Librarian", "probes/probe_editor_whole.py"),
+    # SETUP predates the version word, so every procedure and not the file.
+    ("SETUP.CODE every procedure, every other byte explained", "probes/probe_setup_exact.py"),
 ]
 
 for step in STEPS:

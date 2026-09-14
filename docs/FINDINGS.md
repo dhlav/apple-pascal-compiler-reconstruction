@@ -22884,3 +22884,71 @@ an unused label costs nothing. `PUTLABEL` resets `JTABINX` to 0, and
 `GENJMP` allocates a slot only when a jump to the label needs one. II.0's
 `LABEL 1` in `DELETING`, which no statement jumps to, is kept and the
 segment is still byte-identical.
+
+## 273. `SETUP.CODE`: all 54 procedures, from UCSD's SETUP D1, and why not the whole file
+
+**VERIFIED BINARY FACT.** `github.com/dhlav/ucsd-psystem-os` carries
+UCSD's SETUP, version D1 for II.0 (J. Greg Davidson, April 1979), in
+`setup/main.text`. Compiled **unchanged** by Apple's 1.3 compiler it gives
+**50 of Apple's 54 procedures** instruction- and frame-identical. The
+hand reconstruction it replaces, built over findings 122-135 without an
+ancestor, scored 10 under oscmp in its last kept run
+(`2026-08-29-setup21-scalar-driver`). Six edits, each read off the four
+procedures that differed, give **54 of 54**
+(`acceptance/2026-09-13-setup-s2`). `probe_setup_exact.py` checks this on
+every build. The D1 source is now in `evidence/reference/ucsd-ii0-setup/`.
+
+### 273a. Apple's S.2 edits
+
+**VERIFIED BINARY FACT**, each from a one-procedure diff or a literal
+compared both ways:
+
+- `VERSION` is `'[S.2]'` (`SETUP.1`).
+- `INITS.8` drops the fields `HAS BYTE FLIPPED MACHINE` (word 29 bit 9)
+  and `HAS WORD ORIENTED MACHINE` (29, 10).
+- `INITS.8` puts the prefixed cursor-up key at bit 2 of word 47 and
+  cursor-down at 3. D1's source says Bruce Sherman reversed these on
+  14 May 1979 "to solve the bug of them being switched"; D1 has up at 3.
+  Apple's binary has 2 and 3.
+- Twelve field names reworded in `INITS.8`/`INITS.9`: `LEAD-IN`,
+  `NON-PRINTING`, `KEY FOR MOVING CURSOR ...` in the prefixed set,
+  `EDITOR "ESCAPE" KEY`, `EDITOR "ACCEPT" KEY`, and
+  `PREFIXED[EDITOR 'ESCAPE' KEY]`.
+- `SETUP.7`, `GETSTR`, appends a typed character with no
+  `IF LENGTH(STR) < 80` guard.
+- D1's `{$C II0D1 Copyright...}` option is not in S.2: Apple's block 0 has
+  no notice.
+
+### 273b. What stays different, and why it cannot be closed
+
+**VERIFIED BINARY FACT.** Against shipped `SETUP.CODE`, every segment is
+in the same slot, block and length, and every differing byte is one of:
+
+- **27 bytes of block 0, all in the SEGINFO words at `$100`-`$11F`.**
+  Apple's are all 0; the file predates the version field (finding 99).
+  A 1.3 compile stamps version 6 into every one.
+- **34 bytes inside segments, every one an alignment pad**: the byte
+  after an `LDC`'s count, after an `XJP`'s opcode, after a procedure's
+  final `RNP`/`RBP`, and after the 16-byte stub's `XIT`. Apple's bytes
+  there are nonzero leftovers (`$20`, `$45`, `$A6`, ...); ours are 0.
+  **VERIFIED SOURCE FACT:** the 1.3 compiler writes these with
+  `GENBYTE(0)` (`PASCALCO.text` line 692, `BODY3.text` line 119), so no
+  source can put anything else there.
+- The uninitialised slack after each segment.
+
+So `SETUP.CODE` is as close as Apple's 1.3 tools can come: every
+instruction, every frame, every dictionary field but the version word.
+The probe classifies each differing byte by decoding the procedure around
+it, and rejects an ordinary code byte, so a real difference cannot hide
+among the pads.
+
+### 273c. Two lessons
+
+**The mirror first.** Findings 122-135 spent a session and more deriving
+frames and bodies for a program whose source was sitting in the mirror
+the whole time. PLAN already says to check it first; this is the clearest
+case of why.
+
+**Compile the ancestor unchanged before editing it.** 50 of 54 from an
+untouched file is both a measurement of how far Apple went and a map of
+where: the four procedures that differed held every one of the edits.

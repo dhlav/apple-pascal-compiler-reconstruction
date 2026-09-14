@@ -1,27 +1,3 @@
-{ SETUP -- Apple Pascal 1.3 APPLE3:SETUP.CODE, reconstructed.
-
-  This is UCSD's SETUP, version D1 for II.0 (J. Greg Davidson, April
-  1979), from the setup/ directory of github.com/dhlav/ucsd-psystem-os,
-  with Apple's changes for its version S.2 read off the binary (finding
-  273). Below this comment the file is UCSD's, line for line, except:
-
-    - VERSION is '[S.2]', not '[D1]';
-    - D1's $C copyright option is gone: Apple's block 0 has no
-      notice;
-    - INITS drops the fields HAS BYTE FLIPPED MACHINE and HAS WORD
-      ORIENTED MACHINE;
-    - twelve field names are reworded (LEAD-IN, NON-PRINTING, KEY FOR
-      MOVING CURSOR ..., quotes around ESCAPE and ACCEPT);
-    - the prefixed cursor-up and cursor-down keys are bits 2 and 3 of
-      word 47, where D1 had 3 and 2;
-    - GETSTR appends a character without D1's length-80 guard.
-
-  All 54 procedures compile to Apple's instructions and frames. The
-  whole file cannot be Apple's from 1.3 tools: SETUP.CODE predates the
-  SEGINFO version word, which is 0 in every slot, and its compiler left
-  stale bytes in 34 alignment pads that Apple's 1.3 compiler writes as
-  0. Everything else in the segments and block 0 matches. }
-
 (*
  * UCSD PASCAL - Version I.5
  * Copyright (C) 1978, 1979 Regents of the University of California
@@ -88,9 +64,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *)
 
-(* D1 had the option C II0D1 Copyright(c)1979 Regents of the University
-   of California, San Diego -- not in Apple's S.2, whose block 0 has no
-   notice. *)
+{$C II0D1 Copyright(c)1979 Regents of the University of California, San Diego}
 
     (******************************************************************)
     (*                                                                *)
@@ -116,7 +90,7 @@
 {$U-}
 PROGRAM PASCALSYSTEM;
 CONST
-  VERSION    = '[S.2]'; {Must be changed everytime new version released}
+  VERSION    = '[D1]'; {Must be changed everytime new version released}
   STARTINDEX = 29; {The first word index in miscinforec setup cares about}
   ENDINDEX   = 47; {The last word index in miscinforec setup cares about}
   BITINDMAX  = 15; {Bits in words are indexed 0..15}
@@ -363,6 +337,8 @@ VAR
               ENTER('HAS RANDOM CURSOR ADDRESSING',     29, 3);
               ENTER('HAS SLOW TERMINAL',                29, 4);
               ENTER('STUDENT',                          29, 5);
+              ENTER('HAS BYTE FLIPPED MACHINE',         29, 9);
+              ENTER('HAS WORD ORIENTED MACHINE',        29,10);
 
             {PREFIXED FOR CRTCTRL}
               ENTER('PREFIXED[MOVE CURSOR UP]',                 36, 0);
@@ -375,21 +351,21 @@ VAR
               ENTER('PREFIXED[ERASE LINE]',                     36, 7);
 
             {PREFIXED FOR CRTINFO}
-              ENTER('PREFIXED[KEY FOR MOVING CURSOR RIGHT]',    47,  0);
-              ENTER('PREFIXED[KEY FOR MOVING CURSOR LEFT]',     47,  1);
+              ENTER('PREFIXED[KEY TO MOVE CURSOR RIGHT]',       47,  0);
+              ENTER('PREFIXED[KEY TO MOVE CURSOR LEFT]',        47,  1);
               { The following two entries were reversed May 14, 1979
                 by Bruce Sherman to solve the bug of them being switched}
-              ENTER('PREFIXED[KEY FOR MOVING CURSOR UP]',       47,  2);
-              ENTER('PREFIXED[KEY FOR MOVING CURSOR DOWN]',     47,  3);
-              ENTER('PREFIXED[NON-PRINTING CHARACTER]',         47,  4);
+              ENTER('PREFIXED[KEY TO MOVE CURSOR UP]',          47,  3);
+              ENTER('PREFIXED[KEY TO MOVE CURSOR DOWN]',        47,  2);
+              ENTER('PREFIXED[NON PRINTING CHARACTER]',         47,  4);
               ENTER('PREFIXED[KEY FOR STOP]',                   47,  6);
               ENTER('PREFIXED[KEY FOR BREAK]',                  47,  7);
               ENTER('PREFIXED[KEY FOR FLUSH]',                  47,  8);
               ENTER('PREFIXED[KEY TO END FILE]',                47,  9);
-              ENTER('PREFIXED[EDITOR ''ESCAPE'' KEY]',          47, 10);
+              ENTER('PREFIXED[EDITOR ESCAPE KEY]',              47, 10);
               ENTER('PREFIXED[KEY TO DELETE LINE]',             47, 11);
               ENTER('PREFIXED[KEY TO DELETE CHARACTER]',        47, 12);
-              ENTER('PREFIXED[EDITOR "ACCEPT" KEY]',            47, 13);
+              ENTER('PREFIXED[EDITOR ACCEPT KEY]',              47, 13);
           END; {SETUP1}
 
           PROCEDURE SETUP2;
@@ -403,7 +379,7 @@ VAR
             {Set up the character fields}
               PWIDTH := 8; {Characters all have a width in bits of 8}
               SCAL := CHARACTER; {TeIdentifiers are all characters}
-              ENTER('LEAD-IN TO SCREEN',                31,0);
+              ENTER('LEAD IN TO SCREEN',                31,0);
               ENTER('MOVE CURSOR HOME',                 31,8);
               ENTER('ERASE TO END OF SCREEN',           32,0);
               ENTER('ERASE TO END OF LINE',             32,8);
@@ -420,11 +396,11 @@ VAR
               ENTER('KEY FOR FLUSH',                    41,8);
               ENTER('KEY FOR BREAK',                    42,0);
               ENTER('KEY FOR STOP',                     42,8);
-              ENTER('NON-PRINTING CHARACTER',           43,8);
+              ENTER('NON PRINTING CHARACTER',           43,8);
               ENTER('KEY TO DELETE LINE',               44,0);
-              ENTER('EDITOR "ESCAPE" KEY',                44,8);
-              ENTER('LEAD-IN CHAR FROM KEYBOARD',            45,0);
-              ENTER('EDITOR "ACCEPT" KEY',                45,8);
+              ENTER('EDITOR ESCAPE KEY',                44,8);
+              ENTER('LEAD IN FROM KEYBOARD',            45,0);
+              ENTER('EDITOR ACCEPT KEY',                45,8);
               ENTER('KEY TO DELETE CHARACTER',          43,0);
 
             {Set up miscellaneous fields}
@@ -718,8 +694,11 @@ VAR
                  WRITE(c)
                ELSE
                  WRITE('?');
-               STR := CONCAT(STR,'#');
-               STR[LENGTH(STR)] := c;
+               If Length(str) < 80 Then
+                 Begin
+                   STR := CONCAT(STR,'#');
+                   STR[LENGTH(STR)] := c;
+                 End;
              END;
          END;
        IF c = ESC THEN
