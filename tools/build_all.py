@@ -124,6 +124,7 @@ STEPS = [
     ("SETUP.CODE every procedure, every other byte explained", "probes/probe_setup_exact.py"),
     # 1.1 binaries: every byte but the version field (findings 112, 274).
     ("BINDER and SET40COLS, all but the version field", "probes/probe_v2_binaries.py"),
+    ("FORMATTER.DATA, assembled and built on the 1.3 system", "probes/probe_formatter_data.py"),
 ]
 
 for step in STEPS:

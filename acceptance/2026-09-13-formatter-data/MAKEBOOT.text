@@ -1,0 +1,86 @@
+{ MAKEBOOT -- builds BOOTTRACKS.DATA, the second half of FORMATTER.DATA.
+
+  Apple II Technical Note Pascal #12 describes BOOTTRACKS.DATA as a
+  four-block data file holding the Disk II boot blocks, a blank directory
+  and the boot block for ProDOS blocked devices, but ships no source for
+  it. This program is this reconstruction's: it lays those three pieces
+  out exactly where FORMATTER.DATA's blocks 3 to 6 have them (finding
+  275).
+
+    blocks 0-1  segment blocks 1-2 of BOOTII.CODE, the Disk II boot
+    block  2    the directory of an empty 280-block volume BLANK, dated
+                7-Nov-84, as FORMATTER.DATA carries it
+    block  3    segment block 1 of BOOTPD.CODE, the ProDOS boot
+
+  Everything else in the file is zero. }
+
+(*$I-*)
+PROGRAM MAKEBOOT;
+
+TYPE
+  DATEREC = PACKED RECORD
+              MONTH: 0..12;
+              DAY:   0..31;
+              YEAR:  0..100
+            END;
+  { A volume's directory header, one field to a line so that no clause
+    reverses: first block, last block, kind, name, blocks on the volume,
+    files, load time, date. }
+  VOLHEAD = RECORD
+              DFIRSTBLK: INTEGER;
+              DLASTBLK:  INTEGER;
+              DFKIND:    INTEGER;
+              DVID:      STRING[7];
+              DEOVBLK:   INTEGER;
+              DNUMFILES: INTEGER;
+              DLOADTIME: INTEGER;
+              DLASTBOOT: DATEREC
+            END;
+  BOOTBUF = RECORD CASE INTEGER OF
+              0: (BYTES: PACKED ARRAY [0..2047] OF 0..255);
+              1: (BOOT:  ARRAY [0..511] OF INTEGER;
+                  HEAD:  VOLHEAD)
+            END;
+
+VAR
+  F: FILE;
+  BUF: BOOTBUF;
+
+PROCEDURE FAIL(S: STRING);
+BEGIN
+  WRITELN('MAKEBOOT: ', S);
+  EXIT(MAKEBOOT)
+END;
+
+BEGIN
+  FILLCHAR(BUF, SIZEOF(BUF), 0);
+
+  RESET(F, '*BOOTII.CODE');
+  IF IORESULT <> 0 THEN FAIL('no BOOTII.CODE');
+  IF BLOCKREAD(F, BUF.BYTES[0], 2, 1) <> 2 THEN FAIL('reading BOOTII');
+  CLOSE(F);
+
+  WITH BUF.HEAD DO
+    BEGIN
+      DFIRSTBLK := 0;
+      DLASTBLK := 6;
+      DFKIND := 0;
+      DVID := 'BLANK';
+      DEOVBLK := 280;
+      DNUMFILES := 0;
+      DLOADTIME := 0;
+      DLASTBOOT.MONTH := 11;
+      DLASTBOOT.DAY := 7;
+      DLASTBOOT.YEAR := 84
+    END;
+
+  RESET(F, '*BOOTPD.CODE');
+  IF IORESULT <> 0 THEN FAIL('no BOOTPD.CODE');
+  IF BLOCKREAD(F, BUF.BYTES[1536], 1, 1) <> 1 THEN FAIL('reading BOOTPD');
+  CLOSE(F);
+
+  REWRITE(F, '*BOOTTRACKS.DATA');
+  IF BLOCKWRITE(F, BUF, 4, 0) <> 4 THEN FAIL('writing BOOTTRACKS.DATA');
+  CLOSE(F, LOCK);
+  WRITELN('MAKEBOOT: BOOTTRACKS.DATA written')
+END.

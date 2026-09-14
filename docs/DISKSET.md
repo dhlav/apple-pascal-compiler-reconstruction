@@ -50,7 +50,7 @@ files; the descriptions are still the user's, verbatim.
 |---|---|---|
 | SETUP.CODE | Changes hardware settings like your screen size. | **all 54 procedures instruction- and frame-identical** (finding 273), from UCSD's SETUP D1 (`evidence/reference/ucsd-ii0-setup`) with Apple's six S.2 edits. Not the whole file, and no 1.3 source can make it so: the shipped file predates the SEGINFO version word (0 in every slot) and its compiler left stale bytes in 34 alignment pads the 1.3 compiler writes as 0. Every other byte of the dictionary and segments matches (`probe_setup_exact.py`) |
 | FORMATTER.CODE | Utility used to format blank floppy disks. | **reconstructed**, Pascal and 6502 both, compiled/assembled/linked by Apple's own tools to an identical codefile (finding 104) |
-| FORMATTER.DATA | Support data used by the disk formatter. | not started; data file |
+| FORMATTER.DATA | Support data used by the disk formatter. | **3,583 of 3,584 bytes, built from source by Apple's own tools** (finding 275): the Disk II formatter, the Disk II boot (also every 1.3 disk's blocks 0-1) and the ProDOS boot assembled by `SYSTEM.ASSMBLER`, joined by two compiled programs run on the 1.3 system. The one byte is the assembler's uncleared buffer byte, which holds session memory (`probe_formatter_data.py`) |
 
 ## Assembly Reference Files
 

@@ -1,0 +1,19 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]CCompiling...
+Compile what textfile (<ret> to exit) ? SYSHD:MAKEBOOT.TEXT
+
+To what codefile (<ret> for workfile) ? SYSHD:MAKEBOOT.CODE[*]
+
+Listing file (<ret> for none or option in source): 
+
+
+
+
+Apple Pascal Compiler [1.3]
+<   0>..................................................
+<  50>
+FAIL     [17400 words]
+<  50>.....
+MAKEBOOT [17408 words]
+<  55>..............................
+85 lines
+Smallest available space = 17400 wordsCommand: 

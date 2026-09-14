@@ -1,0 +1,41 @@
+{ MAKEFMT -- builds FORMATTER.DATA, as Apple II Technical Note Pascal #12
+  describes its own MAKEFMT: blocks 1, 2 and 3 of ASMFORMAT.CODE become
+  blocks 0, 1 and 2, and blocks 0 to 3 of BOOTTRACKS.DATA become blocks
+  3 to 6. The note's source is not on the 1.3 disks; this is this
+  reconstruction's, written to that description (finding 275).
+
+  Copying the segment's disk blocks rather than its bytes is what carries
+  the assembler's procedure dictionary and the stale end of its block
+  buffer into the data file, both of which Apple's FORMATTER.DATA has. }
+
+(*$I-*)
+PROGRAM MAKEFMT;
+
+VAR
+  SRC, DST: FILE;
+  BUF: PACKED ARRAY [0..2047] OF 0..255;
+
+PROCEDURE FAIL(S: STRING);
+BEGIN
+  WRITELN('MAKEFMT: ', S);
+  EXIT(MAKEFMT)
+END;
+
+BEGIN
+  RESET(SRC, '*ASMFORMAT.CODE');
+  IF IORESULT <> 0 THEN FAIL('no ASMFORMAT.CODE');
+  IF BLOCKREAD(SRC, BUF, 3, 1) <> 3 THEN FAIL('reading ASMFORMAT');
+  CLOSE(SRC);
+
+  REWRITE(DST, '*FORMATTER.DATA');
+  IF BLOCKWRITE(DST, BUF, 3, 0) <> 3 THEN FAIL('writing blocks 0-2');
+
+  RESET(SRC, '*BOOTTRACKS.DATA');
+  IF IORESULT <> 0 THEN FAIL('no BOOTTRACKS.DATA');
+  IF BLOCKREAD(SRC, BUF, 4, 0) <> 4 THEN FAIL('reading BOOTTRACKS');
+  CLOSE(SRC);
+
+  IF BLOCKWRITE(DST, BUF, 4, 3) <> 4 THEN FAIL('writing blocks 3-6');
+  CLOSE(DST, LOCK);
+  WRITELN('MAKEFMT: FORMATTER.DATA written')
+END.

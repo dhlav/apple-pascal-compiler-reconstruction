@@ -23004,3 +23004,78 @@ The earlier `BINDER.text` (finding 117) had five frames right and one body
 
 UCSD's I.5 `BINDER` in the mirror is a different program: it links code.
 So this file has no ancestor, and its names are this reconstruction's.
+
+## 275. `FORMATTER.DATA`: 3,583 of 3,584 bytes, from source through Apple's own tools
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-13-formatter-data` holds a
+FORMATTER.DATA built end to end under the 1.3 system. SYSTEM.ASSMBLER
+assembled three 6502 sources (`src/native/ASMFORMAT.TEXT`, `BOOTII.TEXT`,
+`BOOTPD.TEXT`). SYSTEM.COMPILER compiled two Pascal programs, `MAKEBOOT`
+and `MAKEFMT`, and running them wrote BOOTTRACKS.DATA and then
+FORMATTER.DATA. The result equals Apple's in every byte but one, `$9FF`.
+`probe_formatter_data.py` checks this on every build.
+
+Apple II Technical Note Pascal #12 (Disk Formatter Routine, 1985/1988)
+gave the layout and the build: MAKEFMT copies blocks 1-3 of
+ASMFORMAT.CODE, then the four blocks of BOOTTRACKS.DATA. The note's
+files are not on the 1.3 disks. Every source here is reconstructed from
+FORMATTER.DATA's own bytes.
+
+### 275a. The layout
+
+**VERIFIED BINARY FACT.**
+
+| blocks | what | size |
+|---|---|---|
+| 0-2 | the Disk II formatter, assembled `.ABSOLUTE` at `$3D00` | 1082 bytes of code, the note's figure |
+| 3-4 | the Disk II boot, loaded at `$0800` | 864 bytes of code |
+| 5 | the directory of an empty volume `BLANK`: blocks 0-6, 280 blocks, no files, 7-Nov-84 | 22 bytes, zeros after |
+| 6 | the boot block for ProDOS blocked devices, loaded at `$0800` | 424 bytes of code |
+
+Blocks 0-2, 3-4 and 6 each end in an assembler segment trailer: four empty
+relocation tables, `enter_ic`, procedure 0, and "segment 1, one
+procedure". So each was copied from an `.ABSOLUTE` codefile's disk blocks,
+not its bytes. **Blocks 3-4 are also blocks 0-1 of all three 1.3 evidence
+disks**, byte for byte, so `BOOTII.TEXT` is every 1.3 disk's boot. The
+Disk II and ProDOS boots share their first 76 bytes, and both carry
+"COPYRIGHT APPLE COMPUTER, INC., 1984, 1985 C.LEUNG". The formatter and the
+Disk II boot share a 17-byte delay routine and its two 12-byte timing
+tables.
+
+### 275b. What the stale bytes proved
+
+**VERIFIED BINARY FACT.** After ASMFORMAT's 1098-byte segment, bytes
+`$44A-$5FF` of block 2 repeat block 1's `$24A-$3FF` exactly. The assembler
+keeps a 1024-byte window and slides it by a block, so the last block's
+tail is the previous block's. That leftover preserved Apple's forward
+references as they stood when block 1 was written. A first assembly with
+every address as a label came out 1,098 of 1,098 in the segment, but 42
+bytes wrong in that tail: its references to the delay entry `$410E` and
+the storage at `$411F-$4126` read `0000`, where Apple's are resolved.
+Defining those 13 symbols with `.EQU` ahead of the code made all 1,536
+bytes match. So Apple's source declared them before use. Which of the
+other storage symbols were `.EQU`s is not visible, since no reference to
+them falls in the window.
+
+### 275c. The one byte: `$BB` against `$DB`
+
+**VERIFIED SOURCE FACT.** SYSTEM.ASSMBLER clears its code buffer with
+`FILLCHAR(G72^, BUFLIMIT, CHR(0))` and `BUFLIMIT = 1023`, one short of
+the buffer's two `NEW`ed blocks. The boot fits in the first window, so its
+second block is zero past the segment except byte 1023, which holds
+whatever that heap address held. Apple's is `$BB`. Every assembly under
+`emuremote.py` gives `$DB` (the boot and, on 2026-09-12, `SEARCH`), and the
+floppy-era `SEARCH` assembly of 2026-08-25 gave `$04`. So the value belongs
+to the session, not the source. Two things were ruled out: setting the
+system date to 11-Nov-84 did not change it, and SYSHD's directory contains
+no `$DB` to have been read into that memory. **SPECULATION:** it is a
+leftover of whatever ran before the assembler in Apple's session; nothing
+known reproduces it.
+
+### 275d. What is ours
+
+The two Pascal programs are this reconstruction's, written to the note's
+description of MAKEFMT and to BOOTTRACKS.DATA's observed layout. Neither
+program's code is compared with anything. The assembler sources use
+`L<address>` labels; the segment names (`ASMFORMAT`, `BOOT`) never reach
+the data file. `emuremote.py` gained a `run` action for X(ecute).

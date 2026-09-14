@@ -19,6 +19,7 @@ finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 `SETUP.CODE` (every procedure; the file predates the version word, 273),
 `BINDER.CODE` and `SET40COLS.CODE` (every byte but the version field,
 274),
+`FORMATTER.DATA` (all but one uncleared assembler byte, 275),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
@@ -93,6 +94,7 @@ python tools/emuremote.py assemble X
 python tools/emuremote.py link --host X --lib Y --out Z
 python tools/emuremote.py observe "L" --seconds 40    # capture a tool's prompts
 python tools/emuremote.py librarian --input X --out Y --slots 1-15 --notice "..."
+python tools/emuremote.py run X                       # X(ecute a program
 ```
 
 **`emuremote.py` is the path to prefer for all three tools** (findings

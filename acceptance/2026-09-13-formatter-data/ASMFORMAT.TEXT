@@ -1,0 +1,544 @@
+;---------------------------------------------------
+; ASMFORMAT -- the Disk II formatter: blocks 0-2 of
+; APPLE3:FORMATTER.DATA. FORMATTER.CODE reads those
+; three blocks to 03D00 and FORMDISK calls 03D00 with
+; slot and drive in A (Apple II Technical Note Pascal
+; #12, which calls this file ASMFORMAT.TEXT, gives
+; its origin and its length, 1082 bytes, and ships no
+; source on the 1.3 disks).
+;
+; Reconstructed from FORMATTER.DATA (finding 275).
+; MAKEFMT copies this codefile's blocks 1-3 into the
+; data file whole, so what has to match is not just
+; the 1082 bytes of code but the assembler's segment
+; dictionary after them and the stale end of its
+; block buffer, which repeats block 1's bytes 024A-
+; 03FF. Those stale bytes are the evidence for the
+; .EQUs below: the delay entry 0410E and the storage
+; from 0411F appear resolved there, so Apple's source
+; defined them before the code that uses them. As
+; forward labels they come out 0000.
+;
+; What is ours: every label (L<address>) and comment.
+;---------------------------------------------------
+
+        .ABSOLUTE
+        .PROC   ASMFORMAT
+        .ORG    3D00
+L410E   .EQU 410E
+L411F   .EQU 411F
+L4120   .EQU 4120
+L4121   .EQU 4121
+L4122   .EQU 4122
+L4123   .EQU 4123
+L4124   .EQU 4124
+L4125   .EQU 4125
+L4126   .EQU 4126
+L4136   .EQU 4136
+L4137   .EQU 4137
+L4138   .EQU 4138
+L4139   .EQU 4139
+        JSR  L3D3A
+        CMP  #00
+        BNE  L3D09
+        CLC
+        RTS
+L3D09   CMP  #02
+        BNE  L3D12
+        LDA  #2B
+        JMP  L3D21
+L3D12   CMP  #01
+        BNE  L3D1B
+        LDA  #27
+        JMP  L3D21
+L3D1B   CLC
+        ADC  #30
+        JMP  L3D21
+L3D21   SEC
+        RTS
+L3D23   ASL  A
+        ASL  L4124
+        STA  L4136
+        TXA
+        LSR  A
+        LSR  A
+        LSR  A
+        LSR  A
+        TAY
+        LDA  L4136
+        JSR  L3EC6
+        LSR  L4124
+        RTS
+L3D3A   TAX
+        AND  #70
+        STA  L4123
+        TXA
+        LDX  L4123
+        ROL  A
+        LDA  #00
+        ROL  A
+        BNE  L3D50
+        LDA  0C08A,X
+        JMP  L3D53
+L3D50   LDA  0C08B,X
+L3D53   LDA  0C089,X
+        LDA  #0D7
+        STA  0A
+        LDA  #50
+        STA  L4124
+        LDA  #00
+        JSR  L3D23
+L3D64   LDA  0A
+        BEQ  L3D6E
+        JSR  L403A
+        JMP  L3D64
+L3D6E   LDA  #01
+        STA  03
+        LDA  #0AA
+        STA  00
+        LDA  L4120
+        CLC
+        ADC  #02
+        STA  04
+        LDA  #00
+        STA  01
+L3D82   LDA  01
+        LDX  L4123
+        JSR  L3D23
+        LDX  L4123
+        LDA  0C08D,X
+        LDA  0C08E,X
+        TAY
+        LDA  0C08E,X
+        LDA  0C08C,X
+        TYA
+        BPL  L3DA2
+        LDA  #02
+        JMP  L3DF9
+L3DA2   JSR  L4063
+        BCC  L3DB5
+        LDA  #01
+        LDY  04
+        CPY  L411F
+        BCS  L3DB2
+        LDA  #04
+L3DB2   JMP  L3DF9
+L3DB5   LDY  04
+        CPY  L411F
+        BCS  L3DC1
+        LDA  #04
+        JMP  L3DF9
+L3DC1   CPY  L4120
+        BCC  L3DCB
+        LDA  #03
+        JMP  L3DF9
+L3DCB   LDA  L4122
+        STA  L4125
+L3DD1   DEC  L4125
+        BNE  L3DDB
+        LDA  #01
+        JMP  L3DF9
+L3DDB   LDX  L4123
+        JSR  L3E6A
+        BCS  L3DD1
+        LDA  08
+        BNE  L3DD1
+        LDX  L4123
+        JSR  L3E07
+        BCS  L3DD1
+        INC  01
+        LDA  01
+        CMP  #23
+        BCC  L3D82
+        LDA  #00
+L3DF9   PHA
+        LDX  L4123
+        LDA  0C088,X
+        LDA  #00
+        JSR  L3D23
+        PLA
+        RTS
+L3E07   LDY  #20
+L3E09   DEY
+        BEQ  L3E68
+L3E0C   LDA  0C08C,X
+        BPL  L3E0C
+L3E11   EOR  #0D5
+        BNE  L3E09
+        NOP
+L3E16   LDA  0C08C,X
+        BPL  L3E16
+        CMP  #0AA
+        BNE  L3E11
+        LDY  #56
+L3E21   LDA  0C08C,X
+        BPL  L3E21
+        CMP  #0AD
+        BNE  L3E11
+        LDA  #00
+L3E2C   DEY
+        STY  05
+L3E2F   LDA  0C08C,X
+        BPL  L3E2F
+        CMP  #96
+        BNE  L3E68
+        LDY  05
+        BNE  L3E2C
+L3E3C   STY  05
+L3E3E   LDA  0C08C,X
+        BPL  L3E3E
+        CMP  #96
+        BNE  L3E68
+        LDY  05
+        INY
+        BNE  L3E3C
+L3E4C   LDA  0C08C,X
+        BPL  L3E4C
+        CMP  #96
+        BNE  L3E68
+L3E55   LDA  0C08C,X
+        BPL  L3E55
+        CMP  #0DE
+        BNE  L3E68
+        NOP
+L3E5F   LDA  0C08C,X
+        BPL  L3E5F
+        CMP  #0AA
+        BEQ  L3EC4
+L3E68   SEC
+        RTS
+L3E6A   LDY  #0FC
+        STY  0C
+L3E6E   INY
+        BNE  L3E75
+        INC  0C
+        BEQ  L3E68
+L3E75   LDA  0C08C,X
+        BPL  L3E75
+L3E7A   CMP  #0D5
+        BNE  L3E6E
+        NOP
+L3E7F   LDA  0C08C,X
+        BPL  L3E7F
+        CMP  #0AA
+        BNE  L3E7A
+        LDY  #03
+L3E8A   LDA  0C08C,X
+        BPL  L3E8A
+        CMP  #96
+        BNE  L3E7A
+        LDA  #00
+L3E95   STA  0B
+L3E97   LDA  0C08C,X
+        BPL  L3E97
+        ROL  A
+        STA  0D
+L3E9F   LDA  0C08C,X
+        BPL  L3E9F
+        AND  0D
+        STA  0007,Y
+        EOR  0B
+        DEY
+        BPL  L3E95
+        TAY
+        BNE  L3E68
+L3EB1   LDA  0C08C,X
+        BPL  L3EB1
+        CMP  #0DE
+        BNE  L3E68
+        NOP
+L3EBB   LDA  0C08C,X
+        BPL  L3EBB
+        CMP  #0AA
+        BNE  L3E68
+L3EC4   CLC
+        RTS
+L3EC6   STX  L4137
+        STA  L4136
+        CMP  L4124
+        BEQ  L3F2D
+        LDA  #00
+        STA  L4138
+L3ED6   LDA  L4124
+        STA  L4139
+        SEC
+        SBC  L4136
+        BEQ  L3F19
+        BCS  L3EEB
+        EOR  #0FF
+        INC  L4124
+        BCC  L3EF0
+L3EEB   ADC  #0FE
+        DEC  L4124
+L3EF0   CMP  L4138
+        BCC  L3EF8
+        LDA  L4138
+L3EF8   CMP  #0C
+        BCS  L3EFD
+        TAY
+L3EFD   SEC
+        JSR  L3F1D
+        LDA  L404B,Y
+        JSR  L403A
+        LDA  L4139
+        CLC
+        JSR  L3F20
+        LDA  L4057,Y
+        JSR  L403A
+        INC  L4138
+        BNE  L3ED6
+L3F19   JSR  L403A
+        CLC
+L3F1D   LDA  L4124
+L3F20   AND  #03
+        ROL  A
+        ORA  L4137
+        TAX
+        LDA  0C080,X
+        LDX  L4137
+L3F2D   RTS
+L3F2E   JSR  L410E
+        LDA  0C08D,X
+        LDA  0C08E,X
+        LDA  #0FF
+        STA  0C08F,X
+        CMP  0C08C,X
+        PHA
+        PLA
+        NOP
+        LDY  #04
+L3F44   PHA
+        PLA
+        JSR  L3FA5
+        DEY
+        BNE  L3F44
+        LDA  #0D5
+        JSR  L3FA4
+        LDA  #0AA
+        JSR  L3FA4
+        LDA  #0AD
+        JSR  L3FA4
+        LDY  #56
+        NOP
+        NOP
+        NOP
+        BNE  L3F65
+L3F62   JSR  L410E
+L3F65   NOP
+        NOP
+        LDA  #96
+        STA  0C08D,X
+        CMP  0C08C,X
+        DEY
+        BNE  L3F62
+        BIT  00
+        NOP
+L3F75   JSR  L410E
+        LDA  #96
+        STA  0C08D,X
+        CMP  0C08C,X
+        LDA  #96
+        NOP
+        INY
+        BNE  L3F75
+        JSR  L3FA4
+        LDA  #0DE
+        JSR  L3FA4
+        LDA  #0AA
+        JSR  L3FA4
+        LDA  #0EB
+        JSR  L3FA4
+        LDA  #0FF
+        JSR  L3FA4
+        LDA  0C08E,X
+        LDA  0C08C,X
+        RTS
+L3FA4   NOP
+L3FA5   PHA
+        PLA
+        STA  0C08D,X
+        CMP  0C08C,X
+        RTS
+L3FAE   SEC
+        LDA  0C08D,X
+        LDA  0C08E,X
+        BMI  L4015
+        LDA  #0FF
+        STA  0C08F,X
+        CMP  0C08C,X
+        PHA
+        PLA
+L3FC1   JSR  L401B
+        JSR  L401B
+        STA  0C08D,X
+        CMP  0C08C,X
+        NOP
+        DEY
+        BNE  L3FC1
+        LDA  #0D5
+        JSR  L402D
+        LDA  #0AA
+        JSR  L402D
+        LDA  #96
+        JSR  L402D
+        LDA  03
+        JSR  L401C
+        LDA  01
+        JSR  L401C
+        LDA  02
+        JSR  L401C
+        LDA  03
+        EOR  01
+        EOR  02
+        PHA
+        LSR  A
+        ORA  00
+        STA  0C08D,X
+        LDA  0C08C,X
+        PLA
+        ORA  #0AA
+        JSR  L402C
+        LDA  #0DE
+        JSR  L402D
+        LDA  #0AA
+        JSR  L402D
+        LDA  #0EB
+        JSR  L402D
+        CLC
+L4015   LDA  0C08E,X
+        LDA  0C08C,X
+L401B   RTS
+L401C   PHA
+        LSR  A
+        ORA  00
+        STA  0C08D,X
+        CMP  0C08C,X
+        PLA
+        NOP
+        NOP
+        NOP
+        ORA  #0AA
+L402C   NOP
+L402D   NOP
+        PHA
+        PLA
+        STA  0C08D,X
+        CMP  0C08C,X
+        RTS
+        .BYTE 00,00,00
+L403A   LDX  #11
+L403C   DEX
+        BNE  L403C
+        INC  09
+        BNE  L4045
+        INC  0A
+L4045   SEC
+        SBC  #01
+        BNE  L403A
+        RTS
+L404B   .BYTE 01,30,28,24,20,1E,1D,1C
+        .BYTE 1C,1C,1C,1C
+L4057   .BYTE 70,2C,26,22,1F,1E,1D,1C
+        .BYTE 1C,1C,1C,1C
+L4063   LDA  L4121
+        STA  06
+L4068   LDY  #80
+        LDA  #00
+        STA  02
+        JMP  L4073
+L4071   LDY  04
+L4073   LDX  L4123
+        JSR  L3FAE
+        BCC  L407E
+        JMP  L410E
+L407E   LDX  L4123
+        JSR  L3F2E
+        INC  02
+        LDA  02
+        CMP  #10
+        BCC  L4071
+        LDY  #0F
+        STY  02
+        LDA  L4122
+        STA  L4125
+L4096   STA  L4126,Y
+        DEY
+        BPL  L4096
+        LDA  04
+        SEC
+        SBC  #05
+        TAY
+L40A2   JSR  L410E
+        JSR  L410E
+        PHA
+        PLA
+        NOP
+        NOP
+        DEY
+        BNE  L40A2
+        LDX  L4123
+        JSR  L3E6A
+        BCS  L40F3
+        LDA  08
+        BEQ  L40CE
+        DEC  04
+        LDA  04
+        CMP  L411F
+        BCS  L40F3
+        SEC
+        RTS
+L40C6   LDX  L4123
+        JSR  L3E6A
+        BCS  L40E8
+L40CE   LDX  L4123
+        JSR  L3E07
+        BCS  L40E8
+        LDY  08
+        LDA  L4126,Y
+        BMI  L40E8
+        LDA  #0FF
+        STA  L4126,Y
+        DEC  02
+        BPL  L40C6
+        CLC
+        RTS
+L40E8   DEC  L4125
+        BNE  L40C6
+        DEC  06
+        BNE  L40F3
+        SEC
+        RTS
+L40F3   LDA  L4122
+        ASL  A
+        STA  L4125
+L40FA   LDX  L4123
+        JSR  L3E6A
+        BCS  L4108
+        LDA  08
+        CMP  #0F
+        BEQ  L410F
+L4108   DEC  L4125
+        BNE  L40FA
+        SEC
+        RTS
+L410F   LDX  #0D6
+L4111   JSR  L410E
+        JSR  L410E
+        BIT  00
+        DEX
+        BNE  L4111
+        JMP  L4068
+        .BYTE 0E
+        .BYTE 1B
+        .BYTE 03
+        .BYTE 10
+        .BYTE 00
+        .BYTE 00
+        .BYTE 00
+        .BYTE 00,00,00,00,00,00,00,00
+        .BYTE 00,00,00,00,00,00,00,00
+        .BYTE 00
+        .BYTE 00
+        .BYTE 00
+        .BYTE 00
+        .END

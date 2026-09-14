@@ -6,6 +6,7 @@
     python tools/emuremote.py observe A --seconds 40      # what does it prompt?
     python tools/emuremote.py librarian --input COMPLINK --out LIBTEST \
         --slots 1-15 --notice "COPYRIGHT ..."            # finding 267
+    python tools/emuremote.py run MAKEFMT                # X(ecute, finding 275
 
 The `emu*.ps1` scripts type into AppleWin's window with SendKeys and capture
 a screenshot. They still work and are still the fallback, but they carry
@@ -454,6 +455,25 @@ def verify_linked(name: str) -> int:
     return 0
 
 
+def do_run(con: Console, args) -> int:
+    """X(ecute a program that asks nothing, and wait for the Command prompt.
+
+    For the build steps Apple ran as programs rather than tools -- the
+    ones that assemble a data file out of codefile blocks. A run-time
+    error stops at a prompt that is not Command:, so that is a failure.
+    """
+    con.expect(PROMPT)
+    con.send("X")
+    con.expect(b"Execute what file")
+    con.send(f"{VOL}{args.name}\r")
+    hit = con.expect(PROMPT, b"Type <space>", b"No file")
+    if hit != PROMPT:
+        print(f"\nRUN FAILED: {message_before(con.text(), hit.decode())}")
+        return 1
+    print(f"\nran {args.name}")
+    return 0
+
+
 def do_observe(con: Console, args) -> int:
     """Send a key and log whatever comes back. For converting the next tool."""
     con.expect(PROMPT)
@@ -589,7 +609,7 @@ def do_librarian(con: Console, args) -> int:
 
 ACTIONS = {"compile": do_compile, "assemble": do_assemble,
            "link": do_link, "observe": do_observe,
-           "librarian": do_librarian}
+           "librarian": do_librarian, "run": do_run}
 
 
 def main() -> int:
@@ -620,6 +640,9 @@ def main() -> int:
     p.add_argument("--notice", default="",
                    help="the answer to Notice? -- the codefile comment")
 
+    p = sub.add_parser("run")
+    p.add_argument("name", help="codefile on SYSHD, without .CODE")
+
     p = sub.add_parser("observe")
     p.add_argument("keys", help="sent verbatim once the Command prompt shows")
     p.add_argument("--seconds", type=float, default=30.0)
@@ -627,7 +650,8 @@ def main() -> int:
     args = ap.parse_args()
     label = {"link": lambda: f"{args.out}-link",
              "librarian": lambda: f"{args.out}-librarian",
-             "observe": lambda: "observe"}.get(
+             "observe": lambda: "observe",
+             "run": lambda: f"{args.name}-run"}.get(
                  args.action, lambda: f"{args.name}-{args.action}")()
 
     if not HD1.exists():
