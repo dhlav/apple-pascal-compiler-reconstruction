@@ -1,0 +1,1217 @@
+;---------------------------------------------------
+; TURTLEGRAPHICS' seven native procedures,
+; SYSTEM.LIBRARY segment 20: the hi-res primitives
+; and the line drawer, the clipper, MOVEABS, MOVEREL,
+; FILLIT, SCREENBIT and DRAWBLOCK.
+;
+; The other twenty-four procedures of the unit are
+; Pascal and are in
+; src/pascal/units/1.3/TURTLEGRAPHICS.text.
+;
+; Reconstructed from the 1.3 binary. Assemble with
+; Apple's own SYSTEM.ASSMBLER: it generates the
+; relocation tables (finding 44), and those are part
+; of what has to match. All seven come out byte for
+; byte, relocation tables included.
+;
+; The order below is the order the seven sit in the
+; shipped segment, which is the order they were
+; assembled in and not the order the unit declares
+; them (finding 96c).
+;
+; What is ours and what is Apple's:
+;   * every label name and every comment is ours;
+;   * the six entry points HIRES exports, and the one
+;     CLIP exports, are Apple's structure -- the
+;     binary has a segment-relative relocation for
+;     each, which is a .DEF/.REF pair and nothing
+;     else (finding 98a);
+;   * labels written L<nnnn> are the offset of the
+;     label from the start of its procedure, and are
+;     placeholders: nothing about them is recovered.
+;
+; Zero page. A native procedure runs inside the
+; interpreter and everything below $50 is free while
+; it does. Only the locations the code makes plain
+; are named here; the rest of the map is not settled
+; and is left as addresses rather than guessed at.
+;   $00,$01  the return address, saved on entry
+;   $04,$05  the hi-res address HPOSN builds
+;   $06      the mask that selects the pixel in it
+;   $34      the page base, $20 or $40
+;   $BB,$BC  the turtle record, put there by HOOKUP
+;            in the Pascal half
+;---------------------------------------------------
+
+RTN     .EQU 000        ; return address
+SCRN    .EQU 004        ; hi-res address of the row
+MASK    .EQU 006        ; bit within the byte
+PAGE    .EQU 034        ; 020 for page 1, 040 for page 2
+TURTLE  .EQU 0BB        ; TURTLEREC, from the Pascal half
+
+
+;---------------------------------------------------
+; The hi-res primitives. Six entry points, all of
+; them .DEF'd because the other six procedures reach
+; them: nothing else produces a segment-relative
+; relocation, and the binary has fifteen.
+;
+;   SETPAGE  read PAGE out of the turtle record and
+;            set the page base to $20 or $40
+;   SETPEN   SETPAGE, then read PEN and pick the
+;            colour mask; carry set means PEN=NONE
+;            and there is nothing to draw
+;   HPOSN    build the screen address for a point,
+;            coordinates already in zero page
+;   PLOT     put one point down
+;   RIGHT    step one pixel right
+;   LINE     draw from the current point to another
+;
+; The colour table below is the eight hi-res byte
+; patterns, indexed by SCREENCOLOR from 5 up: black,
+; green, violet, white, black2, orange, blue, white2.
+;---------------------------------------------------
+        .PROC HIRES,0
+        .DEF SETPAGE,SETPEN,HPOSN,PLOT,RIGHT,LINE
+SETPAGE LDY  #00E
+        LDA  @TURTLE,Y
+        CMP  #002
+        BEQ  L000C
+        LDA  #020
+        BNE  L000E
+L000C   LDA  #040
+L000E   STA  PAGE
+        RTS
+SETPEN  JSR  SETPAGE
+        LDY  #00C
+        LDA  @TURTLE,Y
+        TAY
+        CPY  #00D
+        BCS  L004A
+        LDX  #000
+        STX  01E
+        STX  01D
+        CPY  #005
+        BCC  L0030
+        INC  01D
+        LDA  COLORS-005,Y
+        STA  01F
+        CLC
+        RTS
+L0030   CPY  #003
+        BNE  L003C
+        LDX  #07F
+        STX  01E
+L0038   STX  01F
+        CLC
+        RTS
+L003C   BCC  L0040
+        BCS  L004A
+L0040   CPY  #001
+        BNE  L0048
+        LDX  #07F
+L0046   BNE  L0038
+L0048   BCS  L0038
+L004A   SEC
+        RTS
+;       ---- data
+COLORS  .BYTE 000,02A,055,07F,080,0AA,0D5,0FF
+L0054   STA  011
+        STX  00F
+        STY  010
+HPOSN   PHA
+        AND  #0C0
+        STA  SCRN
+        LSR  A
+        LSR  A
+        ORA  SCRN
+        STA  SCRN
+        PLA
+        STA  SCRN+1
+        ASL  A
+        ASL  A
+        ASL  A
+        ROL  SCRN+1
+        ASL  A
+        ROL  SCRN+1
+        ASL  A
+        ROR  SCRN
+        LDA  SCRN+1
+        AND  #01F
+        ORA  PAGE
+        STA  SCRN+1
+        TXA
+        CPY  #000
+        BEQ  L0085
+        LDY  #023
+        ADC  #004
+L0084   INY
+L0085   SBC  #007
+        BCS  L0084
+        STY  00D
+        TAX
+        LDA  L0182,X
+        STA  MASK
+        TYA
+        LSR  A
+        LDA  01F
+        STA  002
+        BCC  L009C
+        JMP  L00E0
+L009C   RTS
+PLOT    JSR  L0054
+L00A0   BIT  01E
+        LDA  002
+        EOR  @SCRN,Y
+        AND  MASK
+        BNE  L00AC
+        INC  00E
+L00AC   BVC  L00B2
+        LDA  MASK
+        AND  #07F
+L00B2   EOR  @SCRN,Y
+        STA  @SCRN,Y
+        LDA  01D
+        BEQ  L00C6
+        EOR  #0FF
+        STA  01D
+        BPL  L00C9
+        JSR  RIGHT
+        JMP  L00A0
+L00C6   RTS
+L00C7   BPL  RIGHT
+L00C9   LDA  MASK
+        LSR  A
+        BCS  L00D3
+        EOR  #0C0
+L00D0   STA  MASK
+        RTS
+L00D3   DEY
+        BPL  L00D8
+        LDY  #027
+L00D8   LDA  #0C0
+L00DA   STA  MASK
+        STY  00D
+        LDA  002
+L00E0   ASL  A
+        CMP  #0C0
+        BPL  L00EB
+        LDA  002
+        EOR  #07F
+        STA  002
+L00EB   RTS
+RIGHT   LDA  MASK
+        ASL  A
+        EOR  #080
+        BMI  L00D0
+        LDA  #081
+        INY
+        CPY  #028
+        BCC  L00DA
+        LDY  #000
+        BCS  L00DA
+L00FE   BMI  L012F
+        CLC
+        LDA  SCRN+1
+        BIT  L0283
+        BNE  L012A
+        ASL  SCRN
+        BCS  L0126
+        BIT  L0282
+        BEQ  L0116
+        ADC  #01F
+        SEC
+        BCS  L0128
+L0116   ADC  #023
+        PHA
+        LDA  SCRN
+        ADC  #0B0
+        BCS  L0121
+        ADC  #0F0
+L0121   STA  SCRN
+        PLA
+        BCS  L0128
+L0126   ADC  #01F
+L0128   ROR  SCRN
+L012A   ADC  #0FC
+L012C   STA  SCRN+1
+        RTS
+L012F   CLC
+        LDA  SCRN+1
+L0132   ADC  #004
+        BIT  L0283
+        BNE  L012C
+        ASL  SCRN
+        BCC  L0155
+        ADC  #0E0
+        CLC
+        BIT  L0132+001
+        BEQ  L0157
+        LDA  SCRN
+        ADC  #050
+        EOR  #0F0
+        BEQ  L014F
+        EOR  #0F0
+L014F   STA  SCRN
+        LDA  PAGE
+        BCC  L0157
+L0155   ADC  #0E0
+L0157   ROR  SCRN
+        BCC  L012C
+LINE    PHA
+        SEC
+        SBC  00F
+        PHA
+        TXA
+        SBC  010
+        STA  00C
+        BCS  L0171
+        PLA
+        EOR  #0FF
+        ADC  #001
+        PHA
+        LDA  #000
+        SBC  00C
+L0171   STA  009
+        STA  00B
+        PLA
+        STA  008
+        STA  00A
+        PLA
+        CPY  011
+        BNE  L0182
+        JMP  L0213
+L0182   STA  00F
+        STX  010
+        TYA
+        SEC
+        SBC  011
+        BCS  L0190
+        EOR  #0FF
+        ADC  #001
+L0190   STA  007
+        STY  011
+        ROR  00C
+        LDY  00D
+        LDA  009
+        BNE  L01A4
+        LDA  007
+        CMP  008
+        BCS  L01E7
+        LDA  009
+L01A4   STA  003
+        LSR  A
+        STA  00B
+        LDA  008
+        BNE  L01AF
+        STA  003
+L01AF   TAX
+        ROR  A
+        STA  00A
+L01B3   LDA  00A
+        SEC
+        SBC  007
+        STA  00A
+        BCS  L01D6
+        DEC  00B
+        BPL  L01D6
+        ADC  008
+        STA  00A
+        LDA  00B
+        ADC  009
+        STA  00B
+        LDA  00C
+        JSR  L00FE
+        LDA  01D
+        BEQ  L01D6
+        JSR  L00A0
+L01D6   LDA  00C
+        ASL  A
+        JSR  L00C7
+        JSR  L00A0
+        DEX
+        BNE  L01B3
+        DEC  003
+        BPL  L01B3
+        RTS
+L01E7   TAX
+        BEQ  L0212
+        LSR  A
+        STA  00A
+L01ED   LDA  00A
+        SEC
+        SBC  008
+        STA  00A
+        BCS  L0207
+        ADC  007
+        STA  00A
+        LDA  00C
+        ASL  A
+        JSR  L00C7
+        LDA  01D
+        BEQ  L0207
+        JSR  L00A0
+L0207   LDA  00C
+        JSR  L00FE
+        JSR  L00A0
+        DEX
+        BNE  L01ED
+L0212   RTS
+L0213   STX  RTN
+        TAX
+        LDY  RTN
+        LDA  011
+        JSR  HPOSN
+        STY  013
+        LDA  MASK
+        STA  014
+        LDX  00F
+        LDY  010
+        LDA  011
+        JSR  HPOSN
+        CPY  013
+        BEQ  L026C
+        STY  012
+        BNE  L0237
+L0234   JSR  L00A0
+L0237   BIT  00C
+        JSR  L00C7
+        CPY  012
+        BEQ  L0234
+        CPY  013
+        BEQ  L0269
+L0244   LDA  002
+        BIT  01E
+        BVC  L024E
+        LDA  #07F
+        EOR  @SCRN,Y
+L024E   STA  @SCRN,Y
+        JSR  L00E0
+        BIT  00C
+        BPL  L0260
+        DEY
+        CPY  013
+        BNE  L0244
+        LDA  #0C0
+        BNE  L0267
+L0260   INY
+        CPY  013
+        BNE  L0244
+        LDA  #081
+L0267   STA  MASK
+L0269   JSR  L00A0
+L026C   LDA  MASK
+        CMP  014
+        BEQ  L027A
+        BIT  00C
+        JSR  L00C7
+        JMP  L0269
+L027A   RTS
+;       ---- data
+        .BYTE 081,082,084,088,090,0A0,0C0
+L0282   .BYTE 003
+L0283   .BYTE 01C
+
+;---------------------------------------------------
+; Clip a line to the viewport.
+;
+; A .FUNC of four VAR parameters -- the two endpoints
+; -- so it takes four pointers and four bytes of
+; result space, and it rewrites the endpoints in
+; place. CLIPXY is the entry MOVEABS uses, which
+; skips the parameter unpacking because the
+; coordinates are already in zero page.
+;---------------------------------------------------
+        .FUNC CLIP,4
+        .DEF CLIPXY
+        PLA
+        STA  030
+        PLA
+        STA  031
+        PLA
+        PLA
+        PLA
+        PLA
+        PLA
+        STA  02E
+        PLA
+        STA  02F
+        PLA
+        STA  02C
+        PLA
+        STA  02D
+        PLA
+        STA  02A
+        PLA
+        STA  02B
+        PLA
+        STA  028
+        PLA
+        STA  029
+        LDY  #000
+        LDA  @028,Y
+        STA  011
+        INY
+        LDA  @028,Y
+        STA  012
+        LDY  #000
+        LDA  @02A,Y
+        STA  013
+        INY
+        LDA  @02A,Y
+        STA  014
+        LDY  #000
+        LDA  @02C,Y
+        STA  016
+        INY
+        LDA  @02C,Y
+        STA  017
+        LDY  #000
+        LDA  @02E,Y
+        STA  018
+        INY
+        LDA  @02E,Y
+        STA  019
+        JSR  CLIPXY
+        LDA  #000
+        PHA
+        BCS  L0058
+        LDA  #001
+L0058   PHA
+        LDA  031
+        PHA
+        LDA  030
+        PHA
+        LDY  #000
+        LDA  011
+        STA  @028,Y
+        INY
+        LDA  00011,Y
+        STA  @028,Y
+        LDY  #000
+        LDA  013
+        STA  @02A,Y
+        INY
+        LDA  00013,Y
+        STA  @02A,Y
+        LDY  #000
+        LDA  016
+        STA  @02C,Y
+        INY
+        LDA  00016,Y
+        STA  @02C,Y
+        LDY  #000
+        LDA  018
+        STA  @02E,Y
+        INY
+        LDA  00018,Y
+        STA  @02E,Y
+        RTS
+CLIPXY  LDY  #000
+L0092   LDA  @TURTLE,Y
+        STA  00020,Y
+        INY
+        CPY  #008
+        BNE  L0092
+        LDY  #00C
+        LDA  @TURTLE,Y
+        CMP  #005
+        BCC  L00B0
+        LDA  022
+        SBC  #001
+        STA  022
+        LDA  023
+        SBC  #000
+        STA  023
+L00B0   LDY  #00F
+        JSR  L01A5
+        STA  015
+        LDY  #014
+        JSR  L01A5
+        STA  01A
+L00BE   LDA  01A
+        ORA  015
+        AND  #00F
+        BNE  L00C8
+L00C6   CLC
+        RTS
+L00C8   LDA  015
+        AND  01A
+        AND  #00F
+        BEQ  L00D2
+        SEC
+L00D1   RTS
+L00D2   LDA  015
+        AND  #00F
+        BEQ  L00F5
+        LDX  #000
+        LDY  #00F
+        JSR  L0195
+        LDX  #005
+        LDY  #014
+        JSR  L0195
+        JSR  L0118
+        BCS  L00D1
+        LDX  #00F
+        LDY  #00A
+        JSR  L0195
+        JMP  L00BE
+L00F5   LDA  01A
+        AND  #00F
+        BEQ  L00C6
+        LDX  #000
+        LDY  #014
+        JSR  L0195
+        LDX  #005
+        LDY  #00F
+        JSR  L0195
+        JSR  L0118
+        BCS  L00D1
+        LDX  #014
+        LDY  #00A
+        JSR  L0195
+        JMP  L00C6
+L0118   LDA  MASK
+        EOR  00B
+        AND  MASK
+        ASL  A
+        ASL  A
+        ASL  A
+        ASL  A
+        STA  RTN
+        AND  00B
+        BEQ  L0139
+        LDA  00B
+        AND  #00F
+        BNE  L0137
+        LDY  #005
+        LDX  #00A
+        JSR  L0195
+        CLC
+        RTS
+L0137   SEC
+        RTS
+L0139   STA  01B
+        STA  01C
+L013D   ROL  01B
+        LDA  002
+        ADC  007
+        STA  00C
+        LDA  003
+        ADC  008
+        BVS  L014D
+        CMP  #080
+L014D   ROR  A
+        STA  00D
+        ROR  00C
+        ROR  01B
+        ROL  01C
+        LDA  SCRN
+        ADC  009
+        STA  00E
+        LDA  SCRN+1
+        ADC  00A
+        BVS  L0164
+        CMP  #080
+L0164   ROR  A
+        STA  00F
+        ROR  00E
+        ROR  01C
+        LDY  #00A
+        JSR  L01A5
+        STA  010
+        AND  MASK
+        AND  #00F
+        BEQ  L0187
+        LDX  #000
+        JSR  L0195
+        LDA  MASK
+        AND  00B
+        AND  #00F
+        BEQ  L013D
+L0185   CLC
+        RTS
+L0187   LDA  010
+        AND  RTN
+        BNE  L0185
+        LDX  #005
+        JSR  L0195
+        JMP  L013D
+L0195   LDA  #005
+        STA  RTN+1
+L0199   LDA  00002,Y
+        STA  002,X
+        INX
+        INY
+        DEC  RTN+1
+        BNE  L0199
+        RTS
+L01A5   LDA  #000
+        LDX  SCRN+1,Y
+        BMI  L01D3
+        CPX  025
+        BCC  L01D3
+        BNE  L01BB
+        LDX  SCRN,Y
+        CPX  024
+        BCC  L01D3
+        BNE  L01BB
+        ORA  #040
+L01BB   LDX  SCRN+1,Y
+        CPX  027
+        BCC  L01D5
+        BNE  L01CF
+        LDX  SCRN,Y
+        CPX  026
+        BCC  L01D5
+        BNE  L01CF
+        ORA  #080
+        BNE  L01D5
+L01CF   ORA  #008
+        BNE  L01D5
+L01D3   ORA  #004
+L01D5   LDX  003,Y
+        BMI  L01FF
+        CPX  021
+        BCC  L01FF
+        BNE  L01E9
+        LDX  002,Y
+        CPX  020
+        BCC  L01FF
+        BNE  L01E9
+        ORA  #010
+L01E9   LDX  003,Y
+        CPX  023
+        BCC  L0201
+        BNE  L01F9
+        LDX  002,Y
+        CPX  022
+        BCC  L0201
+        BEQ  L01FC
+L01F9   ORA  #002
+        RTS
+L01FC   ORA  #020
+        RTS
+L01FF   ORA  #001
+L0201   RTS
+
+;---------------------------------------------------
+; PROCEDURE MOVEABS(X,Y: INTEGER)
+;
+; Move the turtle to a point, drawing if the pen is
+; down. The turtle's own position is at offsets 8..11
+; of the record TURTLE points at, and is read out to
+; zero page and written back.
+;
+; PUTPOS is where MOVEREL joins: by then the new
+; position is in zero page and the two are the same
+; routine.
+;
+; Screen rows run the other way from turtle rows, so
+; the y coordinates are subtracted from 191 on the
+; way to the drawing primitives.
+;---------------------------------------------------
+        .PROC MOVEABS,2
+        .DEF PUTPOS
+        .REF SETPEN,PLOT,LINE,CLIPXY
+        LDY  #008
+L0002   LDA  @TURTLE,Y
+        STA  00009,Y
+        INY
+        CPY  #00C
+        BNE  L0002
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        PLA
+        STA  018
+        PLA
+        STA  019
+        PLA
+        STA  016
+        PLA
+        STA  017
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+PUTPOS  LDY  #008
+L0026   LDA  0000E,Y
+        STA  @TURTLE,Y
+        INY
+        CPY  #00C
+        BNE  L0026
+        LDY  #00C
+        LDA  @TURTLE,Y
+        BNE  L0037
+L0036   RTS
+L0037   JSR  CLIPXY
+        BCS  L0036
+        JSR  SETPEN
+        BCS  L0036
+        LDA  016
+        PHA
+        LDA  017
+        PHA
+        LDA  #0BF
+        SEC
+        SBC  018
+        PHA
+        LDA  #0BF
+        SEC
+        SBC  013
+        LDX  011
+        LDY  012
+        JSR  PLOT
+        PLA
+        TAY
+        PLA
+        TAX
+        PLA
+        JMP  LINE
+
+;---------------------------------------------------
+; PROCEDURE MOVEREL(DX,DY: INTEGER)
+;
+; Add the offsets to where the turtle is and hand
+; over to MOVEABS at PUTPOS.
+;---------------------------------------------------
+        .PROC MOVEREL,2
+        .REF PUTPOS
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        LDY  #008
+L0008   LDA  @TURTLE,Y
+        STA  00009,Y
+        INY
+        CPY  #00C
+        BNE  L0008
+        CLC
+        PLA
+        ADC  013
+        STA  018
+        PLA
+        ADC  014
+        STA  019
+        CLC
+        PLA
+        ADC  011
+        STA  016
+        PLA
+        ADC  012
+        STA  017
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+        JMP  PUTPOS
+
+;---------------------------------------------------
+; Fill the viewport with the current pen colour, one
+; scan line at a time.
+;
+; The two counters it runs on are the last two bytes
+; of the procedure, past the last instruction -- the
+; second of them is the byte that would otherwise be
+; the pad to the word boundary.
+;---------------------------------------------------
+        .PROC FILLIT,0
+        .REF SETPEN,PLOT,LINE
+        LDY  #000
+L0002   LDA  @TURTLE,Y
+        STA  00020,Y
+        INY
+        CPY  #008
+        BNE  L0002
+        JSR  SETPEN
+        BCS  L0053
+        LDY  #00C
+        LDA  @TURTLE,Y
+        CMP  #005
+        BCC  L0025
+        LDA  022
+        SBC  #001
+        STA  022
+        LDA  023
+        SBC  #000
+        STA  023
+L0025   SEC
+        LDA  026
+        SBC  024
+        ADC  #000
+        STA  L0054
+        LDA  #0BF
+        SEC
+        SBC  026
+        STA  L0055
+L0037   LDA  L0055
+        LDX  020
+        LDY  021
+        JSR  PLOT
+        LDY  L0055
+        LDA  022
+        LDX  023
+        JSR  LINE
+        INC  L0055
+        DEC  L0054
+        BNE  L0037
+L0053   RTS
+L0054   BRK
+L0055   BRK
+
+;---------------------------------------------------
+; FUNCTION SCREENBIT(X,Y: INTEGER): BOOLEAN
+;
+; Is the pixel at (X,Y) on? Position with HPOSN and
+; test the bit the mask selects.
+;---------------------------------------------------
+        .FUNC SCREENBIT,2
+        .REF SETPAGE,HPOSN
+        JSR  SETPAGE
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        PLA
+        PLA
+        PLA
+        PLA
+        PLA
+        STA  015
+        PLA
+        PLA
+        TAX
+        PLA
+        TAY
+        LDA  #000
+        PHA
+        LDA  #0BF
+        SEC
+        SBC  015
+        JSR  HPOSN
+        LDA  @SCRN,Y
+        AND  #07F
+        AND  MASK
+        BEQ  L002A
+        LDA  #001
+L002A   PHA
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+        RTS
+
+;---------------------------------------------------
+; PROCEDURE DRAWBLOCK(VAR SOURCE; ROWSIZE,XSKIP,
+;                     YSKIP,WIDTH,HEIGHT,XSCREEN,
+;                     YSCREEN,MODE: INTEGER)
+;
+; Copy a rectangle of bits onto the screen. Nine
+; parameter words, and the widest thing in the unit:
+; this is what WCHAR draws characters with.
+;
+; The three jumps to RIGHT at the end are the three
+; ways out of the inner loop, one per mode; the two
+; tables below them are indexed by MODE.
+;---------------------------------------------------
+        .PROC DRAWBLOCK,9
+        .REF SETPAGE,HPOSN,RIGHT
+        PLA
+        STA  RTN
+        PLA
+        STA  RTN+1
+        PLA
+        AND  #00F
+        STA  003
+        PLA
+        PLA
+        STA  00B
+        PLA
+        STA  00C
+        PLA
+        STA  009
+        PLA
+        STA  00A
+        PLA
+        STA  00E
+        PLA
+        STA  00F
+        PLA
+        STA  010
+        PLA
+        STA  011
+        PLA
+        STA  012
+        PLA
+        STA  013
+        PLA
+        STA  014
+        PLA
+        STA  015
+        PLA
+        STA  016
+        PLA
+        STA  017
+        PLA
+        STA  018
+        PLA
+        STA  019
+        LDA  RTN+1
+        PHA
+        LDA  RTN
+        PHA
+        JSR  SETPAGE
+        LDY  #000
+L0047   LDA  @TURTLE,Y
+        STA  00020,Y
+        INY
+        CPY  #008
+        BNE  L0047
+        LDY  003
+        LDA  L0219,Y
+        STA  L01F4+001
+        LDA  L0229,Y
+        STA  L01F6+001
+        LDA  023
+        CMP  00A
+        BCC  L006D
+        BNE  L006E
+        LDA  022
+        CMP  009
+        BCS  L006E
+L006D   RTS
+L006E   LDA  027
+        CMP  00C
+        BCC  L006D
+        BNE  L007C
+        LDA  026
+        CMP  00B
+        BCC  L006D
+L007C   SEC
+        LDA  020
+        SBC  009
+        STA  01A
+        LDA  021
+        SBC  00A
+        STA  01B
+        BMI  L00B0
+        CLC
+        LDA  014
+        ADC  01A
+        STA  014
+        LDA  015
+        ADC  01B
+        STA  015
+        SEC
+        LDA  010
+        SBC  01A
+        STA  010
+        LDA  011
+        SBC  01B
+        STA  011
+        BPL  L00A8
+        RTS
+L00A8   LDA  020
+        STA  009
+        LDA  021
+        STA  00A
+L00B0   CLC
+        LDA  009
+        ADC  010
+        STA  01A
+        LDA  00A
+        ADC  011
+        STA  01B
+        SEC
+        LDA  01A
+        SBC  022
+        STA  01A
+        LDA  01B
+        SBC  023
+        STA  01B
+        BMI  L00DB
+        SEC
+        LDA  010
+        SBC  01A
+        STA  010
+        LDA  011
+        SBC  01B
+        STA  011
+        INC  010
+L00DB   SEC
+        LDA  024
+        SBC  00B
+        STA  01A
+        LDA  025
+        SBC  00C
+        STA  01B
+        BMI  L010F
+        CLC
+        LDA  012
+        ADC  01A
+        STA  012
+        LDA  013
+        ADC  01B
+        STA  013
+        SEC
+        LDA  00E
+        SBC  01A
+        STA  00E
+        LDA  00F
+        SBC  01B
+        STA  00F
+        BPL  L0107
+        RTS
+L0107   LDA  024
+        STA  00B
+        LDA  025
+        STA  00C
+L010F   CLC
+        LDA  00B
+        ADC  00E
+        STA  01A
+        LDA  00C
+        ADC  00F
+        STA  01B
+        SEC
+        LDA  01A
+        SBC  026
+        STA  01A
+        LDA  01B
+        SBC  027
+        STA  01B
+        BMI  L0140
+        LDA  #000
+        CMP  01A
+        BEQ  L0140
+        SEC
+        LDA  00E
+        SBC  01A
+        STA  00E
+        LDA  00F
+        SBC  01B
+        STA  00F
+        INC  00E
+L0140   CLC
+        LDA  014
+        ADC  010
+        STA  02A
+        LDA  015
+        ADC  011
+        STA  02B
+        LDA  014
+        AND  #007
+        STA  01C
+        LDA  02A
+        AND  #007
+        STA  01D
+        LDA  015
+        STA  008
+        LDA  014
+        ROR  008
+        ROR  A
+        ROR  008
+        ROR  A
+        ROR  008
+        ROR  A
+        STA  01E
+        LDA  02B
+        STA  008
+        LDA  02A
+        ROR  008
+        ROR  A
+        ROR  008
+        ROR  A
+        ROR  008
+        ROR  A
+        STA  01F
+        SEC
+        LDA  #0BF
+        SBC  00B
+        STA  00B
+        SEC
+        SBC  00E
+        STA  029
+        LDA  012
+        BEQ  L019F
+L018B   CLC
+        LDA  018
+        ADC  016
+        STA  018
+        LDA  019
+        ADC  017
+        STA  019
+        DEC  012
+        BEQ  L019F
+        JMP  L018B
+L019F   LDX  009
+        LDY  00A
+        LDA  00B
+        CMP  029
+        BNE  L01AA
+        RTS
+L01AA   JSR  HPOSN
+        LDY  01E
+        STY  028
+        LDA  @018,Y
+        LDX  #000
+L01B5   CPX  01C
+        BEQ  L01BD
+        LSR  A
+        INX
+        BNE  L01B5
+L01BD   STA  007
+L01BF   CPX  01D
+        BNE  L01C9
+        LDA  028
+        CMP  01F
+        BEQ  L01E0
+L01C9   LSR  007
+        JSR  L01F2
+        INX
+        CPX  #008
+        BNE  L01BF
+        LDX  #000
+        INC  028
+        LDY  028
+        LDA  @018,Y
+        STA  007
+        JMP  L01BF
+L01E0   CLC
+        LDA  018
+        ADC  016
+        STA  018
+        LDA  019
+        ADC  017
+        STA  019
+        DEC  00B
+        JMP  L019F
+L01F2   LDY  00D
+L01F4   BCS  L01F8
+L01F6   BCC  L0203
+L01F8   LDA  MASK
+        AND  #07F
+        ORA  @SCRN,Y
+        STA  @SCRN,Y
+        JMP  RIGHT
+L0203   LDA  MASK
+        EOR  #07F
+        AND  @SCRN,Y
+        STA  @SCRN,Y
+        JMP  RIGHT
+        LDA  MASK
+        AND  #07F
+        EOR  @SCRN,Y
+        STA  @SCRN,Y
+        JMP  RIGHT
+;       ---- data
+L0219   .BYTE 00D,00D,018,018,00D,00D,018,018
+        .BYTE 020,020,002,002,020,020,002,002
+L0229   .BYTE 00B,016,00B,016,01E,000,01E,000
+        .BYTE 00B,016,00B,016,01E,000,01E,000
+        .BYTE 000
+
+        .END

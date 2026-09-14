@@ -55,7 +55,7 @@ BLOCK = 512
 REBUILT = {
     "SYSTEM.EDITOR": ("2026-09-13-editor-librarian/EDLIB.CODE", 272),
     "SYSTEM.FILER": ("2026-09-12-filer-librarian/LIBFILER.CODE", 271),
-    "SYSTEM.LIBRARY": ("2026-09-14-library-text/NEWLIB.CODE", 287),
+    "SYSTEM.LIBRARY": ("2026-09-14-library-decops/NEWLIB.CODE", 290),
     "SYSTEM.MISCINFO": ("2026-09-13-miscinfo/SYSTEM-NEW.MISCINFO", 277),
     "SYSTEM.CHARSET": ("2026-09-13-charset/CHARSET.DATA", 278),
     "SYSTEM.ASSMBLER": ("2026-09-12-assembler-librarian/LIBASM.CODE", 267),

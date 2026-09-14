@@ -29,8 +29,8 @@ slack, finished by `MAKEOS`, 284),
 `SYSTEM.LIBRARY` (all code and interface text by Apple's tools, 287),
 `LINEFEED.CODE` (all but the version field, 288c),
 `FORMATTER.CODE`, and the ten text files (from `src/text/` and their
-`.layout`s, 288). **The disks are written**: `tools/mkdiskset.py`, 359,401
-of 430,080 bytes with every difference accounted for (289). Plan in
+`.layout`s, 288). **The disks are written**: `tools/mkdiskset.py`, 359,323
+of 430,080 bytes with every difference accounted for (289, 290). Plan in
 `docs/PLAN.md`, evidence ledger in `docs/FINDINGS.md`, per-file
 scoreboard in `docs/DISKSET.md`.
 

@@ -1,6 +1,6 @@
 """SYSTEM.LIBRARY: all six units' code, by Apple's compiler, assembler, Linker.
 
-acceptance/2026-09-14-library-text holds the run (findings 285, 286): the six
+acceptance/2026-09-14-library-decops holds the run (findings 285, 286, 290): the six
 unit sources in src/pascal/units/1.3/ compiled by SYSTEM.COMPILER as U*,
 the three native sources in src/native/ assembled by SYSTEM.ASSMBLER as
 N*, and the three units with native halves linked by SYSTEM.LINKER as L*.
@@ -22,7 +22,8 @@ Claims, each of which the binary can fail:
      before it matches none of the six, so the check can fail.
   6. **Each 10-byte trailer is Apple's but for one byte**: offset 6, where
      Apple's holds N or X and no 1.3 tool writes anything.
-  7. **The kept sources and layouts are the tree's.**
+  7. **The kept sources and layouts are the tree's**, the three native
+     sources included.
   8. **Apple's Librarian joins them** (finding 287) into NEWLIB.CODE, slots
      0-6 in Apple's order with the notice: block 0 is Apple's but for the
      block addresses, every code segment is identical, and a region-by-
@@ -40,7 +41,7 @@ from a2pascal.codefile import CodeFile
 from a2pascal.disk import PascalDisk
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-14-library-text"
+RUN = ROOT / "acceptance" / "2026-09-14-library-decops"
 # The run before finding 286: the same code, interfaces staged as plain
 # text. It is the control for the interface-text check.
 PLAIN = ROOT / "acceptance" / "2026-09-14-library-units"
@@ -152,6 +153,10 @@ def main() -> int:
             crlf, lf = b"\r\n", b"\n"
             check(kept.replace(crlf, lf) == tree.replace(crlf, lf),
                   f"{stem}.{ext}")
+    for name in ("LONGINTS.TEXT", "TURTLEGR.TEXT", "APPLESTF.TEXT"):
+        kept = (RUN / name).read_bytes().replace(crlf, lf)
+        tree = (ROOT / "src" / "native" / name).read_bytes()
+        check(kept == tree.replace(crlf, lf), f"src/native/{name}")
 
     print("=== Apple's Librarian joins them (finding 287) ===")
     lib = (RUN / "NEWLIB.CODE").read_bytes()
@@ -180,8 +185,24 @@ def main() -> int:
     check(total == len(araw) == 19456,
           f"text, code and slack of six slots plus block 0 tile Apple's "
           f"{len(araw)} bytes: {total}")
-    check(same == 16414, f"{same} of {total} bytes identical, aligned "
+    # 16414 in the run of finding 287; APPLESTU's slack is the Linker's
+    # memory and three more of its bytes agree in this run (finding 290).
+    check(same == 16417, f"{same} of {total} bytes identical, aligned "
           f"by slot")
+
+    print("=== the engine's name is Apple's (finding 290) ===")
+    # Apple's second LONGINTI text block repeats the first from byte 129,
+    # and past its trailer holds the source that followed IMPLEMENTATION.
+    second = araw[2 * 512:3 * 512]
+    check(second[129:422] == araw[512 + 129:512 + 422]
+          and second[432:].startswith(b'EDURE DECOPS;\r\x10"EXTERNAL;'),
+          f"Apple's slack declares the engine: {second[432:458]!r}")
+    ulong = (RUN / "ULONG.CODE").read_bytes()
+    native = (ROOT / "src" / "native" / "LONGINTS.TEXT").read_text()
+    check(b"DECOPS  " in ulong and b"LONGOPS" not in ulong
+          and ".PROC DECOPS,0" in native,
+          "ULONG's link information and src/native/LONGINTS.TEXT name it "
+          "DECOPS")
 
     print()
     if fail:

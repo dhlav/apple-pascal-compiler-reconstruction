@@ -49,8 +49,8 @@ EXPECTED = {
     ("APPLE1", "SYSTEM.MISCINFO"): 147, ("APPLE3", "II40.MISCINFO"): 142,
     ("APPLE3", "II80.MISCINFO"): 116, ("APPLE3", "HAZEL.MISCINFO"): 151,
     # two text blocks fewer than Apple's, so every slot after LONGINTI sits
-    # a block or two early; slot by slot 16414 agree (287)
-    ("APPLE1", "SYSTEM.LIBRARY"): 16156,
+    # a block or two early; slot by slot 16417 agree (287, 290)
+    ("APPLE1", "SYSTEM.LIBRARY"): 16234,
     # the Linker's slack past the last segment (104)
     ("APPLE2", "LIBMAP.CODE"): 311, ("APPLE3", "FORMATTER.CODE"): 394,
     # the record window's first fill (276)
@@ -64,7 +64,7 @@ EXPECTED = {
     # three slack tails of the finishing tool (284)
     ("APPLE3", "128K.PASCAL"): 571,
 }
-TOTAL_DIFFER = 70679
+TOTAL_DIFFER = 70757
 TOTAL = 3 * 143360
 
 fail = []

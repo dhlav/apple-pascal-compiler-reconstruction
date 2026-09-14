@@ -36,7 +36,7 @@ interpreter, from three traced assemblies (finding 279).
 `SYSTEM.LIBRARY` has every code byte and all interface text by Apple's
 tools (findings 285-287). The ten text files are identical from
 `src/text/` (finding 288). **The disks are written** (step 12, finding
-289): 359,401 of 430,080 bytes, every difference accounted for by
+289, 290): 359,323 of 430,080 bytes, every difference accounted for by
 `probe_diskset.py`.
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.

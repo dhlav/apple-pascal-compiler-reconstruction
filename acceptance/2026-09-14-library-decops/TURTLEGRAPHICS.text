@@ -1,0 +1,535 @@
+{ TURTLEGRAPHICS -- SYSTEM.LIBRARY slot 1, segment 20, 31 procedures,
+  5230 bytes, plus a 386-byte data segment (segment 21).
+
+  This is the largest unit in the library and the only one with a DATA
+  segment of its own: 193 words holding the turtle's state pointer, the
+  character-set buffer, and a 91-entry table of sines. Twenty-four of the
+  thirty-one procedures are p-code and are reproduced here; the other seven
+  (SCREENBIT, DRAWBLOCK, and the five privates 20, 21, 22, 30 and 31) are
+  6502 and are in src/native/TURTLEGR.TEXT, which assembles to Apple's exact
+  bytes (finding 98). They are EXTERNAL here and the linker is what puts
+  them in (finding 44e, and finding 96c: their order in the shipped image is
+  the order they were assembled in, not the order they are declared).
+
+  The unit is free-standing -- it reaches no operating-system global and
+  needs no host program. The binary says so: the private soft-switch routine
+  emits CHK on an array index, and range checking is only on when the
+  compilation is not (*$U-*) (finding 95b).
+
+  Two things had to be recovered rather than read. The data segment's layout
+  is not in the codefile at all; it is inferred from every LDE/LAE/STE
+  against segment 21, which pins eleven scalars in words 1..11 and the sine
+  table at word 12, and 12 + 91*2 - 1 = 193 words is exactly the 386 bytes
+  the segment dictionary gives. Word 10 is never touched by any procedure,
+  so a spare word is declared to hold its place. And the 91 sine constants
+  are four bytes each that the listing never shows as decimal: each was
+  recovered by simulating Apple's own decimal conversion (NUMSTRIN.NUMBER
+  accumulates digits in single precision and then scales by PWROFTEN,
+  finding 93b) and searching for the decimal string that reproduces the
+  shipped bytes exactly. All 91 come out at six significant digits of
+  sin(k degrees) -- and five of them (28, 40, 49, 53 and 87) are a unit low
+  in the last place, which is Apple's table and not a rounding rule.
+
+  The declaration order below is not editorial. p-code procedures are
+  emitted where they are declared (finding 94b), so the addresses in the
+  shipped segment fix the order: 23, 8, 9, 7, 10, 11, 12, 13, 14, 24, 19,
+  17, 18, 25, 26, 6, 5, 3, 4, 27, 2, 28, 29, body. The three native privates
+  20, 21 and 22 have to be the first three privates declared to be numbered
+  20, 21 and 22, and 30 and 31 have to come after 29.
+
+  The interface is Apple's own text from the library (finding 92a). }
+
+UNIT TURTLEGRAPHICS; INTRINSIC CODE 20 DATA 21;
+
+INTERFACE
+    TYPE 
+      SCREENCOLOR=(none,white,black,reverse,radar,
+                   black1,green,violet,white1,black2,orange,blue,white2);
+    
+    PROCEDURE INITTURTLE;
+    PROCEDURE TURN(ANGLE: INTEGER);
+    PROCEDURE TURNTO(ANGLE: INTEGER);
+    PROCEDURE MOVE(DIST: INTEGER);
+    PROCEDURE MOVETO(X,Y: INTEGER);
+    PROCEDURE PENCOLOR(PENMODE: SCREENCOLOR);
+    PROCEDURE TEXTMODE;
+    PROCEDURE GRAFMODE;
+    PROCEDURE FILLSCREEN(FILLCOLOR: SCREENCOLOR);
+    PROCEDURE VIEWPORT(LEFT,RIGHT,BOTTOM,TOP: INTEGER);
+    FUNCTION  TURTLEX: INTEGER;
+    FUNCTION  TURTLEY: INTEGER;
+    FUNCTION  TURTLEANG: INTEGER;
+    FUNCTION  SCREENBIT(X,Y: INTEGER): BOOLEAN;
+    PROCEDURE DRAWBLOCK(VAR SOURCE; ROWSIZE,XSKIP,YSKIP,WIDTH,HEIGHT,
+                        XSCREEN,YSCREEN,MODE: INTEGER);
+    PROCEDURE WCHAR(CH: CHAR);
+    PROCEDURE WSTRING(S: STRING);
+    PROCEDURE CHARTYPE(MODE: INTEGER);
+  
+  IMPLEMENTATION
+
+{ Apple's page ended on the IMPLEMENTATION line above. The scanner fetched
+  the next page before UNITPART copied the interface, so the fetch wrote
+  the text block and the trailer went into the block after it (finding
+  285). A page break here is what puts TURTLEGR's text on three blocks. }
+
+{ SYSTEM.CHARSET is found by reading the directory. }
+
+    CONST
+      MAXDIR   = 77;
+      VIDLENG  = 7;
+      TIDLENG  = 15;
+      FBLKSIZE = 512;
+
+
+{ The turtle's state lives in an eight-word record on the heap, and its
+  address is also written into $00BB so the 6502 half can find it. }
+
+    TYPE
+      TURTLEP = ^TURTLEREC;
+
+      TURTLEREC = RECORD
+                    XLEFT:  INTEGER;      { viewport, left   }
+                    XRIGHT: INTEGER;      { viewport, right  }
+                    YBOT:   INTEGER;      { viewport, bottom }
+                    YTOP:   INTEGER;      { viewport, top    }
+                    XPOS:   INTEGER;      { where the turtle is }
+                    YPOS:   INTEGER;
+                    PEN:    SCREENCOLOR;
+                    PAGE:   INTEGER       { 1 or 2 }
+                  END;
+
+      BYTES   = PACKED ARRAY [0..1] OF CHAR;
+
+      ADDRESS = RECORD CASE INTEGER OF
+                  0: (I: INTEGER);
+                  1: (H: ^INTEGER);
+                  2: (B: ^BYTES);
+                  3: (T: TURTLEP)
+                END;
+
+{ Enough of the operating system's directory to find SYSTEM.CHARSET.
+  These are II.0's declarations, verbatim (finding 95a). Apple's compiler
+  takes one CONST section and one TYPE section, in that order, so they
+  share the block above rather than opening a second one. }
+
+      DATEREC = PACKED RECORD
+                  MONTH: 0..12;
+                  DAY: 0..31;
+                  YEAR: 0..100
+                END (*DATEREC*) ;
+
+      VID = STRING[VIDLENG];
+      DIRRANGE = 0..MAXDIR;
+      TID = STRING[TIDLENG];
+
+      FILEKIND = (UNTYPEDFILE,XDSKFILE,CODEFILE,TEXTFILE,
+                  INFOFILE,DATAFILE,GRAFFILE,FOTOFILE,SECUREDIR);
+
+      DIRENTRY = PACKED RECORD
+                   DFIRSTBLK: INTEGER;
+                   DLASTBLK: INTEGER;
+                   CASE DFKIND: FILEKIND OF
+                     SECUREDIR,
+                     UNTYPEDFILE:
+                        (FILLER1 : 0..2048;
+                         DVID: VID;
+                         DEOVBLK: INTEGER;
+                         DNUMFILES: DIRRANGE;
+                         DLOADTIME: INTEGER;
+                         DLASTBOOT: DATEREC);
+                     XDSKFILE,CODEFILE,TEXTFILE,INFOFILE,
+                     DATAFILE,GRAFFILE,FOTOFILE:
+                        (FILLER2 : 0..1024;
+                         STATUS : BOOLEAN;
+                         DTID: TID;
+                         DLASTBYTE: 1..FBLKSIZE;
+                         DACCESS: DATEREC)
+                 END (*DIRENTRY*) ;
+
+      CHARBITS = PACKED ARRAY [0..7] OF 0..255;
+      CHARSETP = ^CHARSETREC;
+      CHARSETREC = ARRAY [0..127] OF CHARBITS;
+
+{ Segment 21, word for word. Each name is its own declaration because
+  declaration groups ascend from the first free word (finding 93a), and that
+  is what puts ANG90 at word 1 and SINE at words 12 through 193. }
+
+    VAR
+      ANG90:     INTEGER;                 {  1  the heading modulo 90 }
+      CHARBLOCK: INTEGER;                 {  2  where SYSTEM.CHARSET starts }
+      PEEKAT:    ADDRESS;                 {  3 }
+      CHARUNIT:  INTEGER;                 {  4  4 or 5 }
+      CHARMODE:  INTEGER;                 {  5  DRAWBLOCK mode for WCHAR }
+      HAVECHARS: BOOLEAN;                 {  6 }
+      NEWTURTLE: TURTLEP;                 {  7 }
+      TURTLE:    TURTLEP;                 {  8 }
+      HEADING:   INTEGER;                 {  9  0..359 }
+      SPARE:     INTEGER;                 { 10  never touched }
+      CHARSET:   CHARSETP;                { 11 }
+      SINE:      ARRAY [0..90] OF REAL;   { 12..193 }
+
+{ The 6502 half. These three have to be the first three privates declared:
+  a private takes the next number after the interface's last, and MOVEABS,
+  MOVEREL and FILLIT are 20, 21 and 22 in the shipped dictionary. }
+
+    PROCEDURE MOVEABS(X,Y: INTEGER); EXTERNAL;
+    PROCEDURE MOVEREL(DX,DY: INTEGER); EXTERNAL;
+    PROCEDURE FILLIT; EXTERNAL;
+
+    FUNCTION  SCREENBIT; EXTERNAL;
+    PROCEDURE DRAWBLOCK; EXTERNAL;
+
+{ Reading one byte from a soft switch is how the Apple II is told to change
+  video mode. The byte is thrown away; the side effect is the point. }
+
+    PROCEDURE TOUCH(ADDR: INTEGER);
+      VAR JUNK: CHAR;
+          V: ADDRESS;
+    BEGIN
+      V.I := ADDR;
+      JUNK := V.B^[0]
+    END (*TOUCH*) ;
+
+    PROCEDURE TEXTMODE;
+    BEGIN
+      TOUCH(-16303);
+      TOUCH(-16300)
+    END (*TEXTMODE*) ;
+
+    PROCEDURE GRAFMODE;
+    BEGIN
+      TOUCH(-16304);
+      TOUCH(-16302);
+      TOUCH(-16297);
+      IF TURTLE^.PAGE = 2 THEN TOUCH(-16299) ELSE TOUCH(-16300)
+    END (*GRAFMODE*) ;
+
+    PROCEDURE PENCOLOR;
+    BEGIN
+      WITH TURTLE^ DO
+        PEN := PENMODE
+    END (*PENCOLOR*) ;
+
+    PROCEDURE FILLSCREEN;
+      VAR SAVE: SCREENCOLOR;
+    BEGIN
+      WITH TURTLE^ DO
+        BEGIN
+          SAVE := PEN;
+          PEN := FILLCOLOR;
+          FILLIT;
+          PEN := SAVE
+        END
+    END (*FILLSCREEN*) ;
+
+    PROCEDURE VIEWPORT;
+    BEGIN
+      WITH TURTLE^ DO
+        BEGIN
+          XLEFT := LEFT;
+          XRIGHT := RIGHT;
+          YBOT := BOTTOM;
+          YTOP := TOP;
+          IF XLEFT < 0 THEN XLEFT := 0;
+          IF XRIGHT > 279 THEN XRIGHT := 279;
+          IF YBOT < 0 THEN YBOT := 0;
+          IF YTOP > 191 THEN YTOP := 191;
+          IF XRIGHT < XLEFT THEN XRIGHT := XLEFT;
+          IF YTOP < YBOT THEN YTOP := YBOT
+        END
+    END (*VIEWPORT*) ;
+
+    FUNCTION TURTLEX;
+    BEGIN
+      TURTLEX := TURTLE^.XPOS
+    END (*TURTLEX*) ;
+
+    FUNCTION TURTLEY;
+    BEGIN
+      TURTLEY := TURTLE^.YPOS
+    END (*TURTLEY*) ;
+
+    FUNCTION TURTLEANG;
+    BEGIN
+      TURTLEANG := HEADING
+    END (*TURTLEANG*) ;
+
+{ At unit-initialisation time there is no file system to open a file with,
+  so the directory is read as two blocks and walked by hand. }
+
+    FUNCTION FINDFILE(UNITNO: INTEGER; TITLE: STRING): INTEGER;
+      VAR DIR: ARRAY [0..77] OF DIRENTRY;
+          I: INTEGER;
+    BEGIN
+      UNITREAD(UNITNO,DIR,2028,2,0);
+      IF IORESULT <> 0 THEN FINDFILE := 0
+      ELSE
+        BEGIN
+          I := 1;
+          WHILE (I < 78) AND (LENGTH(DIR[I].DTID) > 0)
+                AND (DIR[I].DTID <> TITLE) DO
+            I := I + 1;
+          IF DIR[I].DTID = TITLE THEN FINDFILE := DIR[I].DFIRSTBLK
+          ELSE FINDFILE := 0
+        END
+    END (*FINDFILE*) ;
+
+    PROCEDURE CHARTYPE;
+    BEGIN
+      CHARMODE := MODE MOD 16
+    END (*CHARTYPE*) ;
+
+    PROCEDURE WCHAR;
+    BEGIN
+      IF HAVECHARS THEN
+        BEGIN
+          DRAWBLOCK(CHARSET^[ORD(CH)],1,0,0,7,8,TURTLEX,TURTLEY,CHARMODE);
+          TURTLE^.XPOS := TURTLE^.XPOS + 7
+        END
+    END (*WCHAR*) ;
+
+    PROCEDURE WSTRING;
+      VAR N,I: INTEGER;
+    BEGIN
+      I := 1;
+      N := LENGTH(S);
+      WHILE I <= N DO
+        BEGIN
+          WCHAR(S[I]);
+          I := I + 1
+        END
+    END (*WSTRING*) ;
+
+{ The sine table, six significant digits, in the two halves Apple split it
+  into. Nothing here is computed at run time -- 91 stores of a literal. }
+
+    PROCEDURE SINETAB1;
+    BEGIN
+      SINE[ 0] := 0.0;
+      SINE[ 1] := 0.0174524;
+      SINE[ 2] := 0.0348995;
+      SINE[ 3] := 0.0523360;
+      SINE[ 4] := 0.0697565;
+      SINE[ 5] := 0.0871557;
+      SINE[ 6] := 0.104528;
+      SINE[ 7] := 0.121869;
+      SINE[ 8] := 0.139173;
+      SINE[ 9] := 0.156434;
+      SINE[10] := 0.173648;
+      SINE[11] := 0.190809;
+      SINE[12] := 0.207912;
+      SINE[13] := 0.224951;
+      SINE[14] := 0.241922;
+      SINE[15] := 0.258819;
+      SINE[16] := 0.275637;
+      SINE[17] := 0.292372;
+      SINE[18] := 0.309017;
+      SINE[19] := 0.325568;
+      SINE[20] := 0.342020;
+      SINE[21] := 0.358368;
+      SINE[22] := 0.374607;
+      SINE[23] := 0.390731;
+      SINE[24] := 0.406737;
+      SINE[25] := 0.422618;
+      SINE[26] := 0.438371;
+      SINE[27] := 0.453990;
+      SINE[28] := 0.469471;
+      SINE[29] := 0.484810;
+      SINE[30] := 0.500000;
+      SINE[31] := 0.515038;
+      SINE[32] := 0.529919;
+      SINE[33] := 0.544639;
+      SINE[34] := 0.559193;
+      SINE[35] := 0.573576;
+      SINE[36] := 0.587785;
+      SINE[37] := 0.601815;
+      SINE[38] := 0.615661;
+      SINE[39] := 0.629320;
+      SINE[40] := 0.642787;
+      SINE[41] := 0.656059;
+      SINE[42] := 0.669131;
+      SINE[43] := 0.681998;
+      SINE[44] := 0.694658;
+      SINE[45] := 0.707107
+    END (*SINETAB1*) ;
+
+    PROCEDURE SINETAB2;
+    BEGIN
+      SINE[46] := 0.719340;
+      SINE[47] := 0.731354;
+      SINE[48] := 0.743145;
+      SINE[49] := 0.754709;
+      SINE[50] := 0.766044;
+      SINE[51] := 0.777146;
+      SINE[52] := 0.788011;
+      SINE[53] := 0.798635;
+      SINE[54] := 0.809017;
+      SINE[55] := 0.819152;
+      SINE[56] := 0.829038;
+      SINE[57] := 0.838671;
+      SINE[58] := 0.848048;
+      SINE[59] := 0.857167;
+      SINE[60] := 0.866025;
+      SINE[61] := 0.874620;
+      SINE[62] := 0.882948;
+      SINE[63] := 0.891007;
+      SINE[64] := 0.898794;
+      SINE[65] := 0.906308;
+      SINE[66] := 0.913545;
+      SINE[67] := 0.920505;
+      SINE[68] := 0.927184;
+      SINE[69] := 0.933580;
+      SINE[70] := 0.939693;
+      SINE[71] := 0.945519;
+      SINE[72] := 0.951057;
+      SINE[73] := 0.956305;
+      SINE[74] := 0.961262;
+      SINE[75] := 0.965926;
+      SINE[76] := 0.970296;
+      SINE[77] := 0.974370;
+      SINE[78] := 0.978148;
+      SINE[79] := 0.981627;
+      SINE[80] := 0.984808;
+      SINE[81] := 0.987688;
+      SINE[82] := 0.990268;
+      SINE[83] := 0.992546;
+      SINE[84] := 0.994522;
+      SINE[85] := 0.996195;
+      SINE[86] := 0.997564;
+      SINE[87] := 0.998629;
+      SINE[88] := 0.999391;
+      SINE[89] := 0.999848;
+      SINE[90] := 1.0
+    END (*SINETAB2*) ;
+
+    PROCEDURE MOVETO;
+    BEGIN
+      MOVEABS(X,Y)
+    END (*MOVETO*) ;
+
+{ On the axes the table is not consulted at all; off them the distance is
+  resolved into the quadrant with SINE[ANG90] and SINE[90-ANG90]. }
+
+    PROCEDURE MOVE;
+      VAR QUAD: INTEGER;
+    BEGIN
+      QUAD := HEADING DIV 90;
+      ANG90 := HEADING MOD 90;
+      IF ANG90 = 0 THEN
+        CASE QUAD OF
+          0: MOVEREL(DIST,0);
+          1: MOVEREL(0,DIST);
+          2: MOVEREL(-DIST,0);
+          3: MOVEREL(0,-DIST)
+        END
+      ELSE
+        CASE QUAD OF
+          0: MOVEREL(ROUND(DIST*SINE[90-ANG90]),
+                     ROUND(DIST*SINE[ANG90]));
+          1: MOVEREL(-ROUND(DIST*SINE[ANG90]),
+                     ROUND(DIST*SINE[90-ANG90]));
+          2: MOVEREL(-ROUND(DIST*SINE[90-ANG90]),
+                     -ROUND(DIST*SINE[ANG90]));
+          3: MOVEREL(ROUND(DIST*SINE[ANG90]),
+                     -ROUND(DIST*SINE[90-ANG90]))
+        END
+    END (*MOVE*) ;
+
+    PROCEDURE TURN;
+    BEGIN
+      HEADING := HEADING + ANGLE;
+      IF HEADING < 0 THEN HEADING := 360 - HEADING MOD 360
+      ELSE HEADING := HEADING MOD 360
+    END (*TURN*) ;
+
+    PROCEDURE TURNTO;
+    BEGIN
+      HEADING := ANGLE;
+      IF HEADING < 0 THEN HEADING := 360 - HEADING MOD 360
+      ELSE HEADING := HEADING MOD 360
+    END (*TURNTO*) ;
+
+    PROCEDURE INITSTATE;
+    BEGIN
+      HEADING := 0;
+      WITH TURTLE^ DO
+        BEGIN
+          XLEFT := 0;
+          XRIGHT := 279;
+          YBOT := 0;
+          YTOP := 191;
+          XPOS := 279 DIV 2;
+          YPOS := 191 DIV 2;
+          PEN := NONE;
+          PAGE := 1
+        END
+    END (*INITSTATE*) ;
+
+    PROCEDURE INITTURTLE;
+    BEGIN
+      INITSTATE;
+      FILLSCREEN(BLACK);
+      GRAFMODE
+    END (*INITTURTLE*) ;
+
+{ $00BB is where the 6502 half looks for the state record. }
+
+    PROCEDURE HOOKUP(P: TURTLEP);
+      VAR A: ADDRESS;
+    BEGIN
+      TURTLE := P;
+      A.T := P;
+      PEEKAT.I := 187;
+      PEEKAT.H^ := A.I
+    END (*HOOKUP*) ;
+
+    PROCEDURE MAKETURTLE(P: TURTLEP);
+    BEGIN
+      NEW(P);
+      HOOKUP(P);
+      INITSTATE
+    END (*MAKETURTLE*) ;
+
+{ The last two privates, 30 and 31: the hi-res primitives and the line
+  clipper, both 6502 and both in src/native/TURTLEGR.TEXT. Nothing in this
+  file calls them -- the other five native procedures do, through .DEF/.REF
+  -- but they have to be declared here, after 29, to be numbered 30 and 31.
+
+  CLIP is a FUNCTION of four VAR words because the assembly says .FUNC
+  CLIP,4, and the Linker matches the kind and the parameter words: declared
+  as a bare PROCEDURE it stops with "Proc CLIP undefined" (finding 285).
+  Nothing calls it from Pascal, so the heading changes no byte. }
+
+    PROCEDURE HIRES; EXTERNAL;
+    FUNCTION CLIP(VAR X1, Y1, X2, Y2: INTEGER): BOOLEAN; EXTERNAL;
+
+{ Unit initialisation. SYSTEM.CHARSET is looked for on unit 4 and then on
+  unit 5; if it is there it is read into a 512-word buffer. The buffer comes
+  off the heap and then the heap is cut back to $4000, which is the bottom
+  of the hi-res page -- Apple reserving the screen. }
+
+BEGIN
+  CHARMODE := 10;
+  CHARUNIT := 4;
+  CHARBLOCK := FINDFILE(4,'SYSTEM.CHARSET');
+  IF CHARBLOCK = 0 THEN
+    BEGIN
+      CHARUNIT := 5;
+      CHARBLOCK := FINDFILE(5,'SYSTEM.CHARSET')
+    END;
+  HAVECHARS := CHARBLOCK <> 0;
+  IF HAVECHARS THEN
+    BEGIN
+      NEW(CHARSET);
+      UNITREAD(CHARUNIT,CHARSET^,1024,CHARBLOCK,0)
+    END;
+  SINETAB1;
+  SINETAB2;
+  MAKETURTLE(NEWTURTLE);
+  PEEKAT.I := 16384;
+  RELEASE(PEEKAT.H)
+END (*TURTLEGRAPHICS*) ;
+
+BEGIN
+END.

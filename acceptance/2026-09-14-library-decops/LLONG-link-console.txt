@@ -1,0 +1,23 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]LLinking...
+
+
+
+
+
+
+
+Apple Pascal Linker [1.3]
+
+Link what host codefile? WORKHD:ULONG.CODE
+Opening WORKHD:ULONG.CODE
+Using what library file? WORKHD:NLONG.CODE
+Opening WORKHD:NLONG.CODE
+Another library file (<ret> for none) ? 
+Map file (<ret> for none) ? 
+Reading LONGINTI
+Reading DECOPS  
+Output file (<ret> for workfile) ? WORKHD:LLONG.CODE[*]
+Linking PASCALSY # 0
+Linking LONGINTI # 30
+   Copying proc DECOPS  
+Command: 

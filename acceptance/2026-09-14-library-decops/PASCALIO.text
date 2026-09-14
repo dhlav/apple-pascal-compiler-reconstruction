@@ -1,0 +1,542 @@
+{ PASCALIO -- SYSTEM.LIBRARY slot 1, segment 31, 9 procedures, 2070 bytes.
+
+  The INTERFACE, types included, is Apple's own text from block 8 of the
+  library (finding 92a). The implementation is read back from the p-code.
+
+  Like CHAINSTUFF (finding 94a) this is not a free-standing unit: it reads
+  SYSCOM at lex -1 offset 1 and it takes a FIB apart field by field, so it
+  was compiled inside the operating system's own (*$U-*) source and needs a
+  host. Unlike CHAINSTUFF, almost all of what the host has to supply is
+  recoverable, because it is UCSD II.0's and II.0's GLOBALS.TEXT is here:
+  the CONST and TYPE blocks below are II.0's, verbatim.
+
+  That they are right is not an assumption. Every FIB field this unit
+  touches lands at the offset the binary uses, and the two that only work
+  one way are the interesting ones:
+
+    * FEOF,FEOLN: BOOLEAN is one declaration, and one declaration allocates
+      its identifiers *backwards* (finding 93a). So FEOF is at word 2 and
+      FEOLN at word 1 -- and FSEEK clears word 2 first, which is
+      FEOF := FALSE written first.
+    * FREPTCNT,FNXTBLK,FMAXBLK: INTEGER likewise puts FMAXBLK at 12,
+      FNXTBLK at 13, FREPTCNT at 14. Read forwards instead, FSEEK would be
+      comparing a block number against the count of times the window is
+      valid without a GET, which is nonsense; read backwards it is
+      IF BLK <= FMAXBLK, which is the file's high-water mark. The
+      allocation rule is what makes the record legible.
+
+  One operating system procedure here is past the 43 the compiler reaches
+  (finding 79): 49 is called by FSEEK and returns a BOOLEAN. What it is
+  called and what it does are not recovered; 44..48 are here only to make
+  49 the 49th. }
+
+(*$U-*)
+PROGRAM PASCALSYSTEM;
+
+CONST
+     MMAXINT = 32767;
+     MAXUNIT = 12;      { UCSD II.0's own value, left as is deliberately --
+                          SYSTEM.PASCAL's own reconstruction needed this
+                          corrected to 20 for 1.2/1.3 (finding 141) because
+                          it sizes UNITABLE, a real declared array whose
+                          size changes PASCALSY.1's own frame. This unit
+                          never declares anything sized by MAXUNIT (its own
+                          SYSCOMREC below is a two-field stub, not
+                          UNITABLE), and it is already verified byte-for-
+                          byte against Apple's real SYSTEM.LIBRARY with
+                          this exact value in place (finding 95) -- proof
+                          it is inert here, not an oversight (finding 151).
+                          Left at UCSD's own original number for that
+                          reason, not "fixed" to match. }
+     MAXDIR = 77;
+     VIDLENG = 7;
+     TIDLENG = 15;
+     MAX_SEG = 31;      { same story as MAXUNIT above -- UCSD II.0's own
+                          64K-system value, inert here since nothing in
+                          this unit declares a SEGTABLE-sized structure
+                          (finding 151); SYSTEM.PASCAL needed 63 (finding
+                          142) because its own SYSCOMREC does. }
+     FBLKSIZE = 512;
+     NAME_LEN = 23;
+
+TYPE
+     IORSLTWD = (INOERROR,IBADBLOCK,IBADUNIT,IBADMODE,ITIMEOUT,
+                 ILOSTUNIT,ILOSTFILE,IBADTITLE,INOROOM,INOUNIT,
+                 INOFILE,IDUPFILE,INOTCLOSED,INOTOPEN,IBADFORMAT,
+                 ISTRGOVFL);
+
+     DATEREC = PACKED RECORD
+                 MONTH: 0..12;
+                 DAY: 0..31;
+                 YEAR: 0..100
+               END (*DATEREC*) ;
+
+     UNITNUM = 0..MAXUNIT;
+     VID = STRING[VIDLENG];
+     DIRRANGE = 0..MAXDIR;
+     TID = STRING[TIDLENG];
+
+     FILEKIND = (UNTYPEDFILE,XDSKFILE,CODEFILE,TEXTFILE,
+                 INFOFILE,DATAFILE,GRAFFILE,FOTOFILE,SECUREDIR);
+
+     DIRENTRY = PACKED RECORD
+                  DFIRSTBLK: INTEGER;
+                  DLASTBLK: INTEGER;
+                  CASE DFKIND: FILEKIND OF
+                    SECUREDIR,
+                    UNTYPEDFILE:
+                       (FILLER1 : 0..2048;
+                        DVID: VID;
+                        DEOVBLK: INTEGER;
+                        DNUMFILES: DIRRANGE;
+                        DLOADTIME: INTEGER;
+                        DLASTBOOT: DATEREC);
+                    XDSKFILE,CODEFILE,TEXTFILE,INFOFILE,
+                    DATAFILE,GRAFFILE,FOTOFILE:
+                       (FILLER2 : 0..1024;
+                        STATUS : BOOLEAN;
+                        DTID: TID;
+                        DLASTBYTE: 1..FBLKSIZE;
+                        DACCESS: DATEREC)
+                END (*DIRENTRY*) ;
+
+     DIRP = ^ DIRECTORY;
+     DIRECTORY = ARRAY [DIRRANGE] OF DIRENTRY;
+
+     WINDOWP = ^ WINDOW;
+     WINDOW = PACKED ARRAY [0..0] OF CHAR;
+     FIBP = ^ FIB;
+
+     FIB = RECORD
+             FWINDOW: WINDOWP;
+             FEOF,FEOLN: BOOLEAN;
+             FSTATE: (FJANDW,FNEEDCHAR,FGOTCHAR);
+             FRECSIZE: INTEGER;
+             CASE FISOPEN: BOOLEAN OF
+               TRUE: (FISBLKD: BOOLEAN;
+                      FUNIT: UNITNUM;
+                      FVID: VID;
+                      FREPTCNT,
+                      FNXTBLK,
+                      FMAXBLK: INTEGER;
+                      FMODIFIED:BOOLEAN;
+                      FHEADER: DIRENTRY;
+                      CASE FSOFTBUF: BOOLEAN OF
+                        TRUE: (FNXTBYTE,FMAXBYTE: INTEGER;
+                               FBUFCHNGD: BOOLEAN;
+                               FBUFFER: PACKED ARRAY [0..FBLKSIZE] OF CHAR))
+           END (*FIB*) ;
+
+     SYSCOMREC = RECORD
+                   IORSLT: IORSLTWD;
+                   XEQERR: INTEGER
+                 END (*SYSCOMREC*) ;
+
+VAR SYSCOM: ^ SYSCOMREC;                {   1 }
+    GFILES: ARRAY [0..5] OF FIBP;       {   2..7 }
+
+{ The operating system's own procedures. Only the numbering matters:
+  a forward that is never called and never defined contributes nothing
+  but its position, and the position is what CXP 0,n names. }
+
+PROCEDURE EXECERRO; FORWARD;   { CXP 0,2 }
+PROCEDURE FINIT; FORWARD;   { CXP 0,3 }
+PROCEDURE FRESET; FORWARD;   { CXP 0,4 }
+PROCEDURE FOPEN; FORWARD;   { CXP 0,5 }
+PROCEDURE FCLOSE; FORWARD;   { CXP 0,6 }
+PROCEDURE FGET(VAR F: FIB); FORWARD;   { CXP 0,7 }
+PROCEDURE FPUT; FORWARD;   { CXP 0,8 }
+PROCEDURE XSEEK; FORWARD;   { CXP 0,9 }
+FUNCTION FEOFF: INTEGER; FORWARD;   { CXP 0,10 }
+FUNCTION FEOLNN: INTEGER; FORWARD;   { CXP 0,11 }
+PROCEDURE FREADINT(VAR F: FIB; VAR I: INTEGER); FORWARD;   { CXP 0,12 }
+PROCEDURE FWRITEIN; FORWARD;   { CXP 0,13 }
+PROCEDURE XREADREA; FORWARD;   { CXP 0,14 }
+PROCEDURE XWRITERE; FORWARD;   { CXP 0,15 }
+PROCEDURE FREADCHA; FORWARD;   { CXP 0,16 }
+PROCEDURE FWRITECH; FORWARD;   { CXP 0,17 }
+PROCEDURE FREADSTR; FORWARD;   { CXP 0,18 }
+PROCEDURE FWRITESTRING(VAR F: FIB; VAR S: STRING; RLENG: INTEGER); FORWARD;
+PROCEDURE FWRITEBY; FORWARD;   { CXP 0,20 }
+PROCEDURE FREADLN; FORWARD;   { CXP 0,21 }
+PROCEDURE FWRITELN; FORWARD;   { CXP 0,22 }
+PROCEDURE SCONCAT; FORWARD;   { CXP 0,23 }
+PROCEDURE SINSERT; FORWARD;   { CXP 0,24 }
+PROCEDURE SCOPY; FORWARD;   { CXP 0,25 }
+PROCEDURE SDELETE; FORWARD;   { CXP 0,26 }
+FUNCTION SPOS: INTEGER; FORWARD;   { CXP 0,27 }
+FUNCTION FBLOCKIO: INTEGER; FORWARD;   { CXP 0,28 }
+PROCEDURE FGOTOXY; FORWARD;   { CXP 0,29 }
+FUNCTION VOLSEARC: INTEGER; FORWARD;   { CXP 0,30 }
+PROCEDURE WRITEDIR; FORWARD;   { CXP 0,31 }
+FUNCTION DIRSEARC: INTEGER; FORWARD;   { CXP 0,32 }
+FUNCTION SCANTITL: INTEGER; FORWARD;   { CXP 0,33 }
+PROCEDURE DELENTRY; FORWARD;   { CXP 0,34 }
+PROCEDURE INSENTRY; FORWARD;   { CXP 0,35 }
+PROCEDURE HOMECURS; FORWARD;   { CXP 0,36 }
+PROCEDURE CLEARSCR; FORWARD;   { CXP 0,37 }
+PROCEDURE CLEARLIN; FORWARD;   { CXP 0,38 }
+PROCEDURE PROMPT; FORWARD;   { CXP 0,39 }
+FUNCTION SPACEWAI: INTEGER; FORWARD;   { CXP 0,40 }
+FUNCTION GETCHAR: INTEGER; FORWARD;   { CXP 0,41 }
+FUNCTION FETCHDIR: INTEGER; FORWARD;   { CXP 0,42 }
+PROCEDURE OSPROC43; FORWARD;   { CXP 0,43 }
+PROCEDURE OSPROC44; FORWARD;   { CXP 0,44 }
+PROCEDURE OSPROC45; FORWARD;   { CXP 0,45 }
+PROCEDURE OSPROC46; FORWARD;   { CXP 0,46 }
+PROCEDURE OSPROC47; FORWARD;   { CXP 0,47 }
+PROCEDURE OSPROC48; FORWARD;   { CXP 0,48 }
+FUNCTION OSPROC49(VAR F: FIB): BOOLEAN; FORWARD;   { CXP 0,49 }
+
+UNIT PASCALIO; INTRINSIC CODE 31;
+
+INTERFACE
+    
+  TYPE DECMAX = INTEGER[36];
+       STUNT = RECORD CASE INTEGER OF
+                 2:(W2:INTEGER[4]);
+                 3:(W3:INTEGER[8]);
+                 4:(W4:INTEGER[12]);
+                 5:(W5:INTEGER[16]);
+                 6:(W6:INTEGER[20]);
+                 7:(W7:INTEGER[24]);
+                 8:(W8:INTEGER[28]);
+                 9:(W9:INTEGER[32]);
+                 10:(W10:INTEGER[36])
+               END;
+       
+  
+  PROCEDURE FSEEK(VAR F: FIB; RECNUM: INTEGER);
+  PROCEDURE FREADREAL(VAR F: FIB; VAR X: REAL);
+  PROCEDURE FWRITEREAL(VAR F: FIB; X: REAL; W, D: INTEGER);
+  PROCEDURE FREADDEC(VAR F: FIB; VAR D: STUNT; L: INTEGER);
+  PROCEDURE FWRITEDEC(VAR F: FIB; D: DECMAX; RLENG: INTEGER);
+  FUNCTION SUPER_MOD(A,B : INTEGER) : INTEGER;
+  FUNCTION SUPER_DIV(A,B : INTEGER) : INTEGER;
+  
+IMPLEMENTATION
+
+{ The order below is Apple's, and the segment image is what says so. Every
+  procedure was byte-identical with the implementation in interface order
+  and the whole segment still was not: procedures are emitted where they
+  are declared, so declaration order is an address, and an address is a
+  byte (finding 94b). Apple declares SUPER_MOD, then the private CARRY that
+  SUPER_DIV needs, then SUPER_DIV, then the five file routines with
+  FWRITEDEC ahead of FREADDEC. }
+
+
+  FUNCTION SUPER_MOD;
+    VAR X, Y, Z: INTEGER;
+  BEGIN
+    X := (A MOD 1024) DIV 32 * (B MOD 32) * 32 MOD 512;
+    Y := (A MOD 32) * ((B MOD 1024) DIV 32) * 32 MOD 512;
+    Z := (A MOD 32) * (B MOD 32) MOD 512;
+    SUPER_MOD := (X + Y + Z) MOD 512
+  END (*SUPER_MOD*) ;
+
+
+{ Procedure 9, and the only one not in the interface, so it is declared
+  first and numbered last (finding 94b). SUPER_DIV splits both operands
+  into five-bit digits and adds the partial products; three of them can
+  carry into the next place at once, and this is the carry out. }
+
+  FUNCTION CARRY(P,Q,R: INTEGER): INTEGER;
+  BEGIN
+    CARRY := (P MOD 512 + Q MOD 512 + R MOD 512) DIV 512
+  END (*CARRY*) ;
+
+
+  FUNCTION SUPER_DIV;
+    VAR AH, AM, AL, BH, BM, BL: INTEGER;
+  BEGIN
+    AH := A DIV 1024;
+    AM := (A MOD 1024) DIV 32;
+    AL := A MOD 32;
+    BH := B DIV 1024;
+    BM := (B MOD 1024) DIV 32;
+    BL := B MOD 32;
+    SUPER_DIV := AH*BH*2048 + AH*BM*64 + AH*BL*2
+                 + AM*BH*64 + AM*BM*2 + AM*BL DIV 16
+                 + AL*BH*2 + AL*BM DIV 16 + AL*BL DIV 512
+                 + CARRY(AM*BL*32,AL*BM*32,AL*BL)
+  END (*SUPER_DIV*) ;
+
+
+  PROCEDURE FSEEK;
+{ The four early exits are GOTO, and the binary is specific about it: each
+  one jumps past the ELSE arm below, to a label after the whole IF. An
+  IF..THEN..(empty)..ELSE nesting cannot reach there -- it lands at the end
+  of its own IF -- and that is the two bytes' difference. GOTO is legal
+  here without asking, because (*$U-*) sets GOTOOK (COMPOPTIONS, the 'U'
+  arm), just as it clears RANGECHECK, which is why nothing in this unit
+  emits a CHK. }
+    LABEL 1;
+    VAR BYTEOFF, BLK, SIZE: INTEGER;
+  BEGIN
+    SYSCOM^.IORSLT := INOERROR;
+    IF F.FISOPEN THEN
+      WITH F, FHEADER DO
+        BEGIN
+          IF (RECNUM < 0) OR NOT FSOFTBUF OR
+             ((DFKIND = TEXTFILE) AND (FRECSIZE = 1)) THEN GOTO 1;
+          BLK := SUPER_DIV(RECNUM,FRECSIZE) + 1;
+          BYTEOFF := SUPER_MOD(RECNUM,FRECSIZE);
+          IF BYTEOFF = 0 THEN
+            BEGIN BYTEOFF := 512; BLK := BLK - 1 END;
+          SIZE := DLASTBLK - DFIRSTBLK;
+          IF (BLK > SIZE) OR ((BLK = SIZE) AND (BYTEOFF >= DLASTBYTE)) THEN
+            IF OSPROC49(F) THEN
+              BEGIN SYSCOM^.IORSLT := INOROOM; GOTO 1 END
+            ELSE
+              BEGIN
+                SIZE := DLASTBLK - DFIRSTBLK;
+                IF (BLK > SIZE) OR
+                   ((BLK = SIZE) AND (BYTEOFF >= DLASTBYTE)) THEN
+                  BEGIN SYSCOM^.IORSLT := INOROOM; GOTO 1 END
+              END;
+          IF BLK <> FNXTBLK THEN
+            BEGIN
+              IF FBUFCHNGD THEN
+                BEGIN
+                  FBUFCHNGD := FALSE;
+                  FMODIFIED := TRUE;
+                  UNITWRITE(FUNIT,FBUFFER,512,DFIRSTBLK+FNXTBLK-1,0);
+                  IF IORESULT <> 0 THEN GOTO 1
+                END;
+              IF (BLK <= FMAXBLK) AND (BYTEOFF <> 512) THEN
+                BEGIN
+                  UNITREAD(FUNIT,FBUFFER,512,DFIRSTBLK+BLK-1,0);
+                  IF IORESULT <> 0 THEN GOTO 1
+                END
+            END;
+          FEOF := FALSE;
+          FEOLN := FALSE;
+          FREPTCNT := 0;
+          IF FSTATE <> FJANDW THEN FSTATE := FNEEDCHAR;
+          FNXTBLK := BLK;
+          FNXTBYTE := BYTEOFF
+        END
+    ELSE SYSCOM^.IORSLT := INOTOPEN;
+  1:
+  END (*FSEEK*) ;
+
+
+  PROCEDURE FREADREAL;
+{ Four early exits, and they are one GOTO and not four nested IFs. The
+  instruction stream cannot tell the difference -- nesting the rest of the
+  procedure inside each ELSE produces exactly the same opcodes -- but the
+  jump table can: four jumps to one label share one table entry, and four
+  nested IFs end at four addresses two bytes apart and take three. Apple's
+  table has one. That is the whole evidence, and it is finding 90's point
+  made a second time. }
+    LABEL 1;
+    VAR CH: CHAR; NEG, GOTDIGIT: BOOLEAN; N: INTEGER;
+  BEGIN
+    WITH F DO
+      BEGIN
+        X := 0;
+        NEG := FALSE;
+        GOTDIGIT := FALSE;
+        IF FSTATE = FNEEDCHAR THEN FGET(F);
+        WHILE (FWINDOW^[0] = ' ') AND NOT FEOF DO FGET(F);
+        IF FEOF THEN GOTO 1;
+        CH := FWINDOW^[0];
+        IF (CH = '+') OR (CH = '-') THEN
+          BEGIN
+            NEG := CH = '-';
+            FGET(F);
+            CH := FWINDOW^[0]
+          END;
+        WHILE (CH >= '0') AND (CH <= '9') AND NOT FEOF DO
+          BEGIN
+            GOTDIGIT := TRUE;
+            X := X*10 + (ORD(CH)-48);
+            FGET(F);
+            CH := FWINDOW^[0]
+          END;
+        IF FEOF THEN GOTO 1;
+        N := -1;
+        IF CH = '.' THEN
+          BEGIN
+            N := 0;
+            REPEAT
+              FGET(F);
+              CH := FWINDOW^[0];
+              IF (CH >= '0') AND (CH <= '9') THEN
+                BEGIN
+                  GOTDIGIT := TRUE;
+                  N := N + 1;
+                  X := X + (ORD(CH)-48)/PWROFTEN(N)
+                END
+            UNTIL FEOF OR NOT ((CH >= '0') AND (CH <= '9'));
+            IF FEOF THEN GOTO 1
+          END;
+        IF ((CH = 'e') OR (CH = 'E')) AND (GOTDIGIT OR (N < 0)) THEN
+          BEGIN
+            IF FSTATE = FJANDW THEN FGET(F) ELSE FSTATE := FNEEDCHAR;
+            FREADINT(F,N);
+            IF FEOF THEN GOTO 1;
+            IF NOT GOTDIGIT THEN X := 1;
+            GOTDIGIT := TRUE;
+            IF N < 0 THEN X := X/PWROFTEN(ABS(N))
+            ELSE X := X*PWROFTEN(N)
+          END;
+        IF GOTDIGIT THEN
+          BEGIN IF NEG THEN X := -X ELSE END
+        ELSE SYSCOM^.IORSLT := IBADFORMAT
+      END;
+  1:
+  END (*FREADREAL*) ;
+
+
+  PROCEDURE FWRITEREAL;
+    VAR I, DIGIT, E: INTEGER; Y: REAL; S: STRING[31];
+  BEGIN
+    IF (W < 0) OR (D < 0) THEN BEGIN W := 0; D := 0 END;
+    IF X < 0 THEN BEGIN X := -X; S[1] := '-' END
+    ELSE S[1] := ' ';
+    E := 0;
+    Y := X;
+    IF X >= PWROFTEN(0) THEN
+      BEGIN
+        WHILE Y >= PWROFTEN(1) DO
+          BEGIN
+            E := E + 1;
+            Y := X/PWROFTEN(E)
+          END
+      END
+    ELSE
+      IF X <> 0 THEN
+        REPEAT
+          E := E - 1;
+          Y := X*PWROFTEN(-E)
+        UNTIL Y >= PWROFTEN(0);
+    IF (D = 0) OR (D+E+1 > 6) THEN Y := Y + 5/PWROFTEN(6)
+    ELSE IF D+E+1 >= 0 THEN Y := Y + 5/PWROFTEN(D+E+1);
+    IF Y >= PWROFTEN(1) THEN
+      BEGIN
+        E := E + 1;
+        Y := Y/PWROFTEN(1)
+      END;
+    FOR I := 3 TO 8 DO
+      BEGIN
+        DIGIT := TRUNC(Y);
+        S[I] := CHR(DIGIT+48);
+        Y := (Y - DIGIT)*PWROFTEN(1)
+      END;
+    IF (D = 0) OR (E >= 6) THEN
+      BEGIN
+        S[2] := S[3];
+        S[3] := '.';
+        I := 8;
+        IF E <> 0 THEN
+          BEGIN
+            I := 9;
+            S[9] := 'E';
+            IF E < 0 THEN
+              BEGIN
+                I := 10;
+                S[10] := '-';
+                E := -E
+              END;
+            IF E > 9 THEN
+              BEGIN
+                I := I + 1;
+                S[I] := CHR(E DIV 10 + 48)
+              END;
+            I := I + 1;
+            S[I] := CHR(E MOD 10 + 48)
+          END;
+        S[0] := CHR(I)
+      END
+    ELSE
+      IF E >= 0 THEN
+        BEGIN
+          MOVELEFT(S[3],S[2],E+1);
+          S[3+E] := '.';
+          FILLCHAR(S[9],D-(5-E),' ');
+          S[0] := CHR(3+D+E)
+        END
+      ELSE
+        BEGIN
+          MOVERIGHT(S[3],S[3-E],6);
+          S[2] := '0';
+          S[3] := '.';
+          FILLCHAR(S[4],-E-1,'0');
+          FILLCHAR(S[9-E],D-(5-E),' ');
+          S[0] := CHR(3+D)
+        END;
+    IF W < LENGTH(S) THEN W := LENGTH(S);
+    FWRITESTRING(F,S,W)
+  END (*FWRITEREAL*) ;
+
+
+  PROCEDURE FWRITEDEC;
+    VAR S: STRING[38]; SPARE: INTEGER;
+  BEGIN
+    STR(D,S);
+    FWRITESTRING(F,S,RLENG)
+  END (*FWRITEDEC*) ;
+
+
+  PROCEDURE FREADDEC;
+    VAR CH: CHAR; NEG, GOTDIGIT: BOOLEAN; DIGIT, SPARE: INTEGER;
+  BEGIN
+    WITH F DO
+      BEGIN
+        WITH D DO
+          CASE L OF
+            2: W2 := 0;
+            3: W3 := 0;
+            4: W4 := 0;
+            5: W5 := 0;
+            6: W6 := 0;
+            7: W7 := 0;
+            8: W8 := 0;
+            9: W9 := 0;
+            10: W10 := 0
+          END;
+        NEG := FALSE;
+        GOTDIGIT := FALSE;
+        IF FSTATE = FNEEDCHAR THEN FGET(F);
+        WHILE (FWINDOW^[0] = ' ') AND NOT FEOF DO FGET(F);
+        IF FEOF THEN
+        ELSE
+          BEGIN
+            CH := FWINDOW^[0];
+            IF (CH = '+') OR (CH = '-') THEN
+              BEGIN
+                NEG := CH = '-';
+                FGET(F);
+                CH := FWINDOW^[0]
+              END;
+            WHILE (CH >= '0') AND (CH <= '9') AND NOT FEOF DO
+              BEGIN
+                GOTDIGIT := TRUE;
+                DIGIT := ORD(CH) - 48;
+                IF NEG THEN DIGIT := -DIGIT;
+                WITH D DO
+                  CASE L OF
+                    2: W2 := 10*W2 + DIGIT;
+                    3: W3 := 10*W3 + DIGIT;
+                    4: W4 := 10*W4 + DIGIT;
+                    5: W5 := 10*W5 + DIGIT;
+                    6: W6 := 10*W6 + DIGIT;
+                    7: W7 := 10*W7 + DIGIT;
+                    8: W8 := 10*W8 + DIGIT;
+                    9: W9 := 10*W9 + DIGIT;
+                    10: W10 := 10*W10 + DIGIT
+                  END;
+                FGET(F);
+                CH := FWINDOW^[0]
+              END;
+            IF NOT (GOTDIGIT OR FEOF) THEN SYSCOM^.IORSLT := IBADFORMAT
+          END
+      END
+  END (*FREADDEC*) ;
+
+BEGIN
+END (*PASCALIO*) ;
+
+BEGIN
+END.

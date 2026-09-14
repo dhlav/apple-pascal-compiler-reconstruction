@@ -66,7 +66,7 @@ UNITS = [
         (22, "FILLIT", "PROC", 0), (15, "SCREENBIT", "FUNC", 2),
         (16, "DRAWBLOCK", "PROC", 9)]),
     ("LONGINTS.TEXT", "LONGINTI", 1, [
-        (4, "LONGOPS", "PROC", 0)]),
+        (4, "DECOPS", "PROC", 0)]),
 ]
 
 

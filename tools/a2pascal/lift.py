@@ -102,7 +102,7 @@ NATIVE_SIG = {
     # unit's own assembly, never by a CXP, so nothing here needs them.
     #
     # LONGINTIO's engine is deliberately absent. It is declared
-    # `.PROC LONGOPS,0` because it pops a variable number of words -- the
+    # `.PROC DECOPS,0` because it pops a variable number of words -- the
     # operation number decides how many -- so there is no one arity to give
     # it, and a wrong one would be worse than none.
     #

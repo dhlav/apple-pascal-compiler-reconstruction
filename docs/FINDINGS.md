@@ -23912,3 +23912,101 @@ Each is checked against Apple's bytes, not accepted on its own.
 
 The directory's names, placement and dates are Apple's history, carried
 over rather than reconstructed.
+
+## 290. The library's extra text blocks are not memory: Apple's source, and `DECOPS`
+
+**A correction to 286c and 287.** 286c said `LONGINTI`'s second text block
+"holds only memory", and 287 called everything past each trailer
+"text-block memory". Both are wrong for the three units whose text runs to
+more than one block.
+
+### 290a. The last text block repeats the one before it
+
+**VERIFIED BINARY FACT.** In each of the three, the last text block holds
+the previous block's bytes again, at the same offsets, from some point on:
+
+| unit | last block | zero or other | copy of the block before |
+|---|---|---|---|
+| `LONGINTI` | 2 of 2 | bytes 0-128 zero | 129-511 |
+| `TURTLEGR` | 3 of 3 | trailer at 0-9, zero to 218 | 219-511 |
+| `PASCALIO` | 2 of 2 | text, trailer and a few heap bytes to 378 | 379-511 |
+
+**STRONG INFERENCE.** That is a disk buffer written out after only its
+front was refilled. The shipped compiler's `WRITECODE` moves `IC` bytes into
+`DISKBUF` and writes the whole block, so a partly refilled buffer carries
+the previous block's tail.
+
+What was in that buffer is informative. In `LONGINTI`'s copy the trailer
+reads `      X E `. The trailer as shipped in block 1 reads `   L  N E `.
+
+**STRONG INFERENCE.** The trailer was first written with `X` at offset 6
+and no `L`. The rewrite that `UNITPART` makes after the unit body (`L` for
+segment 30) is also where `N` went in. That rewrite runs under a different
+condition in Apple's compiler than in the shipped one: `TRANSCEN` and
+`APPLESTU` carry `N` with neither `P` nor `L`. Which condition it is remains
+SPECULATION.
+
+### 290b. Apple's own source, past the copied trailers
+
+**VERIFIED BINARY FACT.** The copied tails reach past `IMPLEMENTATION` into
+the lines that followed it in Apple's source files:
+
+* **`LONGINTI`**: `EDURE DECOPS;` then a line `EXTERNAL;`, a blank line,
+  then `PROCEDURE FWRITEDEC(*VAR F: FIB; D: DECMAX; RLEN`. The trailer
+  overwrote 10 bytes, `\r\x10"\r\x10"PROC`. Apple's implementation starts
+  by declaring the native engine, and gives the parameter lists of
+  interface procedures again in comments.
+* **`TURTLEGR`**: `IMPLEMENTATION` is followed by `{$endc}` and
+  `{$SETC SHORT := FALSE}` (the braces overwritten or zero). So Apple's
+  TURTLEGRAPHICS is conditionally compiled. 286c's trial `{$endc}` lines
+  were the right text and did not change the block count.
+* **`CHAINSTU`** and **`TRANSCEN`**: `/P/NEWC/C.CODE`, and
+  `C/C.CODEDEDE` in `CHAINSTU`, in block tails that are otherwise heap. It
+  is a file name with a path syntax no Apple II Pascal volume uses.
+
+**SPECULATION.** `/P/NEWC/C.CODE` points at a cross-development host.
+
+### 290c. The engine is `DECOPS`
+
+**VERIFIED BINARY FACT.** This tree had called `LONGINTIO`'s native
+procedure `LONGOPS` (finding 100f; `lift.py`). Apple's source above names it
+`DECOPS`, which is also the name the compiler's own `GENNR(30,4)` comments
+use. So:
+
+* `src/native/LONGINTS.TEXT` now says `.PROC DECOPS,0`;
+* `LONGINTIO.text` declares `PROCEDURE DECOPS;` / `EXTERNAL;` first after
+  `IMPLEMENTATION`, where Apple's is, instead of last;
+* `FWRITEDEC` carries Apple's parameter comment.
+
+The procedure number is 4 either way, because the interface has already
+taken 2 and 3.
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-library-decops` is all
+six units compiled again, the three native halves assembled and linked,
+and the Librarian join, on the 1.3 system:
+
+* **`LLONG.CODE` is byte-identical to the previous run's**, so the rename
+  and the move changed nothing in the linked unit;
+* **`ULONG.CODE` differs only in its link information**, `DECOPS  ` for
+  `LONGOPS `;
+* **`LAPPLE` and so `NEWLIB` differ in 204 bytes of `APPLESTU`'s slack**,
+  which is Linker memory. Aligned by slot, 16,417 of 19,456 bytes now
+  agree (16,414 in 287).
+
+`probe_library_units.py` now reads this run. It checks that Apple's second
+`LONGINTI` block repeats the first from byte 129 and declares
+`DECOPS; EXTERNAL;`, and that `ULONG`'s link information and the native
+source both say `DECOPS`.
+
+The first attempt at this run was void and is not kept: a two-line longer
+header comment moved line 169, `stagefile.py` refused the layout, the old
+`ULONG.TEXT` compiled, and the Linker reported `Proc LONGOPS undefined`.
+The layout's `expect` lines did their job.
+
+### 290d. The disk count moves with the slack
+
+With this `NEWLIB.CODE` on APPLE1, `SYSTEM.LIBRARY` differs in place by
+16,234 bytes, not 16,156. The set is **359,323 of 430,080**, down 78 from
+289, and in scope 351,873 of 374,784. Nothing reconstructed got worse. The
+Linker's memory in `APPLESTU`'s slack is different, and on the disk it is
+compared against misaligned blocks.

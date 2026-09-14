@@ -1,0 +1,59 @@
+{ APPLESTUFF -- SYSTEM.LIBRARY slot 6, segment 22, 8 procedures, 652 bytes.
+
+  Seven of the eight are the Apple II itself -- the paddles, the pushbutton
+  inputs, the annunciator outputs, the speaker -- and six of those are 6502.
+  What is left in Pascal is the unit body and KEYPRESS, which is 36 bytes
+  and asks the console driver whether a character is waiting.
+
+  So this source reproduces two procedures of eight, and the rest belong to
+  the assembler tier (finding 44e): they are declared EXTERNAL, the way
+  IDSEARCH and TREESEARCH are in PASCALCO, and the linker is what puts them
+  in. Their order in the shipped image is 2, 3, 4, 8, 6, 7, which is the
+  order they were assembled in and not the order they are declared here --
+  the linker appends native code in its own order, so declaration order
+  buys nothing for them (contrast finding 94b, which is about p-code).
+
+  Unlike CHAINSTUFF, PASCALIO and LONGINTIO this unit is free-standing: it
+  reaches no operating-system global and needs no host. The binary says so
+  in its own way -- KEYPRESS emits a CHK on the array index, and range
+  checking is only on when the compilation is not (*$U-*) (finding 95b).
+
+  The interface is Apple's own text from block 35 of the library, leading
+  blank lines and all. }
+
+UNIT APPLESTUFF; INTRINSIC CODE 22;
+
+INTERFACE
+
+    FUNCTION  PADDLE(SELECT: INTEGER): INTEGER;
+    FUNCTION  BUTTON(SELECT: INTEGER): BOOLEAN;
+    PROCEDURE TTLOUT(SELECT: INTEGER; DATA: BOOLEAN);
+    FUNCTION  KEYPRESS: BOOLEAN;
+    FUNCTION  RANDOM: INTEGER;
+    PROCEDURE RANDOMIZE;
+    PROCEDURE NOTE(PITCH,DURATION: INTEGER);
+
+  IMPLEMENTATION
+
+{ Unit 2 is the console. UNITSTATUS with a control word of 0 asks it how
+  many characters are buffered, and anything but none is a keypress. }
+
+    FUNCTION KEYPRESS;
+      VAR A: ARRAY [0..3] OF INTEGER;
+    BEGIN
+      UNITSTATUS(2,A[0],0);
+      KEYPRESS := A[0] <> 0
+    END (*KEYPRESS*) ;
+
+    FUNCTION  PADDLE; EXTERNAL;
+    FUNCTION  BUTTON; EXTERNAL;
+    PROCEDURE TTLOUT; EXTERNAL;
+    FUNCTION  RANDOM; EXTERNAL;
+    PROCEDURE RANDOMIZE; EXTERNAL;
+    PROCEDURE NOTE; EXTERNAL;
+
+BEGIN
+END (*APPLESTUFF*) ;
+
+BEGIN
+END.

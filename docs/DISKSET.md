@@ -18,14 +18,14 @@ files; the descriptions are still the user's, verbatim.
 
 ## The disks, rebuilt
 
-**359,401 of 430,080 bytes** across the three disks (finding 289):
+**359,323 of 430,080 bytes** across the three disks (findings 289, 290):
 `tools/mkdiskset.py` writes each volume from the rebuilt files, the text
 sources, the rebuilt boot and Apple's directory entries, and
 `analysis/diskset-account.txt` accounts for every byte by region.
 `probe_diskset.py` requires the regions to balance against a direct image
 compare and each to differ by exactly what its finding says. In scope,
-without the archived 64K pair, it is 351,951 of 374,784. Nineteen files are
-identical in place; `SYSTEM.LIBRARY` is the largest gap in place (16,156,
+without the archived 64K pair, it is 351,873 of 374,784. Nineteen files are
+identical in place; `SYSTEM.LIBRARY` is the largest gap in place (16,234,
 two blocks short, 287), then `SETUP.CODE` (3,943, 273).
 
 ## Core System Files
@@ -50,7 +50,7 @@ two blocks short, 287), then `SETUP.CODE` (3,943, 273).
 
 | file | what it is | status |
 |---|---|---|
-| SYSTEM.LIBRARY | Default code library for running basic graphics and tools. | **16414 of 19456 bytes, every code byte, joined by Apple's Librarian** (finding 287); all six code segments byte-identical, built by Apple's compiler, assembler and Linker (finding 285, `probe_library_units.py`); 55 p-code and 14 native procedures (tag `system-library-1.3-complete`). Each unit's interface text is Apple's through `IMPLEMENTATION` too, staged with a `.layout` recording how Apple's editor stored its lines (286). Not the file: a trailer flag byte per unit, `TURTLEGR`'s and `LONGINTI`'s text block counts and the heap in those blocks come from a compiler other than the shipped one (286c) |
+| SYSTEM.LIBRARY | Default code library for running basic graphics and tools. | **16417 of 19456 bytes, every code byte, joined by Apple's Librarian** (findings 287, 290); all six code segments byte-identical, built by Apple's compiler, assembler and Linker (finding 285, `probe_library_units.py`); 55 p-code and 14 native procedures (tag `system-library-1.3-complete`). Each unit's interface text is Apple's through `IMPLEMENTATION` too, staged with a `.layout` recording how Apple's editor stored its lines (286). Not the file: a trailer flag byte per unit, `TURTLEGR`'s and `LONGINTI`'s text block counts and the heap in those blocks come from a compiler other than the shipped one (286c) |
 | LIBRARY.CODE | Utility to add or remove tools from library files. | **reconstructed -- the whole file, all 4,096 bytes identical to shipped** (finding 269): compiled by Apple's compiler, slot 1 copied by the shipped `LIBRARY.CODE` itself. 16 of 16 procedures, one segment, from UCSD's I.5 Librarian and the binary. The rewrite replaces findings 113-116's plain-`PROGRAM` file. Apple's additions (byte sex shared with the Linker, the `SEGINFO` word, the `=`/`?` modes, heap-chained copying) carry placeholder names |
 | LIBMAP.CODE | Shows you what is inside a library file. | **reconstructed -- block 0 and the whole segment, all 5,300 bytes before the last block's slack, identical to shipped** (finding 270): compiled by Apple's compiler, `SEARCH` assembled by Apple's assembler, linked by Apple's Linker (an ordinary program, so no Librarian). 12 of 12 procedures, native `IDSEARCH` included (finding 109). From UCSD's I.5 LibMap and the binary. Apple's four added globals are named from compiler symbol-table nodes left in the shipped file's slack (270c) |
 | BINDER | Joins assembly language parts into Pascal programs. | **all 6 procedures instruction- and frame-identical, and every byte but the version field** (finding 274): 2,544 of 2,560 bytes match shipped; the 16 that differ are SEGINFO version bits, 2 in Apple's 1.1-compiled file against 6 from any 1.3 compile. `probe_v2_binaries.py` |

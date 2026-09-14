@@ -4,7 +4,7 @@
 # bytes unlike Apple's image. Text is src/text/ through its
 # .layout; rebuilt is Apple's tools on this repo's source.
 
-APPLE1  143360 bytes, 93253 identical, 50107 differ (image compare: 50107)
+APPLE1  143360 bytes, 93175 identical, 50185 differ (image compare: 50185)
      blocks  region           category   bytes differ  source
      0+2     <boot>           boot        1024      1  2026-09-13-formatter-data/FORMATTER.DATA blocks 3-4
      2+4     <directory>      directory   2048     14  Apple's entries, dead space zero
@@ -12,7 +12,7 @@ APPLE1  143360 bytes, 93253 identical, 50107 differ (image compare: 50107)
     38+44    SYSTEM.PASCAL    archived   22528  19732  not rebuilt, 64K system
     82+50    SYSTEM.EDITOR    rebuilt    25600      0  2026-09-13-editor-librarian/EDLIB.CODE (272)
    132+30    SYSTEM.FILER     rebuilt    15360      0  2026-09-12-filer-librarian/LIBFILER.CODE (271)
-   162+38    SYSTEM.LIBRARY   rebuilt    19456  16156  2026-09-14-library-text/NEWLIB.CODE (287)
+   162+38    SYSTEM.LIBRARY   rebuilt    19456  16234  2026-09-14-library-decops/NEWLIB.CODE (290)
    200+1     SYSTEM.MISCINFO  rebuilt      512    147  2026-09-13-miscinfo/SYSTEM-NEW.MISCINFO (277)
    201+2     SYSTEM.CHARSET   rebuilt     1024      0  2026-09-13-charset/CHARSET.DATA (278)
    203+12    SYSTEM.SYNTAX    text        6144      0  src/text/SYSTEM.SYNTAX.text (288)
@@ -59,10 +59,10 @@ APPLE3  143360 bytes, 123465 identical, 19895 differ (image compare: 19895)
    277+3     <free>           free        1536      0  zero
 
 The set, by category
-  rebuilt    225792 bytes  203074 identical  22718 differ
+  rebuilt    225792 bytes  202996 identical  22796 differ
   text        57344 bytes   57344 identical      0 differ
   boot         3072 bytes    3069 identical      3 differ
   directory    6144 bytes    6076 identical     68 differ
   free        82432 bytes   82388 identical     44 differ
   archived    55296 bytes    7450 identical  47846 differ
-  all        430080 bytes  359401 identical  70679 differ
+  all        430080 bytes  359323 identical  70757 differ

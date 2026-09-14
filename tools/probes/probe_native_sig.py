@@ -40,7 +40,7 @@ SOURCE = {
     "TURTLEGR.TEXT": ("TURTLEGR", {"SCREENBIT": 15, "DRAWBLOCK": 16,
                                    "MOVEABS": 20, "MOVEREL": 21,
                                    "FILLIT": 22, "HIRES": 30, "CLIP": 31}),
-    "LONGINTS.TEXT": ("LONGINTI", {"LONGOPS": 4}),
+    "LONGINTS.TEXT": ("LONGINTI", {"DECOPS": 4}),
     "FORMATTR.TEXT": ("FORMATTE", {"FORMATDISK": 2}),
 }
 # Private to their own assembly, never reached by a CXP, so no entry is
