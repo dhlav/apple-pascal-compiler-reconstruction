@@ -17,6 +17,8 @@ file with `PASCALIO` borrowed, 267f), `LIBRARY.CODE` (the whole file,
 finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 (the whole file, 271), `SYSTEM.EDITOR` (the whole file, 272),
 `SETUP.CODE` (every procedure; the file predates the version word, 273),
+`BINDER.CODE` and `SET40COLS.CODE` (every byte but the version field,
+274),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in

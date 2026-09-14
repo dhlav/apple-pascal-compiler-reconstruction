@@ -1,0 +1,23 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]CCompiling...
+Compile what textfile (<ret> to exit) ? SYSHD:SET40T.TEXT
+
+To what codefile (<ret> for workfile) ? SYSHD:SET40T.CODE[*]
+
+Listing file (<ret> for none or option in source): 
+
+
+
+
+Apple Pascal Compiler [1.3]
+<   0>..............................................
+GETVOLUM [17498 words]
+<  46>...............................................
+READDIR  [17524 words]
+<  93>...............
+WRITEDIR [17506 words]
+< 108>.............
+SET40COL [17514 words]
+< 121>..................................................
+< 171>.
+172 lines
+Smallest available space = 17498 wordsCommand:

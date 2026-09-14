@@ -1,0 +1,173 @@
+{ SET40COLS -- sets the 40/80-column boot flag in a Pascal volume's
+  directory, APPLE3:SET40COLS.CODE.
+
+  Reconstructed from the 1.3 binary. Four p-code procedures, no native
+  code. Unlike LINEFEED, no shipped source exists for this file on any
+  evidence disk -- checked all six, only the codefile is there (finding
+  99c update, LIBMAP/SET40COLS session, 2026-08-27).
+
+  Procedure numbers are fixed by declaration order and the binary fixes
+  the order: GETVOLUME is 2, READDIR 3, WRITEDIR 4, and the outer block
+  is 1.
+
+  The directory-header byte the program flips is byte 25 of the volume's
+  own directory block (block 2), read/written whole as a 512-byte block
+  via UNITREAD/UNITWRITE -- Apple's own on-disk format, not something
+  this file invents. Bit 3 of that byte is the flag: set means 40-column
+  boot, clear means 80-column (or no card, same effect). }
+PROGRAM SET40COLS;
+
+  TYPE
+    { The one byte at VOLBUF[25], overlaid two ways: as a whole byte to
+      copy in and out of the buffer, and as eight individual bits to
+      test/set bit 3 without disturbing the rest. }
+    FLAGBYTE = PACKED RECORD CASE INTEGER OF
+                 0: (ASBYTE: PACKED ARRAY [0..0] OF 0..255);
+                 1: (BITS: PACKED ARRAY [0..7] OF BOOLEAN)
+               END;
+
+  VAR
+    IORES:   INTEGER;                    { last IORESULT }
+    UNITNUM: INTEGER;                    { the volume unit number chosen }
+    ANSWER:  CHAR;                       { Y/N answer when resetting }
+    VOLBUF:  PACKED ARRAY [0..511] OF 0..255;  { one directory block }
+    FLAG:    FLAGBYTE;
+
+  { Prompt for a volume unit number (4, 5, or 9 through 12), echoing
+    digits and handling backspace, until the accumulated number is one
+    of those or the user presses <esc>. <esc> exits the whole program
+    from here, one lex level up. }
+  PROCEDURE GETVOLUME;
+    VAR
+      NDIGITS: INTEGER;
+      DIGIT:   INTEGER;
+      LASTORD: INTEGER;
+      CH:      CHAR;
+  BEGIN
+    REPEAT
+      WRITE('Modify which volume # ?  (4, 5, 9..12, <esc> to exit) ==> ');
+      NDIGITS := 0;
+      UNITNUM := 0;
+      READ(CH);
+      LASTORD := ORD(CH);
+      DIGIT := LASTORD - 48;
+      WHILE (NOT EOLN) AND (LASTORD <> 27) DO
+      BEGIN
+        IF (UNITNUM = 0) AND (CH IN ['1', '4', '5', '9']) THEN
+        BEGIN
+          NDIGITS := NDIGITS + 1;
+          UNITNUM := DIGIT;
+          WRITE(CHR(8), CH)
+        END
+        ELSE IF (UNITNUM = 1) AND (CH IN ['0', '1', '2']) THEN
+        BEGIN
+          NDIGITS := NDIGITS + 1;
+          UNITNUM := (10 * UNITNUM) + DIGIT;
+          WRITE(CHR(8), CH)
+        END
+        ELSE IF (LASTORD = 8) AND (NDIGITS > 0) THEN
+        BEGIN
+          WRITE(CH, ' ', CH);
+          UNITNUM := UNITNUM DIV 10;
+          NDIGITS := NDIGITS - 1
+        END
+        ELSE IF LASTORD > 31 THEN
+        BEGIN
+          WRITE(CHR(8), ' ', CHR(8))
+        END;
+        READ(CH);
+        LASTORD := ORD(CH);
+        DIGIT := LASTORD - 48
+      END
+    UNTIL (UNITNUM IN [4, 5, 9, 10, 11, 12]) OR (LASTORD = 27);
+    IF LASTORD = 27 THEN
+    BEGIN
+      EXIT(SET40COLS)
+    END;
+    WRITELN
+  END;
+
+  { Read the chosen volume's directory block (block 2, 512 bytes) into
+    VOLBUF. }
+  PROCEDURE READDIR;
+  BEGIN
+    UNITREAD(UNITNUM, VOLBUF, 512, 2, 0);
+    IORES := IORESULT;
+    IF IORES <> 0 THEN
+    BEGIN
+      WRITE(CHR(7));
+      WRITE('I/O ERROR #');
+      WRITE(IORES);
+      WRITE(' occurred while trying to read directory.');
+      WRITELN
+    END
+  END;
+
+  { Write VOLBUF back to the chosen volume's directory block. }
+  PROCEDURE WRITEDIR;
+  BEGIN
+    UNITWRITE(UNITNUM, VOLBUF, 512, 2, 0);
+    IORES := IORESULT;
+    IF IORES <> 0 THEN
+    BEGIN
+      WRITE(CHR(7));
+      WRITE('I/O ERROR #');
+      WRITE(IORES);
+      WRITE(' occurred while writing directory.');
+      WRITELN
+    END
+  END;
+
+BEGIN
+  WRITE(CHR(12));
+  WRITELN('SET40COLS');
+  WRITELN;
+  WRITELN('Copyright 1985 Apple Computer, Inc.');
+  WRITELN;
+  WRITELN;
+  WRITELN('This program will set a flag in the directory of a Pascal disk so');
+  WRITELN('that when Pascal is booted off the disk, it will run in 40-column');
+ WRITELN('mode regardless of whether there is an 80-column card in the Apple.');
+  WRITELN('If the flag has already been set for 40-column mode, the program');
+  WRITELN('will give you the option of reseting it so that when Pascal is');
+  WRITELN('booted off the disk, it will use an installed 80-column card.');
+  REPEAT
+    WRITELN;
+    WRITELN;
+    GETVOLUME;
+    READDIR;
+    IF IORES = 0 THEN
+    BEGIN
+      FLAG.ASBYTE[0] := VOLBUF[25];
+      IF FLAG.BITS[3] THEN
+      BEGIN
+        WRITELN('Flag is already set for 40-column mode.');
+        WRITE('Reset flag for 80-column mode (Y/N) ? ');
+        READ(ANSWER);
+        WRITELN;
+        WRITELN;
+        IF (ANSWER = 'y') OR (ANSWER = 'Y') THEN
+        BEGIN
+          FLAG.BITS[3] := FALSE
+        END
+      END
+      ELSE
+      BEGIN
+        FLAG.BITS[3] := TRUE
+      END;
+      VOLBUF[25] := FLAG.ASBYTE[0];
+      WRITEDIR;
+      IF IORES = 0 THEN
+      BEGIN
+        IF FLAG.BITS[3] THEN
+        BEGIN
+          WRITELN('Flag is now set for 40-column mode.')
+        END
+        ELSE
+        BEGIN
+          WRITELN('Flag is now set for 80-column mode.')
+        END
+      END
+    END
+  UNTIL FALSE
+END.

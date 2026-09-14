@@ -22952,3 +22952,55 @@ case of why.
 **Compile the ancestor unchanged before editing it.** 50 of 54 from an
 untouched file is both a measurement of how far Apple went and a map of
 where: the four procedures that differed held every one of the edits.
+
+## 274. `BINDER.CODE`: all 6 procedures, and every byte but the version field
+
+**VERIFIED BINARY FACT.** `src/pascal/programs/1.3/BINDER.text`, rewritten
+from the raw p-code, compiles under Apple's 1.3 compiler to all six of
+`APPLEBIN`'s procedures instruction- and frame-identical, on the second
+compile of the rewrite (`acceptance/2026-09-13-binder-exact`). The
+codefile then equals shipped `BINDER.CODE` in 2,544 of 2,560 bytes. The
+16 that differ are the version fields of the SEGINFO words: `$42` in
+Apple's (version 2, the 1.1 compiler) against `$C2` in ours. With version
+2 written into ours the whole file is Apple's, slack included. That is
+the same wall `SET40COLS.CODE` stands at (finding 112), and
+`probe_v2_binaries.py` now checks both on every build. SET40COLS was
+recompiled for the check, `acceptance/2026-09-13-set40cols-exact`, and
+came out byte-identical to its 2026-08-27 run.
+
+The earlier `BINDER.text` (finding 117) had five frames right and one body
+(`WORDAT`) exact. Under oscmp it scored 0, because its program was named
+`BINDER` and Apple's segment is `APPLEBIN`; renamed, it scored 1 of 6.
+
+### 274a. What was wrong
+
+**VERIFIED BINARY FACT**, each one visible in a one-procedure diff:
+
+- **`(*$I-*)` was missing.** Every I/O statement carried a `CSP 0`
+  Apple's has none of, which is most of the instruction-count gap.
+- **`CHECKERR(FAILED, MSG)`, not `(MSG, FAILED)`.** Every caller pushes
+  the condition, then the message.
+- **The segment loop is `FOR SEGNUM := 1 TO 14`.** Its limit is a temp
+  at global 1120, beside `WITH DICT.ADDRLEN[SEGNUM]` at 1121. That temp
+  is finding 117's unexplained one-word gap in the outer frame, which the
+  old source's `WHILE` could not produce.
+- **`DIRENTRY` fields reverse within a clause.** `ADDR, LENG: INTEGER`
+  puts `LENG` at offset 0; Apple's `ADDR` is at 0. This is finding 93a
+  again.
+- **Files are initialised in reverse declaration order.** Apple's
+  `FINIT`s `NEWFILE` (1040) before `OSFILE` (1080), which one clause,
+  `OSFILE, NEWFILE: FILE`, gives with both offsets unchanged.
+- **The page-reading loop omits the block number.** `BLOCKREAD(OSFILE,
+  PATCH^, 1)` is `LDCI 1 | NGI` for the block, the compiler's own default
+  (finding 247).
+- **The `.CODE` retry opens `CONCAT(NAME, '.CODE')` directly**, through
+  an 86-byte `CONCAT` temp, and leaves `NAME` alone.
+- **The space-bar wait reads `KEYBOARD`** (`LOD 2,4`), not `INPUT`.
+- **`SYSLEN` is written back a byte at a time** through a variant record
+  (`LAO 1030 | SLDC n | LDB`), so the patch buffer is `PACKED ARRAY OF
+  0..255` and no `ORD`/`CHR` is needed.
+- **`READGOTOXY`'s four integers come before its file and string**, in
+  one clause, so `SEGSTART` is local 1.
+
+UCSD's I.5 `BINDER` in the mirror is a different program: it links code.
+So this file has no ancestor, and its names are this reconstruction's.

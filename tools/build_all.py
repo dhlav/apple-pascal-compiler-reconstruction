@@ -122,6 +122,8 @@ STEPS = [
     ("SYSTEM.EDITOR whole file, via the Librarian", "probes/probe_editor_whole.py"),
     # SETUP predates the version word, so every procedure and not the file.
     ("SETUP.CODE every procedure, every other byte explained", "probes/probe_setup_exact.py"),
+    # 1.1 binaries: every byte but the version field (findings 112, 274).
+    ("BINDER and SET40COLS, all but the version field", "probes/probe_v2_binaries.py"),
 ]
 
 for step in STEPS:

@@ -23,9 +23,9 @@ through the end of its segment (finding 270), from I.5's LibMap, and
 `SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer, and `SYSTEM.EDITOR`
 (finding 272), from UCSD's II.0 screen editor. `SETUP.CODE` is 54 of 54
 procedures from UCSD's SETUP D1 (finding 273) -- as far as 1.3 tools
-reach, since it predates the version word. `BINDER.CODE` and
-`SET40COLS.CODE` are 1.1 binaries (version 2) and stay where finding 99c
-left them.
+reach, since it predates the version word. `BINDER.CODE` (finding
+274) and `SET40COLS.CODE` (112) are every byte but the version field:
+they are 1.1 binaries, version 2, and a 1.3 compile writes 6.
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 
