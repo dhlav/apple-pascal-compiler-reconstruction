@@ -1,7 +1,7 @@
 """SYSTEM.LINKER, the whole file, byte for byte.
 
 src/pascal/programs/1.3/LINKER.text compiled by Apple's compiler
-(acceptance/2026-09-12-linker-complete), then slot 1 copied into a fresh
+(acceptance/2026-09-14-linker-names), then slot 1 copied into a fresh
 codefile by Apple's LIBRARY.CODE with the copyright notice -- the release
 step finding 267 found for every system program. No native code, so no
 assembler and no Linker: two of Apple's tools and this repository's source.
@@ -29,8 +29,10 @@ from a2pascal.disk import PascalDisk
 from oscmp import DISKS_13
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-12-linker-librarian" / "LIBLINK.CODE"
-COMPILE = ROOT / "acceptance" / "2026-09-12-linker-complete"
+# The run after finding 291's II.0 names; the 2026-09-12 linker-complete and
+# linker-librarian runs are the same bytes from the placeholder-named source.
+RUN = ROOT / "acceptance" / "2026-09-14-linker-names" / "LIBLINK.CODE"
+COMPILE = ROOT / "acceptance" / "2026-09-14-linker-names"
 INPUT = COMPILE / "LINKER.CODE"
 KEPT_SOURCE = COMPILE / "LINKER.text"
 SOURCE = ROOT / "src" / "pascal" / "programs" / "1.3" / "LINKER.text"

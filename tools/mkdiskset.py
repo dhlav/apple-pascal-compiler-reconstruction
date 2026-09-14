@@ -60,7 +60,7 @@ REBUILT = {
     "SYSTEM.CHARSET": ("2026-09-13-charset/CHARSET.DATA", 278),
     "SYSTEM.ASSMBLER": ("2026-09-12-assembler-librarian/LIBASM.CODE", 267),
     "SYSTEM.COMPILER": ("2026-09-12-compiler-librarian/LIBCOMP.CODE", 267),
-    "SYSTEM.LINKER": ("2026-09-12-linker-librarian/LIBLINK.CODE", 268),
+    "SYSTEM.LINKER": ("2026-09-14-linker-names/LIBLINK.CODE", 291),
     "LIBRARY.CODE": ("2026-09-12-library-librarian/LIBLIB.CODE", 269),
     "LIBMAP.CODE": ("2026-09-12-libmap-linked/LIBMAPL.CODE", 270),
     "6502.OPCODES": ("2026-09-13-asm-data/OPCODES.DATA", 276),

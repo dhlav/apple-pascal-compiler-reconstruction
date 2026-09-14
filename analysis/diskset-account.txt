@@ -24,7 +24,7 @@ APPLE2  143360 bytes, 142683 identical, 677 differ (image compare: 677)
      2+4     <directory>      directory   2048     34  Apple's entries, dead space zero
      6+50    SYSTEM.ASSMBLER  rebuilt    25600      0  2026-09-12-assembler-librarian/LIBASM.CODE (267)
     56+78    SYSTEM.COMPILER  rebuilt    39936      0  2026-09-12-compiler-librarian/LIBCOMP.CODE (267)
-   134+25    SYSTEM.LINKER    rebuilt    12800      0  2026-09-12-linker-librarian/LIBLINK.CODE (268)
+   134+25    SYSTEM.LINKER    rebuilt    12800      0  2026-09-14-linker-names/LIBLINK.CODE (291)
    159+8     LIBRARY.CODE     rebuilt     4096      0  2026-09-12-library-librarian/LIBLIB.CODE (269)
    167+11    LIBMAP.CODE      rebuilt     5632    311  2026-09-12-libmap-linked/LIBMAPL.CODE (270)
    178+2     6502.OPCODES     rebuilt     1024      0  2026-09-13-asm-data/OPCODES.DATA (276)

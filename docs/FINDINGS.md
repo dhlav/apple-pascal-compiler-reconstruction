@@ -24010,3 +24010,57 @@ With this `NEWLIB.CODE` on APPLE1, `SYSTEM.LIBRARY` differs in place by
 289, and in scope 351,873 of 374,784. Nothing reconstructed got worse. The
 Linker's memory in `APPLESTU`'s slack is different, and on the disk it is
 compared against misaligned blocks.
+
+## 291. `SYSTEM.LINKER`'s placeholders named from UCSD's II.0 linker
+
+**VERIFIED SOURCE FACT.** Some of what `LINKER.text` treated as Apple's
+additions to Roger Sumner's I.5 linker is already in its II.0 revision
+("Version II.0, March 1, 1979"). That revision is in
+`github.com/dhlav/ucsd-psystem-os`, `linker/link0-3b.text`, and it has:
+- byte-flipped codefiles;
+- `BIG` operands;
+- a procedure copy for when a separate segment does not fit in memory.
+
+These match our placeholders body for body, in the same declaration slots
+and order:
+
+| was | II.0 | where the match is |
+|---|---|---|
+| `G90` | `FLIPPED` | the global after `CODE`; every use |
+| `LK5`, locals `B, A`, param `X` | `BYTESWAP`, `TEMP1, TEMP2`, `WORD` | the body, statement for statement |
+| `LK10`, local `R` | `STOREBIG`, `BIGWORD` | the body; placed after `STOREWORD` in both |
+| `LK11`, `SEGTBL`, `X` | `FLIPTABLE`, `TABLE`, `WORD` | II.0's body, plus Apple's swaps of `SEGDATA` and `SEGMISC` |
+| `LK46`, `M9..M5`, `SRCBASE, DEST, LENG` | `COPYPROC`, `STARTBLK, LASTBLK, NBLKS, BLK, COPYBYTES`, `SRCOFFSET, CP, SIZE` | the body, and the locals in the same declaration order |
+| `COPYINPROCS.L9` | `SMALLMEM` | set in `READSEPSEG`, tested before the copy |
+| `PHASE1.L2`, `L3` | `HIGHBYTE`, `INT` | the byte-sex test in `PHASE1` and `SETUPFILE` |
+| `READLINKINFO.L10`, `L285`, `L293` | `W`, `TENTRY`, `OKTOADD` | the flip of an entry and its refs, and the add test |
+| `PHASE3.L289` | `FILLER` | between `SEGTBL` and `MAP`; 112 words where II.0's is 144, because Apple's dictionary is larger |
+
+`W` now shares II.0's declaration group, `W, ERRS, NRECS, NEXTBLK,
+RECSLEFT: INTEGER`, which gives the same offsets as the two groups it
+replaced.
+
+**How far to trust the mirror.** It is Peter Miller's packaging: lowercase,
+with a license header added. His `system/globals.text` is UCSD's II.0
+`GLOBALS.TEXT` from `ii0src.sdk` line for line except one rename,
+`NORMAL` → `UK_NORMAL`. So a name taken from it is UCSD's unless Miller
+renamed it; call that STRONG INFERENCE, not VERIFIED. There is independent
+corroboration for `FLIPPED`: Apple's `LIBMAP.CODE` slack holds the compiler
+symbol node `FLIPPED` (finding 270c), so Apple kept the name in a sister
+tool.
+
+**Not renamed.**
+- **`G29`** holds the same declaration slot and type as II.0's `nextseg`,
+  but Apple uses it for the master segment's slot, not the next free one.
+  The role changed, so the name does not carry.
+- **`G91`, `LK2`, `LK3`, `LK17`, `LK51`**, and the locals `L1`, `L4`,
+  `L5`, `L45`, `L12` and `LINKSEGMENT`'s `L1`-`L4`, have no II.0
+  counterpart. They are Apple's intrinsic units, data segments, version
+  check, closing and name handling. They keep their placeholders.
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-linker-names`:
+- the renamed source, compiled by Apple's compiler on the 1.3 system, is
+  byte-identical to the 2026-09-12 compile, all 13,312 bytes;
+- after the Librarian it is all 12,800 bytes of `SYSTEM.LINKER`.
+
+`probe_linker_whole.py` now reads this run.
