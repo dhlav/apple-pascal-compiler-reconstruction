@@ -24105,3 +24105,30 @@ II.0 has none of them.
 and joined on the 1.3 system:
 - the compile is byte-identical to 2026-09-12's, all 4,608 bytes;
 - after the Librarian it is all 4,096 bytes of `LIBRARY.CODE`.
+
+## 293. `LIBMAP.CODE`'s byte-flip placeholders named from UCSD's II.0 LibMap
+
+**VERIFIED SOURCE FACT.** UCSD's II.0 LibMap ("Revised to handle
+byte-flipped files", `libmap/main.text` in the mirror of 291) has the same
+three routines as the Linker and Librarian, and they match `LIBMAP.text`'s
+placeholders body for body:
+
+| was | II.0 |
+|---|---|
+| `LM3`, `b, a`, `x` | `byteswap`, `temp1, temp2`, `word` |
+| `LM4`, `segtbl`, `L4, L5, L6` | `tableflipped`, `table`, `s, highbyte, int` |
+| `LM5`, `segtbl`, `x` | `fliptable`, `table`, `int` (II.0's record local; Apple swaps `seginfo` through it too) |
+| `readlinkinfo`'s `L270, L278` | `tentry, i`, declared in that order |
+
+The new local `i` shadows Apple's global `I` inside `readlinkinfo`. Nothing
+there used the global; the only other `I` is inside a string.
+
+`getfile`'s `L85`, the loop that upper-cases the map file name, is Apple's
+and keeps its placeholder.
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-libmap-names` repeats the
+whole route on the 1.3 system: compile, `SEARCH.TEXT` assembled, and the
+link. The compile, `SEARCH.CODE` and the linked file are byte-identical
+to 2026-09-12's, all 5,632 bytes, slack included. The linked file is
+`LIBMAP.CODE` through the end of its segment, as before. The slack's
+symbol nodes are globals, so local renames do not reach them.

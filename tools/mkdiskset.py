@@ -62,7 +62,7 @@ REBUILT = {
     "SYSTEM.COMPILER": ("2026-09-12-compiler-librarian/LIBCOMP.CODE", 267),
     "SYSTEM.LINKER": ("2026-09-14-linker-names/LIBLINK.CODE", 291),
     "LIBRARY.CODE": ("2026-09-14-library-names/LIBLIB.CODE", 292),
-    "LIBMAP.CODE": ("2026-09-12-libmap-linked/LIBMAPL.CODE", 270),
+    "LIBMAP.CODE": ("2026-09-14-libmap-names/LIBMAPL.CODE", 293),
     "6502.OPCODES": ("2026-09-13-asm-data/OPCODES.DATA", 276),
     "6502.ERRORS": ("2026-09-13-asm-data/ERRORS.DATA", 276),
     "FORMATTER.CODE": ("2026-08-24-formatter-linked/LINKED.CODE", 104),

@@ -1,0 +1,22 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]LLinking...
+
+
+
+
+
+
+
+Apple Pascal Linker [1.3]
+
+Link what host codefile? WORKHD:LIBMAPT.CODE
+Opening WORKHD:LIBMAPT.CODE
+Using what library file? WORKHD:SEARCH.CODE
+Opening WORKHD:SEARCH.CODE
+Another library file (<ret> for none) ? 
+Map file (<ret> for none) ? 
+Reading LIBMAP  
+Reading IDSEARCH
+Output file (<ret> for workfile) ? WORKHD:LIBMAPL.CODE[*]
+Linking LIBMAP   # 1
+   Copying proc IDSEARCH
+Command:

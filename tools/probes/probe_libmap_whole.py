@@ -1,9 +1,9 @@
 """LIBMAP.CODE, the whole segment, and Apple's own names for its globals.
 
 src/pascal/programs/1.3/LIBMAP.text compiled by Apple's compiler
-(acceptance/2026-09-12-libmap-complete), src/native/SEARCH.TEXT assembled
+(acceptance/2026-09-14-libmap-names), src/native/SEARCH.TEXT assembled
 by Apple's assembler, and the two linked by Apple's Linker
-(acceptance/2026-09-12-libmap-linked). LIBMAP is an ordinary PROGRAM: the
+(the same directory). LIBMAP is an ordinary PROGRAM: the
 shipped file is the Linker's output, slot 0, no notice, no Librarian.
 
 Claims, each of which the binary can fail:
@@ -30,8 +30,11 @@ from a2pascal.disk import PascalDisk
 from oscmp import DISKS_13
 
 ROOT = Path(__file__).resolve().parents[2]
-COMPILE = ROOT / "acceptance" / "2026-09-12-libmap-complete"
-LINKED = ROOT / "acceptance" / "2026-09-12-libmap-linked"
+# The run after finding 293's II.0 names, compile and link in one directory;
+# 2026-09-12-libmap-complete and -linked are the same bytes from the
+# placeholder-named source.
+COMPILE = ROOT / "acceptance" / "2026-09-14-libmap-names"
+LINKED = COMPILE
 INPUT = COMPILE / "LIBMAPT.CODE"
 RUN = LINKED / "LIBMAPL.CODE"
 KEPT_SOURCE = COMPILE / "LIBMAP.text"
