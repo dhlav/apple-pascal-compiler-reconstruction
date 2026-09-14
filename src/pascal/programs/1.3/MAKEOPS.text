@@ -1,0 +1,55 @@
+{ MAKEOPS -- builds 6502.OPCODES, the table SYSTEM.ASSMBLER's INITIALI
+  reads into its hash buckets (finding 276).
+
+  The file is sixty six-word records: an eight-character name and two
+  words. Record 0 is the byte-sex mark -- a zero name and a 1 in the first
+  word, which the assembler tests before its first GET. The other 59 come
+  from OPS6502.TEXT, one to a line: the name in columns 1 to 8, then the
+  two words. Apple's source for this is not on the 1.3 disks; this program
+  and that text are this reconstruction's, read off the file's own
+  records.
+
+  Written as '*OPCODES.DATA', not over the assembler's own copy. }
+
+(*$I-*)
+PROGRAM MAKEOPS;
+
+TYPE
+  OPREC = RECORD
+            ONAME: PACKED ARRAY [0..7] OF CHAR;
+            OW4: INTEGER;
+            OW5: INTEGER
+          END;
+
+VAR
+  SRC: TEXT;
+  DST: FILE OF OPREC;
+  I, W4, W5, COUNT: INTEGER;
+  CH: CHAR;
+
+BEGIN
+  RESET(SRC, '*OPS6502.TEXT');
+  IF IORESULT <> 0 THEN
+    BEGIN WRITELN('MAKEOPS: no OPS6502.TEXT'); EXIT(MAKEOPS) END;
+  REWRITE(DST, '*OPCODES.DATA');
+  FOR I := 0 TO 7 DO DST^.ONAME[I] := CHR(0);
+  DST^.OW4 := 1;
+  DST^.OW5 := 0;
+  PUT(DST);
+  COUNT := 1;
+  WHILE NOT EOF(SRC) DO
+    BEGIN
+      FOR I := 0 TO 7 DO
+        BEGIN
+          READ(SRC, CH);
+          DST^.ONAME[I] := CH
+        END;
+      READLN(SRC, W4, W5);
+      DST^.OW4 := W4;
+      DST^.OW5 := W5;
+      PUT(DST);
+      COUNT := COUNT + 1
+    END;
+  CLOSE(DST, LOCK);
+  WRITELN('MAKEOPS: ', COUNT, ' records')
+END.

@@ -26,6 +26,9 @@ procedures from UCSD's SETUP D1 (finding 273) -- as far as 1.3 tools
 reach, since it predates the version word. `BINDER.CODE` (finding
 274) and `SET40COLS.CODE` (112) are every byte but the version field:
 they are 1.1 binaries, version 2, and a 1.3 compile writes 6.
+`FORMATTER.DATA` is 3583 of 3584 bytes, assembled and joined on the 1.3
+system (finding 275); `6502.OPCODES` is identical and `6502.ERRORS` is
+all but the 287 bytes its record window started with (finding 276).
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 

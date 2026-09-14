@@ -23079,3 +23079,67 @@ description of MAKEFMT and to BOOTTRACKS.DATA's observed layout. Neither
 program's code is compared with anything. The assembler sources use
 `L<address>` labels; the segment names (`ASMFORMAT`, `BOOT`) never reach
 the data file. `emuremote.py` gained a `run` action for X(ecute).
+
+## 276. `6502.OPCODES` identical, `6502.ERRORS` all but its window's first fill
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-13-asm-data` holds both
+assembler data files as written under the 1.3 system. SYSTEM.COMPILER
+compiled `MAKEOPS` and `MAKEERRS`, and running them turned
+`src/data/OPS6502.TEXT` and `src/data/ERRS6502.TEXT` into typed files.
+`probe_asm_data.py` checks both on every build. Neither source is on the
+1.3 disks. The texts are read off the files' own records, and the two
+programs are this reconstruction's.
+
+### 276a. `6502.OPCODES`: all 1024 bytes
+
+**VERIFIED BINARY FACT.** It is sixty six-word records, the `OPFREC`
+`SYSTEM.ASSMBLER`'s `INITIALI.4` reads (`FINIT` with 6 words): an
+eight-character name and two words. Record 0 is a zero name with 1 in its
+first word, the byte-sex mark the assembler tests before its first `GET`.
+Records 1-3 are the registers `Y`, `X` and `A` with zero values. The 56
+mnemonics follow in reverse alphabetical order, each with its base opcode
+and an addressing class 2-11. The file equals Apple's in both whole
+blocks, including the 304 zero bytes after record 59. Every byte of every
+record is assigned, so no memory shows through.
+
+### 276b. `6502.ERRORS`: the chain through one window
+
+**VERIFIED BINARY FACT.** It is 85 records of `FILE OF STRING[40]`, 42
+bytes each (the assembler `SEEK`s to the error number). A string
+assignment copies only its length byte and characters, so each record
+keeps the bytes the previous one left in the window past its own length.
+Apple's file follows that chain from record 0 to record 84, with one
+break. Records 66-75 carry record 64's text in bytes 2-29, where record
+65's "Too many .PROCS and/or .FUNCS" would have left its own, and the
+records after them inherit it. So record
+65 was a one-space placeholder when the file was written. The message
+went in afterwards, read back and rewritten in place, which keeps the
+placeholder's leftovers in bytes 30-41. `MAKEERRS` does the same; a
+simulation writing 65 in the loop does not give Apple's file, and the
+probe checks both. **STRONG INFERENCE:** the placeholder numbers 65-75,
+the long messages cut at 40 characters, and the directory dates
+(`6502.OPCODES` 20-Dec-78, `6502.ERRORS` 25-Dec-83) fit a UCSD I.5-era file
+that Apple later amended with its own error 65. UCSD's Z80 assembler list
+in `ucsd-psystem-os` has the same numbers 1-64 and the same cut messages
+(one wording differs, "nesting" for "nested" in 34), and no 65.
+
+The record count needed a text-file detail. Record 84 has length 0, and
+under 1.3 `EOF` is true straight after the last `READLN`, so a loop of
+`READLN` and `PUT` writes it only if the text ends with an empty line. The
+first run, without that line, wrote 84 records.
+
+### 276c. The 287 bytes that differ
+
+**VERIFIED BINARY FACT.** Ours equals Apple's in 3297 of 3584 bytes,
+directory last-byte (498) and zero tail included. The 287 others are
+exactly the bytes whose value descends from the window's first fill:
+record 0 is one space, so its bytes 2-41 are whatever memory the window
+started as, and later short records inherit them. Putting Apple's 40
+fill bytes in place of ours gives Apple's file exactly, and a one-bit
+change to a message is not absorbed. In our run the window started as the
+command line's prompt text ("E(dit, R(un, C(omp, L(ink, X(ecute, A"),
+because a program's globals land on stack the Command level just used.
+Apple's fill (`B9 1E 00 00 00 00 AE 15 93 A1 07 A5 80 D3 ...`) occurs
+nowhere else on the three 1.3 disks. **SPECULATION:** it is memory from
+the session that first wrote the file, possibly on another p-system, and
+no 1.3 session is known to reproduce it. Not closable from source.

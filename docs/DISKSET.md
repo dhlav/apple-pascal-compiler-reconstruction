@@ -56,8 +56,8 @@ files; the descriptions are still the user's, verbatim.
 
 | file | what it is | status |
 |---|---|---|
-| 6502.OPCODES | List of commands for the Apple II processor chip. | not started; 720 bytes, read by SYSTEM.ASSMBLER |
-| 6502.ERRORS | List of error messages for the assembly tool. | not started; 3570 bytes |
+| 6502.OPCODES | List of commands for the Apple II processor chip. | **reconstructed -- all 1,024 bytes identical to shipped** (finding 276): sixty records written by `MAKEOPS` from `src/data/OPS6502.TEXT`, compiled and run on the 1.3 system (`probe_asm_data.py`) |
+| 6502.ERRORS | List of error messages for the assembly tool. | **3,297 of 3,584 bytes, written on the 1.3 system** (finding 276): 85 `STRING[40]` records by `MAKEERRS` from `src/data/ERRS6502.TEXT`, record 65 rewritten afterwards as Apple's was. The other 287 bytes all descend from the record window's first fill, which is session memory; Apple's fill substituted into ours gives Apple's file (`probe_asm_data.py`) |
 
 ## Also on the disks
 

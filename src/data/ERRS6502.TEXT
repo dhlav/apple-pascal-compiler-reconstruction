@@ -1,0 +1,85 @@
+ 
+undefined label
+operand out of range
+must have procedure name
+number of parameters expected
+extra garbage on line
+input line over 80 characters
+not enough .IF's
+must be declared in .ASECT before used
+identifier previously declared
+improper format
+.EQU expected
+must .EQU before use if not to a label
+macro identifier expected
+word addressed machine
+backward .ORG currently not allowed
+identifier expected
+constant expected
+invalid structure
+extra special symbol
+branch too far
+variable not PC relative
+illegal macro parameter index
+not enough macro parameters
+operand not absolute
+illegal use of special symbols
+ill-formed expression
+not enough operands
+cannot handle this relative expression
+constant overflow
+illegal decimal constant
+illegal octal constant
+illegal binary constant
+invalid key word
+macro stack overflow - 5 nested limit
+include files may not be nested
+unexpected end of input
+this is a bad place for an .INCLUDE file
+only labels & comments may occupy col 1
+expected local label
+local label stack overflow
+string constant must be on one line
+string constant exceeds 80 characters
+illegal use of macro parameter
+no local labels in .ASECT
+expected key word
+string expected
+bad block, parity error (CRC)
+bad unit number
+bad mode, illegal operation
+undefined hardware error
+lost unit, unit is no longer on-line
+lost file, file is no longer in director
+bad title, illegal file name
+no room, insufficient space on disk
+no unit, no such volume on-line
+no file, no such file on volume
+duplicate file
+not closed, attempt to open an open file
+not open, attempt to access a closed fil
+bad format, error in reading real or int
+nested macro definitions illegal
+'=' or '<>' expected
+may not EQU to undefined labels
+must declare .ABSOLUTE before 1st .PROC
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+index register required
+'X' or 'Y' expected
+zero-page address required
+illegal use of register
+index register expected
+ill-formed operand
+'X' expected for indexed addressing
+must use 'X' index register
+

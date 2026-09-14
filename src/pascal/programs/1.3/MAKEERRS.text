@@ -1,0 +1,52 @@
+{ MAKEERRS -- builds 6502.ERRORS, the messages SYSTEM.ASSMBLER finds by
+  SEEKing to the error number in a FILE OF STRING[40] (finding 276).
+
+  Every record is written through the file's one window, and a string
+  assignment copies only its length byte and characters, so each record
+  keeps the tail of the one before it. Apple's file shows that chain, and
+  shows it broken once: records 66 to 81 carry record 64's tail, not 65's.
+  So record 65 was a placeholder when the file was written and "Too many
+  .PROCS and/or .FUNCS" went in afterwards, read back and rewritten in
+  place. This program does the same, in that order.
+
+  ERRS6502.TEXT holds the messages 0 to 83, one to a line, a lone space
+  for a number with no message, and then one empty line: Apple's file has
+  an 85th record of length 0, and under 1.3 EOF is true straight after
+  the last READLN, so only a line can put it there. Messages longer than
+  forty characters are written already cut, as the records have them.
+  Apple's source is not on the 1.3 disks;
+  that text and this program are this reconstruction's, read off the
+  file's own records.
+
+  Written as '*ERRORS.DATA', not over the assembler's own copy. }
+
+(*$I-*)
+PROGRAM MAKEERRS;
+
+VAR
+  SRC: TEXT;
+  DST: FILE OF STRING[40];
+  LINE: STRING[40];
+  COUNT: INTEGER;
+
+BEGIN
+  RESET(SRC, '*ERRS6502.TEXT');
+  IF IORESULT <> 0 THEN
+    BEGIN WRITELN('MAKEERRS: no ERRS6502.TEXT'); EXIT(MAKEERRS) END;
+  REWRITE(DST, '*ERRORS.DATA');
+  COUNT := 0;
+  WHILE NOT EOF(SRC) DO
+    BEGIN
+      READLN(SRC, LINE);
+      DST^ := LINE;
+      PUT(DST);
+      COUNT := COUNT + 1
+    END;
+  SEEK(DST, 65);
+  GET(DST);
+  DST^ := 'Too many .PROCS and/or .FUNCS';
+  SEEK(DST, 65);
+  PUT(DST);
+  CLOSE(DST, LOCK);
+  WRITELN('MAKEERRS: ', COUNT, ' records')
+END.

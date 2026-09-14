@@ -1,0 +1,3 @@
+Command: F(ile, E(dit, R(un, C(omp, L(ink, X(ecute, A(ssem, ?  [1.3]XExecute what file (<ret> to exit) ? SYSHD:MAKEOPS
+MAKEOPS: 60 records
+Command: 

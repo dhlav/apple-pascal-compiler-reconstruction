@@ -20,6 +20,8 @@ finding 269), `LIBMAP.CODE` (the whole segment, 270), `SYSTEM.FILER`
 `BINDER.CODE` and `SET40COLS.CODE` (every byte but the version field,
 274),
 `FORMATTER.DATA` (all but one uncleared assembler byte, 275),
+`6502.OPCODES` (the whole file) and `6502.ERRORS` (all but its record
+window's first fill, 276),
 `SYSTEM.LIBRARY`,
 `LINEFEED.CODE`,
 `FORMATTER.CODE`. Plan in
