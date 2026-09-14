@@ -79,6 +79,8 @@ def encode_text(text: str, header: bytes | None = None,
     interface, which the compiler copies into the codefile still encoded
     (finding 285). See `Layout`.
     """
+    if header is None and layout is not None:
+        header = layout.header()
     if header is None:
         header = bytes(HEADER_BYTES)
     if len(header) != HEADER_BYTES:
@@ -157,13 +159,42 @@ class Layout:
                          edit that moves a line fails instead of misencoding
 
     Line numbers are 1-based, as an editor shows them.
+
+    A file whose editor wrote DLE codes on only a few lines says `plain`
+    instead of `dle`, and names those lines:
+
+        plain            no line gets a DLE code unless named
+        dle N            line N gets a DLE code for its indentation
+
+    A file kept whole, not just compiled, needs its header page too. That is
+    the editor's page zero, `HEADER` in `SYSTEM.EDITOR` (finding 288): a
+    DEFINED word, the markers, then the environment the editor's
+    S(et E(nvironment shows. Each directive sets one field; the rest of the
+    page is zero:
+
+        defined N        word 0
+        environment OFF  where AUTOINDENT starts (114 in `HEADER`)
+        autoindent N  filling N  tokdef N  lmargin N  rmargin N
+        paramargin N     one word each, in that order from `environment`
+        runoffch C       one byte, the command character
+        created M-D-Y    a DATEREC word, then `lastused M-D-Y` after it
+        byte OFF N       one byte, for a page zero `HEADER` does not describe
     """
 
+    # HEADER's environment, in declaration order, each field one word.
+    ENVIRONMENT = ("autoindent", "filling", "tokdef", "lmargin", "rmargin",
+                   "paramargin", "runoffch", "created", "lastused")
+
     def __init__(self, text: str):
-        self.dle = False
-        self.literal: dict[int, int] = {}      # line -> spaces in its DLE
+        self.dle = None
+        # line -> spaces in its DLE, None for no DLE
+        self.literal: dict[int, int | None] = {}
+        self.dle_lines: set[int] = set()
         self.pages: set[int] = set()
         self.expect: dict[int, str] = {}
+        self.fields: dict[str, int] = {}
+        self.bytes: dict[int, int] = {}
+        self.environment = 114
         for raw in text.splitlines():
             if raw.startswith("expect "):
                 n, _, want = raw[len("expect "):].partition(" ")
@@ -173,19 +204,54 @@ class Layout:
             if not line:
                 continue
             word, _, rest = line.partition(" ")
-            if word == "dle":
+            if word == "dle" and not rest:
                 self.dle = True
+            elif word == "plain":
+                self.dle = False
+            elif word == "dle":
+                self.dle_lines.add(int(rest))
             elif word == "literal":
-                self.literal[int(rest)] = 0
+                self.literal[int(rest)] = None
             elif word == "split":
                 n, k = rest.split()
                 self.literal[int(n)] = int(k)
             elif word == "page":
                 self.pages.add(int(rest))
+            elif word == "defined":
+                self.fields[word] = int(rest)
+            elif word == "environment":
+                self.environment = int(rest)
+            elif word == "runoffch":
+                self.fields[word] = ord(rest)
+            elif word in ("created", "lastused"):
+                m, d, y = (int(v) for v in rest.split("-"))
+                self.fields[word] = m | d << 4 | y << 9
+            elif word in self.ENVIRONMENT:
+                self.fields[word] = int(rest)
+            elif word == "byte":
+                off, n = rest.split()
+                self.bytes[int(off)] = int(n)
             else:
                 raise ValueError(f"unknown layout directive: {raw!r}")
-        if not self.dle:
-            raise ValueError("a layout must say `dle`")
+        if self.dle is None:
+            raise ValueError("a layout must say `dle` or `plain`")
+        if self.dle_lines and self.dle:
+            raise ValueError("`dle N` names lines in a `plain` layout")
+
+    def header(self) -> bytes | None:
+        """The editor's page zero, or None if the layout does not give one."""
+        if not self.fields and not self.bytes:
+            return None
+        page = bytearray(HEADER_BYTES)
+        if "defined" in self.fields:
+            page[0:2] = self.fields["defined"].to_bytes(2, "little")
+        for i, name in enumerate(self.ENVIRONMENT):
+            if name in self.fields:
+                off = self.environment + 2 * i
+                page[off:off + 2] = self.fields[name].to_bytes(2, "little")
+        for off, n in self.bytes.items():
+            page[off] = n
+        return bytes(page)
 
     @classmethod
     def beside(cls, source) -> "Layout | None":
@@ -205,10 +271,14 @@ class Layout:
         ind = len(body) - len(body.lstrip(" "))
         if number in self.literal:
             k = self.literal[number]
-            if k > ind:
+            if k is not None and k > ind:
                 raise ValueError(f"line {number}: a DLE for {k} spaces, but "
                                  f"it is indented {ind}")
-            head = bytes((DLE, k + 32)) if k else b""
+            # `split N 0` is a DLE for no spaces, then the typed ones; only
+            # `literal` has no DLE at all.
+            head = bytes((DLE, k + 32)) if k is not None else b""
             return head + body[k:].encode("ascii") + bytes((CR,))
+        if not self.dle and number not in self.dle_lines:
+            return body.encode("ascii") + bytes((CR,))
         return (bytes((DLE, ind + 32)) + body[ind:].encode("ascii")
                 + bytes((CR,)))

@@ -131,6 +131,11 @@ STEPS = [
     ("128K.APPLE, three assemblies joined on the 1.3 system", "probes/probe_128k_apple.py"),
     ("128K.PASCAL, the compile finished by MAKEOS on the 1.3 system", "probes/probe_128k_pascal.py"),
     ("SYSTEM.LIBRARY units, compiled, assembled and linked on 1.3", "probes/probe_library_units.py"),
+    ("the ten text files, from src/text and their layouts", "probes/probe_text_files.py"),
+    # The end of the project: the three disks written out of everything
+    # above, and an account of every byte that has to balance (finding 289).
+    ("the disk set, rebuilt", "mkdiskset.py"),
+    ("the disk set's account balances", "probes/probe_diskset.py"),
 ]
 
 for step in STEPS:

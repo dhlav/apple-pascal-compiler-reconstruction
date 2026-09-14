@@ -1,0 +1,38 @@
+# How Apple's editor stored GRAFDEMO.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 78
+paramargin 5
+runoffch ^
+created 5-4-79
+lastused 5-4-79
+literal 1
+expect 1 
+split 29 0
+expect 29     COLORS: ARRAY[0..5] OF SCREENCOLOR;
+split 30 0
+expect 30     BUTTER: PICTURE;
+split 31 0
+expect 31     BIT: BOOLEAN;
+split 47 0
+expect 47   PENCOLOR(NONE);
+literal 139
+expect 139 PROCEDURE DIAGONALS;
+split 190 9
+expect 190                 TURN(180);
+split 191 6
+expect 191                 PENCOLOR(RANDCOLOR);
+split 192 14
+expect 192                 I:=I+1;
+split 208 0
+expect 208   FOR I:=1 TO SIDES DO
+split 238 2
+expect 238       BITMAP[ROW,60-J]:=BIT; (* SYMMETRIC *)
+split 322 0
+expect 322   BUTTER4;
+split 398 2
+expect 398     POLYGONS;

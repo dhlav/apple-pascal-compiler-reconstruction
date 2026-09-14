@@ -16,6 +16,18 @@ they disagree, the generated one is right.
 archived -- see **Archived** at the end. The core rows below name the 128K
 files; the descriptions are still the user's, verbatim.
 
+## The disks, rebuilt
+
+**359,401 of 430,080 bytes** across the three disks (finding 289):
+`tools/mkdiskset.py` writes each volume from the rebuilt files, the text
+sources, the rebuilt boot and Apple's directory entries, and
+`analysis/diskset-account.txt` accounts for every byte by region.
+`probe_diskset.py` requires the regions to balance against a direct image
+compare and each to differ by exactly what its finding says. In scope,
+without the archived 64K pair, it is 351,951 of 374,784. Nineteen files are
+identical in place; `SYSTEM.LIBRARY` is the largest gap in place (16,156,
+two blocks short, 287), then `SETUP.CODE` (3,943, 273).
+
 ## Core System Files
 
 | file | what it is | status |
@@ -64,20 +76,26 @@ files; the descriptions are still the user's, verbatim.
 The list above is the interesting half. The disks carry more:
 
 * **`LINEFEED.CODE`** (APPLE3) -- suppresses line feeds. One procedure, 38
-  bytes, and **reconstructed** (finding 99a).
+  bytes, and **reconstructed** (finding 99a): kept whole from Apple's 1.3
+  compiler, every byte to the end of the code but the version field,
+  `probe_v2_binaries.py` (288c).
 * **`SYSTEM.CHARSET`** (APPLE1) -- the hi-res character set, 1024 bytes.
   **Reconstructed**, identical, written by `MAKECHRS` from
   `src/data/CHARSET.TEXT` on the 1.3 system (finding 278).
-* **`SYSTEM.SYNTAX`** (APPLE1) -- the compiler's error messages. Already a
-  text file on the disk, so it is reproduced by writing the volume.
+* **`SYSTEM.SYNTAX`** (APPLE1) -- the compiler's error messages.
+  **Identical**, all 6144 bytes, from `src/text/SYSTEM.SYNTAX.text` and its
+  `.layout`: the six lines with a DLE, and the editor's page zero (288).
 * **`II40.MISCINFO`, `II80.MISCINFO`, `HAZEL.MISCINFO`** (APPLE3) -- the
   terminal profiles SETUP writes. Every setting and the zero tail
   reproduced by Apple's SETUP from recipes, 370, 396 and 361 of 512
   bytes; the rest is memory SETUP never writes (finding 277).
-* **Eleven `.TEXT` sample programs** (APPLE3) -- `BALANCED`, `CROSSREF`,
+* **Nine `.TEXT` sample programs** (APPLE3) -- `BALANCED`, `CROSSREF`,
   `DISKIO`, `GRAFCHARS`, `GRAFDEMO`, `HILBERT`, `SPIRODEMO`, `TREE`,
-  `HAZELGOTO`. Already source on the disk. (Their 1.1 `.CODE` twins, once
-  the lifter's calibration corpus, are archived with 1.1.)
+  `HAZELGOTO`. **All identical**, every block, from `src/text/` and their
+  `.layout`s: which lines Apple's editor gave a DLE, and each file's page
+  zero with its margins and dates (finding 288, `probe_text_files.py`).
+  (Their 1.1 `.CODE` twins, once the lifter's calibration corpus, are
+  archived with 1.1.)
 
 ## What is left, by size
 

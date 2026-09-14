@@ -1,0 +1,24 @@
+# How Apple's editor stored SYSTEM.SYNTAX on APPLE1 (finding 288).
+plain
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 79
+paramargin 5
+runoffch ^
+created 4-15-81
+lastused 9-24-84
+dle 54
+expect 54 125: Error in type of standard procedure parameter
+dle 106
+expect 106 195: Unit not importable (interface text not available)
+dle 115
+expect 115 277: String too long
+dle 116
+expect 116 301: No case provided for this value
+dle 118
+expect 118 350: No data segment allocated
+dle 132
+expect 132 409: General Compiler error

@@ -1,0 +1,20 @@
+# How Apple's editor stored SPIRODEMO.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 79
+paramargin 5
+runoffch ^
+created 4-28-79
+lastused 5-4-79
+split 19 6
+expect 19        WHILE COL IN [BLACK,BLACK1,BLACK2,RADAR]
+split 20 6
+expect 20        DO COL:=SUCC(COL);
+split 30 0
+expect 30   EXIT(PROGRAM);
+split 50 4
+expect 50       FILLSCREEN(REVERSE);

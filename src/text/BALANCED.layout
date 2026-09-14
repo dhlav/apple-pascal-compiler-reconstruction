@@ -1,0 +1,24 @@
+# How Apple's editor stored BALANCED.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 78
+paramargin 5
+runoffch ^
+created 6-22-79
+lastused 6-22-79
+literal 1
+expect 1 
+split 17 0
+expect 17       CONSOLE=1;
+split 24 10
+expect 24             BAL: -1..+1;
+split 46 4
+expect 46         END;
+split 178 4
+expect 178         END;
+split 217 2
+expect 217     READLN; TEXTMODE;

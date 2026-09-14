@@ -1,6 +1,6 @@
-"""BINDER.CODE and SET40COLS.CODE: Apple's bytes except the version field.
+"""BINDER, SET40COLS, LINEFEED: Apple's bytes except the version field.
 
-Both are 1.1 binaries Apple carried into 1.3 unchanged (finding 99c).
+All three are 1.1 binaries Apple carried into 1.3 unchanged (finding 99c).
 Their segments say version 2; any 1.3 compile says 6. So a whole-file
 match is out of reach, and this probe pins down that it is the ONLY
 thing out of reach (findings 112 and 274):
@@ -10,7 +10,9 @@ thing out of reach (findings 112 and 274):
   2. **Every differing byte is the version field**: each is a high byte
      of a SEGINFO word at $100-$11F, Apple's reads version 2 in its top
      three bits, ours 6, and the other five bits agree. Writing Apple's
-     version into ours makes the WHOLE file identical, slack included.
+     version into ours makes the WHOLE file identical, slack included --
+     except LINEFEED, whose 38 bytes leave most of a block of slack, and
+     that is compared to the end of the segment (findings 99a, 289).
   3. **The comparison can see a code byte**: one flipped byte in the
      segment is caught, at that byte, and costs a procedure its match.
   4. **The verified source is the source in the tree.**
@@ -27,11 +29,13 @@ ROOT = Path(__file__).resolve().parents[2]
 ACC = ROOT / "acceptance"
 SRC = ROOT / "src" / "pascal" / "programs" / "1.3"
 RUNS = [
-    # (shipped name, run dir, codefile, source, procedures)
+    # (shipped name, run dir, codefile, source, procedures, slack compared)
     ("BINDER.CODE", "2026-09-13-binder-exact", "BINDERT.CODE",
-     "BINDER.text", 6),
+     "BINDER.text", 6, True),
     ("SET40COLS.CODE", "2026-09-13-set40cols-exact", "SET40T.CODE",
-     "SET40COLS.text", 4),
+     "SET40COLS.text", 4, True),
+    ("LINEFEED.CODE", "2026-09-14-linefeed", "LINEFEED.CODE",
+     "LINEFEED.text", 1, False),
 ]
 
 fail = []
@@ -56,7 +60,7 @@ def shipped(name: str) -> bytes:
 
 
 def main() -> int:
-    for name, run, code, source, nproc in RUNS:
+    for name, run, code, source, nproc, whole in RUNS:
         print(f"=== {name} ===")
         paths = (ACC / run / code, ACC / run / source, SRC / source)
         missing = [p for p in paths if not p.exists()]
@@ -74,7 +78,11 @@ def main() -> int:
               f"{len(exact)} of {len(real)} procedures instruction- and "
               "frame-identical")
 
-        diff = [i for i in range(len(apple))
+        # Where the comparison stops: the file, or the end of its last
+        # segment when the slack is the compile's memory.
+        limit = len(apple) if whole else max(
+            s.block * 512 + s.length for s in acf.segments if s.length)
+        diff = [i for i in range(limit)
                 if i >= len(ours) or apple[i] != ours[i]]
         version_only = (
             len(ours) == len(apple) and bool(diff)
@@ -87,15 +95,15 @@ def main() -> int:
         restamped = bytearray(ours)
         for i in diff:
             restamped[i] = (restamped[i] & 0x1F) | (2 << 5)
-        check(bytes(restamped) == apple,
-              "with version 2 written into ours, the whole file is "
-              "Apple's, slack and all")
+        check(bytes(restamped)[:limit] == apple[:limit],
+              f"with version 2 written into ours, bytes 0..{limit} are "
+              f"Apple's" + (", slack and all" if whole else ""))
 
         seg = next(s for s in ocf.segments if s.length)
         where = seg.block * 512 + seg.length // 2
         mutant = bytearray(ours)
         mutant[where] ^= 0x01
-        mdiff = [i for i in range(len(apple)) if apple[i] != mutant[i]]
+        mdiff = [i for i in range(limit) if apple[i] != mutant[i]]
         lost = [k for k, r in compare(CodeFile(bytes(mutant)), acf).items()
                 if r["present_apple"] and not r["exact"]]
         check(where in mdiff and len(mdiff) == len(diff) + 1 and len(lost) == 1,
@@ -109,7 +117,8 @@ def main() -> int:
     if fail:
         print(f"v2 binaries: {len(fail)} check(s) failed")
         return 1
-    print("BINDER and SET40COLS: every byte Apple's but the version field")
+    print("BINDER, SET40COLS, LINEFEED: every byte Apple's but the version "
+          "field")
     print("v2-binaries-ok")
     return 0
 

@@ -23744,3 +23744,171 @@ The other 3042 bytes are:
 `PASCALIO`'s and `TRANSCEN`'s slack, 490 and 268 bytes, are identical.
 `probe_library_units.py` checks the block 0 difference set, the code, the
 balance and the count.
+
+## 288. The ten text files, byte for byte; `LINEFEED.CODE` as a whole file
+
+**VERIFIED BINARY FACT.** Every text file on the three 1.3 disks is now
+reproduced exactly, every block its directory entry gives it, from
+`src/text/NAME.text` and a `NAME.layout` beside it. That is
+`SYSTEM.SYNTAX` on APPLE1 and the nine samples on APPLE3.
+`probe_text_files.py` checks each one.
+
+The same lines through the default encoder match none of the ten. With the
+header directives dropped, the text pages still match and the header page
+does not.
+
+### 288a. How Apple's editor stored them
+
+**VERIFIED BINARY FACT.** Read off the shipped bytes:
+
+* **Pages are packed greedily.** A line goes on the current page if it
+  leaves at least one NUL, else it starts the next. The rest of every page
+  is zero; no page anywhere carries stale bytes. No file needed a `page`
+  directive.
+* **Nine files have a DLE on nearly every line.** A few lines have none,
+  and those are `literal`. 72 lines across seven files are a DLE for 0
+  spaces followed by typed spaces, which is `split N 0`. Before this
+  finding `Layout` wrote a zero split with no DLE; it now writes the DLE.
+  The unit layouts never used one, and their interface text is unchanged.
+* **`SYSTEM.SYNTAX` is the other way round.** It is plain text with a DLE
+  on six lines only (54, 106, 115, 116, 118, 132), each a DLE for 0. The
+  new `plain` base and `dle N` directive express that.
+
+### 288b. The header page is `SYSTEM.EDITOR`'s page zero
+
+**VERIFIED SOURCE FACT.** `HEADER` in `src/pascal/programs/1.3/EDITOR.text`
+accounts for every non-zero header byte in nine of the files:
+
+* `DEFINED` 1;
+* `AUTOINDENT` 1 at 114, `FILLING` 0, `TOKDEF` 1, `LMARGIN` 0;
+* `RMARGIN` 79 or 78, `PARAMARGIN` 5, `RUNOFFCH` `^`;
+* `CREATED` and `LASTUSED` as `DATEREC` words at 128 and 130.
+
+The editor's own initialisation (EDITOR.text line 603) sets the same
+defaults but `SCREENWIDTH` for the right margin. The layout names each
+field.
+
+The dates are Apple's editing history, for example:
+
+| file | created | last used |
+|---|---|---|
+| `CROSSREF` | 9 Dec 1978 | 17 May 1982 |
+| `SYSTEM.SYNTAX` | 15 Apr 1981 | 24 Sep 1984 |
+| `DISKIO` | 4 May 1979 | 6 Feb 1985 |
+| `HILBERT` | 19 Feb 1979 | 4 May 1979 |
+
+**VERIFIED BINARY FACT.** `HAZELGOTO.TEXT`'s page zero is not `HEADER`.
+The same environment values sit 142 bytes later, at 256. Word 0 is 2, and
+the sixteen words from 224 to 254 are 1. Its layout records it with
+`environment 256` and `byte` lines and does not name those bytes. Which
+editor wrote it is SPECULATION.
+
+**Not claimed:** that Apple's editor would write these bytes today. The
+encoder is this repository's; what it is checked against is Apple's file.
+
+### 288c. `LINEFEED.CODE` rebuilt as a file
+
+**VERIFIED BINARY FACT.** Finding 99a's source was compiled again by
+Apple's compiler on the 1.3 system and kept whole
+(`acceptance/2026-09-14-linefeed`). Of Apple's 1024 bytes, 557 are
+identical:
+
+* the procedure is instruction- and frame-identical, and bytes 0-549
+  (block 0 and the 38 bytes of code) differ only in the 16 `SEGINFO`
+  version bytes: 2 in Apple's file, 6 in ours;
+* the other 451 differing bytes are slack past the code, which is compile
+  memory.
+
+`probe_v2_binaries.py` checks it beside `BINDER` and `SET40COLS`.
+
+## 289. The three disks written from reconstructed files: 359,401 of 430,080 bytes
+
+**VERIFIED BINARY FACT.** `tools/mkdiskset.py` writes `APPLE1`, `APPLE2`
+and `APPLE3` into `build/diskset/`, block for block. The pieces are:
+
+* every rebuilt file from `acceptance/`;
+* the text files from `src/text/`;
+* the boot blocks from the rebuilt `FORMATTER.DATA`'s blocks 3-4;
+* Apple's directory entries re-encoded, with the dead space written as
+  zero.
+
+It accounts for every byte by region in `analysis/diskset-account.txt`.
+`probe_diskset.py` checks:
+
+* the regions tile each disk;
+* their difference counts add up to a direct compare of the image files;
+* the same build with every region copied from Apple's image *is* Apple's
+  image, so the placement is not what differs;
+* each region differs by exactly its expected count and no other region
+  differs.
+
+| category | bytes | identical | differ |
+|---|---|---|---|
+| rebuilt | 225,792 | 203,074 | 22,718 |
+| text | 57,344 | 57,344 | 0 |
+| boot | 3,072 | 3,069 | 3 |
+| directory | 6,144 | 6,076 | 68 |
+| free | 82,432 | 82,388 | 44 |
+| archived (64K) | 55,296 | 7,450 | 47,846 |
+| **the set** | **430,080** | **359,401** | **70,679** |
+
+In scope, which excludes the archived `SYSTEM.APPLE` and `SYSTEM.PASCAL`,
+351,951 of 374,784 bytes are identical.
+
+Nineteen files are identical in place:
+
+* the ten text files;
+* `SYSTEM.EDITOR`, `SYSTEM.FILER`, `SYSTEM.CHARSET`;
+* `SYSTEM.ASSMBLER`, `SYSTEM.COMPILER`, `SYSTEM.LINKER`, `LIBRARY.CODE`,
+  `6502.OPCODES`;
+* `128K.APPLE`.
+
+### 289a. Every other difference, by file
+
+Every difference has a finding:
+
+| region | differ | why |
+|---|---|---|
+| `SYSTEM.LIBRARY` | 16,156 | in place; aligned slot by slot 16,414 of 19,456 agree (287) |
+| `SETUP.CODE` | 3,943 | version 0 and 34 stale pads (273) |
+| `128K.PASCAL` | 571 | the finishing tool's slack (284) |
+| `LINEFEED.CODE` | 467 | version bits and slack (288c) |
+| `FORMATTER.CODE` | 394 | Linker slack (104) |
+| `LIBMAP.CODE` | 311 | Linker slack (270) |
+| `6502.ERRORS` | 287 | the record window's first fill (276) |
+| four `.MISCINFO` | 147, 142, 116, 151 | memory SETUP never writes (277) |
+| `BINDER`, `SET40COLS` | 16 each | `SEGINFO` version (274) |
+| `FORMATTER.DATA` and each boot | 1 each | the uncleared assembler byte (275) |
+
+Where `SYSTEM.LIBRARY` stands depends on how it is counted. Its file is
+two blocks short (287), so every slot after `LONGINTI` sits a block or
+two early and compares against the wrong bytes. The slot-aligned count is
+the one that measures the reconstruction. The in-place count is the one a
+disk image gets.
+
+### 289b. The disks carry their mastering residue
+
+**VERIFIED BINARY FACT.** Nothing reconstructed produces these bytes:
+
+* **Directory.** On all three disks the bytes past entry 77 hold text: on
+  APPLE3 `ange file type ? (`, the tail of a Filer prompt, and on APPLE1
+  and APPLE2 fragments of file names after a CR LF (`STEM.LIBRARY`,
+  `BMAP.CODEERER`). APPLE2's dead entry 8 is a removed
+  one-block `LINKER.INFO` on block 187, kind 4, its name length zeroed
+  and its characters intact.
+* **Free space.** APPLE2's block 187 still holds that file: linker records
+  naming `FORMATDI`. It is the only free block on the three disks that
+  isn't zero.
+
+**STRONG INFERENCE.** APPLE2 was at some point the work disk for
+assembling `FORMATTER`'s native half. Its `LINKER.INFO` was written and
+removed there before the master was copied.
+
+### 289c. What the number does not say
+
+The boot blocks, the text files and the directory entries are produced by
+this repository's encoders, not by an Apple tool run on the 1.3 system.
+Each is checked against Apple's bytes, not accepted on its own.
+
+The directory's names, placement and dates are Apple's history, carried
+over rather than reconstructed.

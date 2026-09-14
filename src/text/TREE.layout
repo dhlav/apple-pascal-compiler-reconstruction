@@ -1,0 +1,20 @@
+# How Apple's editor stored TREE.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 78
+paramargin 5
+runoffch ^
+created 6-22-79
+lastused 6-22-79
+literal 1
+expect 1 
+split 15 0
+expect 15       CONSOLE=1;
+split 89 4
+expect 89         END;
+split 126 2
+expect 126     READLN; TEXTMODE;

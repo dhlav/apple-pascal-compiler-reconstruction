@@ -33,6 +33,11 @@ four MISCINFO profiles have every setting from Apple's SETUP, run from
 recipes; their other bytes are memory SETUP never writes (finding 277).
 `SYSTEM.CHARSET` is identical (finding 278), and so is `128K.APPLE`, the
 interpreter, from three traced assemblies (finding 279).
+`SYSTEM.LIBRARY` has every code byte and all interface text by Apple's
+tools (findings 285-287). The ten text files are identical from
+`src/text/` (finding 288). **The disks are written** (step 12, finding
+289): 359,401 of 430,080 bytes, every difference accounted for by
+`probe_diskset.py`.
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 
@@ -1566,6 +1571,8 @@ a route end to end; everything else is a straight read-and-rebuild.
     that assembles a full 1.3 volume out of reconstructed files and diffs
     it against the evidence image -- one number for the whole project, and
     a total that has to balance.
+    **Done** (finding 289): `tools/mkdiskset.py`, `probe_diskset.py`,
+    `analysis/diskset-account.txt`.
 
 13. **`SYSTEM.APPLE`/`128K.APPLE` itself** -- item 11's "disassembly project
     of its own," scoped into steps:

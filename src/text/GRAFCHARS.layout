@@ -1,0 +1,18 @@
+# How Apple's editor stored GRAFCHARS.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 78
+paramargin 5
+runoffch ^
+created 6-1-79
+lastused 6-22-79
+split 20 0
+expect 20   PENCOLOR(NONE); MOVETO(L,B);
+split 41 2
+expect 41     END;
+split 78 0
+expect 78   READLN;

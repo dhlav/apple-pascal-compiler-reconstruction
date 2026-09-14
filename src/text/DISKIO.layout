@@ -1,0 +1,64 @@
+# How Apple's editor stored DISKIO.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 79
+paramargin 5
+runoffch ^
+created 5-4-79
+lastused 2-6-85
+split 13 0
+expect 13       STREETLEN=20;
+split 15 0
+expect 15       TELELEN=14;
+split 25 0
+expect 25      CRTCOMMAND= (ERASEOS,ERASEOL,UP,DOWN,RIGHT,LEFT,LEADIN);
+split 32 0
+expect 32     CRTINFO:   PACKED ARRAY[CRTCOMMAND] OF CHAR;
+split 45 0
+expect 45     F: FILE;
+split 54 0
+expect 54   CRTINFO[RIGHT]:=BUFFER[66];   PREFIXED[RIGHT]:=ODD(BYTE DIV 2);
+split 57 0
+expect 57   CRTINFO[DOWN]:=CHR(10);       PREFIXED[DOWN]:=FALSE;
+literal 62
+expect 62 PROCEDURE CRT(C: CRTCOMMAND);
+split 89 0
+expect 89     GOOD: BOOLEAN;
+split 91 0
+expect 91   REPEAT
+split 110 0
+expect 110     STEMP: STRING[80];
+split 111 0
+expect 111     OKSET: SET OF CHAR;
+split 117 2
+expect 117     IF LENGTH(STEMP) = 0 THEN S1[1]:=GETCHAR(OKSET + [CHR(13)])
+split 172 4
+expect 172       CHECK(NAME,NAMELEN);
+split 214 0
+expect 214     IREC,MAXREC: INTEGER;
+split 253 14
+expect 253                 SUCESSFUL := (IORESULT = 0);
+split 255 6
+expect 255           END;
+split 260 0
+expect 260   LASTCHANGE:=FALSE;
+split 281 0
+expect 281   (*$I+*)
+split 311 0
+expect 311     END;
+split 329 8
+expect 329           EXIT(NEXT);
+split 332 0
+expect 332   GOTOXY(0,2); WRITE('Record number ',RECNUM);
+split 335 0
+expect 335   IF LASTCHANGE THEN 
+split 341 4
+expect 341       (*$I+*)
+split 346 4
+expect 346           WRITELN('Use Filer K(runch command to make space after file.');
+split 369 0
+expect 369   PROMPTAT(12,'THAT''S ALL FOLKS...');

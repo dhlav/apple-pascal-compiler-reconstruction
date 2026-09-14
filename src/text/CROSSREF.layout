@@ -1,0 +1,28 @@
+# How Apple's editor stored CROSSREF.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 79
+paramargin 5
+runoffch ^
+created 12-9-78
+lastused 5-17-82
+literal 1
+expect 1 {$SETC APPLE := 2}
+literal 2
+expect 2 {$S-}
+split 42 2
+expect 42     BEGIN 
+split 66 0
+expect 66     REPEAT 
+split 87 0
+expect 87   ROOT:=NIL; N:=0; K1:=C1;
+split 107 12
+expect 107               BEGIN 
+split 129 0
+expect 129   PAGE(G); PAGE(G);
+split 130 0
+expect 130   CLOSE(G,LOCK);

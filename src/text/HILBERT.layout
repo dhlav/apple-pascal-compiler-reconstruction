@@ -1,0 +1,42 @@
+# How Apple's editor stored HILBERT.TEXT on APPLE3 (finding 288).
+dle
+defined 1
+autoindent 1
+filling 0
+tokdef 1
+lmargin 0
+rmargin 79
+paramargin 5
+runoffch ^
+created 2-19-79
+lastused 5-4-79
+split 32 4
+expect 32       BEGIN
+split 33 6
+expect 33         A:=90; B:=I-1;
+split 34 4
+expect 34       END
+split 46 2
+expect 46     WRITE('ORDER: ');  READLN(ORDER);
+split 47 2
+expect 47     IF (ORDER < 1) OR (ORDER > 7) THEN
+split 52 2
+expect 52     INITTURTLE;
+split 54 2
+expect 54     (* CALC STARTING X,Y AND SIZE *)
+split 55 2
+expect 55     FOR N:=2 TO ORDER DO DELTA:=DELTA*2;
+split 56 2
+expect 56     DELTA:=DELTA-1;
+split 57 2
+expect 57     SIZE:=190 DIV DELTA;
+split 58 2
+expect 58     DELTA:=(DELTA*SIZE) DIV 2;
+split 59 2
+expect 59     MOVETO(140-DELTA,96-DELTA);
+split 61 2
+expect 61     HIL(ORDER);
+split 62 2
+expect 62     (* WAIT FOR KEYSTROKE,THEN SWITCH TO TEXT *)
+split 63 0
+expect 63     READ(KEYBOARD,CH); TEXTMODE;  
