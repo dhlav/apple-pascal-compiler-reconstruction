@@ -23350,3 +23350,41 @@ procedures:
 * The dictionary: Apple orders segments by slot from block 1 (45
   blocks). The compile writes them in compile order (48 blocks), with
   `FIOPRIMS` as `SEGKIND` 3 and a text address where Apple has 6 and 0.
+
+## 281. `GETCMD` whole: body order is the segment's layout
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-14-pascalsystem-getcmd`
+holds one compile of the reordered source by Apple's 1.3 compiler. It is
+still 111 of 111 procedures, and `GETCMD` is now byte-identical to the
+shipped segment: all 6302 bytes. The run before it (280) differed in 4438
+of them. Six of the seven segments are now identical as wholes.
+`probe_os_exact.py` checks all six byte for byte. Its control is the 280
+run, which must still differ in `GETCMD` alone, by exactly 4438 bytes.
+
+**VERIFIED SOURCE FACT.** The compiler writes a procedure's code where
+its body is completed, children before their parent. So the order of the
+completion bodies is the physical order in the segment. A `FORWARD` fixes
+only the number (finding 199). Apple's procedure dictionary gives the
+offsets, and read in offset order the layout is
+
+    4 5 6 | 8 7 | 9 10 | 12-18 11 | 19 3 | 21 20 | 22-25 | 2 | 26 27 | 1
+
+Only 1, 26 and 27 were already in place. The move puts every completion
+at the point its code occupies:
+
+* `GETYESNO`, `GC05`, `BADTITLE` ahead of `GC07`;
+* `GC09`, `GC10` ahead of `GC11`;
+* `ASSOCIATE` then `SYSASSOC` right after `ASSOCIATE`'s `FORWARD`, ahead
+  of `STARTCOMPILE`;
+* `RUNWORKFILE` after `XECUTE`, ahead of `SWAPMENU`.
+
+The move leaves the file's multiset of lines unchanged. The only other
+edit is a comment on the forward block that records the order.
+
+**STRONG INFERENCE.** Apple's source had these bodies in this order. The
+layout also says `.19`/`.3` (`ASSOCIATE`/`SYSASSOC`) were written
+together, between the library pass and the compile command, and that
+`RUNWORKFILE` sat with the command handlers near the end.
+
+What is left before the whole file is 280c's other two items: segment 0's
+two-slot split and the dictionary.

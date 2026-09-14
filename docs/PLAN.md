@@ -16,7 +16,7 @@ checks.
 `SYSTEM.ASSMBLER` are reproduced as whole files by Apple's own compiler,
 assembler, Linker and Librarian (findings 267e and 267f; `PASCALIO` in the
 assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 in one
-compile (finding 280), not yet the whole file. `SYSTEM.LINKER` is identical as a whole
+compile (finding 280), with six of seven segments whole (281), not yet the whole file. `SYSTEM.LINKER` is identical as a whole
 file too (finding 268), from I.5's linker and the binary, and so is
 `LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
 through the end of its segment (finding 270), from I.5's LibMap, and

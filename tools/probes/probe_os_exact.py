@@ -35,7 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-13-pascalsystem-one" / "PASCALSY.CODE"
+RUN = ROOT / "acceptance" / "2026-09-14-pascalsystem-getcmd" / "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
 # Grows as the reconstruction does; it must never shrink without a finding
@@ -126,7 +126,36 @@ CONTROL = (ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps"
            / "PASCALSY.CODE")
 CONTROL_DIFFERS = ["PASCALSY.7"]    # FGET: a stub in that run
 
+# Whole segments, byte for byte against the shipped file (finding 281).
+# Procedure identity says nothing about where each body sits; this does.
+# Segment 0 is not here: Apple's is split across slots 0 and 15 by a
+# packing step after the compile (finding 50).
+WHOLE = ["USERPROG", "FIOPRIMS", "PRINTERR", "INITIALI", "GETCMD",
+         "FILEPROC"]
+# Its control is the run before finding 281: all 111 procedures exact,
+# but GETCMD's bodies in declaration-completion order, not Apple's.
+WHOLE_CONTROL = (ROOT / "acceptance" / "2026-09-13-pascalsystem-one"
+                 / "PASCALSY.CODE")
+WHOLE_CONTROL_DIFFERS = {"GETCMD": 4438}
+
 fail = []
+
+
+def segments(data: bytes) -> dict[str, bytes]:
+    """Named segments' code bytes, straight off the dictionary."""
+    out = {}
+    for i in range(16):
+        addr, length = int.from_bytes(data[4 * i:4 * i + 2], "little"), \
+            int.from_bytes(data[4 * i + 2:4 * i + 4], "little")
+        name = data[0x40 + 8 * i:0x48 + 8 * i].decode("latin1").strip()
+        if length and name:
+            out[name] = data[addr * 512:addr * 512 + length]
+    return out
+
+
+def seg_differs(ours: bytes, apple: bytes) -> int:
+    return (sum(a != b for a, b in zip(ours, apple))
+            + abs(len(ours) - len(apple)))
 
 
 def check(ok: bool, label: str) -> None:
@@ -164,6 +193,23 @@ def main() -> int:
         check(differ == CONTROL_DIFFERS,
               f"the pre-280 run still differs in exactly {CONTROL_DIFFERS}: "
               f"{differ}")
+
+    print("=== whole segments, byte for byte (finding 281) ===")
+    apple = segments(shipped_codefile().data)
+    ours = segments(RUN.read_bytes())
+    for name in WHOLE:
+        n = seg_differs(ours.get(name, b""), apple[name])
+        check(n == 0, f"{name}: {len(apple[name])} bytes, {n} differ")
+    if not WHOLE_CONTROL.exists():
+        check(False, f"{WHOLE_CONTROL} is missing")
+    else:
+        ctl = segments(WHOLE_CONTROL.read_bytes())
+        got = {name: seg_differs(ctl.get(name, b""), apple[name])
+               for name in WHOLE}
+        got = {k: v for k, v in got.items() if v}
+        check(got == WHOLE_CONTROL_DIFFERS,
+              f"the pre-281 run differs in exactly "
+              f"{WHOLE_CONTROL_DIFFERS}: {got}")
 
     print()
     if fail:

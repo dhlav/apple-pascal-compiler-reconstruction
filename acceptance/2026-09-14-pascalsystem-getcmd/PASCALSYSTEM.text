@@ -1844,16 +1844,8 @@ PROGRAM PASCALSYSTEM;
       just ahead of `.2` landed their completions on procedure numbers
       `2`/`3` instead, shifting everything after them by two; caught
       by recompiling and comparing frame sizes before it was ever
-      committed). Completions may appear in any order as far as the
-      *numbers* go -- only the `FORWARD` block's own order matters.
-
-      Their order still matters to the bytes. The compiler writes each
-      body where it is completed, children before their parent, so
-      body order is the segment's physical layout. Apple's dictionary
-      offsets give that layout: 4 5 6, 8 7, 9 10, 12-18 11, 19 3,
-      21 20, 22-25, 2, 26 27, 1. So each completion below sits where
-      its code does, and GETCMD comes out byte-identical as a whole
-      segment (finding 281). }
+      committed). Completions below may appear in any order relative
+      to each other -- only the `FORWARD` block's own order matters. }
 
     { **The segment's nesting, read out of the binary** (finding 225).
       Every one of these had been written flat, one level deep, and
