@@ -183,6 +183,16 @@ def seg0_differs(cf: CodeFile, apple_cf: CodeFile) -> list[int]:
     return sorted(n for n in apple if ours.get(n) != apple[n])
 
 
+def boot_128k() -> bytes:
+    """128K.APPLE, read straight off whichever 1.3 disk carries it."""
+    from a2pascal.disk import PascalDisk
+    for dsk in sorted((ROOT / "evidence" / "disks").glob("*.dsk")):
+        d = PascalDisk.from_file(dsk)
+        if any(e.name == "128K.APPLE" for e in d.directory()):
+            return d.read_file("128K.APPLE")
+    raise SystemExit("128K.APPLE is not on any evidence disk")
+
+
 def segments(data: bytes) -> dict[str, bytes]:
     """Named segments' code bytes, straight off the dictionary."""
     out = {}
@@ -284,6 +294,41 @@ def main() -> int:
     check(lo <= hi and lo == slot0_len,
           f"slot 0 is first-fit in number order: any capacity {lo}..{hi} "
           f"bytes gives its set")
+    # Where the crossing pointers come from (finding 283). 128K.APPLE's
+    # boot, copied to $6800 before it runs, loads slot 15 with CodeP at
+    # the word stored at $F84D and slot 0 with CodeP at a literal, and
+    # the loader puts each piece directly below CodeP. So a pointer in
+    # slot 0 at `at` naming a JTAB at `t` in slot 15 must hold
+    #   (top0 - len0 + at) - (top15 - len15 + t).
+    # Nothing here is fitted: both tops are read out of the boot's bytes.
+    apple_boot = boot_128k()
+    boot = apple_boot[0x28EF:0x28EF + 0x500]          # $F8EF, runs at $6800
+    at6c37 = boot[0x437:0x43F]
+    check(at6c37 == bytes.fromhex("a9fd8561a9fc8560"),
+          f"$6C37 is LDA #$FD / STA CodeP+1 / LDA #$FC / STA CodeP: "
+          f"{at6c37.hex()}")
+    top0 = at6c37[1] << 8 | at6c37[5]
+    top15 = int.from_bytes(apple_boot[0x284D:0x284F], "little")
+    check(boot[0x408:0x412] == bytes.fromhex("ad4df88560ad4ef88561"),
+          "$6C08 loads CodeP from $F84D")
+    len0 = next(n for _, n, s in apple0.chunks if s == 0)
+    len15 = next(n for _, n, s in apple0.chunks if s == 15)
+    base0 = next(o for o, _, s in apple0.chunks if s == 0)
+    base15 = next(o for o, _, s in apple0.chunks if s == 15)
+    raw0 = apple0.data[base0:base0 + len0]
+    crossing = bad = 0
+    for p in apple0.procedures:
+        if not base15 <= p.jtab < base15 + len15:
+            continue
+        crossing += 1
+        at = len0 - 2 - 2 * p.number
+        v = int.from_bytes(raw0[at:at + 2], "little")
+        want = ((top0 - len0 + at) - (top15 - len15 + p.jtab - base15)) \
+            & 0xFFFF
+        bad += v != want
+    check(crossing == 42 and bad == 0,
+          f"CodeP ${top15:04X} and ${top0:04X} give every crossing "
+          f"pointer: {crossing} crossing, {bad} wrong")
     got = seg0_differs(CodeFile(RUN.read_bytes()), shipped)
     check(got == [], f"no procedure's bytes differ: {got}")
     if not SEG0_CONTROL.exists():

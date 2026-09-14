@@ -23488,3 +23488,43 @@ also wrote a block 0 carrying `SEGSUSED` 4 and a Librarian-style notice.
 That tool is not on the disks. Its slack, 98 + 40 + 456 = 594 bytes, is
 memory, and 10 bytes of slot 1's tail happen to agree with the compile's.
 Those bytes are not closable. Neither is the 0x120 word from a compile.
+
+## 283. Finding 50's shift comes from two `CodeP` values in the 128K boot
+
+**VERIFIED BINARY FACT.** Finding 50 fitted the crossing-pointer shift by
+requiring the highest crossing pointer to land on slot 15's last word.
+50c measured the separation of the two pieces as 15868 bytes and left the
+load addresses unidentified. They are in `128K.APPLE`.
+
+At $F8C8, bank 2 copies five pages from $F8EF to $6800 and jumps there.
+`absdis` left those pages as `.BYTE`, since the code never runs where it
+is stored. Disassembled at $6800, the boot:
+
+* reads `SYSTEM.PASCAL`'s block 0 into $6000;
+* builds the segment table at $BD7E: unit 4, first block plus the file's
+  start, length;
+* sets `CodeP` from the word at $F84D, $C000, and calls $E684 with
+  segment 15 (`$6C08`-`$6C2C`);
+* sets `CodeP` to the literal $FDFC (`$6C37 LDA #$FD / STA $61 / LDA
+  #$FC / STA $60`) and calls $E7CD with segment 0.
+
+$E684 subtracts the segment's length from `CodeP` and loads the segment
+there. $E7CD reaches it through $E853. So slot 15 occupies $C000 − 5080
+to $BFFF, and slot 0 occupies $FDFC − 1438 to $FDFB. $FDFC − $C000 =
+$3DFC = 15868, which is 50c's number.
+
+A self-relative pointer in slot 0 at piece offset `at`, naming a JTAB at
+`t` in slot 15, therefore holds
+
+    (top0 − len0 + at) − (top15 − len15 + t)
+
+`probe_os_exact.py` reads both tops out of the boot's bytes. It checks
+the instruction bytes around them, then computes all 42 crossing pointers
+of Apple's dictionary from the formula: all 42 agree. With either top one
+byte off, all 42 fail. The shift `CodeFile` fits is 19510 =
+15868 − 1438 + 5080.
+
+**SPECULATION.** Slot 0's piece starts at $F85E. Finding 282b's capacity
+range (1438-1457 bytes) would put the lowest allowed start between $F84B
+and $F85E, just above the boot's own data at $F83F-$F84E. That would
+explain the capacity. It is not checked.
