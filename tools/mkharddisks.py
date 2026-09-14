@@ -139,6 +139,10 @@ FILES = [
     # against is 128K.PASCAL on APPLE3, not the 64K SYSTEM.PASCAL.
     ("PASCALSY.TEXT", ROOT / "src" / "pascal" / "os" / "1.3" /
      "PASCALSYSTEM.text"),
+    # Its one include, `(*$I USESFIO.TEXT*)` (finding 280). An include
+    # with no volume opens on the prefix, which is this boot volume, so it
+    # lives here even when PASCALSY.TEXT is compiled from WORKHD.
+    ("USESFIO.TEXT", ROOT / "src" / "pascal" / "os" / "1.3" / "USESFIO.text"),
     # ASSMBLER.TEXT compiles to ASSMBLER.CODE, which does not collide with
     # the shipped SYSTEM.ASSMBLER beside it -- a volume filename is 15
     # characters, and only Pascal IDENTIFIERS stop at 8.

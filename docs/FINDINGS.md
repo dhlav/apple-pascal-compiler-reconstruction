@@ -23276,3 +23276,77 @@ trace's code/data split and every name are reading. All three pieces
 assembled on the first attempt once the generator placed labels after its
 linear walk. The main piece has 11,760 bytes and 4,939 lines, which left
 13,244 words of assembler memory free.
+
+## 280. All 111 in one compile: a `USES` at program level, through an include file
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-13-pascalsystem-one` holds
+one compile of `PASCALSYSTEM.text` by Apple's 1.3 compiler. All 111
+procedures are instruction-, jump- and frame-identical to `128K.PASCAL`,
+`FGET` among them. `probe_os_exact.py` now requires 111 of 111 in that
+single run. For its discrimination control it requires the pre-280 run
+(`2026-09-11-pascalsystem-jumps`) to still differ in exactly `PASCALSY.7`.
+`tools/fgetvariant.py` and its second run are retired.
+
+### 280a. What finding 232b missed
+
+232b argued that no ordering could work. The `USES` had to precede
+`EXECERROR`'s body to spare `PROCTABLE[2..5]`, and it had to sit in
+`FGET`'s own heading for `FGET` to see the unit's names. The second half
+was the assumption. A `USES` in the *program's* declaration part makes
+the names global, and there it comes before every body.
+
+**VERIFIED SOURCE FACT.** Writing it plainly after the inline unit fails:
+the first try gave `Line 1053, error 17` (BEGIN expected). After
+`UNITPART`, `BLOCK` re-enters `DECLARATIONPART` only when the next
+symbol is `PROCEDURE`, `FUNCTION` or `SEGMENT`. Inside `DECLARATIONPART`,
+a `USES` that follows a declaration passes this test:
+
+    IF (NOT (INCLUDING OR NOTDONE)) OR NOT (SY IN BLOCKBEGSYS)
+      THEN ERROR(18)
+
+and `BLOCKBEGSYS` includes `USESSY`. The test passes only while
+`NOTDONE` is set (a body has just begun, which is how `PROCEDURE FPUT;
+USES FIOPRIMS;` worked) or while `INCLUDING`. So the source now has:
+
+* `WAITSYSVOL`'s `FORWARD`, moved from before the `USERPROGRAM` heading
+  to just after the unit. That opens a declaration part. Neither the
+  segment heading nor the unit claims a segment-0 number (both restore
+  `NEXTPROC`), so it is still procedure 50.
+* `(*$I USESFIO.TEXT*)`, a file whose only statement is
+  `USES FIOPRIMS;`.
+
+`FPUT` and `FGET` lose their own `USES`. `FGET`'s body, parked in a
+comment since finding 233, is back in place. The first compile of this
+shape (a scratch copy on WORKHD with `WORKHD:USESFIO.TEXT`) came out 111
+of 111. So did the committed source's compile, kept here.
+
+An include with no volume name opens on the prefix, the boot volume, not
+beside the source. The first try from WORKHD stopped at error 403, so
+`USESFIO.TEXT` sits on SYSHD (`mkharddisks.py` puts it there) and the
+source can be compiled from either volume.
+
+### 280b. What it says about Apple's source
+
+**STRONG INFERENCE.** An include file was the ordinary shape of a UCSD
+system source. II.0's `SYSTEM.TEXT` is nothing but six include lines:
+`GLOBALS`, `SYSSEGS.A`, `SYSSEGS.B` and `SYSTEM.A`-`C`
+(`reference_source/ucsd_ii0/SYSTEM.TEXT`). A program-level
+`USES` arriving through one of them needs no trick at all. That this file
+needs exactly one include to reach the shipped procedure table fits
+Apple's OS having been a set of include files too. Where Apple's
+boundaries fell is not visible in the code.
+
+### 280c. What is left before the whole file
+
+**VERIFIED BINARY FACT.** Five segments of this compile are
+byte-identical to the shipped ones as wholes: `USERPROG`, `FIOPRIMS`,
+`PRINTERR`, `INITIALI` and `FILEPROC`. What remains is layout, not
+procedures:
+
+* `GETCMD`: 27 of 27 procedures exact, but 4438 of its 6302 bytes differ.
+* Segment 0: Apple stores it in two slots, 0 (1438 bytes) and 15 (5080),
+  with one procedure dictionary whose crossing pointers are shifted
+  (finding 50). The compile writes it whole: 6518 bytes, the same total.
+* The dictionary: Apple orders segments by slot from block 1 (45
+  blocks). The compile writes them in compile order (48 blocks), with
+  `FIOPRIMS` as `SEGKIND` 3 and a text address where Apple has 6 and 0.

@@ -1,0 +1,14 @@
+  { USESFIO -- included by PASCALSYSTEM.text right after the FIOPRIMS
+    unit and WAITSYSVOL's FORWARD (finding 280).
+
+    Why an include file for one line: DECLARATIONPART ends a declaration
+    part with error 18 when a USES follows a procedure declaration, unless
+    INCLUDING or a body has just begun. Inside an include file that check
+    lets the program's own declaration part take a USES after its FORWARD
+    list. So FIOPRIMS's names become global before any body is compiled.
+    The PROCTABLE[2..5] a USES zeroes are then still empty from their
+    FORWARDs, and FGET and FPUT both reach the unit by name, in one
+    compile. A USES written straight into the main file after the unit
+    is error 17 instead: BLOCK only re-enters DECLARATIONPART there for a
+    PROCEDURE, FUNCTION or SEGMENT. }
+  USES FIOPRIMS;

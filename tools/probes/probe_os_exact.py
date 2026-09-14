@@ -35,8 +35,7 @@ from a2pascal.codefile import CodeFile
 from oscmp import compare, shipped_codefile
 
 ROOT = Path(__file__).resolve().parents[2]
-RUN = ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps" / \
-    "PASCALSY.CODE"
+RUN = ROOT / "acceptance" / "2026-09-13-pascalsystem-one" / "PASCALSY.CODE"
 
 # Verified under AppleWin on 2026-09-02, Apple's own compiler both sides.
 # Grows as the reconstruction does; it must never shrink without a finding
@@ -84,8 +83,8 @@ EXACT = [
     "PASCALSY.2", "PASCALSY.3", "PASCALSY.4", "PASCALSY.5", "PASCALSY.6",
     "PASCALSY.43",
     "PASCALSY.27",
-    # PASCALSY is 56 of 58 now: only FGET and FPUT are left, and both are
-    # behind FIOPRIMS's intrinsic-unit shape (findings 200, 224).
+    # PASCALSY was 56 of 58 here, FGET and FPUT behind FIOPRIMS's
+    # intrinsic-unit shape (findings 200, 224).
     "PASCALSY.12", "PASCALSY.13", "PASCALSY.18",
     "PASCALSY.28", "PASCALSY.40", "PASCALSY.41",
     "FILEPROC.1", "FILEPROC.3", "FILEPROC.5", "FILEPROC.6",
@@ -111,46 +110,21 @@ EXACT = [
     # FIOPRIMS.1 is the unit's initialisation part, so it ends RNP 0
     # where a SEGMENT PROCEDURE ends RBP 0.
     "FIOPRIMS.1", "PASCALSY.8",
+    # Finding 280: FGET, in the same compile as everything else, once
+    # the USES moved to program level through an include file.
+    "PASCALSY.7",
     "PRINTERR.1",
     "USERPROG.1",
 ]
 
-# Procedures still known to differ, kept here as the discrimination control
-# (check 3 above). These are not failures -- they are the open work, and
-# what matters is that the comparison still reports them as different.
-# Finding 252 demoted three procedures from EXACT when jump destinations
-# became part of the comparison, and finding 253 put them back: EXECERROR
-# had the CONTROL-RESET hang as the inner IF's ELSE instead of the outer
-# one's, SCANTITLE assigned its result inside an ELSE instead of after it,
-# and BLKXFER left one statement outside a THEN. All three are back on
-# EXACT below. `probe_jump_targets.py` is what stops the hole reopening.
-
-STILL_DIFFERS = [
-    # One left in RUN, and finding 232b says no single compilation of
-    # a single file can hold it alongside the rest. FGET needs
-    # USES FIOPRIMS to name the four helpers it calls with CXP 2,n;
-    # GETTEXT re-parses the interface with NEXTPROC := 2, zeroing
-    # PROCTABLE[2..5] of the current segment, so the USES has to
-    # precede segment 0's procedures 2-5 -- and FGET's own completion
-    # cannot move there, because its nested EXECGETCH must claim
-    # procedure 56 and that fixes its position after FBLOCKIO's.
-    # EXECERROR (procedure 2) would have to be both before FGET, for
-    # its own nested 51/52, and after it, to survive the zeroing.
-    "PASCALSY.7",    # FGET: 1 against Apple's 234, a stub in RUN
-]
-
-# The other half of that trade, kept as its own run: the same file
-# with FGET's real body and its USES, compiled by the same tool the
-# same day. FGET comes out exact and the four procedures the zeroing
-# lands on come out empty -- so the claim is not "FGET is probably
-# right", it is "Apple's compiler wrote Apple's 234 instructions from
-# this source", and the cost is exactly the four the finding names and
-# no others. The directory keeps the source that produced it, so the
-# run is reproducible rather than merely archived.
-FGET_RUN = (ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps-fget"
-            / "PASCALSY.CODE")
-FGET_EXACT = ["PASCALSY.7"]
-FGET_LOST = ["PASCALSY.2", "PASCALSY.3", "PASCALSY.4", "PASCALSY.5"]
+# The discrimination control (check 3 above). With all 111 exact in RUN
+# there is nothing left in it that differs, so the control is the run
+# before finding 280: the same comparison must still see that run's FGET
+# stub as different, and see nothing else there as different. A
+# comparison that called everything identical would fail this.
+CONTROL = (ROOT / "acceptance" / "2026-09-11-pascalsystem-jumps"
+           / "PASCALSY.CODE")
+CONTROL_DIFFERS = ["PASCALSY.7"]    # FGET: a stub in that run
 
 fail = []
 
@@ -177,33 +151,19 @@ def main() -> int:
     check(now >= len(EXACT),
           f"{now} exact, floor is {len(EXACT)} (of {len(rows)} procedures)")
 
-    print("=== the comparison can still tell them apart ===")
-    for key in STILL_DIFFERS:
-        r = rows.get(key)
-        check(bool(r) and not r["exact"],
-              f"{key} still differs, as the reconstruction says it should")
+    print("=== every procedure, in one compile (finding 280) ===")
+    check(now == len(rows) == 111,
+          f"{now} of {len(rows)} procedures exact in the one run")
 
-    print("=== the FGET run, and what it costs (finding 232b) ===")
-    if not FGET_RUN.exists():
-        check(False, f"{FGET_RUN} is missing")
+    print("=== the comparison can still tell them apart ===")
+    if not CONTROL.exists():
+        check(False, f"{CONTROL} is missing")
     else:
-        frows = compare(CodeFile(FGET_RUN.read_bytes()), shipped_codefile())
-        for key in FGET_EXACT:
-            r = frows.get(key)
-            check(bool(r) and r["exact"],
-                  f"{key} instruction- and frame-identical in the FGET run")
-        for key in FGET_LOST:
-            r = frows.get(key)
-            check(bool(r) and not r["exact"],
-                  f"{key} emptied by that run's USES, as finding 232b says")
-        ours = {k for k, r in rows.items() if r["exact"]}
-        theirs = {k for k, r in frows.items() if r["exact"]}
-        both = ours | theirs
-        # 111 of 111 again, and this time under a comparison that can see
-        # a jump go to the wrong place (findings 252, 253).
-        check(len(both) == len(rows),
-              f"{len(both)} of {len(rows)} procedures exact across the two "
-              f"runs together")
+        crows = compare(CodeFile(CONTROL.read_bytes()), shipped_codefile())
+        differ = sorted(k for k, r in crows.items() if not r["exact"])
+        check(differ == CONTROL_DIFFERS,
+              f"the pre-280 run still differs in exactly {CONTROL_DIFFERS}: "
+              f"{differ}")
 
     print()
     if fail:
