@@ -12,33 +12,46 @@ history below still cites 1.1 where 1.1 is how a fact was first found;
 treat those as leads to confirm against the 1.3 binaries, not as live
 checks.
 
-**Current state** (the sections below are older): `SYSTEM.COMPILER` and
-`SYSTEM.ASSMBLER` are reproduced as whole files by Apple's own compiler,
-assembler, Linker and Librarian (findings 267e and 267f; `PASCALIO` in the
-assembler is borrowed, finding 235b); `128K.PASCAL` is 111 of 111 in one
-compile (finding 280), and the whole file but 571 bytes of another tool's slack once `MAKEOS` finishes it on the 1.3 system (findings 281-284). `SYSTEM.LINKER` is identical as a whole
-file too (finding 268), from I.5's linker and the binary, and so is
-`LIBRARY.CODE` (finding 269), from I.5's Librarian, and `LIBMAP.CODE`
-through the end of its segment (finding 270), from I.5's LibMap, and
-`SYSTEM.FILER` (finding 271), from UCSD's II.0 Filer, and `SYSTEM.EDITOR`
-(finding 272), from UCSD's II.0 screen editor. `SETUP.CODE` is 54 of 54
-procedures from UCSD's SETUP D1 (finding 273) -- as far as 1.3 tools
-reach, since it predates the version word. `BINDER.CODE` (finding
-274) and `SET40COLS.CODE` (112) are every byte but the version field:
-they are 1.1 binaries, version 2, and a 1.3 compile writes 6.
-`FORMATTER.DATA` is 3583 of 3584 bytes, assembled and joined on the 1.3
-system (finding 275); `6502.OPCODES` is identical and `6502.ERRORS` is
-all but the 287 bytes its record window started with (finding 276). The
-four MISCINFO profiles have every setting from Apple's SETUP, run from
-recipes; their other bytes are memory SETUP never writes (finding 277).
-`SYSTEM.CHARSET` is identical (finding 278), and so is `128K.APPLE`, the
-interpreter, from three traced assemblies (finding 279).
-`SYSTEM.LIBRARY` has every code byte and all interface text by Apple's
-tools (findings 285-287, 290).
+## Where this stands
+
+**All thirteen steps below are done or closed.** The disks are written:
+`tools/mkdiskset.py` builds `APPLE1`-`APPLE3` from what this repository
+rebuilds, and **359,323 of 430,080 bytes are identical to Apple's images**
+(findings 289, 290). In scope, without the archived 64K pair, it is 351,873
+of 374,784. `probe_diskset.py` requires every region to differ by exactly
+what its finding says. `docs/DISKSET.md` is the per-file scoreboard.
+
+**Identical as files**, by Apple's own tools on the 1.3 system:
+
+* `SYSTEM.COMPILER` (267e) and `SYSTEM.ASSMBLER` (267f). The assembler's
+  `PASCALIO` segment is copied from Apple's file; nothing on the 1.3 disks
+  rebuilds it (235b).
+* `SYSTEM.LINKER` (268), `LIBRARY.CODE` (269), `SYSTEM.FILER` (271) and
+  `SYSTEM.EDITOR` (272).
+* `128K.APPLE` (279), `SYSTEM.CHARSET` (278) and `6502.OPCODES` (276).
+* The ten text files, encoded from `src/text/` by this repository's
+  encoder and checked against Apple's (288).
+
+**Every byte but a named remainder:**
+
+| file | bytes left | why they stay |
+|---|---|---|
+| `128K.PASCAL` | 571 | slack from a finishing tool not on the disks (284) |
+| `SETUP.CODE` | 3,943 | Apple's compiler predates the version word and left stale pads (273) |
+| `LINEFEED.CODE` | 467 | version bits of a 1.1 binary, and compile slack (288c) |
+| `FORMATTER.CODE`, `LIBMAP.CODE` | 394, 311 | Linker slack (104, 270) |
+| `6502.ERRORS` | 287 | the record window's first fill (276) |
+| four `.MISCINFO` | 556 | memory SETUP never writes (277) |
+| `BINDER.CODE`, `SET40COLS.CODE` | 16 each | version bits of 1.1 binaries (274) |
+| `FORMATTER.DATA`, each boot | 1 each | the assembler's uncleared byte (275) |
+
+Most of this is leftover memory from Apple's own sessions. Reproducing it
+would mean recreating that session state, which is not treated as a target.
 
 **`SYSTEM.LIBRARY` is an accepted exception to the whole-file target.**
 Its text blocks were written by a compiler other than the shipped
-`SYSTEM.COMPILER`. That gives three things no source can reproduce:
+`SYSTEM.COMPILER` (286c, 290). That gives three things no source can
+reproduce:
 - the block counts: LONGINTI 2 and TURTLEGR 3, where the shipped compiler
   writes 1 and 2;
 - the `N`/`X` trailer byte;
@@ -50,81 +63,30 @@ LONGINTI sits early. The measure that counts is the slot-aligned one,
 `probe_diskset.py` is expected. Do not reopen it without new evidence
 about that compiler.
 
-The ten text files are identical from
-`src/text/` (finding 288). **The disks are written** (step 12, finding
-289, 290): 359,323 of 430,080 bytes, every difference accounted for by
-`probe_diskset.py`.
-Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
-carries more of UCSD's II.0 tools than `ii0src.sdk` does.
+**What is left** is naming, not bytes:
+* the placeholder names for Apple's additions in the Linker, the Librarian
+  and SETUP;
+* the `L<nnnn>` labels in `128K.APPLE`;
+* the eleven operations of `DECOPS`;
+* the carried-forward items at the end of the steps.
+None of it changes a byte, and each name needs its own evidence.
 
-`docs/DISKSET.md` is the file-by-file scoreboard;
-`analysis/diskset-inventory.txt` is its machine-readable companion,
-regenerated on every build.
+**How the work is done now** is in `CLAUDE.md`:
+* `tools/emuremote.py` drives Apple's compiler, assembler, Linker,
+  Librarian and SETUP over a socket;
+* `SYSHD` carries the system;
+* `WORKHD` carries each run's files;
+* `acceptance/` keeps what came off the emulator, and the probes check it
+  against Apple's disks on every build.
 
-## Where this stands
-
-Three files are reconstructed -- source in `src/`, and Apple's own tools
-turn it back into Apple's bytes:
-
-| file | what it took |
-|---|---|
-| `SYSTEM.LIBRARY` | 55 p-code and 14 native procedures (finding 98) |
-| `LINEFEED.CODE` | 1.1's own source, unaltered, under the 1.3 compiler (finding 99a) |
-| `FORMATTER.CODE` | the first whole program: Pascal *and* 6502, linked (finding 104) |
-
-`SYSTEM.COMPILER` is not on that list yet, but only one thing keeps it off:
-all 15 real segments -- `PASCALCO` included, body order and procedure
-numbering both fixed (finding 107) -- are byte-identical to what Apple
-shipped. What remains is finding 105a alone: an extra, empty `PASCALSY` host
-segment, 512 bytes, that Apple's shipped file does not have at all. It also
-now has a real self-hosting check behind it, not just a static byte
-comparison: swapped onto `SYSHD:` in place of Apple's shipped compiler, it
-compiled `LIBRARY.text` (finding 113's real 574-line, 16-procedure source)
-**byte-identically** to what Apple's own compiler produces from the same
-input, 3072 bytes, 0 differences (finding 114).
-
-Counting procedures rather than bytes, and 1.3 only: **216 done of roughly
-861.** Every remaining target can be read before it is written -- the sweep
-covers every codefile a 1.3 disk carries plus the 1.1 copies of those same
-files, and lifts **1147 of 1147** with the stack fully tracked (finding
-100). Listings are in `analysis/utilities/`, p-code and pseudo-Pascal side
-by side.
-
-The infrastructure is done and is not the constraint: readers for the
-filesystem, codefiles, segments and procedure attributes; a p-code decoder
-that passes a strict self-check; a 6502 disassembler and assembler; a
-lifter that structures 79% of procedures with no goto at all; the global
-map and the 1.1/1.3 correspondence; and the emulator tier below.
-
-**All three of Apple's tools are now driven from here**, which is what made
-`FORMATTER` possible:
-
-* `tools/emucompile.ps1` -- `C(ompile`
-* `tools/emuassemble.ps1` -- `A(ssem`
-* `tools/emulink.ps1` -- `L(ink`, which is the only thing that puts an
-  assembled `EXTERNAL` into a compiled host
-
-Their output is kept under `acceptance/` and re-checked against the shipped
-disks on every build by `tools/probes/probe_acceptance.py` -- the one check
-in the repo with none of this project's own code on either side.
-
-**The acceptance-tier drive layout changed since the above was written.**
-`tools/mkharddisks.py` now builds a single 2MB Pascal hard-disk volume
-(`SYSHD`, on a slot-5 HDC) that boots, carries every system tool, and
-carries the reconstruction's own source and output all at once -- and it is
-the default for `runemu.py` and all three `emu*.ps1` scripts. That retires
-the `A(ssem` Filer-`P(refix` step above: `SYSHD` carries `6502.OPCODES`
-itself, so the default prefix (the boot volume) resolves without help.
-**Every codefile created on that merged volume needs a `[*]` size
-specifier** (`SYSHD:NAME.CODE[*]`) -- a single UCSD volume claims all free
-space for a new file and only shrinks it back on close, so a codefile and
-`SYSTEM.ASSMBLER`'s own `%LINKER.INFO` scratch file race for it otherwise.
-The old four-volume floppy layout is unchanged and still available via
-`-Floppy` / `runemu.py --floppy`, where `[*]` is not needed since system
-tools and output live on separate volumes there. See `CLAUDE.md` for the
-full recipe.
+Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it carries
+more of UCSD's II.0 tools than `ii0src.sdk` does.
 
 ## Next steps
+
+**Kept as the record.** Every step is done or closed; the text under each
+is what was written at the time, including guesses that turned out wrong.
+Current status is in **Where this stands** above.
 
 The order below is by what the evidence supports, not by size. A file whose
 1.1 release ships source is nearly free; a file with a native half now has
@@ -150,7 +112,7 @@ a route end to end; everything else is a straight read-and-rebuild.
    that is something the compiler alone decides or something `SYSTEM.LINKER`
    is meant to drop.
 
-2. **`LIBMAP.CODE`** -- 12 procedures, one of them native. **In progress**
+2. **DONE (finding 270).** **`LIBMAP.CODE`** -- 12 procedures, one of them native. *Was:* **In progress**
    (`src/pascal/programs/1.3/LIBMAP.text`). The native half is closed for
    free: finding 109 found `LIBMAP.2` is byte-for-byte Apple's own
    `IDSEARCH` from `SYSTEM.COMPILER`, linked in whole rather than
@@ -173,7 +135,7 @@ a route end to end; everything else is a straight read-and-rebuild.
    locals), `SHOWREF` (procedure 11), and `MAPLIBRARY` (procedure 12) plus
    the outer block are still stubs.
 
-3. **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
+3. **DONE (finding 274).** **`BINDER.CODE` and `SET40COLS.CODE`** -- 6 and 4 procedures, and both
    are **1.1 binaries Apple never rebuilt** (finding 99c). Both run under
    1.3 -- confirmed by hand in AppleWin off `SYSHD:` (they're on the disk
    now, `tools/mkharddisks.py`'s `EVIDENCE_CODEFILES`) -- so **they're in
@@ -211,7 +173,7 @@ a route end to end; everything else is a straight read-and-rebuild.
    word out of 1119, documented not forced. Byte-identical is still not
    reachable, same known wall as `SET40COLS`.
 
-4. **`LIBRARY.CODE`** -- 16 procedures, one segment, no native.
+4. **DONE (finding 269).** **`LIBRARY.CODE`** -- 16 procedures, one segment, no native.
    **Correction: not the smallest target left** -- procedure *count* is
    small but it nests four lex levels deep with a real heap-chained
    buffer, byte-order swapping, and per-segment link-interface copying;
@@ -226,7 +188,7 @@ a route end to end; everything else is a straight read-and-rebuild.
    `COPYINTERFACE`) and one cosmetic screen-cursor detail in
    `MSGLINE`/`MSGLINEINT` are still `(*STUB*)`.
 
-5. **`SETUP.CODE`** -- **Superseded by finding 273**: UCSD's own SETUP D1
+5. **DONE (finding 273).** **`SETUP.CODE`** -- **Superseded by finding 273**: UCSD's own SETUP D1
    source plus six edits gives all 54 procedures; the history below is the
    hand reconstruction it replaced. 54 procedures in 12 segments, nine of which are
    16-byte stubs, and **byte-identical between 1.1 and 1.3**. The segment
@@ -311,22 +273,22 @@ a route end to end; everything else is a straight read-and-rebuild.
    open. `SETUP19` and `TEACHSET`'s own ten tutorial procedures are now
    the only two stubs left in `SETUP.CODE`, the natural next session.
 
-6. **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
+6. **DONE (finding 268).** **`SYSTEM.LINKER`** -- 51 procedures, one segment. Now also a tool this
    project depends on, so understanding it pays twice.
 
-7. **`SYSTEM.FILER`** -- 56 procedures, one segment.
+7. **DONE (finding 271).** **`SYSTEM.FILER`** -- 56 procedures, one segment.
 
-8. **`SYSTEM.ASSMBLER`** -- 95 procedures in 7 segments, and the acceptance
+8. **DONE (findings 266, 267f).** **`SYSTEM.ASSMBLER`** -- 95 procedures in 7 segments, and the acceptance
    authority for everything in `src/native/`. Reconstructing the thing that
    validates the reconstruction is worth doing carefully and last of the
    utilities. Note `6502.OPCODES` and `6502.ERRORS` are its data, and
    finding 103e records how it looks for each.
 
-9. **`SYSTEM.EDITOR`** -- 129 procedures in 7 segments (numbered 1 and
+9. **DONE (finding 272).** **`SYSTEM.EDITOR`** -- 129 procedures in 7 segments (numbered 1 and
    7-12), the largest single target on the disk set. **Done**: the whole
    file, finding 272.
 
-10. **The operating system** -- `128K.PASCAL` specifically, the only build
+10. **DONE (findings 280-284).** **The operating system** -- `128K.PASCAL` specifically, the only build
     this file targets, reads, or cites; the 64K `SYSTEM.PASCAL` build is
     out of scope entirely, by direct instruction. 7 segments, ~105
     procedures. `ii0src.sdk` is the UCSD II.0 OS source and is genuinely
@@ -1568,7 +1530,7 @@ a route end to end; everything else is a straight read-and-rebuild.
     routines to decode; `.8` also carries finding 220's error-154
     gap, so it can get closer but probably not exact.
 
-11. **The files that are not codefiles.** They still have to come from
+11. **DONE (findings 275-279, 288).** **The files that are not codefiles.** They still have to come from
     somewhere before a disk can be written:
     * `SYSTEM.APPLE` / `128K.APPLE` -- raw 6502, the interpreter. Not a
       codefile, so none of the codefile tooling applies; this is a
@@ -1581,7 +1543,7 @@ a route end to end; everything else is a straight read-and-rebuild.
       text on the disk*, so they are reproduced by writing the volume and
       nothing else.
 
-12. **Write the disks.** The end of the project: the volume writer already
+12. **DONE (findings 289, 290).** **Write the disks.** The end of the project: the volume writer already
     re-encodes every evidence volume byte for byte from its own parsed
     entries, so the writer is not the risk. What is missing is a build step
     that assembles a full 1.3 volume out of reconstructed files and diffs
@@ -1590,7 +1552,7 @@ a route end to end; everything else is a straight read-and-rebuild.
     **Done** (finding 289): `tools/mkdiskset.py`, `probe_diskset.py`,
     `analysis/diskset-account.txt`.
 
-13. **`SYSTEM.APPLE`/`128K.APPLE` itself** -- item 11's "disassembly project
+13. **DONE for `128K.APPLE` (finding 279); `SYSTEM.APPLE` is archived.** **`SYSTEM.APPLE`/`128K.APPLE` itself** -- item 11's "disassembly project
     of its own," scoped into steps:
     * Analyze John Brooks' `SYSTEM.APPLE` source and pull out whatever in it
       is not specific to the 128K configuration -- the interpreter core
@@ -1609,125 +1571,27 @@ a route end to end; everything else is a straight read-and-rebuild.
 
 ### Carried forward, not scheduled
 
-* **`src/pascal/units/1.1/` is empty.** The 1.1 library has no
-  reconstruction at all yet.
-* **`LONGINTS.TEXT`'s eleven operations are not read out** (finding 98d).
-  The engine reassembles to Apple's bytes, but what each operation number
-  does is still unread, and it is the one native procedure deliberately
-  left out of `NATIVE_SIG` because its arity is variable.
+* **`DECOPS`'s eleven operations are not read out** (findings 98d, 290).
+  The engine in `src/native/LONGINTS.TEXT` reassembles to Apple's bytes and
+  carries Apple's name, but what each operation number does is still
+  unread. It is the one native procedure left out of `NATIVE_SIG`, because
+  its arity is variable.
+* **Placeholder names.** Apple's additions to the Linker, the Librarian
+  and SETUP, the `L<nnnn>` labels in `128K.APPLE`, and unnamed globals in
+  `SYSTEM.ASSMBLER` are byte-exact and unnamed. A name needs evidence, as
+  `DECOPS` (290) and LIBMAP's globals (270c) had. Slack that holds
+  compiler symbol nodes or source text is the best place to look.
 * **89 joins where the two paths disagree on stack depth**, mostly UCSD
   sets. Do not "fix" these by loosening the merge -- the report is what
   makes a wrong callee arity findable.
-* **The 1.1 side of the disk set.** `CALC.CODE` and the demo programs'
-  codefiles ship only on 1.1, so they are out of scope but still swept and
-  still listed. The demos' 1.1 `.CODE` beside their `.TEXT` is the only
-  source-and-output pair Apple left behind, and it is a calibration corpus
-  worth using before guessing at a construct.
-* **Interactive acceptance-tier driving (the "REDIRECT" thread).** The
-  user asked whether AppleWin's Super Serial Card (slot 2, TCP port 1977 --
-  confirmed real and working, see below) could replace the current
-  screenshot-and-SendKeys loop with a live, read-as-text session against
-  the running system -- hitting space to page through more compiler
-  errors in one shot instead of one screenshot per keystroke. Checked
-  directly, twice: `REDIRECT` is not a real Apple Pascal 1.3 procedure
-  (compiled a test program against it -- error 104, undeclared -- and it
-  is absent from the full UCSD II.0 source tree in `evidence/`, all six
-  files, zero hits), and `CONSOLE:` is hardwired to the Apple's own
-  screen/keyboard firmware (manual, confirmed), so nothing in Apple
-  Pascal 1.3 itself can redirect the system command level's own I/O to
-  `REMIN:`/`REMOUT:` (slot 2, units 7/8 -- that part of the claim was
-  real). The user's own next idea, not yet tried: **patch the compiler
-  and/or the OS itself** so error reporting (or the console generally)
-  pages interactively rather than stopping the whole compile/list -- a
-  real code change to `SYSTEM.COMPILER`/`SYSTEM.PASCAL`, not a
-  configuration trick, and "system wide" per the user (affecting more
-  than just error listings). Not started; the user asked to hang tight
-  on it. **Tried in the meantime, and it works**: Apple Pascal's own
-  built-in exec files (finding 124) -- `M(ake` records a keystroke
-  sequence to a `.TEXT` file, `X EXEC/<file>` replays the whole thing
-  later without per-keystroke waiting. Proved end to end against a real
-  compile (`SET40T.TEXT`, exact frame-size match to finding 112) and
-  fixed a real bug in `tools/emukeys.ps1` along the way -- it was
-  passing bare `% + ~ ( ) { }` straight to .NET's `SendKeys`, which
-  treats them as modifier/grouping syntax, so an exec file's own `%`
-  terminator was silently never reaching the emulator at all. **Now
-  wired in as the default** for all three `emu*.ps1` scripts' hard-disk
-  paths (finding 125, `tools/execfile.py`), verified against real
-  compiles/assembles/links including a full `FORMATTR`/`FMTNATIV` link
-  reproducing finding 104's own byte-identical result -- the `-Floppy`
-  paths are untouched, still live SendKeys. AppleWin's SSC/TCP mode
-  itself is confirmed live and usable
-  (`HKCU\Software\AppleWin\CurrentVersion\Configuration\Slot 2\Serial
-  Port Name = TCP`, lazily binds port 1977 on first UART access) for
-  anything that talks to `REMIN:`/`REMOUT:` from inside a running
-  program, if that ends up being part of the eventual approach.
-* **The low-level `CHANGEIO`-style redirect (finding 131): mechanism
-  proven, round trip still blocked.** A pasted, LLM-generated "Unit
-  Vector Table at zero-page $1A" writeup turned out fabricated too --
-  contradicts the language reference's own statement that zero-page
-  `0..35` decimal is scratch space, and matches nothing in the UCSD OS
-  source. The user's own `CHANGEIO` program (page-zero 230 decimal, a
-  write-pointer table, `CONSOLE:`<->`PRINTER:`) is real and independently
-  confirmed by Neil Parker's document (`RTPTR`=228/`WTPTR`=230, 8 entries
-  of 2 bytes, one per unit `#1`..`#8`) *and* by a live PEEK probe against
-  the real 1.3 system -- table contents, all 8 units, matched exactly,
-  including unit 6's read slot and unit 7's write slot both reading back
-  0 live, the two scratch slots a symmetric read+write redirect needs.
-  `REDIRIO.TEXT`, the read+write extension of `CHANGEIO`, compiled clean
-  and **works**: after running it, the physical keyboard stopped
-  affecting the screen at all (confirmed via `tools/watchscreen.py`'s
-  idle detection) -- Command-level I/O is genuinely off CONSOLE: and
-  pointed at REMIN:/REMOUT:. Fully recoverable (RAM-only, a reboot
-  reverts it).
-  **No longer blocked (finding 210).** The byte transfer over AppleWin's
-  SSC+TCP socket works, both directions, and the old diagnosis was wrong:
-  the driver *was* reaching the hardware. `CheckComm()` binding port 1977
-  does not make the card report carrier -- only an accepted connection
-  does -- so with nothing connected, DSR and DCD read inactive and Apple's
-  `REMOUT:` driver waits for it forever. Since AppleWin creates the socket
-  only on the guest's first register access, the host client has to
-  poll-connect rather than connect once; that is the entire fix. The
-  status register reads `$70` unconnected and `$10` connected, measured
-  both ways.
-  Proven end to end through Apple's own code: the Filer's `L(dir` with
-  `SYSHD:,REMOUT:` delivered a whole directory listing as clean text, and
-  `tools/remote/REMTEST.text` (`UNITWRITE` to unit 8, blocking `UNITREAD`
-  from unit 7, echo back) round-tripped `PING4321` unchanged. The pieces
-  and the four things that make or break it are in `tools/remote/`.
-  **And the console redirect itself now works (finding 211).** `REDIRIO`
-  rewritten from finding 131's page-zero facts and run: the Command level,
-  the Filer, its prompts, its echo and a full directory listing all came
-  out of the socket, and the host's keystrokes all went in, with the
-  screen blank and the physical keyboard dead. It is a toggle, and the
-  second run was sent over the socket through the redirect it was undoing.
-  Units 1 *and* 2 have to be swapped -- `CONSOLE:` and `SYSTERM:` share
-  the same routines but are separate entries, and the system reads through
-  `SYSTERM:` when it wants no echo, so changing only unit 1 leaves a live
-  keyboard behind and makes "the keyboard is dead" unfalsifiable, which is
-  the hole in finding 131's own test.
-  **And it is wired in (finding 212).** `tools/emuremote.py` compiles with
-  no keystrokes at all: `REDIRIO.CODE` is installed as `SYSTEM.STARTUP` so
-  the boot arms the channel, the `C(ompile` sequence goes over the socket,
-  and the driver waits for the compiler's own last line instead of a fixed
-  sleep. `PASCALSY` takes **57s against the SendKeys path's 340s** of
-  padding, comes back as text, and exits non-zero on a compile error with
-  the line and error number extracted. Two builds from identical source,
-  one each way, differ in 555 bytes and **none of them is inside a
-  segment** -- every segment byte-identical, `oscmp` 44 of 111 both ways
-  (110 as of finding 232, and 111 across two runs, finding 233).
-  The slack differs because the SendKeys path leaves its own exec-file text
-  in the compiler's memory, which is a good illustration of why a
-  whole-file `cmp` is the wrong acceptance test for a codefile.
-  `emucompile.ps1` is untouched and is both the fallback and the way
-  `REDIRIO` itself gets compiled. **The assembler and linker followed
-  (finding 213)**: `emuremote.py compile|assemble|link`, proved end to
-  end by compiling `FORMATTR`, assembling `FMTNATIV` and linking them
-  entirely over the socket to a codefile byte-identical to Apple's
-  shipped `FORMATTER.CODE`. `emulink.ps1`'s own "that race is not fully
-  solved" is solved by not racing -- the Linker's prompt sequence
-  depends on the data, so answers wait for the prompt they answer -- and
-  a link is verified by segment dictionary (`HOSTSEG` means it did not
-  work) rather than by the output file existing, which proves nothing.
+* **Closed: driving the system as text.** The SendKeys and screenshot loop,
+  the exec-file stopgap (findings 124, 125) and the page-zero console
+  redirect (131) ended in `tools/emuremote.py` (findings 210-213).
+  `REDIRIO`, installed as `SYSTEM.STARTUP`, swaps units 1 and 2 onto
+  `REMIN:`/`REMOUT:`, and the host polls to connect to AppleWin's SSC on
+  port 1977. The compiler, assembler, Linker, Librarian and SETUP all run
+  that way. The idea of patching the compiler or OS to page its output was
+  never needed. `CLAUDE.md` has the recipe and the pitfalls.
 
 ## The compiler phase, kept as the record
 
