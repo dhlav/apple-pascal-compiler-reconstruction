@@ -23199,3 +23199,21 @@ INFERENCE:** under 128K.PASCAL code segments do not land where a program's
 globals later go, so SYSTEM.MISCINFO was written under a system that
 loads code on the stack, such as the 64K one. **SPECULATION:** HAZEL's is
 an older Filer's. None of the four leftovers is reproducible in scope.
+
+## 278. `SYSTEM.CHARSET`: identical, written on the 1.3 system
+
+**VERIFIED BINARY FACT.** `acceptance/2026-09-13-charset` holds a
+SYSTEM.CHARSET equal to Apple's in all 1024 bytes. SYSTEM.COMPILER
+compiled `MAKECHRS`, and running it turned `src/data/CHARSET.TEXT` into
+two blocks. `probe_charset.py` checks it on every build.
+
+The file is 128 glyphs of eight bytes. Each byte is one row with its low
+bit at the left, and a glyph's rows are stored bottom row first: 'A'
+(`$41`) reads `00 21 21 21 3F 21 12 0C`, apex last. Bit 7 is clear in
+every byte, so a glyph is seven columns wide at most. Every byte is data,
+so unlike 6502.ERRORS (276) and the MISCINFO profiles (277) nothing of the
+writing session shows through. `CHARSET.TEXT` draws each glyph upright, a
+`CHR n` line and eight rows of `#` and `.`. The probe re-encodes it on the
+host and requires Apple's file one way up and not the other. Neither
+the text nor the program has a source on the 1.3 disks; both are this
+reconstruction's, read off the file.

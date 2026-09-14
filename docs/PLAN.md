@@ -31,6 +31,7 @@ system (finding 275); `6502.OPCODES` is identical and `6502.ERRORS` is
 all but the 287 bytes its record window started with (finding 276). The
 four MISCINFO profiles have every setting from Apple's SETUP, run from
 recipes; their other bytes are memory SETUP never writes (finding 277).
+`SYSTEM.CHARSET` is identical (finding 278).
 Check `github.com/dhlav/ucsd-psystem-os` for an ancestor first; it
 carries more of UCSD's II.0 tools than `ii0src.sdk` does.
 

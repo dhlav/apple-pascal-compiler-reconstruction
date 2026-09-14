@@ -127,6 +127,7 @@ STEPS = [
     ("FORMATTER.DATA, assembled and built on the 1.3 system", "probes/probe_formatter_data.py"),
     ("6502.OPCODES and 6502.ERRORS, written on the 1.3 system", "probes/probe_asm_data.py"),
     ("the MISCINFO profiles, by Apple's SETUP", "probes/probe_miscinfo.py"),
+    ("SYSTEM.CHARSET, written on the 1.3 system", "probes/probe_charset.py"),
 ]
 
 for step in STEPS:

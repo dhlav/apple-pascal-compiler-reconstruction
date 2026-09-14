@@ -66,6 +66,8 @@ The list above is the interesting half. The disks carry more:
 * **`LINEFEED.CODE`** (APPLE3) -- suppresses line feeds. One procedure, 38
   bytes, and **reconstructed** (finding 99a).
 * **`SYSTEM.CHARSET`** (APPLE1) -- the hi-res character set, 1024 bytes.
+  **Reconstructed**, identical, written by `MAKECHRS` from
+  `src/data/CHARSET.TEXT` on the 1.3 system (finding 278).
 * **`SYSTEM.SYNTAX`** (APPLE1) -- the compiler's error messages. Already a
   text file on the disk, so it is reproduced by writing the volume.
 * **`II40.MISCINFO`, `II80.MISCINFO`, `HAZEL.MISCINFO`** (APPLE3) -- the

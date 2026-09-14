@@ -1,0 +1,53 @@
+{ MAKECHRS -- builds SYSTEM.CHARSET, the hi-res character set
+  TURTLEGRAPHICS draws text with (finding 278).
+
+  The file is 128 characters of eight bytes each, two blocks. A byte is
+  one row of the glyph with its low bit at the left, and the rows are
+  stored bottom row first. CHARSET.TEXT draws each glyph upright: a line
+  `CHR n`, then eight rows of `#` and `.`, top row first. Apple's source
+  for this is not on the 1.3 disks; that text and this program are this
+  reconstruction's, read off the file's own bytes.
+
+  Written as '*CHARSET.DATA', not over the system's own copy. }
+
+(*$I-*)
+PROGRAM MAKECHRS;
+
+VAR
+  SRC: TEXT;
+  DST: FILE;
+  BUF: PACKED ARRAY [0..1023] OF 0..255;
+  LINE: STRING;
+  C, ROW, COL, BITS: INTEGER;
+
+PROCEDURE FAIL(S: STRING);
+BEGIN
+  WRITELN('MAKECHRS: ', S);
+  EXIT(MAKECHRS)
+END;
+
+BEGIN
+  RESET(SRC, '*CHARSET.TEXT');
+  IF IORESULT <> 0 THEN FAIL('no CHARSET.TEXT');
+  FOR C := 0 TO 127 DO
+    BEGIN
+      READLN(SRC, LINE);
+      IF POS('CHR', LINE) <> 1 THEN FAIL(LINE);
+      FOR ROW := 7 DOWNTO 0 DO
+        BEGIN
+          READLN(SRC, LINE);
+          IF LENGTH(LINE) <> 8 THEN FAIL(LINE);
+          BITS := 0;
+          FOR COL := 8 DOWNTO 1 DO
+            BEGIN
+              BITS := BITS + BITS;
+              IF LINE[COL] = '#' THEN BITS := BITS + 1
+            END;
+          BUF[C * 8 + ROW] := BITS
+        END
+    END;
+  REWRITE(DST, '*CHARSET.DATA');
+  IF BLOCKWRITE(DST, BUF, 2, 0) <> 2 THEN FAIL('writing');
+  CLOSE(DST, LOCK);
+  WRITELN('MAKECHRS: 128 characters')
+END.
