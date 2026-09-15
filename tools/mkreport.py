@@ -372,6 +372,120 @@ story.append(P(
     "wrote them. The directory's names, placement and dates are Apple's history, carried over "
     "rather than reconstructed.", small))
 
+# ---- source files per destination ---------------------------------------
+# (path relative to the repo, or an outside input marked with a leading
+# "evidence:" or "tool:", and its role). Every repo path is checked to exist.
+U = "src/pascal/units/1.3/"
+PR = "src/pascal/programs/1.3/"
+NAT = "src/native/"
+PHASES = ["COMPINIT", "COMPOPTI", "DECLARAT", "BODYPART", "ROUTINE",
+          "STATEMEN", "CASESTAT", "FORSTATE", "NUMSTRIN", "BODY1", "BODY3",
+          "UNITPART", "FINISHUP", "WRITELIN"]
+SRC = {
+    "SYSTEM.COMPILER": [("src/pascal/1.3/PASCALCO.text", "the compiler's declarations and outer procedures")]
+    + [(f"src/pascal/1.3/phases/{p}.text", "phase segment") for p in PHASES]
+    + [("tools/procbuild.py", "splices PASCALCO.text and the phases into the one source Apple's compiler reads"),
+       (NAT + "SEARCH.TEXT", "IDSEARCH and TREESEARCH, 6502, linked in")],
+    "SYSTEM.ASSMBLER": [(PR + "ASSMBLER.text", "Pascal source, six segments"),
+                        ("evidence:APPLE2 SYSTEM.ASSMBLER slot 0", "the PASCALIO segment, copied by the Librarian, not rebuilt")],
+    "SYSTEM.LINKER": [(PR + "LINKER.text", "Pascal source")],
+    "SYSTEM.EDITOR": [(PR + "EDITOR.text", "Pascal source, seven segments")],
+    "SYSTEM.FILER": [(PR + "FILER.text", "Pascal source")],
+    "LIBRARY.CODE": [(PR + "LIBRARY.text", "Pascal source (staged as LIBR13.TEXT)")],
+    "SETUP.CODE": [(PR + "SETUP.text", "Pascal source")],
+    "BINDER.CODE": [(PR + "BINDER.text", "Pascal source")],
+    "SET40COLS.CODE": [(PR + "SET40COLS.text", "Pascal source")],
+    "LINEFEED.CODE": [(PR + "LINEFEED.text", "Pascal source (Apple's own, unaltered)")],
+    "LIBMAP.CODE": [(PR + "LIBMAP.text", "Pascal source"),
+                    (NAT + "SEARCH.TEXT", "IDSEARCH, 6502, linked in")],
+    "FORMATTER.CODE": [(PR + "FORMATTER.text", "Pascal source"),
+                       (NAT + "FORMATTR.TEXT", "FORMATDISK, 6502, linked in")],
+    "FORMATTER.DATA": [(NAT + "ASMFORMAT.TEXT", "the Disk II formatter, blocks 0-2"),
+                       (NAT + "BOOTII.TEXT", "the Disk II boot"),
+                       (NAT + "BOOTPD.TEXT", "the ProDOS blocked-device boot"),
+                       (PR + "MAKEBOOT.text", "builds BOOTTRACKS.DATA: Disk II boot, blank directory, ProDOS boot"),
+                       (PR + "MAKEFMT.text", "joins ASMFORMAT.CODE and BOOTTRACKS.DATA into FORMATTER.DATA")],
+    "128K.APPLE": [(NAT + "interp/INTERP.TEXT", "interpreter, bank 2, .ABSOLUTE assembly"),
+                   (NAT + "interp/TOP.TEXT", "interpreter top pages, .ABSOLUTE assembly"),
+                   (NAT + "interp/BANK1.TEXT", "interpreter, bank 1, .ABSOLUTE assembly"),
+                   (PR + "MAKEINTP.text", "joins the three assemblies' blocks into 128K.APPLE"),
+                   (NAT + "interp/128K.hints", "the trace directives the three .TEXT files are generated from"),
+                   ("tools/absdis.py", "generates the three .TEXT files by tracing Apple's 128K.APPLE with the hints")],
+    "128K.PASCAL": [("src/pascal/os/1.3/PASCALSYSTEM.text", "Pascal source, seven segments"),
+                    ("src/pascal/os/1.3/USESFIO.text", "include file: the program-level USES FIOPRIMS"),
+                    (PR + "MAKEOS.text", "finishing program: splits segment 0 as the 128K boot loads it, writes the dictionary")],
+    "SYSTEM.LIBRARY": [(U + f"{s}.text", r) for s, r in (
+        ("LONGINTIO", "unit, slot 0"), ("PASCALIO", "unit, slot 1"),
+        ("CHAINSTUFF", "unit, slot 2"), ("TRANSCEND", "unit, slot 3"),
+        ("TURTLEGRAPHICS", "unit, slots 4-5 (code and data)"),
+        ("APPLESTUFF", "unit, slot 6"))]
+    + [(U + f"{s}.layout", "how Apple's editor stored the unit's lines") for s in (
+        "LONGINTIO", "PASCALIO", "CHAINSTUFF", "TRANSCEND", "TURTLEGRAPHICS", "APPLESTUFF")]
+    + [(NAT + "LONGINTS.TEXT", "DECOPS, 6502, linked into LONGINTIO"),
+       (NAT + "TURTLEGR.TEXT", "TURTLEGRAPHICS' native procedures, 6502"),
+       (NAT + "APPLESTF.TEXT", "APPLESTUFF's native procedures, 6502")],
+    "SYSTEM.CHARSET": [("src/data/CHARSET.TEXT", "the character bitmaps"),
+                       (PR + "MAKECHRS.text", "writes SYSTEM.CHARSET from them")],
+    "6502.OPCODES": [("src/data/OPS6502.TEXT", "the opcode records"),
+                     (PR + "MAKEOPS.text", "writes 6502.OPCODES from them")],
+    "6502.ERRORS": [("src/data/ERRS6502.TEXT", "the error messages"),
+                    (PR + "MAKEERRS.text", "writes 6502.ERRORS from them")],
+    "SYSTEM.APPLE": [], "SYSTEM.PASCAL": [],
+}
+for n in ("SYSTEM", "II40", "II80", "HAZEL"):
+    SRC[f"{n}.MISCINFO"] = [(f"src/data/miscinfo/{n}.recipe", "every SETUP field's value"),
+                            ("evidence:APPLE3 SETUP.CODE", "Apple's shipped SETUP, which the recipe is typed into")]
+for n in TEXTS:
+    stem = n[:-5] if n.endswith(".TEXT") else n
+    SRC[n] = [(f"src/text/{stem}.text", "the lines"),
+              (f"src/text/{stem}.layout", "DLE codes, page breaks and the editor's page zero"),
+              ("tools/a2pascal/textfile.py", "the encoder (Layout)")]
+assert set(SRC) == set(F), set(SRC) ^ set(F)
+for n, items in SRC.items():
+    for path, _ in items:
+        if not path.startswith("evidence:"):
+            assert (ROOT / path).exists(), (n, path)
+
+
+def source_lines(n):
+    if not SRC[n]:
+        return "None: not rebuilt."
+    out = []
+    for path, role in SRC[n]:
+        if path.startswith("evidence:"):
+            out.append(f"<i>Apple's {esc(path[len('evidence:'):])}</i> &mdash; {esc(role)}")
+        else:
+            out.append(f"<font face='Courier'>{esc(path)}</font> &mdash; {esc(role)}")
+    return "<br/>".join(out)
+
+
+story.append(PageBreak())
+story.append(P("Source files by destination", h2))
+story.append(P(
+    "Every file the rebuilt disks carry, and the files it is generated from. Paths are relative "
+    "to the repository; each one is checked to exist when this report is built. Entries in italics "
+    "are Apple's shipped files used as inputs, not reconstructed. Each rebuilt file's route through "
+    "Apple's tools is given in its section under File by file.", small))
+story.append(Spacer(1, 6))
+src_rows = [[P("Destination", cellb), P("Source files", cellb)]]
+for n in ["SYSTEM.COMPILER", "SYSTEM.ASSMBLER", "SYSTEM.LINKER", "SYSTEM.EDITOR",
+          "SYSTEM.FILER", "LIBRARY.CODE", "LIBMAP.CODE", "SETUP.CODE", "BINDER.CODE",
+          "SET40COLS.CODE", "LINEFEED.CODE", "FORMATTER.CODE", "FORMATTER.DATA",
+          "128K.APPLE", "128K.PASCAL", "SYSTEM.LIBRARY", "SYSTEM.CHARSET",
+          "6502.OPCODES", "6502.ERRORS", "SYSTEM.MISCINFO", "II40.MISCINFO",
+          "II80.MISCINFO", "HAZEL.MISCINFO"] + TEXTS:
+    src_rows.append([P(esc(n), cell), P(source_lines(n), cell)])
+src_rows.append([P("boot blocks (each disk)", cell),
+                 P("Blocks 3-4 of the rebuilt FORMATTER.DATA, the Disk II boot: "
+                   "<font face='Courier'>src/native/BOOTII.TEXT</font> by way of MAKEBOOT and MAKEFMT", cell)])
+src_rows.append([P("directories", cell),
+                 P("<i>Apple's own directory entries</i>, re-encoded by "
+                   "<font face='Courier'>tools/a2pascal/diskwrite.py</font>; the disks are "
+                   "assembled by <font face='Courier'>tools/mkdiskset.py</font>", cell)])
+src_rows.append([P("SYSTEM.APPLE, SYSTEM.PASCAL", cell),
+                 P("None: the 64K system is out of scope and not rebuilt.", cell)])
+story.append(grid(src_rows, [1.45 * inch, 5.55 * inch]))
+
 # per-file detail
 story.append(PageBreak())
 story.append(P("File by file", h2))
@@ -402,7 +516,8 @@ for n in FILE_ORDER:
         [P("Disk", cellb), P(disks, cell), P("Size", cellb), P(f"{num(size)} bytes", cell)],
         [P("Identical", cellb), P(f"{num(size - differ)}", cell), P("Differ", cellb),
          P(f"<font color='{color}'>{num(differ)}</font>", cell)],
-        [P("Source", cellb), P(esc(info["source"]), cell), P("Findings", cellb), P(esc(info["findings"]), cell)],
+        [P("Findings", cellb), P(esc(info["findings"]), cell), P("", cell), P("", cell)],
+        [P("Source files", cellb), P(source_lines(n), cell), P("", cell), P("", cell)],
         [P("Rebuilt by", cellb), P(esc(info["route"]), cell), P("", cell), P("", cell)],
         [P("Reconstructed", cellb), P(esc(info["work"]), cell), P("", cell), P("", cell)],
         [P("Differences", cellb), P(esc(info["differ"]), cell), P("", cell), P("", cell)],
@@ -412,8 +527,9 @@ for n in FILE_ORDER:
         ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c5ccd4")),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eef2f6")),
-        ("BACKGROUND", (2, 0), (2, 2), colors.HexColor("#eef2f6")),
-        ("SPAN", (1, 3), (3, 3)), ("SPAN", (1, 4), (3, 4)), ("SPAN", (1, 5), (3, 5)),
+        ("BACKGROUND", (2, 0), (2, 1), colors.HexColor("#eef2f6")),
+        ("SPAN", (1, 2), (3, 2)), ("SPAN", (1, 3), (3, 3)), ("SPAN", (1, 4), (3, 4)),
+        ("SPAN", (1, 5), (3, 5)), ("SPAN", (1, 6), (3, 6)),
         ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
         ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
     block = [P(head, h3), t]
