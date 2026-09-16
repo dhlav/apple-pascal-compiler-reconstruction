@@ -131,10 +131,10 @@ Apple's disks. Most of them also require the kept source (or recipe) to
 equal `src/`, line endings aside -- so **a rename or other source edit
 without a fresh acceptance run fails the probe**. That source lock covers
 the Linker, Librarian, LibMap, Filer, Editor, SETUP, BINDER/SET40COLS/
-LINEFEED, the library units (including DECOPS), and `SYSTEM.ASSMBLER`.
-`SYSTEM.COMPILER`'s librarian epoch keeps only the codefile (its BODY13
-splice is generated), so a phase-source rename is not caught that way;
-the byte-identical `LIBCOMP.CODE` and the diskset still are.
+LINEFEED, the library units (including DECOPS), `SYSTEM.ASSMBLER`, and
+`SYSTEM.COMPILER` (`acceptance/2026-09-12-compiler-librarian/source/`
+holds `PASCALCO.text` and every `phases/*.text`; BODY13 remains a
+generated splice and is not itself the lock).
 
 `probe_acceptance.py` itself is narrower: it only re-checks the early
 FORMATTER native and linked runs. It is not the catalogue of every
@@ -315,9 +315,10 @@ source text (270c, 290). Look there before anywhere else.
   library-aligned **16,417 / 19,456** (290d). FINDINGS §287 and §289 keep
   their older headline numbers as ledger history; do not treat those
   headings as current.
-- **`probe_compiler_whole.py`** still has no kept-source lock: the
-  librarian epoch stores only `LIBCOMP.CODE`. A phase rename without a
-  fresh compile would not fail that probe until the bytes moved.
+- **`probe_compiler_whole.py`** now source-locks `PASCALCO.text` and
+  every `phases/*.text` against `src/pascal/1.3/` (kept under the
+  librarian epoch's `source/`). A phase rename without updating that
+  snapshot fails the probe even when `LIBCOMP.CODE` is unchanged.
 
 ---
 

@@ -1,0 +1,200 @@
+{ Segment 18. II.0's COMMENTER (procs.a.text:168) is one procedure that both
+  reads the `$` options and skips the rest of the comment. Apple split it in
+  two: the skipping stayed in segment 1's COMMENTER, and everything from the
+  `$` to the last option came here as a FUNCTION.
+
+  The result is what the caller does next. COMMENTER's whole use of it is
+
+      IF NOT COMPOPTIONS(STOPPER) THEN EXIT(COMMENTER);
+
+  so FALSE carries II.0's own EXIT(COMMENTER) across the segment boundary --
+  an EXIT cannot name a procedure it is no longer inside. Four of II.0's arms
+  leave that way and all four end in EXITOPTIONS below. }
+  VAR CH,SW,DEL: CHAR; LTITLE: STRING[40];
+      LVAL: INTEGER;
+      LDIGITS: INTEGER;
+      LI: INTEGER;
+
+  PROCEDURE EXITOPTIONS;
+  BEGIN
+    COMPOPTIONS := FALSE;
+    EXIT(COMPOPTIONS)
+  END;
+
+  PROCEDURE SCANSTRING(VAR STRG: STRING; MAXLENG: INTEGER);
+{ II.0 takes the text from the option letter to the terminator and calls it
+  the title. Apple's trims leading and trailing blanks, and knows that a `*`
+  inside a (* *) comment is only the terminator when a `)` follows it. }
+    VAR LENG,LSTART,LBLANKS: INTEGER;
+  BEGIN SYMCURSOR := SYMCURSOR+2;
+    LSTART := SCAN(MAXLENG,<>' ',SYMBUFP^[SYMCURSOR]);
+    LENG := LSTART + SCAN(MAXLENG-LSTART,=STOPPER,
+			  SYMBUFP^[SYMCURSOR+LSTART]);
+    IF STOPPER = '*' THEN
+      WHILE (SYMBUFP^[SYMCURSOR+LENG+1] <> ')') AND (MAXLENG-LENG > 0) DO
+	BEGIN LENG := LENG+1;
+	  LENG := LENG + SCAN(MAXLENG-LENG,=STOPPER,
+			      SYMBUFP^[SYMCURSOR+LENG])
+	END;
+    LBLANKS := -SCAN(-LENG,<>' ',SYMBUFP^[SYMCURSOR+LENG]);
+    LENG := LENG-LSTART-LBLANKS;
+    STRG[0] := CHR(LENG);
+    MOVELEFT(SYMBUFP^[SYMCURSOR+LSTART],STRG[1],LENG);
+    SYMCURSOR := SYMCURSOR+LENG+LSTART+LBLANKS+1
+  END (*SCANSTRING*) ;
+
+  PROCEDURE RESSEGLIST;
+{ (*$R name,name*) -- Apple's resident-segment list, which UCSD has no
+  equivalent of. A name may be a unit, a segment procedure, or a number. }
+    VAR LSEG: INTEGER; LCP: CTP; LDONE: BOOLEAN;
+
+    PROCEDURE MARKRESIDENT(FSEG: INTEGER);
+{ RESIDENT is a chain of MODULE identifier records and nothing but this
+  builds it: the only other references anywhere are BLOCK setting it NIL
+  and BODY1 asking whether it is. }
+      VAR LCP: CTP;
+    BEGIN
+      NEW(LCP,MODULE,FALSE);
+      WITH LCP^ DO
+	BEGIN SEGID := FSEG;
+	  NEXT := RESIDENT;
+	  MODLINK := (SY = IDENT) AND INMODULE AND NOT INTRINSIC
+	END;
+      RESIDENT := LCP
+    END (*MARKRESIDENT*) ;
+
+  BEGIN SYMCURSOR := SYMCURSOR+2;
+    LDONE := FALSE;
+    REPEAT
+      SYMCURSOR := SYMCURSOR + SCAN(80,<>' ',SYMBUFP^[SYMCURSOR]);
+      IF SYMBUFP^[SYMCURSOR] = STOPPER THEN LDONE := TRUE
+      ELSE
+	BEGIN
+	  INSYMBOL;
+	  IF SY = INTCONST THEN MARKRESIDENT(VAL.IVAL)
+	  ELSE
+	    IF SY <> IDENT THEN LDONE := TRUE
+	    ELSE
+	      BEGIN PRTERR := FALSE;
+		SEARCHID([PROC,FUNC,MODULE],LCP);
+		PRTERR := TRUE;
+		IF LCP <> NIL THEN
+		  WITH LCP^ DO
+		    IF KLASS = MODULE THEN
+		      BEGIN
+			IF MODSEG THEN MARKRESIDENT(SEGID)
+		      END
+		    ELSE MARKRESIDENT(PFSEG)
+		ELSE ERROR(273)
+	      END;
+	  IF SYMBUFP^[SYMCURSOR] = ',' THEN SYMCURSOR := SYMCURSOR+1
+	END
+    UNTIL LDONE;
+    SYMCURSOR := SYMCURSOR
+		 + SCAN(80,=STOPPER,SYMBUFP^[SYMCURSOR]) + 1;
+    EXITOPTIONS
+  END (*RESSEGLIST*) ;
+
+BEGIN (*COMPOPTIONS*)
+  COMPOPTIONS := TRUE;
+  IF SYMBUFP^[SYMCURSOR+1] <> STOPPER THEN
+    REPEAT
+      CH := SYMBUFP^[SYMCURSOR+1];
+      SW := SYMBUFP^[SYMCURSOR+2];
+      DEL := SYMBUFP^[SYMCURSOR+3];
+      IF (SW = ',') OR (SW = STOPPER) THEN
+	IF NOT ((STOPPER = '*') AND (SW = STOPPER) AND (DEL <> ')')) THEN
+	  BEGIN DEL := SW; SW := '+';
+	    SYMCURSOR := SYMCURSOR-1
+	  END;
+      IF ORD(CH) > 96 THEN CH := CHR(ORD(CH)-32);
+      CASE CH OF
+      'C': BEGIN
+	     IF LEVEL > 1 THEN ERROR(194);
+	     NEW(COMMENT); SCANSTRING(COMMENT^,80); EXITOPTIONS
+	   END;
+      'D': DEBUGGING := (SW='+');
+      'E': OPT_E := (SW='+');
+      'F': FLIPBYTES := (SW='+');
+      'G': GOTOOK := (SW='+');
+      'I': IF (SW='+') OR (SW='-') THEN IOCHECK := (SW='+')
+	   ELSE
+	     BEGIN SCANSTRING(LTITLE,40);
+	       IF STOPPER = '*' THEN
+		 SYMCURSOR := SYMCURSOR+1;
+	       IF LIST THEN
+		 BEGIN
+		   SYMCURSOR := SYMCURSOR + 1;
+		   PRINTLINE;
+		   SYMCURSOR := SYMCURSOR - 1;
+		 END;
+	       IF INCLUDING OR INMODULE AND ININTERFACE THEN
+		 ERROR(406);
+	       OSPROC43(LTITLE,1,40);
+	       RESET(INCLFILE,LTITLE);
+	       IF IORESULT <> 0 THEN ERROR(403);
+	       INCLUDING := TRUE;
+	       OLDSYMCURSOR := SYMCURSOR;
+	       OLDLINESTART := LINESTART;
+	       OLDSYMBLK := SYMBLK-2;
+	       SYMBLK := 2; GETNEXTPAGE;
+	       INSYMBOL; EXIT(INSYMBOL)
+	     END;
+      'L': IF (SW='+') OR (SW='-') THEN
+	     BEGIN LIST := (SW='+');
+	       IF LIST AND NOT LSTOPEN THEN
+		 REWRITE(LP,'*SYSTEM.LST.TEXT[*]')
+	     END
+	   ELSE
+	     BEGIN SCANSTRING(LTITLE,40);
+	       IF NOT LSTOPEN THEN
+		 BEGIN OSPROC43(LTITLE,1,40);
+		   REWRITE(LP,LTITLE);
+		   LIST := IORESULT = 0
+		 END;
+	       EXITOPTIONS
+	     END;
+      'N': IF (SW='S') OR (SW='s') THEN
+	     BEGIN SYMCURSOR := SYMCURSOR+1;
+	       SCANSTRING(LTITLE,40);
+	       LVAL := 0;
+	       LDIGITS := LENGTH(LTITLE);
+	       IF LDIGITS > 2 THEN LDIGITS := 2;
+	       FOR LI := 1 TO LDIGITS DO
+		 LVAL := LVAL*10 + (ORD(LTITLE[LI])-ORD('0'));
+	       IF (LVAL > NEXTSEG) AND (LVAL < 63) THEN NEXTSEG := LVAL;
+	       EXITOPTIONS
+	     END
+	   ELSE NOLOAD := (SW='+');
+      'Q': NOISY := NOT CONLIST AND (SW='-');
+      'P': IF LIST THEN WRITE(LP,CHR(12(*FF*)));
+      'R': IF (SW='+') OR (SW='-') THEN RANGECHECK := (SW='+')
+	   ELSE RESSEGLIST;
+      'S': BEGIN SWAPPING := (SW='+');
+	     SWAPMORE := (DEL='+');
+	     IF DEL IN ['+','-'] THEN
+	       BEGIN SYMCURSOR := SYMCURSOR+1;
+		 DEL := SYMBUFP^[SYMCURSOR+3]
+	       END
+	   END;
+      'T': TINY := (SW='+');
+      'U': IF (SW='+') OR (SW='-') THEN
+	     BEGIN SYSCOMP := (SW = '-');
+	       RANGECHECK := NOT SYSCOMP;
+	       IOCHECK := RANGECHECK;
+	       VARSTRG := RANGECHECK;
+	       GOTOOK := SYSCOMP
+	     END
+	   ELSE
+	     IF NOT USING THEN
+	       BEGIN CLOSE(LIBRARY); LIBNOTOPEN := TRUE;
+		 SCANSTRING(SYSTEMLIB,40);
+		 RESET(LIBRARY,SYSTEMLIB);
+		 IF IORESULT <> 0 THEN ERROR(187);
+		 EXITOPTIONS
+	       END;
+      'V': VARSTRG := (SW='+')
+      END (*CASES*);
+      SYMCURSOR := SYMCURSOR+3;
+    UNTIL DEL <> ','
+END (*COMPOPTIONS*);

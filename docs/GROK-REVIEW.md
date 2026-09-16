@@ -36,16 +36,17 @@ new evidence (HANDOFF §6.1).
 1. **`tools/probes/probe_assembler_whole.py`** — require kept
    `ASSMBLER.text` to equal `src/`; add a one-byte mutant so the whole-file
    compare cannot pass on length alone.
-2. **`tools/probes/probe_compiler_whole.py`** — same one-byte mutant.
+2. **`tools/probes/probe_compiler_whole.py`** — one-byte mutant, plus a
+   source lock of `PASCALCO.text` and every `phases/*.text` kept under
+   `acceptance/2026-09-12-compiler-librarian/source/` against
+   `src/pascal/1.3/` (BODY13 stays generated; the phase inputs are the
+   lock).
 3. **`docs/HANDOFF.md`** — §4 no longer overstates `probe_acceptance.py`
-   (FORMATTER-only); documents which probes source-lock, the compiler's
-   missing source lock, and that FINDINGS §287/§289 headlines are
-   superseded by 290d for live totals.
+   (FORMATTER-only); documents which probes source-lock, and that
+   FINDINGS §287/§289 headlines are superseded by 290d for live totals.
 
 ## Gaps left open (documented, not fixed)
 
-- **Compiler source lock:** librarian epoch has no BODY13/phases text; a
-  rename that does not change bytes would not fail `probe_compiler_whole`.
 - **Finding 290 buffer fragments** beyond LONGINTI/`DECOPS`: TURTLEGR
   `{$endc}` / path strings are FINDINGS prose, not probe assertions.
 - **`mkimages.py`:** not part of `build_all.py`. SYSHD/SRCHD file-count
