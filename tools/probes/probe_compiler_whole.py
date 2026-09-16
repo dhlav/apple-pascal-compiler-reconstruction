@@ -22,6 +22,8 @@ Claims, each of which the binary can fail:
      PASCALSY in slot 0, its segments sit in a different physical order,
      and it carries no notice. If the comparison in (1) could not see a
      difference, it would pass this input too, and this check fails.
+  3. **A one-byte flip in the output is caught** at that byte -- the
+     whole-file compare is not a length-only check.
 """
 import sys
 from pathlib import Path
@@ -78,6 +80,11 @@ def main() -> int:
           "slot 0 is blank: no address, no length, no name")
     check(ours[432] == len(NOTICE) and ours[433:433 + len(NOTICE)] == NOTICE,
           f"the notice is a Pascal string, length byte {len(NOTICE)} first")
+    mutant = bytearray(ours)
+    mutant[1024] ^= 0x01
+    mdiff = [i for i in range(len(apple)) if mutant[i] != apple[i]]
+    check(mdiff == [1024],
+          "a copy with one code byte flipped is caught, at that byte")
 
     print("=== and its input was not already Apple's file ===")
     check(before != apple, "COMPLINK.CODE differs from SYSTEM.COMPILER")

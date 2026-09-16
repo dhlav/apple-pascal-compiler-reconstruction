@@ -123,9 +123,22 @@ cd <dest dir> && cp2 extract --raw --strip-paths build/disks/HD2.hdv X.CODE     
 
 **Results are kept verbatim** in `acceptance/<date>-<name>/`: codefiles,
 consoles and the source that was compiled. There are 130 run directories.
-The probes compare them with Apple's disks, and most also compare the kept
-source with `src/`. So **any source edit, a rename included, needs a fresh
-acceptance run**, or the probe fails.
+
+The whole-file and data probes (`probe_*_whole.py`, `probe_library_units.py`,
+`probe_setup_exact.py`, `probe_v2_binaries.py`, `probe_128k_*.py`, and the
+charset/asm/formatter/miscinfo/text probes) compare those results with
+Apple's disks. Most of them also require the kept source (or recipe) to
+equal `src/`, line endings aside -- so **a rename or other source edit
+without a fresh acceptance run fails the probe**. That source lock covers
+the Linker, Librarian, LibMap, Filer, Editor, SETUP, BINDER/SET40COLS/
+LINEFEED, the library units (including DECOPS), and `SYSTEM.ASSMBLER`.
+`SYSTEM.COMPILER`'s librarian epoch keeps only the codefile (its BODY13
+splice is generated), so a phase-source rename is not caught that way;
+the byte-identical `LIBCOMP.CODE` and the diskset still are.
+
+`probe_acceptance.py` itself is narrower: it only re-checks the early
+FORMATTER native and linked runs. It is not the catalogue of every
+acceptance epoch.
 
 **The release step.** System programs come out of the compiler and are
 then copied into a fresh codefile by Apple's `LIBRARY.CODE` with the
@@ -298,7 +311,13 @@ source text (270c, 290). Look there before anywhere else.
   recorded as raw bytes.
 - **The report** (`tools/mkreport.py`): byte counts are parsed from
   `analysis/diskset-account.txt`, but the per-file notes are hand-written.
-  Check them against FINDINGS.
+  Check them against FINDINGS. Live totals are **359,323 / 430,080** and
+  library-aligned **16,417 / 19,456** (290d). FINDINGS §287 and §289 keep
+  their older headline numbers as ledger history; do not treat those
+  headings as current.
+- **`probe_compiler_whole.py`** still has no kept-source lock: the
+  librarian epoch stores only `LIBCOMP.CODE`. A phase rename without a
+  fresh compile would not fail that probe until the bytes moved.
 
 ---
 

@@ -19,6 +19,9 @@ nothing about them. What it does claim, each of which can fail:
      the shipped file.
   3. **The Librarian did the work**: ASSMBLER.CODE itself is not Apple's
      file -- PASCALSY in slot 0, no notice, innermost-first layout.
+  4. **The verified source is the source in the tree**: the ASSMBLER.text
+     kept with the compile equals src/, line endings aside, so a rename
+     or edit without a fresh acceptance run fails here.
 """
 import sys
 from pathlib import Path
@@ -28,9 +31,11 @@ from a2pascal.disk import PascalDisk
 from oscmp import DISKS_13
 
 ROOT = Path(__file__).resolve().parents[2]
+COMPILE = ROOT / "acceptance" / "2026-09-12-assembler-complete"
 RUN = ROOT / "acceptance" / "2026-09-12-assembler-librarian" / "LIBASM.CODE"
-INPUT = (ROOT / "acceptance" / "2026-09-12-assembler-complete"
-         / "ASSMBLER.CODE")
+INPUT = COMPILE / "ASSMBLER.CODE"
+KEPT_SOURCE = COMPILE / "ASSMBLER.text"
+SOURCE = ROOT / "src" / "pascal" / "programs" / "1.3" / "ASSMBLER.text"
 TARGET = "SYSTEM.ASSMBLER"
 
 fail = []
@@ -64,7 +69,7 @@ def segment(b: bytes, slot: int) -> bytes:
 
 
 def main() -> int:
-    for p in (RUN, INPUT):
+    for p in (RUN, INPUT, KEPT_SOURCE, SOURCE):
         if not p.exists():
             print(f"{p} is missing -- acceptance runs are kept verbatim")
             return 1
@@ -81,6 +86,12 @@ def main() -> int:
     check(ours[64:72] == b"PASCALIO" and words(ours, 0, 2) == [48, 572]
           and words(ours, 224, 1) == [47],
           "PASCALIO in slot 0, text at block 47, code at 48 -- copied last")
+    # A byte in slot 1's code (past the dictionary): the compare must see it.
+    mutant = bytearray(ours)
+    mutant[1024] ^= 0x01
+    mdiff = [i for i in range(len(apple)) if mutant[i] != apple[i]]
+    check(mdiff == [1024],
+          "a copy with one code byte flipped is caught, at that byte")
 
     print("=== slots 1-6 are the reconstruction's own bytes ===")
     for slot in range(1, 7):
@@ -94,6 +105,12 @@ def main() -> int:
     check(compiled != apple, "ASSMBLER.CODE differs from SYSTEM.ASSMBLER")
     check(compiled[64:72] == b"PASCALSY" and compiled[432] == 0,
           "ASSMBLER.CODE has PASCALSY in slot 0 and no notice")
+
+    print("=== the verified source is the source in the tree ===")
+    kept = KEPT_SOURCE.read_bytes().replace(b"\r\n", b"\n")
+    tree = SOURCE.read_bytes().replace(b"\r\n", b"\n")
+    check(kept == tree, "acceptance ASSMBLER.text equals "
+                        "src/pascal/programs/1.3/ASSMBLER.text")
 
     print()
     if fail:
